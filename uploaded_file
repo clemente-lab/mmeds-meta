@@ -1,0 +1,13 @@
+Table S7.
+Percent of taxonomic information preserved at various taxonomic levels across primer sets.
+Taxonomic levels 1-5 preserve 93% of taxonomic information between HMP datasets using
+primers targeting the V1-V3 and V3-V5 rRNA regions.
+""
+Taxonomic Level V1-V3 V3-V5
+1 1 1
+2 1 1
+3 0.999988732 0.999994203
+4 0.99996338 0.999994203
+5 0.932405634 0.929756522
+6 0.768960563 0.724304348
+7 0.229014085 0.15522029

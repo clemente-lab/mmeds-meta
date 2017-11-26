@@ -1,0 +1,922 @@
+[22/Nov/2017:08:07:58] ENGINE Listening for SIGTERM.
+[22/Nov/2017:08:07:58] ENGINE Listening for SIGHUP.
+[22/Nov/2017:08:07:58] ENGINE Listening for SIGUSR1.
+[22/Nov/2017:08:07:58] ENGINE Bus STARTING
+[22/Nov/2017:08:07:58] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Nov/2017:08:07:58] ENGINE Started monitor thread 'Autoreloader'.
+[22/Nov/2017:08:07:58] ENGINE Serving on http://0.0.0.0:8080
+[22/Nov/2017:08:07:58] ENGINE Bus STARTED
+[22/Nov/2017:08:08:12] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 15, in index
+    return open('index.html')
+FileNotFoundError: [Errno 2] No such file or directory: 'index.html'
+[22/Nov/2017:08:08:12] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+[22/Nov/2017:08:08:22] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[22/Nov/2017:08:08:22] ENGINE Stopped thread 'Autoreloader'.
+[22/Nov/2017:08:08:22] ENGINE Bus STOPPING
+[22/Nov/2017:08:08:22] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[22/Nov/2017:08:08:22] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Nov/2017:08:08:22] ENGINE Bus STOPPED
+[22/Nov/2017:08:08:22] ENGINE Bus EXITING
+[22/Nov/2017:08:08:22] ENGINE Bus EXITED
+[22/Nov/2017:08:08:23] ENGINE Waiting for child threads to terminate...
+[22/Nov/2017:08:08:23] ENGINE Re-spawning upload_cherry.py
+[22/Nov/2017:08:08:23] ENGINE Listening for SIGTERM.
+[22/Nov/2017:08:08:23] ENGINE Listening for SIGHUP.
+[22/Nov/2017:08:08:23] ENGINE Listening for SIGUSR1.
+[22/Nov/2017:08:08:23] ENGINE Bus STARTING
+[22/Nov/2017:08:08:23] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Nov/2017:08:08:23] ENGINE Started monitor thread 'Autoreloader'.
+[22/Nov/2017:08:08:23] ENGINE Serving on http://0.0.0.0:8080
+[22/Nov/2017:08:08:23] ENGINE Bus STARTED
+[22/Nov/2017:08:08:25] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 15, in index
+    return open('./index.html')
+FileNotFoundError: [Errno 2] No such file or directory: './index.html'
+[22/Nov/2017:08:08:25] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+[22/Nov/2017:08:09:06] ENGINE Keyboard Interrupt: shutting down bus
+[22/Nov/2017:08:09:06] ENGINE Bus STOPPING
+[22/Nov/2017:08:09:06] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[22/Nov/2017:08:09:06] ENGINE Stopped thread 'Autoreloader'.
+[22/Nov/2017:08:09:06] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Nov/2017:08:09:06] ENGINE Bus STOPPED
+[22/Nov/2017:08:09:06] ENGINE Bus EXITING
+[22/Nov/2017:08:09:06] ENGINE Bus EXITED
+[22/Nov/2017:08:09:06] ENGINE Waiting for child threads to terminate...
+[22/Nov/2017:08:09:06] ENGINE Listening for SIGTERM.
+[22/Nov/2017:08:09:06] ENGINE Listening for SIGHUP.
+[22/Nov/2017:08:09:06] ENGINE Listening for SIGUSR1.
+[22/Nov/2017:08:09:06] ENGINE Bus STARTING
+[22/Nov/2017:08:09:06] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Nov/2017:08:09:06] ENGINE Started monitor thread 'Autoreloader'.
+[22/Nov/2017:08:09:06] ENGINE Serving on http://0.0.0.0:8080
+[22/Nov/2017:08:09:06] ENGINE Bus STARTED
+[22/Nov/2017:08:11:19] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[22/Nov/2017:08:11:19] ENGINE Stopped thread 'Autoreloader'.
+[22/Nov/2017:08:11:19] ENGINE Bus STOPPING
+[22/Nov/2017:08:11:19] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[22/Nov/2017:08:11:19] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Nov/2017:08:11:19] ENGINE Bus STOPPED
+[22/Nov/2017:08:11:19] ENGINE Bus EXITING
+[22/Nov/2017:08:11:19] ENGINE Bus EXITED
+[22/Nov/2017:08:11:19] ENGINE Waiting for child threads to terminate...
+[22/Nov/2017:08:11:19] ENGINE Re-spawning upload_cherry.py
+[22/Nov/2017:08:11:19] ENGINE Listening for SIGTERM.
+[22/Nov/2017:08:11:19] ENGINE Listening for SIGHUP.
+[22/Nov/2017:08:11:19] ENGINE Listening for SIGUSR1.
+[22/Nov/2017:08:11:19] ENGINE Bus STARTING
+[22/Nov/2017:08:11:19] ENGINE Started monitor thread 'Autoreloader'.
+[22/Nov/2017:08:11:19] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Nov/2017:08:11:19] ENGINE Serving on http://0.0.0.0:8080
+[22/Nov/2017:08:11:19] ENGINE Bus STARTED
+[22/Nov/2017:08:11:34] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 39, in download
+    def download(self):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/posixpath.py", line 92, in join
+    genericpath._check_arg_types('join', a, *p)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/genericpath.py", line 149, in _check_arg_types
+    (funcname, s.__class__.__name__)) from None
+TypeError: join() argument must be str or bytes, not 'NoneType'
+[22/Nov/2017:08:11:34] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+[22/Nov/2017:08:13:40] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[22/Nov/2017:08:13:40] ENGINE Stopped thread 'Autoreloader'.
+[22/Nov/2017:08:13:40] ENGINE Bus STOPPING
+[22/Nov/2017:08:13:40] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[22/Nov/2017:08:13:40] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Nov/2017:08:13:40] ENGINE Bus STOPPED
+[22/Nov/2017:08:13:40] ENGINE Bus EXITING
+[22/Nov/2017:08:13:40] ENGINE Bus EXITED
+[22/Nov/2017:08:13:40] ENGINE Waiting for child threads to terminate...
+[22/Nov/2017:08:13:40] ENGINE Re-spawning upload_cherry.py
+[22/Nov/2017:08:13:40] ENGINE Listening for SIGTERM.
+[22/Nov/2017:08:13:40] ENGINE Listening for SIGHUP.
+[22/Nov/2017:08:13:40] ENGINE Listening for SIGUSR1.
+[22/Nov/2017:08:13:40] ENGINE Bus STARTING
+[22/Nov/2017:08:13:40] ENGINE Started monitor thread 'Autoreloader'.
+[22/Nov/2017:08:13:40] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Nov/2017:08:13:40] ENGINE Serving on http://0.0.0.0:8080
+[22/Nov/2017:08:13:40] ENGINE Bus STARTED
+[22/Nov/2017:08:13:46] ENGINE Keyboard Interrupt: shutting down bus
+[22/Nov/2017:08:13:46] ENGINE Bus STOPPING
+[22/Nov/2017:08:13:46] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[22/Nov/2017:08:13:46] ENGINE Stopped thread 'Autoreloader'.
+[22/Nov/2017:08:13:46] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Nov/2017:08:13:46] ENGINE Bus STOPPED
+[22/Nov/2017:08:13:46] ENGINE Bus EXITING
+[22/Nov/2017:08:13:46] ENGINE Bus EXITED
+[22/Nov/2017:08:13:46] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:21:52] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:21:52] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:21:52] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:21:52] ENGINE Bus STARTING
+[24/Nov/2017:09:21:52] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:21:53] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:21:53] ENGINE Bus STARTED
+[24/Nov/2017:09:22:13] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 31, in upload
+    return out % (size, myFile.filename, myFile.content_type)
+TypeError: unsupported operand type(s) for %: '_io.TextIOWrapper' and 'tuple'
+[24/Nov/2017:09:22:13] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------5607450931918413731429946142
+  Content-Length: 43141
+[24/Nov/2017:09:23:10] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:23:10] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:23:10] ENGINE Bus STOPPING
+[24/Nov/2017:09:23:10] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:23:10] ENGINE Bus STOPPED
+[24/Nov/2017:09:23:10] ENGINE Bus EXITING
+[24/Nov/2017:09:23:10] ENGINE Bus EXITED
+[24/Nov/2017:09:23:10] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:23:10] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:23:10] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:23:10] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:23:10] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:23:10] ENGINE Bus STARTING
+[24/Nov/2017:09:23:10] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:23:10] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:23:10] ENGINE Bus STARTED
+[24/Nov/2017:09:23:32] ENGINE Keyboard Interrupt: shutting down bus
+[24/Nov/2017:09:23:32] ENGINE Bus STOPPING
+[24/Nov/2017:09:23:34] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:23:34] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:23:34] ENGINE Bus STOPPED
+[24/Nov/2017:09:23:34] ENGINE Bus EXITING
+[24/Nov/2017:09:23:34] ENGINE Bus EXITED
+[24/Nov/2017:09:23:34] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:47:22] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:47:22] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:47:22] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:47:22] ENGINE Bus STARTING
+[24/Nov/2017:09:47:22] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:47:22] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:47:22] ENGINE Bus STARTED
+[24/Nov/2017:09:48:34] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:48:34] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:48:34] ENGINE Bus STOPPING
+[24/Nov/2017:09:48:34] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:48:34] ENGINE Bus STOPPED
+[24/Nov/2017:09:48:34] ENGINE Bus EXITING
+[24/Nov/2017:09:48:34] ENGINE Bus EXITED
+[24/Nov/2017:09:48:34] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:48:34] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:48:34] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:48:34] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:48:34] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:48:34] ENGINE Bus STARTING
+[24/Nov/2017:09:48:34] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:48:34] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:48:34] ENGINE Bus STARTED
+[24/Nov/2017:09:49:31] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:49:31] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:49:31] ENGINE Bus STOPPING
+[24/Nov/2017:09:49:31] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:49:31] ENGINE Bus STOPPED
+[24/Nov/2017:09:49:31] ENGINE Bus EXITING
+[24/Nov/2017:09:49:31] ENGINE Bus EXITED
+[24/Nov/2017:09:49:31] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:49:31] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:49:32] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:49:32] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:49:32] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:49:32] ENGINE Bus STARTING
+[24/Nov/2017:09:49:32] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:49:32] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:49:32] ENGINE Bus STARTED
+[24/Nov/2017:09:50:10] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:50:10] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:50:10] ENGINE Bus STOPPING
+[24/Nov/2017:09:50:10] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:50:10] ENGINE Bus STOPPED
+[24/Nov/2017:09:50:10] ENGINE Bus EXITING
+[24/Nov/2017:09:50:10] ENGINE Bus EXITED
+[24/Nov/2017:09:50:10] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:50:10] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:50:10] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:50:10] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:50:10] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:50:10] ENGINE Bus STARTING
+[24/Nov/2017:09:50:10] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:50:10] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:50:10] ENGINE Bus STARTED
+[24/Nov/2017:09:51:17] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:51:17] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:51:17] ENGINE Bus STOPPING
+[24/Nov/2017:09:51:17] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:51:17] ENGINE Bus STOPPED
+[24/Nov/2017:09:51:17] ENGINE Bus EXITING
+[24/Nov/2017:09:51:17] ENGINE Bus EXITED
+[24/Nov/2017:09:51:17] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:51:17] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:51:17] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:51:17] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:51:17] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:51:17] ENGINE Bus STARTING
+[24/Nov/2017:09:51:17] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:51:17] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:51:17] ENGINE Bus STARTED
+[24/Nov/2017:09:51:30] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:51:30] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:51:30] ENGINE Bus STOPPING
+[24/Nov/2017:09:51:31] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:51:31] ENGINE Bus STOPPED
+[24/Nov/2017:09:51:31] ENGINE Bus EXITING
+[24/Nov/2017:09:51:31] ENGINE Bus EXITED
+[24/Nov/2017:09:51:31] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:51:31] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:51:32] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:51:32] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:51:32] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:51:32] ENGINE Bus STARTING
+[24/Nov/2017:09:51:32] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:51:32] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:51:32] ENGINE Bus STARTED
+[24/Nov/2017:09:51:35] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 17, in index
+    cherrypy.log.screen('Hi')
+TypeError: 'bool' object is not callable
+[24/Nov/2017:09:51:35] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+[24/Nov/2017:09:53:15] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:53:15] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:53:15] ENGINE Bus STOPPING
+[24/Nov/2017:09:53:15] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:53:15] ENGINE Bus STOPPED
+[24/Nov/2017:09:53:15] ENGINE Bus EXITING
+[24/Nov/2017:09:53:15] ENGINE Bus EXITED
+[24/Nov/2017:09:53:15] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:53:15] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:53:16] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:53:16] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:53:16] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:53:16] ENGINE Bus STARTING
+[24/Nov/2017:09:53:16] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:53:16] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:53:16] ENGINE Bus STARTED
+[24/Nov/2017:09:53:20] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 18, in index
+    cherrypy.log.screen('Hi')
+TypeError: 'bool' object is not callable
+[24/Nov/2017:09:53:20] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  CACHE-CONTROL: max-age=0
+[24/Nov/2017:09:53:24] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:53:24] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:53:24] ENGINE Bus STOPPING
+[24/Nov/2017:09:53:26] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 18, in index
+    sys.stderr.write('Hello')
+TypeError: 'bool' object is not callable
+[24/Nov/2017:09:53:26] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  CACHE-CONTROL: max-age=0
+[24/Nov/2017:09:53:27] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 18, in index
+    sys.stderr.write('Hello')
+TypeError: 'bool' object is not callable
+[24/Nov/2017:09:53:27] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  CACHE-CONTROL: max-age=0
+[24/Nov/2017:09:53:27] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 18, in index
+    sys.stderr.write('Hello')
+TypeError: 'bool' object is not callable
+[24/Nov/2017:09:53:27] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  CACHE-CONTROL: max-age=0
+[24/Nov/2017:09:53:29] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:53:29] ENGINE Bus STOPPED
+[24/Nov/2017:09:53:29] ENGINE Bus EXITING
+[24/Nov/2017:09:53:29] ENGINE Bus EXITED
+[24/Nov/2017:09:53:29] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:53:29] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:53:29] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:53:29] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:53:29] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:53:29] ENGINE Bus STARTING
+[24/Nov/2017:09:53:29] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:53:29] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:53:29] ENGINE Bus STARTED
+[24/Nov/2017:09:57:24] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:57:24] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:57:24] ENGINE Bus STOPPING
+[24/Nov/2017:09:57:24] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:57:24] ENGINE Bus STOPPED
+[24/Nov/2017:09:57:24] ENGINE Bus EXITING
+[24/Nov/2017:09:57:24] ENGINE Bus EXITED
+[24/Nov/2017:09:57:24] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:57:24] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:57:24] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:57:24] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:57:24] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:57:24] ENGINE Bus STARTING
+[24/Nov/2017:09:57:24] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:57:24] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:57:24] ENGINE Bus STARTED
+[24/Nov/2017:09:57:32]  hello
+[24/Nov/2017:09:57:37]  hello
+[24/Nov/2017:09:58:04] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:58:04] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:58:04] ENGINE Bus STOPPING
+[24/Nov/2017:09:58:04] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:58:04] ENGINE Bus STOPPED
+[24/Nov/2017:09:58:04] ENGINE Bus EXITING
+[24/Nov/2017:09:58:04] ENGINE Bus EXITED
+[24/Nov/2017:09:58:04] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:58:04] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:58:05] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:58:05] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:58:05] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:58:05] ENGINE Bus STARTING
+[24/Nov/2017:09:58:05] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:58:05] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:58:05] ENGINE Bus STARTED
+[24/Nov/2017:09:58:18] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 33, in upload
+    cherrypy.log(data)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/__init__.py", line 328, in __call__
+    return log.error(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cplogging.py", line 222, in error
+    ' '.join((self.time(), context, msg)),
+TypeError: sequence item 2: expected str instance, bytes found
+[24/Nov/2017:09:58:18] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------942017503839996073915111254
+  Content-Length: 4171
+[24/Nov/2017:09:58:34] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:58:34] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:58:34] ENGINE Bus STOPPING
+[24/Nov/2017:09:58:34] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:58:34] ENGINE Bus STOPPED
+[24/Nov/2017:09:58:34] ENGINE Bus EXITING
+[24/Nov/2017:09:58:34] ENGINE Bus EXITED
+[24/Nov/2017:09:58:34] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:58:34] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:58:34] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:58:34] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:58:34] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:58:34] ENGINE Bus STARTING
+[24/Nov/2017:09:58:34] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:58:34] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:58:34] ENGINE Bus STARTED
+[24/Nov/2017:09:58:41] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 33, in upload
+    cherrypy.log(type(data))
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/__init__.py", line 328, in __call__
+    return log.error(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cplogging.py", line 222, in error
+    ' '.join((self.time(), context, msg)),
+TypeError: sequence item 2: expected str instance, type found
+[24/Nov/2017:09:58:41] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------161412002316750476951963680013
+  Content-Length: 4177
+[24/Nov/2017:09:58:52] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:58:52] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:58:52] ENGINE Bus STOPPING
+[24/Nov/2017:09:58:52] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:58:52] ENGINE Bus STOPPED
+[24/Nov/2017:09:58:52] ENGINE Bus EXITING
+[24/Nov/2017:09:58:52] ENGINE Bus EXITED
+[24/Nov/2017:09:58:52] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:58:52] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:58:53] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:58:53] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:58:53] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:58:53] ENGINE Bus STARTING
+[24/Nov/2017:09:58:53] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:58:53] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:58:53] ENGINE Bus STARTED
+[24/Nov/2017:09:58:57]  <class 'bytes'>
+[24/Nov/2017:09:59:33] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:09:59:33] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:09:59:33] ENGINE Bus STOPPING
+[24/Nov/2017:09:59:33] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:09:59:33] ENGINE Bus STOPPED
+[24/Nov/2017:09:59:33] ENGINE Bus EXITING
+[24/Nov/2017:09:59:33] ENGINE Bus EXITED
+[24/Nov/2017:09:59:33] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:09:59:33] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:09:59:46] ENGINE Listening for SIGTERM.
+[24/Nov/2017:09:59:46] ENGINE Listening for SIGHUP.
+[24/Nov/2017:09:59:46] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:09:59:46] ENGINE Bus STARTING
+[24/Nov/2017:09:59:46] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:09:59:46] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:09:59:46] ENGINE Bus STARTED
+[24/Nov/2017:10:00:00]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:00:00]  <class 'bytes'>
+[24/Nov/2017:10:00:44]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:00:44]  <class 'bytes'>
+[24/Nov/2017:10:03:44] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:03:44] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:03:44] ENGINE Bus STOPPING
+[24/Nov/2017:10:03:44] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:03:44] ENGINE Bus STOPPED
+[24/Nov/2017:10:03:44] ENGINE Bus EXITING
+[24/Nov/2017:10:03:44] ENGINE Bus EXITED
+[24/Nov/2017:10:03:44] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:03:44] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:03:44] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:03:44] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:03:44] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:03:44] ENGINE Bus STARTING
+[24/Nov/2017:10:03:44] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:03:44] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:03:44] ENGINE Bus STARTED
+[24/Nov/2017:10:04:28]  <cherrypy._cpreqbody.Part object at 0x7fd98979f2e8>
+[24/Nov/2017:10:04:28]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:04:28]  <class 'bytes'>
+[24/Nov/2017:10:09:32] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:09:32] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:09:32] ENGINE Bus STOPPING
+[24/Nov/2017:10:09:32] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:09:32] ENGINE Bus STOPPED
+[24/Nov/2017:10:09:32] ENGINE Bus EXITING
+[24/Nov/2017:10:09:32] ENGINE Bus EXITED
+[24/Nov/2017:10:09:32] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:09:32] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:09:32] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:09:32] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:09:32] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:09:32] ENGINE Bus STARTING
+[24/Nov/2017:10:09:32] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:09:32] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:09:32] ENGINE Bus STARTED
+[24/Nov/2017:10:09:39]  <cherrypy._cpreqbody.Part object at 0x7f9b616b5c50>
+[24/Nov/2017:10:09:39]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:09:39]  <class 'bytes'>
+[24/Nov/2017:10:10:56] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:10:56] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:10:56] ENGINE Bus STOPPING
+[24/Nov/2017:10:10:56] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:10:56] ENGINE Bus STOPPED
+[24/Nov/2017:10:10:56] ENGINE Bus EXITING
+[24/Nov/2017:10:10:56] ENGINE Bus EXITED
+[24/Nov/2017:10:10:56] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:10:56] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:10:56] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:10:56] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:10:56] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:10:56] ENGINE Bus STARTING
+[24/Nov/2017:10:10:56] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:10:56] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:10:56] ENGINE Bus STARTED
+[24/Nov/2017:10:11:09]  <cherrypy._cpreqbody.Part object at 0x7ff135562d68>
+[24/Nov/2017:10:11:09]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:11:09]  
+[24/Nov/2017:10:15:45] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:15:45] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:15:45] ENGINE Bus STOPPING
+[24/Nov/2017:10:15:45] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:15:45] ENGINE Bus STOPPED
+[24/Nov/2017:10:15:45] ENGINE Bus EXITING
+[24/Nov/2017:10:15:45] ENGINE Bus EXITED
+[24/Nov/2017:10:15:45] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:15:45] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:15:45] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:15:45] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:15:45] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:15:45] ENGINE Bus STARTING
+[24/Nov/2017:10:15:45] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:15:45] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:15:45] ENGINE Bus STARTED
+[24/Nov/2017:10:16:37] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:16:37] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:16:37] ENGINE Bus STOPPING
+[24/Nov/2017:10:16:37] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:16:37] ENGINE Bus STOPPED
+[24/Nov/2017:10:16:37] ENGINE Bus EXITING
+[24/Nov/2017:10:16:37] ENGINE Bus EXITED
+[24/Nov/2017:10:16:37] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:16:37] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:16:38] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:16:38] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:16:38] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:16:38] ENGINE Bus STARTING
+[24/Nov/2017:10:16:38] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:16:38] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:16:38] ENGINE Bus STARTED
+[24/Nov/2017:10:16:48]  <cherrypy._cpreqbody.Part object at 0x7efd3255ef60>
+[24/Nov/2017:10:16:48]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:16:48]  
+[24/Nov/2017:10:16:48] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 35, in upload
+    nf = open(filename, 'w')
+NameError: name 'filename' is not defined
+[24/Nov/2017:10:16:48] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------547579357355985992140316555
+  Content-Length: 6288
+[24/Nov/2017:10:17:07] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:17:07] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:17:07] ENGINE Bus STOPPING
+[24/Nov/2017:10:17:07] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:17:07] ENGINE Bus STOPPED
+[24/Nov/2017:10:17:07] ENGINE Bus EXITING
+[24/Nov/2017:10:17:07] ENGINE Bus EXITED
+[24/Nov/2017:10:17:07] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:17:07] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:17:07] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:17:07] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:17:07] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:17:07] ENGINE Bus STARTING
+[24/Nov/2017:10:17:07] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:17:07] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:17:07] ENGINE Bus STARTED
+[24/Nov/2017:10:17:16]  <cherrypy._cpreqbody.Part object at 0x7fc35c74b588>
+[24/Nov/2017:10:17:16]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:17:16]  
+[24/Nov/2017:10:17:16] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 36, in upload
+    nf.write(data)
+TypeError: write() argument must be str, not bytes
+[24/Nov/2017:10:17:16] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------171496095992224456769071466
+  Content-Length: 13787
+[24/Nov/2017:10:17:38] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:17:38] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:17:38] ENGINE Bus STOPPING
+[24/Nov/2017:10:17:38] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:17:38] ENGINE Bus STOPPED
+[24/Nov/2017:10:17:38] ENGINE Bus EXITING
+[24/Nov/2017:10:17:38] ENGINE Bus EXITED
+[24/Nov/2017:10:17:38] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:17:38] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:17:38] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:17:38] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:17:38] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:17:38] ENGINE Bus STARTING
+[24/Nov/2017:10:17:38] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:17:38] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:17:38] ENGINE Bus STARTED
+[24/Nov/2017:10:17:49]  <cherrypy._cpreqbody.Part object at 0x7f4db5aadfd0>
+[24/Nov/2017:10:17:49]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:17:49]  
+[24/Nov/2017:10:18:39] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:18:39] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:18:39] ENGINE Bus STOPPING
+[24/Nov/2017:10:18:39] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:18:39] ENGINE Bus STOPPED
+[24/Nov/2017:10:18:39] ENGINE Bus EXITING
+[24/Nov/2017:10:18:39] ENGINE Bus EXITED
+[24/Nov/2017:10:18:39] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:18:39] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:18:40] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:18:40] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:18:40] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:18:40] ENGINE Bus STARTING
+[24/Nov/2017:10:18:40] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:18:40] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:18:40] ENGINE Bus STARTED
+[24/Nov/2017:10:18:55]  <cherrypy._cpreqbody.Part object at 0x7fba0cb27dd8>
+[24/Nov/2017:10:18:55]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:18:55]  
+[24/Nov/2017:10:19:35] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:19:35] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:19:35] ENGINE Bus STOPPING
+[24/Nov/2017:10:19:35] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:19:35] ENGINE Bus STOPPED
+[24/Nov/2017:10:19:35] ENGINE Bus EXITING
+[24/Nov/2017:10:19:35] ENGINE Bus EXITED
+[24/Nov/2017:10:19:35] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:19:35] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:19:35] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:19:35] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:19:35] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:19:35] ENGINE Bus STARTING
+[24/Nov/2017:10:19:35] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:19:35] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:19:35] ENGINE Bus STARTED
+[24/Nov/2017:10:19:44] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/pipeline/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload_cherry.py", line 25, in upload
+    nf = open(filename, 'wb')
+UnboundLocalError: local variable 'filename' referenced before assignment
+[24/Nov/2017:10:19:44] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn; session_id=84f662a9fe114d51a339043a5c2e27092082cd0b
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------20438403722122033063979142748
+  Content-Length: 13791
+[24/Nov/2017:10:19:52] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:19:52] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:19:52] ENGINE Bus STOPPING
+[24/Nov/2017:10:19:54] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:19:54] ENGINE Bus STOPPED
+[24/Nov/2017:10:19:54] ENGINE Bus EXITING
+[24/Nov/2017:10:19:54] ENGINE Bus EXITED
+[24/Nov/2017:10:19:55] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:19:55] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:19:55] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:19:55] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:19:55] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:19:55] ENGINE Bus STARTING
+[24/Nov/2017:10:19:55] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:19:55] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:19:55] ENGINE Bus STARTED
+[24/Nov/2017:10:20:01]  <cherrypy._cpreqbody.Part object at 0x7f73c0b433c8>
+[24/Nov/2017:10:20:01]  <_io.BufferedRandom name=7>
+[24/Nov/2017:10:20:01]  
+[24/Nov/2017:10:22:57] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:22:57] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:22:57] ENGINE Bus STOPPING
+[24/Nov/2017:10:22:57] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:22:57] ENGINE Bus STOPPED
+[24/Nov/2017:10:22:57] ENGINE Bus EXITING
+[24/Nov/2017:10:22:57] ENGINE Bus EXITED
+[24/Nov/2017:10:22:57] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:22:57] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:22:57] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:22:57] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:22:57] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:22:57] ENGINE Bus STARTING
+[24/Nov/2017:10:22:57] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:22:58] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:22:58] ENGINE Bus STARTED
+[24/Nov/2017:10:31:34] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:31:34] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:31:34] ENGINE Bus STOPPING
+[24/Nov/2017:10:31:34] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:31:34] ENGINE Bus STOPPED
+[24/Nov/2017:10:31:34] ENGINE Bus EXITING
+[24/Nov/2017:10:31:34] ENGINE Bus EXITED
+[24/Nov/2017:10:31:34] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:31:34] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:31:34] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:31:34] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:31:34] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:31:34] ENGINE Bus STARTING
+[24/Nov/2017:10:31:34] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:31:34] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:31:34] ENGINE Bus STARTED
+[24/Nov/2017:10:33:03] ENGINE Restarting because /home/david/Work/PythonPipeline/CherryPy/upload_cherry.py changed.
+[24/Nov/2017:10:33:03] ENGINE Stopped thread 'Autoreloader'.
+[24/Nov/2017:10:33:03] ENGINE Bus STOPPING
+[24/Nov/2017:10:33:03] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[24/Nov/2017:10:33:03] ENGINE Bus STOPPED
+[24/Nov/2017:10:33:03] ENGINE Bus EXITING
+[24/Nov/2017:10:33:03] ENGINE Bus EXITED
+[24/Nov/2017:10:33:03] ENGINE Waiting for child threads to terminate...
+[24/Nov/2017:10:33:03] ENGINE Re-spawning python upload_cherry.py
+[24/Nov/2017:10:33:03] ENGINE Listening for SIGTERM.
+[24/Nov/2017:10:33:03] ENGINE Listening for SIGHUP.
+[24/Nov/2017:10:33:03] ENGINE Listening for SIGUSR1.
+[24/Nov/2017:10:33:03] ENGINE Bus STARTING
+[24/Nov/2017:10:33:03] ENGINE Started monitor thread 'Autoreloader'.
+[24/Nov/2017:10:33:03] ENGINE Serving on http://0.0.0.0:8080
+[24/Nov/2017:10:33:03] ENGINE Bus STARTED
