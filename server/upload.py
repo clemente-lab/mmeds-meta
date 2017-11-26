@@ -8,9 +8,10 @@ from mmeds.mmeds import check_metadata
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
 
+UPLOADED_FP = 'uploaded_file'
+
 
 class FileUpload(object):
-    filename = None
 
     @cherrypy.expose
     def index(self):
@@ -18,24 +19,36 @@ class FileUpload(object):
 
     @cherrypy.expose
     def upload(self, myFile):
-        with open('./file_info.html') as f:
-            out = f.read()
-        size = 0
-        filename = 'uploaded_file'
-        nf = open(filename, 'wb')
+
+        # Write the data to a new file stored on the server
+        nf = open(UPLOADED_FP, 'wb')
         while True:
             data = myFile.file.read(8192)
             nf.write(data)
             if not data:
                 break
-            size += len(data)
         nf.close()
-        self.filename = myFile.filename
-        return out % (size, myFile.filename, myFile.content_type)
+
+        result = check_metadata(UPLOADED_FP)
+
+        # Get the html for the upload page
+        with open('./upload.html', 'r') as f:
+            uploaded_output = f.read()
+        return uploaded_output.format(filename=myFile.filename, output=result.decode('utf-8'))
+
+    @cherrypy.expose
+    def corrections(self):
+        return open('./' + UPLOADED_FP + '.html')
+
+    @cherrypy.expose
+    def log(self):
+        path = os.path.join(absDir, UPLOADED_FP + '.log')
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
 
     @cherrypy.expose
     def download(self):
-        path = os.path.join(absDir, self.filename)
+        path = os.path.join(absDir, UPLOADED_FP + '_corrected.txt')
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
