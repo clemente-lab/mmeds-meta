@@ -3,13 +3,13 @@ import os.path
 
 import cherrypy
 from cherrypy.lib import static
-import pymongo
+from mmeds import check_metadata
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
 
 
-class FileDemo(object):
+class FileUpload(object):
     filename = None
 
     @cherrypy.expose
@@ -40,7 +40,7 @@ class FileDemo(object):
                                  'attachment', os.path.basename(path))
 
 
-tutconf = os.path.join(os.path.dirname(__file__), 'cherry.conf')
+mmeds_conf = os.path.join(os.path.dirname(__file__), 'cherry.conf')
 
 if __name__ == '__main__':
-    cherrypy.quickstart(FileDemo(), config=tutconf)
+    cherrypy.quickstart(FileUpload(), config=mmeds_conf)

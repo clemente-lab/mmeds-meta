@@ -1,0 +1,10 @@
+README.md
+setup.py
+mmeds-meta/__init__.py
+mmeds-meta/mmeds.py
+mmeds_meta.egg-info/PKG-INFO
+mmeds_meta.egg-info/SOURCES.txt
+mmeds_meta.egg-info/dependency_links.txt
+mmeds_meta.egg-info/not-zip-safe
+mmeds_meta.egg-info/requires.txt
+mmeds_meta.egg-info/top_level.txt
