@@ -1,6 +1,8 @@
 README.md
 setup.py
 mmeds/__init__.py
+mmeds/authentication.py
+mmeds/config.py
 mmeds/mmeds.py
 mmeds.egg-info/PKG-INFO
 mmeds.egg-info/SOURCES.txt
