@@ -17,11 +17,11 @@ __email__ = "d.s.t.wallach@gmail.com"
 # https://github.com/mitsuhiko/flask/blob/master/setup.py
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
-with open('mmeds-meta/__init__.py', 'rb') as f:
+with open('mmeds/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
-setup(name='mmeds-meta',
+setup(name='mmeds',
       version=version,
       description='',
       classifiers=[
@@ -34,7 +34,7 @@ setup(name='mmeds-meta',
       author=__author__,
       author_email=__email__,
       license=__license__,
-      packages=['mmeds-meta'],
+      packages=['mmeds'],
       scripts=glob('scripts/*py'),
       install_requires=[
           'numpy',

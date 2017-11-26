@@ -3,7 +3,7 @@ import os.path
 
 import cherrypy
 from cherrypy.lib import static
-from mmeds import check_metadata
+from mmeds.mmeds import check_metadata
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
