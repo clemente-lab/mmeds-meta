@@ -47,6 +47,10 @@ class MMEDSserver(object):
 
     @cherrypy.expose
     def login(self, username, password):
+        """
+        Opens the page to upload files if the user has been authenticated.
+        Otherwise returns to the login page with an error message.
+        """
         if validate_password(username, password):
             return open('./index.html')
         else:
@@ -54,12 +58,14 @@ class MMEDSserver(object):
 
     @cherrypy.expose
     def log(self):
+        """ Allows the user to download a log file """
         path = os.path.join(absDir, UPLOADED_FP + '.log')
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
     @cherrypy.expose
     def download(self):
+        """ Allows the user to download the correct metadata file. """
         path = os.path.join(absDir, UPLOADED_FP + '_corrected.txt')
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
