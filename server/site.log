@@ -1069,3 +1069,50 @@ Request Headers:
 [27/Nov/2017:11:18:51] ENGINE Started monitor thread 'Autoreloader'.
 [27/Nov/2017:11:18:51] ENGINE Serving on http://0.0.0.0:8080
 [27/Nov/2017:11:18:51] ENGINE Bus STARTED
+[27/Nov/2017:11:40:28] ENGINE Restarting because /home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/mmeds-0.1.0.dev0-py3.6.egg/mmeds/authentication.py changed.
+[27/Nov/2017:11:40:28] ENGINE Stopped thread 'Autoreloader'.
+[27/Nov/2017:11:40:28] ENGINE Bus STOPPING
+[27/Nov/2017:11:40:28] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[27/Nov/2017:11:40:28] ENGINE Bus STOPPED
+[27/Nov/2017:11:40:28] ENGINE Bus EXITING
+[27/Nov/2017:11:40:28] ENGINE Bus EXITED
+[27/Nov/2017:11:40:29] ENGINE Waiting for child threads to terminate...
+[27/Nov/2017:11:40:29] ENGINE Re-spawning python upload.py
+[27/Nov/2017:11:40:29] ENGINE Listening for SIGTERM.
+[27/Nov/2017:11:40:29] ENGINE Listening for SIGHUP.
+[27/Nov/2017:11:40:29] ENGINE Listening for SIGUSR1.
+[27/Nov/2017:11:40:29] ENGINE Bus STARTING
+[27/Nov/2017:11:40:29] ENGINE Started monitor thread 'Autoreloader'.
+[27/Nov/2017:11:40:29] ENGINE Serving on http://0.0.0.0:8080
+[27/Nov/2017:11:40:29] ENGINE Bus STARTED
+[27/Nov/2017:13:55:05] HTTP 
+Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 631, in respond
+    self._do_respond(path_info)
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/cherrypy/_cprequest.py", line 690, in _do_respond
+    response.body = self.handler()
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/cherrypy/lib/encoding.py", line 221, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/cherrypy/_cpdispatch.py", line 60, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "upload.py", line 36, in validate
+    result = check_metadata(UPLOADED_FP, UPLOADED_DIR)
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/mmeds-0.1.0.dev0-py3.6.egg/mmeds/mmeds.py", line 11, in check_metadata
+    result = run(call_string, stdout=PIPE, shell=True, check=True)
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/subprocess.py", line 418, in run
+    output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command 'source activate qiime; cd uploaded_data/; validate_mapping_file.py -m uploaded_file' returned non-zero exit status 1.
+[27/Nov/2017:13:55:05] HTTP 
+Request Headers:
+  Remote-Addr: 127.0.0.1
+  HOST: localhost:8080
+  USER-AGENT: Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0
+  ACCEPT: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+  ACCEPT-LANGUAGE: en-US,en;q=0.5
+  ACCEPT-ENCODING: gzip, deflate
+  REFERER: http://localhost:8080/login
+  COOKIE: username-localhost-8888="2|1:0|10:1509473559|23:username-localhost-8888|44:MGVlZGFmYTdkZDk3NGYwN2ExNDMwMWI5YzQ1NWE2NjE=|7905bcb1f978f590a2e2df3ad92100791b3bd5ba1c5490310ca5d3aa83f46acf"; csrftoken=UmYuR5VmTX7EjS3zGPm2x6zM952sOeKFy9fgbOFHTMsCLv68sgRDy4VCqbrQMMbn
+  CONNECTION: keep-alive
+  UPGRADE-INSECURE-REQUESTS: 1
+  Content-Type: multipart/form-data; boundary=---------------------------28530729033304506791047925
+  Content-Length: 3072
