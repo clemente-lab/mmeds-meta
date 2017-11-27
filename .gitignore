@@ -1,0 +1,24 @@
+# Compiled python modules.
+*.pyc
+
+# Build
+/build/
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+# Emacs backup files
+*~
+
+# vi swap files
+.*.swp
+
+# OS X files
+.DS_Store
+
+# Server logs
+server/site.log
+server/overlib.js
