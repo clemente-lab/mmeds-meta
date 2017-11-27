@@ -1116,3 +1116,67 @@ Request Headers:
   UPGRADE-INSECURE-REQUESTS: 1
   Content-Type: multipart/form-data; boundary=---------------------------28530729033304506791047925
   Content-Length: 3072
+[27/Nov/2017:14:28:37] ENGINE Restarting because /home/david/Work/mmeds-meta/server/upload.py changed.
+[27/Nov/2017:14:28:37] ENGINE Stopped thread 'Autoreloader'.
+[27/Nov/2017:14:28:37] ENGINE Bus STOPPING
+[27/Nov/2017:14:28:37] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[27/Nov/2017:14:28:37] ENGINE Bus STOPPED
+[27/Nov/2017:14:28:37] ENGINE Bus EXITING
+[27/Nov/2017:14:28:37] ENGINE Bus EXITED
+[27/Nov/2017:14:28:37] ENGINE Waiting for child threads to terminate...
+[27/Nov/2017:14:28:37] ENGINE Re-spawning python upload.py
+[27/Nov/2017:14:28:37] ENGINE Listening for SIGTERM.
+[27/Nov/2017:14:28:37] ENGINE Listening for SIGHUP.
+[27/Nov/2017:14:28:37] ENGINE Listening for SIGUSR1.
+[27/Nov/2017:14:28:37] ENGINE Bus STARTING
+[27/Nov/2017:14:28:37] ENGINE Started monitor thread 'Autoreloader'.
+[27/Nov/2017:14:28:38] ENGINE Serving on http://0.0.0.0:8080
+[27/Nov/2017:14:28:38] ENGINE Bus STARTED
+[27/Nov/2017:14:28:49] ENGINE Restarting because /home/david/Work/mmeds-meta/server/upload.py changed.
+[27/Nov/2017:14:28:49] ENGINE Stopped thread 'Autoreloader'.
+[27/Nov/2017:14:28:49] ENGINE Bus STOPPING
+[27/Nov/2017:14:28:49] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[27/Nov/2017:14:28:49] ENGINE Bus STOPPED
+[27/Nov/2017:14:28:49] ENGINE Bus EXITING
+[27/Nov/2017:14:28:49] ENGINE Bus EXITED
+[27/Nov/2017:14:28:50] ENGINE Waiting for child threads to terminate...
+[27/Nov/2017:14:28:50] ENGINE Re-spawning python upload.py
+[27/Nov/2017:14:28:50] ENGINE Listening for SIGTERM.
+[27/Nov/2017:14:28:50] ENGINE Listening for SIGHUP.
+[27/Nov/2017:14:28:50] ENGINE Listening for SIGUSR1.
+[27/Nov/2017:14:28:50] ENGINE Bus STARTING
+[27/Nov/2017:14:28:50] ENGINE Started monitor thread 'Autoreloader'.
+[27/Nov/2017:14:28:50] ENGINE Serving on http://0.0.0.0:8080
+[27/Nov/2017:14:28:50] ENGINE Bus STARTED
+[27/Nov/2017:14:28:58] ENGINE Restarting because /home/david/Work/mmeds-meta/server/upload.py changed.
+[27/Nov/2017:14:28:58] ENGINE Stopped thread 'Autoreloader'.
+[27/Nov/2017:14:28:58] ENGINE Bus STOPPING
+[27/Nov/2017:14:28:58] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[27/Nov/2017:14:28:58] ENGINE Bus STOPPED
+[27/Nov/2017:14:28:58] ENGINE Bus EXITING
+[27/Nov/2017:14:28:58] ENGINE Bus EXITED
+[27/Nov/2017:14:28:58] ENGINE Waiting for child threads to terminate...
+[27/Nov/2017:14:28:58] ENGINE Re-spawning python upload.py
+[27/Nov/2017:14:32:17] ENGINE Listening for SIGTERM.
+[27/Nov/2017:14:32:17] ENGINE Listening for SIGHUP.
+[27/Nov/2017:14:32:17] ENGINE Listening for SIGUSR1.
+[27/Nov/2017:14:32:17] ENGINE Bus STARTING
+[27/Nov/2017:14:32:17] ENGINE Started monitor thread 'Autoreloader'.
+[27/Nov/2017:14:32:17] ENGINE Serving on http://0.0.0.0:8080
+[27/Nov/2017:14:32:17] ENGINE Bus STARTED
+[27/Nov/2017:14:34:28] ENGINE Restarting because /home/david/Work/mmeds-meta/server/upload.py changed.
+[27/Nov/2017:14:34:28] ENGINE Stopped thread 'Autoreloader'.
+[27/Nov/2017:14:34:28] ENGINE Bus STOPPING
+[27/Nov/2017:14:34:28] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('0.0.0.0', 8080)) shut down
+[27/Nov/2017:14:34:28] ENGINE Bus STOPPED
+[27/Nov/2017:14:34:28] ENGINE Bus EXITING
+[27/Nov/2017:14:34:28] ENGINE Bus EXITED
+[27/Nov/2017:14:34:29] ENGINE Waiting for child threads to terminate...
+[27/Nov/2017:14:34:29] ENGINE Re-spawning python upload.py
+[27/Nov/2017:14:34:29] ENGINE Listening for SIGTERM.
+[27/Nov/2017:14:34:29] ENGINE Listening for SIGHUP.
+[27/Nov/2017:14:34:29] ENGINE Listening for SIGUSR1.
+[27/Nov/2017:14:34:29] ENGINE Bus STARTING
+[27/Nov/2017:14:34:29] ENGINE Started monitor thread 'Autoreloader'.
+[27/Nov/2017:14:34:29] ENGINE Serving on http://0.0.0.0:8080
+[27/Nov/2017:14:34:29] ENGINE Bus STARTED

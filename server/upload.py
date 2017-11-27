@@ -3,7 +3,7 @@ import os.path
 
 import cherrypy
 from cherrypy.lib import static
-from mmeds.mmeds import check_metadata
+from mmeds.mmeds import check_metadata, insert_error
 from mmeds.config import CONFIG
 from mmeds.authentication import validate_password
 
@@ -24,6 +24,13 @@ class MMEDSserver(object):
     @cherrypy.expose
     def validate(self, myFile):
         """ The page returned after a file is uploaded. """
+
+        valid_extensions = ['txt', 'csv', 'tsv']
+        file_extension = myFile.filename.split('.')[-1]
+        if file_extension not in valid_extensions:
+            with open('../html/upload.html') as f:
+                page = f.read()
+            return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
         # Write the data to a new file stored on the server
         nf = open(UPLOADED_DIR + UPLOADED_FP, 'wb')
         while True:
@@ -50,7 +57,9 @@ class MMEDSserver(object):
         if validate_password(username, password):
             return open('../html/upload.html')
         else:
-            return open('../html/login.html')
+            with open('../html/index.html') as f:
+                page = f.read()
+            return insert_error(page, 17, 'Error: Invalid username or password.')
 
     # View files
     @cherrypy.expose
