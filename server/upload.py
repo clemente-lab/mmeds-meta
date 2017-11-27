@@ -19,10 +19,10 @@ class MMEDSserver(object):
     @cherrypy.expose
     def index(self):
         """ Home page of the application """
-        return open('../html/login.html')
+        return open('../html/index.html')
 
     @cherrypy.expose
-    def upload(self, myFile):
+    def validate(self, myFile):
         """ The page returned after a file is uploaded. """
         # Write the data to a new file stored on the server
         nf = open(UPLOADED_DIR + UPLOADED_FP, 'wb')
@@ -33,18 +33,13 @@ class MMEDSserver(object):
                 break
         nf.close()
 
-        result = check_metadata(UPLOADED_DIR + UPLOADED_FP)
+        result = check_metadata(UPLOADED_FP, UPLOADED_DIR)
 
         # Get the html for the upload page
-        with open('../html/upload.html', 'r') as f:
+        with open('../html/validate.html', 'r') as f:
             uploaded_output = f.read()
 
         return uploaded_output.format(filename=myFile.filename, output=result.decode('utf-8'))
-
-    @cherrypy.expose
-    def corrections(self):
-        """ Page containing the marked up metadata as an html file """
-        return open('./' + UPLOADED_DIR + UPLOADED_FP + '.html')
 
     @cherrypy.expose
     def login(self, username, password):
@@ -53,19 +48,26 @@ class MMEDSserver(object):
         Otherwise returns to the login page with an error message.
         """
         if validate_password(username, password):
-            return open('../html/index.html')
+            return open('../html/upload.html')
         else:
-            return open('../html/login_error.html')
+            return open('../html/login.html')
 
+    # View files
     @cherrypy.expose
-    def log(self):
+    def view_corrections(self):
+        """ Page containing the marked up metadata as an html file """
+        return open(UPLOADED_DIR + UPLOADED_FP + '.html')
+
+    # Download links
+    @cherrypy.expose
+    def download_log(self):
         """ Allows the user to download a log file """
         path = os.path.join(absDir, UPLOADED_DIR + UPLOADED_FP + '.log')
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
     @cherrypy.expose
-    def download(self):
+    def download_corrected(self):
         """ Allows the user to download the correct metadata file. """
         path = os.path.join(absDir, UPLOADED_DIR + UPLOADED_FP + '_corrected.txt')
         return static.serve_file(path, 'application/x-download',
