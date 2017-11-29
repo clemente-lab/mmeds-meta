@@ -11,6 +11,7 @@ localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
 
 UPLOADED_FP = 'uploaded_file'
+ERROR_FP = 'error_log.csv'
 UPLOADED_DIR = 'uploaded_data/'
 
 
@@ -41,17 +42,19 @@ class MMEDSserver(object):
                 break
         nf.close()
 
-        #result = check_metadata(UPLOADED_FP, UPLOADED_DIR)
-
         with open(UPLOADED_DIR + UPLOADED_FP) as f:
             errors = validate_mapping_file(f)
+
+        # Write the errors to a file
+        with open(UPLOADED_DIR + ERROR_FP, 'w') as f:
+            f.write('\n'.join(errors))
 
         # Get the html for the upload page
         with open('../html/error.html', 'r') as f:
             uploaded_output = f.read()
 
         for i, error in enumerate(errors):
-            uploaded_output = insert_error(uploaded_output, 5 + i, '<p>' + error + '</p>')
+            uploaded_output = insert_error(uploaded_output, 7 + i, '<p>' + error + '</p>')
 
         return uploaded_output
 
@@ -73,6 +76,12 @@ class MMEDSserver(object):
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
         return open(UPLOADED_DIR + UPLOADED_FP + '.html')
+
+    @cherrypy.expose
+    def download_error_log(self):
+        path = os.path.join(absDir, UPLOADED_DIR + ERROR_FP)
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
 
     # Download links
     @cherrypy.expose
