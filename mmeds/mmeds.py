@@ -63,7 +63,6 @@ def check_header(header, prev_headers):
     elif header.to_lowercase() in HIPAA_HEADERS:
         errors.append(row_col + 'Potentially identifying information in %s of column\t%d' %
                       (header, col_index))
-
     return errors
 
 
@@ -87,13 +86,16 @@ def check_column(col, prev_headers):
         row_col = str(i) + '\t' + str(col_index) + '\t'
         # Check for non-standard NAs
         if cell in NAs:
-            errors.append(row_col + "Non standard NA format %s\t%d,%d" %
+            errors.append(row_col + 'Non standard NA format %s\t%d,%d' %
                           (cell, i, col_index))
 
         # Check for consistent types in the column
-        if is_numeric(cell) and not numeric_col:
-                errors.append(row_col + "Mixed strings and numbers in %s\t%d,%d" %
+        elif is_numeric(cell) and not numeric_col:
+                errors.append(row_col + 'Mixed strings and numbers in %s\t%d,%d' %
                               (cell, i, col_index))
+        # Check for empty fields
+        elif '' == cell:
+            errors.append(row_col + 'Empty cell value %s', cell)
     return errors
 
 
