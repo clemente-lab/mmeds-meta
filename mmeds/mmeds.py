@@ -3,6 +3,9 @@ import csv
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
+ILLEGAL_IN_HEADER = set('/\\ ')
+ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
+
 
 def check_metadata(file_fp, directory):
     """
@@ -31,19 +34,28 @@ def check_header(header, prev_headers):
     # Get the index of the current column (Starting at 1)
     col_index = len(prev_headers)
 
+    row_col = '0\t' + str(col_index) + '\t'
+
     # Check if it's a duplicate
     if header in prev_headers:
-        errors.append('%s found in header %d times.  ' %
+        errors.append(row_col + '%s found in header %d times.  ' %
                       (header, prev_headers.count(header) + 1),
-                      'Header fields must be unique.\t%d,%d' % (0, col_index))
+                      'Header fields must be unique. Replace header %s of column\t%d' %
+                      (header, col_index))
     # Check if it's numeric
     elif is_numeric(header):
-        errors.append('Column names cannot be numbers. Replace column ' +
-                      str(col_index) + ' header ' + header)
+        errors.append(row_col + 'Column names cannot be numbers. Replace header %s of column\t%d ' %
+                      (header, col_index))
     # Check if it's NA
     elif header in NAs + ['NA']:
-        errors.append('Column names cannot be NA. Replace column ' +
-                      str(col_index) + ' header ' + header)
+        errors.append(row_col + 'Column names cannot be NA. Replace  header %s of column\t%d ' %
+                      (header, col_index))
+    # Check for illegal characters
+    elif ILLEGAL_IN_HEADER.intersection(set(header)):
+        illegal_chars = ILLEGAL_IN_HEADER.intersection(set(header))
+        errors.append(row_col + 'Illegal character(s) %s. Replace header %s of column\t%d' %
+                      (' '.join(illegal_chars), header, col_index))
+
     return errors
 
 
@@ -64,15 +76,15 @@ def check_column(col, prev_headers):
 
     # Check the remaining columns
     for i, cell in enumerate(col):
-
+        row_col = str(i) + '\t' + str(col_index) + '\t'
         # Check for non-standard NAs
         if cell in NAs:
-            errors.append("Non standard NA format %s\t%d,%d" %
+            errors.append(row_col + "Non standard NA format %s\t%d,%d" %
                           (cell, i, col_index))
 
         # Check for consistent types in the column
         if is_numeric(cell) and not numeric_col:
-                errors.append("Mixed strings and numbers in %s\t%d,%d" %
+                errors.append(row_col + "Mixed strings and numbers in %s\t%d,%d" %
                               (cell, i, col_index))
     return errors
 
@@ -91,6 +103,8 @@ def validate_mapping_file(file_fp):
     for col in columns:
         errors += check_column(col, column_headers)
         column_headers.append(col[0])
+        if col[0] == 'description' and col[0] != columns[-1][0]:
+            errors += 'decription is not the last column in the metadata file\t%d,%d' % (0, columns.index(col))
     return errors
 
 
