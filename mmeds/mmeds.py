@@ -3,7 +3,9 @@ import csv
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
-REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence'])
+REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPrimerSequence'])
+
+HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address', 'phone', 'phone_number']
 
 ILLEGAL_IN_HEADER = set('/\\ ')
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
@@ -57,6 +59,10 @@ def check_header(header, prev_headers):
         illegal_chars = ILLEGAL_IN_HEADER.intersection(set(header))
         errors.append(row_col + 'Illegal character(s) %s. Replace header %s of column\t%d' %
                       (' '.join(illegal_chars), header, col_index))
+    # Check for HIPAA non-compliant headers
+    elif header.to_lowercase() in HIPAA_HEADERS:
+        errors.append(row_col + 'Potentially identifying information in %s of column\t%d' %
+                      (header, col_index))
 
     return errors
 
