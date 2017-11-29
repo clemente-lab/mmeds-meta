@@ -43,7 +43,7 @@ def check_header(header, prev_headers):
     # Check if it's a duplicate
     if header in prev_headers:
         errors.append(row_col + '%s found in header %d times.  ' %
-                      (header, prev_headers.count(header) + 1),
+                      (header, prev_headers.count(header) + 1) +
                       'Header fields must be unique. Replace header %s of column\t%d' %
                       (header, col_index))
     # Check if it's numeric
@@ -60,18 +60,19 @@ def check_header(header, prev_headers):
         errors.append(row_col + 'Illegal character(s) %s. Replace header %s of column\t%d' %
                       (' '.join(illegal_chars), header, col_index))
     # Check for HIPAA non-compliant headers
-    elif header.to_lowercase() in HIPAA_HEADERS:
+    elif header.lower() in HIPAA_HEADERS:
         errors.append(row_col + 'Potentially identifying information in %s of column\t%d' %
                       (header, col_index))
     return errors
 
 
-def check_column(col, prev_headers):
+def check_column(column, prev_headers):
     """ Validate that there are no issues with the provided column of metadata """
 
-    col = list(col)
     # Get the header
-    header = col.pop(0)
+    header = column[0]
+    # Get the rest of the column
+    col = column[1:]
 
     # Check the header
     errors = check_header(header, prev_headers)
@@ -95,7 +96,7 @@ def check_column(col, prev_headers):
                               (cell, i, col_index))
         # Check for empty fields
         elif '' == cell:
-            errors.append(row_col + 'Empty cell value %s', cell)
+            errors.append(row_col + 'Empty cell value %s' % cell)
     return errors
 
 
