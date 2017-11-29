@@ -3,6 +3,8 @@ import csv
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
+REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence'])
+
 ILLEGAL_IN_HEADER = set('/\\ ')
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
@@ -103,8 +105,15 @@ def validate_mapping_file(file_fp):
     for col in columns:
         errors += check_column(col, column_headers)
         column_headers.append(col[0])
-        if col[0] == 'description' and col[0] != columns[-1][0]:
-            errors += 'decription is not the last column in the metadata file\t%d,%d' % (0, columns.index(col))
+        if col[0] == 'Description' and col[0] != columns[-1][0]:
+            errors.append('Description is not the last column in the metadata file\t%d,%d' %
+                          (0, columns.index(col)))
+
+    missing_headers = REQUIRED_HEADERS.difference(column_headers)
+
+    if missing_headers:
+        errors.append('Missing requires fields: ' + ', '.join(missing_headers))
+
     return errors
 
 
