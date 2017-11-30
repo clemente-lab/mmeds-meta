@@ -1,5 +1,7 @@
 from subprocess import run, PIPE
+from collections import defaultdict
 import csv
+import cherrypy
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
@@ -100,6 +102,25 @@ def check_column(column, prev_headers):
     return errors
 
 
+def check_duplicates(column, col_index):
+    """ Checks for any duplicate entries in the provided column """
+
+    errors = []
+    cells = defaultdict(list)
+
+    # Add the indices of each item
+    for i, cell in enumerate(column):
+        cells[cell].append(i)
+    # Find any duplicates
+    dups = {k: v for k, v in cells.items() if len(v) > 1}
+    for dup_key in dups.keys():
+        value = dups[dup_key]
+        for val in value[1:]:
+            errors.append('%d\t%d\tValue %s in row %d duplicate of row %d.' %
+                          (val, col_index, dup_key, val, value[0]))
+    return errors
+
+
 def validate_mapping_file(file_fp):
     """
     Checks the mapping file at file_fp for any errors.
@@ -111,13 +132,16 @@ def validate_mapping_file(file_fp):
     c_reader = csv.reader(file_fp, delimiter='\t')
     columns = list(zip(*c_reader))
     column_headers = []
-    for col in columns:
+    for i, col in enumerate(columns):
         errors += check_column(col, column_headers)
         column_headers.append(col[0])
         if col[0] == 'Description' and col[0] != columns[-1][0]:
             errors.append('Description is not the last column in the metadata file\t%d,%d' %
                           (0, columns.index(col)))
+        elif col[0] == '#SampleID' or col[0] == 'BarcodeSequence':
+            errors += check_duplicates(col, i)
 
+    cherrypy.log('\n'.join(column_headers))
     missing_headers = REQUIRED_HEADERS.difference(column_headers)
 
     if missing_headers:
