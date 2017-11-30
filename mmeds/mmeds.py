@@ -9,6 +9,8 @@ REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPr
 
 HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address', 'phone', 'phone_number']
 
+DNA = set('GATC')
+
 ILLEGAL_IN_HEADER = set('/\\ ')
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
@@ -126,9 +128,20 @@ def check_lengths(column, col_index):
     errors = []
     length = len(column[1])
     for i, cell in enumerate(column[2:]):
-        if not length(cell) == length:
+        if not len(cell) == length:
             errors.append('%d\t%d\tValue %s has a different length from other values in column %d' %
-                          (i, col_index, cell, col_index))
+                          (i + 2, col_index, cell, col_index))
+    return errors
+
+
+def check_barcode_chars(column, col_index):
+    """ Check that BarcodeSequence only contains valid DNA characters. """
+    errors = []
+    for i, cell in enumerate(column[1:]):
+        diff = set(cell).difference(DNA)
+        if diff:
+            errors.append('%d\t%d\tInvalid BarcodeSequence char(s) %s in row %d' %
+                          (i + 1, col_index, ', '.join(diff), i + 1))
     return errors
 
 
@@ -147,15 +160,17 @@ def validate_mapping_file(file_fp):
         errors += check_column(col, column_headers)
         column_headers.append(col[0])
 
-        # Check that Description is the last column in the file
+        # Perform column specific checks
         if col[0] == 'Description' and col[0] != columns[-1][0]:
             errors.append('Description is not the last column in the metadata file\t%d,%d' %
                           (0, columns.index(col)))
-        # Check for duplicates in particular columns
-        elif col[0] == '#SampleID' or col[0] == 'BarcodeSequence':
+        elif col[0] == 'BarcodeSequence':
             errors += check_duplicates(col, i)
-        # Check for consistent lengths on particular columns
-        if col[0] == 'BarcodeSequence' or col[0] == 'LinkerPrimerSequence':
+            errors += check_lengths(col, i)
+            errors += check_barcode_chars(col, i)
+        elif col[0] == '#SampleID':
+            errors += check_duplicates(col, i)
+        elif col[0] == 'LinkerPrimerSequence':
             errors += check_lengths(col, i)
 
     cherrypy.log('\n'.join(column_headers))

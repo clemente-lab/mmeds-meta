@@ -1,1 +1,6 @@
-6	1	Value GGTTATTTGGCG in row 5 duplicate of row 6.
+6	1	Value GGTTATTTGGCG in row 6 duplicate of row 5.
+13	1	Value GTGGTTCGTA has a different length from other values in column 1
+17	1	Invalid BarcodeSequence chars R in row 17
+18	1	Invalid BarcodeSequence chars Y in row 18
+3	2	Value GGACTACHGGTWTCTAAT has a different length from other values in column 2
+18	2	Value GGACTACHVGGGTCTAAT has a different length from other values in column 2
