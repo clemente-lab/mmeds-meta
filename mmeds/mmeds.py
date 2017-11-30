@@ -121,6 +121,17 @@ def check_duplicates(column, col_index):
     return errors
 
 
+def check_lengths(column, col_index):
+    """ Checks that all entries have the same length in the provided column """
+    errors = []
+    length = len(column[1])
+    for i, cell in enumerate(column[2:]):
+        if not length(cell) == length:
+            errors.append('%d\t%d\tValue %s has a different length from other values in column %d' %
+                          (i, col_index, cell, col_index))
+    return errors
+
+
 def validate_mapping_file(file_fp):
     """
     Checks the mapping file at file_fp for any errors.
@@ -135,11 +146,17 @@ def validate_mapping_file(file_fp):
     for i, col in enumerate(columns):
         errors += check_column(col, column_headers)
         column_headers.append(col[0])
+
+        # Check that Description is the last column in the file
         if col[0] == 'Description' and col[0] != columns[-1][0]:
             errors.append('Description is not the last column in the metadata file\t%d,%d' %
                           (0, columns.index(col)))
+        # Check for duplicates in particular columns
         elif col[0] == '#SampleID' or col[0] == 'BarcodeSequence':
             errors += check_duplicates(col, i)
+        # Check for consistent lengths on particular columns
+        if col[0] == 'BarcodeSequence' or col[0] == 'LinkerPrimerSequence':
+            errors += check_lengths(col, i)
 
     cherrypy.log('\n'.join(column_headers))
     missing_headers = REQUIRED_HEADERS.difference(column_headers)
