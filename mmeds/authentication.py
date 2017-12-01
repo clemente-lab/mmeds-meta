@@ -1,4 +1,8 @@
-USERS = {'jon': 'secret'}
+USERS = {
+    'jose': 'clemente',
+    'david': 'wallach',
+    'zach': 'wilson'
+}
 
 
 def validate_password(username, password):

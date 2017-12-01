@@ -4,7 +4,8 @@ from mmeds.authentication import USERS
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
-        'log.error_file': 'site.log'
+        'log.error_file': 'site.log',
+        'tools.sessions.on': True
     },
     '/favicon.ico': {
         'tools.staticfile.filename': '/home/david/Work/mmeds-meta/server/favicon.ico',
