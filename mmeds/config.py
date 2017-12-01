@@ -2,7 +2,6 @@ CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
         'log.error_file': 'site.log',
-        'server.socket_port': 443,
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': '../server/data/cert.pem',
         'server.ssl_private_key': '../server/data/privkey.pem',
