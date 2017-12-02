@@ -3,7 +3,7 @@ import string
 import os, os.path
 import time
 import cherrypy
-import pymongog
+import sqlite3
 
 
 DB_STRING = 'my.db'
