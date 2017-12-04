@@ -196,3 +196,7 @@ def is_numeric(s):
     except (TypeError, ValueError):
         pass
     return False
+
+
+def add_to_database(file_fp, database='mmeds_db', user='root'):
+    """ Adds all the information in the provided file pointer to the specified database. """
