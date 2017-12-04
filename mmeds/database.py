@@ -18,16 +18,20 @@ def insert(table, pi, lab):
     db.close()
 
 
-def list_tables():
+def list_tables(database, user='root'):
     """ Logs the availible tables in the database. """
-    db = pms.connect('localhost', 'root', '', 'MetaData')
+    db = pms.connect('localhost', user, '', database)
+    cp.log('Connected to database ' + database + ' as user ' + user)
     cursor = db.cursor()
-
-    sql = 'SELECT owner, table_name FROM all_tables'
-    cursor.execute(sql)
-
-    data = cursor.fetchone()
-    cp.log(data)
+    cp.log('Got cursor from database')
+    try:
+        sql = 'SHOW TABLES;'
+        cursor.execute(sql)
+        cp.log('Ran query')
+        data = cursor.fetchall()
+        cp.log('\n'.join(map(str, data)))
+    except pms.err.ProgrammingError:
+        cp.log('Error executing SQL command: ' + sql)
     db.close()
 
 
