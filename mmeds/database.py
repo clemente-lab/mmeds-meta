@@ -30,9 +30,41 @@ def list_tables(database, user='root'):
         cp.log('Ran query')
         data = cursor.fetchall()
         cp.log('\n'.join(map(str, data)))
-    except pms.err.ProgrammingError:
+    except pms.err.ProgrammingError as e:
         cp.log('Error executing SQL command: ' + sql)
+        cp.log(str(e))
     db.close()
+
+
+def connect(database='mmeds_db', user='root'):
+    """ Connect to the specified database. """
+    try:
+        db = pms.connect('localhost', user, '', database)
+        cp.log('Successfully connected to ' + database)
+    except pms.err.ProgrammingError:
+        cp.log('Error connecting to ' + database)
+    return db
+
+
+def disconnect(db):
+    """ Connect to the specified database. """
+    try:
+        db.close()
+        cp.log('Disconnected from database.')
+    except pms.err.ProgrammingError:
+        cp.log('Error closing connection to database.')
+
+
+def execute(db, sql):
+    """ Execute the provided sql script using the provided database cursor. """
+    try:
+        cursor = db.cursor()
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        cp.log('\n'.join(map(str, data)))
+    except pms.err.ProgrammingError as e:
+        cp.log('Error executing SQL command: ' + sql)
+        cp.log(str(e))
 
 
 def get_version(user, database):
