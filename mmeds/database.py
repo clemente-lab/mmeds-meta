@@ -67,9 +67,9 @@ def execute(db, sql):
         cp.log(str(e))
 
 
-def get_version(user, database):
+def get_version(user='root', database='mmeds_db'):
     """ Returns the version of the database currently running. """
-    db = pms.connect('localhost', 'root', '', 'MetaData')
+    db = pms.connect('localhost', user, '', database)
     cursor = db.cursor()
     cursor.execute('SELECT VERSION()')
     data = cursor.fetchone()
