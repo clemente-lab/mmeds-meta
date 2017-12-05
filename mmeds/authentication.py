@@ -1,6 +1,5 @@
 import hashlib
 import pickle
-import cherrypy as cp
 
 from random import choice
 from string import printable, ascii_uppercase, ascii_lowercase
@@ -56,8 +55,6 @@ def add_user(username, password):
     # Write the dictionary
     with open(LOGIN_FILE, 'wb') as f:
         pickle.dump(login_info, f)
-
-    return login_info.keys()
 
 
 def check_password(password1, password2):

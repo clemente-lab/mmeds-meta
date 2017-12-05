@@ -82,9 +82,7 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 19, user_err)
         else:
-            cp.log('User validated')
-            users = add_user(username, password1)
-            cp.log('\n'.join(users))
+            add_user(username, password1)
             with open('../html/index.html') as f:
                 page = f.read()
             return page
