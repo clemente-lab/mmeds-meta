@@ -84,7 +84,7 @@ def check_password(password1, password2):
 def check_username(username):
     """ Perform checks to ensure the username is valid. """
 
-    invalid_chars = set('\\/ ;,!@#$%^&*()|[{}]`~')
+    invalid_chars = set('\'\"\\/ ;,!@#$%^&*()|[{}]`~')
     if set(username).intersection(invalid_chars):
         return 'Error: Username contains invalid characters.'
     try:
