@@ -76,11 +76,11 @@ class MMEDSserver(object):
         if pass_err:
             with open('../html/sign_up_page.html') as f:
                 page = f.read()
-            return insert_error(page, 19, pass_err)
+            return insert_error(page, 25, pass_err)
         elif user_err:
             with open('../html/sign_up_page.html') as f:
                 page = f.read()
-            return insert_error(page, 19, user_err)
+            return insert_error(page, 25, user_err)
         else:
             add_user(username, password1)
             with open('../html/index.html') as f:
@@ -101,7 +101,7 @@ class MMEDSserver(object):
         else:
             with open('../html/index.html') as f:
                 page = f.read()
-            return insert_error(page, 17, 'Error: Invalid username or password.')
+            return insert_error(page, 23, 'Error: Invalid username or password.')
 
     # View files
     @cp.expose

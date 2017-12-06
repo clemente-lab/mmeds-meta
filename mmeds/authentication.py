@@ -19,6 +19,9 @@ def validate_password(username, password):
     with open(LOGIN_FILE, 'rb') as f:
         login_info = pickle.load(f)
 
+    if username not in login_info:
+        return False
+
     salt = login_info[username][1]
 
     # Hash the password
@@ -27,7 +30,7 @@ def validate_password(username, password):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.digest()
 
-    return username in login_info and login_info[username][0] == password_hash
+    return login_info[username][0] == password_hash
 
 
 def add_user(username, password):
