@@ -5,7 +5,7 @@ import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_error, validate_mapping_file
 from mmeds.config import CONFIG
-from mmeds.authentication import validate_password
+from mmeds.authentication import validate_password, check_username, check_password, add_user
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
@@ -62,6 +62,32 @@ class MMEDSserver(object):
         return uploaded_output
 
     @cp.expose
+    def sign_up_page(self):
+        """ Return the page for signing up. """
+        return open('../html/sign_up_page.html')
+
+    @cp.expose
+    def sign_up(self, username, password1, password2):
+        """
+        Perform the actions necessary to sign up a new user.
+        """
+        pass_err = check_password(password1, password2)
+        user_err = check_username(username)
+        if pass_err:
+            with open('../html/sign_up_page.html') as f:
+                page = f.read()
+            return insert_error(page, 25, pass_err)
+        elif user_err:
+            with open('../html/sign_up_page.html') as f:
+                page = f.read()
+            return insert_error(page, 25, user_err)
+        else:
+            add_user(username, password1)
+            with open('../html/index.html') as f:
+                page = f.read()
+            return page
+
+    @cp.expose
     def login(self, username, password):
         """
         Opens the page to upload files if the user has been authenticated.
@@ -75,7 +101,7 @@ class MMEDSserver(object):
         else:
             with open('../html/index.html') as f:
                 page = f.read()
-            return insert_error(page, 17, 'Error: Invalid username or password.')
+            return insert_error(page, 23, 'Error: Invalid username or password.')
 
     # View files
     @cp.expose
