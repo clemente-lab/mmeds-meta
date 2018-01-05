@@ -3,7 +3,7 @@ import os.path
 
 import cherrypy
 from cherrypy.lib import static
-from mmeds.mmeds import check_metadata, insert_error
+from mmeds.mmeds import check_metadata, insert_error, validate_mapping_file
 from mmeds.config import CONFIG
 from mmeds.authentication import validate_password
 
@@ -11,6 +11,7 @@ localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
 
 UPLOADED_FP = 'uploaded_file'
+ERROR_FP = 'error_log.csv'
 UPLOADED_DIR = 'uploaded_data/'
 
 
@@ -31,6 +32,7 @@ class MMEDSserver(object):
             with open('../html/upload.html') as f:
                 page = f.read()
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
+
         # Write the data to a new file stored on the server
         nf = open(UPLOADED_DIR + UPLOADED_FP, 'wb')
         while True:
@@ -40,13 +42,21 @@ class MMEDSserver(object):
                 break
         nf.close()
 
-        result = check_metadata(UPLOADED_FP, UPLOADED_DIR)
+        with open(UPLOADED_DIR + UPLOADED_FP) as f:
+            errors = validate_mapping_file(f)
+
+        # Write the errors to a file
+        with open(UPLOADED_DIR + ERROR_FP, 'w') as f:
+            f.write('\n'.join(errors))
 
         # Get the html for the upload page
-        with open('../html/validate.html', 'r') as f:
+        with open('../html/error.html', 'r') as f:
             uploaded_output = f.read()
 
-        return uploaded_output.format(filename=myFile.filename, output=result.decode('utf-8'))
+        for i, error in enumerate(errors):
+            uploaded_output = insert_error(uploaded_output, 7 + i, '<p>' + error + '</p>')
+
+        return uploaded_output
 
     @cherrypy.expose
     def login(self, username, password):
@@ -66,6 +76,12 @@ class MMEDSserver(object):
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
         return open(UPLOADED_DIR + UPLOADED_FP + '.html')
+
+    @cherrypy.expose
+    def download_error_log(self):
+        path = os.path.join(absDir, UPLOADED_DIR + ERROR_FP)
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
 
     # Download links
     @cherrypy.expose
