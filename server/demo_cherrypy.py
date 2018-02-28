@@ -12,7 +12,7 @@ class StringGenerator(object):
 
     @cherrypy.expose
     def index(self):
-        return open('ajax.html')
+        return open('../html/ajax.html')
 
 
 @cherrypy.expose
