@@ -122,21 +122,32 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
         sql = 'DESCRIBE ' + table
         cursor.execute(sql)
         structure = cursor.fetchall()
+        # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
-        print(columns)
+        # Create the input file
         with open(os.path.join(path, table + '_input.csv'), 'w') as f:
             f.write('\t'.join(columns) + '\n')
             for i in range(len(df.index)):
+                line = []
                 for j, col in enumerate(columns):
-                    try:
-                        print(df[table].loc[i][col])
-                    except KeyError:
-                        print(col)
-                    pass
+                    # If the column is a primary key
+                    if structure[j][3] == 'PRI':
+                        if '_' in col:
+                            key_table = col.split('_')[0]
+                        else:
+                            key_table = col.strip('id')
+                        print(key_table)
+                        line.append(IDs[key_table][i])
+                    else:
+                        try:
+                            line.append(df[table].loc[i][col])
+                        except KeyError:
+                            line.append(col)
+                f.write('\t'.join(list(map(str, line))) + '\n')
 
 
-    for table in IDs.keys():
-        for column in IDs[table].keys():
-            print('IDs[%s][%s]: %d' % (table, column, IDs[table][column]))
+   #for table in IDs.keys():
+   #    for column in IDs[table].keys():
+   #        print('IDs[%s][%s]: %d' % (table, column, IDs[table][column]))
     disconnect(db)
     return df
