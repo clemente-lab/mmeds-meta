@@ -43,7 +43,7 @@ def list_tables(database, user='root'):
 def connect(database='mmeds_db', user='root'):
     """ Connect to the specified database. """
     try:
-        db = pms.connect('localhost', user, '', database)
+        db = pms.connect('localhost', user, '', database, local_infile=True)
         cp.log('Successfully connected to ' + database)
     except pms.err.ProgrammingError:
         cp.log('Error connecting to ' + database)
@@ -124,8 +124,9 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
         structure = cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
+        filename = os.path.join(path, table + '_input.csv')
         # Create the input file
-        with open(os.path.join(path, table + '_input.csv'), 'w') as f:
+        with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
             for i in range(len(df.index)):
                 line = []
@@ -144,10 +145,10 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
                         except KeyError:
                             line.append(col)
                 f.write('\t'.join(list(map(str, line))) + '\n')
-
-
-   #for table in IDs.keys():
-   #    for column in IDs[table].keys():
-   #        print('IDs[%s][%s]: %d' % (table, column, IDs[table][column]))
+        sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
+              ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+        cursor.execute(sql)
+        # Commit the inserted data
+        db.commit()
     disconnect(db)
     return df
