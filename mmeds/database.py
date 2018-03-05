@@ -81,8 +81,35 @@ def get_version(user='root', database='mmeds_db'):
     return ('Database version : %s' % data)
 
 
+def purge(db):
+    """
+    Deletes every row from every table.
+    """
+    c = db.cursor()
+    c.execute('SHOW TABLES')
+    tables = c.fetchall()
+    r_tables = []
+    while True:
+        for table in tables:
+            try:
+                c.execute('DELETE FROM ' + table[0])
+                db.commit()
+            except pms.err.IntegrityError:
+                r_tables.append(table)
+        if len(r_tables) == 0:
+            break
+        else:
+            tables = r_tables
+            r_tables = []
+
+
 def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_files/'):
+    """
+    Creates table specific input csv files from the complete metadata file.
+    Imports each of those files into the database.
+    """
     db = connect()
+    purge(db)
     df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
     cursor = db.cursor()
     current_key = 0
@@ -99,9 +126,9 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
             sql = 'SELECT * FROM ' + table + ' WHERE'
             for i, column in enumerate(df[table]):
                 if i == 0:
-                    sql += ' ' + column + ' = "' + str(df[table][column][j] + '"')
+                    sql += ' ' + column + ' = "' + str(df[table][column][j]) + '"'
                 else:
-                    sql += ' AND ' + column + ' = "' + str(df[table][column][j] + '"')
+                    sql += ' AND ' + column + ' = "' + str(df[table][column][j]) + '"'
             # Check if there is a matching entry in the table
             found = cursor.execute(sql)
             # print('Return : %d' % found)
@@ -110,7 +137,7 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
                 # Append the key found for that column
                 IDs[table][j] = int(result[0])
             else:
-                this_row = ''.join(df[table].loc[j])
+                this_row = ''.join(list(map(str, df[table].loc[j])))
                 try:
                     key = seen[this_row]
                     IDs[table][j] = key
@@ -137,7 +164,6 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
                             key_table = col.split('_')[0]
                         else:
                             key_table = col.strip('id')
-                        print(key_table)
                         line.append(IDs[key_table][i])
                     else:
                         try:

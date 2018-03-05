@@ -1,8 +1,8 @@
-Lab	Lab	Lab	Study
-PrimaryInvestigator	ContactEmail	ContactName	Experiment
-Jose Clemente	david.wallach@mssm.edu	David Wallach	Lodi
-Jose Clemente	zach.wilson@mssm.edu	Zach Wilson	Ensemble
-John Long	jonathon.snyder@mssm.edu	Jonathon Snyder	Tadro
-Jose Clemente	david.wallach@mssm.edu	David Wallach	Mmeds
-David Wallach	david.wallach@mssm.edu	David Wallach	Mice
-David Wallach	david.wallach@mssm.edu	David Wallach	Rats
+Lab	Lab	Lab	Study	Type	BodySite	Location	Location	Location	Location
+PrimaryInvestigator	ContactEmail	ContactName	Experiment	SpecimenType	SpecimenBodySite	Latitude	Longitude	Depth	Elevation
+Jose Clemente	david.wallach@mssm.edu	David Wallach	Lodi	Stool	Gut	40.79	-73.95	0	0
+Jose Clemente	zach.wilson@mssm.edu	Zach Wilson	Ensemble	Stool	Gut	40.79	-73.95	0	1
+John Long	jonathon.snyder@mssm.edu	Jonathon Snyder	Tadro	Robot	Sensor	41.69	-73.9	0	0
+Jose Clemente	david.wallach@mssm.edu	David Wallach	Mmeds	Program	HardDrive	41.69	-73.9	0	0
+David Wallach	david.wallach@mssm.edu	David Wallach	Mice	Skin	Hand	40.79	-73.95	0	0
+David Wallach	david.wallach@mssm.edu	David Wallach	Rats	Skin	Face	40.79	-73.95	0	0
