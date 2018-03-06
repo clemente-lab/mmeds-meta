@@ -99,83 +99,79 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def read_in_sheet(self, fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_files/'):
+    def create_import_data(self, table, df):
         """
-        Creates table specific input csv files from the complete metadata file.
-        Imports each of those files into the database.
+        Fill out the dictionaries used to create the input files from the input data file.
         """
-        self.purge()
-        df = pd.read_csv(path + fp, delimiter=delimiter, header=[0, 1])
-        current_key = 0
-        # Go create file and import data for each regular table
-        for table in df.axes[1].levels[0]:
-            sql = 'SELECT COUNT(*) FROM ' + table
-            self.cursor.execute(sql)
-            current_key = int(self.cursor.fetchone()[0])
-            # Track keys for repeated values in this file
-            seen = {}
-            # Go through each column
-            for j in range(len(df.index)):
-                sql = 'SELECT * FROM ' + table + ' WHERE'
-                for i, column in enumerate(df[table]):
-                    if i == 0:
-                        sql += ' ' + column + ' = "' + str(df[table][column][j]) + '"'
-                    else:
-                        sql += ' AND ' + column + ' = "' + str(df[table][column][j]) + '"'
-                # Check if there is a matching entry in the table
-                found = self.cursor.execute(sql)
-                # print('Return : %d' % found)
-                if found == 1:
-                    result = self.cursor.fetchone()
-                    # Append the key found for that column
-                    self.IDs[table][j] = int(result[0])
+        sql = 'SELECT COUNT(*) FROM ' + table
+        self.cursor.execute(sql)
+        current_key = int(self.cursor.fetchone()[0])
+        # Track keys for repeated values in this file
+        seen = {}
+        # Go through each column
+        for j in range(len(df.index)):
+            sql = 'SELECT * FROM ' + table + ' WHERE'
+            for i, column in enumerate(df[table]):
+                if i == 0:
+                    sql += ' ' + column + ' = "' + str(df[table][column][j]) + '"'
                 else:
-                    this_row = ''.join(list(map(str, df[table].loc[j])))
-                    try:
-                        key = seen[this_row]
-                        self.IDs[table][j] = key
-                    except KeyError:
-                        seen[this_row] = current_key
-                        self.IDs[table][j] = current_key
-                        current_key += 1
+                    sql += ' AND ' + column + ' = "' + str(df[table][column][j]) + '"'
+            # Check if there is a matching entry in the table
+            found = self.cursor.execute(sql)
+            if found == 1:
+                result = self.cursor.fetchone()
+                # Append the key found for that column
+                self.IDs[table][j] = int(result[0])
+            else:
+                this_row = ''.join(list(map(str, df[table].loc[j])))
+                try:
+                    key = seen[this_row]
+                    self.IDs[table][j] = key
+                except KeyError:
+                    seen[this_row] = current_key
+                    self.IDs[table][j] = current_key
+                    current_key += 1
 
-            sql = 'DESCRIBE ' + table
-            self.cursor.execute(sql)
-            structure = self.cursor.fetchall()
-            # Get the columns for the table
-            columns = list(map(lambda x: x[0], structure))
-            filename = os.path.join(path, table + '_input.csv')
-            # Create the input file
-            with open(filename, 'w') as f:
-                f.write('\t'.join(columns) + '\n')
-                for i in range(len(df.index)):
-                    line = []
-                    for j, col in enumerate(columns):
-                        # If the column is a primary key
-                        if structure[j][3] == 'PRI':
-                            if '_' in col:
-                                key_table = col.split('_')[0]
-                            else:
-                                key_table = col.strip('id')
-                            line.append(self.IDs[key_table][i])
+    def create_import_file(self, table, df):
+        """
+        Create the file to load into each table referenced in the
+        metadata input file
+        """
+        sql = 'DESCRIBE ' + table
+        self.cursor.execute(sql)
+        structure = self.cursor.fetchall()
+        # Get the columns for the table
+        columns = list(map(lambda x: x[0], structure))
+        filename = os.path.join(self.path, table + '_input.csv')
+        # Create the input file
+        with open(filename, 'w') as f:
+            f.write('\t'.join(columns) + '\n')
+            for i in range(len(df.index)):
+                line = []
+                for j, col in enumerate(columns):
+                    # If the column is a primary key
+                    if structure[j][3] == 'PRI':
+                        if '_' in col:
+                            key_table = col.split('_')[0]
                         else:
-                            try:
-                                line.append(df[table].loc[i][col])
-                            except KeyError:
-                                line.append(col)
-                    f.write('\t'.join(list(map(str, line))) + '\n')
-            # Load the newly created file into the database
-            sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
-                  ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-            self.cursor.execute(sql)
-            # Commit the inserted data
-            self.db.commit()
+                            key_table = col.strip('id')
+                        line.append(self.IDs[key_table][i])
+                    else:
+                        try:
+                            line.append(df[table].loc[i][col])
+                        except KeyError:
+                            line.append(col)
+                f.write('\t'.join(list(map(str, line))) + '\n')
+        return filename
 
+    def fill_junction_tables(self):
+        """
+        Create and load the import files for every junction table.
+        """
         self.cursor.execute('SHOW TABLES')
         tables = list(filter(lambda x: '_' in x, [l[0] for l in self.cursor.fetchall()]))
         # Import data for each junction table
         for table in tables:
-            print(table)
             sql = 'DESCRIBE ' + table
             self.cursor.execute(sql)
             columns = list(map(lambda x: x[0].split('_')[0], self.cursor.fetchall()))
@@ -187,7 +183,7 @@ class Database:
                     f_key2 = self.IDs[columns[1]][key]
                     key_pairs.append(str(f_key1) + '\t' + str(f_key2))
                 unique_pairs = list(set(key_pairs))
-                filename = os.path.join(path, table + '_input.csv')
+                filename = os.path.join(self.path, table + '_input.csv')
                 with open(filename, 'w') as f:
                     for pair in unique_pairs:
                         f.write(pair + '\n')
@@ -198,3 +194,23 @@ class Database:
                 self.db.commit()
             except KeyError:
                 pass
+
+    def read_in_sheet(self, fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_files/'):
+        """
+        Creates table specific input csv files from the complete metadata file.
+        Imports each of those files into the database.
+        """
+        self.purge()
+        df = pd.read_csv(path + fp, delimiter=delimiter, header=[0, 1])
+        # Go create file and import data for each regular table
+        for table in df.axes[1].levels[0]:
+            self.create_import_data(table, df)
+            filename = self.create_import_file(table, df)
+            # Load the newly created file into the database
+            sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
+                  ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+            self.cursor.execute(sql)
+            # Commit the inserted data
+            self.db.commit()
+
+        self.fill_junction_tables()
