@@ -110,11 +110,11 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
     """
     db = connect()
     purge(db)
-    df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
+    df = pd.read_csv(path + fp, delimiter=delimiter, header=[0, 1])
     cursor = db.cursor()
     current_key = 0
     IDs = defaultdict(dict)
-    # Go through each table
+    # Go create file and import data for each regular table
     for table in df.axes[1].levels[0]:
         sql = 'SELECT COUNT(*) FROM ' + table
         cursor.execute(sql)
@@ -171,10 +171,41 @@ def read_in_sheet(fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_fil
                         except KeyError:
                             line.append(col)
                 f.write('\t'.join(list(map(str, line))) + '\n')
+        # Load the newly created file into the database
         sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
               ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
         cursor.execute(sql)
         # Commit the inserted data
         db.commit()
+
+    c = db.cursor()
+    c.execute('SHOW TABLES')
+    tables = list(filter(lambda x: '_' in x, [l[0] for l in c.fetchall()]))
+    # Import data for each junction table
+    for table in tables:
+        print(table)
+        sql = 'DESCRIBE ' + table
+        cursor.execute(sql)
+        columns = list(map(lambda x: x[0].split('_')[0], cursor.fetchall()))
+        key_pairs = []
+        # Only fill in table where both foreign keys exist
+        try:
+            for key in IDs[columns[0]].keys():
+                f_key1 = IDs[columns[0]][key]
+                f_key2 = IDs[columns[1]][key]
+                key_pairs.append(str(f_key1) + '\t' + str(f_key2))
+            unique_pairs = list(set(key_pairs))
+            filename = os.path.join(path, table + '_input.csv')
+            with open(filename, 'w') as f:
+                for pair in unique_pairs:
+                    f.write(pair + '\n')
+            sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
+                  ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+            cursor.execute(sql)
+            # Commit the inserted data
+            db.commit()
+        except KeyError:
+            pass
+
     disconnect(db)
     return df
