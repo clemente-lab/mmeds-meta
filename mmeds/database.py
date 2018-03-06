@@ -184,9 +184,13 @@ class Database:
                     key_pairs.append(str(f_key1) + '\t' + str(f_key2))
                 unique_pairs = list(set(key_pairs))
                 filename = os.path.join(self.path, table + '_input.csv')
+
                 with open(filename, 'w') as f:
+                    f.write(columns[0] + '\t' + columns[1] + '\n')
                     for pair in unique_pairs:
                         f.write(pair + '\n')
+
+                # Load the datafile in to the junction table
                 sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
                       ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql)
