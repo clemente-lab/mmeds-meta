@@ -3,6 +3,7 @@ import cherrypy as cp
 import pandas as pd
 import os
 
+from prettytable import PrettyTable, ALL
 from collections import defaultdict
 
 
@@ -59,16 +60,33 @@ class Database:
         except pms.err.ProgrammingError:
             cp.log('Error closing connection to database.')
 
-    def execute(self, db, sql):
+    def format(self, text, header=None):
+        if header is not None:
+            new_text = PrettyTable(header, border=True, hrules=ALL, vrules=ALL)
+        else:
+            new_text = PrettyTable(border=True, hrules=ALL, vrules=ALL)
+        for line in text:
+            new_text.add_row(list(map(str, line)))
+        return new_text.get_html_string()
+
+    def execute(self, sql):
         """ Execute the provided sql script using the provided database cursor. """
         try:
-            cursor = db.cursor()
-            cursor.execute(sql)
-            data = cursor.fetchall()
-            cp.log('\n'.join(map(str, data)))
+            self.cursor.execute(sql)
+            data = self.cursor.fetchall()
+            if 'from' in sql:
+                parsed = sql.split(' ')
+                index = parsed.index('from')
+                table = parsed[index + 1]
+                self.cursor.execute('describe ' + table)
+                header = [x[0] for x in self.cursor.fetchall()]
+                return self.format(data, header)
+            else:
+                return self.format(data)
         except pms.err.ProgrammingError as e:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
+            return str(e)
 
     def get_version(self, user='root', database='mmeds_db'):
         """ Returns the version of the database currently running. """
@@ -203,13 +221,13 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, fp, delimiter='\t', path='/home/david/Work/mmeds-meta/test_files/'):
+    def read_in_sheet(self, fp, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
         self.purge()
-        df = pd.read_csv(path + fp, delimiter=delimiter, header=[0, 1])
+        df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
         # Go create file and import data for each regular table
         for table in df.axes[1].levels[0]:
             self.create_import_data(table, df)

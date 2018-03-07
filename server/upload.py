@@ -1,5 +1,4 @@
 import os
-import os.path
 
 import cherrypy as cp
 from cherrypy.lib import static
@@ -18,6 +17,9 @@ STORAGE_DIR = 'data/'
 
 class MMEDSserver(object):
 
+    def __init__(self):
+        self.db = Database(STORAGE_DIR)
+
     @cp.expose
     def index(self):
         """ Home page of the application """
@@ -35,9 +37,10 @@ class MMEDSserver(object):
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
         cp.session['file'] = myFile.filename
+        file_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['file'])
 
         # Write the data to a new file stored on the server
-        nf = open(STORAGE_DIR + 'copy_' + cp.session['file'], 'wb')
+        nf = open(file_copy, 'wb')
         while True:
             data = myFile.file.read(8192)
             nf.write(data)
@@ -45,22 +48,44 @@ class MMEDSserver(object):
                 break
         nf.close()
 
-        with open(STORAGE_DIR + 'copy_' + cp.session['file']) as f:
+        # Check the metadata file for errors
+        with open(file_copy) as f:
             errors = validate_mapping_file(f)
+            ########### TEMPORARY #############
+            errors = []
+            ##################################
 
-        # Write the errors to a file
-        with open(STORAGE_DIR + 'errors_' + cp.session['file'], 'w') as f:
-            f.write('\n'.join(errors))
+        # If there are errors report them and return the error page
+        if len(errors) > 0:
+            # Write the errors to a file
+            with open(STORAGE_DIR + 'errors_' + cp.session['file'], 'w') as f:
+                f.write('\n'.join(errors))
 
-        # Get the html for the upload page
-        with open('../html/error.html', 'r') as f:
-            uploaded_output = f.read()
+            # Get the html for the upload page
+            with open('../html/error.html', 'r') as f:
+                uploaded_output = f.read()
 
-        uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
-        for i, error in enumerate(errors):
-            uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
+            uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
+            for i, error in enumerate(errors):
+                uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
 
-        return uploaded_output
+            return uploaded_output
+        # Otherwise upload the metadata to the database
+        else:
+            self.db.read_in_sheet(file_copy)
+            # Get the html for the upload page
+            with open('../html/success.html', 'r') as f:
+                upload_successful = f.read()
+            return upload_successful
+
+    @cp.expose
+    def query(self, query):
+        result = self.db.execute(query)
+        with open('../html/success.html', 'r') as f:
+            page = f.read()
+
+        page = insert_error(page, 10, result)
+        return page
 
     @cp.expose
     def sign_up_page(self):
