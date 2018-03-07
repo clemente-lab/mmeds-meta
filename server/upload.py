@@ -6,6 +6,7 @@ from cherrypy.lib import static
 from mmeds.mmeds import insert_error, validate_mapping_file
 from mmeds.config import CONFIG
 from mmeds.authentication import validate_password, check_username, check_password, add_user
+from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)

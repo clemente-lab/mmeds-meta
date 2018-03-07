@@ -4,7 +4,7 @@ CONFIG = {
         'log.error_file': 'site.log',
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': '../server/data/cert.pem',
-        'server.ssl_private_key': '../server/data/privkey.pem',
+        'server.ssl_private_key': '../server/data/key.pem',
         'tools.secureheaders.on': True,
         'tools.sessions.on': True,
         'tools.sessions.secure': True,
