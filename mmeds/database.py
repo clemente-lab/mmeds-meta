@@ -178,13 +178,17 @@ class Database:
             key_pairs = []
             # Only fill in table where both foreign keys exist
             try:
+                # Get the appropriate foreign keys from the IDs dict
                 for key in self.IDs[columns[0]].keys():
                     f_key1 = self.IDs[columns[0]][key]
                     f_key2 = self.IDs[columns[1]][key]
                     key_pairs.append(str(f_key1) + '\t' + str(f_key2))
+
+                # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
                 filename = os.path.join(self.path, table + '_input.csv')
 
+                # Create the input file for the juntion table
                 with open(filename, 'w') as f:
                     f.write(columns[0] + '\t' + columns[1] + '\n')
                     for pair in unique_pairs:
