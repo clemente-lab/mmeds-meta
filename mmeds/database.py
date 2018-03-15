@@ -10,30 +10,22 @@ from collections import defaultdict
 class Database:
 
     def __init__(self, path, database='mmeds_db', user='root'):
-        """ Connect to the specified database. Initialize variables for this session. """
-        self.path = path
-        self.IDs = defaultdict(dict)
+        """
+        Connect to the specified database.
+        Initialize variables for this session.
+        """
         try:
             self.db = pms.connect('localhost', user, '', database, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
+        self.path = path
+        self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
 
-    def insert(self, table, pi, lab):
-        """ Inserts ITEM into TABLE of database. """
-        db = pms.connect('localhost', 'root', '', 'MetaData')
-        cursor = db.cursor()
-
-        sql = 'INSERT INTO %s(PRIMARY_INVESTIGATOR, LAB) VALUES ("%s", "%s")' % (table, pi, lab)
-
-        try:
-            cursor.execute(sql)
-            db.commit()
-        except pms.err.ProgrammingError:
-            cp.log('Error inserting into database')
-            db.rollback()
-        db.close()
+    def __del__(self):
+        """ Close the database connection when the object is cleared. """
+        self.db.close()
 
     def list_tables(self, database, user='root'):
         """ Logs the availible tables in the database. """
@@ -52,15 +44,10 @@ class Database:
             cp.log(str(e))
         db.close()
 
-    def disconnect(self, db):
-        """ Connect to the specified database. """
-        try:
-            db.close()
-            cp.log('Disconnected from database.')
-        except pms.err.ProgrammingError:
-            cp.log('Error closing connection to database.')
-
     def format(self, text, header=None):
+        """
+        Applies PrettyTable HTML formatting to the provided string.
+        """
         if header is not None:
             new_text = PrettyTable(header, border=True, hrules=ALL, vrules=ALL)
         else:
@@ -70,7 +57,7 @@ class Database:
         return new_text.get_html_string()
 
     def execute(self, sql):
-        """ Execute the provided sql script using the provided database cursor. """
+        """ Execute the provided sql code """
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
@@ -88,18 +75,9 @@ class Database:
             cp.log(str(e))
             return str(e)
 
-    def get_version(self, user='root', database='mmeds_db'):
-        """ Returns the version of the database currently running. """
-        db = pms.connect('localhost', user, '', database)
-        cursor = db.cursor()
-        cursor.execute('SELECT VERSION()')
-        data = cursor.fetchone()
-        db.close()
-        return ('Database version : %s' % data)
-
     def purge(self):
         """
-        Deletes every row from every table.
+        Deletes every row from every table in the currently connected database.
         """
         self.cursor.execute('SHOW TABLES')
         tables = self.cursor.fetchall()
@@ -119,7 +97,8 @@ class Database:
 
     def create_import_data(self, table, df):
         """
-        Fill out the dictionaries used to create the input files from the input data file.
+        Fill out the dictionaries used to create the input files
+        from the input data file.
         """
         sql = 'SELECT COUNT(*) FROM ' + table
         self.cursor.execute(sql)
@@ -187,14 +166,16 @@ class Database:
         Create and load the import files for every junction table.
         """
         self.cursor.execute('SHOW TABLES')
-        tables = list(filter(lambda x: '_' in x, [l[0] for l in self.cursor.fetchall()]))
+        tables = list(filter(lambda x: '_' in x,
+                             [l[0] for l in self.cursor.fetchall()]))
         # Import data for each junction table
         for table in tables:
             sql = 'DESCRIBE ' + table
             self.cursor.execute(sql)
-            columns = list(map(lambda x: x[0].split('_')[0], self.cursor.fetchall()))
+            columns = list(map(lambda x: x[0].split('_')[0],
+                               self.cursor.fetchall()))
             key_pairs = []
-            # Only fill in table where both foreign keys exist
+            # Only fill in tables where both foreign keys exist
             try:
                 # Get the appropriate foreign keys from the IDs dict
                 for key in self.IDs[columns[0]].keys():
@@ -213,8 +194,9 @@ class Database:
                         f.write(pair + '\n')
 
                 # Load the datafile in to the junction table
-                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
-                      ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                      table + ' FIELDS TERMINATED BY "\\t"' +\
+                      ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql)
                 # Commit the inserted data
                 self.db.commit()
@@ -233,8 +215,9 @@ class Database:
             self.create_import_data(table, df)
             filename = self.create_import_file(table, df)
             # Load the newly created file into the database
-            sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' + table +\
-                  ' FIELDS TERMINATED BY "\\t"' + ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+            sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                  table + ' FIELDS TERMINATED BY "\\t"' +\
+                  ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
             self.cursor.execute(sql)
             # Commit the inserted data
             self.db.commit()
