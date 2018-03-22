@@ -6,5 +6,10 @@ Cooccurence analysis:
 Link donor and recipient in FMT studies?
 
 Distinguish between sample and speciman. Check FreezerWorks
+-------------------------------------------------------
 
-
+Check columns for values outside 2 stdevs
+change age to birth year
+look into linking non-relational database
+look into other tools and free form data
+warning for spaces at beginning or end
