@@ -1,6 +1,6 @@
 from subprocess import run, PIPE
 from collections import defaultdict
-from numpy import std
+from numpy import std, mean, issubdtype, number
 import pandas as pd
 import cherrypy
 
@@ -88,8 +88,9 @@ def check_column(column, prev_headers):
     # Get the index of the current column (Starting at 1)
     col_index = len(prev_headers) + 1
 
-    #if numeric_col:
-    #    stddev = std(col)
+    if issubdtype(column.dtype, number):
+        stddev = std(column)
+        avg = mean(column)
 
     # Check the remaining columns
     for i, cell in enumerate(column):
@@ -100,9 +101,9 @@ def check_column(column, prev_headers):
                           (cell, i, col_index))
 
         # Check for consistent types in the column
-    #    if is_numeric(cell) and not numeric_col:
-    #            errors.append(row_col + 'Mixed strings and numbers in %s\t%d,%d' %
-    #                          (cell, i, col_index))
+        if not column.dtype == type(cell):
+                errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
+                              (cell, i, col_index))
         if type(cell) == str:
             # Check for empty fields
             if '' == cell:
@@ -110,7 +111,11 @@ def check_column(column, prev_headers):
             # Check for trailing or preceding whitespace
             if not cell == cell.strip():
                 errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
-                          (i + 1, col_index, cell, i + 1))
+                              (i + 1, col_index, cell, i + 1))
+        elif (issubdtype(type(cell), number) and
+                (cell > avg + (2 * stddev) or cell < avg - (2 * stddev))):
+                errors.append('%d\t%d\tValue %s outside of two standard deviations of mean in row %d' %
+                              (i + 1, col_index, cell, i + 1))
     return errors
 
 
