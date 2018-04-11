@@ -51,21 +51,25 @@ def check_header(header, prev_headers):
                       'Header fields must be unique. Replace header %s of column\t%d' %
                       (header, col_index))
     # Check if it's numeric
-    elif is_numeric(header):
+    if is_numeric(header):
         errors.append(row_col + 'Column names cannot be numbers. Replace header %s of column\t%d ' %
                       (header, col_index))
     # Check if it's NA
-    elif header in NAs + ['NA']:
+    if header in NAs + ['NA']:
         errors.append(row_col + 'Column names cannot be NA. Replace  header %s of column\t%d ' %
                       (header, col_index))
     # Check for illegal characters
-    elif ILLEGAL_IN_HEADER.intersection(set(header)):
+    if ILLEGAL_IN_HEADER.intersection(set(header)):
         illegal_chars = ILLEGAL_IN_HEADER.intersection(set(header))
         errors.append(row_col + 'Illegal character(s) %s. Replace header %s of column\t%d' %
                       (' '.join(illegal_chars), header, col_index))
     # Check for HIPAA non-compliant headers
-    elif header.lower() in HIPAA_HEADERS:
+    if header.lower() in HIPAA_HEADERS:
         errors.append(row_col + 'Potentially identifying information in %s of column\t%d' %
+                      (header, col_index))
+    # Check for trailing or preceding whitespace
+    if not header == header.strip():
+        errors.append(row_col + 'Preceding or trailing whitespace %s in column %d' %
                       (header, col_index))
     return errors
 
@@ -95,12 +99,16 @@ def check_column(column, prev_headers):
                           (cell, i, col_index))
 
         # Check for consistent types in the column
-        elif is_numeric(cell) and not numeric_col:
+        if is_numeric(cell) and not numeric_col:
                 errors.append(row_col + 'Mixed strings and numbers in %s\t%d,%d' %
                               (cell, i, col_index))
         # Check for empty fields
-        elif '' == cell:
+        if '' == cell:
             errors.append(row_col + 'Empty cell value %s' % cell)
+        # Check for trailing or preceding whitespace
+        if not cell == cell.strip():
+            errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
+                          (i + 1, col_index, cell, i + 1))
     return errors
 
 
