@@ -1,6 +1,7 @@
 from subprocess import run, PIPE
 from collections import defaultdict
-import csv
+from numpy import std
+import pandas as pd
 import cherrypy
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -76,11 +77,10 @@ def check_header(header, prev_headers):
 
 def check_column(column, prev_headers):
     """ Validate that there are no issues with the provided column of metadata """
-
+    print(column)
     # Get the header
-    header = column[0]
+    header = column.name
     # Get the rest of the column
-    col = column[1:]
 
     # Check the header
     errors = check_header(header, prev_headers)
@@ -88,10 +88,11 @@ def check_column(column, prev_headers):
     # Get the index of the current column (Starting at 1)
     col_index = len(prev_headers) + 1
 
-    numeric_col = is_numeric(col[0])
+    #if numeric_col:
+    #    stddev = std(col)
 
     # Check the remaining columns
-    for i, cell in enumerate(col):
+    for i, cell in enumerate(column):
         row_col = str(i) + '\t' + str(col_index) + '\t'
         # Check for non-standard NAs
         if cell in NAs:
@@ -99,15 +100,16 @@ def check_column(column, prev_headers):
                           (cell, i, col_index))
 
         # Check for consistent types in the column
-        if is_numeric(cell) and not numeric_col:
-                errors.append(row_col + 'Mixed strings and numbers in %s\t%d,%d' %
-                              (cell, i, col_index))
-        # Check for empty fields
-        if '' == cell:
-            errors.append(row_col + 'Empty cell value %s' % cell)
-        # Check for trailing or preceding whitespace
-        if not cell == cell.strip():
-            errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
+    #    if is_numeric(cell) and not numeric_col:
+    #            errors.append(row_col + 'Mixed strings and numbers in %s\t%d,%d' %
+    #                          (cell, i, col_index))
+        if type(cell) == str:
+            # Check for empty fields
+            if '' == cell:
+                errors.append(row_col + 'Empty cell value %s' % cell)
+            # Check for trailing or preceding whitespace
+            if not cell == cell.strip():
+                errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
                           (i + 1, col_index, cell, i + 1))
     return errors
 
@@ -159,30 +161,30 @@ def validate_mapping_file(file_fp):
     Returns a list of the errors, an empty list means there
     were no issues.
     """
-
     errors = []
-    c_reader = csv.reader(file_fp, delimiter='\t')
-    columns = list(zip(*c_reader))
+    #c_reader = csv.reader(file_fp, delimiter='\t')
+    #columns = list(zip(*c_reader))
+    df = pd.read_csv(file_fp, delimiter='\t')
     column_headers = []
-    for i, col in enumerate(columns):
+    for i, header in enumerate(df.axes[1]):
+        col = df[header]
         errors += check_column(col, column_headers)
-        column_headers.append(col[0])
 
         # Perform column specific checks
-        if col[0] == 'Description' and col[0] != columns[-1][0]:
+        if header == 'Description' and not header == df.axes[1][-1]:
             errors.append('Description is not the last column in the metadata file\t%d,%d' %
-                          (0, columns.index(col)))
-        elif col[0] == 'BarcodeSequence':
+                          (0, df.axes[1].tolist().index(header)))
+        elif header == 'BarcodeSequence':
             errors += check_duplicates(col, i)
             errors += check_lengths(col, i)
             errors += check_barcode_chars(col, i)
-        elif col[0] == '#SampleID':
+        elif header == '#SampleID':
             errors += check_duplicates(col, i)
-        elif col[0] == 'LinkerPrimerSequence':
+        elif header == 'LinkerPrimerSequence':
             errors += check_lengths(col, i)
 
-    cherrypy.log('\n'.join(column_headers))
-    missing_headers = REQUIRED_HEADERS.difference(column_headers)
+    cherrypy.log('\n'.join(df.axes[1]))
+    missing_headers = REQUIRED_HEADERS.difference(df.axes[1].tolist())
 
     if missing_headers:
         errors.append('Missing requires fields: ' + ', '.join(missing_headers))

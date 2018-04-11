@@ -1,20 +1,20 @@
-#SampleID,BarcodeSequence,LinkerPrimerSequence,lab,primary_investigator,run_date,barcodewell,host_subject_id,SampleDate,Description
-10249.C008.06SS,ACCGTGCTCACA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P03.E09,0,8/15/13,Vaginal.bd.y.1
-10249.C009.08SS,ATCAGTACTAGG,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.C12,1,8/15/13,Vaginal.bd.n.0
-10249.C010.10SS,CAGAAATGTGTC,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.D06,2,8/15/13,Vaginal.fd.y.1
-10249.C011.02SS,GTAGAGGTAGAG,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.D07,3,8/15/13,Cesarean.fd.n.1
-10249.C012.01SS.r,GGTTATTTGGCG,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.D09,4,8/15/14,Cesarean.bd.n.1
-10249.C016.04SS,TCTGAGGTTGCC,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P04.A01,0,8/15/15,Vaginal.bd.n.1
-10249.C016.06SS,AGCTATGTATGG,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.E08,1,8/15/16,Vaginal.bd.n.1
-10249.C022.09SS,TGTTAAGCAGCA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P04.D03,2,8/15/17,Vaginal.fd.n.0
-10249.C042.01SS.r,GCTATCAAGACA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P04.H10,3,8/15/18,Vaginal.fd.n.1
-10249.C001.02SS,TGTGCGATAACA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.A02,4,8/15/19,Vaginal.bd.n.0
-10249.C001.03SS,GTCGAATTTGCG,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P03.A01,1,8/15/20,Vaginal.bd.n.0
-10249.C001.05SS,GCATCAGAGTTA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P03.A02,2,8/15/21,Vaginal.bd.y.1
-10249.C001.06SS,GTGGTCATCGTA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P03.A03,3,8/15/22,Vaginal.bd.y.1
-10249.C001.07SS,CTGAAGGGCGAA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P03.A04,4,8/15/23,Vaginal.bd.y.1
-10249.C001.08SS,GATTATCGACGA,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.A03,5,8/15/24,Vaginal.bd.y.1
-10249.C001.09SS,GCCTAGCCCAAT,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.A04,1,8/15/25,Vaginal.bd.y.1
-10249.C001.10SS,GATGTATGTGGT,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.A05,2,8/15/26,Vaginal.bd.y.1
-10249.C001.11SS,CGCTCACAGAAT,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P03.A05,3,8/15/27,Vaginal.bd.y.1
-10249.C001.12SS,ACTCCTTGTGTAT,GGACTACHVGGGTWTCTAAT,Clemente Lab at Mount Sinai,Jose Clemente,8/15/13,P02.A06,4,8/15/28,Vaginal.bd.y.1
+#SampleID	BarcodeSequence	LinkerPrimerSequence	lab	primary_investigator	run_date	barcodewell	host_subject_id	SampleDate	Description
+10249.C008.06SS	ACCGTGCTCACA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P03.E09	0	8/15/13	Vaginal.bd.y.1
+10249.C009.08SS	ATCAGTACTAGG	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.C12	1	8/15/13	Vaginal.bd.n.0
+10249.C010.10SS	CAGAAATGTGTC	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.D06	2	8/15/13	Vaginal.fd.y.1
+10249.C011.02SS	GTAGAGGTAGAG	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.D07	3	8/15/13	Cesarean.fd.n.1
+10249.C012.01SS.r	GGTTATTTGGCG	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.D09	4	8/15/14	Cesarean.bd.n.1
+10249.C016.04SS	TCTGAGGTTGCC	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P04.A01	0	8/15/15	Vaginal.bd.n.1
+10249.C016.06SS	AGCTATGTATGG	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.E08	1	8/15/16	Vaginal.bd.n.1
+10249.C022.09SS	TGTTAAGCAGCA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P04.D03	2	8/15/17	Vaginal.fd.n.0
+10249.C042.01SS.r	GCTATCAAGACA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P04.H10	3	8/15/18	Vaginal.fd.n.1
+10249.C001.02SS	TGTGCGATAACA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.A02	4	8/15/19	Vaginal.bd.n.0
+10249.C001.03SS	GTCGAATTTGCG	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P03.A01	1	8/15/20	Vaginal.bd.n.0
+10249.C001.05SS	GCATCAGAGTTA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P03.A02	2	8/15/21	Vaginal.bd.y.1
+10249.C001.06SS	GTGGTCATCGTA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P03.A03	3	8/15/22	Vaginal.bd.y.1
+10249.C001.07SS	CTGAAGGGCGAA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P03.A04	4	8/15/23	Vaginal.bd.y.1
+10249.C001.08SS	GATTATCGACGA	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.A03	5	8/15/24	Vaginal.bd.y.1
+10249.C001.09SS	GCCTAGCCCAAT	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.A04	1	8/15/25	Vaginal.bd.y.1
+10249.C001.10SS	GATGTATGTGGT	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.A05	2	8/15/26	Vaginal.bd.y.1
+10249.C001.11SS	CGCTCACAGAAT	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P03.A05	3	8/15/27	Vaginal.bd.y.1
+10249.C001.12SS	ACTCCTTGTGTAT	GGACTACHVGGGTWTCTAAT	Clemente Lab at Mount Sinai	Jose Clemente	8/15/13	P02.A06	4	8/15/28	Vaginal.bd.y.1
