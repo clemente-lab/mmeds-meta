@@ -113,18 +113,21 @@ class Database:
                     sql += ' ' + column + ' = "' + str(df[table][column][j]) + '"'
                 else:
                     sql += ' AND ' + column + ' = "' + str(df[table][column][j]) + '"'
-            # Check if there is a matching entry in the table
+            # Check if there is a matching entry already in the database
             found = self.cursor.execute(sql)
             if found == 1:
                 result = self.cursor.fetchone()
                 # Append the key found for that column
                 self.IDs[table][j] = int(result[0])
             else:
+                # Create the entry
                 this_row = ''.join(list(map(str, df[table].loc[j])))
                 try:
+                    # See if this table entry already exists in the current input file
                     key = seen[this_row]
                     self.IDs[table][j] = key
                 except KeyError:
+                    # If not add it and give it a unique key
                     seen[this_row] = current_key
                     self.IDs[table][j] = current_key
                     current_key += 1
@@ -134,6 +137,7 @@ class Database:
         Create the file to load into each table referenced in the
         metadata input file
         """
+        # Get the structure of the table currently being filled out
         sql = 'DESCRIBE ' + table
         self.cursor.execute(sql)
         structure = self.cursor.fetchall()
@@ -152,8 +156,10 @@ class Database:
                             key_table = col.split('_')[0]
                         else:
                             key_table = col.strip('id')
+                        # Get the approriate data from the dictionary
                         line.append(self.IDs[key_table][i])
                     else:
+                        # Otherwise see if the entry already exists
                         try:
                             line.append(df[table].loc[i][col])
                         except KeyError:
@@ -208,9 +214,12 @@ class Database:
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
+        # TO BE REMOVED IN NON-DEMO VERSIONS
         self.purge()
+
+        # Read in the metadata file to import
         df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
-        # Go create file and import data for each regular table
+        # Create file and import data for each regular table
         for table in df.axes[1].levels[0]:
             self.create_import_data(table, df)
             filename = self.create_import_file(table, df)
@@ -222,4 +231,6 @@ class Database:
             # Commit the inserted data
             self.db.commit()
 
+        # Create csv files and import them for
+        # each junction table
         self.fill_junction_tables()
