@@ -8,8 +8,8 @@ Link donor and recipient in FMT studies?
 Distinguish between sample and speciman. Check FreezerWorks
 -------------------------------------------------------
 
-X Check columns for values outside 2 stdevs
-X  change age to birth year
-X  warning for spaces at beginning or end
-look into linking non-relational database
-look into other tools and free form data
+** DONE Check columns for values outside 2 stdevs :work:
+** DONE change age to birth year :work:
+** DONE warning for spaces at beginning or end :work:
+** TODO look into linking non-relational database :work:
+** TODO look into other tools and free form data :work:
