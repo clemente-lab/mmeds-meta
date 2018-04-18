@@ -219,8 +219,18 @@ class Database:
 
         # Read in the metadata file to import
         df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
+
+        self.cursor.execute('SHOW TABLES')
+        tables = set(filter(lambda x: '_' in x,
+                            [l[0] for l in self.cursor.fetchall()]))
+
+        input_tables = set(df.axes[1].levels[0])
+
+        if not input_tables.issubset(tables):
+            return 1, 'Tables: ' + ', '.join(input_tables - tables) + ' are not in the database'
+
         # Create file and import data for each regular table
-        for table in df.axes[1].levels[0]:
+        for table in tables:
             self.create_import_data(table, df)
             filename = self.create_import_file(table, df)
             # Load the newly created file into the database
@@ -234,3 +244,5 @@ class Database:
         # Create csv files and import them for
         # each junction table
         self.fill_junction_tables()
+
+        return 0, ''

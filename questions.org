@@ -13,3 +13,4 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE warning for spaces at beginning or end :work:
 ** TODO look into linking non-relational database :work:
 ** TODO look into other tools and free form data :work:
+** TODO Add unused columns error after file upload
