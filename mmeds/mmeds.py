@@ -1,8 +1,6 @@
-from subprocess import run, PIPE
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number
 import pandas as pd
-import cherrypy
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
@@ -14,18 +12,6 @@ DNA = set('GATC')
 
 ILLEGAL_IN_HEADER = set('/\\ ')
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
-
-
-def check_metadata(file_fp, directory):
-    """
-    Execute QIIME to check the metadata file provided.
-    """
-    sac = 'source activate qiime; '
-    cd = 'cd ' + directory + '; '
-    call_string = sac + cd + 'validate_mapping_file.py -m ' + file_fp
-    result = run(call_string, stdout=PIPE, shell=True, check=True)
-    # Return the result of the call
-    return result.stdout
 
 
 def insert_error(page, line_number, error_message):
@@ -77,7 +63,6 @@ def check_header(header, prev_headers):
 
 def check_column(column, prev_headers):
     """ Validate that there are no issues with the provided column of metadata """
-    print(column)
     # Get the header
     header = column.name
     # Get the rest of the column
@@ -167,14 +152,11 @@ def validate_mapping_file(file_fp):
     were no issues.
     """
     errors = []
-    #c_reader = csv.reader(file_fp, delimiter='\t')
-    #columns = list(zip(*c_reader))
     df = pd.read_csv(file_fp, delimiter='\t')
     column_headers = []
     for i, header in enumerate(df.axes[1]):
         col = df[header]
         errors += check_column(col, column_headers)
-
         # Perform column specific checks
         if header == 'Description' and not header == df.axes[1][-1]:
             errors.append('Description is not the last column in the metadata file\t%d,%d' %
@@ -188,7 +170,6 @@ def validate_mapping_file(file_fp):
         elif header == 'LinkerPrimerSequence':
             errors += check_lengths(col, i)
 
-    cherrypy.log('\n'.join(df.axes[1]))
     missing_headers = REQUIRED_HEADERS.difference(df.axes[1].tolist())
 
     if missing_headers:
@@ -211,7 +192,3 @@ def is_numeric(s):
     except (TypeError, ValueError):
         pass
     return False
-
-
-def add_to_database(file_fp, database='mmeds_db', user='root'):
-    """ Adds all the information in the provided file pointer to the specified database. """

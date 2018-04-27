@@ -39,6 +39,7 @@ class MMEDSserver(object):
         cp.session['file'] = myFile.filename
         file_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['file'])
 
+        cp.log("Before copy ifle")
         # Write the data to a new file stored on the server
         nf = open(file_copy, 'wb')
         while True:
@@ -47,13 +48,14 @@ class MMEDSserver(object):
             if not data:
                 break
         nf.close()
-
+        cp.log("Before validate")
         # Check the metadata file for errors
         with open(file_copy) as f:
             errors = validate_mapping_file(f)
             ########### TEMPORARY #############
             errors = []
             ##################################
+            # errors += self.db.check_file_header(file_copy)
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
@@ -72,7 +74,9 @@ class MMEDSserver(object):
             return uploaded_output
         # Otherwise upload the metadata to the database
         else:
+            cp.log("BEFORE READ IN")
             self.db.read_in_sheet(file_copy)
+            cp.log("AFTER READ IN")
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()

@@ -2,6 +2,8 @@ import pymysql as pms
 import cherrypy as cp
 import pandas as pd
 import os
+import pprint
+import sys
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
@@ -95,7 +97,23 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def create_import_data(self, table, df):
+    def check_file_header(self, fp):
+        """
+        Checks that the metadata input file doesn't contain any
+        tables or columns that don't exist in the database.
+        """
+        df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1], nrows=2)
+        self.cursor.execute('SHOW TABLES')
+        tables = list(filter(lambda x: '_' not in x,
+                             [l[0] for l in self.cursor.fetchall()]))
+
+        # Import data for each junction table
+        for table in tables:
+            self.cursor.execute('DESCRIBE ' + table)
+            columns = list(map(lambda x: x[0].split('_')[0],
+                               self.cursor.fetchall()))
+
+    def create_import_data(self, table, df, verbose=True):
         """
         Fill out the dictionaries used to create the input files
         from the input data file.
@@ -138,8 +156,7 @@ class Database:
         metadata input file
         """
         # Get the structure of the table currently being filled out
-        sql = 'DESCRIBE ' + table
-        self.cursor.execute(sql)
+        self.cursor.execute('DESCRIBE ' + table)
         structure = self.cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
@@ -219,18 +236,8 @@ class Database:
 
         # Read in the metadata file to import
         df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
-
-        self.cursor.execute('SHOW TABLES')
-        tables = set(filter(lambda x: '_' in x,
-                            [l[0] for l in self.cursor.fetchall()]))
-
-        input_tables = set(df.axes[1].levels[0])
-
-        if not input_tables.issubset(tables):
-            return 1, 'Tables: ' + ', '.join(input_tables - tables) + ' are not in the database'
-
         # Create file and import data for each regular table
-        for table in tables:
+        for table in df.axes[1].levels[0]:
             self.create_import_data(table, df)
             filename = self.create_import_file(table, df)
             # Load the newly created file into the database
@@ -245,4 +252,9 @@ class Database:
         # each junction table
         self.fill_junction_tables()
 
-        return 0, ''
+        with open('/home/david/Work/mmeds.out') as f:
+            pp = pprint.PrettyPrinter(stream=f)
+            pp.pprint(self.IDs, stream=f)
+
+        # Remove all row information from the current input
+        self.IDs.clear()
