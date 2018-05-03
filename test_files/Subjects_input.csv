@@ -1,9 +1,9 @@
-idSubjects	HostSubjectId	Nationality	Sex	Age	Height	Weight
-0	0	American	M	34	60	45
-1	1	American	M	35	61	46
-2	2	American	M	36	62	47
-3	3	American	F	37	63	48
-1	1	American	M	35	61	46
-0	0	American	M	34	60	45
-4	4	American	F	38	64	49
-0	0	American	M	34	60	45
+idSubjects,HostSubjectId,Nationality,Sex,Age,Height,Weight,Row Key
+0,0,American,M,34,60,45,0
+1,1,American,M,35,61,46,1
+2,2,American,M,36,62,47,2
+3,3,American,F,37,63,48,3
+1,1,American,M,35,61,46,4
+0,0,American,M,34,60,45,5
+4,4,American,F,38,64,49,6
+0,0,American,M,34,60,45,7

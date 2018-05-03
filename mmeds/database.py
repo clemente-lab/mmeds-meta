@@ -1,4 +1,5 @@
 import pymysql as pms
+import mongoengine as men
 import cherrypy as cp
 import pandas as pd
 import os
@@ -21,6 +22,7 @@ class Database:
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
+        self.mongo = men.connect('test', host='127.0.0.1', port=27017)
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
@@ -258,3 +260,9 @@ class Database:
 
         # Remove all row information from the current input
         self.IDs.clear()
+
+    def create_nosql_document(self):
+
+        page = men.ExtraData(title='Using MongoEngine')
+        page.tags = ['mongodb', 'mongoengine']
+        page.save()
