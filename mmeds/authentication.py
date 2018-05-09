@@ -53,7 +53,7 @@ def add_user(username, password):
 
     # Add the user
     if username not in login_info.keys():
-        login_info[username] = [password_hash, salt]
+        login_info[username] = [password_hash, salt, []]
 
     # Write the dictionary
     with open(LOGIN_FILE, 'wb') as f:
@@ -98,3 +98,26 @@ def check_username(username):
         return
 
     return
+
+
+def add_studies_to_user(username, tables):
+    """
+    Adds the specified tables to the list of tables the user
+    should have access to.
+    """
+    # Load the dictionary
+    try:
+        with open(LOGIN_FILE, 'rb') as f:
+            login_info = pickle.load(f)
+    # If it's the first entry
+    except EOFError as e:
+        raise e
+
+    # Add the tables to be allowed
+    login_info[username][2] += tables
+
+    # Write the dictionary
+    with open(LOGIN_FILE, 'wb') as f:
+        pickle.dump(login_info, f)
+
+    return login_info[username][2]

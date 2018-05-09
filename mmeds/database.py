@@ -24,6 +24,7 @@ class Database:
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
+        self.userStudies = defaultdict(list)
 
     def __del__(self):
         """ Close the database connection when the object is cleared. """
@@ -123,6 +124,7 @@ class Database:
         current_key = int(self.cursor.fetchone()[0])
         # Track keys for repeated values in this file
         seen = {}
+        keys = []
         # Go through each column
         for j in range(len(df.index)):
             sql = 'SELECT * FROM ' + table + ' WHERE'
@@ -144,11 +146,14 @@ class Database:
                     # See if this table entry already exists in the current input file
                     key = seen[this_row]
                     self.IDs[table][j] = key
+                    keys.append(key)
                 except KeyError:
                     # If not add it and give it a unique key
                     seen[this_row] = current_key
                     self.IDs[table][j] = current_key
+                    keys.append(current_key)
                     current_key += 1
+        return keys
 
     def create_import_file(self, table, df):
         """
@@ -226,7 +231,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, fp, delimiter='\t'):
+    def read_in_sheet(self, fp, user, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -238,7 +243,10 @@ class Database:
         df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
         # Create file and import data for each regular table
         for table in df.axes[1].levels[0]:
-            self.create_import_data(table, df)
+            if table == 'Study':
+                keys = self.create_import_data(table, df)
+            else:
+                self.create_import_data(table, df)
             filename = self.create_import_file(table, df)
             # Load the newly created file into the database
             sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
@@ -252,9 +260,8 @@ class Database:
         # each junction table
         self.fill_junction_tables()
 
-        with open('/home/david/Work/mmeds.out') as f:
-            pp = pprint.PrettyPrinter(stream=f)
-            pp.pprint(self.IDs, stream=f)
-
         # Remove all row information from the current input
         self.IDs.clear()
+
+        # Return the study keys belonging to this user
+        return keys
