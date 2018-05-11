@@ -8,17 +8,94 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 -- -----------------------------------------------------
--- Schema mydb
--- -----------------------------------------------------
--- -----------------------------------------------------
--- Schema mmeds_db
--- -----------------------------------------------------
-
--- -----------------------------------------------------
 -- Schema mmeds_db
 -- -----------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS `mmeds_db` DEFAULT CHARACTER SET utf8 ;
 USE `mmeds_db` ;
+
+
+-- -----------------------------------------------------
+-- Table `mmeds_db`.`Session`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `mmeds_db`.`Session` ;
+
+CREATE TABLE Session (
+    idSession int NOT NULL PRIMARY KEY,
+    username VARCHAR(100),
+)
+
+-- -----------------------------------------------------
+-- Table `mmeds_db`.`SecurityToken`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `mmeds_db`.`SecurityToken` ;
+
+CREATE TABLE SecurityToken (
+    idSecurityToken int NOT AUTO_INCREMENT NULL PRIMARY KEY,
+    username VARCHAR(100),
+    SecurityToken VARCHAR(100),
+)
+
+-- -----------------------------------------------------
+-- Function setConnectionAuth
+-- -----------------------------------------------------
+CREATE FUNCTION setConnectionAuth (vUser VARCHAR(100), vSecurityToken VARCHAR(100))
+RETURNS BOOLEAN
+NOT DETERMINISTIC
+MODIFIES SQL DATA
+SQL SECURITY DEFINER
+BEGIN
+    SELECT COUNT(*) INTO @vTokenCount
+    FROM securityToken
+    WHERE username = SESSION_USER() AND securityToken = vSecurityToken;
+
+    IF @vTokenCount < 1 THEN
+        RETURN false;
+    END IF;
+
+    INSERT INTO Session (idSession, username) VALUES (CONNECTION_ID(), vUser);
+    RETURN true;
+END //
+
+CREATE FUNCTION unsetConnectionAuth (vSecurityToken VARCHAR(100))
+RETURNS BOOLEAN
+NOT DETERMINISTIC
+MODIFIES SQL DATA
+SQL SECURITY DEFINER
+BEGIN
+    DELETE FROM Session WHERE idConnection = CONNECTION_ID();
+    RETURN true;
+END //
+
+
+-- -----------------------------------------------------
+-- Function ownerCheck
+-- -----------------------------------------------------
+CREATE FUNCTION ownerCheck (vOwnerUserId int)
+RETURNS BOOLEAN
+NOT DETERMINISTIC
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT u.user_id INTO @vCurrentUserId
+    FROM session s
+    JOIN user u
+    ON u.username = s.username
+    WHERE s.idConnection = CONNECTION_ID();
+    IF @vCurrentUserId = vOwnerUserId THEN
+        RETURN true;
+    ELSE
+        RETURN false; END IF;
+END
+
+
+-- -----------------------------------------------------
+-- Function protectedStudy
+-- -----------------------------------------------------
+CREATE
+SQL SECURITY DEFINER
+VIEW protectedStudy AS
+SELECT st.* FROM Study st WHERE ownerCheck(st.user_id)
+WITH CHECK OPTION;
 
 -- -----------------------------------------------------
 -- Table `mmeds_db`.`Lab`
@@ -44,6 +121,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_db`.`Study` (
   `idStudy` INT NOT NULL,
   `Lab_idLab` INT NOT NULL,
   `Experiment` VARCHAR(45) NULL DEFAULT NULL,
+  `user_id` int REFERENCES user (user_id)
   PRIMARY KEY (`idStudy`, `Lab_idLab`),
   INDEX `fk_Experiment_Lab1_idx` (`Lab_idLab` ASC),
   CONSTRAINT `fk_Experiment_Lab1`
