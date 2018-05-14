@@ -16,6 +16,9 @@ class Database:
         Connect to the specified database.
         Initialize variables for this session.
         """
+        self.connect(path, database, user)
+
+    def connect(self, path, database, user):
         try:
             self.db = pms.connect('localhost', user, '', database, local_infile=True)
         except pms.err.ProgrammingError as e:
@@ -24,7 +27,6 @@ class Database:
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
-        self.userStudies = defaultdict(list)
 
     def __del__(self):
         """ Close the database connection when the object is cleared. """
@@ -265,3 +267,9 @@ class Database:
 
         # Return the study keys belonging to this user
         return keys
+
+    def get_col_values_from_table(self, column, table):
+        sql = 'SELECT {} FROM {}'.format(column, table)
+        self.cursor.execute(sql)
+        data = self.cursor.fetchall()
+        return data

@@ -16,7 +16,8 @@ USE `mmeds` ;
 CREATE TABLE user (
     user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
-    password varchar(100) -- this should be a hash, not a clear-text
+    password varchar(64), -- this should be a hash, not a clear-text
+    salt varchar(10)
 );
 
 -- -----------------------------------------------------

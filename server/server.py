@@ -3,16 +3,12 @@ import os
 import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_error, validate_mapping_file
-from mmeds.config import CONFIG
+from mmeds.config import CONFIG, UPLOADED_FP, ERROR_FP, STORAGE_DIR
 from mmeds.authentication import validate_password, check_username, check_password, add_user, add_studies_to_user
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
-
-UPLOADED_FP = 'uploaded_file'
-ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data/'
 
 
 class MMEDSserver(object):
