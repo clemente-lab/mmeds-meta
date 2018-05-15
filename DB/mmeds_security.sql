@@ -11,7 +11,7 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 -- Schema mmeds_db
 -- -----------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS `mmeds` DEFAULT CHARACTER SET utf8 ;
-USE `mmeds` ;
+USE mmeds ;
 
 CREATE TABLE user (
     user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -23,19 +23,23 @@ CREATE TABLE user (
 -- -----------------------------------------------------
 -- Table `mmeds`.`Study`
 -- -----------------------------------------------------
-CREATE TABLE `mmeds`.`Study` (
-    `idStudy` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `Lab_idLab` INT NOT NULL,
-    `Experiment` VARCHAR(45) NULL DEFAULT NULL,
-    `user_id` int REFERENCES mmeds.user (user_id),
-    PRIMARY KEY (`idLab`)
+CREATE TABLE Study (
+    idStudy INT NOT NULL PRIMARY KEY,
+    Lab_idLab INT NOT NULL,
+    Experiment VARCHAR(45) NULL DEFAULT NULL,
+    user_id int REFERENCES user (user_id)
 );
 
 
-CREATE TABLE `mmeds`.`security_token` (
+CREATE TABLE security_token (
     security_token_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     security_token varchar(100)
+);
+
+CREATE TABLE session (
+    connection_id int NOT NULL PRIMARY KEY,
+    username varchar(100)
 );
 
 
