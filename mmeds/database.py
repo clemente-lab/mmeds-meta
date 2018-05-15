@@ -273,3 +273,12 @@ class Database:
         self.cursor.execute(sql)
         data = self.cursor.fetchall()
         return data
+
+    def add_user(self, username, password, salt):
+        """ Add the user with the specified parameters. """
+        # Create the SQL to add the user
+        sql = 'INSERT INTO mmeds.user (username, password, salt) VALUES\
+                ("{}", "{}", "{}");'.format(username, password, salt)
+
+        self.cursor.execute(sql)
+        self.db.commit()

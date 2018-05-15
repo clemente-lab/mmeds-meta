@@ -4,7 +4,7 @@ import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_error, validate_mapping_file
 from mmeds.config import CONFIG, UPLOADED_FP, ERROR_FP, STORAGE_DIR
-from mmeds.authentication import validate_password, check_username, check_password, add_user, add_studies_to_user
+from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
@@ -70,12 +70,6 @@ class MMEDSserver(object):
             return uploaded_output
         # Otherwise upload the metadata to the database
         else:
-            cp.log("BEFORE READ IN")
-            # Get the primary keys for the studies uploaded
-            study_keys = self.db.read_in_sheet(file_copy)
-            # Add them to the studies this user has access to
-            add_studies_to_user(cp.session['user'], study_keys)
-            cp.log("AFTER READ IN")
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()

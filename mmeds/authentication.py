@@ -1,5 +1,4 @@
 import hashlib
-import pickle
 
 from random import choice
 from string import printable, ascii_uppercase, ascii_lowercase
@@ -23,7 +22,7 @@ def validate_password(username, password):
     try:
         hashed_password, salt =\
             db.get_col_values_from_table('password, salt',
-                                         'user where username = "username"')[0]
+                                         'mmeds.user where username = "{}"'.format(username))[0]
     # An index error means that the username did not exist
     except IndexError:
         return False
@@ -32,7 +31,7 @@ def validate_password(username, password):
     salted = password + salt
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
-    password_hash = sha256.digest()
+    password_hash = sha256.hexdigest()
 
     # Check that it matches the stored hash of the password
     return hashed_password == password_hash
@@ -46,13 +45,9 @@ def add_user(username, password):
     salted = password + salt
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
-    password_hash = sha256.digest()
+    password_hash = sha256.hexdigest()
     db = database.Database(STORAGE_DIR)
-    # Create the SQL to add the user
-    sql = 'INSERT INTO mmeds.user (username, password, salt) VALUES\
-            ("{}", "{}", "{}");'.format(username, password_hash, salt)
-
-    db.execute(sql)
+    db.add_user(username, password_hash, salt)
 
 
 def check_password(password1, password2):
