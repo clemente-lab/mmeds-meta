@@ -2,16 +2,15 @@ import pymysql as pms
 import cherrypy as cp
 import pandas as pd
 import os
-import pprint
-import sys
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
+from mmeds.config import SECURITY_TOKEN
 
 
 class Database:
 
-    def __init__(self, path, database='mmeds_db', user='root'):
+    def __init__(self, path, database='mmeds', user='root'):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -20,13 +19,30 @@ class Database:
 
     def connect(self, path, database, user):
         try:
-            self.db = pms.connect('localhost', user, '', database, local_infile=True)
+            if user == 'mmeds_user':
+                self.db = pms.connect('localhost', user, 'password', database, local_infile=True)
+            else:
+                self.db = pms.connect('localhost', user, '', database, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
+
+    def disconnect(self):
+        sql = 'SELECT unset_connection_auth("{}")'.format(SECURITY_TOKEN)
+        self.cursor.execute(sql)
+        self.db.commit()
+        self.db.close()
+
+    def set_mmeds_user(self, user):
+        """ Set the session to the current user of the webapp. """
+        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, SECURITY_TOKEN)
+        self.cursor.execute(sql)
+        set_user = self.cursor.fetchall()[0][0]
+        self.db.commit()
+        return set_user
 
     def __del__(self):
         """ Close the database connection when the object is cleared. """
@@ -100,8 +116,9 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def check_file_header(self, fp):
+    def check_file_header(self, fp, delimiter='\t'):
         """
+        UNFINISHED
         Checks that the metadata input file doesn't contain any
         tables or columns that don't exist in the database.
         """
