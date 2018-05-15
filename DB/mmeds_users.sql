@@ -5,7 +5,8 @@ GRANT EXECUTE ON FUNCTION mmeds.set_connection_auth TO 'mmeds_user'@'%';
 GRANT EXECUTE ON FUNCTION mmeds.unset_connection_auth TO 'mmeds_user'@'%';
 GRANT EXECUTE ON FUNCTION mmeds.owner_check TO 'mmeds_user'@'%';
 GRANT SELECT ON TABLE mmeds.protected_study TO 'mmeds_user'@'%';
-GRANT SELECT ON TABLE mmeds.user TO 'mmeds_user'@'%';
+
+-- TEMPORARY PERMISSIONS FOR DEBUGGING GRANT SELECT ON TABLE mmeds.user TO 'mmeds_user'@'%';
 GRANT SELECT ON TABLE mmeds.session TO 'mmeds_user'@'%';
 
 -- Create a security token for that account

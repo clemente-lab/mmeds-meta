@@ -85,16 +85,15 @@ class MMEDSserver(object):
     @cp.expose
     def query(self, query):
         # Set the session to use the current user
-        self.db = Database(STORAGE_DIR, user='mmeds_user')
-        username = cp.session['user']
-        status = self.db.set_mmeds_user(username)
-        cp.log('Set user to {}. Status {}'.format(username, status))
-        result = self.db.execute(query)
-        with open('../html/success.html', 'r') as f:
-            page = f.read()
+        with Database(STORAGE_DIR, user='mmeds_user') as db:
+            username = cp.session['user']
+            status = db.set_mmeds_user(username)
+            cp.log('Set user to {}. Status {}'.format(username, status))
+            result = db.execute(query)
+            with open('../html/success.html', 'r') as f:
+                page = f.read()
 
-        page = insert_error(page, 10, result)
-        self.db.disconnect()
+            page = insert_error(page, 10, result)
         return page
 
     @cp.expose

@@ -15,9 +15,6 @@ class Database:
         Connect to the specified database.
         Initialize variables for this session.
         """
-        self.connect(path, database, user)
-
-    def connect(self, path, database, user):
         try:
             if user == 'mmeds_user':
                 self.db = pms.connect('localhost', user, 'password', database, local_infile=True)
@@ -30,11 +27,20 @@ class Database:
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
 
-    def disconnect(self):
+    def __del__(self):
+        """ Clear the current user session and disconnect from the database. """
         sql = 'SELECT unset_connection_auth("{}")'.format(SECURITY_TOKEN)
         self.cursor.execute(sql)
         self.db.commit()
         self.db.close()
+
+    def __enter__(self):
+        """ Allows database connection to be used via a 'with' statement. """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """ Delete the Database instance upon the end of the 'with' block. """
+        del self
 
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
@@ -43,10 +49,6 @@ class Database:
         set_user = self.cursor.fetchall()[0][0]
         self.db.commit()
         return set_user
-
-    def __del__(self):
-        """ Close the database connection when the object is cleared. """
-        self.db.close()
 
     def list_tables(self, database, user='root'):
         """ Logs the availible tables in the database. """
