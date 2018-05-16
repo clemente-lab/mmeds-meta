@@ -1,19 +1,28 @@
-from cherrypy.lib.auth_digest import get_ha1_dict_plain
-from mmeds.authentication import USERS
-
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
-        'log.error_file': 'site.log'
+        'log.error_file': 'site.log',
+        'server.ssl_module': 'builtin',
+        'server.ssl_certificate': '../server/data/cert.pem',
+        'server.ssl_private_key': '../server/data/key.pem',
+        'tools.secureheaders.on': True,
+        'tools.sessions.on': True,
+        'tools.sessions.secure': True,
+        'tools.sessions.httponly': True,
+        'request.scheme': 'https'
     },
     '/favicon.ico': {
         'tools.staticfile.filename': '/home/david/Work/mmeds-meta/server/favicon.ico',
-        'tools.staticfile.on': True
+        'tools.staticfile.on': True,
     },
     '/protected/area': {
         'tools.auth_digest': True,
-        'tools.auth_digest.get_ha1': get_ha1_dict_plain(USERS),
         'tools.auth_digest.realm': 'localhost',
         'tools.auth_digest.key': 'a565c2714791cfb',
     }
 }
+
+UPLOADED_FP = 'uploaded_file'
+ERROR_FP = 'error_log.csv'
+STORAGE_DIR = 'data/'
+SECURITY_TOKEN = 'some_security_token'

@@ -1,0 +1,10 @@
+Lab	Lab	Lab	Study	Type	BodySite	Location	Location	Location	Location	Subjects	Subjects	Subjects	Subjects	Subjects	Subjects
+PrimaryInvestigator	ContactEmail	ContactName	Experiment	SpecimenType	SpecimenBodySite	Latitude	Longitude	Depth	Elevation	HostSubjectId	Nationality	Sex	Age	Height	Weight
+Jose Clemente	david.wallach@mssm.edu	David Wallach	Lodi	Stool	Gut	40.79	-73.95	0	0	0	American	M	34	60	45
+Jose Clemente	zach.wilson@mssm.edu	Zach Wilson	Ensemble	Stool	Gut	40.79	-73.95	0	1	1	American	M	35	61	46
+John Long	jonathon.snyder@mssm.edu	Jonathon Snyder	Tadro	Robot	Sensor	41.69	-73.9	0	0	2	American	M	36	62	47
+Jose Clemente	david.wallach@mssm.edu	David Wallach	Mmeds	Program	HardDrive	41.69	-73.9	0	0	3	American	F	37	63	48
+David Wallach	david.wallach@mssm.edu	David Wallach	Mice	Skin	Hand	40.79	-73.95	0	0	1	American	M	35	61	46
+David Wallach	david.wallach@mssm.edu	David Wallach	Rats	Skin	Face	40.79	-73.95	0	0	0	American	M	34	60	45
+David Wallach	david.wallach@mssm.edu	David Wallach	Rats	Skin	Face	40.79	-73.95	0	0	4	American	F	38	64	49
+David Wallach	david.wallach@mssm.edu	David Wallach	Rats	Skin	Face	40.79	-73.95	0	0	0	American	M	34	60	45

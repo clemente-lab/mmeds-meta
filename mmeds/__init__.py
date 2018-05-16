@@ -10,5 +10,6 @@ __email__ = "d.s.t.wallach@gmail.com"
 
 __all__ = [
     'mmeds',
-    'authentication'
+    'authentication',
+    'database'
 ]
