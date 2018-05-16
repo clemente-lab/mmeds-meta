@@ -1,7 +1,7 @@
 import hashlib
 
 from random import choice
-from string import printable, ascii_uppercase, ascii_lowercase
+from string import digits, ascii_uppercase, ascii_lowercase
 
 from mmeds import database
 from mmeds.config import STORAGE_DIR
@@ -11,7 +11,7 @@ LOGIN_FILE = '../server/data/login_info'
 
 def get_salt(strength=10):
     """ Get a randomly generated string for salting passwords. """
-    return ''.join(choice(printable) for i in range(strength))
+    return ''.join(choice(digits + ascii_uppercase + ascii_lowercase) for i in range(strength))
 
 
 def validate_password(username, password):

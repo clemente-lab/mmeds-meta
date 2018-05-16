@@ -50,23 +50,6 @@ class Database:
         self.db.commit()
         return set_user
 
-    def list_tables(self, database, user='root'):
-        """ Logs the availible tables in the database. """
-        db = pms.connect('localhost', user, '', database)
-        cp.log('Connected to database ' + database + ' as user ' + user)
-        cursor = db.cursor()
-        cp.log('Got cursor from database')
-        try:
-            sql = 'SHOW TABLES;'
-            cursor.execute(sql)
-            cp.log('Ran query')
-            data = cursor.fetchall()
-            cp.log('\n'.join(map(str, data)))
-        except pms.err.ProgrammingError as e:
-            cp.log('Error executing SQL command: ' + sql)
-            cp.log(str(e))
-        db.close()
-
     def format(self, text, header=None):
         """
         Applies PrettyTable HTML formatting to the provided string.
