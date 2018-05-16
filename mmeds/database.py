@@ -9,6 +9,12 @@ from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN
 
 
+class MetaData(men.Document):
+    owner = men.StringField(max_length=100, required=True)
+    metadata = men.DictField()
+    data = men.GenericEmbeddedDocumentField()
+
+
 class Database:
 
     def __init__(self, path, database='mmeds', user='root'):
@@ -273,7 +279,6 @@ class Database:
         return keys
 
     def create_nosql_document(self):
-
         page = men.ExtraData(title='Using MongoEngine')
         page.tags = ['mongodb', 'mongoengine']
         page.save()
@@ -292,3 +297,12 @@ class Database:
 
         self.cursor.execute(sql)
         self.db.commit()
+        print('SQL finished')
+
+        # Add a document for the user in the NoSQL
+        user = MetaData(owner=username, metadata={'0': username, '1': password, '2': salt})
+        print('User created')
+        user.tags = ['MetaData', user]
+        print('Tags added')
+        user.save()
+        print('Done')
