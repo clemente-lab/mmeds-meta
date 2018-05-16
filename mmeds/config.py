@@ -21,3 +21,8 @@ CONFIG = {
         'tools.auth_digest.key': 'a565c2714791cfb',
     }
 }
+
+UPLOADED_FP = 'uploaded_file'
+ERROR_FP = 'error_log.csv'
+STORAGE_DIR = 'data/'
+SECURITY_TOKEN = 'some_security_token'

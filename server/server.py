@@ -3,16 +3,12 @@ import os
 import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_error, validate_mapping_file
-from mmeds.config import CONFIG
+from mmeds.config import CONFIG, UPLOADED_FP, ERROR_FP, STORAGE_DIR
 from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
-
-UPLOADED_FP = 'uploaded_file'
-ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data/'
 
 
 class MMEDSserver(object):
@@ -29,6 +25,15 @@ class MMEDSserver(object):
     def validate(self, myFile):
         """ The page returned after a file is uploaded. """
 
+        # If nothing is uploaded proceed to the next page
+        if myFile.filename == '':
+            cp.log('No file uploaded')
+            # Get the html for the upload page
+            with open('../html/success.html', 'r') as f:
+                upload_successful = f.read()
+            return upload_successful
+
+        # Otherwise check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myFile.filename.split('.')[-1]
         if file_extension not in valid_extensions:
@@ -39,7 +44,6 @@ class MMEDSserver(object):
         cp.session['file'] = myFile.filename
         file_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['file'])
 
-        cp.log("Before copy ifle")
         # Write the data to a new file stored on the server
         nf = open(file_copy, 'wb')
         while True:
@@ -48,7 +52,6 @@ class MMEDSserver(object):
             if not data:
                 break
         nf.close()
-        cp.log("Before validate")
         # Check the metadata file for errors
         with open(file_copy) as f:
             errors = validate_mapping_file(f)
@@ -74,9 +77,6 @@ class MMEDSserver(object):
             return uploaded_output
         # Otherwise upload the metadata to the database
         else:
-            cp.log("BEFORE READ IN")
-            self.db.read_in_sheet(file_copy)
-            cp.log("AFTER READ IN")
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()
@@ -84,11 +84,16 @@ class MMEDSserver(object):
 
     @cp.expose
     def query(self, query):
-        result = self.db.execute(query)
-        with open('../html/success.html', 'r') as f:
-            page = f.read()
+        # Set the session to use the current user
+        with Database(STORAGE_DIR, user='mmeds_user') as db:
+            username = cp.session['user']
+            status = db.set_mmeds_user(username)
+            cp.log('Set user to {}. Status {}'.format(username, status))
+            result = db.execute(query)
+            with open('../html/success.html', 'r') as f:
+                page = f.read()
 
-        page = insert_error(page, 10, result)
+            page = insert_error(page, 10, result)
         return page
 
     @cp.expose
@@ -127,7 +132,7 @@ class MMEDSserver(object):
         if validate_password(username, password):
             with open('../html/upload.html') as f:
                 page = f.read()
-            return page.format(user=cp.session['user'])
+            return page.format(user=username)
         else:
             with open('../html/index.html') as f:
                 page = f.read()

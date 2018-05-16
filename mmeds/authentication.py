@@ -1,36 +1,40 @@
 import hashlib
-import pickle
 
 from random import choice
-from string import printable, ascii_uppercase, ascii_lowercase
+from string import digits, ascii_uppercase, ascii_lowercase
+
+from mmeds import database
+from mmeds.config import STORAGE_DIR
 
 LOGIN_FILE = '../server/data/login_info'
 
 
 def get_salt(strength=10):
     """ Get a randomly generated string for salting passwords. """
-    return ''.join(choice(printable) for i in range(strength))
+    return ''.join(choice(digits + ascii_uppercase + ascii_lowercase) for i in range(strength))
 
 
 def validate_password(username, password):
     """ Validate the user and their password """
 
-    # Load the users
-    with open(LOGIN_FILE, 'rb') as f:
-        login_info = pickle.load(f)
-
-    if username not in login_info:
+    db = database.Database(STORAGE_DIR)
+    # Get the values from the user table
+    try:
+        hashed_password, salt =\
+            db.get_col_values_from_table('password, salt',
+                                         'mmeds.user where username = "{}"'.format(username))[0]
+    # An index error means that the username did not exist
+    except IndexError:
         return False
-
-    salt = login_info[username][1]
 
     # Hash the password
     salted = password + salt
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
-    password_hash = sha256.digest()
+    password_hash = sha256.hexdigest()
 
-    return login_info[username][0] == password_hash
+    # Check that it matches the stored hash of the password
+    return hashed_password == password_hash
 
 
 def add_user(username, password):
@@ -41,23 +45,9 @@ def add_user(username, password):
     salted = password + salt
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
-    password_hash = sha256.digest()
-
-    # Load the dictionary
-    try:
-        with open(LOGIN_FILE, 'rb') as f:
-            login_info = pickle.load(f)
-    # If it's the first entry
-    except EOFError:
-        login_info = {}
-
-    # Add the user
-    if username not in login_info.keys():
-        login_info[username] = [password_hash, salt]
-
-    # Write the dictionary
-    with open(LOGIN_FILE, 'wb') as f:
-        pickle.dump(login_info, f)
+    password_hash = sha256.hexdigest()
+    db = database.Database(STORAGE_DIR)
+    db.add_user(username, password_hash, salt)
 
 
 def check_password(password1, password2):
@@ -84,17 +74,17 @@ def check_password(password1, password2):
 def check_username(username):
     """ Perform checks to ensure the username is valid. """
 
+    # Check the username does not contain invalid characters
     invalid_chars = set('\'\"\\/ ;,!@#$%^&*()|[{}]`~')
     if set(username).intersection(invalid_chars):
         return 'Error: Username contains invalid characters.'
-    try:
-        with open(LOGIN_FILE, 'rb') as f:
-            login_info = pickle.load(f)
-        users = login_info.keys()
-        if username in users:
-            return 'Error: Username is already taken.'
-    # If there are no users the username can't be a repeat
-    except EOFError:
-        return
 
+    # Check the username has not already been used
+    db = database.Database(STORAGE_DIR)
+
+    # Get all existing usernames
+    results = db.get_col_values_from_table('username', 'user')
+    used_names = [x[0] for x in results]
+    if username in used_names:
+        return 'Error: Username is already taken.'
     return

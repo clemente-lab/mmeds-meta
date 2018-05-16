@@ -3,22 +3,24 @@ import mongoengine as men
 import cherrypy as cp
 import pandas as pd
 import os
-import pprint
-import sys
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
+from mmeds.config import SECURITY_TOKEN
 
 
 class Database:
 
-    def __init__(self, path, database='mmeds_db', user='root'):
+    def __init__(self, path, database='mmeds', user='root'):
         """
         Connect to the specified database.
         Initialize variables for this session.
         """
         try:
-            self.db = pms.connect('localhost', user, '', database, local_infile=True)
+            if user == 'mmeds_user':
+                self.db = pms.connect('localhost', user, 'password', database, local_infile=True)
+            else:
+                self.db = pms.connect('localhost', user, '', database, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
@@ -28,25 +30,27 @@ class Database:
         self.cursor = self.db.cursor()
 
     def __del__(self):
-        """ Close the database connection when the object is cleared. """
+        """ Clear the current user session and disconnect from the database. """
+        sql = 'SELECT unset_connection_auth("{}")'.format(SECURITY_TOKEN)
+        self.cursor.execute(sql)
+        self.db.commit()
         self.db.close()
 
-    def list_tables(self, database, user='root'):
-        """ Logs the availible tables in the database. """
-        db = pms.connect('localhost', user, '', database)
-        cp.log('Connected to database ' + database + ' as user ' + user)
-        cursor = db.cursor()
-        cp.log('Got cursor from database')
-        try:
-            sql = 'SHOW TABLES;'
-            cursor.execute(sql)
-            cp.log('Ran query')
-            data = cursor.fetchall()
-            cp.log('\n'.join(map(str, data)))
-        except pms.err.ProgrammingError as e:
-            cp.log('Error executing SQL command: ' + sql)
-            cp.log(str(e))
-        db.close()
+    def __enter__(self):
+        """ Allows database connection to be used via a 'with' statement. """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """ Delete the Database instance upon the end of the 'with' block. """
+        del self
+
+    def set_mmeds_user(self, user):
+        """ Set the session to the current user of the webapp. """
+        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, SECURITY_TOKEN)
+        self.cursor.execute(sql)
+        set_user = self.cursor.fetchall()[0][0]
+        self.db.commit()
+        return set_user
 
     def format(self, text, header=None):
         """
@@ -99,8 +103,9 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def check_file_header(self, fp):
+    def check_file_header(self, fp, delimiter='\t'):
         """
+        UNFINISHED
         Checks that the metadata input file doesn't contain any
         tables or columns that don't exist in the database.
         """
@@ -125,6 +130,7 @@ class Database:
         current_key = int(self.cursor.fetchone()[0])
         # Track keys for repeated values in this file
         seen = {}
+        keys = []
         # Go through each column
         for j in range(len(df.index)):
             sql = 'SELECT * FROM ' + table + ' WHERE'
@@ -146,11 +152,14 @@ class Database:
                     # See if this table entry already exists in the current input file
                     key = seen[this_row]
                     self.IDs[table][j] = key
+                    keys.append(key)
                 except KeyError:
                     # If not add it and give it a unique key
                     seen[this_row] = current_key
                     self.IDs[table][j] = current_key
+                    keys.append(current_key)
                     current_key += 1
+        return keys
 
     def create_import_file(self, table, df):
         """
@@ -228,7 +237,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, fp, delimiter='\t'):
+    def read_in_sheet(self, fp, user, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -240,7 +249,10 @@ class Database:
         df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
         # Create file and import data for each regular table
         for table in df.axes[1].levels[0]:
-            self.create_import_data(table, df)
+            if table == 'Study':
+                keys = self.create_import_data(table, df)
+            else:
+                self.create_import_data(table, df)
             filename = self.create_import_file(table, df)
             # Load the newly created file into the database
             sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
@@ -254,15 +266,29 @@ class Database:
         # each junction table
         self.fill_junction_tables()
 
-        with open('/home/david/Work/mmeds.out') as f:
-            pp = pprint.PrettyPrinter(stream=f)
-            pp.pprint(self.IDs, stream=f)
-
         # Remove all row information from the current input
         self.IDs.clear()
+
+        # Return the study keys belonging to this user
+        return keys
 
     def create_nosql_document(self):
 
         page = men.ExtraData(title='Using MongoEngine')
         page.tags = ['mongodb', 'mongoengine']
         page.save()
+
+    def get_col_values_from_table(self, column, table):
+        sql = 'SELECT {} FROM {}'.format(column, table)
+        self.cursor.execute(sql)
+        data = self.cursor.fetchall()
+        return data
+
+    def add_user(self, username, password, salt):
+        """ Add the user with the specified parameters. """
+        # Create the SQL to add the user
+        sql = 'INSERT INTO mmeds.user (username, password, salt) VALUES\
+                ("{}", "{}", "{}");'.format(username, password, salt)
+
+        self.cursor.execute(sql)
+        self.db.commit()
