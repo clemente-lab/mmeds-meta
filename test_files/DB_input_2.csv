@@ -1,7 +1,7 @@
-"Lab"	"Lab"	"Lab"	"Study"	"Type"	"BodySite"	"Location"	"Location"	"Location"	"Location"	"Subjects"	"Subjects"	"Subjects"	"Subjects"	"Subjects"	"Subjects"
-"PrimaryInvestigator"	"ContactEmail"	"ContactName"	"Experiment"	"SpecimenType"	"SpecimenBodySite"	"Latitude"	"Longitude"	"Depth"	"Elevation"	"HostSubjectId"	"Nationality"	"Sex"	"Age"	"Height"	"Weight"
-"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	1	"American"	"F"	34	60	45
-"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	4	"American"	"F"	38	64	49
-"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	0	"American"	"M"	34	60	45
-"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	3	"American"	"M"	35	61	46
-"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	2	"American"	"M"	36	62	47
+"Study"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"
+"Experiment"	"HostSubjectId"	"Nationality"	"Sex"	"Age"	"Height"	"Weight"
+"Rats"	1	"American"	"F"	34	60	45
+"Rats"	4	"American"	"F"	38	64	49
+"Rats"	0	"American"	"M"	34	60	45
+"Rats"	3	"American"	"M"	35	61	46
+"Rats"	2	"American"	"M"	36	62	47

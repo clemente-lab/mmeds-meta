@@ -253,20 +253,23 @@ class Database:
 
         # Read in the metadata file to import
         df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
+
         # Create file and import data for each regular table
-        for table in df.axes[1].levels[0]:
-            if table == 'Study':
-                keys = self.create_import_data(table, df)
+        for table in set(df.axes[1].levels[0]):
+            # Upload the additional meta data to the NoSQL database
+            if table == 'AdditionalMetaData':
+                self.import_additional_metadata(df, user)
             else:
+                continue
                 self.create_import_data(table, df)
-            filename = self.create_import_file(table, df)
-            # Load the newly created file into the database
-            sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
-                  table + ' FIELDS TERMINATED BY "\\t"' +\
-                  ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-            self.cursor.execute(sql)
-            # Commit the inserted data
-            self.db.commit()
+                filename = self.create_import_file(table, df)
+                # Load the newly created file into the database
+                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                      table + ' FIELDS TERMINATED BY "\\t"' +\
+                      ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                self.cursor.execute(sql)
+                # Commit the inserted data
+                self.db.commit()
 
         # Create csv files and import them for
         # each junction table
@@ -274,14 +277,6 @@ class Database:
 
         # Remove all row information from the current input
         self.IDs.clear()
-
-        # Return the study keys belonging to this user
-        return keys
-
-    def create_nosql_document(self):
-        page = men.ExtraData(title='Using MongoEngine')
-        page.tags = ['mongodb', 'mongoengine']
-        page.save()
 
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)
@@ -297,12 +292,17 @@ class Database:
 
         self.cursor.execute(sql)
         self.db.commit()
-        print('SQL finished')
 
         # Add a document for the user in the NoSQL
         user = MetaData(owner=username, metadata={'0': username, '1': password, '2': salt})
-        print('User created')
-        user.tags = ['MetaData', user]
-        print('Tags added')
         user.save()
-        print('Done')
+
+    def import_additional_metadata(self, df, user, table='AdditionalMetaData'):
+        """ Imports additional columns into the NoSQL database. """
+        # Returns a list with one entry
+        mdata = MetaData.objects(owner=user)[0]
+        # Convert dataframe to a dictionary
+        new_mdata = df[table].to_dict()
+        # Add the entries to the user's document
+        mdata.metadata.update(new_mdata)
+        mdata.save()

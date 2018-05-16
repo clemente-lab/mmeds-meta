@@ -14,7 +14,7 @@ absDir = os.path.join(os.getcwd(), localDir)
 class MMEDSserver(object):
 
     def __init__(self):
-        self.db = Database(STORAGE_DIR)
+        self.db = None
 
     @cp.expose
     def index(self):
@@ -75,8 +75,10 @@ class MMEDSserver(object):
                 uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
 
             return uploaded_output
-        # Otherwise upload the metadata to the database
         else:
+            # Otherwise upload the metadata to the database
+            with Database(STORAGE_DIR, user='root') as db:
+                db.read_in_sheet(file_copy, cp.session['user'])
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()
