@@ -627,12 +627,3 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Genotypes` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
-
-
-
-CREATE
-SQL SECURITY DEFINER
-VIEW protected_study AS
-SELECT cc.* FROM `mmeds`.`Study` cc WHERE owner_check(cc.user_id)
-WITH CHECK OPTION;

@@ -22,7 +22,7 @@ class MMEDSserver(object):
         return open('../html/index.html')
 
     @cp.expose
-    def validate(self, myFile):
+    def validate(self, myFile, myEmail):
         """ The page returned after a file is uploaded. """
 
         # If nothing is uploaded proceed to the next page
