@@ -294,7 +294,7 @@ class Database:
         self.db.commit()
 
         # Add a document for the user in the NoSQL
-        user = MetaData(owner=username, metadata={'0': username, '1': password, '2': salt})
+        user = MetaData(owner=username)
         user.save()
 
     def import_additional_metadata(self, df, user, table='AdditionalMetaData'):
