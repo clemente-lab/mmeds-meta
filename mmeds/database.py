@@ -17,7 +17,7 @@ class MetaData(men.Document):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root'):
+    def __init__(self, path, database='mmeds', user='root', owner=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -34,6 +34,10 @@ class Database:
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
+        self.owner = owner
+        sql = 'SELECT user_id FROM user WHERE user.username="'+owner+'"'
+        self.cursor.execute(sql)
+        self.user_id = int(self.cursor.fetchone()[0])
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
@@ -94,12 +98,14 @@ class Database:
         Deletes every row from every table in the currently connected database.
         """
         self.cursor.execute('SHOW TABLES')
-        tables = self.cursor.fetchall()
+        tables = [x[0] for x in self.cursor.fetchall()]
+        # Skip the user table
+        tables.remove('user')
         r_tables = []
         while True:
             for table in tables:
                 try:
-                    self.cursor.execute('DELETE FROM ' + table[0])
+                    self.cursor.execute('DELETE FROM ' + table)
                     self.db.commit()
                 except pms.err.IntegrityError:
                     r_tables.append(table)
@@ -181,8 +187,10 @@ class Database:
         # Create the input file
         with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
+            # For each row in the input file
             for i in range(len(df.index)):
                 line = []
+                # For each column in the table
                 for j, col in enumerate(columns):
                     # If the column is a primary key
                     if structure[j][3] == 'PRI':
@@ -192,6 +200,8 @@ class Database:
                             key_table = col.strip('id')
                         # Get the approriate data from the dictionary
                         line.append(self.IDs[key_table][i])
+                    elif structure[j][0] == 'user_id':
+                        line.append(str(self.user_id))
                     else:
                         # Otherwise see if the entry already exists
                         try:
@@ -243,7 +253,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, fp, user, delimiter='\t'):
+    def read_in_sheet(self, fp, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -256,17 +266,20 @@ class Database:
 
         # Create file and import data for each regular table
         for table in set(df.axes[1].levels[0]):
+            print('Table %s' % table)
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                self.import_additional_metadata(df, user)
+                self.import_additional_metadata(df)
             else:
-                continue
+                print('Create import data')
                 self.create_import_data(table, df)
+                print('Create import file')
                 filename = self.create_import_file(table, df)
                 # Load the newly created file into the database
                 sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
                       ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                print('Execute sql')
                 self.cursor.execute(sql)
                 # Commit the inserted data
                 self.db.commit()
@@ -297,12 +310,12 @@ class Database:
         user = MetaData(owner=username)
         user.save()
 
-    def import_additional_metadata(self, df, user, table='AdditionalMetaData'):
+    def import_additional_metadata(self, df, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
         # Returns a list with one entry
-        mdata = MetaData.objects(owner=user)[0]
+        mdata = MetaData.objects(owner=self.owner)[0]
         # Convert dataframe to a dictionary
-        new_mdata = df[table].to_dict()
+        new_mdata = df[table].to_dict('list')
         # Add the entries to the user's document
         mdata.metadata.update(new_mdata)
         mdata.save()
