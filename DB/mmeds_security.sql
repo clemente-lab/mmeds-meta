@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Specimen` (
   `idSpecimen` INT NOT NULL,
   `user_id` INT REFERENCES user (user_id),
   `Subjects_idSubjects` INT NOT NULL,
-  `SampleType_idSampleType` INT NOT NULL,
+  `Type_idType` INT NOT NULL,
   `Location_idLocation` INT NOT NULL,
   `BodySite_idBodySite` INT NOT NULL,
   `SampleID` VARCHAR(45) NULL DEFAULT NULL,
@@ -204,9 +204,9 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Specimen` (
   `SampleDate` DATETIME NULL DEFAULT NULL,
   `Description` VARCHAR(45) NULL DEFAULT NULL,
   `AdditionalInformation` VARCHAR(45) NULL DEFAULT NULL,
-  PRIMARY KEY (`idSpecimen`, `Subjects_idSubjects`, `SampleType_idSampleType`, `Location_idLocation`, `BodySite_idBodySite`),
+  PRIMARY KEY (`idSpecimen`, `Subjects_idSubjects`, `Type_idType`, `Location_idLocation`, `BodySite_idBodySite`),
   INDEX `fk_Sample_Subjects_idx` (`Subjects_idSubjects` ASC),
-  INDEX `fk_Sample_SampleType1_idx` (`SampleType_idSampleType` ASC),
+  INDEX `fk_Sample_Type1_idx` (`Type_idType` ASC),
   INDEX `fk_Sample_Location1_idx` (`Location_idLocation` ASC),
   INDEX `fk_Specimen_BodySite1_idx` (`BodySite_idBodySite` ASC),
   CONSTRAINT `fk_Sample_Subjects`
@@ -214,8 +214,8 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Specimen` (
     REFERENCES `mmeds`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_Sample_SampleType1`
-    FOREIGN KEY (`SampleType_idSampleType`)
+  CONSTRAINT `fk_Type1`
+    FOREIGN KEY (`Type_idType`)
     REFERENCES `mmeds`.`Type` (`idType`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
@@ -387,14 +387,14 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Aliquot` (
   `user_id` INT REFERENCES user (user_id),
   `Specimen_idSpecimen` INT NOT NULL,
   `Specimen_Subjects_idSubjects` INT NOT NULL,
-  `Specimen_SampleType_idSampleType` INT NOT NULL,
+  `Specimen_Type_idType` INT NOT NULL,
   `Specimen_Location_idLocation` INT NOT NULL,
   `Specimen_BodySite_idBodySite` INT NOT NULL,
-  PRIMARY KEY (`idAliquot`, `Specimen_idSpecimen`, `Specimen_Subjects_idSubjects`, `Specimen_SampleType_idSampleType`, `Specimen_Location_idLocation`, `Specimen_BodySite_idBodySite`),
-  INDEX `fk_Aliquot_Specimen1_idx` (`Specimen_idSpecimen` ASC, `Specimen_Subjects_idSubjects` ASC, `Specimen_SampleType_idSampleType` ASC, `Specimen_Location_idLocation` ASC, `Specimen_BodySite_idBodySite` ASC),
+  PRIMARY KEY (`idAliquot`, `Specimen_idSpecimen`, `Specimen_Subjects_idSubjects`, `Specimen_Type_idType`, `Specimen_Location_idLocation`, `Specimen_BodySite_idBodySite`),
+  INDEX `fk_Aliquot_Specimen1_idx` (`Specimen_idSpecimen` ASC, `Specimen_Subjects_idSubjects` ASC, `Specimen_Type_idType` ASC, `Specimen_Location_idLocation` ASC, `Specimen_BodySite_idBodySite` ASC),
   CONSTRAINT `fk_Aliquot_Specimen1`
-    FOREIGN KEY (`Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_SampleType_idSampleType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
-    REFERENCES `mmeds`.`Specimen` (`idSpecimen` , `Subjects_idSubjects` , `SampleType_idSampleType` , `Location_idLocation` , `BodySite_idBodySite`)
+    FOREIGN KEY (`Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_Type_idType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
+    REFERENCES `mmeds`.`Specimen` (`idSpecimen` , `Subjects_idSubjects` , `Type_idType` , `Location_idLocation` , `BodySite_idBodySite`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -406,11 +406,11 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `mmeds`.`SampleProtocols` ;
 
 CREATE TABLE IF NOT EXISTS `mmeds`.`SampleProtocols` (
-  `idTools` INT NOT NULL,
+  `idSampleProtocols` INT NOT NULL,
   `user_id` INT REFERENCES user (user_id),
   `ToolName` VARCHAR(45) NULL DEFAULT NULL,
   `Version` VARCHAR(45) NULL DEFAULT NULL,
-  PRIMARY KEY (`idTools`))
+  PRIMARY KEY (`idSampleProtocols`))
 ENGINE = InnoDB;
 
 
@@ -424,12 +424,12 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`SampleProtocol` (
   `user_id` INT REFERENCES user (user_id),
   `DatePerformed` DATETIME NULL DEFAULT NULL,
   `Processor` VARCHAR(45) NULL DEFAULT NULL,
-  `SampleProtocols_idTools` INT NOT NULL,
-  PRIMARY KEY (`idSampleProtocol`, `SampleProtocols_idTools`),
-  INDEX `fk_SampleProtocol_SampleProtocols1_idx` (`SampleProtocols_idTools` ASC),
+  `SampleProtocols_idSampleProtocols` INT NOT NULL,
+  PRIMARY KEY (`idSampleProtocol`, `SampleProtocols_idSampleProtocols`),
+  INDEX `fk_SampleProtocol_SampleProtocols1_idx` (`SampleProtocols_idSampleProtocols` ASC),
   CONSTRAINT `fk_SampleProtocol_SampleProtocols1`
-    FOREIGN KEY (`SampleProtocols_idTools`)
-    REFERENCES `mmeds`.`SampleProtocols` (`idTools`)
+    FOREIGN KEY (`SampleProtocols_idSampleProtocols`)
+    REFERENCES `mmeds`.`SampleProtocols` (`idSampleProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -444,24 +444,24 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Sample` (
   `idSample` INT NOT NULL,
   `user_id` INT REFERENCES user (user_id),
   `SampleProtocol_idSampleProtocol` INT NOT NULL,
-  `SampleProtocol_SampleProtocols_idTools` INT NOT NULL,
+  `SampleProtocol_SampleProtocols_idSampleProtocols` INT NOT NULL,
   `Aliquot_idAliquot` INT NOT NULL,
   `Aliquot_Specimen_idSpecimen` INT NOT NULL,
   `Aliquot_Specimen_Subjects_idSubjects` INT NOT NULL,
-  `Aliquot_Specimen_SampleType_idSampleType` INT NOT NULL,
+  `Aliquot_Specimen_Type_idType` INT NOT NULL,
   `Aliquot_Specimen_Location_idLocation` INT NOT NULL,
   `Aliquot_Specimen_BodySite_idBodySite` INT NOT NULL,
-  PRIMARY KEY (`idSample`, `SampleProtocol_idSampleProtocol`, `SampleProtocol_SampleProtocols_idTools`, `Aliquot_idAliquot`, `Aliquot_Specimen_idSpecimen`, `Aliquot_Specimen_Subjects_idSubjects`, `Aliquot_Specimen_SampleType_idSampleType`, `Aliquot_Specimen_Location_idLocation`, `Aliquot_Specimen_BodySite_idBodySite`),
-  INDEX `fk_Sample_SampleProtocol1_idx` (`SampleProtocol_idSampleProtocol` ASC, `SampleProtocol_SampleProtocols_idTools` ASC),
-  INDEX `fk_Sample_Aliquot1_idx` (`Aliquot_idAliquot` ASC, `Aliquot_Specimen_idSpecimen` ASC, `Aliquot_Specimen_Subjects_idSubjects` ASC, `Aliquot_Specimen_SampleType_idSampleType` ASC, `Aliquot_Specimen_Location_idLocation` ASC, `Aliquot_Specimen_BodySite_idBodySite` ASC),
+  PRIMARY KEY (`idSample`, `SampleProtocol_idSampleProtocol`, `SampleProtocol_SampleProtocols_idSampleProtocols`, `Aliquot_idAliquot`, `Aliquot_Specimen_idSpecimen`, `Aliquot_Specimen_Subjects_idSubjects`, `Aliquot_Specimen_Type_idType`, `Aliquot_Specimen_Location_idLocation`, `Aliquot_Specimen_BodySite_idBodySite`),
+  INDEX `fk_Sample_SampleProtocol1_idx` (`SampleProtocol_idSampleProtocol` ASC, `SampleProtocol_SampleProtocols_idSampleProtocols` ASC),
+  INDEX `fk_Sample_Aliquot1_idx` (`Aliquot_idAliquot` ASC, `Aliquot_Specimen_idSpecimen` ASC, `Aliquot_Specimen_Subjects_idSubjects` ASC, `Aliquot_Specimen_Type_idType` ASC, `Aliquot_Specimen_Location_idLocation` ASC, `Aliquot_Specimen_BodySite_idBodySite` ASC),
   CONSTRAINT `fk_Sample_SampleProtocol1`
-    FOREIGN KEY (`SampleProtocol_idSampleProtocol` , `SampleProtocol_SampleProtocols_idTools`)
-    REFERENCES `mmeds`.`SampleProtocol` (`idSampleProtocol` , `SampleProtocols_idTools`)
+    FOREIGN KEY (`SampleProtocol_idSampleProtocol` , `SampleProtocol_SampleProtocols_idSampleProtocols`)
+    REFERENCES `mmeds`.`SampleProtocol` (`idSampleProtocol` , `SampleProtocols_idSampleProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Sample_Aliquot1`
-    FOREIGN KEY (`Aliquot_idAliquot` , `Aliquot_Specimen_idSpecimen` , `Aliquot_Specimen_Subjects_idSubjects` , `Aliquot_Specimen_SampleType_idSampleType` , `Aliquot_Specimen_Location_idLocation` , `Aliquot_Specimen_BodySite_idBodySite`)
-    REFERENCES `mmeds`.`Aliquot` (`idAliquot` , `Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_SampleType_idSampleType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
+    FOREIGN KEY (`Aliquot_idAliquot` , `Aliquot_Specimen_idSpecimen` , `Aliquot_Specimen_Subjects_idSubjects` , `Aliquot_Specimen_Type_idType` , `Aliquot_Specimen_Location_idLocation` , `Aliquot_Specimen_BodySite_idBodySite`)
+    REFERENCES `mmeds`.`Aliquot` (`idAliquot` , `Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_Type_idType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

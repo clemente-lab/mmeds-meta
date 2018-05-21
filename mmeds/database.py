@@ -6,7 +6,7 @@ import os
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, get_salt
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt
 
 
 class MetaData(men.Document):
@@ -205,7 +205,11 @@ class Database:
                         else:
                             key_table = col.strip('id')
                         # Get the approriate data from the dictionary
-                        line.append(self.IDs[key_table][i])
+                        try:
+                            line.append(self.IDs[key_table][i])
+                        except KeyError:
+                            print(self.IDs[key_table].keys())
+                            raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, i))
                     elif structure[j][0] == 'user_id':
                         line.append(str(self.user_id))
                     else:
@@ -271,9 +275,12 @@ class Database:
 
         # Read in the metadata file to import
         df = pd.read_csv(fp, sep=delimiter, header=[0, 1])
-        print(df.axes[1].levels[0])
+        df = df.reindex_axis(df.columns, axis=1)
+
+        tables = df.axes[1].levels[0].tolist()
+        tables.sort(key=lambda x: TABLE_ORDER.index(x))
         # Create file and import data for each regular table
-        for table in df.axes[1].levels[0]:
+        for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 self.import_additional_metadata(df, access_code)

@@ -35,3 +35,31 @@ UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.csv'
 STORAGE_DIR = 'data/'
 SECURITY_TOKEN = 'some_security_token'
+CONTACT_EMAIL = 'david.wallach@mssm.edu'
+
+TABLE_ORDER = [
+    'Lab',
+    'Study',
+    'Genotypes',
+    'Ethnicity'
+    'Illnesses',
+    'Interventions',
+    'SampleProtocols',
+    'RawDataProtocols',
+    'ResultsProtocols',
+    'Type',
+    'BodySite',
+    'Location',
+    'Subjects',
+    'Illness',
+    'Intervention',
+    'Specimen',
+    'Aliqout',
+    'SampleProtocol',
+    'Sample',
+    'RawDataProtocol',
+    'RawData',
+    'ResultProtocol',
+    'Result',
+    'AdditionalMetaData'
+]
