@@ -52,7 +52,7 @@ BEGIN
     JOIN user u
     ON u.username = s.username
     WHERE s.connection_id = CONNECTION_ID();
-    IF @v_current_user_id = v_owner_user_id THEN
+    IF @v_current_user_id = v_owner_user_id OR 1 = v_owner_user_id THEN
         RETURN true;
     ELSE
         RETURN false;

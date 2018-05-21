@@ -1,7 +1,10 @@
-"Study"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"
-"Experiment"	"HostSubjectId"	"Nationality"	"Sex"	"Age"	"Height"	"Weight"
-"Rats"	1	"American"	"F"	34	60	45
-"Rats"	4	"American"	"F"	38	64	49
-"Rats"	0	"American"	"M"	34	60	45
-"Rats"	3	"American"	"M"	35	61	46
-"Rats"	2	"American"	"M"	36	62	47
+"Lab"	"Lab"	"Lab"	"Study"	"Type"	"BodySite"	"Location"	"Location"	"Location"	"Location"	"Subjects"	"Subjects"	"Subjects"	"Subjects"	"Subjects"	"Subjects"	"AdditionalMetaData"	"AdditionalMetaData"	"AdditionalMetaData"
+"PrimaryInvestigator"	"ContactEmail"	"ContactName"	"Experiment"	"SpecimenType"	"SpecimenBodySite"	"Latitude"	"Longitude"	"Depth"	"Elevation"	"HostSubjectId"	"Nationality"	"Sex"	"BirthYear"	"Height"	"Weight"	"Data1"	"Data2"	"Data3"
+"Jose Clemente"	"david.wallach@mssm.edu"	"David Wallach"	"Lodi"	"Stool"	"Gut"	40.79	-73.95	0	0	0	"Spanish"	"M"	1995	60	45	"Test2Data2"	"Test22Data3"	"Test23Data4"
+"Jose Clemente"	"zach.wilson@mssm.edu"	"Zach Wilson"	"Ensemble"	"Stool"	"Gut"	40.79	-73.95	0	1	1	"Spanish"	"M"	1996	61	46	"Test2Data3"	"Test22Data4"	"Test23Data5"
+"John Long"	"jonathon.snyder@mssm.edu"	"Jonathon Snyder"	"Tadro"	"Robot"	"Sensor"	41.69	-73.9	0	0	2	"Spanish"	"M"	1997	62	47	"Test2Data4"	"Test22Data5"	"Test23Data6"
+"Jose Clemente"	"david.wallach@mssm.edu"	"David Wallach"	"Mmeds"	"Program"	"HardDrive"	41.69	-73.9	0	0	3	"French"	"F"	1998	63	48	"Test2Data5"	"Test22Data6"	"Test23Data7"
+"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Mice"	"Skin"	"Hand"	40.79	-73.95	0	0	1	"Spanish"	"M"	1996	61	46	"Test2Data6"	"Test22Data7"	"Test23Data8"
+"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	0	"Spanish"	"M"	1995	60	45	"Test2Data7"	"Test22Data8"	"Test23Data9"
+"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	4	"French"	"F"	2001	64	49	"Test2Data8"	"Test22Data9"	"Test23Data10"
+"David Wallach"	"david.wallach@mssm.edu"	"David Wallach"	"Rats"	"Skin"	"Face"	40.79	-73.95	0	0	0	"Spanish"	"M"	1995	60	45	"Test2Data9"	"Test22Data10"	"Test23Data11"

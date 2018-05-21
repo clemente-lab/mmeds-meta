@@ -22,9 +22,8 @@ class MMEDSserver(object):
         return open('../html/index.html')
 
     @cp.expose
-    def validate(self, myFile, myEmail):
+    def validate(self, myFile, myEmail, public='off'):
         """ The page returned after a file is uploaded. """
-
         # If nothing is uploaded proceed to the next page
         if myFile.filename == '':
             cp.log('No file uploaded')
@@ -76,9 +75,14 @@ class MMEDSserver(object):
 
             return uploaded_output
         else:
+            if public == 'on':
+                username = 'public'
+            else:
+                username = cp.session['user']
+
             # Otherwise upload the metadata to the database
-            with Database(STORAGE_DIR, user='root') as db:
-                db.read_in_sheet(file_copy, cp.session['user'])
+            with Database(STORAGE_DIR, user='root', owner=username) as db:
+                db.read_in_sheet(file_copy)
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()
@@ -87,8 +91,8 @@ class MMEDSserver(object):
     @cp.expose
     def query(self, query):
         # Set the session to use the current user
-        with Database(STORAGE_DIR, user='mmeds_user') as db:
-            username = cp.session['user']
+        username = cp.session['user']
+        with Database(STORAGE_DIR, user='mmeds_user', owner=username) as db:
             status = db.set_mmeds_user(username)
             cp.log('Set user to {}. Status {}'.format(username, status))
             result = db.execute(query)
@@ -97,6 +101,11 @@ class MMEDSserver(object):
 
             page = insert_error(page, 10, result)
         return page
+
+    @cp.expose
+    def get_additional_mdata(self):
+        """ Return the additional MetaData uploaded by the user. """
+        pass
 
     @cp.expose
     def sign_up_page(self):

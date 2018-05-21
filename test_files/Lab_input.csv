@@ -1,9 +1,9 @@
-idLab,PrimaryInvestigator,ContactEmail,ContactName,Row Key
-0,Jose Clemente,david.wallach@mssm.edu,David Wallach,0
-1,Jose Clemente,zach.wilson@mssm.edu,Zach Wilson,1
-2,John Long,jonathon.snyder@mssm.edu,Jonathon Snyder,2
-0,Jose Clemente,david.wallach@mssm.edu,David Wallach,3
-3,David Wallach,david.wallach@mssm.edu,David Wallach,4
-3,David Wallach,david.wallach@mssm.edu,David Wallach,5
-3,David Wallach,david.wallach@mssm.edu,David Wallach,6
-3,David Wallach,david.wallach@mssm.edu,David Wallach,7
+idLab	user_id	PrimaryInvestigator	ContactEmail	ContactName
+0	1	Jose Clemente	david.wallach@mssm.edu	David Wallach
+1	1	Jose Clemente	zach.wilson@mssm.edu	Zach Wilson
+2	1	John Long	jonathon.snyder@mssm.edu	Jonathon Snyder
+0	1	Jose Clemente	david.wallach@mssm.edu	David Wallach
+3	1	David Wallach	david.wallach@mssm.edu	David Wallach
+3	1	David Wallach	david.wallach@mssm.edu	David Wallach
+3	1	David Wallach	david.wallach@mssm.edu	David Wallach
+3	1	David Wallach	david.wallach@mssm.edu	David Wallach

@@ -35,9 +35,12 @@ class Database:
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
         self.owner = owner
-        sql = 'SELECT user_id FROM user WHERE user.username="'+owner+'"'
-        self.cursor.execute(sql)
-        self.user_id = int(self.cursor.fetchone()[0])
+        if owner is None:
+            self.user_id = 0
+        else:
+            sql = 'SELECT user_id FROM user WHERE user.username="' + owner + '"'
+            self.cursor.execute(sql)
+            self.user_id = int(self.cursor.fetchone()[0])
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
@@ -121,7 +124,7 @@ class Database:
         Checks that the metadata input file doesn't contain any
         tables or columns that don't exist in the database.
         """
-        df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1], nrows=2)
+        df = pd.read_csv(fp, sep=delimiter, header=[0, 1], nrows=2)
         self.cursor.execute('SHOW TABLES')
         tables = list(filter(lambda x: '_' not in x,
                              [l[0] for l in self.cursor.fetchall()]))
@@ -137,6 +140,7 @@ class Database:
         Fill out the dictionaries used to create the input files
         from the input data file.
         """
+        print('Create data ' + table)
         sql = 'SELECT COUNT(*) FROM ' + table
         self.cursor.execute(sql)
         current_key = int(self.cursor.fetchone()[0])
@@ -178,6 +182,7 @@ class Database:
         Create the file to load into each table referenced in the
         metadata input file
         """
+        print('creat file ' + table)
         # Get the structure of the table currently being filled out
         self.cursor.execute('DESCRIBE ' + table)
         structure = self.cursor.fetchall()
@@ -259,14 +264,13 @@ class Database:
         Imports each of those files into the database.
         """
         # TO BE REMOVED IN NON-DEMO VERSIONS
-        self.purge()
+        # self.purge()
 
         # Read in the metadata file to import
-        df = pd.read_csv(fp, delimiter=delimiter, header=[0, 1])
-
+        df = pd.read_csv(fp, sep=delimiter, header=[0, 1])
+        print(df.axes[1].levels[0])
         # Create file and import data for each regular table
-        for table in set(df.axes[1].levels[0]):
-            print('Table %s' % table)
+        for table in df.axes[1].levels[0]:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 self.import_additional_metadata(df)

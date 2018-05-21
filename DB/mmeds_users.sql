@@ -13,8 +13,8 @@ GRANT SELECT ON TABLE mmeds.session TO 'mmeds_user'@'%';
 INSERT INTO security_token (username, security_token) VALUES ('mmeds_user@localhost', 'some_security_token');
 
 -- Populate the Study table
-INSERT INTO Study VALUES (1, 1, 'ExperimentOne', 1);
-INSERT INTO Study VALUES (2, 2, 'ExperimentTwo', 2);
-INSERT INTO Study VALUES (3, 3, 'ExperimentThree', 3);
+-- INSERT INTO Study VALUES (1, 1, 'ExperimentOne', 1);
+-- INSERT INTO Study VALUES (2, 2, 'ExperimentTwo', 2);
+-- INSERT INTO Study VALUES (3, 3, 'ExperimentThree', 3);
 
 INSERT INTO user VALUES (1, 'Public', '', '');
