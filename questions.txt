@@ -1,0 +1,10 @@
+What type/abundence/quantity of bacteria is associated with which diseases?
+
+Cooccurence analysis:
+    - What bacteria are present in IBD patients when they have E. Coli?
+
+Link donor and recipient in FMT studies?
+
+Distinguish between sample and speciman. Check FreezerWorks
+
+

@@ -30,7 +30,7 @@ def check_metadata(file_fp, directory):
 def insert_error(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<font color="red">' + error_message + '</font>'] + lines[line_number:]
+    new_lines = lines[:line_number] + ['<p><font color="red">' + error_message + '</font></p>'] + lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
