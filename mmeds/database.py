@@ -221,7 +221,7 @@ class Database:
         Create and load the import files for every junction table.
         """
         self.cursor.execute('SHOW TABLES')
-        tables = list(filter(lambda x: '_' in x,
+        tables = list(filter(lambda x: '_has_' in x,
                              [l[0] for l in self.cursor.fetchall()]))
         # Import data for each junction table
         for table in tables:
