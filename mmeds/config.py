@@ -20,10 +20,6 @@ CONFIG = {
         'tools.sessions.httponly': True,
         'request.scheme': 'https'
     },
-    '/favicon.ico': {
-        'tools.staticfile.filename': '/home/david/Work/mmeds-meta/server/favicon.ico',
-        'tools.staticfile.on': True,
-    },
     '/protected/area': {
         'tools.auth_digest': True,
         'tools.auth_digest.realm': 'localhost',

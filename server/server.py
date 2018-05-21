@@ -83,6 +83,7 @@ class MMEDSserver(object):
             # Otherwise upload the metadata to the database
             with Database(STORAGE_DIR, user='root', owner=username) as db:
                 access_code = db.read_in_sheet(file_copy)
+                :q
 
             # Send the confirmation email
             send_email(myEmail, username, access_code)
