@@ -46,6 +46,9 @@ class MMEDSserver(object):
 
         with open(STORAGE_DIR + 'copy_' + cp.session['file']) as f:
             errors = validate_mapping_file(f)
+            # Otherwise upload the metadata to the database
+            with Database(STORAGE_DIR, user='root', owner=username) as db:
+                access_code = db.read_in_sheet(file_copy)
 
         # Write the errors to a file
         with open(STORAGE_DIR + 'errors_' + cp.session['file'], 'w') as f:
