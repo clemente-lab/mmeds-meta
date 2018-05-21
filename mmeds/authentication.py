@@ -1,17 +1,11 @@
 import hashlib
+import smtplib
 
-from random import choice
-from string import digits, ascii_uppercase, ascii_lowercase
-
+from string import ascii_uppercase, ascii_lowercase
 from mmeds import database
-from mmeds.config import STORAGE_DIR
+from mmeds.config import STORAGE_DIR, get_salt
 
 LOGIN_FILE = '../server/data/login_info'
-
-
-def get_salt(strength=10):
-    """ Get a randomly generated string for salting passwords. """
-    return ''.join(choice(digits + ascii_uppercase + ascii_lowercase) for i in range(strength))
 
 
 def validate_password(username, password):
@@ -88,3 +82,15 @@ def check_username(username):
     if username in used_names:
         return 'Error: Username is already taken.'
     return
+
+
+def send_email(address, user, code):
+    """ Sends a confirmation email to addess containing user and code. """
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    msg = 'Hello {},\n the user {} just uploaded data to the mmeds database server.\
+            In order to gain access to this data without the password to {}\ you must provide\
+            the following access code: {}\n\nBest,\nMmeds Team'.format(address, user, user, code)
+    server.login('donotreply.mmed.server@gmail.com', 'mmeds_server')
+    server.sendmail('donotreply.mmed.server@gmail.com', address, msg)
+    server.quit()

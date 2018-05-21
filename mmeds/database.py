@@ -6,11 +6,12 @@ import os
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN
+from mmeds.config import SECURITY_TOKEN, get_salt
 
 
 class MetaData(men.Document):
-    owner = men.StringField(max_length=100, required=True)
+    study = men.StringField(max_length=100, required=True)
+    access_code = men.StringField(max_length=50, required=True)
     metadata = men.DictField()
     data = men.GenericEmbeddedDocumentField()
 
@@ -266,6 +267,8 @@ class Database:
         # TO BE REMOVED IN NON-DEMO VERSIONS
         # self.purge()
 
+        access_code = get_salt(50)
+
         # Read in the metadata file to import
         df = pd.read_csv(fp, sep=delimiter, header=[0, 1])
         print(df.axes[1].levels[0])
@@ -273,7 +276,7 @@ class Database:
         for table in df.axes[1].levels[0]:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                self.import_additional_metadata(df)
+                self.import_additional_metadata(df, access_code)
             else:
                 print('Create import data')
                 self.create_import_data(table, df)
@@ -295,6 +298,8 @@ class Database:
         # Remove all row information from the current input
         self.IDs.clear()
 
+        return access_code
+
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)
         self.cursor.execute(sql)
@@ -310,16 +315,11 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-        # Add a document for the user in the NoSQL
-        user = MetaData(owner=username)
-        user.save()
-
-    def import_additional_metadata(self, df, table='AdditionalMetaData'):
+    def import_additional_metadata(self, df, access_code, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
-        # Returns a list with one entry
-        mdata = MetaData.objects(owner=self.owner)[0]
         # Convert dataframe to a dictionary
         new_mdata = df[table].to_dict('list')
-        # Add the entries to the user's document
-        mdata.metadata.update(new_mdata)
+        # Add a document for the study in the NoSQL
+        mdata = MetaData(study=self.owner, access_code=access_code, metadata=new_mdata)
+        # Save the document
         mdata.save()

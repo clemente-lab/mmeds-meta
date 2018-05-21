@@ -1,3 +1,12 @@
+from random import choice
+from string import digits, ascii_uppercase, ascii_lowercase
+
+
+def get_salt(strength=10):
+    """ Get a randomly generated string for salting passwords. """
+    return ''.join(choice(digits + ascii_uppercase + ascii_lowercase) for i in range(strength))
+
+
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
