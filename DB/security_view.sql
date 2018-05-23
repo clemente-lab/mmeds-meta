@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS `mmeds`.`protected_Aliquot`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Aliquot AS
@@ -6,6 +7,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Aliquot` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_BodySite`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_BodySite AS
@@ -14,6 +16,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_BodySite` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Ethnicity`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Ethnicity AS
@@ -22,6 +25,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Ethnicity` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Genotypes`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Genotypes AS
@@ -30,6 +34,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Genotypes` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Illness`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Illness AS
@@ -38,6 +43,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Illness` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Illnesses`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Illnesses AS
@@ -46,6 +52,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Illnesses` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Intervention`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Intervention AS
@@ -54,6 +61,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Intervention` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Interventions`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Interventions AS
@@ -62,6 +70,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Interventions` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Lab`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Lab AS
@@ -70,6 +79,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Lab` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Location`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Location AS
@@ -78,6 +88,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Location` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_RawData`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_RawData AS
@@ -86,6 +97,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_RawData` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_RawDataProtocol`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_RawDataProtocol AS
@@ -94,6 +106,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_RawDataProtocol` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_RawDataProtocols`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_RawDataProtocols AS
@@ -102,6 +115,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_RawDataProtocols` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Results`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Results AS
@@ -110,6 +124,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Results` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_ResultsProtocol`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_ResultsProtocol AS
@@ -118,6 +133,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_ResultsProtocol` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_ResultsProtocols`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_ResultsProtocols AS
@@ -126,6 +142,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_ResultsProtocols` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Sample`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Sample AS
@@ -134,6 +151,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Sample` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_SampleProtocol`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_SampleProtocol AS
@@ -142,6 +160,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_SampleProtocol` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_SampleProtocols`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_SampleProtocols AS
@@ -150,6 +169,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_SampleProtocols` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Specimen`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Specimen AS
@@ -158,6 +178,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Specimen` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Study`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Study AS
@@ -166,6 +187,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Study` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Subjects`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Subjects AS
@@ -174,6 +196,7 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds`.`protected_Subjects` TO 'mmeds_user'@'%';
 
+DROP VIEW IF EXISTS `mmeds`.`protected_Type`;
 CREATE
 SQL SECURITY DEFINER
 VIEW protected_Type AS

@@ -37,7 +37,7 @@ TABLE_ORDER = [
     'Lab',
     'Study',
     'Genotypes',
-    'Ethnicity'
+    'Ethnicity',
     'Illnesses',
     'Interventions',
     'SampleProtocols',
@@ -50,12 +50,12 @@ TABLE_ORDER = [
     'Illness',
     'Intervention',
     'Specimen',
-    'Aliqout',
+    'Aliquot',
     'SampleProtocol',
     'Sample',
     'RawDataProtocol',
     'RawData',
-    'ResultProtocol',
-    'Result',
+    'ResultsProtocol',
+    'Results',
     'AdditionalMetaData'
 ]
