@@ -457,14 +457,14 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`RawData` (
   `RawDataProtocols_RawDataProtocols_RawDataProtocols` INT NOT NULL,
   `RawData` VARCHAR(45) NULL,
   PRIMARY KEY (`idRawData`, `Sample_idSample`, `RawDataProtocols_idRawDataProtocols`, `RawDataProtocols_RawDataProtocols_RawDataProtocols`),
-  INDEX `fk_rawData_Sample1_idx` (`Sample_idSample` ASC),
-  INDEX `fk_rawData_RawDataProtocols1_idx` (`RawDataProtocols_idRawDataProtocols` ASC, `RawDataProtocols_RawDataProtocols_RawDataProtocols` ASC),
-  CONSTRAINT `fk_rawData_Sample1`
+  INDEX `fk_RawData_Sample1_idx` (`Sample_idSample` ASC),
+  INDEX `fk_RawData_RawDataProtocols1_idx` (`RawDataProtocols_idRawDataProtocols` ASC, `RawDataProtocols_RawDataProtocols_RawDataProtocols` ASC),
+  CONSTRAINT `fk_RawData_Sample1`
     FOREIGN KEY (`Sample_idSample`)
     REFERENCES `mmeds`.`Sample` (`idSample`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_rawData_RawDataProtocols1`
+  CONSTRAINT `fk_RawData_RawDataProtocols1`
     FOREIGN KEY (`RawDataProtocols_idRawDataProtocols` , `RawDataProtocols_RawDataProtocols_RawDataProtocols`)
     REFERENCES `mmeds`.`RawDataProtocol` (`idRawDataProtocols` , `RawDataProtocols_RawDataProtocols`)
     ON DELETE NO ACTION
@@ -516,14 +516,14 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Results` (
   `user_id` INT NULL DEFAULT NULL,
   `Result` VARCHAR(45) NULL DEFAULT NULL,
   `AdditionalMetaDataRow` INT NULL,
-  `rawData_Sample_idSample` INT NOT NULL,
+  `RawData_Sample_idSample` INT NOT NULL,
   `ResultsProtocols_idResultsProtocols` INT NOT NULL,
   `ResultsProtocols_ResultsProtocols_idResultsProtocols` INT NOT NULL,
-  PRIMARY KEY (`idResults`, `rawData_Sample_idSample`, `ResultsProtocols_idResultsProtocols`, `ResultsProtocols_ResultsProtocols_idResultsProtocols`),
-  INDEX `fk_Results_rawData1_idx` (`rawData_Sample_idSample` ASC),
+  PRIMARY KEY (`idResults`, `RawData_Sample_idSample`, `ResultsProtocols_idResultsProtocols`, `ResultsProtocols_ResultsProtocols_idResultsProtocols`),
+  INDEX `fk_Results_RawData1_idx` (`RawData_Sample_idSample` ASC),
   INDEX `fk_Results_ResultsProtocols1_idx` (`ResultsProtocols_idResultsProtocols` ASC, `ResultsProtocols_ResultsProtocols_idResultsProtocols` ASC),
-  CONSTRAINT `fk_Results_rawData1`
-    FOREIGN KEY (`rawData_Sample_idSample`)
+  CONSTRAINT `fk_Results_RawData1`
+    FOREIGN KEY (`RawData_Sample_idSample`)
     REFERENCES `mmeds`.`RawData` (`Sample_idSample`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,

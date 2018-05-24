@@ -151,12 +151,12 @@ class Database:
         # Go through each column
         for j in range(len(df.index)):
             sql = 'SELECT * FROM ' + table + ' WHERE'
+            # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
                 if i == 0:
                     sql += ' ' + column + ' = "' + str(df[table][column][j]) + '"'
                 else:
                     sql += ' AND ' + column + ' = "' + str(df[table][column][j]) + '"'
-            # Check if there is a matching entry already in the database
             found = self.cursor.execute(sql)
             if found == 1:
                 result = self.cursor.fetchone()

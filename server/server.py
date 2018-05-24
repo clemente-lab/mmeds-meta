@@ -22,10 +22,10 @@ class MMEDSserver(object):
         return open('../html/index.html')
 
     @cp.expose
-    def validate(self, myFile, myEmail, public='off'):
+    def validate(self, myMetaData, myData, myEmail, public='off'):
         """ The page returned after a file is uploaded. """
         # If nothing is uploaded proceed to the next page
-        if myFile.filename == '':
+        if myMetaData.filename == '':
             cp.log('No file uploaded')
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
@@ -34,19 +34,19 @@ class MMEDSserver(object):
 
         # Otherwise check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
-        file_extension = myFile.filename.split('.')[-1]
+        file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
             with open('../html/upload.html') as f:
                 page = f.read()
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
-        cp.session['file'] = myFile.filename
+        cp.session['file'] = myMetaData.filename
         file_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['file'])
 
         # Write the data to a new file stored on the server
         nf = open(file_copy, 'wb')
         while True:
-            data = myFile.file.read(8192)
+            data = myMetaData.file.read(8192)
             nf.write(data)
             if not data:
                 break
