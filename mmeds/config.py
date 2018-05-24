@@ -1,10 +1,14 @@
-from random import choice
+from secrets import choice
 from string import digits, ascii_uppercase, ascii_lowercase
 
 
-def get_salt(strength=10):
+def get_salt(length=10, numeric=False):
     """ Get a randomly generated string for salting passwords. """
-    return ''.join(choice(digits + ascii_uppercase + ascii_lowercase) for i in range(strength))
+    if numeric:
+        listy = digits
+    else:
+        listy = digits + ascii_uppercase + ascii_lowercase
+    return ''.join(choice(listy) for i in range(length))
 
 
 CONFIG = {

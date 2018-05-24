@@ -3,6 +3,7 @@ import mongoengine as men
 import cherrypy as cp
 import pandas as pd
 import os
+import secrets
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
@@ -10,7 +11,7 @@ from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt
 
 
 class MetaData(men.Document):
-    study = men.StringField(max_length=100, required=True)
+    # study = men.StringField(max_length=100, required=True)
     access_code = men.StringField(max_length=50, required=True)
     metadata = men.DictField()
     data = men.GenericEmbeddedDocumentField()
@@ -147,7 +148,6 @@ class Database:
         current_key = int(self.cursor.fetchone()[0])
         # Track keys for repeated values in this file
         seen = {}
-        keys = []
         # Go through each column
         for j in range(len(df.index)):
             sql = 'SELECT * FROM ' + table + ' WHERE'
@@ -169,14 +169,11 @@ class Database:
                     # See if this table entry already exists in the current input file
                     key = seen[this_row]
                     self.IDs[table][j] = key
-                    keys.append(key)
                 except KeyError:
                     # If not add it and give it a unique key
                     seen[this_row] = current_key
                     self.IDs[table][j] = current_key
-                    keys.append(current_key)
                     current_key += 1
-        return keys
 
     def create_import_file(self, table, df):
         """
@@ -212,6 +209,8 @@ class Database:
                             raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, i))
                     elif structure[j][0] == 'user_id':
                         line.append(str(self.user_id))
+                    elif structure[j][0] == 'AdditionalMetaDataRow':
+                        line.append(str(i))
                     else:
                         # Otherwise see if the entry already exists
                         try:
@@ -263,15 +262,23 @@ class Database:
             except KeyError:
                 pass
 
+    def setup_upload(self):
+        """
+        Perform housekeeping in upload table for the current upload.
+        """
+        access_code = get_salt(50)
+        sql = 'INSERT INTO upload (username, access_code) VALUES ("{}", "{}")'
+        self.cursor.execute(sql.format(self.owner, access_code))
+
+        return access_code
+
     def read_in_sheet(self, fp, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
-        # TO BE REMOVED IN NON-DEMO VERSIONS
-        # self.purge()
-
-        access_code = get_salt(50)
+        # Add an entry in the upload table for this upload
+        access_code = self.setup_upload()
 
         # Read in the metadata file to import
         df = pd.read_csv(fp, sep=delimiter, header=[0, 1])
@@ -327,6 +334,6 @@ class Database:
         # Convert dataframe to a dictionary
         new_mdata = df[table].to_dict('list')
         # Add a document for the study in the NoSQL
-        mdata = MetaData(study=self.owner, access_code=access_code, metadata=new_mdata)
+        mdata = MetaData(access_code=access_code, metadata=new_mdata)
         # Save the document
         mdata.save()

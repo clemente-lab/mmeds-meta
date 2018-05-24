@@ -22,3 +22,6 @@
 # Server logs
 server/data/*
 server/site.log
+
+# MySQL Workbench Backups
+*.bak

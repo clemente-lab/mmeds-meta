@@ -18,3 +18,4 @@ INSERT INTO security_token (username, security_token) VALUES ('mmeds_user@localh
 -- INSERT INTO Study VALUES (3, 3, 'ExperimentThree', 3);
 
 INSERT INTO user VALUES (1, 'Public', '', '');
+INSERT INTO user VALUES (2, 'Public', '', '');
