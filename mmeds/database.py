@@ -198,7 +198,7 @@ class Database:
                     # If the column is a primary key
                     if structure[j][3] == 'PRI':
                         if '_' in col:
-                            key_table = col.split('_')[0]
+                            key_table = col.split('_')[-1].strip('id')
                         else:
                             key_table = col.strip('id')
                         # Get the approriate data from the dictionary
