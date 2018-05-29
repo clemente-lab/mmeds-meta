@@ -142,7 +142,6 @@ class Database:
         Fill out the dictionaries used to create the input files
         from the input data file.
         """
-        print('Create data ' + table)
         sql = 'SELECT COUNT(*) FROM ' + table
         self.cursor.execute(sql)
         current_key = int(self.cursor.fetchone()[0])
@@ -153,14 +152,19 @@ class Database:
             sql = 'SELECT * FROM ' + table + ' WHERE'
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
+                value = df[table][column][j]
                 if i == 0:
-                    sql += ' ' + column + ' = "' + str(df[table][column][j]) + '"'
+                    sql += ' '
                 else:
-                    sql += ' AND ' + column + ' = "' + str(df[table][column][j]) + '"'
+                    sql += ' AND '
+                if type(value) == str:
+                    sql += column + ' = "' + value + '"'
+                else:
+                    sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
             found = self.cursor.execute(sql)
             if found == 1:
-                result = self.cursor.fetchone()
                 # Append the key found for that column
+                result = self.cursor.fetchone()
                 self.IDs[table][j] = int(result[0])
             else:
                 # Create the entry
@@ -180,7 +184,6 @@ class Database:
         Create the file to load into each table referenced in the
         metadata input file
         """
-        print('creat file ' + table)
         # Get the structure of the table currently being filled out
         self.cursor.execute('DESCRIBE ' + table)
         structure = self.cursor.fetchall()
@@ -197,15 +200,11 @@ class Database:
                 for j, col in enumerate(columns):
                     # If the column is a primary key
                     if structure[j][3] == 'PRI':
-                        if '_' in col:
-                            key_table = col.split('_')[-1].strip('id')
-                        else:
-                            key_table = col.strip('id')
+                        key_table = col.split('id')[-1]
                         # Get the approriate data from the dictionary
                         try:
                             line.append(self.IDs[key_table][i])
                         except KeyError:
-                            print(self.IDs[key_table].keys())
                             raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, i))
                     elif structure[j][0] == 'user_id':
                         line.append(str(self.user_id))
@@ -292,15 +291,12 @@ class Database:
             if table == 'AdditionalMetaData':
                 self.import_additional_metadata(df, access_code)
             else:
-                print('Create import data')
                 self.create_import_data(table, df)
-                print('Create import file')
                 filename = self.create_import_file(table, df)
                 # Load the newly created file into the database
                 sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
                       ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                print('Execute sql')
                 self.cursor.execute(sql)
                 # Commit the inserted data
                 self.db.commit()
