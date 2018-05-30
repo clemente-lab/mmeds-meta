@@ -41,7 +41,7 @@ class MMEDSserver(object):
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
         # Create a copy of the Data file
-        cp.session['data_file'] = myMetaData.filename
+        cp.session['data_file'] = myData.filename
         data_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['data_file'])
 
         # Write the data to a new file stored on the server
@@ -178,7 +178,12 @@ class MMEDSserver(object):
     def download_data(self, access_code):
         """ Download data and metadata files. """
         with Database(STORAGE_DIR, user='root') as db:
-            db.get_data_from_access_code(access_code)
+            fp = db.get_data_from_access_code(access_code)
+        with open(STORAGE_DIR + 'download.txt', 'w') as f:
+            f.write(str(fp.read(), 'utf-8'))
+        path = os.path.join(absDir, STORAGE_DIR + 'download.txt')
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
 
     # View files
     @cp.expose

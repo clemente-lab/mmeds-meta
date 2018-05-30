@@ -332,10 +332,12 @@ class Database:
         # Open the data file
         with open(data, 'rb') as data_file:
             # Add a document for the study in the NoSQL
-            mdata = MetaData(access_code=access_code, metadata=new_mdata, data=data_file)
+            mdata = MetaData(access_code=access_code, metadata=new_mdata)
+            mdata.data.put(data_file)
             # Save the document
             mdata.save()
 
     def get_data_from_access_code(self, access_code):
         """ Gets the NoSQL data affiliated with the provided access code. """
-        pass
+        mdata = MetaData.objects(access_code=access_code).first()
+        return mdata.data
