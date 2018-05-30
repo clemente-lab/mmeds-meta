@@ -40,11 +40,25 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
-        cp.session['file'] = myMetaData.filename
-        file_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['file'])
+        # Create a copy of the Data file
+        cp.session['data_file'] = myMetaData.filename
+        data_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['data_file'])
 
         # Write the data to a new file stored on the server
-        nf = open(file_copy, 'wb')
+        nf = open(data_copy, 'wb')
+        while True:
+            data = myData.file.read(8192)
+            nf.write(data)
+            if not data:
+                break
+        nf.close()
+
+        # Create a copy of the MetaData
+        cp.session['metadata_file'] = myMetaData.filename
+        metadata_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['metadata_file'])
+
+        # Write the data to a new file stored on the server
+        nf = open(metadata_copy, 'wb')
         while True:
             data = myMetaData.file.read(8192)
             nf.write(data)
@@ -52,7 +66,7 @@ class MMEDSserver(object):
                 break
         nf.close()
         # Check the metadata file for errors
-        with open(file_copy) as f:
+        with open(metadata_copy) as f:
             errors = validate_mapping_file(f)
             ########### TEMPORARY #############
             errors = []
@@ -62,7 +76,7 @@ class MMEDSserver(object):
         # If there are errors report them and return the error page
         if len(errors) > 0:
             # Write the errors to a file
-            with open(STORAGE_DIR + 'errors_' + cp.session['file'], 'w') as f:
+            with open(STORAGE_DIR + 'errors_' + cp.session['metadata_file'], 'w') as f:
                 f.write('\n'.join(errors))
 
             # Get the html for the upload page
@@ -82,7 +96,7 @@ class MMEDSserver(object):
 
             # Otherwise upload the metadata to the database
             with Database(STORAGE_DIR, user='root', owner=username) as db:
-                access_code = db.read_in_sheet(file_copy)
+                access_code = db.read_in_sheet(metadata_copy, data_copy)
 
             # Send the confirmation email
             send_email(myEmail, username, access_code)
@@ -110,6 +124,13 @@ class MMEDSserver(object):
     def get_additional_mdata(self):
         """ Return the additional MetaData uploaded by the user. """
         pass
+
+    @cp.expose
+    def get_data(self):
+        """ Return the data file uploaded by the user. """
+        path = os.path.join(absDir, STORAGE_DIR + cp.session['data_file'])
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
 
     @cp.expose
     def sign_up_page(self):
@@ -152,6 +173,12 @@ class MMEDSserver(object):
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+
+    @cp.expose
+    def download_data(self, access_code):
+        """ Download data and metadata files. """
+        with Database(STORAGE_DIR, user='root') as db:
+            db.get_data_from_access_code(access_code)
 
     # View files
     @cp.expose

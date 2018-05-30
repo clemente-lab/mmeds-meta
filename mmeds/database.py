@@ -14,7 +14,7 @@ class MetaData(men.Document):
     # study = men.StringField(max_length=100, required=True)
     access_code = men.StringField(max_length=50, required=True)
     metadata = men.DictField()
-    data = men.GenericEmbeddedDocumentField()
+    data = men.FileField()
 
 
 class Database:
@@ -271,7 +271,7 @@ class Database:
 
         return access_code
 
-    def read_in_sheet(self, fp, delimiter='\t'):
+    def read_in_sheet(self, metadata, data, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -280,7 +280,7 @@ class Database:
         access_code = self.setup_upload()
 
         # Read in the metadata file to import
-        df = pd.read_csv(fp, sep=delimiter, header=[0, 1])
+        df = pd.read_csv(metadata, sep=delimiter, header=[0, 1])
         df = df.reindex_axis(df.columns, axis=1)
 
         tables = df.axes[1].levels[0].tolist()
@@ -289,7 +289,7 @@ class Database:
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                self.import_additional_metadata(df, access_code)
+                self.import_additional_metadata(df, data, access_code)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -325,11 +325,17 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def import_additional_metadata(self, df, access_code, table='AdditionalMetaData'):
+    def import_additional_metadata(self, df, data, access_code, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
         # Convert dataframe to a dictionary
         new_mdata = df[table].to_dict('list')
-        # Add a document for the study in the NoSQL
-        mdata = MetaData(access_code=access_code, metadata=new_mdata)
-        # Save the document
-        mdata.save()
+        # Open the data file
+        with open(data, 'rb') as data_file:
+            # Add a document for the study in the NoSQL
+            mdata = MetaData(access_code=access_code, metadata=new_mdata, data=data_file)
+            # Save the document
+            mdata.save()
+
+    def get_data_from_access_code(self, access_code):
+        """ Gets the NoSQL data affiliated with the provided access code. """
+        pass

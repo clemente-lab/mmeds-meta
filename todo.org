@@ -11,6 +11,8 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE Check columns for values outside 2 stdevs :work:
 ** DONE change age to birth year :work:
 ** DONE warning for spaces at beginning or end :work:
-** TODO look into linking non-relational database :work:
-** TODO look into other tools and free form data :work:
-** DONE Add unused columns error after file upload
+** DONE look into linking non-relational database			     :work:
+** DONE look into other tools and free form data			     :work:
+** TODO Add unused columns error after file upload :work:
+** TODO Add functionality to download data file and additional metadata :work:
+** TODO Add functionality to allow metadata file to be recreated from the data
