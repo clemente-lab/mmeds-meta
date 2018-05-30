@@ -177,11 +177,14 @@ class MMEDSserver(object):
     @cp.expose
     def download_data(self, access_code):
         """ Download data and metadata files. """
+        # Get the open file handler
         with Database(STORAGE_DIR, user='root') as db:
             fp = db.get_data_from_access_code(access_code)
-        with open(STORAGE_DIR + 'download.txt', 'w') as f:
-            f.write(str(fp.read(), 'utf-8'))
+        # Write the information to a static file
+        with open(STORAGE_DIR + 'download.txt', 'wb') as f:
+            f.write(fp.read())
         path = os.path.join(absDir, STORAGE_DIR + 'download.txt')
+        # Return that file
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
