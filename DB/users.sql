@@ -4,7 +4,6 @@
 GRANT EXECUTE ON FUNCTION mmeds.set_connection_auth TO 'mmeds_user'@'%';
 GRANT EXECUTE ON FUNCTION mmeds.unset_connection_auth TO 'mmeds_user'@'%';
 GRANT EXECUTE ON FUNCTION mmeds.owner_check TO 'mmeds_user'@'%';
-GRANT SELECT ON TABLE mmeds.protected_study TO 'mmeds_user'@'%';
 
 -- TEMPORARY PERMISSIONS FOR DEBUGGING GRANT SELECT ON TABLE mmeds.user TO 'mmeds_user'@'%';
 GRANT SELECT ON TABLE mmeds.session TO 'mmeds_user'@'%';
@@ -18,4 +17,3 @@ INSERT INTO security_token (username, security_token) VALUES ('mmeds_user@localh
 -- INSERT INTO Study VALUES (3, 3, 'ExperimentThree', 3);
 
 INSERT INTO user VALUES (1, 'Public', '', '');
-INSERT INTO user VALUES (2, 'Public', '', '');

@@ -63,3 +63,22 @@ TABLE_ORDER = [
     'Results',
     'AdditionalMetaData'
 ]
+
+PROTECTED_TABLES = [
+    'Lab',
+    'Study',
+    'Location',
+    'Subjects',
+    'Illness',
+    'Intervention',
+    'Specimen',
+    'Aliquot',
+    'SampleProtocol',
+    'Sample',
+    'RawDataProtocol',
+    'RawData',
+    'ResultsProtocol',
+    'Results'
+]
+
+PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
