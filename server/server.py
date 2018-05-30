@@ -24,15 +24,7 @@ class MMEDSserver(object):
     @cp.expose
     def validate(self, myMetaData, myData, myEmail, public='off'):
         """ The page returned after a file is uploaded. """
-        # If nothing is uploaded proceed to the next page
-        if myMetaData.filename == '':
-            cp.log('No file uploaded')
-            # Get the html for the upload page
-            with open('../html/success.html', 'r') as f:
-                upload_successful = f.read()
-            return upload_successful
-
-        # Otherwise check the file that's uploaded
+        # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
@@ -105,6 +97,14 @@ class MMEDSserver(object):
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()
             return upload_successful
+
+    @cp.expose
+    def skip_upload(self):
+        """ Skip uploading a file. """
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
 
     @cp.expose
     def query(self, query):
