@@ -174,8 +174,13 @@ class MMEDSserver(object):
     def download_data(self, access_code):
         """ Download data and metadata files. """
         # Get the open file handler
-        with Database(STORAGE_DIR, user='root') as db:
-            fp = db.get_data_from_access_code(access_code)
+        with Database(STORAGE_DIR, user='root', owner=cp.session['user']) as db:
+            try:
+                fp = db.get_data_from_access_code(access_code)
+            except AttributeError:
+                with open('../html/download_error.html') as f:
+                    download_error = f.read()
+                return download_error.format(cp.session['user'])
         # Write the information to a static file
         with open(STORAGE_DIR + 'download.txt', 'wb') as f:
             f.write(fp.read())

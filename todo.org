@@ -13,8 +13,8 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE warning for spaces at beginning or end :work:
 ** DONE look into linking non-relational database			     :work:
 ** DONE look into other tools and free form data			     :work:
-** TODO Add user_id criteria for matching subject rows
-** TODO Allow modification of previous uploads
+** DONE Add user_id criteria for matching subject rows
+** TODO Allow modification of previous uploads e.g. upload data at later time
 ** TODO Add check for repeated entries for the same subject
 ** TODO Require user name and password as well as access_code
 ** TODO Allow reseting of access code

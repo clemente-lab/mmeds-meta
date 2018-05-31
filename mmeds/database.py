@@ -13,6 +13,7 @@ from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt
 class MetaData(men.Document):
     # study = men.StringField(max_length=100, required=True)
     access_code = men.StringField(max_length=50, required=True)
+    owner = men.StringField(max_length=100, required=True)
     metadata = men.DictField()
     data = men.FileField()
 
@@ -334,12 +335,12 @@ class Database:
         # Open the data file
         with open(data, 'rb') as data_file:
             # Add a document for the study in the NoSQL
-            mdata = MetaData(access_code=access_code, metadata=new_mdata)
+            mdata = MetaData(access_code=access_code, owner=self.owner, metadata=new_mdata)
             mdata.data.put(data_file)
             # Save the document
             mdata.save()
 
     def get_data_from_access_code(self, access_code):
         """ Gets the NoSQL data affiliated with the provided access code. """
-        mdata = MetaData.objects(access_code=access_code).first()
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         return mdata.data
