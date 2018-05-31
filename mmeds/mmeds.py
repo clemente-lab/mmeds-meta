@@ -6,6 +6,8 @@ NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
 REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPrimerSequence', 'Lab', 'AnalysisTool', 'PrimaryInvestigator'])
 
+REQUIRED_HEADERS = set(['SampleID', 'BarcodeSequence', 'PrimaryInvestigator'])
+
 HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address', 'phone', 'phone_number']
 
 DNA = set('GATC')
@@ -61,8 +63,9 @@ def check_header(header, prev_headers):
     return errors
 
 
-def check_column(column, prev_headers):
+def check_column(raw_column, prev_headers):
     """ Validate that there are no issues with the provided column of metadata """
+    column = raw_column.astype(type(raw_column[0]))
     # Get the header
     header = column.name
     # Get the rest of the column
@@ -86,9 +89,11 @@ def check_column(column, prev_headers):
                           (cell, i, col_index))
 
         # Check for consistent types in the column
-        if not column.dtype == type(cell):
-                errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
-                              (cell, i, col_index))
+        # Pandas stores 'str' as 'object' so check for that explicitly
+        if not column.dtype == type(cell) and\
+           (not isinstance(cell, str) and 'object' == column.dtype):
+            errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
+                          (cell, i, col_index))
         if type(cell) == str:
             # Check for empty fields
             if '' == cell:
@@ -97,8 +102,10 @@ def check_column(column, prev_headers):
             if not cell == cell.strip():
                 errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
                               (i + 1, col_index, cell, i + 1))
-        elif (issubdtype(type(cell), number) and
-                (cell > avg + (2 * stddev) or cell < avg - (2 * stddev))):
+    if issubdtype(column.dtype, number):
+        for i, cell in enumerate(column):
+            if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
+                continue
                 errors.append('%d\t%d\tValue %s outside of two standard deviations of mean in row %d' %
                               (i + 1, col_index, cell, i + 1))
     return errors
@@ -145,32 +152,35 @@ def check_barcode_chars(column, col_index):
     return errors
 
 
-def validate_mapping_file(file_fp):
+def validate_mapping_file(file_fp, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors, an empty list means there
     were no issues.
     """
     errors = []
-    df = pd.read_csv(file_fp, delimiter='\t')
+    df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
     column_headers = []
-    for i, header in enumerate(df.axes[1]):
-        col = df[header]
-        errors += check_column(col, column_headers)
-        # Perform column specific checks
-        if header == 'Description' and not header == df.axes[1][-1]:
-            errors.append('Description is not the last column in the metadata file\t%d,%d' %
-                          (0, df.axes[1].tolist().index(header)))
-        elif header == 'BarcodeSequence':
-            errors += check_duplicates(col, i)
-            errors += check_lengths(col, i)
-            errors += check_barcode_chars(col, i)
-        elif header == '#SampleID':
-            errors += check_duplicates(col, i)
-        elif header == 'LinkerPrimerSequence':
-            errors += check_lengths(col, i)
+    all_headers = []
+    tables = df.axes[1].levels[0].tolist()
+    for j, table in enumerate(tables):
+        table_df = df[table]
+        for i, header in enumerate(table_df.axes[1]):
+            col = table_df[header]
+            errors += check_column(col, column_headers)
+            all_headers.append(header)
+            # Perform column specific checks
+            if table == 'Specimen':
+                if header == 'BarcodeSequence':
+                    errors += check_duplicates(col, i)
+                    errors += check_lengths(col, i)
+                    errors += check_barcode_chars(col, i)
+                elif header == 'SampleID':
+                    errors += check_duplicates(col, i)
+                elif header == 'LinkerPrimerSequence':
+                    errors += check_lengths(col, i)
 
-    missing_headers = REQUIRED_HEADERS.difference(df.axes[1].tolist())
+    missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
 
     if missing_headers:
         errors.append('Missing requires fields: ' + ', '.join(missing_headers))

@@ -13,6 +13,17 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE warning for spaces at beginning or end :work:
 ** DONE look into linking non-relational database			     :work:
 ** DONE look into other tools and free form data			     :work:
+** TODO Add user_id criteria for matching subject rows
+** TODO Allow modification of previous uploads
+** TODO Add check for repeated entries for the same subject
+** TODO Require user name and password as well as access_code
+** TODO Allow reseting of access code
+** TODO Demo site for meta data validation
+** TODO Slides of mmeds setup
 ** TODO Add unused columns error after file upload :work:
 ** TODO Add functionality to download data file and additional metadata :work:
 ** TODO Add functionality to allow metadata file to be recreated from the data
+** TODO Setup tools to work with loaded metadata
+** TODO Setup storage of results from analysis
+** TODO Create interface for running tools on data
+** TODO Create interface for analyzing data results

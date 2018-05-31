@@ -161,6 +161,8 @@ class Database:
                     sql += column + ' = "' + value + '"'
                 else:
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+            if table == 'Subjects':
+                sql += ' AND user_id = ' + str(self.user_id)
             found = self.cursor.execute(sql)
             if found == 1:
                 # Append the key found for that column

@@ -60,10 +60,6 @@ class MMEDSserver(object):
         # Check the metadata file for errors
         with open(metadata_copy) as f:
             errors = validate_mapping_file(f)
-            ########### TEMPORARY #############
-            errors = []
-            ##################################
-            # errors += self.db.check_file_header(file_copy)
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
