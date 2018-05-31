@@ -331,7 +331,7 @@ class Database:
     def import_additional_metadata(self, df, data, access_code, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
         # Convert dataframe to a dictionary
-        new_mdata = df[table].to_dict('list')
+        new_mdata = df.to_dict('list')
         # Open the data file
         with open(data, 'rb') as data_file:
             # Add a document for the study in the NoSQL
@@ -344,3 +344,10 @@ class Database:
         """ Gets the NoSQL data affiliated with the provided access code. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         return mdata.data
+
+    def modify_data(self, new_data, access_code):
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        # Open the data file
+        with open(new_data, 'rb') as data_file:
+            mdata.data.replace(data_file)
+            mdata.save()

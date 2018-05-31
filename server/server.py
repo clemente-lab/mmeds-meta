@@ -95,6 +95,32 @@ class MMEDSserver(object):
             return upload_successful
 
     @cp.expose
+    def modify_upload(self, myData, access_code):
+        """ Modify the data of an existing upload. """
+        # Create a copy of the Data file
+        cp.session['data_file'] = myData.filename
+        data_copy = os.path.join(STORAGE_DIR, 'copy_' + cp.session['data_file'])
+
+        # Write the data to a new file stored on the server
+        with open(data_copy, 'wb') as nf:
+            while True:
+                data = myData.file.read(8192)
+                nf.write(data)
+                if not data:
+                    break
+        with Database(STORAGE_DIR, user='root', owner=cp.session['user']) as db:
+            try:
+                db.modify_data(data_copy, access_code)
+            except AttributeError:
+                with open('../html/download_error.html') as f:
+                    download_error = f.read()
+                return download_error.format(cp.session['user'])
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
+
+    @cp.expose
     def skip_upload(self):
         """ Skip uploading a file. """
         # Get the html for the upload page
