@@ -1,5 +1,7 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number
+from mmeds.config import STORAGE_DIR
+from os.path import join
 import pandas as pd
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -202,3 +204,16 @@ def is_numeric(s):
     except (TypeError, ValueError):
         pass
     return False
+
+
+def create_local_copy(fp, filename):
+    """ Create a local copy of the file provided. """
+    file_copy = join(STORAGE_DIR, 'copy_' + filename)
+    # Write the data to a new file stored on the server
+    with open(file_copy, 'wb') as nf:
+        while True:
+            data = fp.read(8192)
+            nf.write(data)
+            if not data:
+                break
+    return file_copy

@@ -3,7 +3,6 @@ import mongoengine as men
 import cherrypy as cp
 import pandas as pd
 import os
-import secrets
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
@@ -11,7 +10,7 @@ from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt
 
 
 class MetaData(men.Document):
-    # study = men.StringField(max_length=100, required=True)
+    study = men.StringField(max_length=45, required=True)
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
     metadata = men.DictField()
@@ -126,7 +125,6 @@ class Database:
         UNFINISHED
         Checks that the metadata input file doesn't contain any
         tables or columns that don't exist in the database.
-        """
         df = pd.read_csv(fp, sep=delimiter, header=[0, 1], nrows=2)
         self.cursor.execute('SHOW TABLES')
         tables = list(filter(lambda x: '_' not in x,
@@ -137,6 +135,8 @@ class Database:
             self.cursor.execute('DESCRIBE ' + table)
             columns = list(map(lambda x: x[0].split('_')[0],
                                self.cursor.fetchall()))
+        """
+        pass
 
     def create_import_data(self, table, df, verbose=True):
         """
@@ -264,27 +264,16 @@ class Database:
             except KeyError:
                 pass
 
-    def setup_upload(self):
-        """
-        Perform housekeeping in upload table for the current upload.
-        """
-        access_code = get_salt(50)
-        sql = 'INSERT INTO upload (username, access_code) VALUES ("{}", "{}")'
-        self.cursor.execute(sql.format(self.owner, access_code))
-
-        return access_code
-
     def read_in_sheet(self, metadata, data, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
-        # Add an entry in the upload table for this upload
-        access_code = self.setup_upload()
-
+        access_code = None
         # Read in the metadata file to import
         df = pd.read_csv(metadata, sep=delimiter, header=[0, 1])
         df = df.reindex_axis(df.columns, axis=1)
+        study_name = df['Study']['StudyName'][0]
 
         tables = df.axes[1].levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
@@ -292,7 +281,7 @@ class Database:
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                self.import_additional_metadata(df, data, access_code)
+                access_code = self.mongo_import(df, data, study_name)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -311,7 +300,7 @@ class Database:
         # Remove all row information from the current input
         self.IDs.clear()
 
-        return access_code
+        return access_code, study_name
 
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)
@@ -328,17 +317,20 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def import_additional_metadata(self, df, data, access_code, table='AdditionalMetaData'):
+    def mongo_import(self, df, data, study_name, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
+        access_code = get_salt(50)
         # Convert dataframe to a dictionary
-        new_mdata = df.to_dict('list')
-        # Open the data file
-        with open(data, 'rb') as data_file:
-            # Add a document for the study in the NoSQL
-            mdata = MetaData(access_code=access_code, owner=self.owner, metadata=new_mdata)
-            mdata.data.put(data_file)
-            # Save the document
-            mdata.save()
+        new_mdata = df.to_dict('split')
+        mdata = MetaData(study=study_name, access_code=access_code, owner=self.owner, metadata=new_mdata)
+        if data is not None:
+            # Open the data file
+            with open(data, 'rb') as data_file:
+                # Add a document for the study in the NoSQL
+                mdata.data.put(data_file)
+        # Save the document
+        mdata.save()
+        return access_code
 
     def get_data_from_access_code(self, access_code):
         """ Gets the NoSQL data affiliated with the provided access code. """

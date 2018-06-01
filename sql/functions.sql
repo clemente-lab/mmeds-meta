@@ -71,13 +71,3 @@ CREATE TABLE session (
     connection_id int NOT NULL PRIMARY KEY,
     username varchar(100)
 );
-
-
--- -----------------------------------------------------
--- Table `mmeds`.`upload`
--- -----------------------------------------------------
-CREATE TABLE upload (
-    upload_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    username varchar(100) NULL DEFAULT NULL,
-    access_code varchar(100) NULL DEFAULT NULL
-);

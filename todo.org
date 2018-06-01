@@ -14,10 +14,12 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE look into linking non-relational database			     :work:
 ** DONE look into other tools and free form data			     :work:
 ** DONE Add user_id criteria for matching subject rows
-** TODO Allow modification of previous uploads e.g. upload data at later time
+** DONE Allow modification of previous uploads e.g. upload data at later time
 ** TODO Add check for repeated entries for the same subject
 ** DONE Require user name and password as well as access_code
+** Add check so only one study can be uploaded per data sheet
 ** TODO Allow reseting of access code
+** Modify server setup so less is happening in the server class
 ** TODO Demo site for meta data validation
 ** TODO Slides of mmeds setup
 ** TODO Add unused columns error after file upload :work:
