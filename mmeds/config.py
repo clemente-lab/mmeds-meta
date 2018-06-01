@@ -1,15 +1,7 @@
 from secrets import choice
 from string import digits, ascii_uppercase, ascii_lowercase
-
-
-def get_salt(length=10, numeric=False):
-    """ Get a randomly generated string for salting passwords. """
-    if numeric:
-        listy = digits
-    else:
-        listy = digits + ascii_uppercase + ascii_lowercase
-    return ''.join(choice(listy) for i in range(length))
-
+from smtplib import SMTP
+from email.message import EmailMessage
 
 CONFIG = {
     'global': {
@@ -82,3 +74,32 @@ PROTECTED_TABLES = [
 ]
 
 PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
+
+
+def get_salt(length=10, numeric=False):
+    """ Get a randomly generated string for salting passwords. """
+    if numeric:
+        listy = digits
+    else:
+        listy = digits + ascii_uppercase + ascii_lowercase
+    return ''.join(choice(listy) for i in range(length))
+
+
+def send_email(toaddr, user, code):
+    """ Sends a confirmation email to addess containing user and code. """
+    fromaddr = 'donotreply.mmed.server@gmail.com'
+    msg = EmailMessage()
+    msg['From'] = fromaddr
+    msg['To'] = toaddr
+    msg['Subject'] = 'New data uploaded to mmeds database'
+    body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
+           'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
+           'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(code) +\
+           'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+    msg.set_content(body)
+
+    server = SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(fromaddr, 'mmeds_server')
+    server.send_message(msg)
+    server.quit()

@@ -1,10 +1,8 @@
 import hashlib
-from smtplib import SMTP
-from email.message import EmailMessage
 
 from string import ascii_uppercase, ascii_lowercase
 from mmeds import database
-from mmeds.config import STORAGE_DIR, CONTACT_EMAIL, get_salt
+from mmeds.config import STORAGE_DIR, get_salt
 
 LOGIN_FILE = '../server/data/login_info'
 
@@ -83,23 +81,3 @@ def check_username(username):
     if username in used_names:
         return 'Error: Username is already taken.'
     return
-
-
-def send_email(toaddr, user, code):
-    """ Sends a confirmation email to addess containing user and code. """
-    fromaddr = 'donotreply.mmed.server@gmail.com'
-    msg = EmailMessage()
-    msg['From'] = fromaddr
-    msg['To'] = toaddr
-    msg['Subject'] = 'New data uploaded to mmeds database'
-    body = 'Hello {},\nthe user {} just uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
-           'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
-           'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(code) +\
-           'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-    msg.set_content(body)
-
-    server = SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(fromaddr, 'mmeds_server')
-    server.send_message(msg)
-    server.quit()

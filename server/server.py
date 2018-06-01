@@ -3,8 +3,8 @@ import os
 import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_error, validate_mapping_file, create_local_copy
-from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR
-from mmeds.authentication import validate_password, check_username, check_password, add_user, send_email
+from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email
+from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
@@ -69,7 +69,7 @@ class MMEDSserver(object):
 
             # Otherwise upload the metadata to the database
             with Database(STORAGE_DIR, user='root', owner=username) as db:
-                access_code = db.read_in_sheet(metadata_copy, data_copy)
+                access_code = db.read_in_sheet(metadata_copy, data_copy, myEmail)
 
             # Send the confirmation email
             send_email(myEmail, username, access_code)
@@ -100,6 +100,22 @@ class MMEDSserver(object):
     @cp.expose
     def skip_upload(self):
         """ Skip uploading a file. """
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
+
+    @cp.expose
+    def reset_code(self, study_name, study_email):
+        """ Skip uploading a file. """
+        # Get the open file handler
+        with Database(STORAGE_DIR, user='root', owner=cp.session['user']) as db:
+            try:
+                db.reset_access_code(study_name, study_email)
+            except AttributeError:
+                with open('../html/download_error.html') as f:
+                    download_error = f.read()
+                return download_error.format(cp.session['user'])
         # Get the html for the upload page
         with open('../html/success.html', 'r') as f:
             upload_successful = f.read()

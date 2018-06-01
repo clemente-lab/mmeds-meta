@@ -6,13 +6,14 @@ import os
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt, send_email
 
 
 class MetaData(men.Document):
     study = men.StringField(max_length=45, required=True)
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
+    email = men.StringField(max_length=100, required=True)
     metadata = men.DictField()
     data = men.FileField()
 
@@ -264,7 +265,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, metadata, data, delimiter='\t'):
+    def read_in_sheet(self, metadata, data, email, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -281,7 +282,7 @@ class Database:
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(df, data, study_name)
+                access_code = self.mongo_import(df, data, study_name, email)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -317,12 +318,16 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def mongo_import(self, df, data, study_name, table='AdditionalMetaData'):
+    def mongo_import(self, df, data, study_name, email, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
         # Convert dataframe to a dictionary
         new_mdata = df.to_dict('split')
-        mdata = MetaData(study=study_name, access_code=access_code, owner=self.owner, metadata=new_mdata)
+        mdata = MetaData(study=study_name,
+                         access_code=access_code,
+                         owner=self.owner,
+                         email=email,
+                         metadata=new_mdata)
         if data is not None:
             # Open the data file
             with open(data, 'rb') as data_file:
@@ -343,3 +348,13 @@ class Database:
         with open(new_data, 'rb') as data_file:
             mdata.data.replace(data_file)
             mdata.save()
+
+    def reset_access_code(self, study_name, email):
+        """
+        Reset the access_code for the study with the matching name and email.
+        """
+        new_code = get_salt(50)
+        mdata = MetaData.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata.access_code = new_code
+        mdata.save()
+        send_email(email, self.owner, new_code)
