@@ -32,6 +32,7 @@ CONTACT_EMAIL = 'david.wallach@mssm.edu'
 TABLE_ORDER = [
     'Lab',
     'Study',
+    'Experiment',
     'Genotypes',
     'Ethnicity',
     'Illnesses',
@@ -59,6 +60,7 @@ TABLE_ORDER = [
 PROTECTED_TABLES = [
     'Lab',
     'Study',
+    'Experiment',
     'Location',
     'Subjects',
     'Illness',

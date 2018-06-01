@@ -70,10 +70,13 @@ def check_column(raw_column, prev_headers):
     column = raw_column.astype(type(raw_column[0]))
     # Get the header
     header = column.name
-    # Get the rest of the column
 
     # Check the header
     errors = check_header(header, prev_headers)
+
+    # Ensure there is only one study being uploaded
+    if header == 'StudyName' and len(set(column.tolist())) > 1:
+        errors += 'Error: Multiple studies in one metadata file.'
 
     # Get the index of the current column (Starting at 1)
     col_index = len(prev_headers) + 1
