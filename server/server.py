@@ -2,7 +2,7 @@ import os
 
 import cherrypy as cp
 from cherrypy.lib import static
-from mmeds.mmeds import insert_error, validate_mapping_file, create_local_copy
+from mmeds.mmeds import insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email
 from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
@@ -44,12 +44,17 @@ class MMEDSserver(object):
 
         # Check the metadata file for errors
         with open(metadata_copy) as f:
-            errors = validate_mapping_file(f)
+            errors, warnings = validate_mapping_file(f)
+        # Set the User
+        if public == 'on':
+            username = 'public'
+        else:
+            username = cp.session['user']
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
             # Write the errors to a file
-            with open(STORAGE_DIR + 'errors_' + cp.session['metadata_file'], 'w') as f:
+            with open(STORAGE_DIR + 'errors_' + myMetaData.filename, 'w') as f:
                 f.write('\n'.join(errors))
 
             # Get the html for the upload page
@@ -59,14 +64,25 @@ class MMEDSserver(object):
             uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             for i, error in enumerate(errors):
                 uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
+            for i, warning in enumerate(warnings):
+                uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+            return uploaded_output
+        elif len(warnings) > 0:
+            cp.session['uploaded_files'] = [metadata_copy, data_copy, username, myEmail]
+            # Write the errors to a file
+            with open(STORAGE_DIR + 'errors_' + myMetaData.filename, 'w') as f:
+                f.write('\n'.join(errors))
 
+            # Get the html for the upload page
+            with open('../html/warning.html', 'r') as f:
+                uploaded_output = f.read()
+
+            for i, warning in enumerate(warnings):
+                uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+
+            uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             return uploaded_output
         else:
-            if public == 'on':
-                username = 'public'
-            else:
-                username = cp.session['user']
-
             # Otherwise upload the metadata to the database
             with Database(STORAGE_DIR, user='root', owner=username) as db:
                 access_code = db.read_in_sheet(metadata_copy, data_copy, myEmail)
@@ -78,6 +94,22 @@ class MMEDSserver(object):
             with open('../html/success.html', 'r') as f:
                 upload_successful = f.read()
             return upload_successful
+
+    @cp.expose
+    def proceed_with_warning(self):
+        """ Proceed with upload after recieving a/some warning(s). """
+        metadata_copy, data_copy, username, myEmail = cp.session['uploaded_files']
+        # Otherwise upload the metadata to the database
+        with Database(STORAGE_DIR, user='root', owner=username) as db:
+            access_code = db.read_in_sheet(metadata_copy, data_copy, myEmail)
+
+        # Send the confirmation email
+        send_email(myEmail, username, access_code)
+
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
 
     @cp.expose
     def modify_upload(self, myData, access_code):
@@ -188,6 +220,13 @@ class MMEDSserver(object):
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+
+    @cp.expose
+    def retry_upload(self):
+        """ Retry the upload of data files. """
+        with open('../html/upload.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
 
     @cp.expose
     def download_data(self, access_code):

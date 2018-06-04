@@ -26,6 +26,14 @@ def insert_error(page, line_number, error_message):
     return new_page
 
 
+def insert_warning(page, line_number, error_message):
+    """ Inserts an error message in the provided HTML page at the specified line number. """
+    lines = page.split('\n')
+    new_lines = lines[:line_number] + ['<p><font color="orange">' + error_message + '</font></p>'] + lines[line_number:]
+    new_page = '\n'.join(new_lines)
+    return new_page
+
+
 def check_header(header, prev_headers):
     """ Check the header field to ensure it complies with MMEDS requirements. """
     errors = []
@@ -73,6 +81,7 @@ def check_column(raw_column, prev_headers):
 
     # Check the header
     errors = check_header(header, prev_headers)
+    warnings = []
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
@@ -110,10 +119,9 @@ def check_column(raw_column, prev_headers):
     if issubdtype(column.dtype, number):
         for i, cell in enumerate(column):
             if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
-                continue
-                errors.append('%d\t%d\tValue %s outside of two standard deviations of mean in row %d' %
-                              (i + 1, col_index, cell, i + 1))
-    return errors
+                warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in row %d' %
+                                (i + 1, col_index, cell, i + 1))
+    return errors, warnings
 
 
 def check_duplicates(column, col_index):
@@ -164,6 +172,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     were no issues.
     """
     errors = []
+    warnings = []
     df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
     column_headers = []
     all_headers = []
@@ -172,7 +181,10 @@ def validate_mapping_file(file_fp, delimiter='\t'):
         table_df = df[table]
         for i, header in enumerate(table_df.axes[1]):
             col = table_df[header]
-            errors += check_column(col, column_headers)
+            new_errors, new_warnings = check_column(col, column_headers)
+            errors += new_errors
+            warnings += new_warnings
+
             all_headers.append(header)
             # Perform column specific checks
             if table == 'Specimen':
@@ -190,7 +202,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     if missing_headers:
         errors.append('Missing requires fields: ' + ', '.join(missing_headers))
 
-    return errors
+    return errors, warnings
 
 
 def is_numeric(s):
