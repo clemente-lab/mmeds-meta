@@ -19,7 +19,7 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE Allow reseting of access code
 ** DONE Add check so only one study can be uploaded per data sheet
 ** DONE Implement a system of Warnings in addition to errors list
-** TODO Add check for repeated entries for the same subject
+** DONE Add check for repeated entries for the same subject
 ** TODO Add check so each user can only upload one study with a particular name
 ** TODO Modify server setup so less is happening in the server class
 ** TODO Demo site for meta data validation

@@ -196,13 +196,11 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                     errors += check_duplicates(col, i)
                 elif header == 'LinkerPrimerSequence':
                     errors += check_lengths(col, i)
-
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
-
     if missing_headers:
         errors.append('Missing requires fields: ' + ', '.join(missing_headers))
 
-    return errors, warnings
+    return errors, warnings, df['Subjects']
 
 
 def is_numeric(s):

@@ -359,14 +359,15 @@ class Database:
         mdata.save()
         send_email(email, self.owner, new_code)
 
-    def check_repeated_subjects(column, user_id):
+    def check_repeated_subjects(self, df):
         """ Checks for users that match those already in the database. """
+        warnings = []
         # Go through each column
         for j in range(len(df.index)):
-            sql = 'SELECT * FROM ' + table + ' WHERE'
+            sql = 'SELECT * FROM Subjects WHERE'
             # Check if there is a matching entry already in the database
-            for i, column in enumerate(df[table]):
-                value = df[table][column][j]
+            for i, column in enumerate(df):
+                value = df[column][j]
                 if i == 0:
                     sql += ' '
                 else:
@@ -374,7 +375,10 @@ class Database:
                 if type(value) == str:
                     sql += column + ' = "' + value + '"'
                 else:
-                    sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-            if table == 'Subjects':
-                sql += ' AND user_id = ' + str(self.user_id)
+                    sql += ' ABS(Subjects.' + column + ' - ' + str(value) + ') <= 0.01'
+            sql += ' AND user_id = ' + str(self.user_id)
             found = self.cursor.execute(sql)
+            if found == 1:
+                warnings.append('%d\tSubect in row %d already exists in the database.' %
+                                (j + 2, j + 2))
+        return warnings
