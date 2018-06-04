@@ -358,3 +358,23 @@ class Database:
         mdata.access_code = new_code
         mdata.save()
         send_email(email, self.owner, new_code)
+
+    def check_repeated_subjects(column, user_id):
+        """ Checks for users that match those already in the database. """
+        # Go through each column
+        for j in range(len(df.index)):
+            sql = 'SELECT * FROM ' + table + ' WHERE'
+            # Check if there is a matching entry already in the database
+            for i, column in enumerate(df[table]):
+                value = df[table][column][j]
+                if i == 0:
+                    sql += ' '
+                else:
+                    sql += ' AND '
+                if type(value) == str:
+                    sql += column + ' = "' + value + '"'
+                else:
+                    sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+            if table == 'Subjects':
+                sql += ' AND user_id = ' + str(self.user_id)
+            found = self.cursor.execute(sql)
