@@ -50,10 +50,12 @@ class MMEDSserver(object):
 
         # Check the metadata file for errors
         with open(metadata_copy) as f:
-            errors, warnings, subjects = validate_mapping_file(f)
+            errors, warnings, study_name, subjects = validate_mapping_file(f)
+        cp.log(study_name)
 
         with Database(STORAGE_DIR, user='root', owner=username) as db:
             warnings += db.check_repeated_subjects(subjects)
+            errors += db.check_user_study_name(study_name)
 
         # If there are errors report them and return the error page
         if len(errors) > 0:

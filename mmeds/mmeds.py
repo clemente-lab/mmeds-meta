@@ -176,6 +176,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
     column_headers = []
     all_headers = []
+    study_name = None
     tables = df.axes[1].levels[0].tolist()
     for j, table in enumerate(tables):
         table_df = df[table]
@@ -196,11 +197,13 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                     errors += check_duplicates(col, i)
                 elif header == 'LinkerPrimerSequence':
                     errors += check_lengths(col, i)
+            elif study_name is None and table == 'Study':
+                study_name = df[table]['StudyName'][i]
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     if missing_headers:
         errors.append('Missing requires fields: ' + ', '.join(missing_headers))
 
-    return errors, warnings, df['Subjects']
+    return errors, warnings, study_name, df['Subjects']
 
 
 def is_numeric(s):

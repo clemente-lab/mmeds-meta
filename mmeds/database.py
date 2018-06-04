@@ -378,7 +378,17 @@ class Database:
                     sql += ' ABS(Subjects.' + column + ' - ' + str(value) + ') <= 0.01'
             sql += ' AND user_id = ' + str(self.user_id)
             found = self.cursor.execute(sql)
-            if found == 1:
+            if found >= 1:
                 warnings.append('%d\tSubect in row %d already exists in the database.' %
                                 (j + 2, j + 2))
         return warnings
+
+    def check_user_study_name(self, study_name):
+        """ Checks if the current user has uploaded a study with the same name. """
+
+        sql = 'SELECT * FROM Study WHERE user_id = {} and Study.StudyName = "{}"'
+        found = self.cursor.execute(sql.format(self.user_id, study_name))
+        if found >= 1:
+            return ['User {} has already uploaded a study with name {}'.format(self.owner, study_name)]
+        else:
+            return []
