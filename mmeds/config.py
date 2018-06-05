@@ -14,12 +14,12 @@ CONFIG = {
         'tools.sessions.on': True,
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
-        'tools.staticdir.root': '../html',
+        'tools.staticdir.root': '/home/david/Work/mmeds-meta',  # Change this for different install locations
         'request.scheme': 'https'
     },
-    '/main.css': {
-        'tools.staticfile.on': True,
-        'tools.staticfile.filename': '/home/david/Work/mmeds-meta/CSS/main.css'
+    '/CSS': {
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': 'CSS'
     },
     '/protected/area': {
         'tools.auth_digest': True,
