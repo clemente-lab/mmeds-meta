@@ -7,6 +7,7 @@ GRANT EXECUTE ON FUNCTION mmeds.owner_check TO 'mmeds_user'@'%';
 
 -- TEMPORARY PERMISSIONS FOR DEBUGGING GRANT SELECT ON TABLE mmeds.user TO 'mmeds_user'@'%';
 GRANT SELECT ON TABLE mmeds.session TO 'mmeds_user'@'%';
+GRANT SELECT ON TABLE mmeds.user TO 'mmeds_user'@'%';
 
 -- Create a security token for that account
 INSERT INTO security_token (username, security_token) VALUES ('mmeds_user@localhost', 'some_security_token');
