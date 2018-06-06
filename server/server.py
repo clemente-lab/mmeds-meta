@@ -91,7 +91,7 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(STORAGE_DIR, user='root', owner=username) as db:
-                access_code = db.read_in_sheet(metadata_copy, data_copy, myEmail)
+                access_code, study_name = db.read_in_sheet(metadata_copy, data_copy, myEmail)
 
             # Send the confirmation email
             send_email(myEmail, username, access_code)
@@ -107,7 +107,7 @@ class MMEDSserver(object):
         metadata_copy, data_copy, username, myEmail = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
         with Database(STORAGE_DIR, user='root', owner=username) as db:
-            access_code = db.read_in_sheet(metadata_copy, data_copy, myEmail)
+            access_code, study_name = db.read_in_sheet(metadata_copy, data_copy, myEmail)
 
         # Send the confirmation email
         send_email(myEmail, username, access_code)
@@ -245,23 +245,44 @@ class MMEDSserver(object):
         return page.format(user=cp.session['user'])
 
     @cp.expose
-    def download_data(self, access_code):
-        """ Download data and metadata files. """
+    def download_page(self, access_code):
+        """ Loads the page with the links to download data and metadata. """
         # Get the open file handler
         with Database(STORAGE_DIR, user='root', owner=cp.session['user']) as db:
             try:
-                fp = db.get_data_from_access_code(access_code)
+                data_fp, metadata_fp = db.get_data_from_access_code(access_code)
             except AttributeError:
                 with open('../html/download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
+        metadata_path = os.data_path.join(absDir, STORAGE_DIR + 'download_metadata.tsv')
+        # Write the dataframe to a file
+        metadata_fp.to_csv(metadata_path, sep='\t')
+        cp.session['metadata_path'] = metadata_path
+
+        data_path = os.data_path.join(absDir, STORAGE_DIR + 'download_data.txt')
         # Write the information to a static file
-        with open(STORAGE_DIR + 'download.txt', 'wb') as f:
-            f.write(fp.read())
-        path = os.path.join(absDir, STORAGE_DIR + 'download.txt')
+        with open(data_path, 'wb') as f:
+            f.write(data_fp.read())
+        cp.session['data_path'] = data_path
+
+        with open('../html/download_data.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def download_metadata(self):
+        """ Download data and metadata files. """
         # Return that file
-        return static.serve_file(path, 'application/x-download',
-                                 'attachment', os.path.basename(path))
+        return static.serve_file(cp.session['metadata_path'], 'application/x-download',
+                                 'attachment', os.path.basename(cp.session['metadata_path']))
+
+    @cp.expose
+    def download_data(self):
+        """ Download data and metadata files. """
+        # Return that file
+        return static.serve_file(cp.session['data_path'], 'application/x-download',
+                                 'attachment', os.path.basename(cp.session['metadata_path']))
 
     # View files
     @cp.expose

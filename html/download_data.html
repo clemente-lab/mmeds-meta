@@ -6,7 +6,11 @@
         <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
     </head>
     <body>
-        <button type="submit" action='get_additional_mdata' method='post'>Get Additional Metadata</button>
-        <button type="submit" action='get_data' method='post'>Get Data</button>
+        <form action='download_metadata' method='post' enctype='multipart/form-data'>
+            <button type="submit" >Get Metadata</button>
+        </form>
+        <form action='download_data' method='post' enctype='multipart/form-data'>
+            <button type="submit" >Get Data</button>
+        </form>
     </body>
 </html>

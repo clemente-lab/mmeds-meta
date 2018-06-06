@@ -339,7 +339,8 @@ class Database:
     def get_data_from_access_code(self, access_code):
         """ Gets the NoSQL data affiliated with the provided access code. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        return mdata.data
+        df = pd.Dataframe.from_dict(mdata.metadata)
+        return mdata.data, df
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
