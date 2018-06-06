@@ -21,6 +21,7 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE Implement a system of Warnings in addition to errors list
 ** DONE Add check for repeated entries for the same subject
 ** DONE Add check so each user can only upload one study with a particular name
+** DONE Button to allow downloading results of query as CSV
 ** TODO Modify server setup so less is happening in the server class
 ** TODO Demo site for meta data validation
 ** TODO Slides of mmeds setup

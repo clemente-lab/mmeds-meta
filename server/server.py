@@ -2,7 +2,7 @@ import os
 
 import cherrypy as cp
 from cherrypy.lib import static
-from mmeds.mmeds import insert_error, insert_warning, validate_mapping_file, create_local_copy
+from mmeds.mmeds import insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email
 from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
@@ -166,11 +166,21 @@ class MMEDSserver(object):
         with Database(STORAGE_DIR, user='mmeds_user', owner=username) as db:
             status = db.set_mmeds_user(username)
             cp.log('Set user to {}. Status {}'.format(username, status))
-            result = db.execute(query)
+            data, header = db.execute(query)
+            html_data = db.format(data, header)
             with open('../html/success.html', 'r') as f:
                 page = f.read()
 
-            page = insert_error(page, 10, result)
+        cp.session['query'] = 'query.tsv'
+        html = '<form action="download_query" method="post">\n\
+                <button type="submit">Download Results</button>\n\
+                </form>'
+        page = insert_html(page, 10, html)
+        page = insert_error(page, 10, html_data)
+        if header is not None:
+            data = [header] + list(data)
+        with open(STORAGE_DIR + cp.session['query'], 'w') as f:
+            f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
         return page
 
     @cp.expose
@@ -277,6 +287,14 @@ class MMEDSserver(object):
     def download_corrected(self):
         """ Allows the user to download the correct metadata file. """
         path = os.path.join(absDir, STORAGE_DIR + UPLOADED_FP + '_corrected.txt')
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
+
+    @cp.expose
+    def download_query(self):
+        """ Download the results of the most recent query as a csv. """
+
+        path = os.path.join(absDir, STORAGE_DIR + cp.session['query'])
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 

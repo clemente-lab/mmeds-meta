@@ -34,6 +34,14 @@ def insert_warning(page, line_number, error_message):
     return new_page
 
 
+def insert_html(page, line_number, html):
+    """ Inserts additional HTML into the provided HTML page at the specified line number. """
+    lines = page.split('\n')
+    new_lines = lines[:line_number] + ['<p>' + html + '</p>'] + lines[line_number:]
+    new_page = '\n'.join(new_lines)
+    return new_page
+
+
 def check_header(header, prev_headers):
     """ Check the header field to ensure it complies with MMEDS requirements. """
     errors = []

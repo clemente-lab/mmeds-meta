@@ -85,19 +85,18 @@ class Database:
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
+            header = None
             if 'from' in sql:
                 parsed = sql.split(' ')
                 index = parsed.index('from')
                 table = parsed[index + 1]
                 self.cursor.execute('describe ' + table)
                 header = [x[0] for x in self.cursor.fetchall()]
-                return self.format(data, header)
-            else:
-                return self.format(data)
+            return data, header
         except pms.err.ProgrammingError as e:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
-            return str(e)
+            return str(e), header
 
     def purge(self):
         """
@@ -388,6 +387,9 @@ class Database:
 
         sql = 'SELECT * FROM Study WHERE user_id = {} and Study.StudyName = "{}"'
         found = self.cursor.execute(sql.format(self.user_id, study_name))
+        ######### TEMPORARY ##########
+        return []
+        #########################
         if found >= 1:
             return ['User {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
