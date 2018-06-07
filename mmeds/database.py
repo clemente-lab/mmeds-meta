@@ -14,8 +14,14 @@ class MetaData(men.Document):
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
-    metadata = men.DictField()
+    metadata = men.FileField()
     data = men.FileField()
+
+
+def delete_MetaData(mdata):
+    """ Deletes the MetaData document and associated Files. """
+    mdata.data.delete()
+    mdata.delete()
 
 
 class Database:
@@ -281,7 +287,7 @@ class Database:
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(df, data, study_name, email)
+                access_code = self.mongo_import(metadata, data, study_name, email)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -317,16 +323,18 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def mongo_import(self, df, data, study_name, email, table='AdditionalMetaData'):
+    def mongo_import(self, metadata, data, study_name, email, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
-        # Convert dataframe to a dictionary
-        new_mdata = df.to_dict('split')
+        # Create the document
         mdata = MetaData(study=study_name,
                          access_code=access_code,
                          owner=self.owner,
-                         email=email,
-                         metadata=new_mdata)
+                         email=email)
+        # The MetaData
+        with open(metadata, 'rb') as metadata_file:
+            mdata.metadata.put(metadata_file)
+
         if data is not None:
             # Open the data file
             with open(data, 'rb') as data_file:
@@ -339,8 +347,7 @@ class Database:
     def get_data_from_access_code(self, access_code):
         """ Gets the NoSQL data affiliated with the provided access code. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        df = pd.Dataframe.from_dict(mdata.metadata)
-        return mdata.data, df
+        return mdata.data.read(), mdata.metadata.read()
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()

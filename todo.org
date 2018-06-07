@@ -22,9 +22,9 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** DONE Add check for repeated entries for the same subject
 ** DONE Add check so each user can only upload one study with a particular name
 ** DONE Button to allow downloading results of query as CSV
-** TODO Add functionality to download data file and additional metadata  :work:
+** DONE Add functionality to download data file and additional metadata  :work:
    - [X] Allow downloading data
-   - [ ] Allow downloading metadata
+   - [X] Allow downloading metadata
 ** TODO Modify server setup so less is happening in the server class
 ** TODO Figure out how to handle writing files with multiple users
 ** TODO Demo site for meta data validation

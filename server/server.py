@@ -251,19 +251,22 @@ class MMEDSserver(object):
         with Database(STORAGE_DIR, user='root', owner=cp.session['user']) as db:
             try:
                 data_fp, metadata_fp = db.get_data_from_access_code(access_code)
-            except AttributeError:
+            except AttributeError as e:
+                cp.log(e)
                 with open('../html/download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
-        metadata_path = os.data_path.join(absDir, STORAGE_DIR + 'download_metadata.tsv')
-        # Write the dataframe to a file
-        metadata_fp.to_csv(metadata_path, sep='\t')
+
+        # Write the metadata to a new file
+        metadata_path = os.path.join(absDir, STORAGE_DIR + 'download_metadata.tsv')
+        with open(metadata_path, 'wb') as f:
+            f.write(metadata_fp)
         cp.session['metadata_path'] = metadata_path
 
-        data_path = os.data_path.join(absDir, STORAGE_DIR + 'download_data.txt')
-        # Write the information to a static file
+        # Write the data to a new file
+        data_path = os.path.join(absDir, STORAGE_DIR + 'download_data.txt')
         with open(data_path, 'wb') as f:
-            f.write(data_fp.read())
+            f.write(data_fp)
         cp.session['data_path'] = data_path
 
         with open('../html/download_data.html') as f:
@@ -282,7 +285,7 @@ class MMEDSserver(object):
         """ Download data and metadata files. """
         # Return that file
         return static.serve_file(cp.session['data_path'], 'application/x-download',
-                                 'attachment', os.path.basename(cp.session['metadata_path']))
+                                 'attachment', os.path.basename(cp.session['data_path']))
 
     # View files
     @cp.expose
