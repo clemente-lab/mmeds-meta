@@ -59,9 +59,10 @@ class MMEDSserver(object):
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
+            cp.session['error_file'] = os.path.join(absDir, STORAGE_DIR, 'errors_' + myMetaData.filename)
             # Write the errors to a file
-            with open(STORAGE_DIR + 'errors_' + myMetaData.filename, 'w') as f:
-                f.write('\n'.join(errors))
+            with open(cp.session['error_file'], 'w') as f:
+                f.write('\n'.join(errors + warnings))
 
             # Get the html for the upload page
             with open('../html/error.html', 'r') as f:
@@ -72,6 +73,7 @@ class MMEDSserver(object):
                 uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
             for i, warning in enumerate(warnings):
                 uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+
             return uploaded_output
         elif len(warnings) > 0:
             cp.session['uploaded_files'] = [metadata_copy, data_copy, username, myEmail]
@@ -295,9 +297,8 @@ class MMEDSserver(object):
 
     @cp.expose
     def download_error_log(self):
-        path = os.path.join(absDir, STORAGE_DIR + 'error_' + cp.session['file'])
-        return static.serve_file(path, 'application/x-download',
-                                 'attachment', os.path.basename(path))
+        return static.serve_file(cp.session['error_file'], 'application/x-download',
+                                 'attachment', os.path.basename(cp.session['error_file']))
 
     # Download links
     @cp.expose

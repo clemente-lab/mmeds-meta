@@ -1591,6 +1591,7 @@ body, input, select, textarea {
     font-size: 13pt;
     font-weight: 300;
     line-height: 1.65;
+    margin: 1em 0;
 }
 
 @media screen and (max-width: 1680px) {
@@ -1665,6 +1666,11 @@ h1, h2, h3, h4, h5, h6 {
 h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
     color: inherit;
     text-decoration: none;
+}
+
+h1 {
+    font-size: 2em;
+    font-weight: 150;
 }
 
 h2 {
@@ -1981,7 +1987,7 @@ header h6 + p {
 /* Form */
 
 form {
-    margin: 0 0 2em 0;
+    margin: 1em 5em;
 }
 
 label {
