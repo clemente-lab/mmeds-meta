@@ -265,11 +265,13 @@ class MMEDSserver(object):
             f.write(metadata_fp)
         cp.session['metadata_path'] = metadata_path
 
-        # Write the data to a new file
-        data_path = os.path.join(absDir, STORAGE_DIR + 'download_data.txt')
-        with open(data_path, 'wb') as f:
-            f.write(data_fp)
-        cp.session['data_path'] = data_path
+        # The data file my not have been uploaded yet
+        if data_fp is not None:
+            # Write the data to a new file
+            data_path = os.path.join(absDir, STORAGE_DIR + 'download_data.txt')
+            with open(data_path, 'wb') as f:
+                f.write(data_fp)
+            cp.session['data_path'] = data_path
 
         with open('../html/download_data.html') as f:
             page = f.read()
@@ -286,8 +288,13 @@ class MMEDSserver(object):
     def download_data(self):
         """ Download data and metadata files. """
         # Return that file
-        return static.serve_file(cp.session['data_path'], 'application/x-download',
-                                 'attachment', os.path.basename(cp.session['data_path']))
+        try:
+            return static.serve_file(cp.session['data_path'], 'application/x-download',
+                                     'attachment', os.path.basename(cp.session['data_path']))
+        except KeyError:
+            with open('../html/download_error.html') as f:
+                page = f.read()
+            return page.format(cp.session['user'])
 
     # View files
     @cp.expose

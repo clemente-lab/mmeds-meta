@@ -14,7 +14,7 @@ HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address',
 
 DNA = set('GATC')
 
-ILLEGAL_IN_HEADER = set('/\\ ')
+ILLEGAL_IN_HEADER = set('/\\ *?') # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
 
@@ -127,7 +127,7 @@ def check_column(raw_column, prev_headers):
     if issubdtype(column.dtype, number):
         for i, cell in enumerate(column):
             if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
-                warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in row %d' %
+                warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in column %d' %
                                 (i + 1, col_index, cell, i + 1))
     return errors, warnings
 
@@ -173,6 +173,15 @@ def check_barcode_chars(column, col_index):
     return errors
 
 
+def check_duplicate_cols(headers):
+    """ Returns true if there are any duplicate headers. """
+    dups = []
+    for header in headers:
+        if '.1' in header:
+            dups.append(header.split('.')[0])
+    return dups
+
+
 def validate_mapping_file(file_fp, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
@@ -208,6 +217,9 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             elif study_name is None and table == 'Study':
                 study_name = df[table]['StudyName'][i]
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
+    dups = check_duplicate_cols(all_headers)
+    if len(dups) > 0:
+        errors.append('Duplicate headers ' + ', '.join(dups))
     if missing_headers:
         errors.append('Missing requires fields: ' + ', '.join(missing_headers))
 
