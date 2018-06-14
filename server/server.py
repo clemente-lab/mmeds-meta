@@ -22,7 +22,7 @@ class MMEDSserver(object):
         return open('../html/index.html')
 
     @cp.expose
-    def validate(self, myMetaData, myData, myEmail, public='off'):
+    def validate(self, myMetaData, myData, public='off'):
         """ The page returned after a file is uploaded. """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -76,7 +76,7 @@ class MMEDSserver(object):
 
             return uploaded_output
         elif len(warnings) > 0:
-            cp.session['uploaded_files'] = [metadata_copy, data_copy, username, myEmail]
+            cp.session['uploaded_files'] = [metadata_copy, data_copy, username]
             # Write the errors to a file
             with open(STORAGE_DIR + 'errors_' + myMetaData.filename, 'w') as f:
                 f.write('\n'.join(errors))
@@ -93,10 +93,10 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(STORAGE_DIR, user='root', owner=username) as db:
-                access_code, study_name = db.read_in_sheet(metadata_copy, data_copy, myEmail)
+                access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
 
             # Send the confirmation email
-            send_email(myEmail, username, access_code)
+            send_email(email, username, access_code)
 
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
@@ -106,13 +106,13 @@ class MMEDSserver(object):
     @cp.expose
     def proceed_with_warning(self):
         """ Proceed with upload after recieving a/some warning(s). """
-        metadata_copy, data_copy, username, myEmail = cp.session['uploaded_files']
+        metadata_copy, data_copy, username = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
         with Database(STORAGE_DIR, user='root', owner=username) as db:
-            access_code, study_name = db.read_in_sheet(metadata_copy, data_copy, myEmail)
+            access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
 
         # Send the confirmation email
-        send_email(myEmail, username, access_code)
+        send_email(email, username, access_code)
 
         # Get the html for the upload page
         with open('../html/success.html', 'r') as f:
@@ -203,7 +203,7 @@ class MMEDSserver(object):
         return open('../html/sign_up_page.html')
 
     @cp.expose
-    def sign_up(self, username, password1, password2):
+    def sign_up(self, username, password1, password2, email):
         """
         Perform the actions necessary to sign up a new user.
         """
@@ -218,7 +218,7 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 25, user_err)
         else:
-            add_user(username, password1)
+            add_user(username, password1, email)
             with open('../html/index.html') as f:
                 page = f.read()
             return page

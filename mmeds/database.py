@@ -276,6 +276,7 @@ class Database:
         Imports each of those files into the database.
         """
         access_code = None
+
         # Read in the metadata file to import
         df = pd.read_csv(metadata, sep=delimiter, header=[0, 1])
         df = df.reindex_axis(df.columns, axis=1)
@@ -306,7 +307,7 @@ class Database:
         # Remove all row information from the current input
         self.IDs.clear()
 
-        return access_code, study_name
+        return access_code, study_name, email
 
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)

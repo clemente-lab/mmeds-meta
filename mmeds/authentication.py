@@ -30,7 +30,7 @@ def validate_password(username, password):
     return hashed_password == password_hash
 
 
-def add_user(username, password):
+def add_user(username, password, email):
     """ Adds a user to the file containing login info. """
 
     # Hash the password
@@ -40,7 +40,7 @@ def add_user(username, password):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
     db = database.Database(STORAGE_DIR)
-    db.add_user(username, password_hash, salt)
+    db.add_user(username, password_hash, salt, email)
 
 
 def check_password(password1, password2):
