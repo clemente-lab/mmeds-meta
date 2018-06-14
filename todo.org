@@ -8,31 +8,43 @@ Link donor and recipient in FMT studies?
 Distinguish between sample and speciman. Check FreezerWorks
 -------------------------------------------------------
 
-** DONE Check columns for values outside 2 stdevs :work:
-** DONE change age to birth year :work:
-** DONE warning for spaces at beginning or end :work:
-** DONE look into linking non-relational database			     :work:
-** DONE look into other tools and free form data			     :work:
-** DONE Add user_id criteria for matching subject rows
-** DONE Allow modification of previous uploads e.g. upload data at later time
-** DONE Require user name and password as well as access_code
-** DONE Allow reseting of access code
-** DONE Add check so only one study can be uploaded per data sheet
-** DONE Implement a system of Warnings in addition to errors list
-** DONE Add check for repeated entries for the same subject
-** DONE Add check so each user can only upload one study with a particular name
-** DONE Button to allow downloading results of query as CSV
-** DONE Add functionality to download data file and additional metadata  :work:
+*** DONE Check columns for values outside 2 stdevs			     :work:
+*** DONE change age to birth year						     :work:
+*** DONE warning for spaces at beginning or end				     :work:
+*** DONE look into linking non-relational database			     :work:
+*** DONE look into other tools and free form data			     :work:
+*** DONE Add user_id criteria for matching subject rows
+*** DONE Allow modification of previous uploads e.g. upload data at later time
+*** DONE Require user name and password as well as access_code
+*** DONE Allow reseting of access code
+*** DONE Add check so only one study can be uploaded per data sheet
+*** DONE Implement a system of Warnings in addition to errors list
+*** DONE Add check for repeated entries for the same subject
+*** DONE Add check so each user can only upload one study with a particular name
+*** DONE Button to allow downloading results of query as CSV
+*** DONE Fix the way headers are checked
+*** DONE Demo site for meta data validation
+*** DONE Add functionality to download data file and additional metadata  :work:
    - [X] Allow downloading data
    - [X] Allow downloading metadata
-** TODO Add password reset
-** TODO Fix the way headers are checked
-** TODO Modify server setup so less is happening in the server class
 ** TODO Figure out how to handle writing files with multiple users
-** TODO Demo site for meta data validation
+  - [ ] Create a numbered directory structure so each user gets the next
+        available directory
+  - [ ] Create a directory based on the username
+  - [ ] Clear dir when user session is finished
+  - [ ] Add log out button and timeout functionality on sessions
+** TODO Add password reset
+** TODO Modify server setup so less is happening in the server class
 ** TODO Slides of mmeds setup
 ** TODO Add unused columns error after file upload :work:
 ** TODO Setup tools to work with loaded metadata
 ** TODO Setup storage of results from analysis
 ** TODO Create interface for running tools on data
 ** TODO Create interface for analyzing data results
+
+
+**** TODO Questions
+     - [ ] Email tied to user account seperate from email for upload?
+     - [ ] What tools do we want to initally setup?
+     - [ ] For highlighted error checks better as excel sheet or webpage?
+     - [ ] Add functionality to maintain session during server restart?

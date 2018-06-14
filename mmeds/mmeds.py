@@ -42,21 +42,12 @@ def insert_html(page, line_number, html):
     return new_page
 
 
-def check_header(header, prev_headers):
+def check_header(header, col_index):
     """ Check the header field to ensure it complies with MMEDS requirements. """
     errors = []
 
-    # Get the index of the current column (Starting at 1)
-    col_index = len(prev_headers)
-
     row_col = '0\t' + str(col_index) + '\t'
 
-    # Check if it's a duplicate
-    if header in prev_headers:
-        errors.append(row_col + '%s found in header %d times.  ' %
-                      (header, prev_headers.count(header) + 1) +
-                      'Header fields must be unique. Replace header %s of column\t%d' %
-                      (header, col_index))
     # Check if it's numeric
     if is_numeric(header):
         errors.append(row_col + 'Column names cannot be numbers. Replace header %s of column\t%d ' %
@@ -81,22 +72,19 @@ def check_header(header, prev_headers):
     return errors
 
 
-def check_column(raw_column, prev_headers):
+def check_column(raw_column, col_index):
     """ Validate that there are no issues with the provided column of metadata """
     column = raw_column.astype(type(raw_column[0]))
     # Get the header
     header = column.name
 
     # Check the header
-    errors = check_header(header, prev_headers)
+    errors = check_header(header, col_index)
     warnings = []
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
         errors.append('Error: Multiple studies in one metadata file')
-
-    # Get the index of the current column (Starting at 1)
-    col_index = len(prev_headers) + 1
 
     if issubdtype(column.dtype, number):
         stddev = std(column)
@@ -191,7 +179,6 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     errors = []
     warnings = []
     df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
-    column_headers = []
     all_headers = []
     study_name = None
     tables = df.axes[1].levels[0].tolist()
@@ -199,7 +186,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
         table_df = df[table]
         for i, header in enumerate(table_df.axes[1]):
             col = table_df[header]
-            new_errors, new_warnings = check_column(col, column_headers)
+            new_errors, new_warnings = check_column(col, len(all_headers) + 1)
             errors += new_errors
             warnings += new_warnings
 
