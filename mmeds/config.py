@@ -33,6 +33,7 @@ ERROR_FP = 'error_log.csv'
 STORAGE_DIR = 'data/'
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
+MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 
 TABLE_ORDER = [
     'Lab',
@@ -94,9 +95,8 @@ def get_salt(length=10, numeric=False):
 
 def send_email(toaddr, user, code):
     """ Sends a confirmation email to addess containing user and code. """
-    fromaddr = 'donotreply.mmed.server@gmail.com'
     msg = EmailMessage()
-    msg['From'] = fromaddr
+    msg['From'] = MMEDS_EMAIL
     msg['To'] = toaddr
     msg['Subject'] = 'New data uploaded to mmeds database'
     body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
@@ -107,6 +107,6 @@ def send_email(toaddr, user, code):
 
     server = SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(fromaddr, 'mmeds_server')
+    server.login(MMEDS_EMAIL, 'mmeds_server')
     server.send_message(msg)
     server.quit()
