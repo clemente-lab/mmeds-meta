@@ -69,6 +69,10 @@ class Database:
         """ Delete the Database instance upon the end of the 'with' block. """
         del self
 
+    def check_email(self, email):
+        """ Check the provided email matches this user. """
+        return email == self.email
+
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
         sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, SECURITY_TOKEN)
@@ -364,11 +368,38 @@ class Database:
         """
         Reset the access_code for the study with the matching name and email.
         """
+        # Get a new code
         new_code = get_salt(50)
+        # Get the mongo document
         mdata = MetaData.objects(study=study_name, owner=self.owner, email=email).first()
         mdata.access_code = new_code
         mdata.save()
         send_email(email, self.owner, new_code)
+
+    def change_password(self, new_password, new_salt):
+        """ Change the password for the current user. """
+        # Get the user's information from the user table
+        sql = 'SELECT * FROM user WHERE username = "{}"'.format(self.owner)
+        self.cursor.execute(sql)
+        result = self.cursor.fetchone()
+        # Ensure the user exists
+        if len(result) == 0:
+            return False
+
+        # Delete the old entry for the user
+        sql = 'DELETE FROM user WHERE user_id = {}'.format(result[0])
+        self.cursor.execute(sql)
+
+        # Insert the user with the updated password
+        sql = 'INSERT INTO mmeds.user (user_id, username, password, salt, email) VALUES\
+                ({}, "{}", "{}", "{}", "{}");'.format(result[0],
+                                                      result[1],
+                                                      new_password,
+                                                      new_salt,
+                                                      result[4])
+        self.cursor.execute(sql)
+        self.db.commit()
+        return True
 
     def check_repeated_subjects(self, df):
         """ Checks for users that match those already in the database. """

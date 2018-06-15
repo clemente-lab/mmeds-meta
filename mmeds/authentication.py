@@ -1,8 +1,8 @@
 import hashlib
 
 from string import ascii_uppercase, ascii_lowercase
-from mmeds import database
-from mmeds.config import STORAGE_DIR, get_salt
+from mmeds.database import Database
+from mmeds.config import STORAGE_DIR, get_salt, send_email
 
 LOGIN_FILE = '../server/data/login_info'
 
@@ -10,15 +10,15 @@ LOGIN_FILE = '../server/data/login_info'
 def validate_password(username, password):
     """ Validate the user and their password """
 
-    db = database.Database(STORAGE_DIR)
-    # Get the values from the user table
-    try:
-        hashed_password, salt =\
-            db.get_col_values_from_table('password, salt',
-                                         'mmeds.user where username = "{}"'.format(username))[0]
-    # An index error means that the username did not exist
-    except IndexError:
-        return False
+    with Database(STORAGE_DIR) as db:
+        # Get the values from the user table
+        try:
+            hashed_password, salt =\
+                db.get_col_values_from_table('password, salt',
+                                             'mmeds.user where username = "{}"'.format(username))[0]
+        # An index error means that the username did not exist
+        except IndexError:
+            return False
 
     # Hash the password
     salted = password + salt
@@ -39,8 +39,8 @@ def add_user(username, password, email):
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
-    db = database.Database(STORAGE_DIR)
-    db.add_user(username, password_hash, salt, email)
+    with Database(STORAGE_DIR) as db:
+        db.add_user(username, password_hash, salt, email)
 
 
 def check_password(password1, password2):
@@ -73,11 +73,30 @@ def check_username(username):
         return 'Error: Username contains invalid characters.'
 
     # Check the username has not already been used
-    db = database.Database(STORAGE_DIR)
-
-    # Get all existing usernames
-    results = db.get_col_values_from_table('username', 'user')
+    with Database(STORAGE_DIR) as db:
+        # Get all existing usernames
+        results = db.get_col_values_from_table('username', 'user')
     used_names = [x[0] for x in results]
     if username in used_names:
         return 'Error: Username is already taken.'
     return
+
+
+def reset_password(username, email):
+    """ Reset the password for the current user. """
+    # Create a new password
+    password = get_salt(20)
+    salt = get_salt()
+    salted = password + salt
+    sha256 = hashlib.sha256()
+    sha256.update(salted.encode('utf-8'))
+    password_hash = sha256.hexdigest()
+
+    with Database(STORAGE_DIR, user='root', owner=username) as db:
+        # Check the email matches the one on file
+        if db.check_email(email):
+            exit = db.change_password(password_hash, salt)
+            send_email(email, username, password, 'reset')
+        else:
+            exit = False
+    return exit

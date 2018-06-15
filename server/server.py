@@ -4,7 +4,7 @@ import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email
-from mmeds.authentication import validate_password, check_username, check_password, add_user
+from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
@@ -295,6 +295,22 @@ class MMEDSserver(object):
             with open('../html/download_error.html') as f:
                 page = f.read()
             return page.format(cp.session['user'])
+
+    @cp.expose
+    def password_recovery(self, username, email):
+        """ Page for reseting a user's password. """
+        with open('../html/blank.html') as f:
+            page = f.read()
+        if username == 'Public' or username == 'public':
+            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+            return page
+        exit = reset_password(username, email)
+
+        if exit:
+            page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
+        else:
+            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+        return page
 
     # View files
     @cp.expose
