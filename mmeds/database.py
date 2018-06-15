@@ -6,7 +6,7 @@ import os
 
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, get_salt, send_email
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
 
 
 class MetaData(men.Document):
@@ -46,10 +46,13 @@ class Database:
         self.owner = owner
         if owner is None:
             self.user_id = 0
+            self.email = MMEDS_EMAIL
         else:
-            sql = 'SELECT user_id FROM user WHERE user.username="' + owner + '"'
+            sql = 'SELECT user_id, email FROM user WHERE user.username="' + owner + '"'
             self.cursor.execute(sql)
-            self.user_id = int(self.cursor.fetchone()[0])
+            result = self.cursor.fetchone()
+            self.user_id = int(result[0])
+            self.email = result[1]
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
@@ -270,7 +273,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, metadata, data, email, delimiter='\t'):
+    def read_in_sheet(self, metadata, data, delimiter='\t'):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -288,7 +291,7 @@ class Database:
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(metadata, data, study_name, email)
+                access_code = self.mongo_import(metadata, data, study_name)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -307,7 +310,7 @@ class Database:
         # Remove all row information from the current input
         self.IDs.clear()
 
-        return access_code, study_name, email
+        return access_code, study_name, self.email
 
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)
@@ -315,23 +318,23 @@ class Database:
         data = self.cursor.fetchall()
         return data
 
-    def add_user(self, username, password, salt):
+    def add_user(self, username, password, salt, email):
         """ Add the user with the specified parameters. """
         # Create the SQL to add the user
-        sql = 'INSERT INTO mmeds.user (username, password, salt) VALUES\
-                ("{}", "{}", "{}");'.format(username, password, salt)
+        sql = 'INSERT INTO mmeds.user (username, password, salt, email) VALUES\
+                ("{}", "{}", "{}", "{}");'.format(username, password, salt, email)
 
         self.cursor.execute(sql)
         self.db.commit()
 
-    def mongo_import(self, metadata, data, study_name, email, table='AdditionalMetaData'):
+    def mongo_import(self, metadata, data, study_name, table='AdditionalMetaData'):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
         # Create the document
         mdata = MetaData(study=study_name,
                          access_code=access_code,
                          owner=self.owner,
-                         email=email)
+                         email=self.email)
         # The MetaData
         with open(metadata, 'rb') as metadata_file:
             mdata.metadata.put(metadata_file)
