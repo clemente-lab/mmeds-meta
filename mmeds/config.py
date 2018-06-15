@@ -108,6 +108,10 @@ def send_email(toaddr, user, code, message='upload'):
         body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
                'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(code) +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+    elif message == 'change':
+        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
+               'If you did not do this contact use immediately.\n{}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
 
     msg.set_content(body)
 

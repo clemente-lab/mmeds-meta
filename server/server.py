@@ -4,7 +4,7 @@ import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email
-from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password
+from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
@@ -345,6 +345,32 @@ class MMEDSserver(object):
         path = os.path.join(absDir, STORAGE_DIR + cp.session['query'])
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
+
+    @cp.expose
+    def input_password(self):
+        """ Load page for changing the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def change_password(self, password0, password1, password2):
+        """ Change the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+
+        # Check the old password matches
+        if validate_password(cp.session['user'], password0):
+            # Check the two copies of the new password match
+            errors = check_password(password1, password2)
+            if len(errors) == 0:
+                change_password(cp.session['user'], password1)
+                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
+            else:
+                page = insert_html(page, 9, errors)
+        else:
+            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
+        return page
 
 
 def secureheaders():

@@ -100,3 +100,18 @@ def reset_password(username, email):
         else:
             exit = False
     return exit
+
+
+def change_password(username, password):
+    """ Reset the password for the current user. """
+    # Create a new password
+    salt = get_salt()
+    salted = password + salt
+    sha256 = hashlib.sha256()
+    sha256.update(salted.encode('utf-8'))
+    password_hash = sha256.hexdigest()
+
+    with Database(STORAGE_DIR, user='root', owner=username) as db:
+        # Check the email matches the one on file
+        db.change_password(password_hash, salt)
+        send_email(db.get_email(), username, password, 'change')

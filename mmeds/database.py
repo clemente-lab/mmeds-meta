@@ -73,6 +73,10 @@ class Database:
         """ Check the provided email matches this user. """
         return email == self.email
 
+    def get_email(self):
+        """ Check the provided email matches this user. """
+        return self.email
+
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
         sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, SECURITY_TOKEN)
