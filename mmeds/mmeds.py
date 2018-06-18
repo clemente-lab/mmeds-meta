@@ -229,9 +229,9 @@ def is_numeric(s):
     return False
 
 
-def create_local_copy(fp, filename):
+def create_local_copy(fp, filename, path=STORAGE_DIR):
     """ Create a local copy of the file provided. """
-    file_copy = join(STORAGE_DIR, 'copy_' + filename)
+    file_copy = join(path, 'copy_' + filename)
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
         while True:
