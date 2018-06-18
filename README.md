@@ -14,11 +14,13 @@ https://downloads.mariadb.org/
 https://www.mongodb.com/download-center#community 
 
 
-To setup the SQL database run the following scripts in this order:  
-    1. sql/tables.sql  
-    2. sql/functions.sql  
-    3. sql/users.sql  
-    4. sql/views.sql  
+To setup the SQL database connect to you sql database as root:  
+`mysql -u root`  
+Then run the following commands in order.  
+    1. `source sql/tables.sql;`  
+    2. `source sql/functions.sql;`  
+    3. `source sql/users.sql;`  
+    4. `source sql/views.sql;`  
 
 
 Run `python setup.py install` to install the necessary dependencies.
