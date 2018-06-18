@@ -39,6 +39,9 @@ setup(name='mmeds',
       install_requires=[
           'numpy',
           'cherrypy',
-          'pymysql'
+          'pymysql',
+          'pandas',
+          'mongoengine',
+          'prettytable'
       ],
       zip_safe=False)
