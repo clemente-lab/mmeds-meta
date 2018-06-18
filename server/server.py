@@ -20,7 +20,7 @@ class MMEDSserver(object):
         self.db = None
 
     def __del__(self):
-        temp_dirs = glob(STORAGE_DIR + "temp_*")
+        temp_dirs = glob(STORAGE_DIR + 'temp_*')
         for temp in temp_dirs:
             cp.log('Removing temporary dir ' + temp)
             rmtree(temp)
