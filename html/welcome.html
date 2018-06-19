@@ -8,13 +8,19 @@
     <body>
         <h2>Welcome {user}</h2>
         <p>
-            <h3>Upload a file</h3>
-            <form action='validate' method='post' enctype='multipart/form-data'>
-                <p> Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
-                <p> Data File: <br> <input type='file' name='myData'/> </p>
-                <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
-                <p> <button type='submit' method='post'>Upload Files</button> </p>
-            </form>
+            <h3>Select type of data for upload</h3>
+            <div class='dropdown'>
+                <button class='dropbtn'> Data Types</button>
+                <div id='myDropdown' class='dropdown-content'>
+                    <form action='upload_qiime' method='post' enctype='multipart/form-data'>
+                        <button type='submit' method='post'>Upload Qiime Data</button>
+                    </form>
+                    <form> Insert </form>
+                    <form> Other </form>
+                    <form> Tools </form>
+                    <form> Here </form>
+                </div>
+            </div>
         </p>
         <p>
             <h3>Modify a previous upload</h3>

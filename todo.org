@@ -40,6 +40,11 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** TODO Setup tools to work with loaded metadata
 ** TODO Setup storage of results from analysis
 ** TODO Create interface for running tools on data
+   - [X] Add drop down menu for different tools
+   - [ ] Modify validate for Qiime data
+   - [ ] Add functionality to convert metadata to Qiime mapping
+   - [ ] Add functionality to run Qiime
+   - [ ] Store newly generated data
 ** TODO Create interface for analyzing data results
 
 **** TODO Questions

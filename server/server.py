@@ -31,7 +31,7 @@ class MMEDSserver(object):
         return open('../html/index.html')
 
     @cp.expose
-    def validate(self, myMetaData, myData, public='off'):
+    def validate_qiime(self, myMetaData, myData1, myData2, public='off'):
         """ The page returned after a file is uploaded. """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -43,10 +43,17 @@ class MMEDSserver(object):
 
         # Create a copy of the Data file
         try:
-            data_copy = create_local_copy(myData.file, myData.filename, cp.session['dir'])
+            data_copy1 = create_local_copy(myData1.file, myData1.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
-            data_copy = None
+            data_copy1 = None
+
+        # Create a copy of the Data file
+        try:
+            data_copy2 = create_local_copy(myData1.file, myData1.filename, cp.session['dir'])
+        # Except the error if there is no file
+        except AttributeError:
+            data_copy2 = None
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
@@ -85,7 +92,7 @@ class MMEDSserver(object):
 
             return uploaded_output
         elif len(warnings) > 0:
-            cp.session['uploaded_files'] = [metadata_copy, data_copy, username]
+            cp.session['uploaded_files'] = [metadata_copy, data_copy1, username]
             # Write the errors to a file
             with open(join(cp.session['dir'], 'errors_' + myMetaData.filename), 'w') as f:
                 f.write('\n'.join(errors))
@@ -102,7 +109,7 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
-                access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
+                access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy1)
 
             # Send the confirmation email
             send_email(email, username, access_code)
@@ -246,13 +253,20 @@ class MMEDSserver(object):
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
         if validate_password(username, password):
-            with open('../html/upload.html') as f:
+            with open('../html/welcome.html') as f:
                 page = f.read()
             return page.format(user=username)
         else:
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+
+    @cp.expose
+    def upload_qiime(self):
+        """ Page for uploading Qiime data """
+        with open('../html/upload_qiime.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
 
     @cp.expose
     def retry_upload(self):
