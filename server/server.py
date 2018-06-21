@@ -157,7 +157,7 @@ class MMEDSserver(object):
         return upload_successful
 
     @cp.expose
-    def skip_upload(self):
+    def query_page(self):
         """ Skip uploading a file. """
         # Get the html for the upload page
         with open('../html/success.html', 'r') as f:
@@ -265,6 +265,20 @@ class MMEDSserver(object):
             return insert_error(page, 23, 'Error: Invalid username or password.')
 
     @cp.expose
+    def analysis_page(self):
+        """ Page for running analysis of previous uploads. """
+        with open('../html/analysis.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def upload_page(self):
+        """ Page for selecting upload type or modifying upload. """
+        with open('../html/upload.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
+
+    @cp.expose
     def upload_qiime(self):
         """ Page for uploading Qiime data """
         with open('../html/upload_qiime.html') as f:
@@ -327,6 +341,11 @@ class MMEDSserver(object):
             with open('../html/download_error.html') as f:
                 page = f.read()
             return page.format(cp.session['user'])
+
+    @cp.expose
+    def run_analysis(self, access_code, tool):
+        """ Run analysis on the specified study. """
+        return "<html> <h1> Got it </h1> </html>"
 
     # View files
     @cp.expose

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <link rel='stylesheet' href='/CSS/stylesheet.css'>
+    <head>
+        <title>Data Upload</title>
+        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+    </head>
+    <body>
+        <p> <h3>Run analysis on upload</h3> </p>
+        <p>
+            <form action='run_analysis' method='post' enctype='multipart/form-data' id='analysis_form'>
+                <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
+                <p> <select name='tool' form='analysis_form'>
+                        <option value="qiime">Qiime</option>
+                        <option value="other">Other</option>
+                    </select> </p>
+                    <p> <button type='submit' method='post'>Run</button> </p>
+            </form>
+        </p>
+    </body>
+</html>

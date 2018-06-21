@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <link rel='stylesheet' href='/CSS/stylesheet.css'>
+    <head>
+        <title>Data Upload</title>
+        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+    </head>
+    <body>
+        <h2>Welcome {user}</h2>
+        <p>
+            <h3>Select type of data for upload</h3>
+            <div class='dropdown'>
+                <button class='dropbtn'> Data Types</button>
+                <div id='myDropdown' class='dropdown-content'>
+                    <form action='upload_qiime' method='post' enctype='multipart/form-data'>
+                        <button type='submit' method='post'>Upload Qiime Data</button>
+                    </form>
+                    <form> Insert </form>
+                    <form> Other </form>
+                    <form> Tools </form>
+                    <form> Here </form>
+                </div>
+            </div>
+        </p>
+        <p>
+            <h3>Modify a previous upload</h3>
+            <form action='modify_upload' method='post' enctype='multipart/form-data'>
+                <p> Data File: <br> <input type='file' name='myData' required/> </p>
+                <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
+                <p> <button type='submit' method='post'>Modify Upload</button> </p>
+            </form>
+        </p>
+    </body>
+</html>
