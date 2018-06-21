@@ -109,7 +109,10 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
-                access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy1)
+                access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                                  'qiime',
+                                                                  data1=data_copy1,
+                                                                  data2=data_copy2)
 
             # Send the confirmation email
             send_email(email, username, access_code)

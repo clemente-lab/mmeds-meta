@@ -9,19 +9,40 @@ from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
 
 
-class MetaData(men.Document):
+class MetaData(men.DynamicDocument):
+    study_type = men.StringField(max_length=45, required=True)
     study = men.StringField(max_length=45, required=True)
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
-    metadata = men.FileField()
-    data = men.FileField()
 
 
 def delete_MetaData(mdata):
     """ Deletes the MetaData document and associated Files. """
     mdata.data.delete()
     mdata.delete()
+
+
+def add_qiime_files(mdata, metadata, data1, data2):
+    mdata.metadata = men.FileField()
+    mdata.data1 = men.FileField()
+    mdata.data2 = men.FileField()
+
+    # The MetaData
+    with open(metadata, 'rb') as metadata_file:
+        mdata.metadata.put(metadata_file)
+
+    if data1 is not None:
+        # Open the data file
+        with open(data1, 'rb') as data_file:
+            # Add a document for the study in the NoSQL
+            mdata.data1.put(data_file)
+    if data2 is not None:
+        # Open the data file
+        with open(data2, 'rb') as data_file:
+            # Add a document for the study in the NoSQL
+            mdata.data2.put(data_file)
+    return mdata
 
 
 class Database:
@@ -273,7 +294,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, metadata, data, delimiter='\t'):
+    def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -291,7 +312,7 @@ class Database:
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(metadata, data, study_name)
+                access_code = self.mongo_import(study_name, study_type=study_type, **kwargs)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -327,23 +348,23 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def mongo_import(self, metadata, data, study_name, table='AdditionalMetaData'):
+    def mongo_import(self, study_name, study_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
         # Create the document
-        mdata = MetaData(study=study_name,
+        mdata = MetaData(study_type=study_type,
+                         study=study_name,
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email)
-        # The MetaData
-        with open(metadata, 'rb') as metadata_file:
-            mdata.metadata.put(metadata_file)
 
-        if data is not None:
-            # Open the data file
-            with open(data, 'rb') as data_file:
-                # Add a document for the study in the NoSQL
-                mdata.data.put(data_file)
+        # Add the files approprate to the type of study
+        if study_type == 'qiime':
+            metadata = kwargs['metadata']
+            data1 = kwargs['data1']
+            data2 = kwargs['data2']
+            mdata = add_qiime_files(mdata, metadata, data1, data2)
+
         # Save the document
         mdata.save()
         return access_code
