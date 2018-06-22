@@ -9,18 +9,13 @@
         <h2>Welcome {user}</h2>
         <p>
             <h3>Select type of data for upload</h3>
-            <div class='dropdown'>
-                <button class='dropbtn'> Data Types</button>
-                <div id='myDropdown' class='dropdown-content'>
-                    <form action='upload_qiime' method='post' enctype='multipart/form-data'>
-                        <button type='submit' method='post'>Upload Qiime Data</button>
-                    </form>
-                    <form> Insert </form>
-                    <form> Other </form>
-                    <form> Tools </form>
-                    <form> Here </form>
-                </div>
-            </div>
+            <form action='upload' method='post' enctype='multipart/form-data' id='upload_form'>
+                <select name='study_type' form='upload_form'>
+                    <option value="qiime">Qiime</option>
+                    <option value="other">Other</option>
+                </select>
+                <button type='submit' method='post'>Upload Data</button>
+            </form>
         </p>
         <p>
             <h3>Modify a previous upload</h3>

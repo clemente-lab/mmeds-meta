@@ -30,6 +30,21 @@ class MMEDSserver(object):
         """ Home page of the application """
         return open('../html/index.html')
 
+    ########################################
+    ###########    Validation    ###########
+    ########################################
+
+    @cp.expose
+    def run_analysis(self, access_code, tool):
+        """ Run analysis on the specified study. """
+        return "<html> <h1> Got it </h1> </html>"
+
+    # View files
+    @cp.expose
+    def view_corrections(self):
+        """ Page containing the marked up metadata as an html file """
+        return open(join(cp.session['dir'], UPLOADED_FP + '.html'))
+
     @cp.expose
     def validate_qiime(self, myMetaData, myData1, myData2, public='off'):
         """ The page returned after a file is uploaded. """
@@ -138,31 +153,9 @@ class MMEDSserver(object):
             upload_successful = f.read()
         return upload_successful
 
-    @cp.expose
-    def modify_upload(self, myData, access_code):
-        """ Modify the data of an existing upload. """
-        # Create a copy of the Data file
-        data_copy = create_local_copy(myData.file, myData.filename)
-
-        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
-            try:
-                db.modify_data(data_copy, access_code)
-            except AttributeError:
-                with open('../html/download_error.html') as f:
-                    download_error = f.read()
-                return download_error.format(cp.session['user'])
-        # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
-            upload_successful = f.read()
-        return upload_successful
-
-    @cp.expose
-    def query_page(self):
-        """ Skip uploading a file. """
-        # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
-            upload_successful = f.read()
-        return upload_successful
+    ########################################
+    ###########  Authentication  ###########
+    ########################################
 
     @cp.expose
     def reset_code(self, study_name, study_email):
@@ -203,23 +196,6 @@ class MMEDSserver(object):
         with open(join(cp.session['dir'], cp.session['query']), 'w') as f:
             f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
         return page
-
-    @cp.expose
-    def get_additional_mdata(self):
-        """ Return the additional MetaData uploaded by the user. """
-        pass
-
-    @cp.expose
-    def get_data(self):
-        """ Return the data file uploaded by the user. """
-        path = os.path.join(absDir, join(cp.session['dir'], cp.session['data_file']))
-        return static.serve_file(path, 'application/x-download',
-                                 'attachment', os.path.basename(path))
-
-    @cp.expose
-    def sign_up_page(self):
-        """ Return the page for signing up. """
-        return open('../html/sign_up_page.html')
 
     @cp.expose
     def sign_up(self, username, password1, password2, email):
@@ -264,6 +240,57 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
 
+    ########################################
+    ###########   Upload Pages   ###########
+    ########################################
+
+    @cp.expose
+    def upload(self, study_type):
+        """ Page for uploading Qiime data """
+        if study_type == 'qiime':
+            with open('../html/upload_qiime.html') as f:
+                page = f.read()
+        else:
+            page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
+        return page.format(user=cp.session['user'])
+
+    @cp.expose
+    def retry_upload(self):
+        """ Retry the upload of data files. """
+        with open('../html/upload.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
+
+    @cp.expose
+    def modify_upload(self, myData, access_code):
+        """ Modify the data of an existing upload. """
+        # Create a copy of the Data file
+        data_copy = create_local_copy(myData.file, myData.filename)
+
+        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+            try:
+                db.modify_data(data_copy, access_code)
+            except AttributeError:
+                with open('../html/download_error.html') as f:
+                    download_error = f.read()
+                return download_error.format(cp.session['user'])
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
+
+    ########################################
+    ###########  No Logic Pages  ###########
+    ########################################
+
+    @cp.expose
+    def query_page(self):
+        """ Skip uploading a file. """
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
+
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
@@ -279,19 +306,25 @@ class MMEDSserver(object):
         return page.format(user=cp.session['user'])
 
     @cp.expose
-    def upload_qiime(self):
-        """ Page for uploading Qiime data """
-        with open('../html/upload_qiime.html') as f:
-            page = f.read()
-        return page.format(user=cp.session['user'])
+    def sign_up_page(self):
+        """ Return the page for signing up. """
+        return open('../html/sign_up_page.html')
 
     @cp.expose
-    def retry_upload(self):
-        """ Retry the upload of data files. """
-        with open('../html/upload.html') as f:
-            page = f.read()
-        return page.format(user=cp.session['user'])
+    def get_additional_mdata(self):
+        """ Return the additional MetaData uploaded by the user. """
+        pass
 
+    @cp.expose
+    def get_data(self):
+        """ Return the data file uploaded by the user. """
+        path = os.path.join(absDir, join(cp.session['dir'], cp.session['data_file']))
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
+
+    ########################################
+    ###########  Download Pages  ###########
+    ########################################
     @cp.expose
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
@@ -343,22 +376,10 @@ class MMEDSserver(object):
             return page.format(cp.session['user'])
 
     @cp.expose
-    def run_analysis(self, access_code, tool):
-        """ Run analysis on the specified study. """
-        return "<html> <h1> Got it </h1> </html>"
-
-    # View files
-    @cp.expose
-    def view_corrections(self):
-        """ Page containing the marked up metadata as an html file """
-        return open(join(cp.session['dir'], UPLOADED_FP + '.html'))
-
-    @cp.expose
     def download_error_log(self):
         return static.serve_file(cp.session['error_file'], 'application/x-download',
                                  'attachment', os.path.basename(cp.session['error_file']))
 
-    # Download links
     @cp.expose
     def download_log(self):
         """ Allows the user to download a log file """
