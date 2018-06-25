@@ -14,7 +14,7 @@ HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address',
 
 DNA = set('GATC')
 
-ILLEGAL_IN_HEADER = set('/\\ *?') # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
+ILLEGAL_IN_HEADER = set('/\\ *?')  # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
 
@@ -84,7 +84,7 @@ def check_column(raw_column, col_index):
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
-        errors.append('Error: Multiple studies in one metadata file')
+        errors.append('-1\t-1\tError: Multiple studies in one metadata file')
 
     if issubdtype(column.dtype, number):
         stddev = std(column)
@@ -205,10 +205,14 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                 study_name = df[table]['StudyName'][i]
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     dups = check_duplicate_cols(all_headers)
+
     if len(dups) > 0:
-        errors.append('Duplicate headers ' + ', '.join(dups))
+        for dup in dups:
+            locs = [i for i, header in enumerate(all_headers) if header == 'dup']
+            for loc in locs:
+                errors.append('1\t{}\tDuplicate header {}'.format(loc, dup))
     if missing_headers:
-        errors.append('Missing requires fields: ' + ', '.join(missing_headers))
+        errors.append('-1\t-1\tMissing requires fields: ' + ', '.join(missing_headers))
 
     return errors, warnings, study_name, df['Subjects']
 
@@ -229,9 +233,9 @@ def is_numeric(s):
     return False
 
 
-def create_local_copy(fp, filename):
+def create_local_copy(fp, filename, path=STORAGE_DIR):
     """ Create a local copy of the file provided. """
-    file_copy = join(STORAGE_DIR, 'copy_' + filename)
+    file_copy = join(path, 'copy_' + filename)
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
         while True:
@@ -240,3 +244,39 @@ def create_local_copy(fp, filename):
             if not data:
                 break
     return file_copy
+
+
+def generate_error_html(file_fp, errors, warnings):
+    """
+    Generates an html page marking the errors and warnings found in
+    the given metadata file.
+    """
+    df = pd.read_csv(file_fp)
+    html = '<table>'
+    markup = defaultdict(dict)
+    top = []
+
+    # Add Errors to markup table
+    for error in errors:
+        row, col, item = error.split('\t')
+        if row == '-1' and col == '-1':
+            top.append(['Error', item])
+        markup[int(row)][int(col)] = ['yellow', item]
+
+    # Add warnings to markup table
+    for warning in warnings:
+        row, col, item = warning.split('\t')
+        if row == '-1' and col == '-1':
+            top.append(['Warning', item])
+        markup[int(row)][int(col)] = ['yellow', item]
+
+    for col, (table, header) in enumerate(df.axes[1]):
+        for row, item in enumerate(df[table][header]):
+            try:
+                color, issue = markup[row + 2][col]
+                html += '<td bgcolor={} onmouseover={}>{}</td>'.format(color, issue, item)
+            except IndexError:
+                html += '<td>{}</td>'.format(item)
+
+    html += '</table>'
+    return html
