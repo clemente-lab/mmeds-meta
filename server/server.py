@@ -7,7 +7,7 @@ import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
-from mmeds.authentication import validate_password, check_username, check_password, add_user
+from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 
 localDir = os.path.dirname(__file__)
@@ -313,6 +313,22 @@ class MMEDSserver(object):
                 page = f.read()
             return page.format(cp.session['user'])
 
+    @cp.expose
+    def password_recovery(self, username, email):
+        """ Page for reseting a user's password. """
+        with open('../html/blank.html') as f:
+            page = f.read()
+        if username == 'Public' or username == 'public':
+            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+            return page
+        exit = reset_password(username, email)
+
+        if exit:
+            page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
+        else:
+            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+        return page
+
     # View files
     @cp.expose
     def view_corrections(self):
@@ -346,6 +362,32 @@ class MMEDSserver(object):
         path = join(absDir, cp.session['dir'], cp.session['query'])
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
+
+    @cp.expose
+    def input_password(self):
+        """ Load page for changing the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def change_password(self, password0, password1, password2):
+        """ Change the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+
+        # Check the old password matches
+        if validate_password(cp.session['user'], password0):
+            # Check the two copies of the new password match
+            errors = check_password(password1, password2)
+            if len(errors) == 0:
+                change_password(cp.session['user'], password1)
+                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
+            else:
+                page = insert_html(page, 9, errors)
+        else:
+            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
+        return page
 
 
 def secureheaders():
