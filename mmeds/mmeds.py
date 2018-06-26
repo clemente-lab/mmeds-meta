@@ -181,9 +181,16 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
     all_headers = []
     study_name = None
-    tables = df.axes[1].levels[0].tolist()
+    # Get the tables in the dataframe while maintaining order
+    tables = []
+    for (table, header) in df.axes[1]:
+        tables.append(table)
+    tables = list(dict.fromkeys(tables))
+
+    # For each table
     for j, table in enumerate(tables):
         table_df = df[table]
+        # For each table column
         for i, header in enumerate(table_df.axes[1]):
             col = table_df[header]
             col_index = len(all_headers)
@@ -204,14 +211,17 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                     errors += check_lengths(col, col_index)
             elif study_name is None and table == 'Study':
                 study_name = df[table]['StudyName'][i]
-    missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
-    dups = check_duplicate_cols(all_headers)
 
+    # Check for duplicate columns
+    dups = check_duplicate_cols(all_headers)
     if len(dups) > 0:
         for dup in dups:
             locs = [i for i, header in enumerate(all_headers) if header == 'dup']
             for loc in locs:
                 errors.append('1\t{}\tDuplicate header {}'.format(loc, dup))
+
+    # Check for missing headers
+    missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     if missing_headers:
         errors.append('-1\t-1\tMissing requires fields: ' + ', '.join(missing_headers))
 
@@ -253,8 +263,8 @@ def generate_error_html(file_fp, errors, warnings):
     the given metadata file.
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1])
-    html = '<!DOCTYPE html><html>'
-    html += '<link rel="stylesheet" href="/CSS/stylesheet.css">'
+    html = '<!DOCTYPE html>\n<html>\n'
+    html += '<link rel="stylesheet" href="/CSS/stylesheet.css">\n'
     markup = defaultdict(dict)
     top = []
 
@@ -274,7 +284,7 @@ def generate_error_html(file_fp, errors, warnings):
 
     # Add general warnings and errors
     for color, er in top:
-        html += '<h3 style="color:{}">'.format(color) + er + '</h3>'
+        html += '<h3 style="color:{}">'.format(color) + er + '</h3>\n'
 
     # Get all the table and header names
     tables = []
@@ -285,8 +295,8 @@ def generate_error_html(file_fp, errors, warnings):
 
     # Create the table and header rows of the table
     html += '<table>'
-    html += '<tr><th>' + '</th><th>'.join(tables) + '</th></tr>'
-    html += '<tr><th>' + '</th><th>'.join(headers) + '</th></tr>'
+    html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
+    html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
 
     # Build each row of the table
     for row in range(len(df[tables[0]][headers[0]])):
@@ -301,11 +311,11 @@ def generate_error_html(file_fp, errors, warnings):
             # Add the error/warning if there is one
             try:
                 color, issue = markup[row + 2][try_col]
-                html += '<td bgcolor={}>{}<br>-----------<br>{}</td>'.format(color, item, issue)
+                html += '<td style="color:black" bgcolor={}>{}<div style="font-weight:bold"><br>-----------<br>{}</div></td>\n'.format(color, item, issue)
             # Otherwise add the table item
             except KeyError:
-                html += '<td>{}</td>'.format(item)
-        html += '</tr>'
-    html += '</table>'
-    html += '</html>'
+                html += '<td style="color:black">{}</td>\n'.format(item)
+        html += '</tr>\n'
+    html += '</table>\n'
+    html += '</html>\n'
     return html
