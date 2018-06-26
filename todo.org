@@ -42,7 +42,6 @@ Distinguish between sample and speciman. Check FreezerWorks
 ** TODO Create interface for running tools on data
 ** TODO Create interface for analyzing data results
 
-
 **** TODO Questions
      - [ ] Email tied to user account seperate from email for upload?
      - [ ] What tools do we want to initally setup?
