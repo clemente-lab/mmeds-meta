@@ -14,7 +14,7 @@ HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address',
 
 DNA = set('GATC')
 
-ILLEGAL_IN_HEADER = set('/\\ *?') # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
+ILLEGAL_IN_HEADER = set('/\\ *?')  # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
 
@@ -84,7 +84,7 @@ def check_column(raw_column, col_index):
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
-        errors.append('Error: Multiple studies in one metadata file')
+        errors.append('-1\t-1\tError: Multiple studies in one metadata file')
 
     if issubdtype(column.dtype, number):
         stddev = std(column)
@@ -181,12 +181,20 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
     all_headers = []
     study_name = None
-    tables = df.axes[1].levels[0].tolist()
+    # Get the tables in the dataframe while maintaining order
+    tables = []
+    for (table, header) in df.axes[1]:
+        tables.append(table)
+    tables = list(dict.fromkeys(tables))
+
+    # For each table
     for j, table in enumerate(tables):
         table_df = df[table]
+        # For each table column
         for i, header in enumerate(table_df.axes[1]):
             col = table_df[header]
-            new_errors, new_warnings = check_column(col, len(all_headers) + 1)
+            col_index = len(all_headers)
+            new_errors, new_warnings = check_column(col, col_index)
             errors += new_errors
             warnings += new_warnings
 
@@ -194,21 +202,28 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             # Perform column specific checks
             if table == 'Specimen':
                 if header == 'BarcodeSequence':
-                    errors += check_duplicates(col, i)
-                    errors += check_lengths(col, i)
-                    errors += check_barcode_chars(col, i)
+                    errors += check_duplicates(col, col_index)
+                    errors += check_lengths(col, col_index)
+                    errors += check_barcode_chars(col, col_index)
                 elif header == 'SampleID':
-                    errors += check_duplicates(col, i)
+                    errors += check_duplicates(col, col_index)
                 elif header == 'LinkerPrimerSequence':
-                    errors += check_lengths(col, i)
+                    errors += check_lengths(col, col_index)
             elif study_name is None and table == 'Study':
                 study_name = df[table]['StudyName'][i]
-    missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
+
+    # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)
     if len(dups) > 0:
-        errors.append('Duplicate headers ' + ', '.join(dups))
+        for dup in dups:
+            locs = [i for i, header in enumerate(all_headers) if header == 'dup']
+            for loc in locs:
+                errors.append('1\t{}\tDuplicate header {}'.format(loc, dup))
+
+    # Check for missing headers
+    missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     if missing_headers:
-        errors.append('Missing requires fields: ' + ', '.join(missing_headers))
+        errors.append('-1\t-1\tMissing requires fields: ' + ', '.join(missing_headers))
 
     return errors, warnings, study_name, df['Subjects']
 
@@ -240,3 +255,67 @@ def create_local_copy(fp, filename, path=STORAGE_DIR):
             if not data:
                 break
     return file_copy
+
+
+def generate_error_html(file_fp, errors, warnings):
+    """
+    Generates an html page marking the errors and warnings found in
+    the given metadata file.
+    """
+    df = pd.read_csv(file_fp, sep='\t', header=[0, 1])
+    html = '<!DOCTYPE html>\n<html>\n'
+    html += '<link rel="stylesheet" href="/CSS/stylesheet.css">\n'
+    markup = defaultdict(dict)
+    top = []
+
+    # Add Errors to markup table
+    for error in errors:
+        row, col, item = error.split('\t')
+        if row == '-1' and col == '-1':
+            top.append(['red', item])
+        markup[int(row)][int(col)] = ['red', item]
+
+    # Add warnings to markup table
+    for warning in warnings:
+        row, col, item = warning.split('\t')
+        if row == '-1' and col == '-1':
+            top.append(['yellow', item])
+        markup[int(row)][int(col)] = ['yellow', item]
+
+    # Add general warnings and errors
+    for color, er in top:
+        html += '<h3 style="color:{}">'.format(color) + er + '</h3>\n'
+
+    # Get all the table and header names
+    tables = []
+    headers = []
+    for (table, header) in df.axes[1]:
+        tables.append(table)
+        headers.append(header)
+
+    # Create the table and header rows of the table
+    html += '<table>'
+    html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
+    html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
+
+    # Build each row of the table
+    for row in range(len(df[tables[0]][headers[0]])):
+        html += '<tr>'
+        # Build each column in the row
+        for col, (table, header) in enumerate(zip(tables, headers)):
+            item = df[table][header][row]
+            if table == 'Subjects':
+                try_col = -2
+            else:
+                try_col = col
+            # Add the error/warning if there is one
+            try:
+                color, issue = markup[row + 2][try_col]
+                html += '<td style="color:black" bgcolor={}>{}<div style="font-weight:bold"><br>-----------<br>{}</div></td>\n'.format(color, item, issue)
+            # Otherwise add the table item
+            except KeyError:
+                html += '<td style="color:black">{}</td>\n'.format(item)
+        html += '</tr>\n'
+    html += '</table>\n'
+    html += '</html>\n'
+    return html

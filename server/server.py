@@ -5,7 +5,7 @@ from glob import glob
 
 import cherrypy as cp
 from cherrypy.lib import static
-from mmeds.mmeds import insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
+from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
@@ -83,7 +83,9 @@ class MMEDSserver(object):
             for i, warning in enumerate(warnings):
                 uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
 
-            return uploaded_output
+            html = generate_error_html(metadata_copy, errors, warnings)
+
+            return html
         elif len(warnings) > 0:
             cp.session['uploaded_files'] = [metadata_copy, data_copy, username]
             # Write the errors to a file
