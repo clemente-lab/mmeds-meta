@@ -186,7 +186,8 @@ def validate_mapping_file(file_fp, delimiter='\t'):
         table_df = df[table]
         for i, header in enumerate(table_df.axes[1]):
             col = table_df[header]
-            new_errors, new_warnings = check_column(col, len(all_headers) + 1)
+            col_index = len(all_headers)
+            new_errors, new_warnings = check_column(col, col_index)
             errors += new_errors
             warnings += new_warnings
 
@@ -194,13 +195,13 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             # Perform column specific checks
             if table == 'Specimen':
                 if header == 'BarcodeSequence':
-                    errors += check_duplicates(col, i)
-                    errors += check_lengths(col, i)
-                    errors += check_barcode_chars(col, i)
+                    errors += check_duplicates(col, col_index)
+                    errors += check_lengths(col, col_index)
+                    errors += check_barcode_chars(col, col_index)
                 elif header == 'SampleID':
-                    errors += check_duplicates(col, i)
+                    errors += check_duplicates(col, col_index)
                 elif header == 'LinkerPrimerSequence':
-                    errors += check_lengths(col, i)
+                    errors += check_lengths(col, col_index)
             elif study_name is None and table == 'Study':
                 study_name = df[table]['StudyName'][i]
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
@@ -251,8 +252,9 @@ def generate_error_html(file_fp, errors, warnings):
     Generates an html page marking the errors and warnings found in
     the given metadata file.
     """
-    df = pd.read_csv(file_fp)
-    html = '<table>'
+    df = pd.read_csv(file_fp, sep='\t', header=[0, 1])
+    html = '<!DOCTYPE html><html>'
+    html += '<link rel="stylesheet" href="/CSS/stylesheet.css">'
     markup = defaultdict(dict)
     top = []
 
@@ -260,23 +262,50 @@ def generate_error_html(file_fp, errors, warnings):
     for error in errors:
         row, col, item = error.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['Error', item])
-        markup[int(row)][int(col)] = ['yellow', item]
+            top.append(['red', item])
+        markup[int(row)][int(col)] = ['red', item]
 
     # Add warnings to markup table
     for warning in warnings:
         row, col, item = warning.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['Warning', item])
+            top.append(['yellow', item])
         markup[int(row)][int(col)] = ['yellow', item]
 
-    for col, (table, header) in enumerate(df.axes[1]):
-        for row, item in enumerate(df[table][header]):
-            try:
-                color, issue = markup[row + 2][col]
-                html += '<td bgcolor={} onmouseover={}>{}</td>'.format(color, issue, item)
-            except IndexError:
-                html += '<td>{}</td>'.format(item)
+    # Add general warnings and errors
+    for color, er in top:
+        html += '<h3 style="color:{}">'.format(color) + er + '</h3>'
 
+    # Get all the table and header names
+    tables = []
+    headers = []
+    for (table, header) in df.axes[1]:
+        tables.append(table)
+        headers.append(header)
+
+    # Create the table and header rows of the table
+    html += '<table>'
+    html += '<tr><th>' + '</th><th>'.join(tables) + '</th></tr>'
+    html += '<tr><th>' + '</th><th>'.join(headers) + '</th></tr>'
+
+    # Build each row of the table
+    for row in range(len(df[tables[0]][headers[0]])):
+        html += '<tr>'
+        # Build each column in the row
+        for col, (table, header) in enumerate(zip(tables, headers)):
+            item = df[table][header][row]
+            if table == 'Subjects':
+                try_col = -2
+            else:
+                try_col = col
+            # Add the error/warning if there is one
+            try:
+                color, issue = markup[row + 2][try_col]
+                html += '<td bgcolor={}>{}<br>-----------<br>{}</td>'.format(color, item, issue)
+            # Otherwise add the table item
+            except KeyError:
+                html += '<td>{}</td>'.format(item)
+        html += '</tr>'
     html += '</table>'
+    html += '</html>'
     return html
