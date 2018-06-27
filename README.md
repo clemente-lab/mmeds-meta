@@ -26,3 +26,6 @@ Then run the following commands in order.
 Run `python setup.py install` to install the necessary dependencies.
 
 To start the server change to the server directory and run `python server.py`
+
+To connect to the server go to https://localhost:8080
+Allow access to the webpage despite your browsers warning. The security certificate is not signed.
