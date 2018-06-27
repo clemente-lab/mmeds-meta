@@ -22,7 +22,7 @@ Then run the following commands in order.
     3. `source sql/users.sql;`  
     4. `source sql/views.sql;`  
 
-
+mmeds is writtein in Python3 so you will need a python3 environment to run it.
 Run `python setup.py install` to install the necessary dependencies.
 
 To start the server change to the server directory and run `python server.py`
