@@ -240,6 +240,14 @@ class MMEDSserver(object):
             return insert_error(page, 23, 'Error: Invalid username or password.')
 
     @cp.expose
+    def logout(self):
+        """
+        Expires the session and returns to login page
+        """
+        cp.lib.sessions.expire()
+        return open('../html/index.html')
+
+    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
         with open('../html/upload.html') as f:
