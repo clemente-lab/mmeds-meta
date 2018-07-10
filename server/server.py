@@ -9,6 +9,8 @@ from mmeds.mmeds import insert_html, insert_error, insert_warning, validate_mapp
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user
 from mmeds.database import Database
+from mmeds.tools import run_qiime
+from mmeds.error import MissingUploadError
 
 localDir = os.path.dirname(__file__)
 absDir = os.path.join(os.getcwd(), localDir)
@@ -37,7 +39,20 @@ class MMEDSserver(object):
     @cp.expose
     def run_analysis(self, access_code, tool):
         """ Run analysis on the specified study. """
-        return "<html> <h1> Got it </h1> </html>"
+        if tool == 'qiime':
+            with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+                try:
+                    data1, data2, metadata = db.get_qiime_files(access_code, cp.session['dir'])
+                except MissingUploadError:
+                    with open('../html/download_error.html') as f:
+                        page = f.read()
+                    return page.format(cp.session['user'])
+                result = run_qiime(data1, data2, metadata, cp.session['dir'])
+            path = join(absDir, cp.session['dir'], result)
+            return static.serve_file(path, 'application/x-download',
+                                     'attachment', os.path.basename(path))
+        else:
+            return "<html> <h1> Got it </h1> </html>"
 
     # View files
     @cp.expose
@@ -65,7 +80,7 @@ class MMEDSserver(object):
 
         # Create a copy of the Data file
         try:
-            data_copy2 = create_local_copy(myData1.file, myData1.filename, cp.session['dir'])
+            data_copy2 = create_local_copy(myData1.file, myData2.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
             data_copy2 = None
@@ -107,7 +122,7 @@ class MMEDSserver(object):
 
             return uploaded_output
         elif len(warnings) > 0:
-            cp.session['uploaded_files'] = [metadata_copy, data_copy1, username]
+            cp.session['uploaded_files'] = [metadata_copy, data_copy1, data_copy2, username]
             # Write the errors to a file
             with open(join(cp.session['dir'], 'errors_' + myMetaData.filename), 'w') as f:
                 f.write('\n'.join(errors))
@@ -124,10 +139,11 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
-                access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                access_code, study_name, email, log = db.read_in_sheet(metadata_copy,
                                                                   'qiime',
                                                                   data1=data_copy1,
                                                                   data2=data_copy2)
+                cp.log(log)
 
             # Send the confirmation email
             send_email(email, username, access_code)
@@ -140,10 +156,11 @@ class MMEDSserver(object):
     @cp.expose
     def proceed_with_warning(self):
         """ Proceed with upload after recieving a/some warning(s). """
-        metadata_copy, data_copy, username = cp.session['uploaded_files']
+        metadata_copy, data_copy1, data_copy2, username = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
         with Database(cp.session['dir'], user='root', owner=username) as db:
-            access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
+            access_code, study_name, email, log = db.read_in_sheet(metadata_copy,
+                                                                    'qiime', data1=data_copy1, data2=data_copy2)
 
         # Send the confirmation email
         send_email(email, username, access_code)

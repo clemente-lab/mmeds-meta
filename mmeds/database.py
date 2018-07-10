@@ -7,6 +7,7 @@ import os
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
+from mmeds.error import MissingUploadError
 
 
 class MetaData(men.DynamicDocument):
@@ -308,11 +309,16 @@ class Database:
 
         tables = df.axes[1].levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
+
+        log = study_type + '\n'
+
         # Create file and import data for each regular table
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(study_name, study_type=study_type, **kwargs)
+                kwargs['metadata'] = metadata
+                access_code, mongo_log = self.mongo_import(study_name, study_type, **kwargs)
+                log += mongo_log
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -331,7 +337,7 @@ class Database:
         # Remove all row information from the current input
         self.IDs.clear()
 
-        return access_code, study_name, self.email
+        return access_code, study_name, self.email, log
 
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)
@@ -358,16 +364,18 @@ class Database:
                          owner=self.owner,
                          email=self.email)
 
+        mongo_log = ''
         # Add the files approprate to the type of study
         if study_type == 'qiime':
             metadata = kwargs['metadata']
             data1 = kwargs['data1']
             data2 = kwargs['data2']
             mdata = add_qiime_files(mdata, metadata, data1, data2)
+            mongo_log = 'Added files\n()\n()\n()\n'.format(metadata, data1, data2)
 
         # Save the document
         mdata.save()
-        return access_code
+        return access_code, mongo_log
 
     def get_data_from_access_code(self, access_code):
         """ Gets the NoSQL data affiliated with the provided access code. """
@@ -427,3 +435,25 @@ class Database:
             return ['User {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
             return []
+
+    def get_qiime_files(self, access_code, path):
+        """ Return the three files necessary for qiime analysis. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+        # Raise an error if the upload does not exist
+        if mdata is None:
+            raise MissingUploadError
+
+        data1 = 'data1'
+        data2 = 'data2'
+        metadata = 'metadata'
+
+        # Write files to temporary directory
+        with open(path + data1, 'wb') as f:
+            f.write(mdata.data1)
+        with open(path + data2, 'wb') as f:
+            f.write(mdata.data2)
+        with open(path + metadata, 'wb') as f:
+            f.write(mdata.metadata)
+
+        return data1, data2, metadata
