@@ -1,4 +1,5 @@
 from subprocess import run
+from os.path import join
 
 
 def run_qiime(read1, read2, mapping_file, path):
@@ -7,6 +8,6 @@ def run_qiime(read1, read2, mapping_file, path):
     the specified files.
     """
     filename = 'newfile.txt'
-    run('source activate qiime; python --version; echo "Ran Successfully"&>{}'.format(path + filename), shell=True)
+    run('source activate qiime1; python --version; echo "{}\n{}\n{}\n"&>{}'.format(read1, read2, mapping_file, join(path, filename)), shell=True)
 
     return filename

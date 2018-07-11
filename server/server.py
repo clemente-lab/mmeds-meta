@@ -47,7 +47,7 @@ class MMEDSserver(object):
                     with open('../html/download_error.html') as f:
                         page = f.read()
                     return page.format(cp.session['user'])
-                result = run_qiime(data1, data2, metadata, cp.session['dir'])
+            result = run_qiime(data1, data2, metadata, cp.session['dir'])
             path = join(absDir, cp.session['dir'], result)
             return static.serve_file(path, 'application/x-download',
                                      'attachment', os.path.basename(path))
@@ -139,11 +139,10 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
-                access_code, study_name, email, log = db.read_in_sheet(metadata_copy,
+                access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                                   'qiime',
                                                                   data1=data_copy1,
                                                                   data2=data_copy2)
-                cp.log(log)
 
             # Send the confirmation email
             send_email(email, username, access_code)
@@ -159,8 +158,10 @@ class MMEDSserver(object):
         metadata_copy, data_copy1, data_copy2, username = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
         with Database(cp.session['dir'], user='root', owner=username) as db:
-            access_code, study_name, email, log = db.read_in_sheet(metadata_copy,
-                                                                    'qiime', data1=data_copy1, data2=data_copy2)
+            access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                              'qiime',
+                                                              data1=data_copy1,
+                                                              data2=data_copy2)
 
         # Send the confirmation email
         send_email(email, username, access_code)
