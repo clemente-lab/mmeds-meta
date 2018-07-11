@@ -30,7 +30,7 @@ CONFIG = {
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data/'
+STORAGE_DIR = 'data'
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
