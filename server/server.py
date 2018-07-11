@@ -42,12 +42,17 @@ class MMEDSserver(object):
         if tool == 'qiime':
             with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
                 try:
-                    data1, data2, metadata = db.get_qiime_files(access_code, cp.session['dir'])
+                    files, path = db.get_qiime_files(access_code)
+                    data1 = files['data1']
+                    data2 = files['data2']
+                    metadata = files['metadata']
+                    result = run_qiime(data1, data2, metadata, path)
+                    db.update_metadata(access_code, result)
                 except MissingUploadError:
                     with open('../html/download_error.html') as f:
                         page = f.read()
                     return page.format(cp.session['user'])
-            result = run_qiime(data1, data2, metadata, cp.session['dir'])
+
             path = join(absDir, cp.session['dir'], result)
             return static.serve_file(path, 'application/x-download',
                                      'attachment', os.path.basename(path))

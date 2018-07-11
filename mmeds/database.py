@@ -2,8 +2,8 @@ import pymysql as pms
 import mongoengine as men
 import cherrypy as cp
 import pandas as pd
-import os
 
+from os.path import join
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
@@ -16,6 +16,7 @@ class MetaData(men.DynamicDocument):
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
+    path = men.StringField(max_length=100, required=True)
     files = men.DictField()
 
 
@@ -23,31 +24,6 @@ def delete_MetaData(mdata):
     """ Deletes the MetaData document and associated Files. """
     mdata.data.delete()
     mdata.delete()
-
-
-def add_qiime_files(mdata, metadata, data1, data2):
-    mdata.metadata = men.FileField()
-    mdata.data1 = men.FileField()
-    mdata.data2 = men.FileField()
-
-    mdata.save()
-
-    # The MetaData
-    with open(metadata, 'rb') as metadata_file:
-        mdata.metadata.write(metadata_file.read())
-
-    if data1 is not None:
-        # Open the data file
-        with open(data1, 'rb') as data_file:
-            # Add a document for the study in the NoSQL
-            mdata.data1.write(data_file.read())
-    if data2 is not None:
-        # Open the data file
-        with open(data2, 'rb') as data_file:
-            # Add a document for the study in the NoSQL
-            mdata.data2.write(data_file.read())
-    mdata.save()
-    return mdata
 
 
 class Database:
@@ -227,7 +203,7 @@ class Database:
         structure = self.cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
-        filename = os.path.join(self.path, table + '_input.csv')
+        filename = join(self.path, table + '_input.csv')
         # Create the input file
         with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
@@ -281,7 +257,7 @@ class Database:
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
-                filename = os.path.join(self.path, table + '_input.csv')
+                filename = join(self.path, table + '_input.csv')
 
                 # Create the input file for the juntion table
                 with open(filename, 'w') as f:
@@ -363,11 +339,11 @@ class Database:
                          study=study_name,
                          access_code=access_code,
                          owner=self.owner,
-                         email=self.email)
+                         email=self.email,
+                         path=self.path)
 
         # Add the files approprate to the type of study
-        if study_type == 'qiime':
-            mdata.files.update(kwargs)
+        mdata.files.update(kwargs)
 
         # Save the document
         mdata.save()
@@ -432,7 +408,13 @@ class Database:
         else:
             return []
 
-    def get_qiime_files(self, access_code, path):
+    def update_metadata(self, access_code, filekey, filename):
+        """ Add a file to a metadata object """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.files[filekey] = join(self.path, filename)
+        mdata.save()
+
+    def get_mongo_files(self, access_code):
         """ Return the three files necessary for qiime analysis. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
 
@@ -440,4 +422,4 @@ class Database:
         if mdata is None:
             raise MissingUploadError
 
-        return mdata.files['data1'], mdata.files['data2'], mdata.files['metadata']
+        return mdata.files, mdata.path
