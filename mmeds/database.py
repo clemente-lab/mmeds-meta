@@ -4,6 +4,7 @@ import cherrypy as cp
 import pandas as pd
 import os
 
+from pathlib import Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
@@ -209,7 +210,7 @@ class Database:
         structure = self.cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
-        filename = os.path.join(self.path, table + '_input.csv')
+        filename = Path(self.path + '/' + table + '_input.csv')
         # Create the input file
         with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
@@ -263,7 +264,7 @@ class Database:
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
-                filename = os.path.join(self.path, table + '_input.csv')
+                filename = Path(self.path + '/' + table + '_input.csv')
 
                 # Create the input file for the juntion table
                 with open(filename, 'w') as f:
@@ -272,7 +273,7 @@ class Database:
                         f.write(pair + '\n')
 
                 # Load the datafile in to the junction table
-                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
                       ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql)
@@ -304,7 +305,7 @@ class Database:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
                 # Load the newly created file into the database
-                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
                       ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql)

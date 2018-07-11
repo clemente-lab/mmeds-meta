@@ -1,5 +1,6 @@
 import os
 from os.path import join, dirname
+from pathlib import Path
 from shutil import rmtree
 from glob import glob
 
@@ -11,7 +12,7 @@ from mmeds.authentication import validate_password, check_username, check_passwo
 from mmeds.database import Database
 
 localDir = dirname(__file__)
-absDir = join(os.getcwd(), localDir)
+absDir = Path(os.getcwd() + "/" + localDir)
 
 
 class MMEDSserver(object):
@@ -68,7 +69,7 @@ class MMEDSserver(object):
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
-            cp.session['error_file'] = join(absDir, cp.session['dir'], 'errors_' + myMetaData.filename)
+            cp.session['error_file'] = Path(absDir / cp.session['dir'] / 'errors_' + str(myMetaData.filename))
             # Write the errors to a file
             with open(cp.session['error_file'], 'w') as f:
                 f.write('\n'.join(errors + warnings))
@@ -89,7 +90,7 @@ class MMEDSserver(object):
         elif len(warnings) > 0:
             cp.session['uploaded_files'] = [metadata_copy, data_copy, username]
             # Write the errors to a file
-            with open(join(absDir, cp.session['dir'], 'errors_' + myMetaData.filename), 'w') as f:
+            with open(Path(absDir / cp.session['dir'] / ('errors_' + myMetaData.filename)), 'w') as f:
                 f.write('\n'.join(errors))
 
             # Get the html for the upload page
@@ -341,7 +342,7 @@ class MMEDSserver(object):
     @cp.expose
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
-        return open(join(absDir, cp.session['dir'], UPLOADED_FP + '.html'))
+        return open(join(cp.session['dir'], UPLOADED_FP + '.html'))
 
     @cp.expose
     def download_error_log(self):
