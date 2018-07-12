@@ -1,5 +1,4 @@
 import os
-from os.path import join, dirname
 from pathlib import Path
 from shutil import rmtree
 from glob import glob
@@ -11,8 +10,7 @@ from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 
-localDir = dirname(__file__)
-absDir = Path(os.getcwd() + "/" + localDir)
+absDir = Path(os.getcwd())
 
 
 class MMEDSserver(object):
@@ -69,7 +67,7 @@ class MMEDSserver(object):
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
-            cp.session['error_file'] = Path(absDir / cp.session['dir'] / 'errors_' + str(myMetaData.filename))
+            cp.session['error_file'] = cp.session['dir'] / 'errors_' + str(myMetaData.filename)
             # Write the errors to a file
             with open(cp.session['error_file'], 'w') as f:
                 f.write('\n'.join(errors + warnings))
@@ -90,7 +88,7 @@ class MMEDSserver(object):
         elif len(warnings) > 0:
             cp.session['uploaded_files'] = [metadata_copy, data_copy, username]
             # Write the errors to a file
-            with open(Path(absDir / cp.session['dir'] / ('errors_' + myMetaData.filename)), 'w') as f:
+            with open(cp.session['dir'] / ('errors_' + myMetaData.filename), 'w') as f:
                 f.write('\n'.join(errors))
 
             # Get the html for the upload page
@@ -120,6 +118,7 @@ class MMEDSserver(object):
         """ Proceed with upload after recieving a/some warning(s). """
         metadata_copy, data_copy, username = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
+        cp.log(str(cp.session['dir']))
         with Database(cp.session['dir'], user='root', owner=username) as db:
             access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
 
@@ -193,7 +192,7 @@ class MMEDSserver(object):
         page = insert_error(page, 10, html_data)
         if header is not None:
             data = [header] + list(data)
-        with open(absDir, join(cp.session['dir'], cp.session['query']), 'w') as f:
+        with open(cp.session['dir'] / cp.session['query'], 'w') as f:
             f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
         return page
 
@@ -205,7 +204,7 @@ class MMEDSserver(object):
     @cp.expose
     def get_data(self):
         """ Return the data file uploaded by the user. """
-        path = join(absDir, join(cp.session['dir'], cp.session['data_file']))
+        path = cp.session['dir'] / cp.session['data_file']
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
@@ -243,9 +242,9 @@ class MMEDSserver(object):
         """
         cp.session['user'] = username
         # Create a unique dir for handling files uploaded by this user
-        new_dir = join(absDir, STORAGE_DIR, 'temp_' + get_salt(10))
+        new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
         while os.path.exists(new_dir):
-            new_dir = join(absDir, STORAGE_DIR, 'temp_' + get_salt(10))
+            new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
         if validate_password(username, password):
@@ -278,7 +277,7 @@ class MMEDSserver(object):
                 return download_error.format(cp.session['user'])
 
         # Write the metadata to a new file
-        metadata_path = join(absDir, cp.session['dir'], 'download_metadata.tsv')
+        metadata_path = cp.session['dir'] / 'download_metadata.tsv'
         with open(metadata_path, 'wb') as f:
             f.write(metadata_fp)
         cp.session['metadata_path'] = metadata_path
@@ -286,7 +285,7 @@ class MMEDSserver(object):
         # The data file my not have been uploaded yet
         if data_fp is not None:
             # Write the data to a new file
-            data_path = join(absDir, cp.session['dir'], 'download_data.txt')
+            data_path = cp.session['dir'] / 'download_data.txt'
             with open(data_path, 'wb') as f:
                 f.write(data_fp)
             cp.session['data_path'] = data_path
@@ -334,7 +333,7 @@ class MMEDSserver(object):
     @cp.expose
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
-        return open(join(cp.session['dir'], UPLOADED_FP + '.html'))
+        return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
     def download_error_log(self):
@@ -345,14 +344,14 @@ class MMEDSserver(object):
     @cp.expose
     def download_log(self):
         """ Allows the user to download a log file """
-        path = join(absDir, cp.session['dir'] + UPLOADED_FP + '.log')
+        path = cp.session['dir'] / (UPLOADED_FP + '.log')
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
     @cp.expose
     def download_corrected(self):
         """ Allows the user to download the correct metadata file. """
-        path = join(absDir, cp.session['dir'], UPLOADED_FP + '_corrected.txt')
+        path = cp.session['dir'] / (UPLOADED_FP + '_corrected.txt')
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
@@ -360,7 +359,7 @@ class MMEDSserver(object):
     def download_query(self):
         """ Download the results of the most recent query as a csv. """
 
-        path = join(absDir, cp.session['dir'], cp.session['query'])
+        path = cp.session['dir'] / cp.session['query']
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 

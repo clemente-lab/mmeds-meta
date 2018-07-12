@@ -2,9 +2,8 @@ import pymysql as pms
 import mongoengine as men
 import cherrypy as cp
 import pandas as pd
-import os
 
-from pathlib import Path
+from pathlib import WindowsPath
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
@@ -210,7 +209,7 @@ class Database:
         structure = self.cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
-        filename = Path(self.path + '/' + table + '_input.csv')
+        filename = self.path / (table + '_input.csv')
         # Create the input file
         with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
@@ -264,13 +263,16 @@ class Database:
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
-                filename = Path(self.path + '/' + table + '_input.csv')
+                filename = self.path / (table + '_input.csv')
 
                 # Create the input file for the juntion table
                 with open(filename, 'w') as f:
                     f.write(columns[0] + '\t' + columns[1] + '\n')
                     for pair in unique_pairs:
                         f.write(pair + '\n')
+
+                if isinstance(filename, WindowsPath):
+                    filename = str(filename).replace('\\', '\\\\')
 
                 # Load the datafile in to the junction table
                 sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
@@ -304,6 +306,9 @@ class Database:
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
+
+                if isinstance(filename, WindowsPath):
+                    filename = str(filename).replace('\\', '\\\\')
                 # Load the newly created file into the database
                 sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
