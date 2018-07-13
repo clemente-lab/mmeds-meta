@@ -463,3 +463,11 @@ class Database:
             raise MissingUploadError
 
         return mdata.files, mdata.path
+
+    def get_metadata(self, access_code):
+        """
+        Return the MetaData object.
+        This object should be treated as read only.
+        Any modifications should be done through the Database class.
+        """
+        return MetaData.objects(access_code=access_code, owner=self.owner).first()

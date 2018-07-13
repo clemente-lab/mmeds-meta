@@ -265,6 +265,32 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
 
+    @cp.expose
+    def input_password(self):
+        """ Load page for changing the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def change_password(self, password0, password1, password2):
+        """ Change the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+
+        # Check the old password matches
+        if validate_password(cp.session['user'], password0):
+            # Check the two copies of the new password match
+            errors = check_password(password1, password2)
+            if len(errors) == 0:
+                change_password(cp.session['user'], password1)
+                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
+            else:
+                page = insert_html(page, 9, errors)
+        else:
+            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
+        return page
+
     ########################################
     ###########   Upload Pages   ###########
     ########################################
@@ -443,32 +469,6 @@ class MMEDSserver(object):
         path = cp.session['dir'] / cp.session['query']
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
-
-    @cp.expose
-    def input_password(self):
-        """ Load page for changing the user's password """
-        with open('../html/change_password.html') as f:
-            page = f.read()
-        return page
-
-    @cp.expose
-    def change_password(self, password0, password1, password2):
-        """ Change the user's password """
-        with open('../html/change_password.html') as f:
-            page = f.read()
-
-        # Check the old password matches
-        if validate_password(cp.session['user'], password0):
-            # Check the two copies of the new password match
-            errors = check_password(password1, password2)
-            if len(errors) == 0:
-                change_password(cp.session['user'], password1)
-                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
-            else:
-                page = insert_html(page, 9, errors)
-        else:
-            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
-        return page
 
 
 def secureheaders():
