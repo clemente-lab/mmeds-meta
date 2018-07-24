@@ -71,6 +71,10 @@ class Database:
         """ Delete the Database instance upon the end of the 'with' block. """
         del self
 
+    ########################################
+    ###############  MySQL  ################
+    ########################################
+
     def check_email(self, email):
         """ Check the provided email matches this user. """
         return email == self.email
@@ -345,6 +349,10 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
+    ########################################
+    ##############  MongoDB  ###############
+    ########################################
+
     def mongo_import(self, study_name, study_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
@@ -362,11 +370,6 @@ class Database:
         # Save the document
         mdata.save()
         return access_code
-
-    def get_data_from_access_code(self, access_code):
-        """ Gets the NoSQL data affiliated with the provided access code. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        return mdata.data.read(), mdata.metadata.read()
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
@@ -412,6 +415,12 @@ class Database:
         self.db.commit()
         return True
 
+    def update_metadata(self, access_code, filekey, filename):
+        """ Add a file to a metadata object """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.files[filekey] = str(self.path / filename)
+        mdata.save()
+
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
@@ -448,12 +457,6 @@ class Database:
         else:
             return []
 
-    def update_metadata(self, access_code, filekey, filename):
-        """ Add a file to a metadata object """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        mdata.files[filekey] = self.path / filename
-        mdata.save()
-
     def get_mongo_files(self, access_code):
         """ Return the three files necessary for qiime analysis. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
@@ -471,3 +474,8 @@ class Database:
         Any modifications should be done through the Database class.
         """
         return MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+    def get_data_from_access_code(self, access_code):
+        """ Gets the NoSQL data affiliated with the provided access code. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        return mdata.data.read(), mdata.metadata.read()

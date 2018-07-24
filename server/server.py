@@ -9,7 +9,7 @@ from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_w
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
-from mmeds.tools import run_qiime
+from mmeds.tools import QiimeAnalysis
 from mmeds.error import MissingUploadError
 
 absDir = Path(os.getcwd())
@@ -32,26 +32,22 @@ class MMEDSserver(object):
         return open('../html/index.html')
 
     ########################################
-    ###########    Validation    ###########
+    #############  Validation  #############
     ########################################
 
     @cp.expose
     def run_analysis(self, access_code, tool):
         """ Run analysis on the specified study. """
         if tool == 'qiime':
-            with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
-                try:
-                    files, path = db.get_qiime_files(access_code)
-                    data1 = files['data1']
-                    data2 = files['data2']
-                    metadata = files['metadata']
-                    result = run_qiime(data1, data2, metadata, path)
-                    db.update_metadata(access_code, result)
-                except MissingUploadError:
-                    with open('../html/download_error.html') as f:
-                        page = f.read()
-                    return page.format(cp.session['user'])
+            try:
+                qa = QiimeAnalysis(cp.session['dir'], cp.session['user'], access_code)
+                result = qa.analysis()
+            except MissingUploadError:
+                with open('../html/download_error.html') as f:
+                    page = f.read()
+                return page.format(cp.session['user'])
 
+            return "<html> <h1> Ran successfully </h1> </html>"
             path = cp.session['dir'] / result
             return static.serve_file(path, 'application/x-download',
                                      'attachment', os.path.basename(path))
@@ -65,7 +61,7 @@ class MMEDSserver(object):
         return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_qiime(self, myMetaData, myData1, myData2, public='off'):
+    def validate_qiime(self, myMetaData, reads, barcodes, public='off'):
         """ The page returned after a file is uploaded. """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -77,14 +73,14 @@ class MMEDSserver(object):
 
         # Create a copy of the Data file
         try:
-            data_copy1 = create_local_copy(myData1.file, myData1.filename, cp.session['dir'])
+            data_copy1 = create_local_copy(reads.file, reads.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
             data_copy1 = None
 
         # Create a copy of the Data file
         try:
-            data_copy2 = create_local_copy(myData1.file, myData2.filename, cp.session['dir'])
+            data_copy2 = create_local_copy(reads.file, barcodes.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
             data_copy2 = None
@@ -147,8 +143,8 @@ class MMEDSserver(object):
             with Database(cp.session['dir'], user='root', owner=username) as db:
                 access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                                   'qiime',
-                                                                  data1=data_copy1,
-                                                                  data2=data_copy2)
+                                                                  reads=data_copy1,
+                                                                  barcodes=data_copy2)
 
             # Send the confirmation email
             send_email(email, username, access_code)
@@ -167,8 +163,8 @@ class MMEDSserver(object):
         with Database(cp.session['dir'], user='root', owner=username) as db:
             access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                               'qiime',
-                                                              data1=data_copy1,
-                                                              data2=data_copy2)
+                                                              reads=data_copy1,
+                                                              barcodes=data_copy2)
 
         # Send the confirmation email
         send_email(email, username, access_code)

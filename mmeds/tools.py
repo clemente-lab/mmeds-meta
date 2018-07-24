@@ -1,4 +1,5 @@
 from pandas import read_csv
+from pathlib import Path
 from subprocess import run
 from mmeds.database import Database
 
@@ -13,7 +14,7 @@ class QiimeAnalysis:
         self.headers = [
             '#SampleID',
             'BarcodeSequence',
-            'BarcodeWell'
+            'LinkerPrimerSequence',
             'Description'
         ]
 
@@ -31,15 +32,16 @@ class QiimeAnalysis:
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
-        pass
+        files, path = self.db.get_mongo_files(self.access_code)
+        run('source activate qiime1; validate_mapping_file.py -m {}'.format(files['mapping_file']), shell=True)
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
         # Open the metadata file for the study
-        metadata = self.db.get_meta_data(self.access_code)
+        metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
         with open(fp) as f:
-            mdata = read_csv(f, header=[0, 1])
+            mdata = read_csv(f, header=[0, 1], sep='\t')
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
@@ -55,4 +57,19 @@ class QiimeAnalysis:
                 f.write('\t'.join(row) + '\n')
 
         # Add the mapping file to the MetaData object
-        self.db.update_metadata(self.access_code, 'mapping_file', mapping_file)
+        self.db.update_metadata(self.access_code, 'mapping', mapping_file)
+
+    def split_libraries(self):
+        """ Split the libraries and perform quality analysis. """
+        files, path = self.db.get_mongo_files(self.access_code)
+        output = Path(path) / 'split_output'
+        run('mkdir {}'.format(output), shell=True)
+
+        cmd = 'source activate qiime1; split_libraris_fastq.py -o {} -i {} -b {} -m {}'
+        run(cmd.format(output, files['reads'], files['barcodes'], files['mapping']), shell=True)
+
+    def analysis(self):
+        """ Perform some analysis. """
+        self.create_qiime_mapping_file()
+        self.validate_mapping()
+        self.split_libraries()
