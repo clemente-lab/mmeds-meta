@@ -3,7 +3,11 @@ import mongoengine as men
 import cherrypy as cp
 import pandas as pd
 
+<<<<<<< HEAD
 from os.path import join
+=======
+from pathlib import WindowsPath
+>>>>>>> master
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
@@ -70,6 +74,14 @@ class Database:
     def __exit__(self, exc_type, exc_value, traceback):
         """ Delete the Database instance upon the end of the 'with' block. """
         del self
+
+    def check_email(self, email):
+        """ Check the provided email matches this user. """
+        return email == self.email
+
+    def get_email(self):
+        """ Check the provided email matches this user. """
+        return self.email
 
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
@@ -203,7 +215,11 @@ class Database:
         structure = self.cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
+<<<<<<< HEAD
         filename = join(self.path, table + '_input.csv')
+=======
+        filename = self.path / (table + '_input.csv')
+>>>>>>> master
         # Create the input file
         with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
@@ -257,7 +273,11 @@ class Database:
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
+<<<<<<< HEAD
                 filename = join(self.path, table + '_input.csv')
+=======
+                filename = self.path / (table + '_input.csv')
+>>>>>>> master
 
                 # Create the input file for the juntion table
                 with open(filename, 'w') as f:
@@ -265,8 +285,11 @@ class Database:
                     for pair in unique_pairs:
                         f.write(pair + '\n')
 
+                if isinstance(filename, WindowsPath):
+                    filename = str(filename).replace('\\', '\\\\')
+
                 # Load the datafile in to the junction table
-                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
                       ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql)
@@ -299,8 +322,11 @@ class Database:
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
+
+                if isinstance(filename, WindowsPath):
+                    filename = str(filename).replace('\\', '\\\\')
                 # Load the newly created file into the database
-                sql = 'LOAD DATA LOCAL INFILE "' + filename + '" INTO TABLE ' +\
+                sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
                       table + ' FIELDS TERMINATED BY "\\t"' +\
                       ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql)
@@ -365,13 +391,40 @@ class Database:
         """
         Reset the access_code for the study with the matching name and email.
         """
+        # Get a new code
         new_code = get_salt(50)
+        # Get the mongo document
         mdata = MetaData.objects(study=study_name, owner=self.owner, email=email).first()
         mdata.access_code = new_code
         mdata.save()
         send_email(email, self.owner, new_code)
 
-    def check_repeated_subjects(self, df):
+    def change_password(self, new_password, new_salt):
+        """ Change the password for the current user. """
+        # Get the user's information from the user table
+        sql = 'SELECT * FROM user WHERE username = "{}"'.format(self.owner)
+        self.cursor.execute(sql)
+        result = self.cursor.fetchone()
+        # Ensure the user exists
+        if len(result) == 0:
+            return False
+
+        # Delete the old entry for the user
+        sql = 'DELETE FROM user WHERE user_id = {}'.format(result[0])
+        self.cursor.execute(sql)
+
+        # Insert the user with the updated password
+        sql = 'INSERT INTO mmeds.user (user_id, username, password, salt, email) VALUES\
+                ({}, "{}", "{}", "{}", "{}");'.format(result[0],
+                                                      result[1],
+                                                      new_password,
+                                                      new_salt,
+                                                      result[4])
+        self.cursor.execute(sql)
+        self.db.commit()
+        return True
+
+    def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
         # Go through each column
@@ -391,8 +444,7 @@ class Database:
             sql += ' AND user_id = ' + str(self.user_id)
             found = self.cursor.execute(sql)
             if found >= 1:
-                warnings.append('%d\tSubect in row %d already exists in the database.' %
-                                (j + 2, j + 2))
+                warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2, subject_col, j + 2))
         return warnings
 
     def check_user_study_name(self, study_name):
@@ -404,7 +456,7 @@ class Database:
         return []
         #########################
         if found >= 1:
-            return ['User {} has already uploaded a study with name {}'.format(self.owner, study_name)]
+            return ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
             return []
 

@@ -30,7 +30,7 @@ CONFIG = {
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data/'
+STORAGE_DIR = 'data'
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
@@ -94,16 +94,26 @@ def get_salt(length=10, numeric=False):
     return ''.join(choice(listy) for i in range(length))
 
 
-def send_email(toaddr, user, code):
+def send_email(toaddr, user, code, message='upload'):
     """ Sends a confirmation email to addess containing user and code. """
     msg = EmailMessage()
     msg['From'] = MMEDS_EMAIL
     msg['To'] = toaddr
     msg['Subject'] = 'New data uploaded to mmeds database'
-    body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
-           'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
-           'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(code) +\
-           'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+    if message == 'upload':
+        body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
+               'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
+               'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(code) +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+    elif message == 'reset':
+        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
+               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(code) +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+    elif message == 'change':
+        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
+               'If you did not do this contact use immediately.\n{}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+
     msg.set_content(body)
 
     server = SMTP('smtp.gmail.com', 587)
