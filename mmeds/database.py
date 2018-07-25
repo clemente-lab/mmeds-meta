@@ -3,11 +3,7 @@ import mongoengine as men
 import cherrypy as cp
 import pandas as pd
 
-<<<<<<< HEAD
-from os.path import join
-=======
 from pathlib import WindowsPath
->>>>>>> master
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
@@ -74,6 +70,10 @@ class Database:
     def __exit__(self, exc_type, exc_value, traceback):
         """ Delete the Database instance upon the end of the 'with' block. """
         del self
+
+    ########################################
+    ###############  MySQL  ################
+    ########################################
 
     def check_email(self, email):
         """ Check the provided email matches this user. """
@@ -215,11 +215,7 @@ class Database:
         structure = self.cursor.fetchall()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
-<<<<<<< HEAD
-        filename = join(self.path, table + '_input.csv')
-=======
         filename = self.path / (table + '_input.csv')
->>>>>>> master
         # Create the input file
         with open(filename, 'w') as f:
             f.write('\t'.join(columns) + '\n')
@@ -273,11 +269,7 @@ class Database:
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
-<<<<<<< HEAD
-                filename = join(self.path, table + '_input.csv')
-=======
                 filename = self.path / (table + '_input.csv')
->>>>>>> master
 
                 # Create the input file for the juntion table
                 with open(filename, 'w') as f:
@@ -357,6 +349,10 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
+    ########################################
+    ##############  MongoDB  ###############
+    ########################################
+
     def mongo_import(self, study_name, study_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
@@ -366,7 +362,7 @@ class Database:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
-                         path=self.path)
+                         path=str(self.path))
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)
@@ -374,11 +370,6 @@ class Database:
         # Save the document
         mdata.save()
         return access_code
-
-    def get_data_from_access_code(self, access_code):
-        """ Gets the NoSQL data affiliated with the provided access code. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        return mdata.data.read(), mdata.metadata.read()
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
@@ -424,6 +415,12 @@ class Database:
         self.db.commit()
         return True
 
+    def update_metadata(self, access_code, filekey, filename):
+        """ Add a file to a metadata object """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.files[filekey] = str(self.path / filename)
+        mdata.save()
+
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
@@ -460,12 +457,6 @@ class Database:
         else:
             return []
 
-    def update_metadata(self, access_code, filekey, filename):
-        """ Add a file to a metadata object """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        mdata.files[filekey] = join(self.path, filename)
-        mdata.save()
-
     def get_mongo_files(self, access_code):
         """ Return the three files necessary for qiime analysis. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
@@ -475,3 +466,16 @@ class Database:
             raise MissingUploadError
 
         return mdata.files, mdata.path
+
+    def get_metadata(self, access_code):
+        """
+        Return the MetaData object.
+        This object should be treated as read only.
+        Any modifications should be done through the Database class.
+        """
+        return MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+    def get_data_from_access_code(self, access_code):
+        """ Gets the NoSQL data affiliated with the provided access code. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        return mdata.data.read(), mdata.metadata.read()

@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Specimen` (
   `BodySite_idBodySite` INT NOT NULL,
   `SampleID` VARCHAR(45) NULL DEFAULT NULL,
   `BarcodeSequence` VARCHAR(45) NULL DEFAULT NULL,
-  `BarcodeWell` VARCHAR(45) NULL DEFAULT NULL,
+  `LinkerPrimerSequence` VARCHAR(45) NULL DEFAULT NULL,
   `SampleDate` DATETIME NULL DEFAULT NULL,
   `Description` VARCHAR(45) NULL DEFAULT NULL,
   `AdditionalInformation` VARCHAR(45) NULL DEFAULT NULL,
