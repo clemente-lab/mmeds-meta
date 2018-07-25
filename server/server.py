@@ -261,7 +261,7 @@ class MMEDSserver(object):
         """
         Expires the session and returns to login page
         """
-        cp.lib.sessions.expire()
+        cp.session['user'] = None
         return open('../html/index.html')
 
     @cp.expose
