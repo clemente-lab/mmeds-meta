@@ -299,6 +299,14 @@ class MMEDSserver(object):
         return page.format(user=cp.session['user'])
 
     @cp.expose
+    def logout(self):
+        """
+        Expires the session and returns to login page
+        """
+        cp.session['user'] = None
+        return open('../html/index.html')
+
+    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
         with open('../html/upload.html') as f:
