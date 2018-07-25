@@ -1,7 +1,10 @@
 from pandas import read_csv
 from pathlib import Path
 from subprocess import run
+import os
+
 from mmeds.database import Database
+from mmeds.config import get_salt
 
 
 class QiimeAnalysis:
@@ -33,7 +36,7 @@ class QiimeAnalysis:
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
-        run('source activate qiime1; validate_mapping_file.py -m {}'.format(files['mapping_file']), shell=True)
+        run('source activate qiime1; validate_mapping_file.py -m {}'.format(files['mapping']), shell=True)
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -62,14 +65,38 @@ class QiimeAnalysis:
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
         files, path = self.db.get_mongo_files(self.access_code)
-        output = Path(path) / 'split_output'
-        run('mkdir {}'.format(output), shell=True)
+        new_dir = Path(path) / ('split_output_' + get_salt(10))
+        while os.path.exists(new_dir):
+            new_dir = Path(path) / ('split_output_' + get_salt(10))
+        os.makedirs(new_dir)
 
-        cmd = 'source activate qiime1; split_libraris_fastq.py -o {} -i {} -b {} -m {}'
-        run(cmd.format(output, files['reads'], files['barcodes'], files['mapping']), shell=True)
+        # Add the split directory to the MetaData object
+        self.db.update_metadata(self.access_code, 'split_dir', new_dir)
+
+        cmd = 'source activate qiime1; split_libraries_fastq.py -o {} -i {} -b {} -m {}'
+        command = cmd.format(new_dir, files['reads'], files['barcodes'], files['mapping'])
+        completed_process = run(command, shell=True, check=True)
+        return completed_process.stdout
+
+    def pick_otu(self, reference='open'):
+        """ Run the pick OTU scripts. """
+        files, path = self.db.get_mongo_files(self.access_code)
+        new_dir = Path(path) / ('otu_output_' + get_salt(10))
+        while os.path.exists(new_dir):
+            new_dir = Path(path) / ('otu_output_' + get_salt(10))
+
+        with open(Path(path) / 'params.txt', 'w') as f:
+            f.write('pick_otus:enable_rev_strand_match True\n')
+
+        cmd = 'source activate qiime1; pick_open_reference_otus.py -o {} -i {} -p {}'
+        command = cmd.format(new_dir, Path(files['split_dir']) / 'seqs.fna', Path(path) / 'params.txt')
+        completed_process = run(command, shell=True, check=True)
+        return completed_process.stdout
 
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.validate_mapping()
         self.split_libraries()
+        result = self.pick_otu()
+        return result

@@ -247,10 +247,10 @@ def is_numeric(s):
 def create_local_copy(fp, filename, path=STORAGE_DIR):
     """ Create a local copy of the file provided. """
     # Create the filename
-    file_copy = join(path, '_'.join('copy' + get_salt(5) + filename))
+    file_copy = join(path, '_'.join(['copy', get_salt(5), filename]))
     # Ensure there is not already a file with the same name
     while exists(file_copy):
-        file_copy = join(path, '_'.join('copy' + get_salt(5) + filename))
+        file_copy = join(path, '_'.join(['copy', get_salt(5), filename]))
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:

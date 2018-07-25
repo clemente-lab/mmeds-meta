@@ -47,10 +47,7 @@ class MMEDSserver(object):
                     page = f.read()
                 return page.format(cp.session['user'])
 
-            return "<html> <h1> Ran successfully </h1> </html>"
-            path = cp.session['dir'] / result
-            return static.serve_file(path, 'application/x-download',
-                                     'attachment', os.path.basename(path))
+            return "<html> <h1>{}</h1> </html>".format(result)
         else:
             return "<html> <h1> Got it </h1> </html>"
 
