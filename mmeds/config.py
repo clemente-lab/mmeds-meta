@@ -2,6 +2,7 @@ from secrets import choice
 from string import digits, ascii_uppercase, ascii_lowercase
 from smtplib import SMTP
 from email.message import EmailMessage
+from pathlib import Path
 
 CONFIG = {
     'global': {
@@ -14,7 +15,7 @@ CONFIG = {
         'tools.sessions.on': True,
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
-        'tools.staticdir.root': '/home/david/Work/mmeds-meta',  # Change this for different install locations
+        'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
         'request.scheme': 'https'
     },
     '/CSS': {
