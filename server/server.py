@@ -9,6 +9,8 @@ from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_w
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
+from mmeds.tools import QiimeAnalysis
+from mmeds.error import MissingUploadError
 
 absDir = Path(os.getcwd())
 
@@ -29,8 +31,35 @@ class MMEDSserver(object):
         """ Home page of the application """
         return open('../html/index.html')
 
+    ########################################
+    #############  Validation  #############
+    ########################################
+
     @cp.expose
-    def validate(self, myMetaData, myData, public='off'):
+    def run_analysis(self, access_code, tool):
+        """ Run analysis on the specified study. """
+        if tool == 'qiime':
+            try:
+                qa = QiimeAnalysis(cp.session['user'], access_code)
+                result = qa.analysis()
+                with open(result) as f:
+                    page = f.read()
+                return page
+            except MissingUploadError:
+                with open('../html/download_error.html') as f:
+                    page = f.read()
+                return page.format(cp.session['user'])
+        else:
+            return "<html> <h1> Got it </h1> </html>"
+
+    # View files
+    @cp.expose
+    def view_corrections(self):
+        """ Page containing the marked up metadata as an html file """
+        return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
+
+    @cp.expose
+    def validate_qiime(self, myMetaData, reads, barcodes, public='off'):
         """ The page returned after a file is uploaded. """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -42,10 +71,17 @@ class MMEDSserver(object):
 
         # Create a copy of the Data file
         try:
-            data_copy = create_local_copy(myData.file, myData.filename, cp.session['dir'])
+            reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
-            data_copy = None
+            reads_copy = None
+
+        # Create a copy of the Data file
+        try:
+            barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
+        # Except the error if there is no file
+        except AttributeError:
+            barcodes_copy = None
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
@@ -86,7 +122,7 @@ class MMEDSserver(object):
 
             return html
         elif len(warnings) > 0:
-            cp.session['uploaded_files'] = [metadata_copy, data_copy, username]
+            cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
             # Write the errors to a file
             with open(cp.session['dir'] / ('errors_' + myMetaData.filename), 'w') as f:
                 f.write('\n'.join(errors))
@@ -103,7 +139,10 @@ class MMEDSserver(object):
         else:
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
-                access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
+                access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                                  'qiime',
+                                                                  reads=reads_copy,
+                                                                  barcodes=barcodes_copy)
 
             # Send the confirmation email
             send_email(email, username, access_code)
@@ -116,11 +155,14 @@ class MMEDSserver(object):
     @cp.expose
     def proceed_with_warning(self):
         """ Proceed with upload after recieving a/some warning(s). """
-        metadata_copy, data_copy, username = cp.session['uploaded_files']
+        metadata_copy, data_copy1, data_copy2, username = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
         cp.log(str(cp.session['dir']))
         with Database(cp.session['dir'], user='root', owner=username) as db:
-            access_code, study_name, email = db.read_in_sheet(metadata_copy, data_copy)
+            access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                              'qiime',
+                                                              reads=data_copy1,
+                                                              barcodes=data_copy2)
 
         # Send the confirmation email
         send_email(email, username, access_code)
@@ -130,31 +172,9 @@ class MMEDSserver(object):
             upload_successful = f.read()
         return upload_successful
 
-    @cp.expose
-    def modify_upload(self, myData, access_code):
-        """ Modify the data of an existing upload. """
-        # Create a copy of the Data file
-        data_copy = create_local_copy(myData.file, myData.filename)
-
-        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
-            try:
-                db.modify_data(data_copy, access_code)
-            except AttributeError:
-                with open('../html/download_error.html') as f:
-                    download_error = f.read()
-                return download_error.format(cp.session['user'])
-        # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
-            upload_successful = f.read()
-        return upload_successful
-
-    @cp.expose
-    def skip_upload(self):
-        """ Skip uploading a file. """
-        # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
-            upload_successful = f.read()
-        return upload_successful
+    ########################################
+    ###########  Authentication  ###########
+    ########################################
 
     @cp.expose
     def reset_code(self, study_name, study_email):
@@ -209,11 +229,6 @@ class MMEDSserver(object):
                                  'attachment', os.path.basename(path))
 
     @cp.expose
-    def sign_up_page(self):
-        """ Return the page for signing up. """
-        return open('../html/sign_up_page.html')
-
-    @cp.expose
     def sign_up(self, username, password1, password2, email):
         """
         Perform the actions necessary to sign up a new user.
@@ -248,13 +263,53 @@ class MMEDSserver(object):
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
         if validate_password(username, password):
-            with open('../html/upload.html') as f:
+            with open('../html/welcome.html') as f:
                 page = f.read()
             return page.format(user=username)
         else:
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+
+    @cp.expose
+    def input_password(self):
+        """ Load page for changing the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def change_password(self, password0, password1, password2):
+        """ Change the user's password """
+        with open('../html/change_password.html') as f:
+            page = f.read()
+
+        # Check the old password matches
+        if validate_password(cp.session['user'], password0):
+            # Check the two copies of the new password match
+            errors = check_password(password1, password2)
+            if len(errors) == 0:
+                change_password(cp.session['user'], password1)
+                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
+            else:
+                page = insert_html(page, 9, errors)
+        else:
+            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
+        return page
+
+    ########################################
+    ###########   Upload Pages   ###########
+    ########################################
+
+    @cp.expose
+    def upload(self, study_type):
+        """ Page for uploading Qiime data """
+        if study_type == 'qiime':
+            with open('../html/upload_qiime.html') as f:
+                page = f.read()
+        else:
+            page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
+        return page.format(user=cp.session['user'])
 
     @cp.expose
     def logout(self):
@@ -270,6 +325,59 @@ class MMEDSserver(object):
         with open('../html/upload.html') as f:
             page = f.read()
         return page.format(user=cp.session['user'])
+
+    @cp.expose
+    def modify_upload(self, myData, access_code):
+        """ Modify the data of an existing upload. """
+        # Create a copy of the Data file
+        data_copy = create_local_copy(myData.file, myData.filename)
+
+        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+            try:
+                db.modify_data(data_copy, access_code)
+            except AttributeError:
+                with open('../html/download_error.html') as f:
+                    download_error = f.read()
+                return download_error.format(cp.session['user'])
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
+
+    ########################################
+    ###########  No Logic Pages  ###########
+    ########################################
+
+    @cp.expose
+    def query_page(self):
+        """ Skip uploading a file. """
+        # Get the html for the upload page
+        with open('../html/success.html', 'r') as f:
+            upload_successful = f.read()
+        return upload_successful
+
+    @cp.expose
+    def analysis_page(self):
+        """ Page for running analysis of previous uploads. """
+        with open('../html/analysis.html') as f:
+            page = f.read()
+        return page
+
+    @cp.expose
+    def upload_page(self):
+        """ Page for selecting upload type or modifying upload. """
+        with open('../html/upload.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
+
+    @cp.expose
+    def sign_up_page(self):
+        """ Return the page for signing up. """
+        return open('../html/sign_up_page.html')
+
+    ########################################
+    ###########  Download Pages  ###########
+    ########################################
 
     @cp.expose
     def download_page(self, access_code):
@@ -337,18 +445,11 @@ class MMEDSserver(object):
             page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
         return page
 
-    # View files
-    @cp.expose
-    def view_corrections(self):
-        """ Page containing the marked up metadata as an html file """
-        return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
-
     @cp.expose
     def download_error_log(self):
         return static.serve_file(cp.session['error_file'], 'application/x-download',
                                  'attachment', os.path.basename(cp.session['error_file']))
 
-    # Download links
     @cp.expose
     def download_log(self):
         """ Allows the user to download a log file """
@@ -370,32 +471,6 @@ class MMEDSserver(object):
         path = cp.session['dir'] / cp.session['query']
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
-
-    @cp.expose
-    def input_password(self):
-        """ Load page for changing the user's password """
-        with open('../html/change_password.html') as f:
-            page = f.read()
-        return page
-
-    @cp.expose
-    def change_password(self, password0, password1, password2):
-        """ Change the user's password """
-        with open('../html/change_password.html') as f:
-            page = f.read()
-
-        # Check the old password matches
-        if validate_password(cp.session['user'], password0):
-            # Check the two copies of the new password match
-            errors = check_password(password1, password2)
-            if len(errors) == 0:
-                change_password(cp.session['user'], password1)
-                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
-            else:
-                page = insert_html(page, 9, errors)
-        else:
-            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
-        return page
 
 
 def secureheaders():

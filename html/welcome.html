@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <link rel='stylesheet' href='/CSS/stylesheet.css'>
+    <head>
+        <title>Welcome to Mmeds</title>
+        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+    </head>
+    <body>
+        <h2>
+            <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo' width='210em' height='100em'>
+            <br>
+            Welcome {user}
+        </h2>
+        <h3>What would you like to do?</h3>
+        <p>
+            <form action='upload_page' method='post'>
+                <button type='submit' method='post'/>Upload Data</button>
+            </form>
+        </p>
+        <p>
+            <form action='analysis_page' method='post'>
+                <button type='submit' method='post'>Run Analysis</button>
+            </form>
+        </p>
+        <p>
+            <form action='query_page' method='post' enctype='multipart/form-data'>
+                <button type='submit' method='post'>Run Queries</button>
+            </form>
+        </p>
+    </body>
+</html>

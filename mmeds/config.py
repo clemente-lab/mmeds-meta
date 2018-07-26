@@ -35,6 +35,7 @@ SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 
+
 TABLE_ORDER = [
     'Lab',
     'Study',

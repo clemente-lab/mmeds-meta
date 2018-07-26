@@ -6,14 +6,19 @@
         <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
     </head>
     <body>
-        <h2>Welcome {user}</h2>
+        <h2>
+            <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo' width='210em' height='100em'>
+            <br>
+            Welcome {user}
+        </h2>
         <p>
-            <h3>Upload a file</h3>
-            <form action='validate' method='post' enctype='multipart/form-data'>
-                <p> Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
-                <p> Data File: <br> <input type='file' name='myData'/> </p>
-                <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
-                <p> <button type='submit' method='post'>Upload Files</button> </p>
+            <h3>Select type of data for upload</h3>
+            <form action='upload' method='post' enctype='multipart/form-data' id='upload_form'>
+                <select name='study_type' form='upload_form'>
+                    <option value="qiime">Qiime</option>
+                    <option value="other">Other</option>
+                </select>
+                <button type='submit' method='post'>Upload Data</button>
             </form>
         </p>
         <p>
@@ -25,16 +30,11 @@
             </form>
         </p>
         <p>
-            <h3>Skip uploading</h3>
-            <form action='skip_upload' method='post'>
-                <button type='submit' method='post'>Skip Upload</button>
+            <h3>Logout</h3>
+            <form action='logout' method='post'>
+                <button type='submit' method='post'>Logout</button>
             </form>
         </p>
-	<p>
-	    <form action='logout' method='post'>
-		<button type='submit' method='post'>Logout</button>
-	    </form>
-	</p>
         <p>
             <h3>Change Password</h3>
             <form action='input_password' method='post'>

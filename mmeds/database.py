@@ -7,15 +7,17 @@ from pathlib import WindowsPath
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
+from mmeds.error import MissingUploadError
 
 
-class MetaData(men.Document):
+class MetaData(men.DynamicDocument):
+    study_type = men.StringField(max_length=45, required=True)
     study = men.StringField(max_length=45, required=True)
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
-    metadata = men.FileField()
-    data = men.FileField()
+    path = men.StringField(max_length=100, required=True)
+    files = men.DictField()
 
 
 def delete_MetaData(mdata):
@@ -68,6 +70,10 @@ class Database:
     def __exit__(self, exc_type, exc_value, traceback):
         """ Delete the Database instance upon the end of the 'with' block. """
         del self
+
+    ########################################
+    ###############  MySQL  ################
+    ########################################
 
     def check_email(self, email):
         """ Check the provided email matches this user. """
@@ -284,7 +290,7 @@ class Database:
             except KeyError:
                 pass
 
-    def read_in_sheet(self, metadata, data, delimiter='\t'):
+    def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -298,11 +304,13 @@ class Database:
 
         tables = df.axes[1].levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
+
         # Create file and import data for each regular table
         for table in tables:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(metadata, data, study_name)
+                kwargs['metadata'] = metadata
+                access_code = self.mongo_import(study_name, study_type, **kwargs)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -341,31 +349,27 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def mongo_import(self, metadata, data, study_name, table='AdditionalMetaData'):
+    ########################################
+    ##############  MongoDB  ###############
+    ########################################
+
+    def mongo_import(self, study_name, study_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
         # Create the document
-        mdata = MetaData(study=study_name,
+        mdata = MetaData(study_type=study_type,
+                         study=study_name,
                          access_code=access_code,
                          owner=self.owner,
-                         email=self.email)
-        # The MetaData
-        with open(metadata, 'rb') as metadata_file:
-            mdata.metadata.put(metadata_file)
+                         email=self.email,
+                         path=str(self.path))
 
-        if data is not None:
-            # Open the data file
-            with open(data, 'rb') as data_file:
-                # Add a document for the study in the NoSQL
-                mdata.data.put(data_file)
+        # Add the files approprate to the type of study
+        mdata.files.update(kwargs)
+
         # Save the document
         mdata.save()
         return access_code
-
-    def get_data_from_access_code(self, access_code):
-        """ Gets the NoSQL data affiliated with the provided access code. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        return mdata.data.read(), mdata.metadata.read()
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
@@ -411,6 +415,12 @@ class Database:
         self.db.commit()
         return True
 
+    def update_metadata(self, access_code, filekey, filename):
+        """ Add a file to a metadata object """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.files[filekey] = str(self.path / filename)
+        mdata.save()
+
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
@@ -446,3 +456,26 @@ class Database:
             return ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
             return []
+
+    def get_mongo_files(self, access_code):
+        """ Return the three files necessary for qiime analysis. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+        # Raise an error if the upload does not exist
+        if mdata is None:
+            raise MissingUploadError
+
+        return mdata.files, mdata.path
+
+    def get_metadata(self, access_code):
+        """
+        Return the MetaData object.
+        This object should be treated as read only.
+        Any modifications should be done through the Database class.
+        """
+        return MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+    def get_data_from_access_code(self, access_code):
+        """ Gets the NoSQL data affiliated with the provided access code. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        return mdata.data.read(), mdata.metadata.read()
