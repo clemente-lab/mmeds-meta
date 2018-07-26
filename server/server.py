@@ -40,7 +40,7 @@ class MMEDSserver(object):
         """ Run analysis on the specified study. """
         if tool == 'qiime':
             try:
-                qa = QiimeAnalysis(cp.session['dir'], cp.session['user'], access_code)
+                qa = QiimeAnalysis(cp.session['user'], access_code)
                 result = qa.analysis()
             except MissingUploadError:
                 with open('../html/download_error.html') as f:
@@ -70,17 +70,17 @@ class MMEDSserver(object):
 
         # Create a copy of the Data file
         try:
-            data_copy1 = create_local_copy(reads.file, reads.filename, cp.session['dir'])
+            reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
-            data_copy1 = None
+            reads_copy = None
 
         # Create a copy of the Data file
         try:
-            data_copy2 = create_local_copy(reads.file, barcodes.filename, cp.session['dir'])
+            barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
         # Except the error if there is no file
         except AttributeError:
-            data_copy2 = None
+            barcodes_copy = None
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
@@ -121,7 +121,7 @@ class MMEDSserver(object):
 
             return html
         elif len(warnings) > 0:
-            cp.session['uploaded_files'] = [metadata_copy, data_copy1, data_copy2, username]
+            cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
             # Write the errors to a file
             with open(cp.session['dir'] / ('errors_' + myMetaData.filename), 'w') as f:
                 f.write('\n'.join(errors))
@@ -140,8 +140,8 @@ class MMEDSserver(object):
             with Database(cp.session['dir'], user='root', owner=username) as db:
                 access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                                   'qiime',
-                                                                  reads=data_copy1,
-                                                                  barcodes=data_copy2)
+                                                                  reads=reads_copy,
+                                                                  barcodes=barcodes_copy)
 
             # Send the confirmation email
             send_email(email, username, access_code)

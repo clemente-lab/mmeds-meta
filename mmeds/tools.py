@@ -10,9 +10,8 @@ from mmeds.config import get_salt
 class QiimeAnalysis:
     """ A class for analysis qiime analysis of uploaded studies. """
 
-    def __init__(self, path, owner, access_code):
-        self.path = path
-        self.db = Database(path, user='root', owner=owner)
+    def __init__(self, owner, access_code):
+        self.db = Database('', user='root', owner=owner)
         self.access_code = access_code
         self.headers = [
             '#SampleID',
@@ -20,6 +19,9 @@ class QiimeAnalysis:
             'LinkerPrimerSequence',
             'Description'
         ]
+
+        files, path = self.db.get_mongo_files(self.access_code)
+        self.path = Path(path)
 
     def __del__(self):
         del self.db
@@ -36,7 +38,8 @@ class QiimeAnalysis:
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
-        run('source activate qiime1; validate_mapping_file.py -m {}'.format(files['mapping']), shell=True)
+        cmd = 'source activate qiime1; validate_mapping_file.py -m {}'
+        run(cmd.format(files['mapping']), shell=True, check=True)
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -68,15 +71,13 @@ class QiimeAnalysis:
         new_dir = Path(path) / ('split_output_' + get_salt(10))
         while os.path.exists(new_dir):
             new_dir = Path(path) / ('split_output_' + get_salt(10))
-        os.makedirs(new_dir)
 
         # Add the split directory to the MetaData object
         self.db.update_metadata(self.access_code, 'split_dir', new_dir)
 
         cmd = 'source activate qiime1; split_libraries_fastq.py -o {} -i {} -b {} -m {}'
         command = cmd.format(new_dir, files['reads'], files['barcodes'], files['mapping'])
-        completed_process = run(command, shell=True, check=True)
-        return completed_process.stdout
+        run(command, shell=True, check=True)
 
     def pick_otu(self, reference='open'):
         """ Run the pick OTU scripts. """
