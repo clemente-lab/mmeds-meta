@@ -42,12 +42,13 @@ class MMEDSserver(object):
             try:
                 qa = QiimeAnalysis(cp.session['user'], access_code)
                 result = qa.analysis()
+                with open(result) as f:
+                    page = f.read()
+                return page
             except MissingUploadError:
                 with open('../html/download_error.html') as f:
                     page = f.read()
                 return page.format(cp.session['user'])
-
-            return "<html> <h1>{}</h1> </html>".format(result)
         else:
             return "<html> <h1> Got it </h1> </html>"
 

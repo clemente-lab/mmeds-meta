@@ -75,6 +75,7 @@ class QiimeAnalysis:
         # Add the split directory to the MetaData object
         self.db.update_metadata(self.access_code, 'split_dir', new_dir)
 
+        # Run the script
         cmd = 'source activate qiime1; split_libraries_fastq.py -o {} -i {} -b {} -m {}'
         command = cmd.format(new_dir, files['reads'], files['barcodes'], files['mapping'])
         run(command, shell=True, check=True)
@@ -86,18 +87,42 @@ class QiimeAnalysis:
         while os.path.exists(new_dir):
             new_dir = Path(path) / ('otu_output_' + get_salt(10))
 
+        # Add the otu directory to the MetaData object
+        self.db.update_metadata(self.access_code, 'otu_dir', new_dir)
+
         with open(Path(path) / 'params.txt', 'w') as f:
             f.write('pick_otus:enable_rev_strand_match True\n')
 
+        # Run the script
         cmd = 'source activate qiime1; pick_open_reference_otus.py -o {} -i {} -p {}'
         command = cmd.format(new_dir, Path(files['split_dir']) / 'seqs.fna', Path(path) / 'params.txt')
-        completed_process = run(command, shell=True, check=True)
-        return completed_process.stdout
+        run(command, shell=True, check=True)
+
+    def core_diversity(self):
+        """ Run the core diversity analysis script. """
+        files, path = self.db.get_mongo_files(self.access_code)
+        new_dir = Path(path) / ('diversity_output_' + get_salt(10))
+        while os.path.exists(new_dir):
+            new_dir = Path(path) / ('diversity_output_' + get_salt(10))
+
+        # Add the otu directory to the MetaData object
+        self.db.update_metadata(self.access_code, 'diversity_dir', new_dir)
+
+        # Run the script
+        cmd = 'source activate qiime1; core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {}'
+        command = cmd.format(new_dir,
+                             Path(files['otu_dir']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
+                             files['mapping'],
+                             Path(files['otu_dir']) / 'rep_set.tre',
+                             1114)
+        run(command, shell=True, check=True)
 
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.validate_mapping()
         self.split_libraries()
-        result = self.pick_otu()
-        return result
+        self.pick_otu()
+        self.core_diversity()
+        files, path = self.db.get_mongo_files(self.access_code)
+        return Path(files['diversity_dir']) / 'index.html'
