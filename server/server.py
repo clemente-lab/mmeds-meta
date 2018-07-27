@@ -9,7 +9,7 @@ from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_w
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
-from mmeds.tools import QiimeAnalysis
+from mmeds.tools import analysis_runner
 from mmeds.error import MissingUploadError
 
 absDir = Path(os.getcwd())
@@ -40,11 +40,8 @@ class MMEDSserver(object):
         """ Run analysis on the specified study. """
         if tool == 'qiime':
             try:
-                qa = QiimeAnalysis(cp.session['user'], access_code)
-                result = qa.analysis()
-                with open(result) as f:
-                    page = f.read()
-                return page
+                analysis_runner('qiime', cp.session['user'], access_code)
+                return "<html> <h1> Analysis Running </h1> </html>"
             except MissingUploadError:
                 with open('../html/download_error.html') as f:
                     page = f.read()

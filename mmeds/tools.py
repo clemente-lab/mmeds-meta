@@ -2,9 +2,10 @@ from pandas import read_csv
 from pathlib import Path
 from subprocess import run
 import os
+import multiprocessing as mp
 
 from mmeds.database import Database
-from mmeds.config import get_salt
+from mmeds.config import get_salt, send_email
 
 
 class QiimeAnalysis:
@@ -124,5 +125,18 @@ class QiimeAnalysis:
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
-        files, path = self.db.get_mongo_files(self.access_code)
-        return Path(files['diversity_dir']) / 'index.html'
+        doc = self.db.get_metadata(self.access_code)
+        send_email(doc.email, doc.owner, 'analysis', study_name=doc.study)
+
+
+def run_qiime(user, access_code):
+    """ Run qiime analysis. """
+    qa = QiimeAnalysis(user, access_code)
+    qa.analysis()
+
+
+def analysis_runner(atype, user, access_code):
+    """ Start running the analysis in a new process """
+    if atype == 'qiime':
+        p = mp.Process(target=run_qiime, args=(user, access_code))
+        p.start()
