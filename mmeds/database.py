@@ -362,7 +362,7 @@ class Database:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
-                         path=str(self.path))
+                         path=str(self.path).replace('temp', 'upload'))
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)

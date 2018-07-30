@@ -144,8 +144,13 @@ class MMEDSserver(object):
                                                                   barcodes=barcodes_copy)
 
             # Send the confirmation email
-            send_email(email, username, access_code)
+            send_email(email, username, code=access_code)
+
+            # Update the directory
             cp.session['uploaded'] = True
+            new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
+            os.rename(cp.session['dir'], new_dir)
+            cp.session['dir'] = new_dir
 
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
@@ -165,9 +170,13 @@ class MMEDSserver(object):
                                                               barcodes=data_copy2)
 
         # Send the confirmation email
-        send_email(email, username, access_code)
+        send_email(email, username, code=access_code)
 
+        # Update the directory
         cp.session['uploaded'] = True
+        new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
+        os.rename(cp.session['dir'], new_dir)
+        cp.session['dir'] = new_dir
 
         # Get the html for the upload page
         with open('../html/success.html', 'r') as f:
