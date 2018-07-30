@@ -41,13 +41,15 @@ class MMEDSserver(object):
         if tool == 'qiime':
             try:
                 analysis_runner('qiime', cp.session['user'], access_code)
-                return "<html> <h1> Analysis Running </h1> </html>"
+                with open('../html/welcome.html') as f:
+                    page = f.read()
+                return page
             except MissingUploadError:
                 with open('../html/download_error.html') as f:
                     page = f.read()
                 return page.format(cp.session['user'])
         else:
-            return "<html> <h1> Got it </h1> </html>"
+            return "<html> <h1> Tool does not exist. </h1> </html>"
 
     # View files
     @cp.expose
@@ -143,6 +145,7 @@ class MMEDSserver(object):
 
             # Send the confirmation email
             send_email(email, username, access_code)
+            cp.session['uploaded'] = True
 
             # Get the html for the upload page
             with open('../html/success.html', 'r') as f:
@@ -163,6 +166,8 @@ class MMEDSserver(object):
 
         # Send the confirmation email
         send_email(email, username, access_code)
+
+        cp.session['uploaded'] = True
 
         # Get the html for the upload page
         with open('../html/success.html', 'r') as f:
@@ -252,6 +257,7 @@ class MMEDSserver(object):
         Opens the page to upload files if the user has been authenticated.
         Otherwise returns to the login page with an error message.
         """
+        cp.session['uploaded'] = False
         cp.session['user'] = username
         # Create a unique dir for handling files uploaded by this user
         new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
@@ -259,6 +265,7 @@ class MMEDSserver(object):
             new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
+        cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
         if validate_password(username, password):
             with open('../html/welcome.html') as f:
                 page = f.read()
@@ -267,6 +274,17 @@ class MMEDSserver(object):
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+
+    @cp.expose
+    def logout(self):
+        """
+        Expires the session and returns to login page
+        """
+        cp.session['user'] = None
+        if not cp.session['uploaded']:
+            rmtree(cp.session['dir'])
+
+        return open('../html/index.html')
 
     @cp.expose
     def input_password(self):
@@ -307,14 +325,6 @@ class MMEDSserver(object):
         else:
             page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
         return page.format(user=cp.session['user'])
-
-    @cp.expose
-    def logout(self):
-        """
-        Expires the session and returns to login page
-        """
-        cp.session['user'] = None
-        return open('../html/index.html')
 
     @cp.expose
     def retry_upload(self):
