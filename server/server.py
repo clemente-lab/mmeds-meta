@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from shutil import rmtree
 from glob import glob
+from subprocess import run
 
 import cherrypy as cp
 from cherrypy.lib import static
@@ -9,7 +10,7 @@ from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_w
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
-from mmeds.tools import QiimeAnalysis
+from mmeds.tools import analysis_runner
 from mmeds.error import MissingUploadError
 
 absDir = Path(os.getcwd())
@@ -40,9 +41,9 @@ class MMEDSserver(object):
         """ Run analysis on the specified study. """
         if tool == 'qiime':
             try:
-                qa = QiimeAnalysis(cp.session['user'], access_code)
-                result = qa.analysis()
-                with open(result) as f:
+                p = analysis_runner('qiime', cp.session['user'], access_code)
+                cp.session['processes'][access_code] = p
+                with open('../html/welcome.html') as f:
                     page = f.read()
                 return page
             except MissingUploadError:
@@ -50,7 +51,7 @@ class MMEDSserver(object):
                     page = f.read()
                 return page.format(cp.session['user'])
         else:
-            return "<html> <h1> Got it </h1> </html>"
+            return "<html> <h1> Tool does not exist. </h1> </html>"
 
     # View files
     @cp.expose
@@ -145,12 +146,18 @@ class MMEDSserver(object):
                                                                   barcodes=barcodes_copy)
 
             # Send the confirmation email
-            send_email(email, username, access_code)
+            send_email(email, username, code=access_code)
+
+            # Update the directory
+            cp.session['uploaded'] = True
+            #new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
+            #os.rename(cp.session['dir'], new_dir)
+            #cp.session['dir'] = new_dir
 
             # Get the html for the upload page
-            with open('../html/success.html', 'r') as f:
+            with open('../html/welcome.html', 'r') as f:
                 upload_successful = f.read()
-            return upload_successful
+            return upload_successful.format(user=cp.session['user'])
 
     @cp.expose
     def proceed_with_warning(self):
@@ -165,12 +172,18 @@ class MMEDSserver(object):
                                                               barcodes=data_copy2)
 
         # Send the confirmation email
-        send_email(email, username, access_code)
+        send_email(email, username, code=access_code)
+
+        # Update the directory
+        cp.session['uploaded'] = True
+        # new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
+        # os.rename(cp.session['dir'], new_dir)
+        # cp.session['dir'] = new_dir
 
         # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
+        with open('../html/welcome.html', 'r') as f:
             upload_successful = f.read()
-        return upload_successful
+        return upload_successful.format(user=cp.session['user'])
 
     ########################################
     ###########  Authentication  ###########
@@ -255,6 +268,7 @@ class MMEDSserver(object):
         Opens the page to upload files if the user has been authenticated.
         Otherwise returns to the login page with an error message.
         """
+        cp.session['uploaded'] = False
         cp.session['user'] = username
         # Create a unique dir for handling files uploaded by this user
         new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
@@ -262,6 +276,9 @@ class MMEDSserver(object):
             new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
+        cp.session['processes'] = {}
+
+        cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
         if validate_password(username, password):
             with open('../html/welcome.html') as f:
                 page = f.read()
@@ -270,6 +287,17 @@ class MMEDSserver(object):
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+
+    @cp.expose
+    def logout(self):
+        """
+        Expires the session and returns to login page
+        """
+        cp.session['user'] = None
+        if not cp.session['uploaded']:
+            rmtree(cp.session['dir'])
+
+        return open('../html/index.html')
 
     @cp.expose
     def input_password(self):
@@ -310,14 +338,6 @@ class MMEDSserver(object):
         else:
             page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
         return page.format(user=cp.session['user'])
-
-    @cp.expose
-    def logout(self):
-        """
-        Expires the session and returns to login page
-        """
-        cp.session['user'] = None
-        return open('../html/index.html')
 
     @cp.expose
     def retry_upload(self):
@@ -382,33 +402,49 @@ class MMEDSserver(object):
     @cp.expose
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
-        # Get the open file handler
+        if cp.session['processes'].get(access_code) is None or\
+           not cp.session['processes'][access_code].is_alive():
+            # Get the open file handler
+            with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+                try:
+                    files, path = db.get_mongo_files(access_code)
+                except AttributeError as e:
+                    cp.log(e)
+                    with open('../html/download_error.html') as f:
+                        download_error = f.read()
+                    return download_error.format(cp.session['user'])
+
+            with open('../html/select_download.html') as f:
+                page = f.read()
+
+            for i, f in enumerate(files.keys()):
+                page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+
+            cp.session['download_access'] = access_code
+            return page
+        else:
+            with open('../html/unavailable.html') as f:
+                page = f.read()
+            return page
+
+    @cp.expose
+    def select_download(self, download):
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
-                data_fp, metadata_fp = db.get_data_from_access_code(access_code)
+                files, path = db.get_mongo_files(cp.session['download_access'])
             except AttributeError as e:
                 cp.log(e)
                 with open('../html/download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
 
-        # Write the metadata to a new file
-        metadata_path = cp.session['dir'] / 'download_metadata.tsv'
-        with open(metadata_path, 'wb') as f:
-            f.write(metadata_fp)
-        cp.session['metadata_path'] = metadata_path
+        file_path = str(Path(path) / files[download])
+        if 'dir' in download:
+            run('tar -czvf {} {}'.format(file_path + '.tar.gz', file_path), shell=True, check=True)
+            file_path += '.tar.gz'
 
-        # The data file my not have been uploaded yet
-        if data_fp is not None:
-            # Write the data to a new file
-            data_path = cp.session['dir'] / 'download_data.txt'
-            with open(data_path, 'wb') as f:
-                f.write(data_fp)
-            cp.session['data_path'] = data_path
-
-        with open('../html/download_data.html') as f:
-            page = f.read()
-        return page
+        return static.serve_file(file_path, 'application/x-download',
+                                 'attachment', os.path.basename(file_path))
 
     @cp.expose
     def download_metadata(self):

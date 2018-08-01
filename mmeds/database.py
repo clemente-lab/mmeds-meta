@@ -20,15 +20,9 @@ class MetaData(men.DynamicDocument):
     files = men.DictField()
 
 
-def delete_MetaData(mdata):
-    """ Deletes the MetaData document and associated Files. """
-    mdata.data.delete()
-    mdata.delete()
-
-
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None):
+    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -41,7 +35,7 @@ class Database:
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
-        self.mongo = men.connect('test', host='127.0.0.1', port=27017)
+        self.mongo = men.connect('test', host='127.0.0.1', port=27017, connect=connect)
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
@@ -474,8 +468,3 @@ class Database:
         Any modifications should be done through the Database class.
         """
         return MetaData.objects(access_code=access_code, owner=self.owner).first()
-
-    def get_data_from_access_code(self, access_code):
-        """ Gets the NoSQL data affiliated with the provided access code. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        return mdata.data.read(), mdata.metadata.read()
