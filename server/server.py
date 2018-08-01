@@ -156,7 +156,7 @@ class MMEDSserver(object):
             # Get the html for the upload page
             with open('../html/welcome.html', 'r') as f:
                 upload_successful = f.read()
-            return upload_successful.format(cp.session['user'])
+            return upload_successful.format(user=cp.session['user'])
 
     @cp.expose
     def proceed_with_warning(self):
@@ -182,7 +182,7 @@ class MMEDSserver(object):
         # Get the html for the upload page
         with open('../html/welcome.html', 'r') as f:
             upload_successful = f.read()
-        return upload_successful.format(cp.session['user'])
+        return upload_successful.format(user=cp.session['user'])
 
     ########################################
     ###########  Authentication  ###########
