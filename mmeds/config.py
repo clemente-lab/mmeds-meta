@@ -3,6 +3,7 @@ from string import digits, ascii_uppercase, ascii_lowercase
 from smtplib import SMTP
 from email.message import EmailMessage
 from pathlib import Path
+from cherrypy.lib.sessions import FileSession
 
 CONFIG = {
     'global': {
@@ -11,12 +12,14 @@ CONFIG = {
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': '../server/data/cert.pem',
         'server.ssl_private_key': '../server/data/key.pem',
-        'tools.secureheaders.on': True,
+        'request.scheme': 'https',
+        'secureheaders.on': True,
         'tools.sessions.on': True,
+        #'tools.sessions.storage_class': FileSession,
+        #'tools.sessions.storage_path': Path.cwd() / 'session',
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
-        'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
-        'request.scheme': 'https'
+        'tools.staticdir.root': Path().cwd().parent,
     },
     '/CSS': {
         'tools.staticdir.on': True,

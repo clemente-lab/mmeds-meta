@@ -12,7 +12,7 @@ class QiimeAnalysis:
     """ A class for analysis qiime analysis of uploaded studies. """
 
     def __init__(self, owner, access_code):
-        self.db = Database('', user='root', owner=owner)
+        self.db = Database('', user='root', owner=owner, connect=False)
         self.access_code = access_code
         self.headers = [
             '#SampleID',
@@ -81,7 +81,7 @@ class QiimeAnalysis:
         command = cmd.format(new_dir, files['reads'], files['barcodes'], files['mapping'])
         run(command, shell=True, check=True)
 
-    def pick_otu(self, reference='open'):
+    def pick_otu(self, reference='closed'):
         """ Run the pick OTU scripts. """
         files, path = self.db.get_mongo_files(self.access_code)
         new_dir = Path(path) / ('otu_output_' + get_salt(10))
@@ -95,8 +95,11 @@ class QiimeAnalysis:
             f.write('pick_otus:enable_rev_strand_match True\n')
 
         # Run the script
-        cmd = 'source activate qiime1; pick_open_reference_otus.py -o {} -i {} -p {}'
-        command = cmd.format(new_dir, Path(files['split_dir']) / 'seqs.fna', Path(path) / 'params.txt')
+        cmd = 'source activate qiime1; pick_{}_reference_otus.py -o {} -i {} -p {}'
+        command = cmd.format(reference,
+                             new_dir,
+                             Path(files['split_dir']) / 'seqs.fna',
+                             Path(path) / 'params.txt')
         run(command, shell=True, check=True)
 
     def core_diversity(self):
@@ -140,3 +143,4 @@ def analysis_runner(atype, user, access_code):
     if atype == 'qiime':
         p = mp.Process(target=run_qiime, args=(user, access_code))
         p.start()
+    return p

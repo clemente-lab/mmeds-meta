@@ -41,7 +41,8 @@ class MMEDSserver(object):
         """ Run analysis on the specified study. """
         if tool == 'qiime':
             try:
-                analysis_runner('qiime', cp.session['user'], access_code)
+                p = analysis_runner('qiime', cp.session['user'], access_code)
+                cp.session['processes'][access_code] = p
                 with open('../html/welcome.html') as f:
                     page = f.read()
                 return page
@@ -275,6 +276,8 @@ class MMEDSserver(object):
             new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
+        cp.session['processes'] = {}
+
         cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
         if validate_password(username, password):
             with open('../html/welcome.html') as f:
@@ -399,24 +402,30 @@ class MMEDSserver(object):
     @cp.expose
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
-        # Get the open file handler
-        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
-            try:
-                files, path = db.get_mongo_files(access_code)
-            except AttributeError as e:
-                cp.log(e)
-                with open('../html/download_error.html') as f:
-                    download_error = f.read()
-                return download_error.format(cp.session['user'])
+        if cp.session['processes'].get(access_code) is None or\
+           not cp.session['processes'][access_code].is_alive():
+            # Get the open file handler
+            with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+                try:
+                    files, path = db.get_mongo_files(access_code)
+                except AttributeError as e:
+                    cp.log(e)
+                    with open('../html/download_error.html') as f:
+                        download_error = f.read()
+                    return download_error.format(cp.session['user'])
 
-        with open('../html/select_download.html') as f:
-            page = f.read()
+            with open('../html/select_download.html') as f:
+                page = f.read()
 
-        for i, f in enumerate(files.keys()):
-            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+            for i, f in enumerate(files.keys()):
+                page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
 
-        cp.session['download_access'] = access_code
-        return page
+            cp.session['download_access'] = access_code
+            return page
+        else:
+            with open('../html/unavailable.html') as f:
+                page = f.read()
+            return page
 
     @cp.expose
     def select_download(self, download):

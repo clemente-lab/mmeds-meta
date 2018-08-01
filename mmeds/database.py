@@ -22,7 +22,7 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None):
+    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -35,7 +35,7 @@ class Database:
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
-        self.mongo = men.connect('test', host='127.0.0.1', port=27017)
+        self.mongo = men.connect('test', host='127.0.0.1', port=27017, connect=connect)
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
