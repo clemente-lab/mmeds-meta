@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from shutil import rmtree
 from glob import glob
+from subprocess import run
 
 import cherrypy as cp
 from cherrypy.lib import static
@@ -148,14 +149,14 @@ class MMEDSserver(object):
 
             # Update the directory
             cp.session['uploaded'] = True
-            new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
-            os.rename(cp.session['dir'], new_dir)
-            cp.session['dir'] = new_dir
+            #new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
+            #os.rename(cp.session['dir'], new_dir)
+            #cp.session['dir'] = new_dir
 
             # Get the html for the upload page
-            with open('../html/success.html', 'r') as f:
+            with open('../html/welcome.html', 'r') as f:
                 upload_successful = f.read()
-            return upload_successful
+            return upload_successful.format(cp.session['user'])
 
     @cp.expose
     def proceed_with_warning(self):
@@ -174,14 +175,14 @@ class MMEDSserver(object):
 
         # Update the directory
         cp.session['uploaded'] = True
-        new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
-        os.rename(cp.session['dir'], new_dir)
-        cp.session['dir'] = new_dir
+        # new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
+        # os.rename(cp.session['dir'], new_dir)
+        # cp.session['dir'] = new_dir
 
         # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
+        with open('../html/welcome.html', 'r') as f:
             upload_successful = f.read()
-        return upload_successful
+        return upload_successful.format(cp.session['user'])
 
     ########################################
     ###########  Authentication  ###########
@@ -401,30 +402,40 @@ class MMEDSserver(object):
         # Get the open file handler
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
-                data_fp, metadata_fp = db.get_data_from_access_code(access_code)
+                files, path = db.get_mongo_files(access_code)
             except AttributeError as e:
                 cp.log(e)
                 with open('../html/download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
 
-        # Write the metadata to a new file
-        metadata_path = cp.session['dir'] / 'download_metadata.tsv'
-        with open(metadata_path, 'wb') as f:
-            f.write(metadata_fp)
-        cp.session['metadata_path'] = metadata_path
-
-        # The data file my not have been uploaded yet
-        if data_fp is not None:
-            # Write the data to a new file
-            data_path = cp.session['dir'] / 'download_data.txt'
-            with open(data_path, 'wb') as f:
-                f.write(data_fp)
-            cp.session['data_path'] = data_path
-
-        with open('../html/download_data.html') as f:
+        with open('../html/select_download.html') as f:
             page = f.read()
+
+        for i, f in enumerate(files.keys()):
+            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+
+        cp.session['download_access'] = access_code
         return page
+
+    @cp.expose
+    def select_download(self, download):
+        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+            try:
+                files, path = db.get_mongo_files(cp.session['download_access'])
+            except AttributeError as e:
+                cp.log(e)
+                with open('../html/download_error.html') as f:
+                    download_error = f.read()
+                return download_error.format(cp.session['user'])
+
+        file_path = str(Path(path) / files[download])
+        if 'dir' in download:
+            run('tar -czvf {} {}'.format(file_path + '.tar.gz', file_path), shell=True, check=True)
+            file_path += '.tar.gz'
+
+        return static.serve_file(file_path, 'application/x-download',
+                                 'attachment', os.path.basename(file_path))
 
     @cp.expose
     def download_metadata(self):

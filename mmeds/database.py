@@ -20,12 +20,6 @@ class MetaData(men.DynamicDocument):
     files = men.DictField()
 
 
-def delete_MetaData(mdata):
-    """ Deletes the MetaData document and associated Files. """
-    mdata.data.delete()
-    mdata.delete()
-
-
 class Database:
 
     def __init__(self, path, database='mmeds', user='root', owner=None):
@@ -362,7 +356,7 @@ class Database:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
-                         path=str(self.path).replace('temp', 'upload'))
+                         path=str(self.path))
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)
@@ -474,8 +468,3 @@ class Database:
         Any modifications should be done through the Database class.
         """
         return MetaData.objects(access_code=access_code, owner=self.owner).first()
-
-    def get_data_from_access_code(self, access_code):
-        """ Gets the NoSQL data affiliated with the provided access code. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        return mdata.data.read(), mdata.metadata.read()
