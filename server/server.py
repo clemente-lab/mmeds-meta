@@ -39,9 +39,9 @@ class MMEDSserver(object):
     @cp.expose
     def run_analysis(self, access_code, tool):
         """ Run analysis on the specified study. """
-        if tool == 'qiime':
+        if 'qiime' in tool:
             try:
-                p = analysis_runner('qiime', cp.session['user'], access_code)
+                p = analysis_runner(tool, cp.session['user'], access_code)
                 cp.session['processes'][access_code] = p
                 with open('../html/welcome.html') as f:
                     page = f.read()
@@ -60,7 +60,7 @@ class MMEDSserver(object):
         return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_qiime1(self, myMetaData, reads, barcodes, public='off'):
+    def validate_qiime(self, myMetaData, reads, barcodes, public='off'):
         """ The page returned after a file is uploaded. """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -332,15 +332,13 @@ class MMEDSserver(object):
     @cp.expose
     def upload(self, study_type):
         """ Page for uploading Qiime data """
-        if study_type == 'qiime-1.9.1':
-            with open('../html/upload_qiime1.html') as f:
+        if 'qiime' in study_type:
+            with open('../html/upload_qiime.html') as f:
                 page = f.read()
-        elif study_type == 'qiime-2':
-            with open('../html/upload_qiime2.html') as f:
-                page = f.read()
+            page = page.format(user=cp.session['user'], version=study_type)
         else:
             page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
-        return page.format(user=cp.session['user'])
+        return page
 
     @cp.expose
     def retry_upload(self):

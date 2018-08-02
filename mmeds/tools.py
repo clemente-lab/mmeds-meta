@@ -142,6 +142,20 @@ class Qiime2Analysis:
     def __del__(self):
         del self.db
 
+    def setup_dir(self):
+        """ Setup the directory to run the analysis. """
+        files, path = self.db.get_mongo_files(self.access_code)
+
+        new_dir = Path(path) / ('working_dir' + get_salt(10))
+        while os.path.exists(new_dir):
+            new_dir = Path(path) / ('working_dir' + get_salt(10))
+        # Create links to the files
+        run('ln {} {}'.format(files['barcodes'], new_dir / 'barcodes.fastq.gz'))
+        run('ln {} {}'.format(files['reads'], new_dir / 'sequences.fastq.gz'))
+
+        # Add the split directory to the MetaData object
+        self.db.update_metadata(self.access_code, 'working_dir', new_dir)
+
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
@@ -230,6 +244,7 @@ class Qiime2Analysis:
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
+        self.setup_dir()
         self.validate_mapping()
         self.split_libraries()
         self.pick_otu()
