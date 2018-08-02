@@ -60,7 +60,7 @@ class MMEDSserver(object):
         return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_qiime(self, myMetaData, reads, barcodes, public='off'):
+    def validate_qiime1(self, myMetaData, reads, barcodes, public='off'):
         """ The page returned after a file is uploaded. """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -332,8 +332,11 @@ class MMEDSserver(object):
     @cp.expose
     def upload(self, study_type):
         """ Page for uploading Qiime data """
-        if study_type == 'qiime':
-            with open('../html/upload_qiime.html') as f:
+        if study_type == 'qiime-1.9.1':
+            with open('../html/upload_qiime1.html') as f:
+                page = f.read()
+        elif study_type == 'qiime-2':
+            with open('../html/upload_qiime2.html') as f:
                 page = f.read()
         else:
             page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
