@@ -41,6 +41,7 @@ class MMEDSserver(object):
         """ Run analysis on the specified study. """
         if 'qiime' in tool:
             try:
+                cp.log('Running analysis with ' + tool)
                 p = analysis_runner(tool, cp.session['user'], access_code)
                 cp.session['processes'][access_code] = p
                 with open('../html/welcome.html') as f:
