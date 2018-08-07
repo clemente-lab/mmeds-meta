@@ -59,28 +59,18 @@ class Qiime1Analysis:
 
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
+        add_path(self, 'split_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
-        new_dir = Path(path) / ('split_output_' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = Path(path) / ('split_output_' + get_salt(10))
-
-        # Add the split directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'split_dir', new_dir)
 
         # Run the script
         cmd = 'source activate qiime1; split_libraries_fastq.py -o {} -i {} -b {} -m {}'
-        command = cmd.format(new_dir, files['reads'], files['barcodes'], files['mapping'])
+        command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
         run(command, shell=True, check=True)
 
     def pick_otu(self, reference='closed'):
         """ Run the pick OTU scripts. """
+        add_path(self, 'otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
-        new_dir = Path(path) / ('otu_output_' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = Path(path) / ('otu_output_' + get_salt(10))
-
-        # Add the otu directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'otu_dir', new_dir)
 
         with open(Path(path) / 'params.txt', 'w') as f:
             f.write('pick_otus:enable_rev_strand_match True\n')
@@ -88,24 +78,19 @@ class Qiime1Analysis:
         # Run the script
         cmd = 'source activate qiime1; pick_{}_reference_otus.py -o {} -i {} -p {}'
         command = cmd.format(reference,
-                             new_dir,
+                             files['otu_output'],
                              Path(files['split_dir']) / 'seqs.fna',
                              Path(path) / 'params.txt')
         run(command, shell=True, check=True)
 
     def core_diversity(self):
         """ Run the core diversity analysis script. """
+        add_path(self, 'diversity_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
-        new_dir = Path(path) / ('diversity_output_' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = Path(path) / ('diversity_output_' + get_salt(10))
-
-        # Add the otu directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'diversity_dir', new_dir)
 
         # Run the script
         cmd = 'source activate qiime1; core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {}'
-        command = cmd.format(new_dir,
+        command = cmd.format(files['diversity_output'],
                              Path(files['otu_dir']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                              files['mapping'],
                              Path(files['otu_dir']) / 'rep_set.tre',
@@ -145,19 +130,20 @@ class Qiime2Analysis:
 
     def setup_dir(self):
         """ Setup the directory to run the analysis. """
+        # Add the split directory to the MetaData object
+        add_path(self, 'working_dir', '')
+
         files, path = self.db.get_mongo_files(self.access_code)
 
-        new_dir = Path(path) / ('working_dir' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = Path(path) / ('working_dir' + get_salt(10))
-        run('mkdir {}'.format(new_dir), shell=True, check=True)
+        run('mkdir {}'.format(files['working_dir']), shell=True, check=True)
 
         # Create links to the files
-        run('ln {} {}'.format(files['barcodes'], new_dir / 'barcodes.fastq.gz'), shell=True, check=True)
-        run('ln {} {}'.format(files['reads'], new_dir / 'sequences.fastq.gz'), shell=True, check=True)
-
-        # Add the split directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'working_dir', Path(new_dir))
+        run('ln {} {}'.format(files['barcodes'],
+                              Path(files['working_dir']) / 'barcodes.fastq.gz'),
+            shell=True, check=True)
+        run('ln {} {}'.format(files['reads'],
+                              Path(files['working_dir']) / 'sequences.fastq.gz'),
+            shell=True, check=True)
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
@@ -194,7 +180,9 @@ class Qiime2Analysis:
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Add the split directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'working_file', Path(str(files['working_dir']) + '.qza'))
+        self.db.update_metadata(self.access_code,
+                                'working_file',
+                                Path(str(files['working_dir']) + '.qza'))
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
@@ -202,45 +190,34 @@ class Qiime2Analysis:
         command = cmd.format(itype, files['working_dir'], files['working_file'])
         run(command, shell=True, check=True)
 
-    def dddDemultiplex(self):
-        """ Run the pick OTU scripts. """
-        files, path = self.db.get_mongo_files(self.access_code)
-        new_dir = Path(path) / ('otu_output_' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = Path(path) / ('otu_output_' + get_salt(10))
-
-        # Add the otu directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'otu_dir', new_dir)
-
-        with open(Path(path) / 'params.txt', 'w') as f:
-            f.write('pick_otus:enable_rev_strand_match True\n')
-
-        # Run the script
-        cmd = 'source activate qiime2; pick_{}_reference_otus.py -o {} -i {} -p {}'
-        command = cmd.format('ference',
-                             new_dir,
-                             Path(files['split_dir']) / 'seqs.fna',
-                             Path(path) / 'params.txt')
-        run(command, shell=True, check=True)
-
     def demultiplex(self):
         """ Run the core diversity analysis script. """
-        files, path = self.db.get_mongo_files(self.access_code)
-        new_file = Path(path) / ('demux_' + get_salt(10) + '.qza')
-        while os.path.exists(new_file):
-            new_file = Path(path) / ('demux_' + get_salt(10) + '.qza')
-
         # Add the otu directory to the MetaData object
-        self.db.update_metadata(self.access_code, 'demux_file', new_file)
+        add_path(self, 'demux', 'qza')
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
-        cmd = 'source activate qiime2; qiime demux emp-single --i-seqs {} --m-barcodes-file {} --m-barcodes-column {} --o-per-sample-sequences {}'
-        command = cmd.format(files['working_file'],
-                             files['mapping'],
-                             self.headers[1],
-                             files['demux_file'])
-        run(command, shell=True, check=True)
+        cmd = [
+            'source activate qiime2;',
+            ' qiime demux emp-single',
+            '--i-seqs {}'.format(files['working_file']),
+            '--m-barcodes-file {}'.format(files['mapping']),
+            '--m-barcodes-column {}'.format(self.headers[1]),
+            '--o-per-sample-sequences {}'.format(files['demux_file'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def tabulate(self):
+        """ Run tabulate visualization. """
+        add_path(self, 'stats_{}_visual'.format(self.atype), 'qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime metadata tabulate',
+            '--m-input-file {}'.format(files['stats_{}'.format(self.atype)]),
+            '--o-visualization {}'.format(files['stats_{}_visual'.format(self.atype)])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
 
     def dada2(self, p_trim_left=0, p_trunc_len=120):
         """ Run DADA2 analysis on the demultiplexed file. """
@@ -252,7 +229,7 @@ class Qiime2Analysis:
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
-            'dada2 denoise-single',
+            'qiime dada2 denoise-single',
             '--i-demultiplexed-seqs {}'.format(files['demux_file']),
             '--p-trim-left {}'.format(p_trim_left),
             '--p-trunc-len {}'.format(p_trunc_len),
@@ -260,11 +237,54 @@ class Qiime2Analysis:
             '--o-table {}'.format(files['table_dada2']),
             '--o-denoising-stats {}'.format(files['stats_dada2'])
         ]
-        run(cmd, shell=True, check=True)
+        run(' '.join(cmd), shell=True, check=True)
 
-    def deblur(self):
+    def deblur_filter(self):
         """ Run Deblur analysis on the demultiplexed file. """
-        pass
+        add_path(self, 'demux_filtered', 'qza')
+        add_path(self, 'demux_filter_stats', 'qza')
+
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime quality-filter q-score',
+            '--i-demux {}'.format(files['demux_file']),
+            '--o-filtered-sequences {}'.format(files['demux_filtered']),
+            '--o-filter-stats {}'.format(files['demux_filter_stats'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def deblur_denoise(self, p_trim_length=120):
+        """ Run Deblur analysis on the demultiplexed file. """
+        add_path(self, 'rep_seqs_deblur', 'qza')
+        add_path(self, 'table_deblur', 'qza')
+        add_path(self, 'stats_deblur', 'qza')
+
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime deblur denoise-16S',
+            '--i-demultiplexed-seqs {}'.format(files['demux_filtered']),
+            '--p-trim-length {}'.format(p_trim_length),
+            '--o-representative-sequences {}'.format(files['rep_seqs_deblur']),
+            '--o-table {}'.format(files['table_deblur']),
+            '--p-sample-stats',
+            '--o-stats {}'.format(files['stats_deblur'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def deblur_visualize(self):
+        """ Create visualizations from deblur analysis. """
+        add_path(self, 'stats_deblur_visual', 'qzv')
+
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime deblur visualize-stats',
+            '--i-deblur-stats {}'.format(files['stats_deblur']),
+            '--o-visualization {}'.format(files['stats_deblur_visual'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
 
     def analysis(self):
         """ Perform some analysis. """
@@ -273,9 +293,12 @@ class Qiime2Analysis:
         self.qimport()
         self.demultiplex()
         if self.atype == 'deblur':
-            self.deblur()
+            self.deblur_filter()
+            self.deblur_denoise()
+            self.deblur_visualize()
         elif self.atype == 'dada2':
             self.dada2()
+        self.tabulate()
         return
 
 
