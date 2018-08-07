@@ -126,7 +126,7 @@ class Qiime1Analysis:
 class Qiime2Analysis:
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code):
+    def __init__(self, owner, access_code, atype):
         self.db = Database('', user='root', owner=owner, connect=False)
         self.access_code = access_code
         self.headers = [
@@ -138,6 +138,7 @@ class Qiime2Analysis:
 
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
+        self.atype = atype.split('-')[-1]
 
     def __del__(self):
         del self.db
@@ -241,17 +242,49 @@ class Qiime2Analysis:
                              files['demux_file'])
         run(command, shell=True, check=True)
 
+    def dada2(self, p_trim_left=0, p_trunc_len=120):
+        """ Run DADA2 analysis on the demultiplexed file. """
+        # Index new files
+        add_path(self, 'rep_seqs', 'qza')
+        add_path(self, 'table_dada2', 'qza')
+        add_path(self, 'stats_dada2', 'qza')
+
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'dada2 denoise-single',
+            '--i-demultiplexed-seqs {}'.format(files['demux_file']),
+            '--p-trim-left {}'.format(p_trim_left),
+            '--p-trunc-len {}'.format(p_trunc_len),
+            '--o-representative-sequences {}'.format(files['rep_seqs']),
+            '--o-table {}'.format(files['table_dada2']),
+            '--o-denoising-stats {}'.format(files['stats_dada2'])
+        ]
+        run(cmd, shell=True, check=True)
+
+    def deblur(self):
+        """ Run Deblur analysis on the demultiplexed file. """
+        pass
+
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.setup_dir()
         self.qimport()
         self.demultiplex()
+        if self.atype == 'deblur':
+            self.deblur()
+        elif self.atype == 'dada2':
+            self.dada2()
         return
-        self.pick_otu()
-        self.core_diversity()
-        doc = self.db.get_metadata(self.access_code)
-        send_email(doc.email, doc.owner, 'analysis', study_name=doc.study)
+
+
+def add_path(qiime, name, extension):
+    """ Add a file or directory to the document identified by qiime.access_code. """
+    new_file = Path(qiime.path) / (name + '_' + get_salt(5) + '.' + extension)
+    while os.path.exists(new_file):
+        new_file = Path(qiime.path) / (name + '_' + get_salt(5) + '.' + extension)
+    qiime.db.update_metadata(qiime.access_code, name, new_file)
 
 
 def run_qiime1(user, access_code):
@@ -260,20 +293,20 @@ def run_qiime1(user, access_code):
     qa.analysis()
 
 
-def run_qiime2(user, access_code):
+def run_qiime2(user, access_code, atype):
     """ Run qiime analysis. """
-    qa = Qiime2Analysis(user, access_code)
+    qa = Qiime2Analysis(user, access_code, atype)
     qa.analysis()
 
 
 def analysis_runner(atype, user, access_code):
     """ Start running the analysis in a new process """
-    if atype == 'qiime1':
+    if 'qiime1' in atype:
         p = mp.Process(target=run_qiime1, args=(user, access_code))
-    elif atype == 'qiime2':
+    elif 'qiime2' in atype:
 
         #p = mp.Process(target=run_qiime2, args=(user, access_code))
-        return run_qiime2(user, access_code)
+        return run_qiime2(user, access_code, atype)
     p.start()
 
     return p
