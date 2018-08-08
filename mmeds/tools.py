@@ -327,9 +327,6 @@ def analysis_runner(atype, user, access_code):
     if 'qiime1' in atype:
         p = mp.Process(target=run_qiime1, args=(user, access_code))
     elif 'qiime2' in atype:
-
-        #p = mp.Process(target=run_qiime2, args=(user, access_code))
-        return run_qiime2(user, access_code, atype)
+        p = mp.Process(target=run_qiime2, args=(user, access_code))
     p.start()
-
     return p
