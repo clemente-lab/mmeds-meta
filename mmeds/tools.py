@@ -105,7 +105,7 @@ class Qiime1Analysis:
         self.pick_otu()
         self.core_diversity()
         doc = self.db.get_metadata(self.access_code)
-        send_email(doc.email, doc.owner, 'analysis', study_name=doc.study)
+        send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime1', study_name=doc.study)
 
 
 class Qiime2Analysis:
@@ -300,7 +300,7 @@ class Qiime2Analysis:
             self.dada2()
             self.tabulate()
         doc = self.db.get_metadata(self.access_code)
-        send_email(doc.email, doc.owner, 'analysis', study_name=doc.study)
+        send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 ' + self.atype, study_name=doc.study)
 
 
 def add_path(qiime, name, extension):

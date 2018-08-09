@@ -103,24 +103,29 @@ def send_email(toaddr, user, message='upload', **kwargs):
     msg = EmailMessage()
     msg['From'] = MMEDS_EMAIL
     msg['To'] = toaddr
-    msg['Subject'] = 'New data uploaded to mmeds database'
     if message == 'upload':
         body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
                'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
                'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['code']) +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+        msg['Subject'] = 'New data uploaded to mmeds database'
     elif message == 'reset':
         body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
                'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+        msg['Subject'] = 'Password Reset'
     elif message == 'change':
         body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+        msg['Subject'] = 'Password Change'
     elif message == 'analysis':
-        body = 'Hello {},\nYour requested analysis on study {} is complete.\n'.format(toaddr, kwargs['study_name']) +\
+        body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(kwargs['analysis_type'],
+                                                                                         toaddr,
+                                                                                         kwargs['study_name']) +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
+        msg['Subject'] = 'Analysis Complete'
 
     msg.set_content(body)
 
