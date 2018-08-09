@@ -67,7 +67,7 @@ class Qiime1Analysis:
         command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
         run(command, shell=True, check=True)
 
-    def pick_otu(self, reference='closed'):
+    def pick_otu(self, reference='open'):
         """ Run the pick OTU scripts. """
         add_path(self, 'otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
@@ -79,7 +79,7 @@ class Qiime1Analysis:
         cmd = 'source activate qiime1; pick_{}_reference_otus.py -o {} -i {} -p {}'
         command = cmd.format(reference,
                              files['otu_output'],
-                             Path(files['split_dir']) / 'seqs.fna',
+                             Path(files['split_output']) / 'seqs.fna',
                              Path(path) / 'params.txt')
         run(command, shell=True, check=True)
 
@@ -91,9 +91,9 @@ class Qiime1Analysis:
         # Run the script
         cmd = 'source activate qiime1; core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {}'
         command = cmd.format(files['diversity_output'],
-                             Path(files['otu_dir']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
+                             Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                              files['mapping'],
-                             Path(files['otu_dir']) / 'rep_set.tre',
+                             Path(files['otu_output']) / 'rep_set.tre',
                              1114)
         run(command, shell=True, check=True)
 
@@ -193,7 +193,7 @@ class Qiime2Analysis:
     def demultiplex(self):
         """ Run the core diversity analysis script. """
         # Add the otu directory to the MetaData object
-        add_path(self, 'demux', 'qza')
+        add_path(self, 'demux_file', 'qza')
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
@@ -298,8 +298,9 @@ class Qiime2Analysis:
             self.deblur_visualize()
         elif self.atype == 'dada2':
             self.dada2()
-        self.tabulate()
-        return
+            self.tabulate()
+        doc = self.db.get_metadata(self.access_code)
+        send_email(doc.email, doc.owner, 'analysis', study_name=doc.study)
 
 
 def add_path(qiime, name, extension):
@@ -327,6 +328,6 @@ def analysis_runner(atype, user, access_code):
     if 'qiime1' in atype:
         p = mp.Process(target=run_qiime1, args=(user, access_code))
     elif 'qiime2' in atype:
-        p = mp.Process(target=run_qiime2, args=(user, access_code))
+        p = mp.Process(target=run_qiime2, args=(user, access_code, atype))
     p.start()
     return p

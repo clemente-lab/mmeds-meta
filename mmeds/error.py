@@ -6,6 +6,5 @@ class MmedsError(Exception):
 class MissingUploadError(MmedsError):
     """ Exception for missing uploads. """
 
-    def __init__(self, expression, message):
-        self.expresssion = expression
+    def __init__(self, message):
         self.message = message
