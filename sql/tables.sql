@@ -362,8 +362,8 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`SampleProtocol` (
   `idSampleProtocol` INT NOT NULL,
   `SampleProtocols_idSampleProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
-  `DatePerformed` DATETIME NULL DEFAULT NULL,
-  `Processor` VARCHAR(45) NULL DEFAULT NULL,
+  `SampleDatePerformed` DATETIME NULL DEFAULT NULL,
+  `SampleProcessor` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idSampleProtocol`, `SampleProtocols_idSampleProtocols`),
   INDEX `fk_SampleProtocol_SampleProtocols1_idx` (`SampleProtocols_idSampleProtocols` ASC),
   CONSTRAINT `fk_SampleProtocol_SampleProtocols1`
@@ -429,8 +429,8 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`RawDataProtocol` (
   `idRawDataProtocol` INT NOT NULL,
   `RawDataProtocols_idRawDataProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
-  `DatePerformed` DATETIME NULL DEFAULT NULL,
-  `Processor` VARCHAR(45) NULL DEFAULT NULL,
+  `RawDataDatePerformed` DATETIME NULL DEFAULT NULL,
+  `RawDataProcessor` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idRawDataProtocol`, `RawDataProtocols_idRawDataProtocols`),
   INDEX `fk_RawDataProtocol_RawDataProtocols1_idx` (`RawDataProtocols_idRawDataProtocols` ASC),
   CONSTRAINT `fk_RawDataProtocol_RawDataProtocols1`
@@ -489,8 +489,8 @@ DROP TABLE IF EXISTS `mmeds`.`ResultsProtocol` ;
 CREATE TABLE IF NOT EXISTS `mmeds`.`ResultsProtocol` (
   `idResultsProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
-  `DatePerformed` DATETIME NULL DEFAULT NULL,
-  `Processor` VARCHAR(45) NULL DEFAULT NULL,
+  `ResultsDatePerformed` DATETIME NULL DEFAULT NULL,
+  `ResultsProcessor` VARCHAR(45) NULL DEFAULT NULL,
   `ResultsProtocols_idResultsProtocols` INT NOT NULL,
   PRIMARY KEY (`idResultsProtocols`, `ResultsProtocols_idResultsProtocols`),
   INDEX `fk_ResultsProtocols_ResultsProtocols1_idx` (`ResultsProtocols_idResultsProtocols` ASC),

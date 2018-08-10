@@ -14,15 +14,6 @@ class Qiime1Analysis:
     def __init__(self, owner, access_code):
         self.db = Database('', user='root', owner=owner, connect=False)
         self.access_code = access_code
-        self.headers = [
-            '#SampleID',
-            'BarcodeSequence',
-            'LinkerPrimerSequence',
-            'Type',
-            'BodySite',
-            'Description'
-        ]
-
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
 
@@ -41,19 +32,42 @@ class Qiime1Analysis:
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
         with open(fp) as f:
-            mdata = read_csv(f, header=[0, 1], sep='\t')
+            mdata = read_csv(f, header=[1], sep='\t')
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
+
+        headers = list(mdata.columns)
+
+        si = headers.index('SampleID')
+        hold = headers[0]
+        headers[0] = '#SampleID'
+        headers[si] = hold
+
+        hold = headers[1]
+        di = headers.index('BarcodeSequence')
+        headers[1] = 'BarcodeSequence'
+        headers[di] = hold
+
+        hold = headers[2]
+        di = headers.index('LinkerPrimerSequence')
+        headers[2] = 'LinkerPrimerSequence'
+        headers[di] = hold
+
+        hold = headers[-1]
+        di = headers.index('Description')
+        headers[-1] = 'Description'
+        headers[di] = hold
+
         with open(mapping_file, 'w') as f:
-            f.write('\t'.join(self.headers) + '\n')
+            f.write('\t'.join(headers) + '\n')
             for row_index in range(len(mdata)):
                 row = []
-                for header in self.headers:
+                for header in headers:
                     if header == '#SampleID':
-                        row.append(mdata['Specimen']['SampleID'][row_index])
+                        row.append(str(mdata['SampleID'][row_index]))
                     else:
-                        row.append(mdata['Specimen'][header][row_index])
+                        row.append(str(mdata[header][row_index]))
                 f.write('\t'.join(row) + '\n')
 
         # Add the mapping file to the MetaData object
@@ -116,14 +130,6 @@ class Qiime2Analysis:
     def __init__(self, owner, access_code, atype):
         self.db = Database('', user='root', owner=owner, connect=False)
         self.access_code = access_code
-        self.headers = [
-            '#SampleID',
-            'BarcodeSequence',
-            'LinkerPrimerSequence',
-            'SampleDate',
-            'Description'
-        ]
-
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
         self.atype = atype.split('-')[-1]
@@ -161,19 +167,42 @@ class Qiime2Analysis:
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
         with open(fp) as f:
-            mdata = read_csv(f, header=[0, 1], sep='\t')
+            mdata = read_csv(f, header=[1], sep='\t')
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
+
+        headers = list(mdata.columns)
+
+        si = headers.index('SampleID')
+        hold = headers[0]
+        headers[0] = '#SampleID'
+        headers[si] = hold
+
+        hold = headers[1]
+        di = headers.index('BarcodeSequence')
+        headers[1] = 'BarcodeSequence'
+        headers[di] = hold
+
+        hold = headers[2]
+        di = headers.index('LinkerPrimerSequence')
+        headers[2] = 'LinkerPrimerSequence'
+        headers[di] = hold
+
+        hold = headers[-1]
+        di = headers.index('Description')
+        headers[-1] = 'Description'
+        headers[di] = hold
+
         with open(mapping_file, 'w') as f:
-            f.write('\t'.join(self.headers) + '\n')
+            f.write('\t'.join(headers) + '\n')
             for row_index in range(len(mdata)):
                 row = []
-                for header in self.headers:
+                for header in headers:
                     if header == '#SampleID':
-                        row.append(mdata['Specimen']['SampleID'][row_index])
+                        row.append(str(mdata['SampleID'][row_index]))
                     else:
-                        row.append(mdata['Specimen'][header][row_index])
+                        row.append(str(mdata[header][row_index]))
                 f.write('\t'.join(row) + '\n')
 
         # Add the mapping file to the MetaData object
@@ -387,10 +416,26 @@ class Qiime2Analysis:
         ]
         run(' '.join(cmd), shell=True, check=True)
 
+    def alpha_rarefaction(self, max_depth=4000):
+        """
+        Create plots for alpha rarefaction.
+        """
+        add_path(self, 'alpha_rarefaction', 'qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime diversity alpha-rarefaction',
+            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
+            '--i-phylogeny {}'.format(files['rooted_tree']),
+            '--p-max-depth {}'.format(max_depth),
+            '--m-metadata-file {}'.format(files['mapping']),
+            '--o-visualization {}'.format(files['alpha_rarefaction'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
-        """
         self.setup_dir()
         self.qimport()
         self.demultiplex()
@@ -401,7 +446,6 @@ class Qiime2Analysis:
         elif self.atype == 'dada2':
             self.dada2()
             self.tabulate()
-         """
         self.alignment_mafft()
         self.alignment_mask()
         self.phylogeny_fasttree()
@@ -409,6 +453,7 @@ class Qiime2Analysis:
         self.core_diversity()
         self.alpha_diversity()
         self.beta_diversity()
+        self.alpha_rarefaction()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 ' + self.atype, study_name=doc.study)
 
