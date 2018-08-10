@@ -18,6 +18,8 @@ class Qiime1Analysis:
             '#SampleID',
             'BarcodeSequence',
             'LinkerPrimerSequence',
+            'Type',
+            'BodySite',
             'Description'
         ]
 
@@ -118,12 +120,14 @@ class Qiime2Analysis:
             '#SampleID',
             'BarcodeSequence',
             'LinkerPrimerSequence',
+            'SampleDate',
             'Description'
         ]
 
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
         self.atype = atype.split('-')[-1]
+        self.overwrite = False
 
     def __del__(self):
         del self.db
@@ -293,7 +297,7 @@ class Qiime2Analysis:
         cmd = [
             'source activate qiime2;',
             'qiime alignment mafft',
-            '--i-sequences {}'.format(files['rep_seqs{}'.format(self.atype)]),
+            '--i-sequences {}'.format(files['rep_seqs_{}'.format(self.atype)]),
             '--o-alignment {}'.format(files['alignment'])
         ]
         run(' '.join(cmd), shell=True, check=True)
@@ -312,7 +316,7 @@ class Qiime2Analysis:
 
     def phylogeny_fasttree(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 3"""
-        add_path(self, 'unrooted-tree', 'qza')
+        add_path(self, 'unrooted_tree', 'qza')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -328,7 +332,7 @@ class Qiime2Analysis:
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
-            'qiime phylogeny fasttree',
+            'qiime phylogeny midpoint-root',
             '--i-tree {}'.format(files['unrooted_tree']),
             '--o-rooted-tree {}'.format(files['rooted_tree'])
         ]
@@ -365,7 +369,7 @@ class Qiime2Analysis:
         ]
         run(' '.join(cmd), shell=True, check=True)
 
-    def beta_diversity(self, column='BarcodeSequence'):
+    def beta_diversity(self, column='SampleDate'):
         """
         Run core diversity.
         column: Some column from the metadata file
@@ -386,6 +390,7 @@ class Qiime2Analysis:
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
+        """
         self.setup_dir()
         self.qimport()
         self.demultiplex()
@@ -396,6 +401,7 @@ class Qiime2Analysis:
         elif self.atype == 'dada2':
             self.dada2()
             self.tabulate()
+         """
         self.alignment_mafft()
         self.alignment_mask()
         self.phylogeny_fasttree()
