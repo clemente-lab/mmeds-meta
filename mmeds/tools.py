@@ -222,7 +222,7 @@ class Qiime2Analysis:
     def dada2(self, p_trim_left=0, p_trunc_len=120):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
-        add_path(self, 'rep_seqs', 'qza')
+        add_path(self, 'rep_seqs_dada2', 'qza')
         add_path(self, 'table_dada2', 'qza')
         add_path(self, 'stats_dada2', 'qza')
 
@@ -233,7 +233,7 @@ class Qiime2Analysis:
             '--i-demultiplexed-seqs {}'.format(files['demux_file']),
             '--p-trim-left {}'.format(p_trim_left),
             '--p-trunc-len {}'.format(p_trunc_len),
-            '--o-representative-sequences {}'.format(files['rep_seqs']),
+            '--o-representative-sequences {}'.format(files['rep_seqs_dada2']),
             '--o-table {}'.format(files['table_dada2']),
             '--o-denoising-stats {}'.format(files['stats_dada2'])
         ]
@@ -286,6 +286,103 @@ class Qiime2Analysis:
         ]
         run(' '.join(cmd), shell=True, check=True)
 
+    def alignment_mafft(self):
+        """ Generate a tree for phylogenetic diversity analysis. Step 1"""
+        add_path(self, 'alignment', 'qza')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime alignment mafft',
+            '--i-sequences {}'.format(files['rep_seqs{}'.format(self.atype)]),
+            '--o-alignment {}'.format(files['alignment'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def alignment_mask(self):
+        """ Generate a tree for phylogenetic diversity analysis. Step 2"""
+        add_path(self, 'masked_alignment', 'qza')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime alignment mask',
+            '--i-alignment {}'.format(files['alignment']),
+            '--o-masked-alignment {}'.format(files['masked_alignment'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def phylogeny_fasttree(self):
+        """ Generate a tree for phylogenetic diversity analysis. Step 3"""
+        add_path(self, 'unrooted-tree', 'qza')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime phylogeny fasttree',
+            '--i-alignment {}'.format(files['masked_alignment']),
+            '--o-tree {}'.format(files['unrooted_tree'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def phylogeny_midpoint_root(self):
+        """ Generate a tree for phylogenetic diversity analysis. Step 3"""
+        add_path(self, 'rooted_tree', 'qza')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime phylogeny fasttree',
+            '--i-tree {}'.format(files['unrooted_tree']),
+            '--o-rooted-tree {}'.format(files['rooted_tree'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def core_diversity(self, p_sampling_depth=1109):
+        """ Run core diversity """
+        add_path(self, 'core_metrics_results', '')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime diversity core-metrics-phylogenetic',
+            '--i-phylogeny {}'.format(files['rooted_tree']),
+            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
+            '--p-sampling-depth {}'.format(p_sampling_depth),
+            '--m-metadata-file {}'.format(files['mapping']),
+            '--output-dir {}'.format(files['core_metrics_results'])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def alpha_diversity(self, metric='faith_pd'):
+        """
+        Run core diversity.
+        metric : ('faith_pd' or 'evenness')
+        """
+        add_path(self, '{}_group_significance'.format(metric), 'qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime diversity alpha-group-significance',
+            '--i-alpha-diversity {}'.format(Path(files['core_metrics_results']) / '{}_vector.qza'.format(metric)),
+            '--m-metadata-file {}'.format(files['mapping']),
+            '--o-visualization {}'.format(files['{}_group_significance'.format(metric)])
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
+    def beta_diversity(self, column='BarcodeSequence'):
+        """
+        Run core diversity.
+        column: Some column from the metadata file
+        """
+        add_path(self, 'unweighted_{}_significance'.format(column), 'qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'source activate qiime2;',
+            'qiime diversity beta-group-significance',
+            '--i-distance-matrix {}'.format(Path(files['core_metrics_results']) / 'unweighted_unifrac_distance_matrix.qza'),
+            '--m-metadata-file {}'.format(files['mapping']),
+            '--m-metadata-column {}'.format(column),
+            '--o-visualization {}'.format(files['unweighted_{}_significance'.format(column)]),
+            '--p-pairwise'
+        ]
+        run(' '.join(cmd), shell=True, check=True)
+
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
@@ -299,6 +396,13 @@ class Qiime2Analysis:
         elif self.atype == 'dada2':
             self.dada2()
             self.tabulate()
+        self.alignment_mafft()
+        self.alignment_mask()
+        self.phylogeny_fasttree()
+        self.phylogeny_midpoint_root()
+        self.core_diversity()
+        self.alpha_diversity()
+        self.beta_diversity()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email, doc.owner, 'analysis', study_name=doc.study)
 
