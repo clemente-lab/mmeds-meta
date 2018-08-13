@@ -1,6 +1,7 @@
 from pandas import read_csv
 from pathlib import Path
 from subprocess import run
+from shutil import copyfile
 import os
 import multiprocessing as mp
 
@@ -120,6 +121,7 @@ class Qiime1Analysis:
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
+        move_user_files(self)
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime1', study_name=doc.study)
 
@@ -226,7 +228,7 @@ class Qiime2Analysis:
     def demultiplex(self):
         """ Run the core diversity analysis script. """
         # Add the otu directory to the MetaData object
-        add_path(self, 'demux_file', 'qza')
+        add_path(self, 'demux_file', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
@@ -235,14 +237,14 @@ class Qiime2Analysis:
             ' qiime demux emp-single',
             '--i-seqs {}'.format(files['working_file']),
             '--m-barcodes-file {}'.format(files['mapping']),
-            '--m-barcodes-column {}'.format(self.headers[1]),
+            '--m-barcodes-column {}'.format('BarcodeSequence'),
             '--o-per-sample-sequences {}'.format(files['demux_file'])
         ]
         run(' '.join(cmd), shell=True, check=True)
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        add_path(self, 'stats_{}_visual'.format(self.atype), 'qzv')
+        add_path(self, 'stats_{}_visual'.format(self.atype), '.qzv')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -255,9 +257,9 @@ class Qiime2Analysis:
     def dada2(self, p_trim_left=0, p_trunc_len=120):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
-        add_path(self, 'rep_seqs_dada2', 'qza')
-        add_path(self, 'table_dada2', 'qza')
-        add_path(self, 'stats_dada2', 'qza')
+        add_path(self, 'rep_seqs_dada2', '.qza')
+        add_path(self, 'table_dada2', '.qza')
+        add_path(self, 'stats_dada2', '.qza')
 
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
@@ -274,8 +276,8 @@ class Qiime2Analysis:
 
     def deblur_filter(self):
         """ Run Deblur analysis on the demultiplexed file. """
-        add_path(self, 'demux_filtered', 'qza')
-        add_path(self, 'demux_filter_stats', 'qza')
+        add_path(self, 'demux_filtered', '.qza')
+        add_path(self, 'demux_filter_stats', '.qza')
 
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
@@ -289,9 +291,9 @@ class Qiime2Analysis:
 
     def deblur_denoise(self, p_trim_length=120):
         """ Run Deblur analysis on the demultiplexed file. """
-        add_path(self, 'rep_seqs_deblur', 'qza')
-        add_path(self, 'table_deblur', 'qza')
-        add_path(self, 'stats_deblur', 'qza')
+        add_path(self, 'rep_seqs_deblur', '.qza')
+        add_path(self, 'table_deblur', '.qza')
+        add_path(self, 'stats_deblur', '.qza')
 
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
@@ -308,7 +310,7 @@ class Qiime2Analysis:
 
     def deblur_visualize(self):
         """ Create visualizations from deblur analysis. """
-        add_path(self, 'stats_deblur_visual', 'qzv')
+        add_path(self, 'stats_deblur_visual', '.qzv')
 
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
@@ -321,7 +323,7 @@ class Qiime2Analysis:
 
     def alignment_mafft(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 1"""
-        add_path(self, 'alignment', 'qza')
+        add_path(self, 'alignment', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -333,7 +335,7 @@ class Qiime2Analysis:
 
     def alignment_mask(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 2"""
-        add_path(self, 'masked_alignment', 'qza')
+        add_path(self, 'masked_alignment', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -345,7 +347,7 @@ class Qiime2Analysis:
 
     def phylogeny_fasttree(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 3"""
-        add_path(self, 'unrooted_tree', 'qza')
+        add_path(self, 'unrooted_tree', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -357,7 +359,7 @@ class Qiime2Analysis:
 
     def phylogeny_midpoint_root(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 3"""
-        add_path(self, 'rooted_tree', 'qza')
+        add_path(self, 'rooted_tree', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -387,7 +389,7 @@ class Qiime2Analysis:
         Run core diversity.
         metric : ('faith_pd' or 'evenness')
         """
-        add_path(self, '{}_group_significance'.format(metric), 'qzv')
+        add_path(self, '{}_group_significance'.format(metric), '.qzv')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -403,7 +405,7 @@ class Qiime2Analysis:
         Run core diversity.
         column: Some column from the metadata file
         """
-        add_path(self, 'unweighted_{}_significance'.format(column), 'qzv')
+        add_path(self, 'unweighted_{}_significance'.format(column), '.qzv')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -420,7 +422,7 @@ class Qiime2Analysis:
         """
         Create plots for alpha rarefaction.
         """
-        add_path(self, 'alpha_rarefaction', 'qzv')
+        add_path(self, 'alpha_rarefaction', '.qzv')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'source activate qiime2;',
@@ -435,7 +437,6 @@ class Qiime2Analysis:
 
     def analysis(self):
         """ Perform some analysis. """
-        self.create_qiime_mapping_file()
         self.setup_dir()
         self.qimport()
         self.demultiplex()
@@ -455,14 +456,27 @@ class Qiime2Analysis:
         self.beta_diversity()
         self.alpha_rarefaction()
         doc = self.db.get_metadata(self.access_code)
+        move_user_files(self)
         send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 ' + self.atype, study_name=doc.study)
+
+
+def move_user_files(qiime):
+    """ Move all files intended for the user to a set location. """
+    add_path(qiime, 'visualizations_dir', '')
+    files, path = qiime.db.get_mongo_files(qiime.access_code)
+    os.mkdir(files['visualizations_dir'])
+    for key in files.keys():
+        f = Path(files[key])
+        if '.qzv' in files[key]:
+            new_file = f.name
+            copyfile(files[key], Path(files['visualizations_dir']) / new_file)
 
 
 def add_path(qiime, name, extension):
     """ Add a file or directory to the document identified by qiime.access_code. """
-    new_file = Path(qiime.path) / (name + '_' + get_salt(5) + '.' + extension)
+    new_file = Path(qiime.path) / (name + '_' + get_salt(5) + extension)
     while os.path.exists(new_file):
-        new_file = Path(qiime.path) / (name + '_' + get_salt(5) + '.' + extension)
+        new_file = Path(qiime.path) / (name + '_' + get_salt(5) + extension)
     qiime.db.update_metadata(qiime.access_code, name, new_file)
 
 

@@ -7,7 +7,7 @@ from subprocess import run
 import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
-from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, send_email, get_salt
+from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, USER_FILES, send_email, get_salt
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 from mmeds.tools import analysis_runner
@@ -435,8 +435,11 @@ class MMEDSserver(object):
             with open('../html/select_download.html') as f:
                 page = f.read()
 
-            for i, f in enumerate(files.keys()):
-                page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+            i = 0
+            for f in files.keys():
+                if f in USER_FILES:
+                    page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+                    i += 1
 
             cp.session['download_access'] = access_code
             return page
@@ -459,7 +462,7 @@ class MMEDSserver(object):
 
         file_path = str(Path(path) / files[download])
         if 'dir' in download:
-            run('tar -czvf {} {}'.format(file_path + '.tar.gz', file_path), shell=True, check=True)
+            run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz', Path(file_path).parent, Path(file_path).name), shell=True, check=True)
             file_path += '.tar.gz'
 
         return static.serve_file(file_path, 'application/x-download',
