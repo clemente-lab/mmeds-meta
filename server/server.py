@@ -20,6 +20,7 @@ class MMEDSserver(object):
 
     def __init__(self):
         self.db = None
+        self.users = set()
 
     def __del__(self):
         temp_dirs = glob(STORAGE_DIR + 'temp_*')
@@ -39,19 +40,27 @@ class MMEDSserver(object):
     @cp.expose
     def run_analysis(self, access_code, tool):
         """ Run analysis on the specified study. """
-        if tool == 'qiime':
-            try:
-                p = analysis_runner('qiime', cp.session['user'], access_code)
-                cp.session['processes'][access_code] = p
-                with open('../html/welcome.html') as f:
-                    page = f.read()
-                return page
-            except MissingUploadError:
-                with open('../html/download_error.html') as f:
-                    page = f.read()
-                return page.format(cp.session['user'])
+        if cp.session['processes'].get(access_code) is None or\
+                cp.session['processes'][access_code].exitcode is not None:
+            if 'qiime' in tool:
+                try:
+                    cp.log('Running analysis with ' + tool)
+                    p = analysis_runner(tool, cp.session['user'], access_code)
+                    cp.session['processes'][access_code] = p
+                    with open('../html/welcome.html') as f:
+                        page = f.read()
+                    return page
+                except MissingUploadError:
+                    with open('../html/download_error.html') as f:
+                        page = f.read()
+                    return page.format(cp.session['user'])
+            else:
+                return "<html> <h1> Tool does not exist. </h1> </html>"
         else:
-            return "<html> <h1> Tool does not exist. </h1> </html>"
+            with open('../html/welcome.html') as f:
+                page = f.read()
+            page = insert_error(page, 31, 'Requested study is currently unavailable')
+            return page.format(user=cp.session['user'])
 
     # View files
     @cp.expose
@@ -279,20 +288,26 @@ class MMEDSserver(object):
         cp.session['processes'] = {}
 
         cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
-        if validate_password(username, password):
-            with open('../html/welcome.html') as f:
-                page = f.read()
-            return page.format(user=username)
-        else:
+        if not validate_password(username, password):
             with open('../html/index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
+        elif username in self.users:
+            with open('../html/index.html') as f:
+                page = f.read()
+            return insert_error(page, 23, 'Error: User is already logged in.')
+        else:
+            self.users.add(username)
+            with open('../html/welcome.html') as f:
+                page = f.read()
+            return page.format(user=username)
 
     @cp.expose
     def logout(self):
         """
         Expires the session and returns to login page
         """
+        self.users.remove(cp.session['user'])
         cp.session['user'] = None
         if not cp.session['uploaded']:
             rmtree(cp.session['dir'])
@@ -332,12 +347,13 @@ class MMEDSserver(object):
     @cp.expose
     def upload(self, study_type):
         """ Page for uploading Qiime data """
-        if study_type == 'qiime':
+        if 'qiime' in study_type:
             with open('../html/upload_qiime.html') as f:
                 page = f.read()
+            page = page.format(user=cp.session['user'], version=study_type)
         else:
             page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
-        return page.format(user=cp.session['user'])
+        return page
 
     @cp.expose
     def retry_upload(self):
@@ -381,7 +397,7 @@ class MMEDSserver(object):
         """ Page for running analysis of previous uploads. """
         with open('../html/analysis.html') as f:
             page = f.read()
-        return page
+        return page.format(user=cp.session['user'])
 
     @cp.expose
     def upload_page(self):
@@ -402,8 +418,10 @@ class MMEDSserver(object):
     @cp.expose
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
+        for key in cp.session['processes'].keys():
+            cp.log('{}: {}, {}'.format(key, cp.session['processes'][key].is_alive(), cp.session['processes'][key].exitcode))
         if cp.session['processes'].get(access_code) is None or\
-           not cp.session['processes'][access_code].is_alive():
+                cp.session['processes'][access_code].exitcode is not None:
             # Get the open file handler
             with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
                 try:
@@ -423,9 +441,10 @@ class MMEDSserver(object):
             cp.session['download_access'] = access_code
             return page
         else:
-            with open('../html/unavailable.html') as f:
+            with open('../html/welcome.html') as f:
                 page = f.read()
-            return page
+            page = insert_error(page, 31, 'Requested study is currently unavailable')
+            return page.format(user=cp.session['user'])
 
     @cp.expose
     def select_download(self, download):

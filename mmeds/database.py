@@ -457,7 +457,7 @@ class Database:
 
         # Raise an error if the upload does not exist
         if mdata is None:
-            raise MissingUploadError
+            raise MissingUploadError('No data exist for this access code')
 
         return mdata.files, mdata.path
 
