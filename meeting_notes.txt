@@ -1,0 +1,37 @@
+**Internal to mount sinai we can link accounts to sinai accounts
+
+to use it externally we would need to handle account authentication
+
+Make sureit's known which use is 
+
+start with a 1TB base directory in /orga/projects/
+
+chrons at reboot
+
+They will host the web server that will redirect to my server
+
+GPFS backend
+
+Setup MongoDB 
+
+They will create a group account for the server
+sudo based account
+
+Put a request in for a 1TB project dir for this new account.
+
+Consider having other local services that run the jobs and the web server looks for completion status
+
+Make sure that the server internally validates that all jobs submitted run through to completion
+Run chronjob check how much time is left in the account
+
+submit and hol and get a stat for it to make sure all is well
+
+ifirst ticket, request allocation account, 
+
+website
+
+access
+
+alloocation request
+put jose's and my names on the requestc
+
