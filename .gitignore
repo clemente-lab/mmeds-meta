@@ -4,6 +4,9 @@
 # Build
 /build/
 
+# Libraries
+/lib/
+
 # Setuptools distribution folder.
 /dist/
 
