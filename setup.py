@@ -37,6 +37,7 @@ setup(name='mmeds',
       packages=['mmeds'],
       scripts=glob('scripts/*py'),
       install_requires=[
+          'path',
           'numpy',
           'cherrypy',
           'pymysql',
