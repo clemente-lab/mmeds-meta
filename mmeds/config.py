@@ -4,6 +4,8 @@ from smtplib import SMTP
 from email.message import EmailMessage
 from pathlib import Path
 from cherrypy.lib.sessions import FileSession
+# Add some notes here
+# Add some more notes here
 
 CONFIG = {
     'global': {
