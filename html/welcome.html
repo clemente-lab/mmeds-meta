@@ -27,5 +27,25 @@
                 <button type='submit' method='post'>Run Queries</button>
             </form>
         </p>
+        <br />
+        <h3>Access Previous Uploads</h3>
+        <p>
+            <form action='download_page' method='post'>
+                <p>
+                    <input type="text" placeholder="Access Code" name="access_code" required/>
+                </p>
+                <button type="submit">Execute</button>
+            </form>
+        </p>
+        <h3>Forgot Access Code</h3>
+        <p>
+            <form action='reset_code' method='post'>
+                <p>
+                    <input type="text" placeholder="Study Name" name="study_name" required/>
+                    <input type="email" placeholder="Email" name="study_email" required/>
+                </p>
+                <button type="submit">Execute</button>
+            </form>
+        </p>
     </body>
 </html>

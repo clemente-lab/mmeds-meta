@@ -8,8 +8,8 @@
     <body>
         <h2>Welcome {user}</h2>
         <p>
-            <h3>Upload a file</h3>
-            <form action='validate_qiime' method='post' enctype='multipart/form-data'>
+            <h3>Upload tar archive</h3>
+            <form action='validate_{version}' method='post' enctype='multipart/form-data'>
                 <p> Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
                 <p> Reads: <br> <input type='file' name='reads'/> </p>
                 <p> Barcodes: <br> <input type='file' name='barcodes'/> </p>
