@@ -2,15 +2,23 @@ import pymysql as pms
 import mongoengine as men
 import cherrypy as cp
 import pandas as pd
+import os
+import shutil
+import pickle
 
-from pathlib import WindowsPath
+from datetime import datetime
+from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, get_salt, send_email
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, get_salt, send_email
 from mmeds.error import MissingUploadError
+
+DAYS = 13
 
 
 class MetaData(men.DynamicDocument):
+    created = men.DateTimeField()
+    last_accessed = men.DateTimeField()
     study_type = men.StringField(max_length=45, required=True)
     study = men.StringField(max_length=45, required=True)
     access_code = men.StringField(max_length=50, required=True)
@@ -49,6 +57,23 @@ class Database:
             result = self.cursor.fetchone()
             self.user_id = int(result[0])
             self.email = result[1]
+
+        self.check_file = Path(os.getcwd()) / 'data' / 'last_check.dat'
+
+        # Do housekeeping for removing old files
+        if os.path.isfile(self.check_file):
+            with open(self.check_file, 'rb') as f:
+                last_check = pickle.load(f)
+            if (datetime.utcnow() - last_check).days > DAYS:
+                check = True
+            else:
+                check = False
+        else:
+            check = True
+        if check:
+            self.clean()
+            with open(self.check_file, 'wb') as f:
+                pickle.dump(datetime.utcnow(), f)
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
@@ -351,7 +376,9 @@ class Database:
         """ Imports additional columns into the NoSQL database. """
         access_code = get_salt(50)
         # Create the document
-        mdata = MetaData(study_type=study_type,
+        mdata = MetaData(created=datetime.utcnow(),
+                         last_accessed=datetime.utcnow(),
+                         study_type=study_type,
                          study=study_name,
                          access_code=access_code,
                          owner=self.owner,
@@ -367,6 +394,7 @@ class Database:
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.last_accessed = datetime.utcnow()
         # Open the data file
         with open(new_data, 'rb') as data_file:
             mdata.data.replace(data_file)
@@ -380,6 +408,7 @@ class Database:
         new_code = get_salt(50)
         # Get the mongo document
         mdata = MetaData.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata.last_accessed = datetime.utcnow()
         mdata.access_code = new_code
         mdata.save()
         send_email(email, self.owner, new_code)
@@ -412,6 +441,7 @@ class Database:
     def update_metadata(self, access_code, filekey, filename):
         """ Add a file to a metadata object """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = str(self.path / filename)
         mdata.save()
 
@@ -454,6 +484,7 @@ class Database:
     def get_mongo_files(self, access_code):
         """ Return the three files necessary for qiime analysis. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata.last_accessed = datetime.utcnow()
 
         # Raise an error if the upload does not exist
         if mdata is None:
@@ -468,3 +499,17 @@ class Database:
         Any modifications should be done through the Database class.
         """
         return MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+    def clean(self):
+        """ Remove all temporary and intermediate files. """
+        docs = MetaData.objects().first()
+        if docs is None:
+            return
+        for mdata in docs:
+            if (datetime.utcnow() - mdata.last_accessed).days > DAYS:
+                for key in mdata.files.keys():
+                    if key not in USER_FILES:
+                        if os.path.isfile(mdata.files[key]):
+                            os.remove(mdata.files[key])
+                        elif os.path.exists(mdata.files[key]):
+                            shutil.rmtree(mdata.files[key])

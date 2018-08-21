@@ -87,6 +87,14 @@ PROTECTED_TABLES = [
     'Results'
 ]
 
+USER_FILES = set([
+    'reads',
+    'barcodes',
+    'metadata',
+    'mapping',
+    'visualizations_dir'
+])
+
 PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
 
 
