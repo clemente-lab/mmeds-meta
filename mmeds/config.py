@@ -19,7 +19,8 @@ CONFIG = {
         #'tools.sessions.storage_path': Path.cwd() / 'session',
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
-        'tools.staticdir.root': Path().cwd().parent,
+        'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
+        'request.scheme': 'https'
     },
     '/CSS': {
         'tools.staticdir.on': True,
