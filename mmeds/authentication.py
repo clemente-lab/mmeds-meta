@@ -7,29 +7,6 @@ from mmeds.config import STORAGE_DIR, get_salt, send_email
 LOGIN_FILE = '../server/data/login_info'
 
 
-def validate_password(username, password):
-    """ Validate the user and their password """
-
-    with Database(STORAGE_DIR) as db:
-        # Get the values from the user table
-        try:
-            hashed_password, salt =\
-                db.get_col_values_from_table('password, salt',
-                                             'mmeds.user where username = "{}"'.format(username))[0]
-        # An index error means that the username did not exist
-        except IndexError:
-            return False
-
-    # Hash the password
-    salted = password + salt
-    sha256 = hashlib.sha256()
-    sha256.update(salted.encode('utf-8'))
-    password_hash = sha256.hexdigest()
-
-    # Check that it matches the stored hash of the password
-    return hashed_password == password_hash
-
-
 def add_user(username, password, email):
     """ Adds a user to the file containing login info. """
 
@@ -41,6 +18,30 @@ def add_user(username, password, email):
     password_hash = sha256.hexdigest()
     with Database(STORAGE_DIR) as db:
         db.add_user(username, password_hash, salt, email)
+
+
+def validate_password(username, password):
+    """ Validate the user and their password """
+
+    with Database(STORAGE_DIR) as db:
+        # Get the values from the user table
+        try:
+            hashed_password, salt =\
+                db.get_col_values_from_table('password, salt',
+                                             'mmeds.user where username = "{}"'.format(username))[0]
+        # An index error means that the username did not exist
+        except IndexError:
+            print('Username did not exist')
+            return False
+
+    # Hash the password
+    salted = password + salt
+    sha256 = hashlib.sha256()
+    sha256.update(salted.encode('utf-8'))
+    password_hash = sha256.hexdigest()
+
+    # Check that it matches the stored hash of the password
+    return hashed_password == password_hash
 
 
 def check_password(password1, password2):
@@ -56,9 +57,9 @@ def check_password(password1, password2):
         errors.append('Error: Passwords must contain at least one number.')
     if not pas.intersection(syms):
         errors.append('Error: Passwords must contain at least one of the following symbols ' + str(syms) + ' .')
-    if not (pas.intersection(set(ascii_uppercase)) and pas.intersection(set(ascii_lowercase))):
+    if 0 == len(pas.intersection(set(ascii_uppercase)).union(pas.intersection(set(ascii_lowercase)))):
         errors.append('Error: Passwords must contain a mix of upper and lower case characters.')
-    if len(password1) < 10:
+    if len(password1) <= 10:
         errors.append('Error: Passwords must be longer than 10 characters.')
 
     return '<br \>'.join(errors)
