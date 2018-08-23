@@ -37,6 +37,7 @@ setup(name='mmeds',
       packages=['mmeds'],
       scripts=glob('scripts/*py'),
       install_requires=[
+          'pytest',
           'numpy',
           'cherrypy',
           'pymysql',

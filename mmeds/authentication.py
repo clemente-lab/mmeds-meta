@@ -7,7 +7,7 @@ from mmeds.config import STORAGE_DIR, get_salt, send_email
 LOGIN_FILE = '../server/data/login_info'
 
 
-def add_user(username, password, email):
+def add_user(username, password, email, testing=False):
     """ Adds a user to the file containing login info. """
 
     # Hash the password
@@ -16,14 +16,14 @@ def add_user(username, password, email):
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
-    with Database(STORAGE_DIR) as db:
+    with Database(STORAGE_DIR, testing=testing) as db:
         db.add_user(username, password_hash, salt, email)
 
 
-def validate_password(username, password):
+def validate_password(username, password, testing=False):
     """ Validate the user and their password """
 
-    with Database(STORAGE_DIR) as db:
+    with Database(STORAGE_DIR, testing=testing) as db:
         # Get the values from the user table
         try:
             hashed_password, salt =\
@@ -57,7 +57,7 @@ def check_password(password1, password2):
         errors.append('Error: Passwords must contain at least one number.')
     if not pas.intersection(syms):
         errors.append('Error: Passwords must contain at least one of the following symbols ' + str(syms) + ' .')
-    if 0 == len(pas.intersection(set(ascii_uppercase)).union(pas.intersection(set(ascii_lowercase)))):
+    if not (pas.intersection(set(ascii_uppercase)) and pas.intersection(set(ascii_lowercase))):
         errors.append('Error: Passwords must contain a mix of upper and lower case characters.')
     if len(password1) <= 10:
         errors.append('Error: Passwords must be longer than 10 characters.')
@@ -65,7 +65,7 @@ def check_password(password1, password2):
     return '<br \>'.join(errors)
 
 
-def check_username(username):
+def check_username(username, testing=False):
     """ Perform checks to ensure the username is valid. """
 
     # Check the username does not contain invalid characters
@@ -74,7 +74,7 @@ def check_username(username):
         return 'Error: Username contains invalid characters.'
 
     # Check the username has not already been used
-    with Database(STORAGE_DIR) as db:
+    with Database(STORAGE_DIR, testing=testing) as db:
         # Get all existing usernames
         results = db.get_col_values_from_table('username', 'user')
     used_names = [x[0] for x in results]
