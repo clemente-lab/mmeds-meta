@@ -12,10 +12,6 @@ bad_password3 = 'password1@password'
 bad_password4 = 'Passwor1@'
 
 
-def setup_module():
-    auth.add_user(test_username1, test_password1)
-
-
 def test_add_user():
     """ Test the add_user function """
     assert not auth.add_user(test_username2, test_password2)
