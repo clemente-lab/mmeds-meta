@@ -284,6 +284,7 @@ class MMEDSserver(object):
             if not os.path.exists(new_dir):
                 os.makedirs(new_dir)
                 cp.log('Created dir')
+            cp.session['uploaded'] = True
         else:
             # Create a unique dir for handling files uploaded by this user
             new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
