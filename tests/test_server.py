@@ -1,6 +1,5 @@
 from server.server import MMEDSserver
 import cherrypy
-import unittest
 from cherrypy.test import helper
 
 
@@ -11,9 +10,9 @@ class SimpleCPTest(helper.CPWebCase):
 
     setup_server = staticmethod(setup_server)
 
-    def test_message_should_be_returned_as_is(self):
-        self.getPage("/index.html")
-        #self.assertStatus('200 OK')
+    def test_index(self):
+        self.getPage("/index")
+        self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
         #self.assertBody('Hello world')
 

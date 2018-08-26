@@ -38,6 +38,12 @@ CONFIG = {
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.csv'
 STORAGE_DIR = 'data'
+
+# The path changes depening on where this is being called
+# So that it will work with testing and the server
+HTML_DIR = Path('../html/').resolve()
+if not HTML_DIR.is_dir():
+    HTML_DIR = Path('./html/').resolve()
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
