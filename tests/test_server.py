@@ -1,32 +1,27 @@
 from server.server import MMEDSserver
-import cherrypy
+from mmeds.config import TEST_CONFIG, HTML_DIR, TEST_USER, TEST_PASS, TEST_EMAIL
+from mmeds.authentication import add_user
+import cherrypy as cp
 from cherrypy.test import helper
 
 
 class SimpleCPTest(helper.CPWebCase):
 
     def setup_server():
-        cherrypy.tree.mount(MMEDSserver())
+        cp.tree.mount(MMEDSserver())
+        cp.config.update(TEST_CONFIG)
 
     setup_server = staticmethod(setup_server)
+    add_user(TEST_USER, TEST_PASS, TEST_EMAIL)
 
     def test_index(self):
         self.getPage("/index")
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
-        #self.assertBody('Hello world')
+        with open(HTML_DIR / 'index.html') as f:
+            page = f.read()
+        self.assertBody(page)
 
-    def test_non_utf8_message_will_fail(self):
-        """
-        CherryPy defaults to decode the query-string
-        using UTF-8, trying to send a query-string with
-        a different encoding will raise a 404 since
-        it considers it's a different URL.
-        """
-        self.getPage("/echo?message=A+bient%F4t",
-                     headers=[
-                         ('Accept-Charset', 'ISO-8859-1,utf-8'),
-                         ('Content-Type', 'text/html;charset=ISO-8859-1')
-                     ]
-        )
-        self.assertStatus('404 Not Found')
+    def test_login(self):
+        self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
+        self.assertStatus('200 OK')

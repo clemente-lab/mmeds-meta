@@ -7,13 +7,33 @@ from cherrypy.lib.sessions import FileSession
 # Add some notes here
 # Add some more notes here
 
+UPLOADED_FP = 'uploaded_file'
+ERROR_FP = 'error_log.csv'
+STORAGE_DIR = Path('./data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('../server/data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('./server/data').resolve()
+
+# The path changes depening on where this is being called
+# So that it will work with testing and the server
+HTML_DIR = Path('../html/').resolve()
+if not HTML_DIR.is_dir():
+    HTML_DIR = Path('./html/').resolve()
+SECURITY_TOKEN = 'some_security_token'
+CONTACT_EMAIL = 'david.wallach@mssm.edu'
+MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+TEST_PASS = 'testpass'
+TEST_USER = 'testuser'
+TEST_EMAIL = 'd.s.t.wallach@gmail.com'
+
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
-        'log.error_file': 'site.log',
+        'log.error_file': STORAGE_DIR.parent / 'site.log',
         'server.ssl_module': 'builtin',
-        'server.ssl_certificate': '../server/data/cert.pem',
-        'server.ssl_private_key': '../server/data/key.pem',
+        'server.ssl_certificate': STORAGE_DIR / 'cert.pem',
+        'server.ssl_private_key': STORAGE_DIR / 'key.pem',
         'request.scheme': 'https',
         'secureheaders.on': True,
         'tools.sessions.on': True,
@@ -35,18 +55,21 @@ CONFIG = {
     }
 }
 
-UPLOADED_FP = 'uploaded_file'
-ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data'
-
-# The path changes depening on where this is being called
-# So that it will work with testing and the server
-HTML_DIR = Path('../html/').resolve()
-if not HTML_DIR.is_dir():
-    HTML_DIR = Path('./html/').resolve()
-SECURITY_TOKEN = 'some_security_token'
-CONTACT_EMAIL = 'david.wallach@mssm.edu'
-MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+TEST_CONFIG = {
+    'global': {
+        'log.error_file': STORAGE_DIR.parent / 'site.log',
+        'tools.sessions.on': True,
+    },
+    '/CSS': {
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': 'CSS'
+    },
+    '/protected/area': {
+        'tools.auth_digest': True,
+        'tools.auth_digest.realm': 'localhost',
+        'tools.auth_digest.key': 'a565c2714791cfb',
+    }
+}
 
 
 TABLE_ORDER = [

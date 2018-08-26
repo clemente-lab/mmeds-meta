@@ -7,10 +7,10 @@ import shutil
 import pickle
 
 from datetime import datetime
-from pathlib import WindowsPath, Path
+from pathlib import WindowsPath
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, get_salt, send_email
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt, send_email
 from mmeds.error import MissingUploadError
 
 DAYS = 13
@@ -58,7 +58,7 @@ class Database:
             self.user_id = int(result[0])
             self.email = result[1]
 
-        self.check_file = Path(os.getcwd()) / 'data' / 'last_check.dat'
+        self.check_file = STORAGE_DIR / 'last_check.dat'
 
         if not testing:
             # Do housekeeping for removing old files
@@ -66,14 +66,11 @@ class Database:
                 with open(self.check_file, 'rb') as f:
                     last_check = pickle.load(f)
                 if (datetime.utcnow() - last_check).days > DAYS:
-                    check = True
-                else:
-                    check = False
+                    self.clean()
+                    with open(self.check_file, 'wb') as f:
+                        pickle.dump(datetime.utcnow(), f)
             else:
-                check = True
-            if check:
-                self.clean()
-                with open(self.check_file, 'wb') as f:
+                with open(self.check_file, 'wb+') as f:
                     pickle.dump(datetime.utcnow(), f)
 
     def __del__(self):

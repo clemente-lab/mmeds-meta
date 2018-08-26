@@ -23,7 +23,7 @@ class MMEDSserver(object):
         self.users = set()
 
     def __del__(self):
-        temp_dirs = glob(STORAGE_DIR + 'temp_*')
+        temp_dirs = glob(STORAGE_DIR / 'temp_*')
         for temp in temp_dirs:
             cp.log('Removing temporary dir ' + temp)
             rmtree(temp)
@@ -280,9 +280,9 @@ class MMEDSserver(object):
         cp.session['uploaded'] = False
         cp.session['user'] = username
         # Create a unique dir for handling files uploaded by this user
-        new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
+        new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
         while os.path.exists(new_dir):
-            new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
+            new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
         os.makedirs(new_dir)
         cp.session['dir'] = new_dir
         cp.session['processes'] = {}
