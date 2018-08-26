@@ -3,7 +3,7 @@ from string import digits, ascii_uppercase, ascii_lowercase
 from smtplib import SMTP
 from email.message import EmailMessage
 from pathlib import Path
-from cherrypy.lib.sessions import FileSession
+from cherrypy.lib.sessions import FileSession, RamSession
 # Add some notes here
 # Add some more notes here
 
@@ -23,22 +23,18 @@ if not HTML_DIR.is_dir():
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
-TEST_PASS = 'testpass'
-TEST_USER = 'testuser'
-TEST_EMAIL = 'd.s.t.wallach@gmail.com'
+
 
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
-        'log.error_file': STORAGE_DIR.parent / 'site.log',
+        'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'server.ssl_module': 'builtin',
-        'server.ssl_certificate': STORAGE_DIR / 'cert.pem',
-        'server.ssl_private_key': STORAGE_DIR / 'key.pem',
+        'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
+        'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'request.scheme': 'https',
         'secureheaders.on': True,
         'tools.sessions.on': True,
-        #'tools.sessions.storage_class': FileSession,
-        #'tools.sessions.storage_path': Path.cwd() / 'session',
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
         'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
@@ -55,10 +51,25 @@ CONFIG = {
     }
 }
 
+
+###################
+##### Testing #####
+###################
+
+TEST_PASS = 'testpass'
+TEST_USER = 'testuser'
+TEST_EMAIL = 'd.s.t.wallach@gmail.com'
+TEST_CODE = 'asdfasdfasdfasdf'
+
+
 TEST_CONFIG = {
     'global': {
-        'log.error_file': STORAGE_DIR.parent / 'site.log',
+        'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'tools.sessions.on': True,
+#       'tools.sessions.storage_class': RamSession,
+#       'tools.sessions.storage_path': STORAGE_DIR / 'session',
+#       'tools.sessions.timeout': (1.0 / 60),
+#       'tools.sessions.clean_freq': (1.0 / 60)
     },
     '/CSS': {
         'tools.staticdir.on': True,
