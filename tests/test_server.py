@@ -1,7 +1,6 @@
 from server.server import MMEDSserver
 from time import sleep
 
-from mmeds.config import TEST_CODE, TEST_CONFIG, HTML_DIR, TEST_USER, TEST_PASS, TEST_EMAIL, TEST_DIR
 import mmeds.config as fig
 from mmeds.authentication import add_user
 from mmeds.mmeds import insert_error, insert_html
@@ -15,16 +14,16 @@ class TestServer(helper.CPWebCase):
 
     def setup_server():
         cp.tree.mount(MMEDSserver())
-        cp.config.update(TEST_CONFIG)
+        cp.config.update(fig.TEST_CONFIG)
 
     setup_server = staticmethod(setup_server)
-    add_user(TEST_USER, TEST_PASS, TEST_EMAIL)
-    with Database(TEST_DIR, user='root', owner=TEST_USER) as db:
+    add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
+    with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
         access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                           'qiime',
                                                           reads=fig.TEST_READS,
                                                           barcodes=fig.TEST_BARCODES,
-                                                          access_code=TEST_CODE)
+                                                          access_code=fig.TEST_CODE)
 
     ################################
     ###########  Stress  ###########
@@ -34,7 +33,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
-        with open(HTML_DIR / 'index.html') as f:
+        with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
         self.assertBody(page)
 
@@ -43,32 +42,32 @@ class TestServer(helper.CPWebCase):
     ########################################
 
     def test_login(self):
-        self.getPage('/login?username={}&password={}'.format(TEST_USER, TEST_PASS))
+        self.getPage('/login?username={}&password={}'.format(fig.TEST_USER, fig.TEST_PASS))
         self.assertStatus('200 OK')
-        with open(HTML_DIR / 'welcome.html') as f:
-            page = f.read().format(user=TEST_USER)
+        with open(fig.HTML_DIR / 'welcome.html') as f:
+            page = f.read().format(user=fig.TEST_USER)
         self.assertBody(page)
 
     def test_logout(self):
-        self.getPage('/login?username={}&password={}'.format(TEST_USER, TEST_PASS))
+        self.getPage('/login?username={}&password={}'.format(fig.TEST_USER, fig.TEST_PASS))
         self.getPage('/logout', headers=self.cookies)
         self.assertStatus('200 OK')
-        with open(HTML_DIR / 'index.html') as f:
+        with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
         self.assertBody(page)
 
     def test_login_again(self):
-        self.getPage('/login?username={}&password={}'.format(TEST_USER, TEST_PASS))
+        self.getPage('/login?username={}&password={}'.format(fig.TEST_USER, fig.TEST_PASS))
         self.assertStatus('200 OK')
-        with open(HTML_DIR / 'index.html') as f:
+        with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
         page = insert_error(page, 23, 'Error: User is already logged in.')
         self.assertBody(page)
 
     def test_login_fail(self):
-        self.getPage('/login?username={}&password={}'.format(TEST_USER, TEST_PASS + 'garbage'))
+        self.getPage('/login?username={}&password={}'.format(fig.TEST_USER, fig.TEST_PASS + 'garbage'))
         self.assertStatus('200 OK')
-        with open(HTML_DIR / 'index.html') as f:
+        with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
         page = insert_error(page, 23, 'Error: Invalid username or password.')
         self.assertBody(page)
@@ -81,22 +80,22 @@ class TestServer(helper.CPWebCase):
         pass
 
     def test_download_page_fail(self):
-        self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
-        self.getPage("/download_page?access_code={}".format(TEST_CODE + 'garbage'), headers=self.cookies)
+        self.getPage("/login?username={}&password={}".format(fig.TEST_USER, fig.TEST_PASS))
+        self.getPage("/download_page?access_code={}".format(fig.TEST_CODE + 'garbage'), headers=self.cookies)
         self.assertStatus('200 OK')
-        with open(HTML_DIR / 'download_error.html') as f:
-            page = f.read().format(TEST_USER)
+        with open(fig.HTML_DIR / 'download_error.html') as f:
+            page = f.read().format(fig.TEST_USER)
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
 
     def test_download_block(self):
         # Login
-        self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
+        self.getPage("/login?username={}&password={}".format(fig.TEST_USER, fig.TEST_PASS))
         # Start test analysis
-        self.getPage('/run_analysis?access_code={}&tool={}'.format(TEST_CODE, fig.TEST_TOOL), headers=self.cookies)
+        self.getPage('/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL), headers=self.cookies)
         # Try to access
-        self.getPage("/download_page?access_code={}".format(TEST_CODE), headers=self.cookies)
-        with open(HTML_DIR / 'welcome.html') as f:
+        self.getPage("/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
+        with open(fig.HTML_DIR / 'welcome.html') as f:
             page = f.read().format(user=fig.TEST_USER)
         page = insert_error(page, 31, 'Requested study is currently unavailable')
         self.assertBody(page)
@@ -106,9 +105,9 @@ class TestServer(helper.CPWebCase):
         del page
 
         # Try to access again
-        self.getPage("/download_page?access_code={}".format(TEST_CODE), headers=self.cookies)
+        self.getPage("/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
 
-        with open(HTML_DIR / 'select_download.html') as f:
+        with open(fig.HTML_DIR / 'select_download.html') as f:
             page = f.read().format(fig.TEST_USER)
         for i, f in enumerate(fig.TEST_FILES):
             page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
@@ -117,11 +116,11 @@ class TestServer(helper.CPWebCase):
         self.getPage('/logout', headers=self.cookies)
 
     def test_download_page(self):
-        self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
-        self.getPage("/download_page?access_code={}".format(TEST_CODE), headers=self.cookies)
+        self.getPage("/login?username={}&password={}".format(fig.TEST_USER, fig.TEST_PASS))
+        self.getPage("/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
         self.assertStatus('200 OK')
-        with open(HTML_DIR / 'select_download.html') as f:
-            page = f.read().format(TEST_USER)
+        with open(fig.HTML_DIR / 'select_download.html') as f:
+            page = f.read().format(fig.TEST_USER)
 
         for i, f in enumerate(fig.TEST_FILES):
             page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
