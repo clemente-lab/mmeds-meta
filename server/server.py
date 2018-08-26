@@ -8,6 +8,7 @@ import cherrypy as cp
 from cherrypy.lib import static
 from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES, send_email, get_salt
+import mmeds.config as fig
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 from mmeds.tools import analysis_runner
@@ -276,8 +277,12 @@ class MMEDSserver(object):
         """
         cp.session['uploaded'] = False
         cp.session['user'] = username
-        # Create a unique dir for handling files uploaded by this user
-        new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
+        # Specify a particular test directory
+        if username == fig.TEST_USER:
+            new_dir = fig.TEST_DIR
+        else:
+            # Create a unique dir for handling files uploaded by this user
+            new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
         while os.path.exists(new_dir):
             new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
         os.makedirs(new_dir)
