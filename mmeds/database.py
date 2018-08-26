@@ -482,11 +482,12 @@ class Database:
     def get_mongo_files(self, access_code):
         """ Return the three files necessary for qiime analysis. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        mdata.last_accessed = datetime.utcnow()
 
         # Raise an error if the upload does not exist
         if mdata is None:
             raise MissingUploadError('No data exist for this access code')
+
+        mdata.last_accessed = datetime.utcnow()
 
         return mdata.files, mdata.path
 

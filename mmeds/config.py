@@ -66,6 +66,7 @@ TEST_CONFIG = {
     'global': {
         'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'tools.sessions.on': True,
+        'tools.sessions.name': 'cp_session',
 #       'tools.sessions.storage_class': RamSession,
 #       'tools.sessions.storage_path': STORAGE_DIR / 'session',
 #       'tools.sessions.timeout': (1.0 / 60),

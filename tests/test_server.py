@@ -20,7 +20,7 @@ class TestServer(helper.CPWebCase):
     ################################
 
     def test_index(self):
-        self.getPage("/index")
+        self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
         with open(HTML_DIR / 'index.html') as f:
@@ -71,6 +71,9 @@ class TestServer(helper.CPWebCase):
 
     def test_download_page_fail(self):
         self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
-        with self.asserRaises(AttributeError):
-            self.getPage("/download_page?access_code={}".format(TEST_CODE + 'garbage'), headers=self.cookies)
-            self.assertStatus('200 OK')
+        self.getPage("/download_page?access_code={}".format(TEST_CODE + 'garbage'), headers=self.cookies)
+        self.assertStatus('200 OK')
+        with open(HTML_DIR / 'download_error.html') as f:
+            page = f.read().format(TEST_USER)
+        self.assertBody(page)
+        self.getPage('/logout', headers=self.cookies)

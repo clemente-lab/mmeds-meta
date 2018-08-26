@@ -426,8 +426,8 @@ class MMEDSserver(object):
             with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
                 try:
                     files, path = db.get_mongo_files(access_code)
-                except AttributeError as e:
-                    cp.log(e)
+                except MissingUploadError as e:
+                    cp.log(str(e))
                     with open(HTML_DIR / 'download_error.html') as f:
                         download_error = f.read()
                     return download_error.format(cp.session['user'])
