@@ -1,4 +1,6 @@
 DELIMITER //
+
+DROP FUNCTION IF EXISTS set_connection_auth //
 CREATE FUNCTION set_connection_auth (v_user VARCHAR(100), v_security_token VARCHAR(100))
 RETURNS BOOLEAN
 NOT DETERMINISTIC
@@ -16,6 +18,7 @@ BEGIN
     RETURN true;
 END //
 
+DROP FUNCTION IF EXISTS unset_connection_auth //
 CREATE FUNCTION unset_connection_auth (v_security_token VARCHAR(100))
 RETURNS BOOLEAN
 NOT DETERMINISTIC
@@ -26,6 +29,7 @@ BEGIN
     RETURN true;
 END //
 
+DROP FUNCTION IF EXISTS owner_check //
 CREATE FUNCTION owner_check (v_owner_user_id int)
 RETURNS BOOLEAN
 NOT DETERMINISTIC
@@ -48,7 +52,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 -- Table `mmeds`.`user`
 -- -----------------------------------------------------
-CREATE TABLE user (
+CREATE TABLE IF NOT EXISTS user (
     user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     password varchar(64),
@@ -59,7 +63,7 @@ CREATE TABLE user (
 -- -----------------------------------------------------
 -- Table `mmeds`.`security_token`
 -- -----------------------------------------------------
-CREATE TABLE security_token (
+CREATE TABLE IF NOT EXISTS security_token (
     security_token_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     security_token varchar(100)
@@ -68,7 +72,7 @@ CREATE TABLE security_token (
 -- -----------------------------------------------------
 -- Table `mmeds`.`session`
 -- -----------------------------------------------------
-CREATE TABLE session (
+CREATE TABLE IF NOT EXISTS session (
     connection_id int NOT NULL PRIMARY KEY,
     username varchar(100)
 );

@@ -8,13 +8,6 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 -- -----------------------------------------------------
--- Schema mydb
--- -----------------------------------------------------
--- -----------------------------------------------------
--- Schema mmeds
--- -----------------------------------------------------
-
--- -----------------------------------------------------
 -- Schema mmeds
 -- -----------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS `mmeds` DEFAULT CHARACTER SET utf8 ;
@@ -34,7 +27,6 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Lab` (
   PRIMARY KEY (`idLab`))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
 -- Table `mmeds`.`Study`
 -- -----------------------------------------------------
@@ -53,6 +45,7 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Study` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+SHOW warnings;
 
 
 -- -----------------------------------------------------
@@ -126,6 +119,7 @@ DROP TABLE IF EXISTS `mmeds`.`Experiment` ;
 
 CREATE TABLE IF NOT EXISTS `mmeds`.`Experiment` (
   `idExperiment` INT NOT NULL,
+  `user_id` INT NULL DEFAULT NULL,
   `ExperimentName` VARCHAR(45) NULL,
   `Study_idStudy` INT NOT NULL,
   `Study_Lab_idLab` INT NOT NULL,

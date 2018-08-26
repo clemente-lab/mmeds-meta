@@ -30,7 +30,7 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True):
+    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -60,20 +60,21 @@ class Database:
 
         self.check_file = Path(os.getcwd()) / 'data' / 'last_check.dat'
 
-        # Do housekeeping for removing old files
-        if os.path.isfile(self.check_file):
-            with open(self.check_file, 'rb') as f:
-                last_check = pickle.load(f)
-            if (datetime.utcnow() - last_check).days > DAYS:
-                check = True
+        if not testing:
+            # Do housekeeping for removing old files
+            if os.path.isfile(self.check_file):
+                with open(self.check_file, 'rb') as f:
+                    last_check = pickle.load(f)
+                if (datetime.utcnow() - last_check).days > DAYS:
+                    check = True
+                else:
+                    check = False
             else:
-                check = False
-        else:
-            check = True
-        if check:
-            self.clean()
-            with open(self.check_file, 'wb') as f:
-                pickle.dump(datetime.utcnow(), f)
+                check = True
+            if check:
+                self.clean()
+                with open(self.check_file, 'wb') as f:
+                    pickle.dump(datetime.utcnow(), f)
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
