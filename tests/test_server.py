@@ -1,7 +1,11 @@
 from server.server import MMEDSserver
-from mmeds.config import TEST_CODE, TEST_CONFIG, HTML_DIR, TEST_USER, TEST_PASS, TEST_EMAIL
+
+from mmeds.config import TEST_CODE, TEST_CONFIG, HTML_DIR, TEST_USER, TEST_PASS, TEST_EMAIL, TEST_DIR
+import mmeds.config as fig
 from mmeds.authentication import add_user
-from mmeds.mmeds import insert_error
+from mmeds.mmeds import insert_error, insert_html
+from mmeds.database import Database
+
 import cherrypy as cp
 from cherrypy.test import helper
 
@@ -14,6 +18,12 @@ class TestServer(helper.CPWebCase):
 
     setup_server = staticmethod(setup_server)
     add_user(TEST_USER, TEST_PASS, TEST_EMAIL)
+    with Database(TEST_DIR, user='root', owner=TEST_USER) as db:
+        access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
+                                                          'qiime',
+                                                          reads=fig.TEST_READS,
+                                                          barcodes=fig.TEST_BARCODES,
+                                                          access_code=TEST_CODE)
 
     ################################
     ###########  Stress  ###########
@@ -75,5 +85,18 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         with open(HTML_DIR / 'download_error.html') as f:
             page = f.read().format(TEST_USER)
+        self.assertBody(page)
+        self.getPage('/logout', headers=self.cookies)
+
+    def test_download_page(self):
+        self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
+        self.getPage("/download_page?access_code={}".format(TEST_CODE), headers=self.cookies)
+        self.assertStatus('200 OK')
+        with open(HTML_DIR / 'select_download.html') as f:
+            page = f.read().format(TEST_USER)
+
+        for i, f in enumerate(fig.TEST_FILES):
+            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)

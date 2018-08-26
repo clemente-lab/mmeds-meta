@@ -372,7 +372,12 @@ class Database:
 
     def mongo_import(self, study_name, study_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
-        access_code = get_salt(50)
+        # If an access_code is provided use that
+        # For testing purposes
+        if kwargs.get('access_code') is not None:
+            access_code = kwargs.get('access_code')
+        else:
+            access_code = get_salt(50)
         # Create the document
         mdata = MetaData(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
