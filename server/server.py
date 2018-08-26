@@ -275,21 +275,6 @@ class MMEDSserver(object):
         Opens the page to upload files if the user has been authenticated.
         Otherwise returns to the login page with an error message.
         """
-        cp.session['uploaded'] = False
-        cp.session['user'] = username
-        # Specify a particular test directory
-        if username == fig.TEST_USER:
-            new_dir = fig.TEST_DIR
-        else:
-            # Create a unique dir for handling files uploaded by this user
-            new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
-        os.makedirs(new_dir)
-        cp.session['dir'] = new_dir
-        cp.session['processes'] = {}
-
-        cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
         if not validate_password(username, password):
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -299,6 +284,23 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 23, 'Error: User is already logged in.')
         else:
+            cp.session['uploaded'] = False
+            cp.session['user'] = username
+            # Specify a particular test directory
+            if username == fig.TEST_USER:
+                new_dir = fig.TEST_DIR
+                if not os.path.exists(new_dir):
+                    os.makedirs(new_dir)
+            else:
+                # Create a unique dir for handling files uploaded by this user
+                new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
+                while os.path.exists(new_dir):
+                    new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
+                os.makedirs(new_dir)
+            cp.session['dir'] = new_dir
+            cp.session['processes'] = {}
+
+            cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
             self.users.add(username)
             with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
