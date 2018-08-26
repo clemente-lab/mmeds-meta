@@ -42,20 +42,20 @@ class MMEDSserver(object):
         """ Run analysis on the specified study. """
         if cp.session['processes'].get(access_code) is None or\
                 cp.session['processes'][access_code].exitcode is not None:
-            if 'qiime' in tool:
+            if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
                     p = analysis_runner(tool, cp.session['user'], access_code)
                     cp.session['processes'][access_code] = p
                     with open(HTML_DIR / 'welcome.html') as f:
                         page = f.read()
-                    return page
+                    return page.format(user=cp.session['user'])
                 except MissingUploadError:
                     with open(HTML_DIR / 'download_error.html') as f:
                         page = f.read()
                     return page.format(cp.session['user'])
             else:
-                return "<html> <h1> Tool does not exist. </h1> </html>"
+                return '<html> <h1> Tool {} does not exist. </h1> </html>'.format(tool)
         else:
             with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
@@ -159,9 +159,6 @@ class MMEDSserver(object):
 
             # Update the directory
             cp.session['uploaded'] = True
-            #new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
-            #os.rename(cp.session['dir'], new_dir)
-            #cp.session['dir'] = new_dir
 
             # Get the html for the upload page
             with open(HTML_DIR / 'welcome.html', 'r') as f:

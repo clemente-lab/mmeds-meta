@@ -1,4 +1,5 @@
 from server.server import MMEDSserver
+from time import sleep
 
 from mmeds.config import TEST_CODE, TEST_CONFIG, HTML_DIR, TEST_USER, TEST_PASS, TEST_EMAIL, TEST_DIR
 import mmeds.config as fig
@@ -85,6 +86,33 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         with open(HTML_DIR / 'download_error.html') as f:
             page = f.read().format(TEST_USER)
+        self.assertBody(page)
+        self.getPage('/logout', headers=self.cookies)
+
+    def test_download_block(self):
+        # Login
+        self.getPage("/login?username={}&password={}".format(TEST_USER, TEST_PASS))
+        # Start test analysis
+        self.getPage('/run_analysis?access_code={}&tool={}'.format(TEST_CODE, fig.TEST_TOOL), headers=self.cookies)
+        # Try to access
+        self.getPage("/download_page?access_code={}".format(TEST_CODE), headers=self.cookies)
+        with open(HTML_DIR / 'welcome.html') as f:
+            page = f.read().format(user=fig.TEST_USER)
+        page = insert_error(page, 31, 'Requested study is currently unavailable')
+        self.assertBody(page)
+
+        # Wait for analysis to finish
+        sleep(int(fig.TEST_TOOL.split('-')[-1]))
+        del page
+
+        # Try to access again
+        self.getPage("/download_page?access_code={}".format(TEST_CODE), headers=self.cookies)
+
+        with open(HTML_DIR / 'select_download.html') as f:
+            page = f.read().format(fig.TEST_USER)
+        for i, f in enumerate(fig.TEST_FILES):
+            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
 
