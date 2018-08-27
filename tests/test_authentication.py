@@ -22,6 +22,11 @@ def test_validate_password():
     assert auth.validate_password(test_username2, test_password2, testing=True)
 
 
+def test_remove_user():
+    """ Test the add_user function """
+    assert not auth.remove_user(test_username2)
+
+
 def test_check_password():
 
     results4 = auth.check_password(bad_password3, bad_password3)

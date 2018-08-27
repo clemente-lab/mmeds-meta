@@ -20,6 +20,13 @@ def add_user(username, password, email, testing=False):
         db.add_user(username, password_hash, salt, email)
 
 
+def remove_user(username):
+    """ Removes a user from the user sql table. """
+    with Database(STORAGE_DIR) as db:
+        db.clear_user_data(username)
+        db.remove_user(username)
+
+
 def validate_password(username, password, testing=False):
     """ Validate the user and their password """
 

@@ -366,7 +366,13 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-    def clean_user_data(self, username):
+    def remove_user(self, username):
+        """ Remove a user from the database. """
+        sql = 'DELETE FROM mmeds.user WHERE username="{}"'.format(username)
+        self.cursor.execute(sql)
+        self.db.commit()
+
+    def clear_user_data(self, username):
         """
         Remove all data in the database belonging to username.
 

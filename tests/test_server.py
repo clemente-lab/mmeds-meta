@@ -2,7 +2,7 @@ from server.server import MMEDSserver
 from time import sleep
 
 import mmeds.config as fig
-from mmeds.authentication import add_user
+from mmeds.authentication import add_user, remove_user
 from mmeds.mmeds import insert_error, insert_html
 from mmeds.database import Database
 
@@ -24,6 +24,9 @@ class TestServer(helper.CPWebCase):
                                                           reads=fig.TEST_READS,
                                                           barcodes=fig.TEST_BARCODES,
                                                           access_code=fig.TEST_CODE)
+
+    def teardown_server():
+        remove_user(fig.TEST_USER)
 
     ################################
     ###########  Stress  ###########
