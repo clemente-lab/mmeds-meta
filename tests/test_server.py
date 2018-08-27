@@ -118,7 +118,6 @@ class TestServer(helper.CPWebCase):
     def test_download_page(self):
         self.getPage("/login?username={}&password={}".format(fig.TEST_USER, fig.TEST_PASS))
         self.getPage("/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
-        self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'select_download.html') as f:
             page = f.read().format(fig.TEST_USER)
 
@@ -130,7 +129,7 @@ class TestServer(helper.CPWebCase):
 
     def test_query(self):
         return
-    """
+        """
         with Database(fig.TEST_DIR, user='mmeds_user', owner=TEST_USER) as db:
             status = db.set_mmeds_user(username)
             data, header = db.execute(query)
