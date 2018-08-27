@@ -366,6 +366,45 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
+    def clean_user_data(self, username):
+        """
+        Remove all data in the database belonging to username.
+
+        DOES NOT WORK
+
+        """
+        sql = 'SELECT user_id FROM mmeds.user where username="{}"'.format(username)
+        self.cursor.execute(sql)
+        user_id = int(self.cursor.fetchone()[0])
+        print(user_id)
+
+        self.cursor.execute('SHOW TABLES')
+        tables = [x[0] for x in self.cursor.fetchall()]
+        # Skip the user table
+        tables.remove('user')
+        r_tables = []
+        while True:
+            for table in tables:
+                try:
+                    sql = 'DESCRIBE {}'.format(table)
+                    self.cursor.execute(sql)
+                    columns = self.cursor.fetchall()
+                    labels = [col[0] for col in columns]
+                    if 'user_id' in labels:
+                        sql = 'DELETE FROM {} WHERE user_id={}'.format(table, user_id)
+                        print(sql)
+                        self.cursor.execute(sql)
+                        self.db.commit()
+                    else:
+                        continue
+                except pms.err.IntegrityError:
+                    r_tables.append(table)
+            if len(r_tables) == 0:
+                break
+            else:
+                tables = r_tables
+                r_tables = []
+
     ########################################
     ##############  MongoDB  ###############
     ########################################

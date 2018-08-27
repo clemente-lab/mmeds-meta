@@ -127,3 +127,15 @@ class TestServer(helper.CPWebCase):
 
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
+
+    def test_query(self):
+        return
+    """
+        with Database(fig.TEST_DIR, user='mmeds_user', owner=TEST_USER) as db:
+            status = db.set_mmeds_user(username)
+            data, header = db.execute(query)
+            html_data = db.format(data, header)
+            with open(HTML_DIR / 'success.html', 'r') as f:
+                page = f.read()
+        pass
+        """
