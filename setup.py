@@ -37,6 +37,7 @@ setup(name='mmeds',
       packages=['mmeds', 'server'],
       scripts=glob('scripts/*py'),
       install_requires=[
+          'locust',
           'pytest',
           'numpy',
           'cherrypy',

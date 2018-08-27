@@ -379,6 +379,7 @@ class Database:
         DOES NOT WORK
 
         """
+        return
         sql = 'SELECT user_id FROM mmeds.user where username="{}"'.format(username)
         self.cursor.execute(sql)
         user_id = int(self.cursor.fetchone()[0])

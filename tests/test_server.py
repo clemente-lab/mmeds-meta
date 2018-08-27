@@ -25,9 +25,6 @@ class TestServer(helper.CPWebCase):
                                                           barcodes=fig.TEST_BARCODES,
                                                           access_code=fig.TEST_CODE)
 
-    def teardown_server():
-        remove_user(fig.TEST_USER)
-
     ################################
     ###########  Stress  ###########
     ################################
