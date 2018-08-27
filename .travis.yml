@@ -8,4 +8,4 @@ install:
   - mysql -u root < setup.sql
 script:
     - pytest -s tests 2> /dev/null
-    - cd server; timeout 240 python server.py&>/dev/null; sleep 1; locust -c 10 -r 10 -n 100 --no-web -f ../tests/locustfile.py
+    - cd server; timeout 240 python server.py&>/dev/null& sleep 1; locust -c 10 -r 10 -n 100 --no-web -f ../tests/locustfile.py
