@@ -8,4 +8,4 @@ install:
   - mysql -u root < setup.sql
 script:
     - pytest -s tests
-    - locust -c 10 -r 10 -n 100 --no-web -f tests/locustfile.py
+    - cd server; python server.py& locust -c 10 -r 10 -n 100 --no-web -f ../tests/locustfile.py
