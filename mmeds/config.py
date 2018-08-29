@@ -3,31 +3,33 @@ from string import digits, ascii_uppercase, ascii_lowercase
 from smtplib import SMTP
 from email.message import EmailMessage
 from pathlib import Path
-from cherrypy.lib.sessions import FileSession, RamSession
 # Add some notes here
 # Add some more notes here
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.csv'
-STORAGE_DIR = Path('./data').resolve()
-if not STORAGE_DIR.is_dir():
-    STORAGE_DIR = Path('../server/data').resolve()
-if not STORAGE_DIR.is_dir():
-    STORAGE_DIR = Path('./server/data').resolve()
 
 # The path changes depening on where this is being called
 # So that it will work with testing and the server
 HTML_DIR = Path('../html/').resolve()
 if not HTML_DIR.is_dir():
     HTML_DIR = Path('./html/').resolve()
+STORAGE_DIR = Path('./data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('../server/data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('./server/data').resolve()
+
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+PORT = 8080
 
 
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
+        'server.socket_port': PORT,
         'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
@@ -71,27 +73,6 @@ TEST_FILES = [
     'barcodes',
     'metadata'
 ]
-
-TEST_CONFIG = {
-    'global': {
-        'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
-        'tools.sessions.on': True,
-        'tools.sessions.name': 'cp_session',
-#       'tools.sessions.storage_class': RamSession,
-#       'tools.sessions.storage_path': STORAGE_DIR / 'session',
-#       'tools.sessions.timeout': (1.0 / 60),
-#       'tools.sessions.clean_freq': (1.0 / 60)
-    },
-    '/CSS': {
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'CSS'
-    },
-    '/protected/area': {
-        'tools.auth_digest': True,
-        'tools.auth_digest.realm': 'localhost',
-        'tools.auth_digest.key': 'a565c2714791cfb',
-    }
-}
 
 
 TABLE_ORDER = [

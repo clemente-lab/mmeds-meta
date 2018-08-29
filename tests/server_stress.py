@@ -1,5 +1,6 @@
 from locust import TaskSet, task, HttpLocust
 from mmeds.mmeds import insert_html, insert_error
+from mmeds.database import Database
 from time import sleep
 import mmeds.config as fig
 import urllib3
@@ -26,6 +27,12 @@ class MyTasks(TaskSet):
         page = insert_error(page, 31, 'Requested study is currently unavailable')
 
         self.download_failure = page
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
+            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
+                                                              'qiime',
+                                                              reads=fig.TEST_READS,
+                                                              barcodes=fig.TEST_BARCODES,
+                                                              access_code=fig.TEST_CODE)
 
     def login(self):
         self.client.post('/login',
@@ -40,16 +47,21 @@ class MyTasks(TaskSet):
 
     @task
     def get_download(self):
-        self.client.get("/download_page?access_code={}".format(fig.TEST_CODE))
-        self.client.get('/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL))
-        result = self.client.get('/download_page?access_code={}'.format(fig.TEST_CODE))
-        assert str(result.text) == self.download_failure
+        address = '/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL)
+        self.client.get(address)
+        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        with self.client.get(address, catch_response=True) as result:
+            assert str(result.text) == self.download_failure
+        # The duration of the sleep is set by the end of the
+        # fig.TEST_TOOL string in mmeds/config
+        # Makes sure the wait is the same duration as the spawned process
         sleep(int(fig.TEST_TOOL.split('-')[-1]))
 
-        result = self.client.get('/download_page?access_code={}'.format(fig.TEST_CODE))
-        assert str(result.text) == self.download_success
+        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        with self.client.get(address, catch_response=True) as result:
+            assert str(result.text) == self.download_success
 
 
 class MyUser(HttpLocust):
-    host = 'https://localhost:8080'
+    host = 'https://localhost:{}'.format(fig.PORT)
     task_set = MyTasks
