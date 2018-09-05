@@ -96,6 +96,7 @@ class MMEDSserver(object):
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+        cp.log(str(metadata_copy))
 
         # Set the User
         if public == 'on':
@@ -104,9 +105,10 @@ class MMEDSserver(object):
             username = cp.session['user']
 
         # Check the metadata file for errors
-        with open(metadata_copy) as f:
-            errors, warnings, study_name, subjects = validate_mapping_file(f)
-        cp.log(study_name)
+        errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
+        cp.log(str(len(errors) + len(warnings)))
+        for error in errors:
+            cp.log(error)
 
         with Database(cp.session['dir'], user='root', owner=username) as db:
             warnings += db.check_repeated_subjects(subjects)

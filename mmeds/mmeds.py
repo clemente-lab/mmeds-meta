@@ -112,11 +112,22 @@ def check_column(raw_column, col_index):
             if not cell == cell.strip():
                 errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
                               (i + 1, col_index, cell, i + 1))
+    # Check that values fall within standard deviation
     if issubdtype(column.dtype, number):
         for i, cell in enumerate(column):
             if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
                 warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in column %d' %
                                 (i + 1, col_index, cell, i + 1))
+    # Check for catagorical data
+    elif 'object' == column.dtype:
+        counts = column.value_counts()
+        stddev = std(counts.values)
+        avg = mean(counts.values)
+        for val, count in counts.iteritems():
+            if count < avg - stddev:
+                warnings.append('%d\t%d\tPotential catagorical data detected. Value %s may be in error, only %d found.' %
+                                (-1, col_index, val, count))
+
     return errors, warnings
 
 

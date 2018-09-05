@@ -33,20 +33,20 @@ Distinguish between sample and speciman. Check FreezerWorks
   - [ ] Create a directory based on the username
   - [ ] Clear dir when user session is finished
   - [ ] Add log out button and timeout functionality on sessions
-** TODO Add password reset
+** DONE Add password reset
 ** TODO Modify server setup so less is happening in the server class
 ** TODO Slides of mmeds setup
 ** TODO Add unused columns error after file upload :work:
-** TODO Setup tools to work with loaded metadata
-** TODO Setup storage of results from analysis
-** TODO Create interface for running tools on data
+** DONE Setup tools to work with loaded metadata
+** DONE Setup storage of results from analysis
+** DONE Create interface for running tools on data
    - [X] Add drop down menu for different tools
-   - [ ] Modify validate for Qiime data
-   - [ ] Add functionality to convert metadata to Qiime mapping
-   - [ ] Add functionality to run Qiime
-   - [ ] Store newly generated data
+   - [X] Modify validate for Qiime data
+   - [X] Add functionality to convert metadata to Qiime mapping
+   - [X] Add functionality to run Qiime
+   - [X] Store newly generated data
 ** TODO Create interface for analyzing data results
-
+** TODO Try uploading and downloading large files
 **** TODO Questions
      - [ ] Email tied to user account seperate from email for upload?
      - [ ] What tools do we want to initally setup?

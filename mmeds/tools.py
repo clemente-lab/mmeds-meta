@@ -439,6 +439,7 @@ class Qiime2Analysis:
     def analysis(self):
         """ Perform some analysis. """
         self.setup_dir()
+        self.create_qiime_mapping_file()
         self.qimport()
         self.demultiplex()
         if self.atype == 'deblur':
