@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import shutil
 import pickle
+import warnings
 
 from datetime import datetime
 from pathlib import WindowsPath
@@ -35,6 +36,7 @@ class Database:
         Connect to the specified database.
         Initialize variables for this session.
         """
+        warnings.simplefilter('ignore')
         try:
             if user == 'mmeds_user':
                 self.db = pms.connect('localhost', user, 'password', database, local_infile=True)

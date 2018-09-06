@@ -34,6 +34,13 @@ class MyTasks(TaskSet):
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
 
+        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        with self.client.get(address, catch_response=True) as result:
+            print(result.text)
+
+    def on_stop(self):
+        self.logout()
+
     def login(self):
         self.client.post('/login',
                          {
@@ -41,12 +48,15 @@ class MyTasks(TaskSet):
                              'password': fig.TEST_PASS
                          })
 
-    @task
+    def logout(self):
+        self.client.post('/logout')
+
+    #@task
     def read_root(self):
         self.client.get('/')
 
-    @task
-    def get_download(self):
+    #@task
+    def access_download(self):
         address = '/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL)
         self.client.get(address)
         address = '/download_page?access_code={}'.format(fig.TEST_CODE)
@@ -60,6 +70,20 @@ class MyTasks(TaskSet):
         address = '/download_page?access_code={}'.format(fig.TEST_CODE)
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_success
+
+    @task
+    def select_download(self):
+        """ Test download selection. """
+        downloads = [
+            'barcodes',
+            'reads',
+            'metadata'
+        ]
+        for download in downloads:
+            address = '/select_download'
+            with self.client.post(address, {'download': download}) as result:
+                print(str(type(result)))
+                print(str(result))
 
 
 class MyUser(HttpLocust):
