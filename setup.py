@@ -37,6 +37,7 @@ setup(name='mmeds',
       packages=['mmeds', 'server'],
       scripts=glob('scripts/*py'),
       install_requires=[
+          'locustio>=0.8.1,<0.8.2',
           'locust',
           'pytest',
           'numpy',
