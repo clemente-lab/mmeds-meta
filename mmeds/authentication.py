@@ -1,5 +1,4 @@
 import hashlib
-
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt, send_email

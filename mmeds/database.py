@@ -10,8 +10,9 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, get_salt, send_email
+from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, get_salt, send_email
 from mmeds.error import MissingUploadError
+import mmeds.secrets as sec
 
 DAYS = 13
 
@@ -37,13 +38,13 @@ class Database:
         """
         try:
             if user == 'mmeds_user':
-                self.db = pms.connect('localhost', user, 'password', database, local_infile=True)
+                self.db = pms.connect(sec.SQL_HOST, user, sec.SQL_USER_PASS, database, local_infile=True)
             else:
-                self.db = pms.connect('localhost', user, '', database, local_infile=True)
+                self.db = pms.connect(sec.SQL_HOST, user, sec.SQL_ADMIN_PASS, database, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
-        self.mongo = men.connect('test', host='127.0.0.1', port=27017, connect=connect)
+        self.mongo = men.connect('test', host=sec.MONGO_HOST, port=sec.MONGO_PORT, connect=connect)
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
@@ -77,7 +78,7 @@ class Database:
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
-        sql = 'SELECT unset_connection_auth("{}")'.format(SECURITY_TOKEN)
+        sql = 'SELECT unset_connection_auth("{}")'.format(sec.SECURITY_TOKEN)
         self.cursor.execute(sql)
         self.db.commit()
         self.db.close()
@@ -104,7 +105,7 @@ class Database:
 
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
-        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, SECURITY_TOKEN)
+        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, sec.SECURITY_TOKEN)
         self.cursor.execute(sql)
         set_user = self.cursor.fetchall()[0][0]
         self.db.commit()

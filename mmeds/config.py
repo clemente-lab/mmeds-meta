@@ -1,9 +1,7 @@
-from secrets import choice
-from string import digits, ascii_uppercase, ascii_lowercase
 from smtplib import SMTP
 from email.message import EmailMessage
 from pathlib import Path
-from cherrypy.lib.sessions import FileSession
+import mmeds.secrets as sec
 # Add some notes here
 # Add some more notes here
 
@@ -31,14 +29,13 @@ CONFIG = {
     '/protected/area': {
         'tools.auth_digest': True,
         'tools.auth_digest.realm': 'localhost',
-        'tools.auth_digest.key': 'a565c2714791cfb',
+        'tools.auth_digest.key': sec.DIGEST_KEY,
     }
 }
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.csv'
 STORAGE_DIR = 'data'
-SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 
@@ -101,12 +98,7 @@ PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaD
 
 
 def get_salt(length=10, numeric=False):
-    """ Get a randomly generated string for salting passwords. """
-    if numeric:
-        listy = digits
-    else:
-        listy = digits + ascii_uppercase + ascii_lowercase
-    return ''.join(choice(listy) for i in range(length))
+    return sec.get_salt(length, numeric)
 
 
 def send_email(toaddr, user, message='upload', **kwargs):
