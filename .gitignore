@@ -33,3 +33,4 @@ server/site.log
 /keyrings/live/pubring.kbx~
 /keyrings/live/secring.gpg
 /server/data/privkey.pem
+/mmeds/secrets.py
