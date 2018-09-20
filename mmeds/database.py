@@ -31,20 +31,24 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True):
+    def __init__(self, path, database=sec.SQL_HOST, user='root', owner=None, connect=True):
         """
         Connect to the specified database.
         Initialize variables for this session.
         """
         try:
             if user == 'mmeds_user':
-                self.db = pms.connect(sec.SQL_HOST, user, sec.SQL_USER_PASS, database, local_infile=True)
+                self.db = pms.connect(host=sec.SQL_HOST, user=sec.SQL_USER_NAME, password=sec.SQL_USER_PASS, database=sec.SQL_DATABASE, local_infile=True)
             else:
-                self.db = pms.connect(sec.SQL_HOST, user, sec.SQL_ADMIN_PASS, database, local_infile=True)
+                self.db = pms.connect(host=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, password=sec.SQL_ADMIN_PASS, database=sec.SQL_DATABASE, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
-        self.mongo = men.connect('test', host=sec.MONGO_HOST, port=sec.MONGO_PORT, connect=connect)
+        self.mongo = men.connect('mmeds',
+                                 port=sec.MONGO_PORT,
+                                 authentication_database=sec.AUTH_DATABASE,
+                                 host=sec.MONGO_HOST,
+                                 connect=connect)
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
