@@ -127,9 +127,9 @@ class MMEDSserver(object):
 
             uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             for i, error in enumerate(errors):
-                uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
+                uploaded_output = insert_error(uploaded_output, 11 + i, '<p>' + error + '</p>')
             for i, warning in enumerate(warnings):
-                uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+                uploaded_output = insert_warning(uploaded_output, 11 + i, '<p>' + warning + '</p>')
 
             html = generate_error_html(metadata_copy, errors, warnings)
 
@@ -145,9 +145,8 @@ class MMEDSserver(object):
                 uploaded_output = f.read()
 
             for i, warning in enumerate(warnings):
-                uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+                uploaded_output = insert_warning(uploaded_output, 11 + i, '<p>' + warning + '</p>')
 
-            uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             return uploaded_output
         else:
             # Otherwise upload the metadata to the database
