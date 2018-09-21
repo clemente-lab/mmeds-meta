@@ -125,7 +125,8 @@ class MMEDSserver(object):
             with open(HTML_DIR / 'error.html', 'r') as f:
                 uploaded_output = f.read()
 
-            uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
+            uploaded_output = insert_error(
+                uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             for i, error in enumerate(errors):
                 uploaded_output = insert_error(uploaded_output, 11 + i, '<p>' + error + '</p>')
             for i, warning in enumerate(warnings):
@@ -427,7 +428,8 @@ class MMEDSserver(object):
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
         for key in cp.session['processes'].keys():
-            cp.log('{}: {}, {}'.format(key, cp.session['processes'][key].is_alive(), cp.session['processes'][key].exitcode))
+            cp.log('{}: {}, {}'.format(key, cp.session['processes'][
+                   key].is_alive(), cp.session['processes'][key].exitcode))
         if cp.session['processes'].get(access_code) is None or\
                 cp.session['processes'][access_code].exitcode is not None:
             # Get the open file handler
@@ -459,6 +461,7 @@ class MMEDSserver(object):
 
     @cp.expose
     def select_download(self, download):
+        cp.log('User{} requests download {}'.format(cp.session['user'], download))
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
                 files, path = db.get_mongo_files(cp.session['download_access'])
@@ -470,8 +473,10 @@ class MMEDSserver(object):
 
         file_path = str(Path(path) / files[download])
         if 'dir' in download:
-            run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz', Path(file_path).parent, Path(file_path).name), shell=True, check=True)
+            run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
+                                               Path(file_path).parent, Path(file_path).name), shell=True, check=True)
             file_path += '.tar.gz'
+        cp.log('Fetching {}'.format(file_path))
 
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
@@ -501,14 +506,16 @@ class MMEDSserver(object):
         with open(HTML_DIR / 'blank.html') as f:
             page = f.read()
         if username == 'Public' or username == 'public':
-            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+            page = insert_html(
+                page, 10, '<h4> No account exists with the providied username and email. </h4>')
             return page
         exit = reset_password(username, email)
 
         if exit:
             page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
         else:
-            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+            page = insert_html(
+                page, 10, '<h4> No account exists with the providied username and email. </h4>')
         return page
 
     @cp.expose

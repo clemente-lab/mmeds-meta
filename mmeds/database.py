@@ -443,6 +443,12 @@ class Database:
         mdata.save()
         return access_code
 
+    def mongo_clean(self, access_code):
+        """ Delete all mongo objects with the given access_code. """
+        obs = MetaData.object(access_code=access_code)
+        for ob in obs:
+            ob.delete()
+
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
@@ -541,6 +547,7 @@ class Database:
             raise MissingUploadError('No data exist for this access code')
 
         mdata.last_accessed = datetime.utcnow()
+        mdata.save()
 
         return mdata.files, mdata.path
 

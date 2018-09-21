@@ -36,6 +36,9 @@ class MyTasks(TaskSet):
                                                               access_code=fig.TEST_CODE)
 
     def on_stop(self):
+
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
+            db.mongo_clean(fig.TEST_CODE)
         self.logout()
 
     def login(self):
@@ -52,7 +55,7 @@ class MyTasks(TaskSet):
     def read_root(self):
         self.client.get('/')
 
-    @task
+    #@task
     def access_download(self):
         address = '/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL)
         self.client.get(address)
@@ -76,18 +79,21 @@ class MyTasks(TaskSet):
             'reads',
             'metadata'
         ]
-        for download in downloads:
-            address = '/select_download'
-            with self.client.post(address, {'download': download}) as result:
-                print(str(type(result)))
-                print(str(result))
+        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        with self.client.get(address, catch_response=True) as result:
+            assert str(result.text) == self.download_success
+            for download in downloads:
+                address = '/select_download'
+                with self.client.post(address, {'download': download}) as result:
+                    print(str(type(result)))
+                    print(str(result))
 
-    @task
+    #@task
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
         self.client.get(address)
 
-    @task
+    #@task
     def get_email(self):
         imapper = easyimap.connect('imap.gmail.com', fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
         for mail_id in imapper.listids(limit=100):
