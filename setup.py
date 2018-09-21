@@ -45,6 +45,7 @@ setup(name='mmeds',
           'pymysql',
           'pandas',
           'mongoengine',
-          'prettytable'
+          'prettytable',
+          'easyimap'
       ],
       zip_safe=False)

@@ -1,5 +1,6 @@
 from server.server import MMEDSserver
 from time import sleep
+from collections import defaultdict
 
 import mmeds.config as fig
 from mmeds.authentication import add_user, remove_user
@@ -14,7 +15,10 @@ class TestServer(helper.CPWebCase):
 
     def setup_server():
         cp.tree.mount(MMEDSserver())
-        cp.config.update(fig.TEST_CONFIG)
+        test_config = defaultdict(dict)
+        test_config['global']['tools.sessions.on'] = True
+        test_config['global']['tools.sessions.name'] = 'cp_session'
+        cp.config.update(test_config)
 
     setup_server = staticmethod(setup_server)
     add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
@@ -126,6 +130,17 @@ class TestServer(helper.CPWebCase):
 
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
+
+    def test_download(self):
+        downloads = [
+            'barcodes',
+            'reads',
+            'metadata'
+        ]
+        for download in downloads:
+            address = '/select_download?download={}'.format(download)
+            self.getPage(address)
+            print(self.body)
 
     def test_query(self):
         return

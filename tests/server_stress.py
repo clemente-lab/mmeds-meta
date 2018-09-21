@@ -4,6 +4,7 @@ from mmeds.database import Database
 from time import sleep
 import mmeds.config as fig
 import urllib3
+import easyimap
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -34,10 +35,6 @@ class MyTasks(TaskSet):
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
 
-        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
-        with self.client.get(address, catch_response=True) as result:
-            print(result.text)
-
     def on_stop(self):
         self.logout()
 
@@ -51,11 +48,11 @@ class MyTasks(TaskSet):
     def logout(self):
         self.client.post('/logout')
 
-    #@task
+    @task
     def read_root(self):
         self.client.get('/')
 
-    #@task
+    @task
     def access_download(self):
         address = '/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL)
         self.client.get(address)
@@ -84,6 +81,18 @@ class MyTasks(TaskSet):
             with self.client.post(address, {'download': download}) as result:
                 print(str(type(result)))
                 print(str(result))
+
+    @task
+    def upload_files(self):
+        address = '/upload?study_type={}'.format('qiime')
+        self.client.get(address)
+
+    @task
+    def get_email(self):
+        imapper = easyimap.connect('imap.gmail.com', fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
+        for mail_id in imapper.listids(limit=100):
+            mail = imapper.mail(mail_id)
+            print(mail.from_addr)
 
 
 class MyUser(HttpLocust):

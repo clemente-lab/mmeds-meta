@@ -40,7 +40,6 @@ CONFIG = {
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
         'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
-        'request.scheme': 'https'
     },
     '/CSS': {
         'tools.staticdir.on': True,
@@ -61,7 +60,8 @@ CONFIG = {
 TEST_PATH = Path('./data_files/').resolve()
 TEST_PASS = 'testpass'
 TEST_USER = 'testuser'
-TEST_EMAIL = 'd.s.t.wallach@gmail.com'
+TEST_EMAIL = 'mmeds.tester@gmail.com'
+TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
 TEST_DIR = STORAGE_DIR / 'test_dir'
 TEST_METADATA = str(TEST_PATH / 'qiime_metadata.csv')
