@@ -444,7 +444,11 @@ class Database:
         return access_code
 
     def mongo_clean(self, access_code):
-        """ Delete all mongo objects with the given access_code. """
+        """
+        Delete all mongo objects with the given access_code.
+        It will not delete the files associated with those objects.
+        """
+
         obs = MetaData.object(access_code=access_code)
         for ob in obs:
             ob.delete()

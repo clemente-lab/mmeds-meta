@@ -3,6 +3,7 @@ from string import digits, ascii_uppercase, ascii_lowercase
 from smtplib import SMTP
 from email.message import EmailMessage
 from pathlib import Path
+import hashlib
 # Add some notes here
 # Add some more notes here
 
@@ -23,7 +24,7 @@ if not STORAGE_DIR.is_dir():
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
-PORT = 8080
+PORT = 8081
 
 
 CONFIG = {
@@ -58,6 +59,9 @@ CONFIG = {
 ###################
 
 TEST_PATH = Path('./data_files/').resolve()
+if not TEST_PATH.is_dir():
+    TEST_PATH = Path('../data_files/').resolve()
+
 TEST_PASS = 'testpass'
 TEST_USER = 'testuser'
 TEST_EMAIL = 'mmeds.tester@gmail.com'
@@ -68,11 +72,18 @@ TEST_METADATA = str(TEST_PATH / 'qiime_metadata.csv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_TOOL = 'tester-1'
-TEST_FILES = [
-    'reads',
-    'barcodes',
-    'metadata'
-]
+TEST_FILES = {
+    'reads': TEST_READS,
+    'barcodes': TEST_BARCODES,
+    'metadata': TEST_METADATA
+}
+TEST_CHECKS = {}
+for key in TEST_FILES.keys():
+    hash1 = hashlib.md5()
+    with open(TEST_FILES[key], 'rb') as f:
+        contents = f.read()
+    hash1.update(contents)
+    TEST_CHECKS[key] = hash1.digest()
 
 
 TABLE_ORDER = [

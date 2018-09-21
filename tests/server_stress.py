@@ -5,6 +5,7 @@ from time import sleep
 import mmeds.config as fig
 import urllib3
 import easyimap
+import hashlib
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -18,7 +19,7 @@ class MyTasks(TaskSet):
             page = f.read().format(fig.TEST_USER)
 
         # Get page for succesful download
-        for i, f in enumerate(fig.TEST_FILES):
+        for i, f in enumerate(fig.TEST_FILES.keys()):
             page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
         self.download_success = page
 
@@ -36,10 +37,11 @@ class MyTasks(TaskSet):
                                                               access_code=fig.TEST_CODE)
 
     def on_stop(self):
+        self.logout()
 
+    def teardown(self):
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
             db.mongo_clean(fig.TEST_CODE)
-        self.logout()
 
     def login(self):
         self.client.post('/login',
@@ -55,7 +57,7 @@ class MyTasks(TaskSet):
     def read_root(self):
         self.client.get('/')
 
-    #@task
+    @task
     def access_download(self):
         address = '/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL)
         self.client.get(address)
@@ -65,7 +67,7 @@ class MyTasks(TaskSet):
         # The duration of the sleep is set by the end of the
         # fig.TEST_TOOL string in mmeds/config
         # Makes sure the wait is the same duration as the spawned process
-        sleep(int(fig.TEST_TOOL.split('-')[-1]))
+        sleep(float(fig.TEST_TOOL.split('-')[-1]))
 
         address = '/download_page?access_code={}'.format(fig.TEST_CODE)
         with self.client.get(address, catch_response=True) as result:
@@ -74,26 +76,28 @@ class MyTasks(TaskSet):
     @task
     def select_download(self):
         """ Test download selection. """
-        downloads = [
-            'barcodes',
-            'reads',
-            'metadata'
-        ]
         address = '/download_page?access_code={}'.format(fig.TEST_CODE)
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_success
-            for download in downloads:
+            for download in fig.TEST_FILES.keys():
                 address = '/select_download'
-                with self.client.post(address, {'download': download}) as result:
-                    print(str(type(result)))
-                    print(str(result))
+                with self.client.post(address, {'download': download}, catch_response=True) as dresult:
 
-    #@task
+                    h1 = hashlib.md5()
+                    h1.update(dresult.content)
+
+                    hash1 = h1.digest()
+                    hash2 = fig.TEST_CHECKS[download]
+
+                    # Assert that the hashes match
+                    assert hash1 == hash2
+
+    @task
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
         self.client.get(address)
 
-    #@task
+    @task
     def get_email(self):
         imapper = easyimap.connect('imap.gmail.com', fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
         for mail_id in imapper.listids(limit=100):

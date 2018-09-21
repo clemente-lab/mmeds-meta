@@ -505,7 +505,7 @@ def analysis_runner(atype, user, access_code):
     elif 'qiime2' in atype:
         p = mp.Process(target=run_qiime2, args=(user, access_code, atype))
     elif 'test' in atype:
-        time = int(atype.split('-')[-1])
+        time = float(atype.split('-')[-1])
         p = mp.Process(target=test, args=(time, atype))
     p.start()
     return p
