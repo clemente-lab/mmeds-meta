@@ -124,7 +124,7 @@ def check_column(raw_column, col_index):
         stddev = std(counts.values)
         avg = mean(counts.values)
         for val, count in counts.iteritems():
-            if count < avg - stddev:
+            if count < avg - stddev and count < 3:
                 warnings.append('%d\t%d\tPotential catagorical data detected. Value %s may be in error, only %d found.' %
                                 (-1, col_index, val, count))
 

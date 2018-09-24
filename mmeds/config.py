@@ -24,7 +24,7 @@ if not STORAGE_DIR.is_dir():
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
-PORT = 8081
+PORT = 8080
 
 
 CONFIG = {
@@ -68,7 +68,8 @@ TEST_EMAIL = 'mmeds.tester@gmail.com'
 TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
 TEST_DIR = STORAGE_DIR / 'test_dir'
-TEST_METADATA = str(TEST_PATH / 'qiime_metadata.csv')
+TEST_METADATA = str(TEST_PATH / 'test_qiime_metadata.csv')
+TEST_METADATA_FAIL = str(TEST_PATH / 'qiime_metadata.csv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_TOOL = 'tester-1'

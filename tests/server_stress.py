@@ -95,9 +95,25 @@ class MyTasks(TaskSet):
     @task
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
-        self.client.get(address)
+        with self.client.get(address, catch_response=True) as result:
+            print('result 1')
+            print(result.content)
+            address = '/validate_qiime'
+            with open(fig.TEST_METADATA, 'rb') as f:
+                metadata = f.read()
+            with open(fig.TEST_READS, 'rb') as f:
+                reads = f.read()
+            with open(fig.TEST_BARCODES, 'rb') as f:
+                barcodes = f.read()
+            files = {
+                'myMetaData': metadata,
+                'reads': reads,
+                'barcodes': barcodes
+            }
+            # Test the upload
+            self.client.post(address, files=files)
 
-    @task
+    #@task
     def get_email(self):
         imapper = easyimap.connect('imap.gmail.com', fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
         for mail_id in imapper.listids(limit=100):
