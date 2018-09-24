@@ -6,8 +6,8 @@ from subprocess import run
 
 import cherrypy as cp
 from cherrypy.lib import static
-from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
-from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES, send_email, get_salt
+from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
+from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES, get_salt
 import mmeds.config as fig
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database

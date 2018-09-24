@@ -4,7 +4,6 @@ from mmeds.database import Database
 from time import sleep
 import mmeds.config as fig
 import urllib3
-import easyimap
 import hashlib
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -112,13 +111,6 @@ class MyTasks(TaskSet):
             }
             # Test the upload
             self.client.post(address, files=files)
-
-    #@task
-    def get_email(self):
-        imapper = easyimap.connect('imap.gmail.com', fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
-        for mail_id in imapper.listids(limit=100):
-            mail = imapper.mail(mail_id)
-            print(mail.from_addr)
 
 
 class MyUser(HttpLocust):

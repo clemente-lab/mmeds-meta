@@ -1,7 +1,9 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number
-from mmeds.config import STORAGE_DIR, get_salt
 from os.path import join, exists
+from email.message import EmailMessage
+from smtplib import SMTP
+import mmeds.config as fig
 import pandas as pd
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -255,13 +257,13 @@ def is_numeric(s):
     return False
 
 
-def create_local_copy(fp, filename, path=STORAGE_DIR):
+def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
     # Create the filename
-    file_copy = join(path, '_'.join(['copy', get_salt(5), filename]))
+    file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
     # Ensure there is not already a file with the same name
     while exists(file_copy):
-        file_copy = join(path, '_'.join(['copy', get_salt(5), filename]))
+        file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
@@ -335,3 +337,41 @@ def generate_error_html(file_fp, errors, warnings):
     html += '</table>\n'
     html += '</html>\n'
     return html
+
+
+def send_email(toaddr, user, message='upload', **kwargs):
+    """ Sends a confirmation email to addess containing user and code. """
+    msg = EmailMessage()
+    msg['From'] = fig.MMEDS_EMAIL
+    msg['To'] = toaddr
+    if message == 'upload':
+        body = 'Hello {email},\nthe user {user} uploaded data to the mmeds database server.\n'.format(email=toaddr, user=user) +\
+               'In order to gain access to this data without the password to\n{user} you must provide '.format(user=user) +\
+               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n'.format(code=kwargs['code']) +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'.format(cemail=fig.CONTACT_EMAIL)
+        msg['Subject'] = 'New data uploaded to mmeds database'
+    elif message == 'reset':
+        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
+               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Password Reset'
+    elif message == 'change':
+        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Password Change'
+    elif message == 'analysis':
+        body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(toaddr,
+                                                                                         kwargs['analysis_type'],
+                                                                                         kwargs['study_name']) +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Analysis Complete'
+
+    msg.set_content(body)
+
+    server = SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(fig.MMEDS_EMAIL, 'mmeds_server')
+    server.send_message(msg)
+    server.quit()

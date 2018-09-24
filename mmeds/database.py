@@ -11,8 +11,9 @@ from datetime import datetime
 from pathlib import WindowsPath
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt, send_email
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
 from mmeds.error import MissingUploadError
+from mmeds.mmeds import send_email
 
 DAYS = 13
 
