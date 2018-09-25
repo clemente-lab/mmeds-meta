@@ -48,10 +48,6 @@ class MyTasks(TaskSet):
     def on_stop(self):
         self.logout()
 
-    def teardown(self):
-        with Database(self.dir, user='root', owner=self.user) as db:
-            db.mongo_clean(self.code)
-
     def login(self):
         self.client.post('/login',
                          {
@@ -127,5 +123,9 @@ class MyTasks(TaskSet):
 
 class MyUser(HttpLocust):
     host = 'https://localhost:{}'.format(fig.PORT)
-    IDs = [str(i) for i in range(50)]
+    IDs = [str(i) for i in range(500)]
     task_set = MyTasks
+
+    def teardown(self):
+        with Database(self.dir, user='root', owner=self.user) as db:
+            db.mongo_clean(self.code)
