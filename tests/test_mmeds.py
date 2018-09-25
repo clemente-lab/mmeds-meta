@@ -4,6 +4,9 @@ import mmeds.config as fig
 import easyimap
 import email
 import datetime
+import hashlib as hl
+import os
+import difflib
 
 
 def test_is_numeric():
@@ -15,7 +18,8 @@ def test_is_numeric():
     assert mmeds.is_numeric('5r') is False
 
 
-def test_get_email():
+# Not in current use
+def get_email():
     mmeds.send_email(fig.TEST_EMAIL, fig.TEST_USER, code=fig.TEST_CODE)
     imapper = easyimap.connect('imap.gmail.com', fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
     sleep(10)
@@ -31,3 +35,23 @@ def test_get_email():
         assert delta.total_seconds() + parsed[-1] < 600
 
     imapper.quit()
+
+
+def test_create_local_copy():
+    """ Test the creation of a new unique file. """
+    h1 = hl.md5()
+    h2 = hl.md5()
+    with open(fig.TEST_METADATA, 'rb') as f:
+        copy = mmeds.create_local_copy(f, 'metadata.tsv', fig.TEST_DIR)
+        f.seek(0, 0)  # Reset the file pointer
+        data1 = f.read()
+    h1.update(data1)
+    hash1 = h1.hexdigest()
+
+    with open(copy, 'rb') as f:
+        data2 = f.read()
+    os.remove(copy)
+    h2.update(data2)
+    hash2 = h2.hexdigest()
+
+    assert hash1 == hash2
