@@ -7,7 +7,8 @@ import os
 import multiprocessing as mp
 
 from mmeds.database import Database
-from mmeds.config import get_salt, send_email
+from mmeds.config import get_salt
+from mmeds.mmeds import send_email
 
 
 class Qiime1Analysis:

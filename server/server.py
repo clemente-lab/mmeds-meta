@@ -280,12 +280,13 @@ class MMEDSserver(object):
         cp.session['uploaded'] = False
         cp.session['user'] = username
         # Specify a particular test directory
-        if username == fig.TEST_USER:
-            new_dir = fig.TEST_DIR
+        if fig.TEST_USER in username:
+            ID = username.strip(fig.TEST_USER)
+            new_dir = Path(str(fig.TEST_DIR) + ID)
             cp.log(str(new_dir))
             if not os.path.exists(new_dir):
                 os.makedirs(new_dir)
-                cp.log('Created dir')
+                cp.log('Created dir {}'.format(new_dir))
             cp.session['uploaded'] = True
         else:
             # Create a unique dir for handling files uploaded by this user

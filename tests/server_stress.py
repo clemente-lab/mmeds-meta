@@ -1,6 +1,8 @@
 from locust import TaskSet, task, HttpLocust
 from mmeds.mmeds import insert_html, insert_error
 from mmeds.database import Database
+from mmeds.authentication import add_user
+from pathlib import Path
 from time import sleep
 import mmeds.config as fig
 import urllib3
@@ -13,9 +15,17 @@ class MyTasks(TaskSet):
 
     def on_start(self):
         self.client.verify = False
+
+        self.ID = self.locust.IDs.pop()
+        self.user = fig.TEST_USER + self.ID
+        self.dir = Path(str(fig.TEST_DIR) + self.ID)
+        self.code = fig.TEST_CODE + self.ID
+
+        add_user(self.user, fig.TEST_PASS, fig.TEST_EMAIL)
         self.login()
+
         with open(fig.HTML_DIR / 'select_download.html') as f:
-            page = f.read().format(fig.TEST_USER)
+            page = f.read().format(self.user)
 
         # Get page for succesful download
         for i, f in enumerate(fig.TEST_FILES.keys()):
@@ -24,28 +34,28 @@ class MyTasks(TaskSet):
 
         # Get page for busy download
         with open(fig.HTML_DIR / 'welcome.html') as f:
-            page = f.read().format(user=fig.TEST_USER)
+            page = f.read().format(user=self.user)
         page = insert_error(page, 31, 'Requested study is currently unavailable')
 
         self.download_failure = page
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
+        with Database(self.dir, user='root', owner=self.user) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
-                                                              access_code=fig.TEST_CODE)
+                                                              access_code=self.code)
 
     def on_stop(self):
         self.logout()
 
     def teardown(self):
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
-            db.mongo_clean(fig.TEST_CODE)
+        with Database(self.dir, user='root', owner=self.user) as db:
+            db.mongo_clean(self.code)
 
     def login(self):
         self.client.post('/login',
                          {
-                             'username': fig.TEST_USER,
+                             'username': self.user,
                              'password': fig.TEST_PASS
                          })
 
@@ -54,13 +64,17 @@ class MyTasks(TaskSet):
 
     @task
     def read_root(self):
-        self.client.get('/')
+        with self.client.get('/', catch_response=True) as response:
+            sess = response.headers['Set-Cookie']
+            split = sess.split(';')
+            session_id = split[0].split('=')[1]
+            print(session_id)
 
     @task
     def access_download(self):
-        address = '/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE, fig.TEST_TOOL)
+        address = '/run_analysis?access_code={}&tool={}'.format(self.code, fig.TEST_TOOL)
         self.client.get(address)
-        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        address = '/download_page?access_code={}'.format(self.code)
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_failure
         # The duration of the sleep is set by the end of the
@@ -68,14 +82,14 @@ class MyTasks(TaskSet):
         # Makes sure the wait is the same duration as the spawned process
         sleep(float(fig.TEST_TOOL.split('-')[-1]))
 
-        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        address = '/download_page?access_code={}'.format(self.code)
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_success
 
     @task
     def select_download(self):
         """ Test download selection. """
-        address = '/download_page?access_code={}'.format(fig.TEST_CODE)
+        address = '/download_page?access_code={}'.format(self.code)
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_success
             for download in fig.TEST_FILES.keys():
@@ -95,8 +109,6 @@ class MyTasks(TaskSet):
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
         with self.client.get(address, catch_response=True) as result:
-            print('result 1')
-            print(result.content)
             address = '/validate_qiime'
             with open(fig.TEST_METADATA, 'rb') as f:
                 metadata = f.read()
@@ -115,4 +127,5 @@ class MyTasks(TaskSet):
 
 class MyUser(HttpLocust):
     host = 'https://localhost:{}'.format(fig.PORT)
+    IDs = [str(i) for i in range(50)]
     task_set = MyTasks
