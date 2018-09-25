@@ -1,5 +1,5 @@
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number
+from numpy import std, mean, issubdtype, number, isnan
 from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
@@ -76,7 +76,11 @@ def check_header(header, col_index):
 
 def check_column(raw_column, col_index):
     """ Validate that there are no issues with the provided column of metadata """
-    column = raw_column.astype(type(raw_column[0]))
+    if not pd.isnull(raw_column[0]):
+        column = raw_column.astype(type(raw_column[0]))
+    else:
+        column = raw_column
+
     # Get the header
     header = column.name
 
@@ -102,14 +106,16 @@ def check_column(raw_column, col_index):
 
         # Check for consistent types in the column
         # Pandas stores 'str' as 'object' so check for that explicitly
-        if not column.dtype == type(cell) and\
+        if (is_numeric(cell) and not issubdtype(column.dtype, number)) or\
+           not column.dtype == type(cell) and\
            (not isinstance(cell, str) and 'object' == column.dtype):
             errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
                           (cell, i, col_index))
+        # Check for empty fields
+        if '' == cell or pd.isnull(cell):
+            errors.append(row_col + 'Empty cell value %s' % cell)
+
         if type(cell) == str:
-            # Check for empty fields
-            if '' == cell:
-                errors.append(row_col + 'Empty cell value %s' % cell)
             # Check for trailing or preceding whitespace
             if not cell == cell.strip():
                 errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
@@ -191,7 +197,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     """
     errors = []
     warnings = []
-    df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
+    df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1], na_filter=False)
     all_headers = []
     study_name = None
     # Get the tables in the dataframe while maintaining order
@@ -236,7 +242,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     # Check for missing headers
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     if missing_headers:
-        errors.append('-1\t-1\tMissing requires fields: ' + ', '.join(missing_headers))
+        errors.append('-1\t-1\tMissing required fields: ' + ', '.join(missing_headers))
 
     return errors, warnings, study_name, df['Subjects']
 

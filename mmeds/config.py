@@ -68,6 +68,7 @@ TEST_CODE = 'asdfasdfasdfasdf'
 TEST_DIR = STORAGE_DIR / 'test_dir'
 TEST_METADATA = str(TEST_PATH / 'test_qiime_metadata.csv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'qiime_metadata.csv')
+TEST_METADATA_VALID = str(TEST_PATH / 'validate_qiime_metadata.csv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_TOOL = 'tester-1'
