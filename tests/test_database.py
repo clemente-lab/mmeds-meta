@@ -25,6 +25,33 @@ def format(text, header=None):
     return new_text.get_html_string()
 
 
+def build_sql(table, df, row, c):
+    sql = 'DESCRIBE {}'.format(table)
+    c.execute(sql)
+    result = c.fetchall()
+    all_cols = [res[0] for res in result]
+    columns = list(filter(lambda x: '_id' not in x, all_cols))
+    del columns[columns.index('id' + table)]
+    sql = 'SELECT * FROM {} WHERE '.format(table)
+    # Create an sql query to match the data from this row of the input file
+    for i, column in enumerate(columns):
+        value = df[table][column].iloc[row]
+        if pd.isnull(value):
+            value = 'NULL'
+        if i == 0:
+            sql += ' '
+        else:
+            sql += ' AND '
+        # Add qoutes around string values
+        if type(value) == str:
+            sql += column + ' = "' + value + '"'
+        # Otherwise check the absolute value of the difference is small
+        # so that SQL won't fail to match floats
+        else:
+            sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+    return sql
+
+
 def setup_function(function):
     add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
     with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
@@ -35,7 +62,7 @@ def setup_function(function):
                                                           access_code=fig.TEST_CODE)
 
 
-def test_tables():
+def error_test_tables():
     db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
     c = db.cursor()
     c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
@@ -51,27 +78,25 @@ def test_tables():
             sql = 'DESCRIBE {}'.format(table)
             c.execute(sql)
             result = c.fetchall()
-            columns = list(filter(lambda x: 'id' not in x, [res[0] for res in result]))
-            table_df = df[table]
-            sql = 'SELECT * FROM {} WHERE '.format(table)
-            # Create an sql query to match the data from this row of the input file
-            for i, column in enumerate(columns):
-                value = table_df[column].iloc[row]
-                if pd.isnull(value):
-                    value = 'NULL'
-                if i == 0:
-                    sql += ' '
-                else:
-                    sql += ' AND '
-                # Add qoutes around string values
-                if type(value) == str:
-                    sql += column + ' = "' + value + '"'
-                # Otherwise check the absolute value of the difference is small
-                # so that SQL won't fail to match floats
-                else:
-                    sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-                if table == 'Subjects':
-                    sql += ' AND user_id = ' + str(user_id)
+            all_cols = [res[0] for res in result]
+            foreign_keys = list(filter(lambda x: '_has_' not in x, list(filter(lambda x: '_id' in x, all_cols))))
+            # Remove the table id for the row as
+            # that doesn't matter for the test
+            del foreign_keys[foreign_keys.index('user_id')]
+            # Create the query
+            sql = build_sql(table, df, row, c)
+
+            foreign_tables = [x.split('_id')[1] for x in foreign_keys]
+            print(foreign_keys)
+            print(foreign_tables)
+            for ftable in foreign_tables:
+                fsql = build_sql(ftable, df, row, c)
+                c.execute(fsql)
+                fkey = c.fetchone()[0]
+                sql += ' AND {ftable}_id{ftable}={fkey}'.format(ftable=ftable, fkey=fkey)
+
+            sql += ' AND user_id = ' + str(user_id)
+            print(sql)
             found = c.execute(sql)
             # Assert there exists at least one entry matching this description
             assert found > 0
