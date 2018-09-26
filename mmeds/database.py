@@ -197,12 +197,17 @@ class Database:
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
                 value = df[table][column][j]
+                if pd.isnull(value):
+                    value = 'NULL'
                 if i == 0:
                     sql += ' '
                 else:
                     sql += ' AND '
+                # Add qoutes around string values
                 if type(value) == str:
                     sql += column + ' = "' + value + '"'
+                # Otherwise check the absolute value of the difference is small
+                # so that SQL won't fail to match floats
                 else:
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
             if table == 'Subjects':
@@ -259,7 +264,10 @@ class Database:
                     else:
                         # Otherwise see if the entry already exists
                         try:
-                            line.append(df[table].loc[i][col])
+                            if pd.isnull(df[table].loc[i][col]):
+                                line.append('NULL')
+                            else:
+                                line.append(df[table].loc[i][col])
                         except KeyError:
                             line.append(col)
                 f.write('\t'.join(list(map(str, line))) + '\n')
@@ -322,7 +330,7 @@ class Database:
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
 
-        tables = df.axes[1].levels[0].tolist()
+        tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
 
         # Create file and import data for each regular table

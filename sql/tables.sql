@@ -504,7 +504,6 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Results` (
   `idResults` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Result` VARCHAR(45) NULL DEFAULT NULL,
-  `AdditionalMetaDataRow` INT NULL DEFAULT NULL,
   `RawData_Sample_idSample` INT NOT NULL,
   `ResultsProtocols_idResultsProtocols` INT NOT NULL,
   `ResultsProtocols_ResultsProtocols_idResultsProtocols` INT NOT NULL,
