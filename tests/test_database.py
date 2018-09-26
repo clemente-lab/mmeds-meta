@@ -49,13 +49,13 @@ def test_tables():
     del tables[tables.index('AdditionalMetaData')]
     for row in range(len(df)):
         for table in tables:
-            print(table + '\n')
             sql = 'DESCRIBE {}'.format(table)
             c.execute(sql)
             result = c.fetchall()
             columns = list(filter(lambda x: 'id' not in x, [res[0] for res in result]))
             table_df = df[table]
             sql = 'SELECT * FROM {} WHERE '.format(table)
+            # Create an sql query to match the data from this row of the input file
             for i, column in enumerate(columns):
                 value = table_df[column].iloc[row]
                 if pd.isnull(value):
@@ -76,7 +76,3 @@ def test_tables():
             found = c.execute(sql)
             # Assert there exists at least one entry matching this description
             assert found > 0
-
-
-test_users()
-test_tables()
