@@ -25,8 +25,7 @@ def format(text, header=None):
     return new_text.get_html_string()
 
 
-def test_users():
-
+def setup_function(function):
     add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
     with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
         access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_FAIL,
