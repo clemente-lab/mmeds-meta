@@ -234,7 +234,7 @@ DROP TABLE IF EXISTS `mmeds`.`Illnesses` ;
 CREATE TABLE IF NOT EXISTS `mmeds`.`Illnesses` (
   `idIllnesses` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
-  `Illnesses_name` VARCHAR(45) NULL DEFAULT NULL,
+  `IllnessName` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idIllnesses`))
 ENGINE = InnoDB;
 
@@ -273,10 +273,10 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `mmeds`.`Interventions` ;
 
 CREATE TABLE IF NOT EXISTS `mmeds`.`Interventions` (
-  `idIntervention` INT NOT NULL,
+  `idInterventions` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
-  `Additional_information` VARCHAR(45) NULL DEFAULT NULL,
-  PRIMARY KEY (`idIntervention`))
+  `InterventionName` VARCHAR(45) NULL DEFAULT NULL,
+  PRIMARY KEY (`idInterventions`))
 ENGINE = InnoDB;
 
 
@@ -291,23 +291,22 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Intervention` (
   `StartDate` DATETIME NULL DEFAULT NULL,
   `EndDate` DATETIME NULL DEFAULT NULL,
   `Subjects_idSubjects` INT NOT NULL,
-  `Interventions_idIntervention` INT NOT NULL,
-  PRIMARY KEY (`idIntervention`, `Subjects_idSubjects`, `Interventions_idIntervention`),
+  `Interventions_idInterventions` INT NOT NULL,
+  PRIMARY KEY (`idIntervention`, `Subjects_idSubjects`, `Interventions_idInterventions`),
   INDEX `fk_Treatment_Subjects1_idx` (`Subjects_idSubjects` ASC),
-  INDEX `fk_Intervention_Interventions1_idx` (`Interventions_idIntervention` ASC),
+  INDEX `fk_Intervention_Interventions1_idx` (`Interventions_idInterventions` ASC),
   CONSTRAINT `fk_Treatment_Subjects1`
     FOREIGN KEY (`Subjects_idSubjects`)
     REFERENCES `mmeds`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Intervention_Interventions1`
-    FOREIGN KEY (`Interventions_idIntervention`)
-    REFERENCES `mmeds`.`Interventions` (`idIntervention`)
+    FOREIGN KEY (`Interventions_idInterventions`)
+    REFERENCES `mmeds`.`Interventions` (`idInterventions`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 COMMENT = 'Reduce to intervention which links to interventions table. Some interventions are treatments';
-
 
 -- -----------------------------------------------------
 -- Table `mmeds`.`Aliquot`
@@ -533,7 +532,7 @@ DROP TABLE IF EXISTS `mmeds`.`Genotypes` ;
 CREATE TABLE IF NOT EXISTS `mmeds`.`Genotypes` (
   `idGenotypes` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
-  `Genotypescol` VARCHAR(45) NULL DEFAULT NULL,
+  `Genotype` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idGenotypes`))
 ENGINE = InnoDB;
 
