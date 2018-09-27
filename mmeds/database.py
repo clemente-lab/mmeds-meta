@@ -290,10 +290,11 @@ class Database:
             # Only fill in tables where both foreign keys exist
             try:
                 # Get the appropriate foreign keys from the IDs dict
-                for key in self.IDs[columns[0]].keys():
-                    f_key1 = self.IDs[columns[0]][key]
-                    f_key2 = self.IDs[columns[1]][key]
-                    key_pairs.append(str(f_key1) + '\t' + str(f_key2))
+                for column in columns:
+                    keys_list = []
+                    for key in self.IDs[column].keys():
+                        keys_list.append(str(self.IDs[column][key]))
+                    key_pairs.append('\t'.join(keys_list))
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
@@ -315,7 +316,8 @@ class Database:
                 self.cursor.execute(sql)
                 # Commit the inserted data
                 self.db.commit()
-            except KeyError:
+            except KeyError as e:
+                raise e
                 pass
 
     def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):

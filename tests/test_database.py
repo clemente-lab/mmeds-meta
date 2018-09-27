@@ -35,9 +35,11 @@ def build_sql(table, df, row, c):
                                            all_cols))))
     # Remove the table id for the row as
     # that doesn't matter for the test
-    del foreign_keys[foreign_keys.index('user_id')]
+    if 'user_id' in foreign_keys:
+        del foreign_keys[foreign_keys.index('user_id')]
     columns = list(filter(lambda x: '_id' not in x, all_cols))
-    del columns[columns.index('id' + table)]
+    if 'id' + table in columns:
+        del columns[columns.index('id' + table)]
     sql = 'SELECT * FROM {} WHERE '.format(table)
     # Create an sql query to match the data from this row of the input file
     for i, column in enumerate(columns):
@@ -56,13 +58,19 @@ def build_sql(table, df, row, c):
         else:
             sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
 
+    # Collect the matching foreign keys based on the infromation
+    # in the current row of the data frame
     for fkey in foreign_keys:
         ftable = fkey.split('_id')[1]
+        # Recursively build the sql call
         fsql = build_sql(ftable, df, row, c)
         c.execute(fsql)
         fresults = c.fetchall()
         fresult = fresults[0][0]
-        sql += ' AND {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
+        if '=' in sql:
+            sql += ' AND {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
+        else:
+            sql += ' {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
 
     return sql
 
@@ -103,4 +111,14 @@ def error_test_tables():
 
 
 def test_junction_tables():
-    pass
+    db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
+    c = db.cursor()
+    df = pd.read_csv(fig.TEST_METADATA_FAIL, header=[0, 1], sep='\t')
+    c.execute('SHOW TABLES')
+    # Get the junction tables
+    jtables = [x[0] for x in c.fetchall() if 'has' in x[0]]
+    for row in range(len(df)):
+        for jtable in jtables:
+            sql = build_sql(jtable, df, row, c)
+            jresult = c.execute(sql)
+            assert jresult > 0
