@@ -30,6 +30,12 @@ def build_sql(table, df, row, c):
     c.execute(sql)
     result = c.fetchall()
     all_cols = [res[0] for res in result]
+    foreign_keys = list(filter(lambda x: '_has_' not in x,
+                               list(filter(lambda x: '_id' in x,
+                                           all_cols))))
+    # Remove the table id for the row as
+    # that doesn't matter for the test
+    del foreign_keys[foreign_keys.index('user_id')]
     columns = list(filter(lambda x: '_id' not in x, all_cols))
     del columns[columns.index('id' + table)]
     sql = 'SELECT * FROM {} WHERE '.format(table)
@@ -49,6 +55,15 @@ def build_sql(table, df, row, c):
         # so that SQL won't fail to match floats
         else:
             sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+
+    for fkey in foreign_keys:
+        ftable = fkey.split('_id')[1]
+        fsql = build_sql(ftable, df, row, c)
+        c.execute(fsql)
+        fresults = c.fetchall()
+        fresult = fresults[0][0]
+        sql += ' AND {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
+
     return sql
 
 
@@ -75,28 +90,17 @@ def error_test_tables():
     del tables[tables.index('AdditionalMetaData')]
     for row in range(len(df)):
         for table in tables:
-            sql = 'DESCRIBE {}'.format(table)
-            c.execute(sql)
-            result = c.fetchall()
-            all_cols = [res[0] for res in result]
-            foreign_keys = list(filter(lambda x: '_has_' not in x, list(filter(lambda x: '_id' in x, all_cols))))
-            # Remove the table id for the row as
-            # that doesn't matter for the test
-            del foreign_keys[foreign_keys.index('user_id')]
             # Create the query
             sql = build_sql(table, df, row, c)
-
-            foreign_tables = [x.split('_id')[1] for x in foreign_keys]
-            print(foreign_keys)
-            print(foreign_tables)
-            for ftable in foreign_tables:
-                fsql = build_sql(ftable, df, row, c)
-                c.execute(fsql)
-                fkey = c.fetchone()[0]
-                sql += ' AND {ftable}_id{ftable}={fkey}'.format(ftable=ftable, fkey=fkey)
-
             sql += ' AND user_id = ' + str(user_id)
-            print(sql)
             found = c.execute(sql)
             # Assert there exists at least one entry matching this description
-            assert found > 0
+            try:
+                assert found > 0
+            except AssertionError as e:
+                print(c.fetchall())
+                raise e
+
+
+def test_junction_tables():
+    pass
