@@ -50,6 +50,10 @@ class Database:
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
+        if user == 'mmeds_user':
+            sql = 'SELECT set_connection_auth("{}")'.format(SECURITY_TOKEN)
+            self.cursor.execute(sql)
+            self.db.commit()
         self.owner = owner
         if owner is None:
             self.user_id = 0

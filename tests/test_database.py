@@ -4,6 +4,7 @@ from prettytable import PrettyTable, ALL
 import mmeds.config as fig
 import pymysql as pms
 import pandas as pd
+import random
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
 # Validating each value if it is successfully saved to the database.
@@ -77,6 +78,7 @@ def build_sql(table, df, row, c):
 
 def setup_function(function):
     add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
+    add_user(fig.TEST_USER + '0', fig.TEST_PASS, fig.TEST_EMAIL)
     with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
         access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_FAIL,
                                                           'qiime',
@@ -85,7 +87,7 @@ def setup_function(function):
                                                           access_code=fig.TEST_CODE)
 
 
-def error_test_tables():
+def test_tables():
     db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
     c = db.cursor()
     c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
@@ -123,3 +125,52 @@ def test_junction_tables():
             jresult = c.execute(sql)
             # Ensure an entry exists for this value
             assert jresult > 0
+
+
+def error_test_modify_tables():
+    db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
+    c = db.cursor()
+    c.execute('SHOW TABLES')
+    tables = [x[0] for x in c.fetchall() if 'protected' not in x[0]]
+    del tables[tables.index('session')]
+    del tables[tables.index('security_token')]
+    del tables[tables.index('user')]
+    for table in tables:
+        sql = 'DESCRIBE {}'.format(table)
+        c.execute(sql)
+        result = c.fetchall()
+        columns = [res[0] for res in result]
+
+        sql = 'SELECT * FROM {}'.format(table)
+        c.execute(sql)
+        rows = c.fetchall()
+        # Pick a row at random
+        row = random.choice(rows)
+
+        sql = 'DELETE FROM {} WHERE '.format(table)
+        for i, column in enumerate(columns):
+            value = row[i]
+            if i == 0:
+                sql += ' '
+            else:
+                sql += ' AND '
+            # Add qoutes around string values
+            if type(value) == str:
+                sql += column + ' = "' + value + '"'
+            # Otherwise check the absolute value of the difference is small
+            # so that SQL won't fail to match floats
+            else:
+                sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+        print(sql)
+        c.execute(sql)
+
+
+def error_test_table_protection():
+    db = pms.connect('localhost', 'mmeds_user', 'password', 'mmeds', local_infile=True)
+    c = db.cursor()
+    c.execute('SHOW TABLES')
+    protected_tables = [x[0] for x in c.fetchall() if 'protected' in x[0]]
+    tables = [x.split('_')[-1] for x in protected_tables]
+    for table, ptable in zip(tables, protected_tables):
+        print(ptable)
+        pass
