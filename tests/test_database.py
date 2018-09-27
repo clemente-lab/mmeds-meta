@@ -121,4 +121,5 @@ def test_junction_tables():
         for jtable in jtables:
             sql = build_sql(jtable, df, row, c)
             jresult = c.execute(sql)
+            # Ensure an entry exists for this value
             assert jresult > 0

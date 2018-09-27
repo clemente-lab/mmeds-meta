@@ -290,11 +290,11 @@ class Database:
             # Only fill in tables where both foreign keys exist
             try:
                 # Get the appropriate foreign keys from the IDs dict
-                for column in columns:
+                for key in self.IDs[columns[0]].keys():
                     keys_list = []
-                    for key in self.IDs[column].keys():
+                    for column in columns:
                         keys_list.append(str(self.IDs[column][key]))
-                    key_pairs.append('\t'.join(keys_list))
+                    key_pairs.append('\t'.join(keys_list) + '\n')
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
