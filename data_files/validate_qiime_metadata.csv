@@ -1,0 +1,34 @@
+Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Subjects
+Non-standard1	MixedTypes	Non-standard2	StudyName	Whitespace	Stddev	Catagorical	EmptyCell1	EmptyCell2	GoodString	GoodNumber	BadBarcodes	GoodBarcodes	GoodBarcodes	SomeSubs
+n.a.	1234	N/A	Good_Study	Illuminate 	100	gut	100	asdf	asdf	1	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate   	100	gut			asdf	2	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	  Limun	101	gut		asdf	asdf	3	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	102	gut		asdf	asdf	4	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	103	gut		asdf	asdf	5	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	104	gut		asdf	asdf	6	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	105	gut		asdf	asdf	7	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	106	gut	106	asdf	asdf	8	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	107	left palm	107	asdf	asdf	9	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illum   inate	108	left palm	108	asdf	asdf	10	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	N/A	Good_Study	Illuminate	109	left palm	109	asdf	asdf	11	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	100	left palm	100	asdf	asdf	12	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	100	left palm	100	asdf	asdf	13	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	100	left palm	100	asdf	asdf	14	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	1000	left palm	100	asdf	asdf	15	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	1234	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	100	right palm	100	asdf	asdf	16	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+n.a.	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Good_Study	Illum   inate	100	right palm	100	asdf	asdf	17	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	100	right palm	100	asdf	asdf	18	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	101	right palm	101	asdf	asdf	19	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	102	right palm	102	asdf	asdf	20	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Good_Study	Illuminate	103	right palm	103	asdf	asdf	21	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	104	right palm	104	asdf	asdf	22	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	105	right palm	105	asdf	asdf	23	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	106	right palm	106	asdf	asdf	24	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	107	tongue	107	asdf	asdf	25	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	108	tongue	108	asdf	asdf	26	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	109	tongue	109	asdf	asdf	27	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	100	tongue	100	asdf	asdf	28	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	100	tongue	100	asdf	asdf	29	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	100	tongue	100	asdf	asdf	30	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	100	tongue	100	asdf	asdf	31	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary
+Chuck Schumar	d.s.t.wallach@gmail.com	GTGCCAGCMGCCGCGGTAA	Bad_Study	Illuminate	100	tuber	100	asdf	asdf	32	GTGCCAGCMGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	Gary

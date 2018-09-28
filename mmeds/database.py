@@ -5,13 +5,15 @@ import pandas as pd
 import os
 import shutil
 import pickle
+import warnings
 
 from datetime import datetime
-from pathlib import WindowsPath, Path
+from pathlib import WindowsPath
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, get_salt, send_email
-from mmeds.error import MissingUploadError
+from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
+from mmeds.error import TableAccessError, MissingUploadError
+from mmeds.mmeds import send_email
 
 DAYS = 13
 
@@ -30,16 +32,17 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True):
+    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
         """
+        warnings.simplefilter('ignore')
         try:
             if user == 'mmeds_user':
-                self.db = pms.connect('localhost', user, 'password', database, local_infile=True)
+                self.db = pms.connect('localhost', user, 'password', database, max_allowed_packet=2048000000, local_infile=True)
             else:
-                self.db = pms.connect('localhost', user, '', database, local_infile=True)
+                self.db = pms.connect('localhost', user, '', database, max_allowed_packet=2048000000, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
@@ -47,6 +50,10 @@ class Database:
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
+        if user == 'mmeds_user':
+            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, SECURITY_TOKEN)
+            self.cursor.execute(sql)
+            self.db.commit()
         self.owner = owner
         if owner is None:
             self.user_id = 0
@@ -58,22 +65,20 @@ class Database:
             self.user_id = int(result[0])
             self.email = result[1]
 
-        self.check_file = Path(os.getcwd()) / 'data' / 'last_check.dat'
+        self.check_file = STORAGE_DIR / 'last_check.dat'
 
-        # Do housekeeping for removing old files
-        if os.path.isfile(self.check_file):
-            with open(self.check_file, 'rb') as f:
-                last_check = pickle.load(f)
-            if (datetime.utcnow() - last_check).days > DAYS:
-                check = True
+        if not testing:
+            # Do housekeeping for removing old files
+            if os.path.isfile(self.check_file):
+                with open(self.check_file, 'rb') as f:
+                    last_check = pickle.load(f)
+                if (datetime.utcnow() - last_check).days > DAYS:
+                    self.clean()
+                    with open(self.check_file, 'wb') as f:
+                        pickle.dump(datetime.utcnow(), f)
             else:
-                check = False
-        else:
-            check = True
-        if check:
-            self.clean()
-            with open(self.check_file, 'wb') as f:
-                pickle.dump(datetime.utcnow(), f)
+                with open(self.check_file, 'wb+') as f:
+                    pickle.dump(datetime.utcnow(), f)
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
@@ -128,13 +133,19 @@ class Database:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
             header = None
-            if 'from' in sql:
+            if 'from' in sql.casefold():
                 parsed = sql.split(' ')
-                index = parsed.index('from')
+                index = list(map(lambda x: x.casefold(), parsed)).index('from')
                 table = parsed[index + 1]
                 self.cursor.execute('describe ' + table)
                 header = [x[0] for x in self.cursor.fetchall()]
             return data, header
+        except pms.err.OperationalError as e:
+            # If it's a select command denied error
+            if e.args[0] == 1142:
+                raise TableAccessError(e.args[1])
+            else:
+                raise e
         except pms.err.ProgrammingError as e:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
@@ -196,12 +207,17 @@ class Database:
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
                 value = df[table][column][j]
+                if pd.isnull(value):
+                    value = 'NULL'
                 if i == 0:
                     sql += ' '
                 else:
                     sql += ' AND '
+                # Add qoutes around string values
                 if type(value) == str:
                     sql += column + ' = "' + value + '"'
+                # Otherwise check the absolute value of the difference is small
+                # so that SQL won't fail to match floats
                 else:
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
             if table == 'Subjects':
@@ -258,7 +274,10 @@ class Database:
                     else:
                         # Otherwise see if the entry already exists
                         try:
-                            line.append(df[table].loc[i][col])
+                            if pd.isnull(df[table].loc[i][col]):
+                                line.append('NULL')
+                            else:
+                                line.append(df[table].loc[i][col])
                         except KeyError:
                             line.append(col)
                 f.write('\t'.join(list(map(str, line))) + '\n')
@@ -282,9 +301,10 @@ class Database:
             try:
                 # Get the appropriate foreign keys from the IDs dict
                 for key in self.IDs[columns[0]].keys():
-                    f_key1 = self.IDs[columns[0]][key]
-                    f_key2 = self.IDs[columns[1]][key]
-                    key_pairs.append(str(f_key1) + '\t' + str(f_key2))
+                    keys_list = []
+                    for column in columns:
+                        keys_list.append(str(self.IDs[column][key]))
+                    key_pairs.append('\t'.join(keys_list) + '\n')
 
                 # Remove any repeated pairs of foreign keys
                 unique_pairs = list(set(key_pairs))
@@ -306,7 +326,8 @@ class Database:
                 self.cursor.execute(sql)
                 # Commit the inserted data
                 self.db.commit()
-            except KeyError:
+            except KeyError as e:
+                raise e
                 pass
 
     def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):
@@ -320,8 +341,11 @@ class Database:
         df = pd.read_csv(metadata, sep=delimiter, header=[0, 1])
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
+        sql = 'SET FOREIGN_KEY_CHECKS=0'
+        self.cursor.execute(sql)
+        self.db.commit()
 
-        tables = df.axes[1].levels[0].tolist()
+        tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
 
         # Create file and import data for each regular table
@@ -368,13 +392,64 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
+    def remove_user(self, username):
+        """ Remove a user from the database. """
+        sql = 'DELETE FROM mmeds.user WHERE username="{}"'.format(username)
+        self.cursor.execute(sql)
+        self.db.commit()
+
+    def clear_user_data(self, username):
+        """
+        Remove all data in the database belonging to username.
+
+        DOES NOT WORK
+
+        """
+        return
+        sql = 'SELECT user_id FROM mmeds.user where username="{}"'.format(username)
+        self.cursor.execute(sql)
+        user_id = int(self.cursor.fetchone()[0])
+        print(user_id)
+
+        self.cursor.execute('SHOW TABLES')
+        tables = [x[0] for x in self.cursor.fetchall()]
+        # Skip the user table
+        tables.remove('user')
+        r_tables = []
+        while True:
+            for table in tables:
+                try:
+                    sql = 'DESCRIBE {}'.format(table)
+                    self.cursor.execute(sql)
+                    columns = self.cursor.fetchall()
+                    labels = [col[0] for col in columns]
+                    if 'user_id' in labels:
+                        sql = 'DELETE FROM {} WHERE user_id={}'.format(table, user_id)
+                        print(sql)
+                        self.cursor.execute(sql)
+                        self.db.commit()
+                    else:
+                        continue
+                except pms.err.IntegrityError:
+                    r_tables.append(table)
+            if len(r_tables) == 0:
+                break
+            else:
+                tables = r_tables
+                r_tables = []
+
     ########################################
     ##############  MongoDB  ###############
     ########################################
 
     def mongo_import(self, study_name, study_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
-        access_code = get_salt(50)
+        # If an access_code is provided use that
+        # For testing purposes
+        if kwargs.get('access_code') is not None:
+            access_code = kwargs.get('access_code')
+        else:
+            access_code = get_salt(50)
         # Create the document
         mdata = MetaData(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
@@ -391,6 +466,16 @@ class Database:
         # Save the document
         mdata.save()
         return access_code
+
+    def mongo_clean(self, access_code):
+        """
+        Delete all mongo objects with the given access_code.
+        It will not delete the files associated with those objects.
+        """
+
+        obs = MetaData.object(access_code=access_code)
+        for ob in obs:
+            ob.delete()
 
     def modify_data(self, new_data, access_code):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
@@ -484,11 +569,13 @@ class Database:
     def get_mongo_files(self, access_code):
         """ Return the three files necessary for qiime analysis. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
-        mdata.last_accessed = datetime.utcnow()
 
         # Raise an error if the upload does not exist
         if mdata is None:
             raise MissingUploadError('No data exist for this access code')
+
+        mdata.last_accessed = datetime.utcnow()
+        mdata.save()
 
         return mdata.files, mdata.path
 

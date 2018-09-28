@@ -1,28 +1,44 @@
 from secrets import choice
 from string import digits, ascii_uppercase, ascii_lowercase
-from smtplib import SMTP
-from email.message import EmailMessage
 from pathlib import Path
-from cherrypy.lib.sessions import FileSession
+import hashlib
 # Add some notes here
 # Add some more notes here
+
+UPLOADED_FP = 'uploaded_file'
+ERROR_FP = 'error_log.csv'
+
+# The path changes depening on where this is being called
+# So that it will work with testing and the server
+HTML_DIR = Path('../html/').resolve()
+if not HTML_DIR.is_dir():
+    HTML_DIR = Path('./html/').resolve()
+STORAGE_DIR = Path('./data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('../server/data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('./server/data').resolve()
+
+SECURITY_TOKEN = 'some_security_token'
+CONTACT_EMAIL = 'david.wallach@mssm.edu'
+MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+PORT = 8080
+
 
 CONFIG = {
     'global': {
         'server.socket_host': '0.0.0.0',
-        'log.error_file': 'site.log',
+        'server.socket_port': PORT,
+        'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'server.ssl_module': 'builtin',
-        'server.ssl_certificate': '../server/data/cert.pem',
-        'server.ssl_private_key': '../server/data/key.pem',
+        'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
+        'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'request.scheme': 'https',
         'secureheaders.on': True,
         'tools.sessions.on': True,
-        #'tools.sessions.storage_class': FileSession,
-        #'tools.sessions.storage_path': Path.cwd() / 'session',
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
         'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
-        'request.scheme': 'https'
     },
     '/CSS': {
         'tools.staticdir.on': True,
@@ -35,12 +51,42 @@ CONFIG = {
     }
 }
 
-UPLOADED_FP = 'uploaded_file'
-ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data'
-SECURITY_TOKEN = 'some_security_token'
-CONTACT_EMAIL = 'david.wallach@mssm.edu'
-MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+
+###################
+##### Testing #####
+###################
+
+TEST_PATH = Path('./data_files/').resolve()
+if not TEST_PATH.is_dir():
+    TEST_PATH = Path('../data_files/').resolve()
+
+TEST_PASS = 'testpass'
+TEST_USER = 'testuser'
+TEST_USER_0 = 'testuser0'
+TEST_EMAIL = 'mmeds.tester@gmail.com'
+TEST_EMAIL_PASS = 'testmmeds1234'
+TEST_CODE = 'asdfasdfasdfasdf'
+TEST_DIR = STORAGE_DIR / 'test_dir'
+TEST_DIR_0 = STORAGE_DIR / 'test_dir0'
+TEST_METADATA = str(TEST_PATH / 'test_qiime_metadata.csv')
+TEST_METADATA_FAIL = str(TEST_PATH / 'qiime_metadata.csv')
+TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test0_metadata.csv')
+TEST_METADATA_VALID = str(TEST_PATH / 'validate_qiime_metadata.csv')
+TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
+TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
+TEST_TOOL = 'tester-1'
+TEST_FILES = {
+    'reads': TEST_READS,
+    'barcodes': TEST_BARCODES,
+    'metadata': TEST_METADATA
+}
+TEST_CHECKS = {}
+for key in TEST_FILES.keys():
+    hash1 = hashlib.md5()
+    with open(TEST_FILES[key], 'rb') as f:
+        contents = f.read()
+    hash1.update(contents)
+    TEST_CHECKS[key] = hash1.digest()
 
 
 TABLE_ORDER = [
@@ -107,41 +153,3 @@ def get_salt(length=10, numeric=False):
     else:
         listy = digits + ascii_uppercase + ascii_lowercase
     return ''.join(choice(listy) for i in range(length))
-
-
-def send_email(toaddr, user, message='upload', **kwargs):
-    """ Sends a confirmation email to addess containing user and code. """
-    msg = EmailMessage()
-    msg['From'] = MMEDS_EMAIL
-    msg['To'] = toaddr
-    if message == 'upload':
-        body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
-               'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
-               'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['code']) +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'New data uploaded to mmeds database'
-    elif message == 'reset':
-        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
-               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'Password Reset'
-    elif message == 'change':
-        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
-               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'Password Change'
-    elif message == 'analysis':
-        body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(kwargs['analysis_type'],
-                                                                                         toaddr,
-                                                                                         kwargs['study_name']) +\
-               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'Analysis Complete'
-
-    msg.set_content(body)
-
-    server = SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(MMEDS_EMAIL, 'mmeds_server')
-    server.send_message(msg)
-    server.quit()

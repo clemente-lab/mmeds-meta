@@ -1,7 +1,9 @@
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number
-from mmeds.config import STORAGE_DIR, get_salt
+from numpy import std, mean, issubdtype, number, isnan
 from os.path import join, exists
+from email.message import EmailMessage
+from smtplib import SMTP
+import mmeds.config as fig
 import pandas as pd
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -74,7 +76,11 @@ def check_header(header, col_index):
 
 def check_column(raw_column, col_index):
     """ Validate that there are no issues with the provided column of metadata """
-    column = raw_column.astype(type(raw_column[0]))
+    if not pd.isnull(raw_column[0]):
+        column = raw_column.astype(type(raw_column[0]))
+    else:
+        column = raw_column
+
     # Get the header
     header = column.name
 
@@ -100,23 +106,36 @@ def check_column(raw_column, col_index):
 
         # Check for consistent types in the column
         # Pandas stores 'str' as 'object' so check for that explicitly
-        if not column.dtype == type(cell) and\
+        if (is_numeric(cell) and not issubdtype(column.dtype, number)) or\
+           not column.dtype == type(cell) and\
            (not isinstance(cell, str) and 'object' == column.dtype):
             errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
                           (cell, i, col_index))
+        # Check for empty fields
+        if '' == cell or pd.isnull(cell):
+            errors.append(row_col + 'Empty cell value %s' % cell)
+
         if type(cell) == str:
-            # Check for empty fields
-            if '' == cell:
-                errors.append(row_col + 'Empty cell value %s' % cell)
             # Check for trailing or preceding whitespace
             if not cell == cell.strip():
                 errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
                               (i + 1, col_index, cell, i + 1))
+    # Check that values fall within standard deviation
     if issubdtype(column.dtype, number):
         for i, cell in enumerate(column):
             if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
                 warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in column %d' %
                                 (i + 1, col_index, cell, i + 1))
+    # Check for catagorical data
+    elif 'object' == column.dtype:
+        counts = column.value_counts()
+        stddev = std(counts.values)
+        avg = mean(counts.values)
+        for val, count in counts.iteritems():
+            if count < avg - stddev and count < 3:
+                warnings.append('%d\t%d\tPotential catagorical data detected. Value %s may be in error, only %d found.' %
+                                (-1, col_index, val, count))
+
     return errors, warnings
 
 
@@ -178,7 +197,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     """
     errors = []
     warnings = []
-    df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1])
+    df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1], na_filter=False)
     all_headers = []
     study_name = None
     # Get the tables in the dataframe while maintaining order
@@ -223,7 +242,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     # Check for missing headers
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     if missing_headers:
-        errors.append('-1\t-1\tMissing requires fields: ' + ', '.join(missing_headers))
+        errors.append('-1\t-1\tMissing required fields: ' + ', '.join(missing_headers))
 
     return errors, warnings, study_name, df['Subjects']
 
@@ -244,18 +263,18 @@ def is_numeric(s):
     return False
 
 
-def create_local_copy(fp, filename, path=STORAGE_DIR):
+def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
     # Create the filename
-    file_copy = join(path, '_'.join(['copy', get_salt(5), filename]))
+    file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
     # Ensure there is not already a file with the same name
     while exists(file_copy):
-        file_copy = join(path, '_'.join(['copy', get_salt(5), filename]))
+        file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
         while True:
-            data = fp.read(8192)
+            data = fp.read()
             nf.write(data)
             if not data:
                 break
@@ -324,3 +343,41 @@ def generate_error_html(file_fp, errors, warnings):
     html += '</table>\n'
     html += '</html>\n'
     return html
+
+
+def send_email(toaddr, user, message='upload', **kwargs):
+    """ Sends a confirmation email to addess containing user and code. """
+    msg = EmailMessage()
+    msg['From'] = fig.MMEDS_EMAIL
+    msg['To'] = toaddr
+    if message == 'upload':
+        body = 'Hello {email},\nthe user {user} uploaded data to the mmeds database server.\n'.format(email=toaddr, user=user) +\
+               'In order to gain access to this data without the password to\n{user} you must provide '.format(user=user) +\
+               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n'.format(code=kwargs['code']) +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'.format(cemail=fig.CONTACT_EMAIL)
+        msg['Subject'] = 'New data uploaded to mmeds database'
+    elif message == 'reset':
+        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
+               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Password Reset'
+    elif message == 'change':
+        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Password Change'
+    elif message == 'analysis':
+        body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(toaddr,
+                                                                                         kwargs['analysis_type'],
+                                                                                         kwargs['study_name']) +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Analysis Complete'
+
+    msg.set_content(body)
+
+    server = SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(fig.MMEDS_EMAIL, 'mmeds_server')
+    server.send_message(msg)
+    server.quit()
