@@ -37,7 +37,13 @@ def insert_warning(page, line_number, error_message):
 
 
 def insert_html(page, line_number, html):
-    """ Inserts additional HTML into the provided HTML page at the specified line number. """
+    """
+    Inserts additional HTML into the provided HTML page at the specified line number.
+    =================================================================================
+    :page: The page (a string) to insert the new HTML into
+    :line_number: The line to insert the HTML
+    :html: The HTML to insert
+    """
     lines = page.split('\n')
     new_lines = lines[:line_number] + [html] + lines[line_number:]
     new_page = '\n'.join(new_lines)
@@ -181,7 +187,11 @@ def check_barcode_chars(column, col_index):
 
 
 def check_duplicate_cols(headers):
-    """ Returns true if there are any duplicate headers. """
+    """
+    Returns true if there are any duplicate headers.
+    ================================================
+    :headers: The headers for each column in the metadata file
+    """
     dups = []
     for header in headers:
         if '.1' in header:
@@ -248,7 +258,11 @@ def validate_mapping_file(file_fp, delimiter='\t'):
 
 
 def is_numeric(s):
-    """ Check if the provided string is a number. """
+    """
+    Check if the provided string is a number.
+    =========================================
+    :s: The string to check
+    """
     try:
         float(s)
         return True
@@ -285,6 +299,10 @@ def generate_error_html(file_fp, errors, warnings):
     """
     Generates an html page marking the errors and warnings found in
     the given metadata file.
+    ===============================================================
+    :file_fp: The destination the error file will be written to
+    :errors: A list of the errors the metadata file produced
+    :warnings: A list of the warnings the metadata file produced
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1])
     html = '<!DOCTYPE html>\n<html>\n'
@@ -346,7 +364,14 @@ def generate_error_html(file_fp, errors, warnings):
 
 
 def send_email(toaddr, user, message='upload', **kwargs):
-    """ Sends a confirmation email to addess containing user and code. """
+    """
+    Sends a confirmation email to addess containing user and code.
+    ==============================================================
+    :toaddr: The address to send the email to
+    :user: The user account that toaddr belongs to
+    :message: The type of message to send
+    :kwargs: Any information that is specific to a paricular message type
+    """
     msg = EmailMessage()
     msg['From'] = fig.MMEDS_EMAIL
     msg['To'] = toaddr
