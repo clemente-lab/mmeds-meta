@@ -6,7 +6,19 @@
         <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
     </head>
     <body>
-        <h2>Results</h3>
+      <ul class='topbar'>
+        <li>
+          <a class='log' href='home'>
+            <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo'/>
+          </a>
+        </li>
+        <li> <a href='upload_page'> Upload Data </a> </li>
+        <li> <a href='analysis_page'> Run Analysis </a> </li>
+        <li> <a href='query_page'> Run Queries </a> </li>
+        <li> <a href='logout'> Logout </a> </li>
+      </ul>
+      <div class='inner'>
+        <h3>Results</h3>
         Uploaded: {filename} <br />
         Message: {output} <br />
 
@@ -16,5 +28,6 @@
         <a href='download_log'>Download</a>
         <h3>Download corrected</h3>
         <a href='download_corrected'>Download</a>
+        </div>
     </body>
 </html>

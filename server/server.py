@@ -32,7 +32,13 @@ class MMEDSserver(object):
     @cp.expose
     def index(self):
         """ Home page of the application """
-        return open(HTML_DIR / 'index.html')
+        if cp.session.get('user'):
+            with open(HTML_DIR / 'welcome.html') as f:
+                page = f.read().format(user=cp.session['user'])
+        else:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
 
     ########################################
     #############  Validation  #############
@@ -309,6 +315,13 @@ class MMEDSserver(object):
             with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
             return page.format(user=username)
+
+    @cp.expose
+    def home(self):
+        """ Return the home page of the server for a user already logged in. """
+        with open(HTML_DIR / 'welcome.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
 
     @cp.expose
     def logout(self):
