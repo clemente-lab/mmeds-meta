@@ -1,25 +1,37 @@
 <!DOCTYPE html>
 <html>
-    <link rel='stylesheet' href='/CSS/stylesheet.css'/>
-    <head>
-        <title>Warnings</title>
-        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
-    </head>
-    <body>
-        <h1> <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo' width='210em' height='100em'> </h1>
-        <p>
-            <h3>The metadata uploaded has produced the following warnings</h3>
-            <h3>Do you wish to proceed?</h3>
-            <p>
-                <form action='proceed_with_warning' method='post'>
-                    <button type='submit' method='post'>Yes</button>
-                </form>
-            </p>
-            <p>
-                <form action='retry_upload' method='post'>
-                    <button type='submit' method='post'>No</button>
-                </form>
-            </p>
-        </p>
-    </body>
+  <link rel='stylesheet' href='/CSS/stylesheet.css'/>
+  <head>
+    <title>Warnings</title>
+    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+  </head>
+  <body>
+      <ul class='topbar'>
+        <li>
+          <a class='log' href='home'>
+            <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo'/>
+          </a>
+        </li>
+        <li> <a href='upload_page'> Upload Data </a> </li>
+        <li> <a href='analysis_page'> Run Analysis </a> </li>
+        <li> <a href='query_page'> Run Queries </a> </li>
+        <li> <a href='logout'> Logout </a> </li>
+      </ul>
+      <div class='inner'>
+    <p>
+      <h3>The metadata uploaded has produced the following warnings</h3>
+      <h3>Do you wish to proceed?</h3>
+      <p>
+        <form action='proceed_with_warning' method='post'>
+          <button type='submit' method='post'>Yes</button>
+        </form>
+      </p>
+      <p>
+        <form action='retry_upload' method='post'>
+          <button type='submit' method='post'>No</button>
+        </form>
+      </p>
+    </p>
+    </div>
+  </body>
 </html>

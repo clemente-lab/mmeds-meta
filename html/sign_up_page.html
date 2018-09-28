@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html>
-    <link rel='stylesheet' href='/CSS/stylesheet.css'>
-    <head>
-        <title>Sign Up</title>
-        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
-    </head>
-    <body>
-        <h1>
-            <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo' width='210em' height='100em'>
-            <br>
-            Sign Up
-        </h1>
-        <form action='sign_up' method='post' enctype='multipart/form-data'>
-            <p> Username <br> <input type="text" placeholder="Enter Username" name="username" required> </p>
-            <p> Email <br> <input type='email' name='email' placeholder='Enter Email' required/> </p>
-            <p> Password <br> <input type="password" placeholder="Enter Password" name="password1" required> </p>
-            <p> Reenter Password <br> <input type="password" placeholder="Enter Password" name="password2" required> </p>
-            <button type="submit">Sign Up</button>
-        </form>
-    </body>
+  <link rel='stylesheet' href='/CSS/stylesheet.css'>
+  <head>
+    <title>Sign Up</title>
+    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+  </head>
+  <body>
+    <ul class='topbar'>
+      <li>
+        <a class='log' href='home'>
+          <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo'/>
+        </a>
+      </li>
+      <li> <a href='upload_page'> Upload Data </a> </li>
+      <li> <a href='analysis_page'> Run Analysis </a> </li>
+      <li> <a href='query_page'> Run Queries </a> </li>
+      <li> <a href='logout'> Logout </a> </li>
+    </ul>
+    <div class='inner'>
+      <h2>
+        Sign Up
+      </h2>
+      <form action='sign_up' method='post' enctype='multipart/form-data'>
+        <p> Username <br> <input type="text" placeholder="Enter Username" name="username" required> </p>
+        <p> Email <br> <input type='email' name='email' placeholder='Enter Email' required/> </p>
+        <p> Password <br> <input type="password" placeholder="Enter Password" name="password1" required> </p>
+        <p> Reenter Password <br> <input type="password" placeholder="Enter Password" name="password2" required> </p>
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+  </body>
 </html>
