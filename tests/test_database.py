@@ -1,10 +1,12 @@
 from mmeds.database import Database
-from mmeds.authentication import add_user
+from mmeds.authentication import add_user, remove_user
+from mmeds.error import TableAccessError
 from prettytable import PrettyTable, ALL
 import mmeds.config as fig
 import pymysql as pms
 import pandas as pd
 import random
+import pytest
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
 # Validating each value if it is successfully saved to the database.
@@ -86,9 +88,24 @@ def setup_function(function):
                                                           barcodes=fig.TEST_BARCODES,
                                                           access_code=fig.TEST_CODE)
 
+    with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0) as db:
+        access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_FAIL_0,
+                                                          'qiime',
+                                                          reads=fig.TEST_READS,
+                                                          barcodes=fig.TEST_BARCODES,
+                                                          access_code=fig.TEST_CODE + '0')
 
+
+def teardown_function(function):
+    remove_user(fig.TEST_USER)
+    remove_user(fig.TEST_USER_0)
+
+
+################
+### Test SQL ###
+################
 def test_tables():
-    db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
+    db = pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True)
     c = db.cursor()
     c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
     user_id = int(c.fetchone()[0])
@@ -113,7 +130,7 @@ def test_tables():
 
 
 def test_junction_tables():
-    db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
+    db = pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True)
     c = db.cursor()
     df = pd.read_csv(fig.TEST_METADATA_FAIL, header=[0, 1], sep='\t')
     c.execute('SHOW TABLES')
@@ -128,7 +145,7 @@ def test_junction_tables():
 
 
 def error_test_modify_tables():
-    db = pms.connect('localhost', 'root', '', 'mmeds', local_infile=True)
+    db = pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True)
     c = db.cursor()
     c.execute('SHOW TABLES')
     tables = [x[0] for x in c.fetchall() if 'protected' not in x[0]]
@@ -165,12 +182,24 @@ def error_test_modify_tables():
         c.execute(sql)
 
 
-def error_test_table_protection():
-    db = pms.connect('localhost', 'mmeds_user', 'password', 'mmeds', local_infile=True)
-    c = db.cursor()
-    c.execute('SHOW TABLES')
-    protected_tables = [x[0] for x in c.fetchall() if 'protected' in x[0]]
-    tables = [x.split('_')[-1] for x in protected_tables]
-    for table, ptable in zip(tables, protected_tables):
-        print(ptable)
-        pass
+def test_table_protection():
+    df = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], sep='\t')
+    with Database(fig.TEST_DIR_0, user='mmeds_user', owner=fig.TEST_USER_0) as db:
+        protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
+        for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
+            # Confirm that trying to access the unprotected table
+            # raises the appropriate error
+            with pytest.raises(TableAccessError):
+                db.execute('SELECT * FROM {}'.format(table))
+            results, header = db.execute('SELECT * FROM {}'.format(ptable))
+            for result in results:
+                for i, col in enumerate(header):
+                    if 'id' not in col:
+                        # If the value is 'NULL' assert there is a NaN value in the dataframe
+                        if result[i] == 'NULL':
+                            assert df[table][col].isnull().values.any()
+                        else:
+                            if 'Date' in col:
+                                assert result[i] in pd.to_datetime(df[table][col], yearfirst=True).tolist()
+                            else:
+                                assert result[i] in df[table][col].tolist()

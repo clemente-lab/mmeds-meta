@@ -8,3 +8,10 @@ class MissingUploadError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class TableAccessError(MmedsError):
+    """ Exception for missing uploads. """
+
+    def __init__(self, message):
+        self.message = message

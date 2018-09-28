@@ -219,8 +219,6 @@ class MMEDSserver(object):
         # Set the session to use the current user
         username = cp.session['user']
         with Database(cp.session['dir'], user='mmeds_user', owner=username) as db:
-            status = db.set_mmeds_user(username)
-            cp.log('Set user to {}. Status {}'.format(username, status))
             data, header = db.execute(query)
             html_data = db.format(data, header)
             with open(HTML_DIR / 'success.html', 'r') as f:

@@ -52,7 +52,8 @@ DELIMITER ;
 -- -----------------------------------------------------
 -- Table `mmeds`.`user`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS user (
+DROP TABLE IF EXISTS `mmeds`.`user` ;
+CREATE TABLE IF NOT EXISTS `mmeds`.`user` (
     user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     password varchar(64),
@@ -63,7 +64,8 @@ CREATE TABLE IF NOT EXISTS user (
 -- -----------------------------------------------------
 -- Table `mmeds`.`security_token`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS security_token (
+DROP TABLE IF EXISTS `mmeds`.`security_token` ;
+CREATE TABLE IF NOT EXISTS `mmeds`.`security_token` (
     security_token_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     security_token varchar(100)
@@ -72,7 +74,8 @@ CREATE TABLE IF NOT EXISTS security_token (
 -- -----------------------------------------------------
 -- Table `mmeds`.`session`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS session (
+DROP TABLE IF EXISTS `mmeds`.`session` ;
+CREATE TABLE IF NOT EXISTS `mmeds`.`session` (
     connection_id int NOT NULL PRIMARY KEY,
     username varchar(100)
 );

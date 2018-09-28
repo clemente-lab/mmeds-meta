@@ -12,7 +12,7 @@ from pathlib import WindowsPath
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
-from mmeds.error import MissingUploadError
+from mmeds.error import TableAccessError, MissingUploadError
 from mmeds.mmeds import send_email
 
 DAYS = 13
@@ -40,9 +40,9 @@ class Database:
         warnings.simplefilter('ignore')
         try:
             if user == 'mmeds_user':
-                self.db = pms.connect('localhost', user, 'password', database, local_infile=True)
+                self.db = pms.connect('localhost', user, 'password', database, max_allowed_packet=2048000000, local_infile=True)
             else:
-                self.db = pms.connect('localhost', user, '', database, local_infile=True)
+                self.db = pms.connect('localhost', user, '', database, max_allowed_packet=2048000000, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
@@ -51,7 +51,7 @@ class Database:
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
         if user == 'mmeds_user':
-            sql = 'SELECT set_connection_auth("{}")'.format(SECURITY_TOKEN)
+            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, SECURITY_TOKEN)
             self.cursor.execute(sql)
             self.db.commit()
         self.owner = owner
@@ -133,13 +133,19 @@ class Database:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
             header = None
-            if 'from' in sql:
+            if 'from' in sql.casefold():
                 parsed = sql.split(' ')
-                index = parsed.index('from')
+                index = list(map(lambda x: x.casefold(), parsed)).index('from')
                 table = parsed[index + 1]
                 self.cursor.execute('describe ' + table)
                 header = [x[0] for x in self.cursor.fetchall()]
             return data, header
+        except pms.err.OperationalError as e:
+            # If it's a select command denied error
+            if e.args[0] == 1142:
+                raise TableAccessError(e.args[1])
+            else:
+                raise e
         except pms.err.ProgrammingError as e:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
@@ -335,6 +341,9 @@ class Database:
         df = pd.read_csv(metadata, sep=delimiter, header=[0, 1])
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
+        sql = 'SET FOREIGN_KEY_CHECKS=0'
+        self.cursor.execute(sql)
+        self.db.commit()
 
         tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))

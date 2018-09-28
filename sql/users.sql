@@ -3,17 +3,20 @@ DROP PROCEDURE IF EXISTS add_users //
 
 CREATE PROCEDURE add_users()
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM mysql.user WHERE User = 'mmeds_user') THEN
-        -- Create the user for the mmeds user activites
-        CREATE USER 'mmeds_user'@'%' IDENTIFIED BY 'password';
+  IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmeds_user') THEN
+    DROP USER 'mmeds_user'@'%';
+    DELETE FROM security_token WHERE username='mmeds_user@localhost';
+  END IF;
 
-        -- Create a security token for that account
-        INSERT INTO security_token (username, security_token) VALUES ('mmeds_user@localhost', 'some_security_token');
-    END IF;
+  -- Create the user for the mmeds user activites
+  CREATE USER 'mmeds_user'@'%' IDENTIFIED BY 'password';
 
-    IF NOT EXISTS(SELECT * FROM mmeds.user WHERE user_id = 1) THEN
-        INSERT INTO user VALUES (1, 'Public', '', '', '');
-    END IF;
+  -- Create a security token for that account
+  INSERT INTO security_token (username, security_token) VALUES ('mmeds_user@localhost', 'some_security_token');
+
+  IF NOT EXISTS(SELECT * FROM mmeds.user WHERE user_id = 1) THEN
+    INSERT INTO user VALUES (1, 'Public', '', '', '');
+  END IF;
 END //
 
 CALL add_users();
