@@ -16,6 +16,7 @@ def test_is_numeric():
     assert mmeds.is_numeric('5.4.5') is False
     assert mmeds.is_numeric('r5') is False
     assert mmeds.is_numeric('5r') is False
+    assert mmeds.is_numeric('2016-12-01') is False
 
 
 # Not in current use
@@ -101,6 +102,13 @@ def test_check_column():
 
     errors, warnings = mmeds.check_column(test_df['Test']['Whitespace'], 0)
     assert 'trailing whitespace' in errors[0]
+
+    errors, warnings = mmeds.check_column(test_df['Test']['BadDate'], 0)
+    assert 'Invalid date' in errors[0]
+
+    errors, warnings = mmeds.check_column(test_df['Test']['GoodDate'], 0)
+    assert len(errors) == 0 and len(warnings) == 0
+
     errors, warnings = mmeds.check_column(test_df['Test']['GoodString'], 0)
     assert len(errors) == 0 and len(warnings) == 0
 
@@ -140,6 +148,15 @@ def test_check_duplicate_cols():
     headers = list(test_df['Test'].axes[1])
     dups = mmeds.check_duplicate_cols(headers)
     assert len(dups) > 0
+
+
+def test_check_dates():
+    test_df = pd.read_csv(fig.TEST_METADATA_VALID, header=[0, 1], sep='\t', na_filter=False)
+    errors = mmeds.check_dates(test_df['BadDates'])
+    assert 'earlier than start date' in errors[0]
+
+    errors = mmeds.check_dates(test_df['GoodDates'])
+    assert len(errors) == 0
 
 
 def test_validate_mapping_files():

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number, isnan
+from numpy import std, mean, issubdtype, number
 from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
@@ -37,7 +37,13 @@ def insert_warning(page, line_number, error_message):
 
 
 def insert_html(page, line_number, html):
-    """ Inserts additional HTML into the provided HTML page at the specified line number. """
+    """
+    Inserts additional HTML into the provided HTML page at the specified line number.
+    =================================================================================
+    :page: The page (a string) to insert the new HTML into
+    :line_number: The line to insert the HTML
+    :html: The HTML to insert
+    """
     lines = page.split('\n')
     new_lines = lines[:line_number] + [html] + lines[line_number:]
     new_page = '\n'.join(new_lines)
@@ -74,12 +80,78 @@ def check_header(header, col_index):
     return errors
 
 
-def check_column(raw_column, col_index):
-    """ Validate that there are no issues with the provided column of metadata """
-    if not pd.isnull(raw_column[0]):
+def check_cell(row_index, col_index, cell, col_type, check_date):
+    """
+    Check the data in the specified cell.
+    ====================================
+    :row_index: The index of the row of the cell
+    :col_index: The index of the column of the cell
+    :cell: The value of the cell
+    :col_type: The known type of the column as a whole
+    :check_date: If True check the cell for a valid date
+    """
+    errors = []
+    row_col = str(row_index) + '\t' + str(col_index) + '\t'
+    # Check for non-standard NAs
+    if cell in NAs:
+        errors.append(row_col + 'Non standard NA format %s\t%d,%d' %
+                      (cell, row_index, col_index))
+
+    # Check for consistent types in the column
+    # Pandas stores 'str' as 'object' so check for that explicitly
+    if (is_numeric(cell) and not issubdtype(col_type, number)) or\
+       not col_type == type(cell) and\
+       (not isinstance(cell, str) and 'object' == col_type):
+        errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
+                      (cell, row_index, col_index))
+    # Check for empty fields
+    if '' == cell or pd.isnull(cell):
+        errors.append(row_col + 'Empty cell value %s' % cell)
+
+    if type(cell) == str:
+        # Check for trailing or preceding whitespace
+        if not cell == cell.strip():
+            errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
+                          (row_index, col_index, cell, row_index))
+    # Check if this is the cell with the invalid date
+    if check_date:
+        try:
+            pd.to_datetime(cell)
+        except ValueError:
+            errors.append('{}\t{}\tInvalid date {} in row {}'.format(row_index, col_index, cell, row_index))
+    return errors
+
+
+def get_col_type(raw_column):
+    """
+    Return the type of data the column should be checked for.
+    =========================================================
+    :raw_column: The column to check for type
+    """
+    check_date = False
+    if 'Date' in raw_column.name:
+        try:
+            column = pd.to_datetime(raw_column)
+        # If there is an error converting to datetime
+        # check the individual cells
+        except ValueError:
+            column = raw_column
+            check_date = True
+    elif not pd.isnull(raw_column[0]):
         column = raw_column.astype(type(raw_column[0]))
     else:
         column = raw_column
+    return column, check_date
+
+
+def check_column(raw_column, col_index):
+    """
+    Validate that there are no issues with the provided column of metadata.
+    =======================================================================
+    :raw_column: The unmodified column from the metadata dataframe
+    :col_index: The index of the column in the original dataframe
+    """
+    column, check_date = get_col_type(raw_column)
 
     # Get the header
     header = column.name
@@ -88,40 +160,18 @@ def check_column(raw_column, col_index):
     errors = check_header(header, col_index)
     warnings = []
 
+    # Check the remaining columns
+    for i, cell in enumerate(column):
+        errors += check_cell(i, col_index, cell, column.dtype, check_date)
+
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
         errors.append('-1\t-1\tError: Multiple studies in one metadata file')
 
+    # Check that values fall within standard deviation
     if issubdtype(column.dtype, number):
         stddev = std(column)
         avg = mean(column)
-
-    # Check the remaining columns
-    for i, cell in enumerate(column):
-        row_col = str(i) + '\t' + str(col_index) + '\t'
-        # Check for non-standard NAs
-        if cell in NAs:
-            errors.append(row_col + 'Non standard NA format %s\t%d,%d' %
-                          (cell, i, col_index))
-
-        # Check for consistent types in the column
-        # Pandas stores 'str' as 'object' so check for that explicitly
-        if (is_numeric(cell) and not issubdtype(column.dtype, number)) or\
-           not column.dtype == type(cell) and\
-           (not isinstance(cell, str) and 'object' == column.dtype):
-            errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
-                          (cell, i, col_index))
-        # Check for empty fields
-        if '' == cell or pd.isnull(cell):
-            errors.append(row_col + 'Empty cell value %s' % cell)
-
-        if type(cell) == str:
-            # Check for trailing or preceding whitespace
-            if not cell == cell.strip():
-                errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
-                              (i + 1, col_index, cell, i + 1))
-    # Check that values fall within standard deviation
-    if issubdtype(column.dtype, number):
         for i, cell in enumerate(column):
             if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
                 warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in column %d' %
@@ -181,12 +231,80 @@ def check_barcode_chars(column, col_index):
 
 
 def check_duplicate_cols(headers):
-    """ Returns true if there are any duplicate headers. """
+    """
+    Returns true if there are any duplicate headers.
+    ================================================
+    :headers: The headers for each column in the metadata file
+    """
     dups = []
     for header in headers:
         if '.1' in header:
             dups.append(header.split('.')[0])
     return dups
+
+
+def check_dates(df):
+    """
+    Check that no dates in the end col are earlier than
+    the matching date in the start col
+    ===================================================
+    :df: The data frame of the table containing the columns
+    :table_col: The column of the offending start date:w
+
+    """
+    errors = []
+    start_col = 0
+    for i in range(len(df)):
+        if df['StartDate'][i] > df['EndDate'][i]:
+            err = '{}\t{}\t End date {} is earlier than start date {} in row {}'
+            errors.append(err.format(i + 1, start_col, df['EndDate'][i], df['StartDate'][i], i))
+    return errors
+
+
+def check_table(table_df, name, all_headers, study_name):
+    """
+    Check the data within a particular table
+    ========================================
+    :table_df: A pandas dataframe containing the data for the specified table
+    :name: The name of the table
+    :all_headers: The headers that have been encountered so far
+    :study_name: None if no StudyName column has been seen yet,
+        otherwise with have the previously seen StudyName
+    """
+    errors = []
+    warnings = []
+    start_col = None
+    end_col = None
+    # For each table column
+    for i, header in enumerate(table_df.axes[1]):
+        col = table_df[header]
+        col_index = len(all_headers)
+        # Check that end dates are after start dates
+        if header == 'StartDate':
+            start_col = i
+        elif header == 'EndDate':
+            end_col = i
+        new_errors, new_warnings = check_column(col, col_index)
+        errors += new_errors
+        warnings += new_warnings
+
+        all_headers.append(header)
+        # Perform column specific checks
+        if name == 'Specimen':
+            if header == 'BarcodeSequence':
+                errors += check_duplicates(col, col_index)
+                errors += check_lengths(col, col_index)
+                errors += check_barcode_chars(col, col_index)
+            elif header == 'SampleID':
+                errors += check_duplicates(col, col_index)
+            elif header == 'LinkerPrimerSequence':
+                errors += check_lengths(col, col_index)
+        elif study_name is None and name == 'Study':
+            study_name = table_df['StudyName'][i]
+    # Compare the start and end dates
+    if start_col is not None and end_col is not None:
+        errors += check_dates(table_df)
+    return (errors, warnings, all_headers, study_name)
 
 
 def validate_mapping_file(file_fp, delimiter='\t'):
@@ -198,38 +316,23 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     errors = []
     warnings = []
     df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1], na_filter=False)
-    all_headers = []
-    study_name = None
     # Get the tables in the dataframe while maintaining order
     tables = []
     for (table, header) in df.axes[1]:
         tables.append(table)
     tables = list(dict.fromkeys(tables))
 
+    all_headers = []
+    study_name = None
     # For each table
-    for j, table in enumerate(tables):
+    for table in tables:
         table_df = df[table]
-        # For each table column
-        for i, header in enumerate(table_df.axes[1]):
-            col = table_df[header]
-            col_index = len(all_headers)
-            new_errors, new_warnings = check_column(col, col_index)
-            errors += new_errors
-            warnings += new_warnings
-
-            all_headers.append(header)
-            # Perform column specific checks
-            if table == 'Specimen':
-                if header == 'BarcodeSequence':
-                    errors += check_duplicates(col, col_index)
-                    errors += check_lengths(col, col_index)
-                    errors += check_barcode_chars(col, col_index)
-                elif header == 'SampleID':
-                    errors += check_duplicates(col, col_index)
-                elif header == 'LinkerPrimerSequence':
-                    errors += check_lengths(col, col_index)
-            elif study_name is None and table == 'Study':
-                study_name = df[table]['StudyName'][i]
+        (new_errors,
+         new_warnings,
+         all_headers,
+         study_name) = check_table(table_df, table, all_headers, study_name)
+        errors += new_errors
+        warnings += new_warnings
 
     # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)
@@ -248,11 +351,15 @@ def validate_mapping_file(file_fp, delimiter='\t'):
 
 
 def is_numeric(s):
-    """ Check if the provided string is a number. """
+    """
+    Check if the provided string is a number.
+    =========================================
+    :s: The string to check
+    """
     try:
         float(s)
         return True
-    except ValueError:
+    except (TypeError, ValueError):
         pass
     try:
         import unicodedata
@@ -285,6 +392,10 @@ def generate_error_html(file_fp, errors, warnings):
     """
     Generates an html page marking the errors and warnings found in
     the given metadata file.
+    ===============================================================
+    :file_fp: The destination the error file will be written to
+    :errors: A list of the errors the metadata file produced
+    :warnings: A list of the warnings the metadata file produced
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1])
     html = '<!DOCTYPE html>\n<html>\n'
@@ -346,7 +457,14 @@ def generate_error_html(file_fp, errors, warnings):
 
 
 def send_email(toaddr, user, message='upload', **kwargs):
-    """ Sends a confirmation email to addess containing user and code. """
+    """
+    Sends a confirmation email to addess containing user and code.
+    ==============================================================
+    :toaddr: The address to send the email to
+    :user: The user account that toaddr belongs to
+    :message: The type of message to send
+    :kwargs: Any information that is specific to a paricular message type
+    """
     msg = EmailMessage()
     msg['From'] = fig.MMEDS_EMAIL
     msg['To'] = toaddr

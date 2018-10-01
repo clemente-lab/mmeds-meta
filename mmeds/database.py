@@ -127,6 +127,9 @@ class Database:
     def format(self, text, header=None):
         """
         Applies PrettyTable HTML formatting to the provided string.
+        ===========================================================
+        :text: The text to format, should be the result of an SQL query
+        :header: Optional, if querying a table will contain the column names
         """
         if header is not None:
             new_text = PrettyTable(header, border=True, hrules=ALL, vrules=ALL)
@@ -533,7 +536,13 @@ class Database:
         return True
 
     def update_metadata(self, access_code, filekey, filename):
-        """ Add a file to a metadata object """
+        """
+        Add a file to a metadata object
+        ====================================
+        :access_code: Code identifiying the document to update
+        :filekey: The key the new file should be indexed under
+        :filename: The path to the new file
+        """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = str(self.path / filename)

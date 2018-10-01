@@ -46,7 +46,12 @@ class MMEDSserver(object):
 
     @cp.expose
     def run_analysis(self, access_code, tool):
-        """ Run analysis on the specified study. """
+        """
+        Run analysis on the specified study
+        ----------------------------------------
+        :access_code: The code that identifies the dataset to run the tool on
+        :tool: The tool to run on the chosen dataset
+        """
         if cp.session['processes'].get(access_code) is None or\
                 cp.session['processes'][access_code].exitcode is not None:
             if 'qiime' in tool or 'test' in tool:
@@ -344,7 +349,13 @@ class MMEDSserver(object):
 
     @cp.expose
     def change_password(self, password0, password1, password2):
-        """ Change the user's password """
+        """
+        Change the user's password
+        ===============================
+        :password0: The old password
+        :password1: The new password
+        :password2: A second entry of the new password
+        """
         with open(HTML_DIR / 'change_password.html') as f:
             page = f.read()
 

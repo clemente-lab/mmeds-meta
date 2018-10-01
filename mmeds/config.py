@@ -38,12 +38,15 @@ CONFIG = {
         'tools.sessions.on': True,
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
-        'tools.staticdir.root': Path().cwd().parent,  # Change this for different install locations
+        'tools.staticdir.root': Path().cwd().parent,
     },
+    # Content in this directory will be made directly
+    # available on the web server
     '/CSS': {
         'tools.staticdir.on': True,
         'tools.staticdir.dir': 'CSS'
     },
+    # This sets up the https security
     '/protected/area': {
         'tools.auth_digest': True,
         'tools.auth_digest.realm': 'localhost',
@@ -89,6 +92,9 @@ for key in TEST_FILES.keys():
     TEST_CHECKS[key] = hash1.digest()
 
 
+# The order in which data should be imported to
+# ensure the necessary primary keys are created
+# before they are referenced as foreign keys
 TABLE_ORDER = [
     'Lab',
     'Study',
@@ -117,6 +123,9 @@ TABLE_ORDER = [
     'AdditionalMetaData'
 ]
 
+# MMEDS users are not given direct access to
+# these tables as they will contain data that
+# is private to other users
 PROTECTED_TABLES = [
     'Lab',
     'Study',
@@ -143,6 +152,7 @@ USER_FILES = set([
     'visualizations_dir'
 ])
 
+# These are the tables that users are given direct access to
 PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
 
 
