@@ -8,7 +8,7 @@ import pickle
 import warnings
 
 from datetime import datetime
-from pathlib import WindowsPath
+from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
@@ -28,6 +28,15 @@ class MetaData(men.DynamicDocument):
     email = men.StringField(max_length=100, required=True)
     path = men.StringField(max_length=100, required=True)
     files = men.DictField()
+
+    # When the document is updated record the
+    # location of all files in a new file
+    def save(self):
+        with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
+            f.write('Key\tPath\n')
+            for key in self.files:
+                f.write('{}\t{}\n'.format(key, self.files[key]))
+        super(MetaData, self).save()
 
 
 class Database:
