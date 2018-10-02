@@ -23,7 +23,7 @@ ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 def insert_error(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<p><font color="red">' + error_message + '</font></p>'] + lines[line_number:]
+    new_lines = lines[:line_number] + ['<h4><font color="red">' + error_message + '</font></h4>'] + lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
@@ -31,7 +31,7 @@ def insert_error(page, line_number, error_message):
 def insert_warning(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<p><font color="orange">' + error_message + '</font></p>'] + lines[line_number:]
+    new_lines = lines[:line_number] + ['<h4><font color="orange">' + error_message + '</font></h4>'] + lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
@@ -261,6 +261,31 @@ def check_dates(df):
     return errors
 
 
+def check_table_column(table_df, name, header, col_index, row_index, study_name):
+    errors = []
+    warnings = []
+    if not name == 'AdditionalMetaData' and header not in fig.TABLE_COLS[name]:
+        errors.append('-1\t{}\tColumn {} should not be in table {}'.format(col_index, header, name))
+    col = table_df[header]
+    new_errors, new_warnings = check_column(col, col_index)
+    errors += new_errors
+    warnings += new_warnings
+
+    # Perform column specific checks
+    if name == 'Specimen':
+        if header == 'BarcodeSequence':
+            errors += check_duplicates(col, col_index)
+            errors += check_lengths(col, col_index)
+            errors += check_barcode_chars(col, col_index)
+        elif header == 'SampleID':
+            errors += check_duplicates(col, col_index)
+        elif header == 'LinkerPrimerSequence':
+            errors += check_lengths(col, col_index)
+    elif study_name is None and name == 'Study':
+        study_name = table_df['StudyName'][row_index]
+    return errors, warnings
+
+
 def check_table(table_df, name, all_headers, study_name):
     """
     Check the data within a particular table
@@ -275,32 +300,27 @@ def check_table(table_df, name, all_headers, study_name):
     warnings = []
     start_col = None
     end_col = None
+    if not name == 'AdditionalMetaData':
+        missing_cols = set(fig.TABLE_COLS[name]).difference(table_df.columns)
+        if missing_cols:
+            errors.append('-1\t-1\tColumns {} missing from table {}'.format(', '.join(missing_cols), name))
     # For each table column
-    for i, header in enumerate(table_df.axes[1]):
-        col = table_df[header]
-        col_index = len(all_headers)
+    for i, header in enumerate(table_df.columns):
         # Check that end dates are after start dates
         if header == 'StartDate':
             start_col = i
         elif header == 'EndDate':
             end_col = i
-        new_errors, new_warnings = check_column(col, col_index)
+        col_index = len(all_headers)
+        new_errors, new_warnings = check_table_column(table_df,
+                                                      name,
+                                                      header,
+                                                      col_index,
+                                                      i,
+                                                      study_name)
+        all_headers.append(header)
         errors += new_errors
         warnings += new_warnings
-
-        all_headers.append(header)
-        # Perform column specific checks
-        if name == 'Specimen':
-            if header == 'BarcodeSequence':
-                errors += check_duplicates(col, col_index)
-                errors += check_lengths(col, col_index)
-                errors += check_barcode_chars(col, col_index)
-            elif header == 'SampleID':
-                errors += check_duplicates(col, col_index)
-            elif header == 'LinkerPrimerSequence':
-                errors += check_lengths(col, col_index)
-        elif study_name is None and name == 'Study':
-            study_name = table_df['StudyName'][i]
     # Compare the start and end dates
     if start_col is not None and end_col is not None:
         errors += check_dates(table_df)
@@ -326,6 +346,10 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     study_name = None
     # For each table
     for table in tables:
+        # If the table shouldn't exist add and error and skip checking it
+        if table not in fig.TABLE_ORDER:
+            errors.append('-1\t-1\tError: Table {} should not be the metadata'.format(table))
+            continue
         table_df = df[table]
         (new_errors,
          new_warnings,
@@ -341,6 +365,11 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             locs = [i for i, header in enumerate(all_headers) if header == 'dup']
             for loc in locs:
                 errors.append('1\t{}\tDuplicate header {}'.format(loc, dup))
+
+    # Check for missing tables
+    missing_tables = set(fig.TABLE_ORDER).difference(set(tables))
+    if missing_tables:
+        errors.append('-1\t-1\tError: Missing tables ' + ', '.join(missing_tables))
 
     # Check for missing headers
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))

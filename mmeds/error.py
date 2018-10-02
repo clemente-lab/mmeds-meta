@@ -15,3 +15,10 @@ class TableAccessError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class MetaDataError(MmedsError):
+    """ Exception for missing uploads. """
+
+    def __init__(self, message):
+        self.message = message

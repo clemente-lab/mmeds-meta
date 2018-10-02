@@ -12,7 +12,7 @@ import mmeds.config as fig
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 from mmeds.tools import analysis_runner
-from mmeds.error import MissingUploadError
+from mmeds.error import MissingUploadError, MetaDataError
 
 absDir = Path(os.getcwd())
 
@@ -92,17 +92,15 @@ class MMEDSserver(object):
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
         # Create a copy of the Data file
-        try:
+        if reads.file is not None:
             reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
-        # Except the error if there is no file
-        except AttributeError:
+        else:
             reads_copy = None
 
         # Create a copy of the Data file
-        try:
+        if barcodes.file is not None:
             barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
-        # Except the error if there is no file
-        except AttributeError:
+        else:
             barcodes_copy = None
 
         # Create a copy of the MetaData
@@ -115,19 +113,25 @@ class MMEDSserver(object):
         else:
             username = cp.session['user']
 
+        cp.log("Before metadata validation")
         # Check the metadata file for errors
         errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
         cp.log(str(len(errors) + len(warnings)))
         for error in errors:
             cp.log(error)
 
+        cp.log("before check subs")
         with Database(cp.session['dir'], user='root', owner=username) as db:
-            warnings += db.check_repeated_subjects(subjects)
-            errors += db.check_user_study_name(study_name)
+            try:
+                warnings += db.check_repeated_subjects(subjects)
+                errors += db.check_user_study_name(study_name)
+            except MetaDataError as e:
+                errors.append('-1\t-1\t' + e.message)
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
-            cp.session['error_file'] = cp.session['dir'] / 'errors_' + str(myMetaData.filename)
+            cp.log("Errors > 0")
+            cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
             # Write the errors to a file
             with open(cp.session['error_file'], 'w') as f:
                 f.write('\n'.join(errors + warnings))
@@ -138,29 +142,37 @@ class MMEDSserver(object):
 
             uploaded_output = insert_error(
                 uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
-            for i, error in enumerate(errors):
-                uploaded_output = insert_error(uploaded_output, 11 + i, '<p>' + error + '</p>')
             for i, warning in enumerate(warnings):
-                uploaded_output = insert_warning(uploaded_output, 11 + i, '<p>' + warning + '</p>')
+                uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
+            for i, error in enumerate(errors):
+                uploaded_output = insert_error(uploaded_output, 22 + i, error)
 
             html = generate_error_html(metadata_copy, errors, warnings)
+            cp.log('Created error html')
 
             return html
         elif len(warnings) > 0:
+            cp.log('Warnings > 0')
             cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
+            cp.log("Created error file")
             # Write the errors to a file
-            with open(cp.session['dir'] / ('errors_' + myMetaData.filename), 'w') as f:
-                f.write('\n'.join(errors))
+            with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
+                f.write('\n'.join(warnings))
+            cp.log('wrote warns')
 
             # Get the html for the upload page
             with open(HTML_DIR / 'warning.html', 'r') as f:
                 uploaded_output = f.read()
 
+            cp.log('Created html')
+
             for i, warning in enumerate(warnings):
-                uploaded_output = insert_warning(uploaded_output, 11 + i, '<p>' + warning + '</p>')
+                uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
+            cp.log('inserted warnings')
 
             return uploaded_output
         else:
+            cp.log("No Errors or warnings")
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
                 access_code, study_name, email = db.read_in_sheet(metadata_copy,
@@ -216,7 +228,7 @@ class MMEDSserver(object):
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
                 db.reset_access_code(study_name, study_email)
-            except AttributeError:
+            except MissingUploadError:
                 with open(HTML_DIR / 'download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
@@ -403,7 +415,7 @@ class MMEDSserver(object):
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
                 db.modify_data(data_copy, access_code)
-            except AttributeError:
+            except MissingUploadError:
                 with open(HTML_DIR / 'download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
@@ -488,7 +500,7 @@ class MMEDSserver(object):
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
                 files, path = db.get_mongo_files(cp.session['download_access'])
-            except AttributeError as e:
+            except MissingUploadError as e:
                 cp.log(e)
                 with open(HTML_DIR / 'download_error.html') as f:
                     download_error = f.read()

@@ -12,7 +12,7 @@ from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
-from mmeds.error import TableAccessError, MissingUploadError
+from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 
 DAYS = 13
@@ -252,6 +252,34 @@ class Database:
                     self.IDs[table][j] = current_key
                     current_key += 1
 
+    def create_import_line(self, df, table, structure, columns, row_index):
+        line = []
+        # For each column in the table
+        for j, col in enumerate(columns):
+
+            # If the column is a primary key
+            if structure[j][3] == 'PRI':
+                key_table = col.split('id')[-1]
+                # Get the approriate data from the dictionary
+                try:
+                    line.append(self.IDs[key_table][row_index])
+                except KeyError:
+                    raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, row_index))
+            elif structure[j][0] == 'user_id':
+                line.append(str(self.user_id))
+            elif structure[j][0] == 'AdditionalMetaDataRow':
+                line.append(str(row_index))
+            else:
+                # Otherwise see if the entry already exists
+                try:
+                    if pd.isnull(df[table].loc[row_index][col]):
+                        line.append('NULL')
+                    else:
+                        line.append(df[table].loc[row_index][col])
+                except KeyError:
+                    line.append(col)
+        return line
+
     def create_import_file(self, table, df):
         """
         Create the file to load into each table referenced in the
@@ -268,30 +296,11 @@ class Database:
             f.write('\t'.join(columns) + '\n')
             # For each row in the input file
             for i in range(len(df.index)):
-                line = []
-                # For each column in the table
-                for j, col in enumerate(columns):
-                    # If the column is a primary key
-                    if structure[j][3] == 'PRI':
-                        key_table = col.split('id')[-1]
-                        # Get the approriate data from the dictionary
-                        try:
-                            line.append(self.IDs[key_table][i])
-                        except KeyError:
-                            raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, i))
-                    elif structure[j][0] == 'user_id':
-                        line.append(str(self.user_id))
-                    elif structure[j][0] == 'AdditionalMetaDataRow':
-                        line.append(str(i))
-                    else:
-                        # Otherwise see if the entry already exists
-                        try:
-                            if pd.isnull(df[table].loc[i][col]):
-                                line.append('NULL')
-                            else:
-                                line.append(df[table].loc[i][col])
-                        except KeyError:
-                            line.append(col)
+                line = self.create_import_line(df,
+                                               table,
+                                               structure,
+                                               columns,
+                                               i)
                 f.write('\t'.join(list(map(str, line))) + '\n')
         return filename
 
@@ -566,7 +575,10 @@ class Database:
                 else:
                     sql += ' ABS(Subjects.' + column + ' - ' + str(value) + ') <= 0.01'
             sql += ' AND user_id = ' + str(self.user_id)
-            found = self.cursor.execute(sql)
+            try:
+                found = self.cursor.execute(sql)
+            except pms.err.InternalError as e:
+                raise MetaDataError(e.args[1])
             if found >= 1:
                 warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2, subject_col, j + 2))
         return warnings

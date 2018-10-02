@@ -1,6 +1,7 @@
 from secrets import choice
 from string import digits, ascii_uppercase, ascii_lowercase
 from pathlib import Path
+import pymysql as pms
 import hashlib
 # Add some notes here
 # Add some more notes here
@@ -154,6 +155,14 @@ USER_FILES = set([
 
 # These are the tables that users are given direct access to
 PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
+
+# These are the columns for each table
+TABLE_COLS = {}
+with pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True) as db:
+    for table in TABLE_ORDER:
+        if not table == 'AdditionalMetaData':
+            db.execute('DESCRIBE ' + table)
+            TABLE_COLS[table] = [x[0] for x in db.fetchall() if 'id' not in x[0]]
 
 
 def get_salt(length=10, numeric=False):
