@@ -86,11 +86,11 @@ class MyTasks(TaskSet):
     def select_download(self):
         """ Test download selection. """
         address = '/download_page?access_code={}'.format(self.code)
-        with self.client.get(address, catch_response=True) as result:
+        with self.client.get(address) as result:
             assert str(result.text) == self.download_success
             for download in fig.TEST_FILES.keys():
                 address = '/select_download'
-                with self.client.post(address, {'download': download}, catch_response=True) as dresult:
+                with self.client.post(address, {'download': download}) as dresult:
 
                     h1 = hashlib.md5()
                     h1.update(dresult.content)
@@ -104,7 +104,7 @@ class MyTasks(TaskSet):
     @task
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
-        with self.client.get(address, catch_response=True) as result:
+        with self.client.get(address) as result:
             address = '/validate_qiime'
             with open(fig.TEST_METADATA, 'rb') as f:
                 metadata = f.read()

@@ -1,0 +1,30 @@
+[2018-10-02 11:27:53,206] localhost.localdomain/INFO/locust.main: Starting Locust 0.8.1
+[2018-10-02 11:27:53,206] localhost.localdomain/INFO/locust.runners: Hatching and swarming 5 clients at the rate 1 clients/s...
+[2018-10-02 11:27:58,279] localhost.localdomain/INFO/locust.runners: All locusts hatched: MyUser: 5
+[2018-10-02 11:27:58,279] localhost.localdomain/INFO/locust.runners: Resetting stats
+
+[2018-10-02 11:28:17,042] localhost.localdomain/ERROR/stderr: Traceback (most recent call last):
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/locust/core.py", line 271, in run
+    self.execute_next_task()
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/locust/core.py", line 297, in execute_next_task
+    self.execute_task(task["callable"], *task["args"], **task["kwargs"])
+  File "/home/david/anaconda3/envs/mmeds/lib/python3.6/site-packages/locust/core.py", line 309, in execute_task
+    task(self, *args, **kwargs)
+  File "/home/david/Work/mmeds-meta/tests/server_stress.py", line 102, in select_download
+    assert hash1 == hash2
+AssertionError
+[2018-10-02 11:28:21,912] localhost.localdomain/INFO/locust.runners: All locusts dead
+
+[2018-10-02 11:28:21,912] localhost.localdomain/INFO/locust.main: Shutting down (exit code 0), bye.
+[2018-10-02 11:30:32,307] localhost.localdomain/INFO/locust.main: Starting Locust 0.8.1
+[2018-10-02 11:30:32,307] localhost.localdomain/INFO/locust.runners: Hatching and swarming 5 clients at the rate 1 clients/s...
+[2018-10-02 11:30:37,441] localhost.localdomain/INFO/locust.runners: All locusts hatched: MyUser: 5
+[2018-10-02 11:30:37,441] localhost.localdomain/INFO/locust.runners: Resetting stats
+
+[2018-10-02 11:30:57,188] localhost.localdomain/INFO/stdout: d70a38cd9a236cb3ce9f8df9bc80a9b09a10e75c
+[2018-10-02 11:30:57,188] localhost.localdomain/INFO/stdout: 
+[2018-10-02 11:31:00,504] localhost.localdomain/INFO/stdout: 6b09942dbda8c914ee64cfbc3e9bd4aa789321b7
+[2018-10-02 11:31:00,504] localhost.localdomain/INFO/stdout: 
+[2018-10-02 11:31:00,504] localhost.localdomain/INFO/locust.runners: All locusts dead
+
+[2018-10-02 11:31:00,504] localhost.localdomain/INFO/locust.main: Shutting down (exit code 0), bye.

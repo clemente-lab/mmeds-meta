@@ -22,6 +22,7 @@ class MMEDSserver(object):
     def __init__(self):
         self.db = None
         self.users = set()
+        self.processes = {}
 
     def __del__(self):
         temp_dirs = glob(STORAGE_DIR / 'temp_*')
@@ -52,13 +53,13 @@ class MMEDSserver(object):
         :access_code: The code that identifies the dataset to run the tool on
         :tool: The tool to run on the chosen dataset
         """
-        if cp.session['processes'].get(access_code) is None or\
-                cp.session['processes'][access_code].exitcode is not None:
+        if self.processes.get(access_code) is None or\
+                self.processes[access_code].exitcode is not None:
             if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
                     p = analysis_runner(tool, cp.session['user'], access_code)
-                    cp.session['processes'][access_code] = p
+                    self.processes[access_code] = p
                     with open(HTML_DIR / 'welcome.html') as f:
                         page = f.read()
                     return page.format(user=cp.session['user'])
@@ -316,7 +317,7 @@ class MMEDSserver(object):
                 new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
             os.makedirs(new_dir)
         cp.session['dir'] = new_dir
-        cp.session['processes'] = {}
+        self.processes = {}
 
         cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
         if not validate_password(username, password):
@@ -462,11 +463,11 @@ class MMEDSserver(object):
     @cp.expose
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
-        for key in cp.session['processes'].keys():
-            cp.log('{}: {}, {}'.format(key, cp.session['processes'][
-                   key].is_alive(), cp.session['processes'][key].exitcode))
-        if cp.session['processes'].get(access_code) is None or\
-                cp.session['processes'][access_code].exitcode is not None:
+        for key in self.processes.keys():
+            cp.log('{}: {}, {}'.format(key, self.processes[
+                   key].is_alive(), self.processes[key].exitcode))
+        if self.processes.get(access_code) is None or\
+                self.processes[access_code].exitcode is not None:
             # Get the open file handler
             with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
                 try:

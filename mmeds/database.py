@@ -348,8 +348,8 @@ class Database:
                 # Commit the inserted data
                 self.db.commit()
             except KeyError as e:
+                e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
-                pass
 
     def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):
         """

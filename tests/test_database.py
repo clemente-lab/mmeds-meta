@@ -82,7 +82,7 @@ def setup_function(function):
     add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
     add_user(fig.TEST_USER + '0', fig.TEST_PASS, fig.TEST_EMAIL)
     with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
-        access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_FAIL,
+        access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                           'qiime',
                                                           reads=fig.TEST_READS,
                                                           barcodes=fig.TEST_BARCODES,
@@ -110,7 +110,7 @@ def test_tables():
     c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
     user_id = int(c.fetchone()[0])
 
-    df = pd.read_csv(fig.TEST_METADATA_FAIL, header=[0, 1], sep='\t')
+    df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
 
     tables = df.columns.levels[0].tolist()
     tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
@@ -132,7 +132,7 @@ def test_tables():
 def test_junction_tables():
     db = pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True)
     c = db.cursor()
-    df = pd.read_csv(fig.TEST_METADATA_FAIL, header=[0, 1], sep='\t')
+    df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
     c.execute('SHOW TABLES')
     # Get the junction tables
     jtables = [x[0] for x in c.fetchall() if 'has' in x[0]]
