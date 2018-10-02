@@ -58,7 +58,7 @@ class MyTasks(TaskSet):
     def logout(self):
         self.client.post('/logout')
 
-    @task
+    @task(1)
     def read_root(self):
         with self.client.get('/', catch_response=True) as response:
             sess = response.headers['Set-Cookie']
@@ -66,7 +66,7 @@ class MyTasks(TaskSet):
             session_id = split[0].split('=')[1]
             print(session_id)
 
-    @task
+    @task(2)
     def access_download(self):
         address = '/run_analysis?access_code={}&tool={}'.format(self.code, fig.TEST_TOOL)
         self.client.get(address)
@@ -82,7 +82,7 @@ class MyTasks(TaskSet):
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_success
 
-    @task
+    @task(3)
     def select_download(self):
         """ Test download selection. """
         address = '/download_page?access_code={}'.format(self.code)
@@ -101,7 +101,7 @@ class MyTasks(TaskSet):
                     # Assert that the hashes match
                     assert hash1 == hash2
 
-    @task
+    @task(4)
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
         with self.client.get(address) as result:
