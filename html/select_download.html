@@ -1,15 +1,28 @@
 <!DOCTYPE html>
 <html>
-    <link rel='stylesheet' href='/CSS/stylesheet.css'>
-    <head>
-        <title>Select Download</title>
-        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
-    </head>
-    <body>
-        <form action='select_download' method='post' enctype='multipart/form-data' id='download_form'>
-            <select name='download' form='download_form'>
-            </select>
-            <button type='submit' method='post'>Select Download</button>
-        </form>
-    </body>
+  <link rel='stylesheet' href='/CSS/stylesheet.css'>
+  <head>
+    <title>Select Download</title>
+    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+  </head>
+  <body>
+    <ul class='topbar'>
+      <li>
+        <a class='log' href='home'>
+          <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo'/>
+        </a>
+      </li>
+      <li> <a href='upload_page'> Upload Data </a> </li>
+      <li> <a href='analysis_page'> Run Analysis </a> </li>
+      <li> <a href='query_page'> Run Queries </a> </li>
+      <li> <a href='logout'> Logout </a> </li>
+    </ul>
+    <div class='inner'>
+      <form action='select_download' method='post' enctype='multipart/form-data' id='download_form'>
+        <select name='download' form='download_form'>
+        </select>
+        <button type='submit' method='post'>Select Download</button>
+      </form>
+    </div>
+  </body>
 </html>

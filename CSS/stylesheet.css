@@ -8,6 +8,66 @@ templated.co @templatedco
 Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
  */
 
+ul.topbar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0px;
+    border: 0;
+    overflow: hidden;
+    background-color: #00aeef;
+    position: fixed;
+    top: 0;
+    width: 210px;
+    height: 100%;
+}
+
+ul.topbar li {
+    float: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+ul.topbar li a.log{
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 0px 0px 0px 0px;
+    text-decoration: none;
+}
+
+ul.topbar li a.log:hover{
+    background-color: #00aeef;
+}
+
+ul.topbar li a{
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 5px 0px 5px 0px;
+    text-decoration: none;
+}
+
+ul.topbar li a:hover {
+    background-color: #9a9a9a;
+}
+
+ul.topbar li a img{
+  width: 210px;
+  height: 100px;
+  padding: 0px
+}
+
+div.inner {
+    margin: auto;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    text-align: center;
+}
+
 /* Reset */
 
 html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
@@ -29,7 +89,7 @@ body {
 }
 
 ol, ul {
-    list-style: none;
+    list-style-type: none;
 }
 
 blockquote, q {
@@ -215,16 +275,34 @@ body {
         width: 90% !important;
     }
 
-}
+  }
 
-/* Grid */
+  /* Grid */
 
-.row {
-    border-bottom: solid 1px transparent;
+  .row {
+    border-bottom: sot-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    background-color: #f1f1f1;
+  }
+
+  li a {
+    display: block;
+    color: #000;
+    padding: 8px 16px;
+    text-decoration: none;
+  }
+
+  /* Change the link color on hover */
+  li a:hover {
+    background-color: #555;
+    color: white;
+    id 1px transparent;
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
-}
+  }
 
 .row > * {
     float: left;
@@ -1591,7 +1669,7 @@ body, input, select, textarea {
     font-size: 13pt;
     font-weight: 300;
     line-height: 1.65;
-    margin: 1em 0;
+    margin: 0;
 }
 
 @media screen and (max-width: 1680px) {

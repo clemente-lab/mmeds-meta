@@ -2,11 +2,13 @@ from pandas import read_csv
 from pathlib import Path
 from subprocess import run
 from shutil import copyfile
+from time import sleep
 import os
 import multiprocessing as mp
 
 from mmeds.database import Database
-from mmeds.config import get_salt, send_email
+from mmeds.config import get_salt
+from mmeds.mmeds import send_email
 
 
 class Qiime1Analysis:
@@ -438,6 +440,7 @@ class Qiime2Analysis:
     def analysis(self):
         """ Perform some analysis. """
         self.setup_dir()
+        self.create_qiime_mapping_file()
         self.qimport()
         self.demultiplex()
         if self.atype == 'deblur':
@@ -492,11 +495,18 @@ def run_qiime2(user, access_code, atype):
     qa.analysis()
 
 
+def test(time, atype):
+    sleep(time)
+
+
 def analysis_runner(atype, user, access_code):
     """ Start running the analysis in a new process """
     if 'qiime1' in atype:
         p = mp.Process(target=run_qiime1, args=(user, access_code))
     elif 'qiime2' in atype:
         p = mp.Process(target=run_qiime2, args=(user, access_code, atype))
+    elif 'test' in atype:
+        time = float(atype.split('-')[-1])
+        p = mp.Process(target=test, args=(time, atype))
     p.start()
     return p

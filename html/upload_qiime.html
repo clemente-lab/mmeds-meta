@@ -1,21 +1,34 @@
 <!DOCTYPE html>
 <html>
-    <link rel='stylesheet' href='/CSS/stylesheet.css'>
-    <head>
-        <title>Data Upload</title>
-        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
-    </head>
-    <body>
-        <h2>Welcome {user}</h2>
-        <p>
-            <h3>Upload tar archive</h3>
-            <form action='validate_{version}' method='post' enctype='multipart/form-data'>
-                <p> Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
-                <p> Reads: <br> <input type='file' name='reads'/> </p>
-                <p> Barcodes: <br> <input type='file' name='barcodes'/> </p>
-                <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
-                <p> <button type='submit' method='post'>Upload Files</button> </p>
-            </form>
-        </p>
-    </body>
+  <link rel='stylesheet' href='/CSS/stylesheet.css'>
+  <head>
+    <title>Data Upload</title>
+    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+  </head>
+  <body>
+    <ul class='topbar'>
+      <li>
+        <a class='log' href='home'>
+          <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo'/>
+        </a>
+      </li>
+      <li> <a href='upload_page'> Upload Data </a> </li>
+      <li> <a href='analysis_page'> Run Analysis </a> </li>
+      <li> <a href='query_page'> Run Queries </a> </li>
+      <li> <a href='logout'> Logout </a> </li>
+    </ul>
+    <div class='inner'>
+      <h2>Welcome {user}</h2>
+      <p>
+        <h3>Upload tar archive</h3>
+        <form action='validate_{version}' method='post' enctype='multipart/form-data'>
+          <p> Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
+          <p> Reads: <br> <input type='file' name='reads'/> </p>
+          <p> Barcodes: <br> <input type='file' name='barcodes'/> </p>
+          <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
+          <p> <button type='submit' method='post'>Upload Files</button> </p>
+        </form>
+      </p>
+    </div>
+  </body>
 </html>

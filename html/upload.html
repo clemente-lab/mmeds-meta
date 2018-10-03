@@ -1,45 +1,50 @@
 <!DOCTYPE html>
 <html>
-    <link rel='stylesheet' href='/CSS/stylesheet.css'>
-    <head>
-        <title>Data Upload</title>
-        <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
-    </head>
-    <body>
-        <h2>
-            <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo' width='210em' height='100em'>
-            <br>
-            Welcome {user}
-        </h2>
-        <p>
-            <h3>Select type of data for upload</h3>
-            <form action='upload' method='post' enctype='multipart/form-data' id='upload_form'>
-                <select name='study_type' form='upload_form'>
-                    <option value="qiime">Qiime</option>
-                    <option value="other">Other</option>
-                </select>
-                <button type='submit' method='post'>Upload Data</button>
-            </form>
-        </p>
-        <p>
-            <h3>Modify a previous upload</h3>
-            <form action='modify_upload' method='post' enctype='multipart/form-data'>
-                <p> Data File: <br> <input type='file' name='myData' required/> </p>
-                <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
-                <p> <button type='submit' method='post'>Modify Upload</button> </p>
-            </form>
-        </p>
-        <p>
-            <h3>Logout</h3>
-            <form action='logout' method='post'>
-                <button type='submit' method='post'>Logout</button>
-            </form>
-        </p>
-        <p>
-            <h3>Change Password</h3>
-            <form action='input_password' method='post'>
-                <button type='submit' method='post'>Change Password</button>
-            </form>
-        </p>
-    </body>
+  <link rel='stylesheet' href='/CSS/stylesheet.css'/>
+  <head>
+    <title>Data Upload</title>
+    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+  </head>
+  <body>
+    <ul class='topbar'>
+      <li>
+        <a class='log' href='home'>
+          <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo'/>
+        </a>
+      </li>
+      <li> <a href='upload_page'> Upload Data </a> </li>
+      <li> <a href='analysis_page'> Run Analysis </a> </li>
+      <li> <a href='query_page'> Run Queries </a> </li>
+      <li> <a href='logout'> Logout </a> </li>
+    </ul>
+    <div class='inner'>
+      <h2>
+        Welcome {user}
+      </h2>
+      <p>
+        <h3>Select type of data for upload</h3>
+        <form action='upload' method='post' enctype='multipart/form-data' id='upload_form'>
+          <select name='study_type' form='upload_form'>
+            <option value="qiime">Qiime</option>
+            <option value="other">Other</option>
+          </select>
+          <button type='submit' method='post'>Upload Data</button>
+        </form>
+      </p>
+      <p>
+        <h3>Modify a previous upload</h3>
+        <form action='modify_upload' method='post' enctype='multipart/form-data'>
+          <p> Data File: <br> <input type='file' name='myData' required/> </p>
+          <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
+          <p> <button type='submit' method='post'>Modify Upload</button> </p>
+        </form>
+      </p>
+      <p>
+        <h3>Change Password</h3>
+        <form action='input_password' method='post'>
+          <button type='submit' method='post'>Change Password</button>
+        </form>
+      </p>
+    </div>
+  </body>
 </html>

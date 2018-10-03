@@ -1,6 +1,11 @@
 language: python
 python: "3.6"
+services:
+    - mysql
+    - mongodb
 install:
   - pip install .
+  - mysql -u root < setup.sql
 script:
-    - pytest tests
+    - pytest -s tests 2> /dev/null
+    - cd server; timeout 240 python server.py&>/dev/null& sleep 1; locust -c 5 -r 1 -n 10 --no-web -f ../tests/server_stress.py

@@ -6,8 +6,9 @@ from subprocess import run
 
 import cherrypy as cp
 from cherrypy.lib import static
-from mmeds.mmeds import generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
-from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, USER_FILES, send_email, get_salt
+from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
+from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES, get_salt
+import mmeds.config as fig
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 from mmeds.tools import analysis_runner
@@ -23,7 +24,7 @@ class MMEDSserver(object):
         self.users = set()
 
     def __del__(self):
-        temp_dirs = glob(STORAGE_DIR + 'temp_*')
+        temp_dirs = glob(STORAGE_DIR / 'temp_*')
         for temp in temp_dirs:
             cp.log('Removing temporary dir ' + temp)
             rmtree(temp)
@@ -31,7 +32,13 @@ class MMEDSserver(object):
     @cp.expose
     def index(self):
         """ Home page of the application """
-        return open('../html/index.html')
+        if cp.session.get('user'):
+            with open(HTML_DIR / 'welcome.html') as f:
+                page = f.read().format(user=cp.session['user'])
+        else:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
 
     ########################################
     #############  Validation  #############
@@ -39,25 +46,30 @@ class MMEDSserver(object):
 
     @cp.expose
     def run_analysis(self, access_code, tool):
-        """ Run analysis on the specified study. """
+        """
+        Run analysis on the specified study
+        ----------------------------------------
+        :access_code: The code that identifies the dataset to run the tool on
+        :tool: The tool to run on the chosen dataset
+        """
         if cp.session['processes'].get(access_code) is None or\
                 cp.session['processes'][access_code].exitcode is not None:
-            if 'qiime' in tool:
+            if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
                     p = analysis_runner(tool, cp.session['user'], access_code)
                     cp.session['processes'][access_code] = p
-                    with open('../html/welcome.html') as f:
+                    with open(HTML_DIR / 'welcome.html') as f:
                         page = f.read()
-                    return page
+                    return page.format(user=cp.session['user'])
                 except MissingUploadError:
-                    with open('../html/download_error.html') as f:
+                    with open(HTML_DIR / 'download_error.html') as f:
                         page = f.read()
                     return page.format(cp.session['user'])
             else:
-                return "<html> <h1> Tool does not exist. </h1> </html>"
+                return '<html> <h1> Tool {} does not exist. </h1> </html>'.format(tool)
         else:
-            with open('../html/welcome.html') as f:
+            with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
             page = insert_error(page, 31, 'Requested study is currently unavailable')
             return page.format(user=cp.session['user'])
@@ -75,7 +87,7 @@ class MMEDSserver(object):
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
-            with open('../html/upload.html') as f:
+            with open(HTML_DIR / 'upload.html') as f:
                 page = f.read()
             return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
@@ -95,6 +107,7 @@ class MMEDSserver(object):
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+        cp.log(str(metadata_copy))
 
         # Set the User
         if public == 'on':
@@ -103,9 +116,10 @@ class MMEDSserver(object):
             username = cp.session['user']
 
         # Check the metadata file for errors
-        with open(metadata_copy) as f:
-            errors, warnings, study_name, subjects = validate_mapping_file(f)
-        cp.log(study_name)
+        errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
+        cp.log(str(len(errors) + len(warnings)))
+        for error in errors:
+            cp.log(error)
 
         with Database(cp.session['dir'], user='root', owner=username) as db:
             warnings += db.check_repeated_subjects(subjects)
@@ -119,14 +133,15 @@ class MMEDSserver(object):
                 f.write('\n'.join(errors + warnings))
 
             # Get the html for the upload page
-            with open('../html/error.html', 'r') as f:
+            with open(HTML_DIR / 'error.html', 'r') as f:
                 uploaded_output = f.read()
 
-            uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
+            uploaded_output = insert_error(
+                uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             for i, error in enumerate(errors):
-                uploaded_output = insert_error(uploaded_output, 8 + i, '<p>' + error + '</p>')
+                uploaded_output = insert_error(uploaded_output, 11 + i, '<p>' + error + '</p>')
             for i, warning in enumerate(warnings):
-                uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+                uploaded_output = insert_warning(uploaded_output, 11 + i, '<p>' + warning + '</p>')
 
             html = generate_error_html(metadata_copy, errors, warnings)
 
@@ -138,13 +153,12 @@ class MMEDSserver(object):
                 f.write('\n'.join(errors))
 
             # Get the html for the upload page
-            with open('../html/warning.html', 'r') as f:
+            with open(HTML_DIR / 'warning.html', 'r') as f:
                 uploaded_output = f.read()
 
             for i, warning in enumerate(warnings):
-                uploaded_output = insert_warning(uploaded_output, 8 + i, '<p>' + warning + '</p>')
+                uploaded_output = insert_warning(uploaded_output, 11 + i, '<p>' + warning + '</p>')
 
-            uploaded_output = insert_error(uploaded_output, 7, '<h3>' + cp.session['user'] + '</h3>')
             return uploaded_output
         else:
             # Otherwise upload the metadata to the database
@@ -159,12 +173,9 @@ class MMEDSserver(object):
 
             # Update the directory
             cp.session['uploaded'] = True
-            #new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
-            #os.rename(cp.session['dir'], new_dir)
-            #cp.session['dir'] = new_dir
 
             # Get the html for the upload page
-            with open('../html/welcome.html', 'r') as f:
+            with open(HTML_DIR / 'welcome.html', 'r') as f:
                 upload_successful = f.read()
             return upload_successful.format(user=cp.session['user'])
 
@@ -190,7 +201,7 @@ class MMEDSserver(object):
         # cp.session['dir'] = new_dir
 
         # Get the html for the upload page
-        with open('../html/welcome.html', 'r') as f:
+        with open(HTML_DIR / 'welcome.html', 'r') as f:
             upload_successful = f.read()
         return upload_successful.format(user=cp.session['user'])
 
@@ -206,11 +217,11 @@ class MMEDSserver(object):
             try:
                 db.reset_access_code(study_name, study_email)
             except AttributeError:
-                with open('../html/download_error.html') as f:
+                with open(HTML_DIR / 'download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
         # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
+        with open(HTML_DIR / 'success.html', 'r') as f:
             upload_successful = f.read()
         return upload_successful
 
@@ -219,11 +230,9 @@ class MMEDSserver(object):
         # Set the session to use the current user
         username = cp.session['user']
         with Database(cp.session['dir'], user='mmeds_user', owner=username) as db:
-            status = db.set_mmeds_user(username)
-            cp.log('Set user to {}. Status {}'.format(username, status))
             data, header = db.execute(query)
             html_data = db.format(data, header)
-            with open('../html/success.html', 'r') as f:
+            with open(HTML_DIR / 'success.html', 'r') as f:
                 page = f.read()
 
         cp.session['query'] = 'query.tsv'
@@ -258,16 +267,16 @@ class MMEDSserver(object):
         pass_err = check_password(password1, password2)
         user_err = check_username(username)
         if pass_err:
-            with open('../html/sign_up_page.html') as f:
+            with open(HTML_DIR / 'sign_up_page.html') as f:
                 page = f.read()
             return insert_error(page, 25, pass_err)
         elif user_err:
-            with open('../html/sign_up_page.html') as f:
+            with open(HTML_DIR / 'sign_up_page.html') as f:
                 page = f.read()
             return insert_error(page, 25, user_err)
         else:
             add_user(username, password1, email)
-            with open('../html/index.html') as f:
+            with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return page
 
@@ -279,28 +288,45 @@ class MMEDSserver(object):
         """
         cp.session['uploaded'] = False
         cp.session['user'] = username
-        # Create a unique dir for handling files uploaded by this user
-        new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
-        while os.path.exists(new_dir):
-            new_dir = absDir / STORAGE_DIR / ('temp_' + get_salt(10))
-        os.makedirs(new_dir)
+        # Specify a particular test directory
+        if fig.TEST_USER in username:
+            ID = username.strip(fig.TEST_USER)
+            new_dir = Path(str(fig.TEST_DIR) + ID)
+            cp.log(str(new_dir))
+            if not os.path.exists(new_dir):
+                os.makedirs(new_dir)
+                cp.log('Created dir {}'.format(new_dir))
+            cp.session['uploaded'] = True
+        else:
+            # Create a unique dir for handling files uploaded by this user
+            new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
+            while os.path.exists(new_dir):
+                new_dir = STORAGE_DIR / ('temp_' + get_salt(10))
+            os.makedirs(new_dir)
         cp.session['dir'] = new_dir
         cp.session['processes'] = {}
 
         cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
         if not validate_password(username, password):
-            with open('../html/index.html') as f:
+            with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
         elif username in self.users:
-            with open('../html/index.html') as f:
+            with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: User is already logged in.')
         else:
             self.users.add(username)
-            with open('../html/welcome.html') as f:
+            with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
             return page.format(user=username)
+
+    @cp.expose
+    def home(self):
+        """ Return the home page of the server for a user already logged in. """
+        with open(HTML_DIR / 'welcome.html') as f:
+            page = f.read()
+        return page.format(user=cp.session['user'])
 
     @cp.expose
     def logout(self):
@@ -312,19 +338,25 @@ class MMEDSserver(object):
         if not cp.session['uploaded']:
             rmtree(cp.session['dir'])
 
-        return open('../html/index.html')
+        return open(HTML_DIR / 'index.html')
 
     @cp.expose
     def input_password(self):
         """ Load page for changing the user's password """
-        with open('../html/change_password.html') as f:
+        with open(HTML_DIR / 'change_password.html') as f:
             page = f.read()
         return page
 
     @cp.expose
     def change_password(self, password0, password1, password2):
-        """ Change the user's password """
-        with open('../html/change_password.html') as f:
+        """
+        Change the user's password
+        ===============================
+        :password0: The old password
+        :password1: The new password
+        :password2: A second entry of the new password
+        """
+        with open(HTML_DIR / 'change_password.html') as f:
             page = f.read()
 
         # Check the old password matches
@@ -348,7 +380,7 @@ class MMEDSserver(object):
     def upload(self, study_type):
         """ Page for uploading Qiime data """
         if 'qiime' in study_type:
-            with open('../html/upload_qiime.html') as f:
+            with open(HTML_DIR / 'upload_qiime.html') as f:
                 page = f.read()
             page = page.format(user=cp.session['user'], version=study_type)
         else:
@@ -358,7 +390,7 @@ class MMEDSserver(object):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        with open('../html/upload.html') as f:
+        with open(HTML_DIR / 'upload.html') as f:
             page = f.read()
         return page.format(user=cp.session['user'])
 
@@ -372,11 +404,11 @@ class MMEDSserver(object):
             try:
                 db.modify_data(data_copy, access_code)
             except AttributeError:
-                with open('../html/download_error.html') as f:
+                with open(HTML_DIR / 'download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
         # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
+        with open(HTML_DIR / 'success.html', 'r') as f:
             upload_successful = f.read()
         return upload_successful
 
@@ -388,28 +420,28 @@ class MMEDSserver(object):
     def query_page(self):
         """ Skip uploading a file. """
         # Get the html for the upload page
-        with open('../html/success.html', 'r') as f:
+        with open(HTML_DIR / 'success.html', 'r') as f:
             upload_successful = f.read()
         return upload_successful
 
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
-        with open('../html/analysis.html') as f:
+        with open(HTML_DIR / 'analysis.html') as f:
             page = f.read()
         return page.format(user=cp.session['user'])
 
     @cp.expose
     def upload_page(self):
         """ Page for selecting upload type or modifying upload. """
-        with open('../html/upload.html') as f:
+        with open(HTML_DIR / 'upload.html') as f:
             page = f.read()
         return page.format(user=cp.session['user'])
 
     @cp.expose
     def sign_up_page(self):
         """ Return the page for signing up. """
-        return open('../html/sign_up_page.html')
+        return open(HTML_DIR / 'sign_up_page.html')
 
     ########################################
     ###########  Download Pages  ###########
@@ -419,20 +451,21 @@ class MMEDSserver(object):
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
         for key in cp.session['processes'].keys():
-            cp.log('{}: {}, {}'.format(key, cp.session['processes'][key].is_alive(), cp.session['processes'][key].exitcode))
+            cp.log('{}: {}, {}'.format(key, cp.session['processes'][
+                   key].is_alive(), cp.session['processes'][key].exitcode))
         if cp.session['processes'].get(access_code) is None or\
                 cp.session['processes'][access_code].exitcode is not None:
             # Get the open file handler
             with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
                 try:
                     files, path = db.get_mongo_files(access_code)
-                except AttributeError as e:
-                    cp.log(e)
-                    with open('../html/download_error.html') as f:
+                except MissingUploadError as e:
+                    cp.log(str(e))
+                    with open(HTML_DIR / 'download_error.html') as f:
                         download_error = f.read()
                     return download_error.format(cp.session['user'])
 
-            with open('../html/select_download.html') as f:
+            with open(HTML_DIR / 'select_download.html') as f:
                 page = f.read()
 
             i = 0
@@ -444,26 +477,29 @@ class MMEDSserver(object):
             cp.session['download_access'] = access_code
             return page
         else:
-            with open('../html/welcome.html') as f:
+            with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
             page = insert_error(page, 31, 'Requested study is currently unavailable')
             return page.format(user=cp.session['user'])
 
     @cp.expose
     def select_download(self, download):
+        cp.log('User{} requests download {}'.format(cp.session['user'], download))
         with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
             try:
                 files, path = db.get_mongo_files(cp.session['download_access'])
             except AttributeError as e:
                 cp.log(e)
-                with open('../html/download_error.html') as f:
+                with open(HTML_DIR / 'download_error.html') as f:
                     download_error = f.read()
                 return download_error.format(cp.session['user'])
 
         file_path = str(Path(path) / files[download])
         if 'dir' in download:
-            run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz', Path(file_path).parent, Path(file_path).name), shell=True, check=True)
+            run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
+                                               Path(file_path).parent, Path(file_path).name), shell=True, check=True)
             file_path += '.tar.gz'
+        cp.log('Fetching {}'.format(file_path))
 
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
@@ -483,24 +519,26 @@ class MMEDSserver(object):
             return static.serve_file(cp.session['data_path'], 'application/x-download',
                                      'attachment', os.path.basename(cp.session['data_path']))
         except KeyError:
-            with open('../html/download_error.html') as f:
+            with open(HTML_DIR / 'download_error.html') as f:
                 page = f.read()
             return page.format(cp.session['user'])
 
     @cp.expose
     def password_recovery(self, username, email):
         """ Page for reseting a user's password. """
-        with open('../html/blank.html') as f:
+        with open(HTML_DIR / 'blank.html') as f:
             page = f.read()
         if username == 'Public' or username == 'public':
-            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+            page = insert_html(
+                page, 10, '<h4> No account exists with the providied username and email. </h4>')
             return page
         exit = reset_password(username, email)
 
         if exit:
             page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
         else:
-            page = insert_html(page, 10, '<h4> No account exists with the providied username and email. </h4>')
+            page = insert_html(
+                page, 10, '<h4> No account exists with the providied username and email. </h4>')
         return page
 
     @cp.expose
