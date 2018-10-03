@@ -106,7 +106,6 @@ class MMEDSserver(object):
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
-        cp.log(str(metadata_copy))
 
         # Set the User
         if public == 'on':
@@ -114,14 +113,11 @@ class MMEDSserver(object):
         else:
             username = cp.session['user']
 
-        cp.log("Before metadata validation")
         # Check the metadata file for errors
         errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
-        cp.log(str(len(errors) + len(warnings)))
         for error in errors:
             cp.log(error)
 
-        cp.log("before check subs")
         with Database(cp.session['dir'], user='root', owner=username) as db:
             try:
                 warnings += db.check_repeated_subjects(subjects)
@@ -131,7 +127,6 @@ class MMEDSserver(object):
 
         # If there are errors report them and return the error page
         if len(errors) > 0:
-            cp.log("Errors > 0")
             cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
             # Write the errors to a file
             with open(cp.session['error_file'], 'w') as f:
@@ -153,27 +148,20 @@ class MMEDSserver(object):
 
             return html
         elif len(warnings) > 0:
-            cp.log('Warnings > 0')
             cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
-            cp.log("Created error file")
             # Write the errors to a file
             with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
                 f.write('\n'.join(warnings))
-            cp.log('wrote warns')
 
             # Get the html for the upload page
             with open(HTML_DIR / 'warning.html', 'r') as f:
                 uploaded_output = f.read()
 
-            cp.log('Created html')
-
             for i, warning in enumerate(warnings):
                 uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-            cp.log('inserted warnings')
 
             return uploaded_output
         else:
-            cp.log("No Errors or warnings")
             # Otherwise upload the metadata to the database
             with Database(cp.session['dir'], user='root', owner=username) as db:
                 access_code, study_name, email = db.read_in_sheet(metadata_copy,
@@ -463,9 +451,11 @@ class MMEDSserver(object):
     @cp.expose
     def download_page(self, access_code):
         """ Loads the page with the links to download data and metadata. """
+        """
         for key in self.processes.keys():
             cp.log('{}: {}, {}'.format(key, self.processes[
                    key].is_alive(), self.processes[key].exitcode))
+                   """
         if self.processes.get(access_code) is None or\
                 self.processes[access_code].exitcode is not None:
             # Get the open file handler
@@ -484,7 +474,7 @@ class MMEDSserver(object):
             i = 0
             for f in files.keys():
                 if f in USER_FILES:
-                    page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+                    page = insert_html(page, 22 + i, '<option value="{}">{}</option>'.format(f, f))
                     i += 1
 
             cp.session['download_access'] = access_code
@@ -492,7 +482,7 @@ class MMEDSserver(object):
         else:
             with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
-            page = insert_error(page, 31, 'Requested study is currently unavailable')
+            page = insert_error(page, 22, 'Requested study is currently unavailable')
             return page.format(user=cp.session['user'])
 
     @cp.expose

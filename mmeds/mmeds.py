@@ -410,7 +410,7 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
         while True:
-            data = fp.read()
+            data = fp.read(8192)
             nf.write(data)
             if not data:
                 break

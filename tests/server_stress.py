@@ -29,21 +29,24 @@ class MyTasks(TaskSet):
 
         # Get page for succesful download
         for i, f in enumerate(fig.TEST_FILES.keys()):
-            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+            page = insert_html(page, 22 + i, '<option value="{}">{}</option>'.format(f, f))
         self.download_success = page
 
         # Get page for busy download
         with open(fig.HTML_DIR / 'welcome.html') as f:
             page = f.read().format(user=self.user)
-        page = insert_error(page, 31, 'Requested study is currently unavailable')
+        page = insert_error(page, 22, 'Requested study is currently unavailable')
 
         self.download_failure = page
+        """
         with Database(self.dir, user='root', owner=self.user) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=self.code)
+        """
+        self.upload_files()
 
     def on_stop(self):
         self.logout()
@@ -58,7 +61,7 @@ class MyTasks(TaskSet):
     def logout(self):
         self.client.post('/logout')
 
-    @task(1)
+    @task
     def read_root(self):
         with self.client.get('/', catch_response=True) as response:
             sess = response.headers['Set-Cookie']
@@ -66,7 +69,7 @@ class MyTasks(TaskSet):
             session_id = split[0].split('=')[1]
             print(session_id)
 
-    @task(2)
+    @task
     def access_download(self):
         address = '/run_analysis?access_code={}&tool={}'.format(self.code, fig.TEST_TOOL)
         self.client.get(address)
@@ -82,7 +85,7 @@ class MyTasks(TaskSet):
         with self.client.get(address, catch_response=True) as result:
             assert str(result.text) == self.download_success
 
-    @task(3)
+    @task
     def select_download(self):
         """ Test download selection. """
         address = '/download_page?access_code={}'.format(self.code)
@@ -101,10 +104,10 @@ class MyTasks(TaskSet):
                     # Assert that the hashes match
                     assert hash1 == hash2
 
-    @task(4)
+    @task
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
-        with self.client.get(address) as result:
+        with self.client.get(address):
             address = '/validate_qiime'
             with open(fig.TEST_METADATA, 'rb') as f:
                 metadata = f.read()
@@ -118,7 +121,8 @@ class MyTasks(TaskSet):
                 'barcodes': barcodes
             }
             # Test the upload
-            self.client.post(address, files=files)
+            with self.client.post(address, files=files) as result:
+                print(result)
 
 
 class MyUser(HttpLocust):
