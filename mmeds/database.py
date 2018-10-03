@@ -57,8 +57,10 @@ class Database:
             cp.log('Error connecting to ' + database)
             raise e
         self.mongo = men.connect('mmeds',
+                                 username=sec.MONGO_ADMIN_NAME,
+                                 password=sec.MONGO_ADMIN_PASS,
                                  port=sec.MONGO_PORT,
-                                 authentication_database=sec.AUTH_DATABASE,
+                                 authentication_source=sec.AUTH_DATABASE,
                                  host=sec.MONGO_HOST,
                                  connect=connect)
         self.path = path

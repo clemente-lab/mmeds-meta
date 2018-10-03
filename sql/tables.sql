@@ -10,23 +10,19 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 -- -----------------------------------------------------
 -- Schema mydb
 -- -----------------------------------------------------
--- -----------------------------------------------------
--- Schema mmeds
--- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `mmeds` ;
 
 -- -----------------------------------------------------
--- Schema mmeds
+-- Schema mmeds_data1
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `mmeds` DEFAULT CHARACTER SET utf8 ;
-USE `mmeds` ;
+CREATE SCHEMA IF NOT EXISTS `mmeds_data1` DEFAULT CHARACTER SET utf8 ;
+USE `mmeds_data1` ;
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Lab`
+-- Table `mmeds_data1`.`Lab`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Lab` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Lab` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Lab` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Lab` (
   `idLab` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `PrimaryInvestigator` VARCHAR(45) NULL DEFAULT NULL,
@@ -37,11 +33,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Study`
+-- Table `mmeds_data1`.`Study`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Study` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Study` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Study` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Study` (
   `idStudy` INT NOT NULL,
   `Lab_idLab` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
@@ -50,18 +46,18 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Study` (
   INDEX `fk_Study_Lab1_idx` (`Lab_idLab` ASC),
   CONSTRAINT `fk_Study_Lab1`
     FOREIGN KEY (`Lab_idLab`)
-    REFERENCES `mmeds`.`Lab` (`idLab`)
+    REFERENCES `mmeds_data1`.`Lab` (`idLab`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Subjects`
+-- Table `mmeds_data1`.`Subjects`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Subjects` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Subjects` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects` (
   `idSubjects` INT NOT NULL,
   `HostSubjectId` INT NULL DEFAULT NULL,
   `user_id` INT NULL DEFAULT NULL,
@@ -75,11 +71,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Type`
+-- Table `mmeds_data1`.`Type`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Type` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Type` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Type` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Type` (
   `idType` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `SpecimenType` VARCHAR(45) NULL DEFAULT NULL,
@@ -88,11 +84,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Location`
+-- Table `mmeds_data1`.`Location`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Location` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Location` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Location` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Location` (
   `idLocation` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Latitude` FLOAT NULL DEFAULT NULL,
@@ -108,11 +104,11 @@ COMMENT = 'Change to collection site. Add field for collection_tech or similar';
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`BodySite`
+-- Table `mmeds_data1`.`BodySite`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`BodySite` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`BodySite` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`BodySite` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`BodySite` (
   `idBodySite` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `SpecimenBodySite` VARCHAR(45) NULL DEFAULT NULL,
@@ -121,11 +117,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Experiment`
+-- Table `mmeds_data1`.`Experiment`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Experiment` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Experiment` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Experiment` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Experiment` (
   `idExperiment` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `ExperimentName` VARCHAR(45) NULL DEFAULT NULL,
@@ -135,18 +131,18 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Experiment` (
   INDEX `fk_Experiment_Study1_idx` (`Study_idStudy` ASC, `Study_Lab_idLab` ASC),
   CONSTRAINT `fk_Experiment_Study1`
     FOREIGN KEY (`Study_idStudy` , `Study_Lab_idLab`)
-    REFERENCES `mmeds`.`Study` (`idStudy` , `Lab_idLab`)
+    REFERENCES `mmeds_data1`.`Study` (`idStudy` , `Lab_idLab`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Specimen`
+-- Table `mmeds_data1`.`Specimen`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Specimen` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Specimen` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Specimen` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Specimen` (
   `idSpecimen` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Subjects_idSubjects` INT NOT NULL,
@@ -170,27 +166,27 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Specimen` (
   INDEX `fk_Specimen_Experiment1_idx` (`Experiment_idExperiment` ASC, `Experiment_Study_idStudy` ASC, `Experiment_Study_Lab_idLab` ASC),
   CONSTRAINT `fk_Sample_Subjects`
     FOREIGN KEY (`Subjects_idSubjects`)
-    REFERENCES `mmeds`.`Subjects` (`idSubjects`)
+    REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Type1`
     FOREIGN KEY (`Type_idType`)
-    REFERENCES `mmeds`.`Type` (`idType`)
+    REFERENCES `mmeds_data1`.`Type` (`idType`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Sample_Location1`
     FOREIGN KEY (`Location_idLocation`)
-    REFERENCES `mmeds`.`Location` (`idLocation`)
+    REFERENCES `mmeds_data1`.`Location` (`idLocation`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Specimen_BodySite1`
     FOREIGN KEY (`BodySite_idBodySite`)
-    REFERENCES `mmeds`.`BodySite` (`idBodySite`)
+    REFERENCES `mmeds_data1`.`BodySite` (`idBodySite`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Specimen_Experiment1`
     FOREIGN KEY (`Experiment_idExperiment` , `Experiment_Study_idStudy` , `Experiment_Study_Lab_idLab`)
-    REFERENCES `mmeds`.`Experiment` (`idExperiment` , `Study_idStudy` , `Study_Lab_idLab`)
+    REFERENCES `mmeds_data1`.`Experiment` (`idExperiment` , `Study_idStudy` , `Study_Lab_idLab`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
@@ -198,11 +194,11 @@ COMMENT = 'Add table for body site 1:n';
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Ethnicity`
+-- Table `mmeds_data1`.`Ethnicity`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Ethnicity` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Ethnicity` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Ethnicity` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Ethnicity` (
   `idEthnicity` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Ethnicity` VARCHAR(45) NULL DEFAULT NULL,
@@ -211,11 +207,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Subjects_has_Ethnicity`
+-- Table `mmeds_data1`.`Subjects_has_Ethnicity`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Subjects_has_Ethnicity` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Subjects_has_Ethnicity` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Ethnicity` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects_has_Ethnicity` (
   `Subjects_idSubjects` INT NOT NULL,
   `Ethnicity_idEthnicity` INT NOT NULL,
   PRIMARY KEY (`Subjects_idSubjects`, `Ethnicity_idEthnicity`),
@@ -223,23 +219,23 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Ethnicity` (
   INDEX `fk_Subjects_has_Ethnicity_Subjects1_idx` (`Subjects_idSubjects` ASC),
   CONSTRAINT `fk_Subjects_has_Ethnicity_Subjects1`
     FOREIGN KEY (`Subjects_idSubjects`)
-    REFERENCES `mmeds`.`Subjects` (`idSubjects`)
+    REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Subjects_has_Ethnicity_Ethnicity1`
     FOREIGN KEY (`Ethnicity_idEthnicity`)
-    REFERENCES `mmeds`.`Ethnicity` (`idEthnicity`)
+    REFERENCES `mmeds_data1`.`Ethnicity` (`idEthnicity`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Illnesses`
+-- Table `mmeds_data1`.`Illnesses`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Illnesses` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Illnesses` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Illnesses` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Illnesses` (
   `idIllnesses` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `IllnessName` VARCHAR(45) NULL DEFAULT NULL,
@@ -248,11 +244,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Illness`
+-- Table `mmeds_data1`.`Illness`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Illness` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Illness` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Illness` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Illness` (
   `idIllness` INT NOT NULL,
   `Subjects_idSubjects` INT NOT NULL,
   `Illnesses_idIllnesses` INT NOT NULL,
@@ -264,23 +260,23 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Illness` (
   INDEX `fk_Illness_Illnesses1_idx` (`Illnesses_idIllnesses` ASC),
   CONSTRAINT `fk_Illness_Subjects1`
     FOREIGN KEY (`Subjects_idSubjects`)
-    REFERENCES `mmeds`.`Subjects` (`idSubjects`)
+    REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Illness_Illnesses1`
     FOREIGN KEY (`Illnesses_idIllnesses`)
-    REFERENCES `mmeds`.`Illnesses` (`idIllnesses`)
+    REFERENCES `mmeds_data1`.`Illnesses` (`idIllnesses`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Interventions`
+-- Table `mmeds_data1`.`Interventions`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Interventions` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Interventions` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Interventions` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Interventions` (
   `idInterventions` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `InterventionName` VARCHAR(45) NULL DEFAULT NULL,
@@ -289,11 +285,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Intervention`
+-- Table `mmeds_data1`.`Intervention`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Intervention` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Intervention` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Intervention` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Intervention` (
   `idIntervention` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `StartDate` DATETIME NULL DEFAULT NULL,
@@ -305,12 +301,12 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Intervention` (
   INDEX `fk_Intervention_Interventions1_idx` (`Interventions_idInterventions` ASC),
   CONSTRAINT `fk_Treatment_Subjects1`
     FOREIGN KEY (`Subjects_idSubjects`)
-    REFERENCES `mmeds`.`Subjects` (`idSubjects`)
+    REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Intervention_Interventions1`
     FOREIGN KEY (`Interventions_idInterventions`)
-    REFERENCES `mmeds`.`Interventions` (`idInterventions`)
+    REFERENCES `mmeds_data1`.`Interventions` (`idInterventions`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
@@ -318,11 +314,11 @@ COMMENT = 'Reduce to intervention which links to interventions table. Some inter
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Aliquot`
+-- Table `mmeds_data1`.`Aliquot`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Aliquot` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Aliquot` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Aliquot` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Aliquot` (
   `idAliquot` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Specimen_idSpecimen` INT NOT NULL,
@@ -335,18 +331,18 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Aliquot` (
   INDEX `fk_Aliquot_Specimen1_idx` (`Specimen_idSpecimen` ASC, `Specimen_Subjects_idSubjects` ASC, `Specimen_Type_idType` ASC, `Specimen_Location_idLocation` ASC, `Specimen_BodySite_idBodySite` ASC),
   CONSTRAINT `fk_Aliquot_Specimen1`
     FOREIGN KEY (`Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_Type_idType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
-    REFERENCES `mmeds`.`Specimen` (`idSpecimen` , `Subjects_idSubjects` , `Type_idType` , `Location_idLocation` , `BodySite_idBodySite`)
+    REFERENCES `mmeds_data1`.`Specimen` (`idSpecimen` , `Subjects_idSubjects` , `Type_idType` , `Location_idLocation` , `BodySite_idBodySite`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`SampleProtocols`
+-- Table `mmeds_data1`.`SampleProtocols`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`SampleProtocols` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`SampleProtocols` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`SampleProtocols` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`SampleProtocols` (
   `idSampleProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `ToolName` VARCHAR(45) NULL DEFAULT NULL,
@@ -356,11 +352,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`SampleProtocol`
+-- Table `mmeds_data1`.`SampleProtocol`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`SampleProtocol` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`SampleProtocol` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`SampleProtocol` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`SampleProtocol` (
   `idSampleProtocol` INT NOT NULL,
   `SampleProtocols_idSampleProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
@@ -370,18 +366,18 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`SampleProtocol` (
   INDEX `fk_SampleProtocol_SampleProtocols1_idx` (`SampleProtocols_idSampleProtocols` ASC),
   CONSTRAINT `fk_SampleProtocol_SampleProtocols1`
     FOREIGN KEY (`SampleProtocols_idSampleProtocols`)
-    REFERENCES `mmeds`.`SampleProtocols` (`idSampleProtocols`)
+    REFERENCES `mmeds_data1`.`SampleProtocols` (`idSampleProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Sample`
+-- Table `mmeds_data1`.`Sample`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Sample` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Sample` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Sample` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Sample` (
   `idSample` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `SampleProtocol_idSampleProtocol` INT NOT NULL,
@@ -398,23 +394,23 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Sample` (
   INDEX `fk_Sample_Aliquot1_idx` (`Aliquot_idAliquot` ASC, `Aliquot_Specimen_idSpecimen` ASC, `Aliquot_Specimen_Subjects_idSubjects` ASC, `Aliquot_Specimen_Type_idType` ASC, `Aliquot_Specimen_Location_idLocation` ASC, `Aliquot_Specimen_BodySite_idBodySite` ASC),
   CONSTRAINT `fk_Sample_SampleProtocol1`
     FOREIGN KEY (`SampleProtocol_idSampleProtocol` , `SampleProtocol_SampleProtocols_idSampleProtocols`)
-    REFERENCES `mmeds`.`SampleProtocol` (`idSampleProtocol` , `SampleProtocols_idSampleProtocols`)
+    REFERENCES `mmeds_data1`.`SampleProtocol` (`idSampleProtocol` , `SampleProtocols_idSampleProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Sample_Aliquot1`
     FOREIGN KEY (`Aliquot_idAliquot` , `Aliquot_Specimen_idSpecimen` , `Aliquot_Specimen_Subjects_idSubjects` , `Aliquot_Specimen_Type_idType` , `Aliquot_Specimen_Location_idLocation` , `Aliquot_Specimen_BodySite_idBodySite`)
-    REFERENCES `mmeds`.`Aliquot` (`idAliquot` , `Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_Type_idType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
+    REFERENCES `mmeds_data1`.`Aliquot` (`idAliquot` , `Specimen_idSpecimen` , `Specimen_Subjects_idSubjects` , `Specimen_Type_idType` , `Specimen_Location_idLocation` , `Specimen_BodySite_idBodySite`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`RawDataProtocols`
+-- Table `mmeds_data1`.`RawDataProtocols`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`RawDataProtocols` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`RawDataProtocols` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`RawDataProtocols` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`RawDataProtocols` (
   `idRawDataProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `RawDataProtocolscol` VARCHAR(45) NULL DEFAULT NULL,
@@ -423,11 +419,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`RawDataProtocol`
+-- Table `mmeds_data1`.`RawDataProtocol`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`RawDataProtocol` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`RawDataProtocol` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`RawDataProtocol` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`RawDataProtocol` (
   `idRawDataProtocol` INT NOT NULL,
   `RawDataProtocols_idRawDataProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
@@ -437,18 +433,18 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`RawDataProtocol` (
   INDEX `fk_RawDataProtocol_RawDataProtocols1_idx` (`RawDataProtocols_idRawDataProtocols` ASC),
   CONSTRAINT `fk_RawDataProtocol_RawDataProtocols1`
     FOREIGN KEY (`RawDataProtocols_idRawDataProtocols`)
-    REFERENCES `mmeds`.`RawDataProtocols` (`idRawDataProtocols`)
+    REFERENCES `mmeds_data1`.`RawDataProtocols` (`idRawDataProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`RawData`
+-- Table `mmeds_data1`.`RawData`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`RawData` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`RawData` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`RawData` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`RawData` (
   `idRawData` INT NOT NULL,
   `Sample_idSample` INT NOT NULL,
   `RawDataProtocol_idRawDataProtocol` INT NOT NULL,
@@ -459,23 +455,23 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`RawData` (
   INDEX `fk_RawData_RawDataProtocol1_idx` (`RawDataProtocol_idRawDataProtocol` ASC),
   CONSTRAINT `fk_RawData_Sample1`
     FOREIGN KEY (`Sample_idSample`)
-    REFERENCES `mmeds`.`Sample` (`idSample`)
+    REFERENCES `mmeds_data1`.`Sample` (`idSample`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_RawData_RawDataProtocol1`
     FOREIGN KEY (`RawDataProtocol_idRawDataProtocol`)
-    REFERENCES `mmeds`.`RawDataProtocol` (`idRawDataProtocol`)
+    REFERENCES `mmeds_data1`.`RawDataProtocol` (`idRawDataProtocol`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`ResultsProtocols`
+-- Table `mmeds_data1`.`ResultsProtocols`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`ResultsProtocols` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`ResultsProtocols` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`ResultsProtocols` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`ResultsProtocols` (
   `idResultsProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `ResultsProtocolscol` VARCHAR(45) NULL DEFAULT NULL,
@@ -484,11 +480,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`ResultsProtocol`
+-- Table `mmeds_data1`.`ResultsProtocol`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`ResultsProtocol` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`ResultsProtocol` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`ResultsProtocol` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`ResultsProtocol` (
   `idResultsProtocol` INT NOT NULL,
   `ResultsProtocols_idResultsProtocols` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
@@ -498,18 +494,18 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`ResultsProtocol` (
   INDEX `fk_ResultsProtocols_ResultsProtocols1_idx` (`ResultsProtocols_idResultsProtocols` ASC),
   CONSTRAINT `fk_ResultsProtocols_ResultsProtocols1`
     FOREIGN KEY (`ResultsProtocols_idResultsProtocols`)
-    REFERENCES `mmeds`.`ResultsProtocols` (`idResultsProtocols`)
+    REFERENCES `mmeds_data1`.`ResultsProtocols` (`idResultsProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Results`
+-- Table `mmeds_data1`.`Results`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Results` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Results` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Results` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Results` (
   `idResults` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Result` VARCHAR(45) NULL DEFAULT NULL,
@@ -520,23 +516,23 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Results` (
   INDEX `fk_Results_ResultsProtocols1_idx` (`ResultsProtocol_idResultsProtocol` ASC),
   CONSTRAINT `fk_Results_RawData1`
     FOREIGN KEY (`RawData_Sample_idSample`)
-    REFERENCES `mmeds`.`RawData` (`Sample_idSample`)
+    REFERENCES `mmeds_data1`.`RawData` (`Sample_idSample`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Results_ResultsProtocols1`
     FOREIGN KEY (`ResultsProtocol_idResultsProtocol`)
-    REFERENCES `mmeds`.`ResultsProtocol` (`idResultsProtocol`)
+    REFERENCES `mmeds_data1`.`ResultsProtocol` (`idResultsProtocol`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Genotypes`
+-- Table `mmeds_data1`.`Genotypes`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Genotypes` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Genotypes` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Genotypes` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Genotypes` (
   `idGenotypes` INT NOT NULL,
   `user_id` INT NULL DEFAULT NULL,
   `Genotype` VARCHAR(45) NULL DEFAULT NULL,
@@ -545,11 +541,11 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Subjects_has_Genotypes`
+-- Table `mmeds_data1`.`Subjects_has_Genotypes`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Subjects_has_Genotypes` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Subjects_has_Genotypes` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Genotypes` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects_has_Genotypes` (
   `Subjects_idSubjects` INT NOT NULL,
   `Genotypes_idGenotypes` INT NOT NULL,
   PRIMARY KEY (`Subjects_idSubjects`, `Genotypes_idGenotypes`),
@@ -557,23 +553,23 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Genotypes` (
   INDEX `fk_Subjects_has_Genotypes_Subjects1_idx` (`Subjects_idSubjects` ASC),
   CONSTRAINT `fk_Subjects_has_Genotypes_Subjects1`
     FOREIGN KEY (`Subjects_idSubjects`)
-    REFERENCES `mmeds`.`Subjects` (`idSubjects`)
+    REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Subjects_has_Genotypes_Genotypes1`
     FOREIGN KEY (`Genotypes_idGenotypes`)
-    REFERENCES `mmeds`.`Genotypes` (`idGenotypes`)
+    REFERENCES `mmeds_data1`.`Genotypes` (`idGenotypes`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mmeds`.`Subjects_has_Experiment`
+-- Table `mmeds_data1`.`Subjects_has_Experiment`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`Subjects_has_Experiment` ;
+DROP TABLE IF EXISTS `mmeds_data1`.`Subjects_has_Experiment` ;
 
-CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Experiment` (
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects_has_Experiment` (
   `Subjects_idSubjects` INT NOT NULL,
   `Experiment_idExperiment` INT NOT NULL,
   PRIMARY KEY (`Subjects_idSubjects`, `Experiment_idExperiment`),
@@ -581,12 +577,12 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`Subjects_has_Experiment` (
   INDEX `fk_Subjects_has_Experiment_Subjects1_idx` (`Subjects_idSubjects` ASC),
   CONSTRAINT `fk_Subjects_has_Experiment_Subjects1`
     FOREIGN KEY (`Subjects_idSubjects`)
-    REFERENCES `mmeds`.`Subjects` (`idSubjects`)
+    REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_Subjects_has_Experiment_Experiment1`
     FOREIGN KEY (`Experiment_idExperiment`)
-    REFERENCES `mmeds`.`Experiment` (`idExperiment`)
+    REFERENCES `mmeds_data1`.`Experiment` (`idExperiment`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

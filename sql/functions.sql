@@ -1,36 +1,36 @@
 DELIMITER //
 
-DROP FUNCTION IF EXISTS set_connection_auth //
-CREATE FUNCTION set_connection_auth (v_user VARCHAR(100), v_security_token VARCHAR(100))
+DROP FUNCTION IF EXISTS `mmeds_data1`.`set_connection_auth` //
+CREATE FUNCTION `mmeds_data1`.`set_connection_auth` (v_user VARCHAR(100), v_security_token VARCHAR(100))
 RETURNS BOOLEAN
 NOT DETERMINISTIC
 MODIFIES SQL DATA
 SQL SECURITY DEFINER
 BEGIN
     SELECT COUNT(*) INTO @v_token_count
-    FROM security_token
+    FROM `mmeds_data1`.`security_token`
     WHERE username = SESSION_USER() AND security_token = v_security_token;
 
     IF @v_token_count < 1 THEN
         RETURN false;
     END IF;
-    INSERT INTO session (connection_id, username) VALUES (CONNECTION_ID(), v_user);
+    INSERT INTO `mmeds_datat1`.`session` (connection_id, username) VALUES (CONNECTION_ID(), v_user);
     RETURN true;
 END //
 
-DROP FUNCTION IF EXISTS unset_connection_auth //
-CREATE FUNCTION unset_connection_auth (v_security_token VARCHAR(100))
+DROP FUNCTION IF EXISTS `mmeds_data1`.`unset_connection_auth` //
+CREATE FUNCTION `mmeds_data1`.`unset_connection_auth` (v_security_token VARCHAR(100))
 RETURNS BOOLEAN
 NOT DETERMINISTIC
 MODIFIES SQL DATA
 SQL SECURITY DEFINER
 BEGIN
-    DELETE FROM session WHERE connection_id = CONNECTION_ID();
+    DELETE FROM `mmeds_data1`.`session` WHERE connection_id = CONNECTION_ID();
     RETURN true;
 END //
 
-DROP FUNCTION IF EXISTS owner_check //
-CREATE FUNCTION owner_check (v_owner_user_id int)
+DROP FUNCTION IF EXISTS `mmeds_data1`.`owner_check` //
+CREATE FUNCTION `mmeds_data1`.`owner_check` (v_owner_user_id int)
 RETURNS BOOLEAN
 NOT DETERMINISTIC
 READS SQL DATA
@@ -50,10 +50,10 @@ END //
 DELIMITER ;
 
 -- -----------------------------------------------------
--- Table `mmeds`.`user`
+-- Table `mmeds_data1`.`user`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`user` ;
-CREATE TABLE IF NOT EXISTS `mmeds`.`user` (
+DROP TABLE IF EXISTS `mmeds_data1`.`user` ;
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`user` (
     user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     password varchar(64),
@@ -62,20 +62,20 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`user` (
 );
 
 -- -----------------------------------------------------
--- Table `mmeds`.`security_token`
+-- Table `mmeds_data1`.`security_token`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`security_token` ;
-CREATE TABLE IF NOT EXISTS `mmeds`.`security_token` (
+DROP TABLE IF EXISTS `mmeds_data1`.`security_token` ;
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`security_token` (
     security_token_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     security_token varchar(100)
 );
 
 -- -----------------------------------------------------
--- Table `mmeds`.`session`
+-- Table `mmeds_data1`.`session`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`session` ;
-CREATE TABLE IF NOT EXISTS `mmeds`.`session` (
+DROP TABLE IF EXISTS `mmeds_data1`.`session` ;
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`session` (
     connection_id int NOT NULL PRIMARY KEY,
     username varchar(100)
 );

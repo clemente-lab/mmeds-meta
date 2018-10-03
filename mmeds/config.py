@@ -55,12 +55,6 @@ CONFIG = {
     }
 }
 
-UPLOADED_FP = 'uploaded_file'
-ERROR_FP = 'error_log.csv'
-STORAGE_DIR = 'data'
-CONTACT_EMAIL = 'david.wallach@mssm.edu'
-MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
-
 ###################
 ##### Testing #####
 ###################
