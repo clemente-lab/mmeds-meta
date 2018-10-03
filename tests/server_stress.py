@@ -38,14 +38,12 @@ class MyTasks(TaskSet):
         page = insert_error(page, 22, 'Requested study is currently unavailable')
 
         self.download_failure = page
-        """
         with Database(self.dir, user='root', owner=self.user) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=self.code)
-        """
         self.upload_files()
 
     def on_stop(self):
@@ -67,7 +65,6 @@ class MyTasks(TaskSet):
             sess = response.headers['Set-Cookie']
             split = sess.split(';')
             session_id = split[0].split('=')[1]
-            print(session_id)
 
     @task
     def access_download(self):

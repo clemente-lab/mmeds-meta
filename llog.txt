@@ -1,0 +1,112 @@
+[2018-10-03 11:53:22,121] localhost.localdomain/INFO/locust.main: Starting Locust 0.8.1
+[2018-10-03 11:53:22,121] localhost.localdomain/INFO/locust.runners: Hatching and swarming 5 clients at the rate 1 clients/s...
+[2018-10-03 11:53:27,251] localhost.localdomain/INFO/locust.runners: All locusts hatched: MyUser: 5
+[2018-10-03 11:53:27,251] localhost.localdomain/INFO/locust.runners: Resetting stats
+
+[2018-10-03 11:53:49,875] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:53:49,875] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:49,917] localhost.localdomain/INFO/stdout: b002e7934d490deca25fba1e2029a68957288606
+[2018-10-03 11:53:49,917] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:51,004] localhost.localdomain/INFO/stdout: b002e7934d490deca25fba1e2029a68957288606
+[2018-10-03 11:53:51,004] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:54,145] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:53:54,145] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:54,318] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:53:54,318] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:54,590] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:53:54,590] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:54,632] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:53:54,632] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:55,573] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:53:55,574] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:56,849] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:53:56,849] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:56,944] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:53:56,944] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:56,952] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:53:56,952] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:56,978] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:53:56,978] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:57,731] localhost.localdomain/INFO/stdout: df22f2b68cf833bd72a17a7d14a1af07b067e54a
+[2018-10-03 11:53:57,731] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:58,672] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:53:58,672] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:53:59,059] localhost.localdomain/INFO/stdout: 5019773a473beaa3a5eed4c910faa4c9d674e428
+[2018-10-03 11:53:59,059] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:00,112] localhost.localdomain/INFO/stdout: b002e7934d490deca25fba1e2029a68957288606
+[2018-10-03 11:54:00,112] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:00,351] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:00,351] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:02,700] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:02,700] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:02,912] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:02,912] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:03,241] localhost.localdomain/INFO/stdout: b002e7934d490deca25fba1e2029a68957288606
+[2018-10-03 11:54:03,241] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:03,714] localhost.localdomain/INFO/stdout: 51dddd16d84eccd3b90f3961eb2aa240bed5b7c3
+[2018-10-03 11:54:03,714] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:03,784] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:03,784] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:03,833] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:03,833] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,051] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:54:04,051] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,255] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:54:04,256] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,274] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:54:04,274] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,719] localhost.localdomain/INFO/stdout: 51dddd16d84eccd3b90f3961eb2aa240bed5b7c3
+[2018-10-03 11:54:04,719] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,933] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:54:04,933] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,974] localhost.localdomain/INFO/stdout: 8cf9c1f41a7902dc42309a56900fba37446c4836
+[2018-10-03 11:54:04,974] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:04,995] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:54:04,995] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:05,012] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:54:05,012] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:05,416] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:54:05,416] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:05,477] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:54:05,477] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:05,494] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:54:05,494] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:06,217] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:54:06,218] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:06,293] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:54:06,293] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:06,335] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:54:06,335] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:06,503] localhost.localdomain/INFO/stdout: df22f2b68cf833bd72a17a7d14a1af07b067e54a
+[2018-10-03 11:54:06,503] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:07,300] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:07,300] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:07,530] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:54:07,530] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:07,630] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:54:07,630] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:07,670] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:54:07,670] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:08,379] localhost.localdomain/INFO/stdout: reads
+[2018-10-03 11:54:08,379] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:08,424] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:08,424] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:08,470] localhost.localdomain/INFO/stdout: barcodes
+[2018-10-03 11:54:08,470] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:08,501] localhost.localdomain/INFO/stdout: metadata
+[2018-10-03 11:54:08,502] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:08,682] localhost.localdomain/INFO/stdout: 5019773a473beaa3a5eed4c910faa4c9d674e428
+[2018-10-03 11:54:08,682] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:10,024] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:10,024] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:10,833] localhost.localdomain/INFO/stdout: <Response [200]>
+[2018-10-03 11:54:10,834] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:11,492] localhost.localdomain/INFO/stdout: b002e7934d490deca25fba1e2029a68957288606
+[2018-10-03 11:54:11,492] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:11,599] localhost.localdomain/INFO/stdout: 8cf9c1f41a7902dc42309a56900fba37446c4836
+[2018-10-03 11:54:11,599] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:11,840] localhost.localdomain/INFO/stdout: 51dddd16d84eccd3b90f3961eb2aa240bed5b7c3
+[2018-10-03 11:54:11,840] localhost.localdomain/INFO/stdout: 
+[2018-10-03 11:54:11,840] localhost.localdomain/INFO/locust.runners: All locusts dead
+
+[2018-10-03 11:54:11,840] localhost.localdomain/INFO/locust.main: Shutting down (exit code 0), bye.
