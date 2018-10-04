@@ -132,6 +132,7 @@ class DatabaseTests(TestCase):
             value = self.df[table][column].iloc[row]
             if pd.isnull(value):
                 value = 'NULL'
+            # Only and AND if it's not the first argument
             if i == 0:
                 sql += ' '
             else:
@@ -152,7 +153,9 @@ class DatabaseTests(TestCase):
             fsql = self.build_sql(ftable, row)
             self.c.execute(fsql)
             fresults = self.c.fetchall()
+            # Get the resulting foreign key
             fresult = fresults[0][0]
+            # Add it to the original query
             if '=' in sql:
                 sql += ' AND {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
             else:
@@ -232,6 +235,14 @@ class DatabaseTests(TestCase):
             self.c.execute(sql)
 
     def test_table_protection(self):
+        """
+        The purpose of this test is to ensure that a user can only access data
+        that they uploaded or that is made public. It does this by querying
+        each of the protected tables as testuser0. For each row of results that
+        is returned, it checks that a matching row exists in the metadata file
+        uploaded by testuser0. There are other rows in these table as we know
+        from previous test cases.
+        """
         with Database(fig.TEST_DIR_0, user='mmeds_user', owner=fig.TEST_USER_0) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
