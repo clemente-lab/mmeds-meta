@@ -20,15 +20,15 @@ if not STORAGE_DIR.is_dir():
 if not STORAGE_DIR.is_dir():
     STORAGE_DIR = Path('./server/data').resolve()
 
-SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 PORT = 8080
+HOST = '0.0.0.0'
 
 
 CONFIG = {
     'global': {
-        'server.socket_host': '0.0.0.0',
+        'server.socket_host': HOST,
         'server.socket_port': PORT,
         'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'server.ssl_module': 'builtin',
@@ -50,7 +50,7 @@ CONFIG = {
     # This sets up the https security
     '/protected/area': {
         'tools.auth_digest': True,
-        'tools.auth_digest.realm': 'localhost',
+        'tools.auth_digest.realm': HOST,
         'tools.auth_digest.key': sec.DIGEST_KEY,
     }
 }

@@ -42,21 +42,21 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database=sec.SQL_HOST, user='root', owner=None, connect=True, testing=False):
+    def __init__(self, path, database=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, owner=None, connect=True, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
         """
         warnings.simplefilter('ignore')
         try:
-            if user == 'mmeds_user':
+            if user == sec.SQL_USER_NAME:
                 self.db = pms.connect(host=sec.SQL_HOST, user=sec.SQL_USER_NAME, password=sec.SQL_USER_PASS, database=sec.SQL_DATABASE, local_infile=True)
             else:
                 self.db = pms.connect(host=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, password=sec.SQL_ADMIN_PASS, database=sec.SQL_DATABASE, local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e
-        self.mongo = men.connect('mmeds',
+        self.mongo = men.connect(db=sec.MONGO_DATABASE,
                                  username=sec.MONGO_ADMIN_NAME,
                                  password=sec.MONGO_ADMIN_PASS,
                                  port=sec.MONGO_PORT,
@@ -66,11 +66,12 @@ class Database:
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
-        if user == 'mmeds_user':
+        if user == sec.SQL_USER_NAME:
             sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, SECURITY_TOKEN)
             self.cursor.execute(sql)
             self.db.commit()
         self.owner = owner
+        self.user = user
         if owner is None:
             self.user_id = 0
             self.email = MMEDS_EMAIL
@@ -98,9 +99,10 @@ class Database:
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
-        sql = 'SELECT unset_connection_auth("{}")'.format(sec.SECURITY_TOKEN)
-        self.cursor.execute(sql)
-        self.db.commit()
+        if self.user == sec.SQL_USER_NAME:
+            sql = 'SELECT unset_connection_auth("{}")'.format(sec.SECURITY_TOKEN)
+            self.cursor.execute(sql)
+            self.db.commit()
         self.db.close()
 
     def __enter__(self):
@@ -405,15 +407,15 @@ class Database:
     def add_user(self, username, password, salt, email):
         """ Add the user with the specified parameters. """
         # Create the SQL to add the user
-        sql = 'INSERT INTO mmeds.user (username, password, salt, email) VALUES\
-                ("{}", "{}", "{}", "{}");'.format(username, password, salt, email)
+        sql = 'INSERT INTO {}.user (username, password, salt, email) VALUES\
+                ("{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE, username, password, salt, email)
 
         self.cursor.execute(sql)
         self.db.commit()
 
     def remove_user(self, username):
         """ Remove a user from the database. """
-        sql = 'DELETE FROM mmeds.user WHERE username="{}"'.format(username)
+        sql = 'DELETE FROM {}.user WHERE username="{}"'.format(sec.SQL_DATABASE, username)
         self.cursor.execute(sql)
         self.db.commit()
 
@@ -425,7 +427,7 @@ class Database:
 
         """
         return
-        sql = 'SELECT user_id FROM mmeds.user where username="{}"'.format(username)
+        sql = 'SELECT user_id FROM {}.user where username="{}"'.format(sec.SQL_DATABASE, username)
         self.cursor.execute(sql)
         user_id = int(self.cursor.fetchone()[0])
         print(user_id)
