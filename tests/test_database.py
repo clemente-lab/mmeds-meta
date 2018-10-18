@@ -1,4 +1,4 @@
-from mmeds.database import Database
+from mmeds.database import Database, MetaData
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
 from prettytable import PrettyTable, ALL
@@ -263,6 +263,26 @@ class DatabaseTests(TestCase):
                                 else:
                                     assert result[i] in self.df0[table][col].tolist()
 
+    ####################
+    ### Test MongoDB ###
+    ####################
+    def test_mongo_import(self):
+        """ Test the import of files into mongo. """
+        # Get a random string to use for the code
+        test_code = fig.get_salt(10)
+        args = {}
+        for i in range(5):
+            args[fig.get_salt(5)] = fig.get_salt(10)
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
+            db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)
+
+
+def test():
+    tester = DatabaseTests()
+    tester.setUpClass()
+    tester.test_mongo_import()
+
 
 if __name__ == "__main__":
-    main()
+    test()
+    #main()

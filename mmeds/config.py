@@ -50,7 +50,7 @@ CONFIG = {
     # This sets up the https security
     '/protected/area': {
         'tools.auth_digest': True,
-        'tools.auth_digest.realm': 'localhost',
+        'tools.auth_digest.realm': '0.0.0.0',
         'tools.auth_digest.key': 'a565c2714791cfb',
     }
 }
