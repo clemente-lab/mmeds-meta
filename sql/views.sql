@@ -1,3 +1,5 @@
+USE `mmeds_data1`;
+
 DROP VIEW IF EXISTS `mmeds_data1`.`protected_Lab`;
 CREATE
 SQL SECURITY DEFINER

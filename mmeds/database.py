@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
+from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
 from mmeds.error import TableAccessError, MissingUploadError
 from mmeds.mmeds import send_email
 import mmeds.secrets as sec
@@ -42,7 +42,7 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, owner=None, connect=True, testing=False):
+    def __init__(self, path, database=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -60,14 +60,13 @@ class Database:
                                  username=sec.MONGO_ADMIN_NAME,
                                  password=sec.MONGO_ADMIN_PASS,
                                  port=sec.MONGO_PORT,
-                                 authentication_source=sec.AUTH_DATABASE,
-                                 host=sec.MONGO_HOST,
-                                 connect=connect)
+                                 authentication_source=sec.MONGO_DATABASE,
+                                 host=sec.MONGO_HOST)
         self.path = path
         self.IDs = defaultdict(dict)
         self.cursor = self.db.cursor()
         if user == sec.SQL_USER_NAME:
-            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, SECURITY_TOKEN)
+            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, sec.SECURITY_TOKEN)
             self.cursor.execute(sql)
             self.db.commit()
         self.owner = owner
