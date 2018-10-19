@@ -158,11 +158,15 @@ PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaD
 
 # These are the columns for each table
 TABLE_COLS = {}
+ALL_COLS = []
 with pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True) as db:
     for table in TABLE_ORDER:
         if not table == 'AdditionalMetaData':
             db.execute('DESCRIBE ' + table)
-            TABLE_COLS[table] = [x[0] for x in db.fetchall() if 'id' not in x[0]]
+            results = [x[0] for x in db.fetchall() if 'id' not in x[0]]
+            TABLE_COLS[table] = results
+            ALL_COLS += results
+    TABLE_COLS['AdditionalMetaData'] = []
 
 
 def get_salt(length=10, numeric=False):
