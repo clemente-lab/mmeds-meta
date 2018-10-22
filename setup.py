@@ -46,6 +46,6 @@ setup(name='mmeds',
           'pandas',
           'mongoengine',
           'prettytable',
-          'easyimap'
+          'pint'
       ],
       zip_safe=False)
