@@ -3,6 +3,7 @@ from numpy import std, mean, issubdtype, number
 from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
+from numpy import datetime64
 import mmeds.config as fig
 import pandas as pd
 
@@ -90,6 +91,9 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
     :col_type: The known type of the column as a whole
     :check_date: If True check the cell for a valid date
     """
+    # An NA cell will not generate any errors
+    if cell == 'NA':
+        return []
     errors = []
     row_col = str(row_index) + '\t' + str(col_index) + '\t'
     # Check for non-standard NAs
@@ -98,20 +102,17 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
                       (cell, row_index, col_index))
 
     # Check for consistent types in the column
-    # Pandas stores 'str' as 'object' so check for that explicitly
-    if (is_numeric(cell) and not issubdtype(col_type, number)) or\
-       not col_type == type(cell) and\
-       (not isinstance(cell, str) and 'object' == col_type):
-        errors.append(row_col + 'Mixed Type Error: Mixed datatypes in column %d: %s' %
-                      (col_index, cell))
+    if not issubdtype(col_type, datetime64):
+        # If the cast fails for this cell the data must be the wrong type
+        try:
+            col_type(cell)
+        except ValueError:
+            errors.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
     # Check for empty fields
     if '' == cell or pd.isnull(cell):
         errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
     if type(cell) == str:
-        if not cell == 'NA' and issubdtype(col_type, number):
-            errors.append(row_col + 'Mixed Type Error: Mixed datatypes in column %d: %s' %
-                          (col_index, cell))
         # Check for trailing or preceding whitespace
         if not cell == cell.strip():
             errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
@@ -121,8 +122,7 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
         try:
             pd.to_datetime(cell)
         except ValueError:
-            if not cell == 'NA':
-                errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
+            errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
     return errors
 
 
@@ -133,7 +133,9 @@ def get_col_type(raw_column):
     :raw_column: The column to check for type
     """
     check_date = False
+    col_type = None
     if 'Date' in raw_column.name:
+        col_type = datetime64
         try:
             column = pd.to_datetime(raw_column)
         # If there is an error converting to datetime
@@ -141,18 +143,35 @@ def get_col_type(raw_column):
         except ValueError:
             column = raw_column
             check_date = True
-    # Try to set the type based on the first non NA cell
+    # Try to set the type based on the most common type
     else:
-        type_cell = raw_column[0]
+        column = raw_column
+        types = {
+            int: 0,
+            float: 0,
+            str: 0
+        }
+
         for cell in raw_column:
-            if not cell == 'NA':
-                type_cell = cell
-                break
-        try:
-            column = raw_column.astype(type(type_cell))
-        except ValueError:
-            column = raw_column
-    return column, check_date
+            # Don't count NA
+            if cell == 'NA':
+                continue
+            # Check if value is numeric
+            elif is_numeric(cell):
+                try:
+                    int(cell)
+                    types[int] += 1
+                except ValueError:
+                    types[float] += 1
+            # Check if it's a string
+            else:
+                try:
+                    str(cell)
+                    types[str] += 1
+                except TypeError:
+                    continue
+        col_type = max(types, key=types.get)
+    return column, col_type, check_date
 
 
 def check_column(raw_column, col_index):
@@ -162,7 +181,7 @@ def check_column(raw_column, col_index):
     :raw_column: The unmodified column from the metadata dataframe
     :col_index: The index of the column in the original dataframe
     """
-    column, check_date = get_col_type(raw_column)
+    column, col_type, check_date = get_col_type(raw_column)
 
     # Get the header
     header = column.name
@@ -173,22 +192,23 @@ def check_column(raw_column, col_index):
 
     # Check the remaining columns
     for i, cell in enumerate(column):
-        errors += check_cell(i, col_index, cell, column.dtype, check_date)
+        errors += check_cell(i, col_index, cell, col_type, check_date)
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
         errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
     # Check that values fall within standard deviation
-    if issubdtype(column.dtype, number):
-        stddev = std(column)
-        avg = mean(column)
+    if issubdtype(col_type, number):
+        filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
+        stddev = std(filtered)
+        avg = mean(filtered)
         for i, cell in enumerate(column):
-            if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
+            if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
                 warnings.append('%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d' %
                                 (i + 1, col_index, cell, col_index))
     # Check for catagorical data
-    elif 'object' == column.dtype:
+    elif 'str' == col_type:
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
@@ -396,17 +416,20 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    try:
-        float(s)
-        return True
-    except (TypeError, ValueError):
-        pass
-    try:
-        import unicodedata
-        unicodedata.numeric(s)
-        return True
-    except (TypeError, ValueError):
-        pass
+    if issubdtype(type(s), str):
+        if ('.e' in s or '.E' in s):
+            return False
+        try:
+            float(s)
+            return True
+        except (TypeError, ValueError):
+            pass
+        try:
+            import unicodedata
+            unicodedata.numeric(s)
+            return True
+        except (TypeError, ValueError):
+            pass
     return False
 
 
