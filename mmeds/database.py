@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
+from mmeds.config import SQL_DATABASE, SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 
@@ -41,7 +41,7 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True, testing=False):
+    def __init__(self, path, database=SQL_DATABASE, user='root', owner=None, connect=True, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.

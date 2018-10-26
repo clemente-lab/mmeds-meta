@@ -50,10 +50,10 @@ END //
 DELIMITER ;
 
 -- -----------------------------------------------------
--- Table `mmeds`.`user`
+-- Table `mmeds_data1`.`user`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`user` ;
-CREATE TABLE IF NOT EXISTS `mmeds`.`user` (
+DROP TABLE IF EXISTS `mmeds_data1`.`user` ;
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`user` (
     user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     password varchar(64),
@@ -62,20 +62,20 @@ CREATE TABLE IF NOT EXISTS `mmeds`.`user` (
 );
 
 -- -----------------------------------------------------
--- Table `mmeds`.`security_token`
+-- Table `mmeds_data1`.`security_token`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`security_token` ;
-CREATE TABLE IF NOT EXISTS `mmeds`.`security_token` (
+DROP TABLE IF EXISTS `mmeds_data1`.`security_token` ;
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`security_token` (
     security_token_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username varchar(100),
     security_token varchar(100)
 );
 
 -- -----------------------------------------------------
--- Table `mmeds`.`session`
+-- Table `mmeds_data1`.`session`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mmeds`.`session` ;
-CREATE TABLE IF NOT EXISTS `mmeds`.`session` (
+DROP TABLE IF EXISTS `mmeds_data1`.`session` ;
+CREATE TABLE IF NOT EXISTS `mmeds_data1`.`session` (
     connection_id int NOT NULL PRIMARY KEY,
     username varchar(100)
 );

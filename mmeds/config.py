@@ -23,6 +23,7 @@ if not STORAGE_DIR.is_dir():
 SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+SQL_DATABASE = 'mmeds_data1'
 PORT = 8080
 
 
@@ -109,7 +110,7 @@ TABLE_ORDER = [
     'ResultsProtocols',
     'Type',
     'BodySite',
-    'Location',
+    'CollectionSite',
     'Subjects',
     'Illness',
     'Intervention',
@@ -130,8 +131,8 @@ TABLE_ORDER = [
 PROTECTED_TABLES = [
     'Lab',
     'Study',
+    'CollectionSite',
     'Experiment',
-    'Location',
     'Subjects',
     'Illness',
     'Intervention',
@@ -159,7 +160,7 @@ PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaD
 # These are the columns for each table
 TABLE_COLS = {}
 ALL_COLS = []
-with pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True) as db:
+with pms.connect('localhost', 'root', '', SQL_DATABASE, max_allowed_packet=2048000000, local_infile=True) as db:
     for table in TABLE_ORDER:
         if not table == 'AdditionalMetaData':
             db.execute('DESCRIBE ' + table)
@@ -167,6 +168,50 @@ with pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000
             TABLE_COLS[table] = results
             ALL_COLS += results
     TABLE_COLS['AdditionalMetaData'] = []
+
+MMEDS_MAP = {
+    'investigation_type': ('Study', 'StudyType'),
+    'project_name': ('Study', 'StudyName'),
+    'experimental_factor': None,
+    'collection_date': ('Specimen', 'CollectionDate'),
+    'lat_lon': ('CollectionSite', '##PARSE##'),
+    'geo_loc_name': None,
+    'biome': ('CollectionSite', 'Biome'),
+    'feature': ('CollectionSite', 'Feature'),
+    'material': ('CollectionSite', 'Material'),
+    'env_package': None,
+    'depth': ('CollectionSite', 'Depth'),
+    'ammonium': None,
+    'chlorophyll': None,
+    'density': None,
+    'nitrate': None,
+    'org_carb': None,
+    'org_nitro': None,
+    'organism_count': None,
+    'oxy_stat_samp': None,
+    'phosphate': None,
+    'salinity': None,
+    'silicate': None,
+    'temp': None,
+    'tot_depth_water_col': None,
+    'rel_to_oxygen': None,
+    'samp_collect_device': None,
+    'samp_mat_process': None,
+    'samp_size': None,
+    'nucl_acid_ext': None,
+    'nucl_acid_amp': None,
+    'lib_reads_seqd': None,
+    'target_gene': None,
+    'subfragment': None,
+    'pcr_primers': None,
+    'mid': None,
+    'adapter': None,
+    'pcr_cond': None,
+    'sequencing_meth': ('RawDataProtocols', 'RawDataProtocolscol'),
+    'url': ('Study', 'RelevantLinks')
+}
+
+MIXS_MAP = {v: k for k, v in MMEDS_MAP.items()}
 
 
 def get_salt(length=10, numeric=False):
