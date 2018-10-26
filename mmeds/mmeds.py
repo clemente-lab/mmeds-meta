@@ -519,6 +519,109 @@ def generate_error_html(file_fp, errors, warnings):
     return html
 
 
+def split_data(column):
+    """
+    Split the data into multiple columns
+    ------------------------------------
+    :column: A pandas Series object
+    """
+    result = defaultdict(list)
+    if column.name == 'lat_lon':
+        for value in column:
+            parsed = value.strip('+').split('-')
+            result['Latitude'].append(parsed[0])
+            result['Longitude'].append(parsed[1])
+    elif column.name == 'assembly_name':
+        for value in column:
+            parsed = value.strip(' ')
+            result['Tool'].append(parsed[0])
+            result['Version'].append(parsed[1])
+    else:
+        raise ValueError
+    return result
+
+
+def MIxS_to_mmeds(file, out_file, skip_rows=0):
+    """
+    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
+    ------------------------------------------------------------------------------
+    :file: The path to the file to convert
+    :out_file: The path to write the new metadata file to
+    :skip_rows: The number of rows to skip after the header
+    """
+    # Read in the data file
+    df = pd.read_csv(file, header=0, sep='\t')
+    # Set the index to be the 'column_header' column
+    df.set_index('column_header', inplace=True)
+    # Remove rows with null indexes
+    df = df.loc[df.index.notnull()]
+    # Transpose the dataframe across the diagonal
+    df = df.T
+    # Drop unnamed columns
+    df.drop([x for x in df.axes[0] if 'Unnamed' in x], inplace=True)
+    # Drop any columns with only np.nan values
+    df.dropna(how='all', axis='columns', inplace=True)
+    # Replace np.nans with "NA"s
+    df.fillna('"NA"', inplace=True)
+    # Create a new dictionary for accessing the columns belonging to each table
+    all_cols = defaultdict(list)
+    all_cols.update(fig.TABLE_COLS)
+    # Find all columns that don't have a mapping and add them to AdditionalMetaData
+    unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
+    for item in unmapped_items:
+        fig.MIXS_MAP[('AdditionalMetaData', str(item))] = str(item)
+        fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(item))
+        all_cols['AdditionalMetaData'].append(str(item))
+
+    # Build the data for the new format
+    meta = {}
+    for col in df.columns:
+        (table, column) = fig.MMEDS_MAP[col]
+        if ':' in column:
+            cols = column.split(':')
+            data = split_data(df[col])
+            for new_col in cols:
+                meta[(table, new_col)] = data[new_col]
+        else:
+            meta[(table, column)] = df[col].astype(str)
+
+    # Write the file
+    write_mmeds_metadata(out_file, meta, all_cols)
+
+
+def write_mmeds_metadata(out_file, meta, all_cols):
+    """
+    Write out a mmeds metadate file based on the data provided
+    ----------------------------------------------------------
+    :out_file: The path to write the metadata to
+    :meta: A dictionary containing all the information to write
+    :all_cols: A dictionary specifying all the tables and columns
+        for this metadata file
+    """
+
+    # Build the first two rows of the mmeds metadata file
+    table_row, column_row = [], []
+    for table in all_cols.keys():
+        for column in all_cols[table]:
+            table_row.append(table)
+            column_row.append(column)
+
+    # Write out each line of the file
+    with open(out_file, 'w') as f:
+        f.write('\t'.join(table_row) + '\n')
+        f.write('\t'.join(column_row) + '\n')
+        for i in range(len(meta[(table_row[0], column_row[0])])):
+            row = []
+            for table, column in zip(table_row, column_row):
+                # Add the value to the row
+                try:
+                    row.append(meta[(table, column)][i])
+                # If a value doesn't exist for this table,column insert NA
+                except KeyError:
+                    row.append('"NA"')
+            f.write('\t'.join(row) + '\n')
+
+
 def send_email(toaddr, user, message='upload', **kwargs):
     """
     Sends a confirmation email to addess containing user and code.
