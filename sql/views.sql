@@ -133,21 +133,21 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds_data1`.`protected_Results` TO 'mmeds_user'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmeds_user'@'%';
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmeds_user'@'%';
-
 GRANT SELECT ON TABLE `mmeds_data1`.`Genotypes` TO 'mmeds_user'@'%';
-
-GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmeds_user'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`ResultsProtocols` TO 'mmeds_user'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`SampleProtocols` TO 'mmeds_user'@'%';
 
+GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmeds_user'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`Ethnicity` TO 'mmeds_user'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmeds_user'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmeds_user'@'%';
+
 GRANT SELECT ON TABLE `mmeds_data1`.`Illnesses` TO 'mmeds_user'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmeds_user'@'%';
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Ethnicity` TO 'mmeds_user'@'%';
 

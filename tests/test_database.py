@@ -1,8 +1,8 @@
-from mmeds.database import Database, MetaData
+from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
 from prettytable import PrettyTable, ALL
-from unittest import TestCase, main
+from unittest import TestCase
 import mmeds.config as fig
 import pymysql as pms
 import pandas as pd
@@ -54,7 +54,7 @@ class DatabaseTests(TestCase):
                                                               access_code=fig.TEST_CODE + '0')
         self.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], sep='\t')
         self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
-        self.db = pms.connect('localhost', 'root', '', 'mmeds', max_allowed_packet=2048000000, local_infile=True)
+        self.db = pms.connect('localhost', 'root', '', fig.SQL_DATABASE, max_allowed_packet=2048000000, local_infile=True)
         self.c = self.db.cursor()
 
     @classmethod
