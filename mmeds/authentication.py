@@ -1,11 +1,9 @@
 import hashlib
-
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
 from mmeds.mmeds import send_email
-
-LOGIN_FILE = '../server/data/login_info'
+import mmeds.secrets as sec
 
 
 def add_user(username, password, email, testing=False):
@@ -36,7 +34,8 @@ def validate_password(username, password, testing=False):
         try:
             hashed_password, salt =\
                 db.get_col_values_from_table('password, salt',
-                                             'mmeds.user where username = "{}"'.format(username))[0]
+                                             '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
+                                                                                    username))[0]
         # An index error means that the username did not exist
         except IndexError:
             print('Username did not exist')

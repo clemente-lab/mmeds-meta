@@ -1,36 +1,36 @@
 DELIMITER //
 
-DROP FUNCTION IF EXISTS set_connection_auth //
-CREATE FUNCTION set_connection_auth (v_user VARCHAR(100), v_security_token VARCHAR(100))
+DROP FUNCTION IF EXISTS `mmeds_data1`.`set_connection_auth` //
+CREATE FUNCTION `mmeds_data1`.`set_connection_auth` (v_user VARCHAR(100), v_security_token VARCHAR(100))
 RETURNS BOOLEAN
 NOT DETERMINISTIC
 MODIFIES SQL DATA
 SQL SECURITY DEFINER
 BEGIN
     SELECT COUNT(*) INTO @v_token_count
-    FROM security_token
+    FROM `mmeds_data1`.`security_token`
     WHERE username = SESSION_USER() AND security_token = v_security_token;
 
     IF @v_token_count < 1 THEN
         RETURN false;
     END IF;
-    INSERT INTO session (connection_id, username) VALUES (CONNECTION_ID(), v_user);
+    INSERT INTO `mmeds_datat1`.`session` (connection_id, username) VALUES (CONNECTION_ID(), v_user);
     RETURN true;
 END //
 
-DROP FUNCTION IF EXISTS unset_connection_auth //
-CREATE FUNCTION unset_connection_auth (v_security_token VARCHAR(100))
+DROP FUNCTION IF EXISTS `mmeds_data1`.`unset_connection_auth` //
+CREATE FUNCTION `mmeds_data1`.`unset_connection_auth` (v_security_token VARCHAR(100))
 RETURNS BOOLEAN
 NOT DETERMINISTIC
 MODIFIES SQL DATA
 SQL SECURITY DEFINER
 BEGIN
-    DELETE FROM session WHERE connection_id = CONNECTION_ID();
+    DELETE FROM `mmeds_data1`.`session` WHERE connection_id = CONNECTION_ID();
     RETURN true;
 END //
 
-DROP FUNCTION IF EXISTS owner_check //
-CREATE FUNCTION owner_check (v_owner_user_id int)
+DROP FUNCTION IF EXISTS `mmeds_data1`.`owner_check` //
+CREATE FUNCTION `mmeds_data1`.`owner_check` (v_owner_user_id int)
 RETURNS BOOLEAN
 NOT DETERMINISTIC
 READS SQL DATA
