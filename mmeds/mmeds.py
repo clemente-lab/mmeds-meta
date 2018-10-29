@@ -573,18 +573,19 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
     all_cols.update(fig.TABLE_COLS)
-    print('\n'.join(list(map(str, fig.TABLE_COLS.values()))))
     # Find all columns that don't have a mapping and add them to AdditionalMetaData
     unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
     for item in unmapped_items:
+        # If there is no units entry for the item
         if pd.isnull(units.get(item)):
             first = df[item][0].split(' ')
+            # If the value is numeric grab the units in the data cell
             if is_numeric(first[0]):
-                print(first[0])
                 unit_col = item + ' ({})'.format(' '.join(first[1:]))
                 df[item] = df[item].map(lambda x: x.split(' ')[0])
             else:
                 unit_col = item
+        # Add the units to the header if available
         else:
             unit_col = item + ' ({})'.format(units[item])
         fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
