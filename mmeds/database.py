@@ -28,6 +28,7 @@ class MetaData(men.DynamicDocument):
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
     path = men.StringField(max_length=100, required=True)
+    metadata = men.DictField()
     files = men.DictField()
 
     # When the document is updated record the
@@ -488,6 +489,8 @@ class Database:
                          owner=self.owner,
                          email=self.email,
                          path=str(self.path))
+        # Add the metadata to the document
+        mdata.metadata.update(kwargs['metadata'])
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)

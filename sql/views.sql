@@ -135,19 +135,19 @@ GRANT SELECT ON TABLE `mmeds_data1`.`protected_Results` TO 'mmedsusers'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`Illnesses` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`ResultsProtocols` TO 'mmedsusers'@'%';
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmedsusers'@'%';
+GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmedsusers'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`Genotypes` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmedsusers'@'%';
+GRANT SELECT ON TABLE `mmeds_data1`.`ResultsProtocols` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmedsusers'@'%';
+GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmedsusers'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`Ethnicity` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmedsusers'@'%';
+GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmedsusers'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmedsusers'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`SampleProtocols` TO 'mmedsusers'@'%';
 

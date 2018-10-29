@@ -556,6 +556,12 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
     df.set_index('column_header', inplace=True)
     # Remove rows with null indexes
     df = df.loc[df.index.notnull()]
+    # Retrieve the unit column if one is specified
+    if unit_column is not None:
+        units = df[unit_column]
+        df.drop(unit_column, axis=1, inplace=True)
+    else:
+        units = {}
     # Transpose the dataframe across the diagonal
     df = df.T
     # Drop unnamed columns
@@ -567,12 +573,18 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
     all_cols.update(fig.TABLE_COLS)
+    print('\n'.join(list(map(str, fig.TABLE_COLS.values()))))
     # Find all columns that don't have a mapping and add them to AdditionalMetaData
     unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
     for item in unmapped_items:
-        fig.MIXS_MAP[('AdditionalMetaData', str(item))] = str(item)
-        fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(item))
-        all_cols['AdditionalMetaData'].append(str(item))
+        print(units[item])
+        if pd.isnull(units[item]):
+            unit_col = item
+        else:
+            unit_col = item + ' ({})'.format(units[item])
+        fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
+        fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
+        all_cols['AdditionalMetaData'].append(str(unit_col))
 
     # Build the data for the new format
     meta = {}
@@ -586,11 +598,12 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
         else:
             meta[(table, column)] = df[col].astype(str)
 
+    print('\n'.join(list(map(str, meta.keys()))))
     # Write the file
-    write_mmeds_metadata(out_file, meta, all_cols)
+    write_mmeds_metadata(out_file, meta, all_cols, len(df))
 
 
-def write_mmeds_metadata(out_file, meta, all_cols):
+def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
     """
     Write out a mmeds metadate file based on the data provided
     ----------------------------------------------------------
@@ -598,6 +611,7 @@ def write_mmeds_metadata(out_file, meta, all_cols):
     :meta: A dictionary containing all the information to write
     :all_cols: A dictionary specifying all the tables and columns
         for this metadata file
+    :num_rows: An int. The number of rows in the original metadata
     """
 
     # Build the first two rows of the mmeds metadata file
@@ -611,7 +625,7 @@ def write_mmeds_metadata(out_file, meta, all_cols):
     with open(out_file, 'w') as f:
         f.write('\t'.join(table_row) + '\n')
         f.write('\t'.join(column_row) + '\n')
-        for i in range(len(meta[(table_row[0], column_row[0])])):
+        for i in range(num_rows):
             row = []
             for table, column in zip(table_row, column_row):
                 # Add the value to the row
