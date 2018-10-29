@@ -577,9 +577,14 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
     # Find all columns that don't have a mapping and add them to AdditionalMetaData
     unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
     for item in unmapped_items:
-        print(units[item])
-        if pd.isnull(units[item]):
-            unit_col = item
+        if pd.isnull(units.get(item)):
+            first = df[item][0].split(' ')
+            if is_numeric(first[0]):
+                print(first[0])
+                unit_col = item + ' ({})'.format(' '.join(first[1:]))
+                df[item] = df[item].map(lambda x: x.split(' ')[0])
+            else:
+                unit_col = item
         else:
             unit_col = item + ' ({})'.format(units[item])
         fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
@@ -598,7 +603,6 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
         else:
             meta[(table, column)] = df[col].astype(str)
 
-    print('\n'.join(list(map(str, meta.keys()))))
     # Write the file
     write_mmeds_metadata(out_file, meta, all_cols, len(df))
 
