@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
+from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 import mmeds.secrets as sec
@@ -50,10 +50,23 @@ class Database:
         """
         warnings.simplefilter('ignore')
         try:
-            if user == sec.SQL_USER_NAME:
-                self.db = pms.connect(host=sec.SQL_HOST, user=sec.SQL_USER_NAME, password=sec.SQL_USER_PASS, database=sec.SQL_DATABASE, local_infile=True)
+            if testing:
+                self.db = pms.connect(host='localhost',
+                                      user=user,
+                                      password='',
+                                      database=SQL_DATABASE)
+            elif user == sec.SQL_USER_NAME:
+                self.db = pms.connect(host=sec.SQL_HOST,
+                                      user=sec.SQL_USER_NAME,
+                                      password=sec.SQL_USER_PASS,
+                                      database=sec.SQL_DATABASE,
+                                      local_infile=True)
             else:
-                self.db = pms.connect(host=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, password=sec.SQL_ADMIN_PASS, database=sec.SQL_DATABASE, local_infile=True)
+                self.db = pms.connect(host=sec.SQL_HOST,
+                                      user=sec.SQL_ADMIN_NAME,
+                                      password=sec.SQL_ADMIN_PASS,
+                                      database=sec.SQL_DATABASE,
+                                      local_infile=True)
         except pms.err.ProgrammingError as e:
             cp.log('Error connecting to ' + database)
             raise e

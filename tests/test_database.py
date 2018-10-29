@@ -37,16 +37,16 @@ class DatabaseTests(TestCase):
         """
         Load data that is to be used by multiple test cases
         """
-        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL)
-        add_user(fig.TEST_USER + '0', fig.TEST_PASS, fig.TEST_EMAIL)
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
+        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER + '0', fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
 
-        with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0) as db:
+        with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_FAIL_0,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
@@ -243,7 +243,7 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
-        with Database(fig.TEST_DIR_0, user='mmeds_user', owner=fig.TEST_USER_0) as db0:
+        with Database(fig.TEST_DIR_0, user='mmeds_user', owner=fig.TEST_USER_0, testing=True) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
                 # Confirm that trying to access the unprotected table
@@ -273,7 +273,7 @@ class DatabaseTests(TestCase):
         args = {}
         for i in range(5):
             args[fig.get_salt(5)] = fig.get_salt(10)
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER) as db:
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)
 
 
