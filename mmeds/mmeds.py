@@ -541,13 +541,14 @@ def split_data(column):
     return result
 
 
-def MIxS_to_mmeds(file, out_file, skip_rows=0):
+def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
     """
     A function for converting a MIxS formatted datafile to a MMEDS formatted file.
     ------------------------------------------------------------------------------
     :file: The path to the file to convert
     :out_file: The path to write the new metadata file to
     :skip_rows: The number of rows to skip after the header
+    :unit_column: A string. If None then the function checks each cell for units.
     """
     # Read in the data file
     df = pd.read_csv(file, header=0, sep='\t')
