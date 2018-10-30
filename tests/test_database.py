@@ -275,14 +275,3 @@ class DatabaseTests(TestCase):
             args[fig.get_salt(5)] = fig.get_salt(10)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)
-
-
-def test():
-    tester = DatabaseTests()
-    tester.setUpClass()
-    tester.test_table_protection()
-
-
-if __name__ == "__main__":
-    test()
-    #main()

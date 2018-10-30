@@ -11,9 +11,9 @@ NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
 REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPrimerSequence', 'Lab', 'AnalysisTool', 'PrimaryInvestigator'])
 
-REQUIRED_HEADERS = set(['SampleID', 'BarcodeSequence', 'PrimaryInvestigator'])
+REQUIRED_HEADERS = set(['SpecimenID', 'BarcodeSequence', 'PrimaryInvestigator'])
 
-HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address', 'phone', 'phone_number']
+HIPAA_HEADERS = ['social_security', 'social_security_number', 'address', 'phone', 'phone_number']
 
 DNA = set('GATC')
 
@@ -200,15 +200,18 @@ def check_column(raw_column, col_index):
 
     # Check that values fall within standard deviation
     if issubdtype(col_type, number):
-        filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
-        stddev = std(filtered)
-        avg = mean(filtered)
-        for i, cell in enumerate(column):
-            if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
-                warnings.append('%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d' %
-                                (i + 1, col_index, cell, col_index))
+        try:
+            filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
+            stddev = std(filtered)
+            avg = mean(filtered)
+            for i, cell in enumerate(column):
+                if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
+                    warnings.append('%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d' %
+                                    (i + 1, col_index, cell, col_index))
+        except ValueError:
+            errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
     # Check for catagorical data
-    elif 'str' == col_type:
+    elif issubdtype(col_type, str):
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
