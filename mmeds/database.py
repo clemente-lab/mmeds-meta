@@ -52,7 +52,7 @@ class Database:
         try:
             if testing:
                 self.db = pms.connect(host='localhost',
-                                      user=user,
+                                      user='root',
                                       password='',
                                       database=SQL_DATABASE)
             elif user == sec.SQL_USER_NAME:

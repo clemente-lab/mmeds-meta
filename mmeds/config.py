@@ -160,14 +160,34 @@ PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaD
 # These are the columns for each table
 TABLE_COLS = {}
 ALL_COLS = []
-with pms.connect('localhost', 'root', '', SQL_DATABASE, max_allowed_packet=2048000000, local_infile=True) as db:
-    for table in TABLE_ORDER:
-        if not table == 'AdditionalMetaData':
-            db.execute('DESCRIBE ' + table)
-            results = [x[0] for x in db.fetchall() if 'id' not in x[0]]
-            TABLE_COLS[table] = results
-            ALL_COLS += results
-    TABLE_COLS['AdditionalMetaData'] = []
+
+# Try connecting via the testing setup
+try:
+    db = pms.connect('localhost',
+                     'root',
+                     '',
+                     SQL_DATABASE,
+                     max_allowed_packet=2048000000,
+                     local_infile=True)
+# Otherwise connect via secured credentials
+except pms.err.ProgrammingError:
+    db = pms.connect(host=sec.SQL_HOST,
+                     user=sec.SQL_ADMIN_NAME,
+                     password=sec.SQL_ADMIN_PASS,
+                     database=sec.SQL_DATABASE,
+                     local_infile=True)
+c = db.cursor()
+for table in TABLE_ORDER:
+    if not table == 'AdditionalMetaData':
+        c.execute('DESCRIBE ' + table)
+        results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
+        TABLE_COLS[table] = results
+        ALL_COLS += results
+TABLE_COLS['AdditionalMetaData'] = []
+
+# Clean up
+del db
+
 
 MMEDS_MAP = {
     'investigation_type': ('Study', 'StudyType'),
