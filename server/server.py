@@ -3,6 +3,7 @@ from pathlib import Path
 from shutil import rmtree
 from glob import glob
 from subprocess import run
+from sys import argv
 
 import cherrypy as cp
 from cherrypy.lib import static
@@ -19,10 +20,12 @@ absDir = Path(os.getcwd())
 
 class MMEDSserver(object):
 
-    def __init__(self):
+    def __init__(self, testing=False):
         self.db = None
         self.users = set()
         self.processes = {}
+        self.testing = testing
+        cp.log(testing)
 
     def __del__(self):
         temp_dirs = glob(STORAGE_DIR / 'temp_*')
@@ -118,7 +121,7 @@ class MMEDSserver(object):
         for error in errors:
             cp.log(error)
 
-        with Database(cp.session['dir'], user='root', owner=username) as db:
+        with Database(cp.session['dir'], user='root', owner=username, testing=self.testing) as db:
             try:
                 warnings += db.check_repeated_subjects(subjects)
                 errors += db.check_user_study_name(study_name)
@@ -163,7 +166,7 @@ class MMEDSserver(object):
             return uploaded_output
         else:
             # Otherwise upload the metadata to the database
-            with Database(cp.session['dir'], user='root', owner=username) as db:
+            with Database(cp.session['dir'], user='root', owner=username, testing=self.testing) as db:
                 access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                                   'qiime',
                                                                   reads=reads_copy,
@@ -186,7 +189,7 @@ class MMEDSserver(object):
         metadata_copy, data_copy1, data_copy2, username = cp.session['uploaded_files']
         # Otherwise upload the metadata to the database
         cp.log(str(cp.session['dir']))
-        with Database(cp.session['dir'], user='root', owner=username) as db:
+        with Database(cp.session['dir'], user='root', owner=username, testing=self.testing) as db:
             access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                               'qiime',
                                                               reads=data_copy1,
@@ -214,7 +217,7 @@ class MMEDSserver(object):
     def reset_code(self, study_name, study_email):
         """ Skip uploading a file. """
         # Get the open file handler
-        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+        with Database(cp.session['dir'], user='root', owner=cp.session['user'], testing=self.testing) as db:
             try:
                 db.reset_access_code(study_name, study_email)
             except MissingUploadError:
@@ -230,7 +233,7 @@ class MMEDSserver(object):
     def query(self, query):
         # Set the session to use the current user
         username = cp.session['user']
-        with Database(cp.session['dir'], user='mmeds_user', owner=username) as db:
+        with Database(cp.session['dir'], user='mmeds_user', owner=username, testing=self.testing) as db:
             data, header = db.execute(query)
             html_data = db.format(data, header)
             with open(HTML_DIR / 'success.html', 'r') as f:
@@ -308,7 +311,7 @@ class MMEDSserver(object):
         self.processes = {}
 
         cp.log('Current directory for {}: {}'.format(username, cp.session['dir']))
-        if not validate_password(username, password):
+        if not validate_password(username, password, testing=self.testing):
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return insert_error(page, 23, 'Error: Invalid username or password.')
@@ -401,7 +404,7 @@ class MMEDSserver(object):
         # Create a copy of the Data file
         data_copy = create_local_copy(myData.file, myData.filename)
 
-        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+        with Database(cp.session['dir'], user='root', owner=cp.session['user'], testing=self.testing) as db:
             try:
                 db.modify_data(data_copy, access_code)
             except MissingUploadError:
@@ -459,7 +462,7 @@ class MMEDSserver(object):
         if self.processes.get(access_code) is None or\
                 self.processes[access_code].exitcode is not None:
             # Get the open file handler
-            with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+            with Database(cp.session['dir'], user='root', owner=cp.session['user'], testing=testing) as db:
                 try:
                     files, path = db.get_mongo_files(access_code)
                 except MissingUploadError as e:
@@ -488,7 +491,7 @@ class MMEDSserver(object):
     @cp.expose
     def select_download(self, download):
         cp.log('User{} requests download {}'.format(cp.session['user'], download))
-        with Database(cp.session['dir'], user='root', owner=cp.session['user']) as db:
+        with Database(cp.session['dir'], user='root', owner=cp.session['user'], testing=testing) as db:
             try:
                 files, path = db.get_mongo_files(cp.session['download_access'])
             except MissingUploadError as e:
@@ -582,5 +585,6 @@ def secureheaders():
 
 
 if __name__ == '__main__':
+    testing = argv[1]
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
-    cp.quickstart(MMEDSserver(), config=CONFIG)
+    cp.quickstart(MMEDSserver(testing), config=CONFIG)

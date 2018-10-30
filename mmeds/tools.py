@@ -15,7 +15,7 @@ class Qiime1Analysis:
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code):
-        self.db = Database('', user='root', owner=owner, connect=False)
+        self.db = Database('', user='root', owner=owner, testing=True)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
@@ -42,7 +42,7 @@ class Qiime1Analysis:
 
         headers = list(mdata.columns)
 
-        si = headers.index('SampleID')
+        si = headers.index('SpecimenID')
         hold = headers[0]
         headers[0] = '#SampleID'
         headers[si] = hold
@@ -68,7 +68,7 @@ class Qiime1Analysis:
                 row = []
                 for header in headers:
                     if header == '#SampleID':
-                        row.append(str(mdata['SampleID'][row_index]))
+                        row.append(str(mdata['SpecimenID'][row_index]))
                     else:
                         row.append(str(mdata[header][row_index]))
                 f.write('\t'.join(row) + '\n')
@@ -132,7 +132,7 @@ class Qiime2Analysis:
     """ A class for qiime 2 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, atype):
-        self.db = Database('', user='root', owner=owner, connect=False)
+        self.db = Database('', user='root', owner=owner, testing=True)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
@@ -178,7 +178,7 @@ class Qiime2Analysis:
 
         headers = list(mdata.columns)
 
-        si = headers.index('SampleID')
+        si = headers.index('SpecimenID')
         hold = headers[0]
         headers[0] = '#SampleID'
         headers[si] = hold
@@ -204,7 +204,7 @@ class Qiime2Analysis:
                 row = []
                 for header in headers:
                     if header == '#SampleID':
-                        row.append(str(mdata['SampleID'][row_index]))
+                        row.append(str(mdata['SpecimenID'][row_index]))
                     else:
                         row.append(str(mdata[header][row_index]))
                 f.write('\t'.join(row) + '\n')
