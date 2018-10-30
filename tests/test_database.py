@@ -59,8 +59,8 @@ class DatabaseTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER)
-        remove_user(fig.TEST_USER_0)
+        remove_user(fig.TEST_USER, testing=True)
+        remove_user(fig.TEST_USER_0, testing=True)
         self.db.close()
 
     def build_sql(self, table, row):
@@ -243,7 +243,7 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
-        with Database(fig.TEST_DIR_0, user='mmeds_user', owner=fig.TEST_USER_0, testing=True) as db0:
+        with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=True) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
                 # Confirm that trying to access the unprotected table
@@ -280,7 +280,7 @@ class DatabaseTests(TestCase):
 def test():
     tester = DatabaseTests()
     tester.setUpClass()
-    tester.test_mongo_import()
+    tester.test_table_protection()
 
 
 if __name__ == "__main__":

@@ -43,48 +43,54 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database=sec.SQL_HOST, user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
+    def __init__(self, path, user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
         """
         warnings.simplefilter('ignore')
-        try:
-            if testing:
+        self.path = path
+        self.IDs = defaultdict(dict)
+        self.owner = owner
+        self.user = user
+        if testing:
+            if user == sec.SQL_USER_NAME:
+                self.db = pms.connect(host='localhost',
+                                      user=sec.SQL_USER_NAME,
+                                      password='password',
+                                      database=SQL_DATABASE,
+                                      local_infile=True)
+            else:
                 self.db = pms.connect(host='localhost',
                                       user='root',
                                       password='',
-                                      database=SQL_DATABASE)
-            elif user == sec.SQL_USER_NAME:
-                self.db = pms.connect(host=sec.SQL_HOST,
-                                      user=sec.SQL_USER_NAME,
-                                      password=sec.SQL_USER_PASS,
-                                      database=sec.SQL_DATABASE,
+                                      database=SQL_DATABASE,
                                       local_infile=True)
-            else:
-                self.db = pms.connect(host=sec.SQL_HOST,
-                                      user=sec.SQL_ADMIN_NAME,
-                                      password=sec.SQL_ADMIN_PASS,
-                                      database=sec.SQL_DATABASE,
-                                      local_infile=True)
-        except pms.err.ProgrammingError as e:
-            cp.log('Error connecting to ' + database)
-            raise e
-        self.mongo = men.connect(db=sec.MONGO_DATABASE,
-                                 username=sec.MONGO_ADMIN_NAME,
-                                 password=sec.MONGO_ADMIN_PASS,
-                                 port=sec.MONGO_PORT,
-                                 authentication_source=sec.MONGO_DATABASE,
-                                 host=sec.MONGO_HOST)
-        self.path = path
-        self.IDs = defaultdict(dict)
+        else:
+            self.db = pms.connect(host=sec.SQL_HOST,
+                                  user=user,
+                                  password=sec.SQL_USER_PASS,
+                                  database=sec.SQL_DATABASE,
+                                  local_infile=True)
+
+        if testing:
+            self.mongo = men.connect(db='test',
+                                     port=27017,
+                                     host='127.0.0.1')
+        else:
+            self.mongo = men.connect(db=sec.MONGO_DATABASE,
+                                     username=sec.MONGO_ADMIN_NAME,
+                                     password=sec.MONGO_ADMIN_PASS,
+                                     port=sec.MONGO_PORT,
+                                     authentication_source=sec.MONGO_DATABASE,
+                                     host=sec.MONGO_HOST)
         self.cursor = self.db.cursor()
+        # Setup RLS for regular users
         if user == sec.SQL_USER_NAME:
             sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, sec.SECURITY_TOKEN)
             self.cursor.execute(sql)
             self.db.commit()
-        self.owner = owner
-        self.user = user
+
         if owner is None:
             self.user_id = 0
             self.email = MMEDS_EMAIL
@@ -502,8 +508,6 @@ class Database:
                          owner=self.owner,
                          email=self.email,
                          path=str(self.path))
-        # Add the metadata to the document
-        mdata.metadata.update(kwargs['metadata'])
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)
