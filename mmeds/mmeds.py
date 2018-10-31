@@ -4,6 +4,7 @@ from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
 from numpy import datetime64
+from mmeds.error import MetaDataError
 import mmeds.config as fig
 import pandas as pd
 
@@ -561,8 +562,11 @@ def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
     df = df.loc[df.index.notnull()]
     # Retrieve the unit column if one is specified
     if unit_column is not None:
-        units = df[unit_column]
-        df.drop(unit_column, axis=1, inplace=True)
+        try:
+            units = df[unit_column]
+            df.drop(unit_column, axis=1, inplace=True)
+        except KeyError:
+            raise MetaDataError('The provided unit column is invalid.')
     else:
         units = {}
     # Transpose the dataframe across the diagonal
@@ -643,6 +647,13 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
                 except KeyError:
                     row.append('"NA"')
             f.write('\t'.join(row) + '\n')
+
+
+def mmeds_to_MIxS(file, out_file):
+    """
+    A function to convert a mmeds formatted metadata file to a MIxS one.
+    """
+    pass
 
 
 def send_email(toaddr, user, message='upload', **kwargs):

@@ -7,6 +7,7 @@ from sys import argv
 
 import cherrypy as cp
 from cherrypy.lib import static
+from mmeds import mmeds
 from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES, get_salt
 import mmeds.config as fig
@@ -414,6 +415,23 @@ class MMEDSserver(object):
         with open(HTML_DIR / 'success.html', 'r') as f:
             upload_successful = f.read()
         return upload_successful
+
+    @cp.expose
+    def convert_to_mmeds(self, myMetaData, unitCol, skipRows):
+        """
+        Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
+        """
+        meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+        file_path = cp.session['dir'] / 'mmeds_metadata.tsv'
+        try:
+            mmeds.MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
+        except MetaDataError as e:
+            with open(HTML_DIR / 'welcome.html') as f:
+                page = f.read()
+            page = insert_error(page, 31, e.message)
+            return page
+        return static.serve_file(file_path, 'application/x-download',
+                                 'attachment', os.path.basename(file_path))
 
     ########################################
     ###########  No Logic Pages  ###########

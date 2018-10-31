@@ -1,6 +1,6 @@
 from pandas import read_csv
 from pathlib import Path
-from subprocess import run
+from subprocess import run, CalledProcessError
 from shutil import copyfile
 from time import sleep
 import os
@@ -493,9 +493,9 @@ def run_qiime1(user, access_code):
     try:
         qa = Qiime1Analysis(user, access_code)
         qa.analysis()
-    except AnalysisError:
+    except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=True)
-        send_email(email, user, 'error', analysis_type='Qiime1.9.1')
+        send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.args[1])
 
 
 def run_qiime2(user, access_code, atype):
@@ -503,9 +503,9 @@ def run_qiime2(user, access_code, atype):
     try:
         qa = Qiime2Analysis(user, access_code, atype)
         qa.analysis()
-    except AnalysisError:
+    except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=True)
-        send_email(email, user, 'error', analysis_type='Qiime2')
+        send_email(email, user, 'error', analysis_type='Qiime2', error=e.args[1])
 
 
 def test(time, atype):
