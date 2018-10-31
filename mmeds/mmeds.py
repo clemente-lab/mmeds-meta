@@ -649,11 +649,20 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
             f.write('\t'.join(row) + '\n')
 
 
-def mmeds_to_MIxS(file, out_file):
+def mmeds_to_MIxS(file, out_file, skip_rows=0, unit_column=None):
     """
     A function to convert a mmeds formatted metadata file to a MIxS one.
     """
-    pass
+    # Read in the data file
+    df = pd.read_csv(file, header=[0, 1], sep='\t')
+    with open(out_file, 'w') as f:
+        for (col1, col2) in df.columns:
+            if df[col1][col2].notnull().any():
+                try:
+                    header = fig.MIXS_MAP[(col1, col2)]
+                except KeyError:
+                    header = col2
+                f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
 def send_email(toaddr, user, message='upload', **kwargs):

@@ -417,21 +417,28 @@ class MMEDSserver(object):
         return upload_successful
 
     @cp.expose
-    def convert_to_mmeds(self, myMetaData, unitCol, skipRows):
+    def convert_to_mmeds(self, convertTo, myMetaData, unitCol, skipRows):
         """
         Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
         """
         meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
-        file_path = cp.session['dir'] / 'mmeds_metadata.tsv'
+        # Try the conversion
         try:
-            mmeds.MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
+            if convertTo == 'mmeds':
+                file_path = cp.session['dir'] / 'mmeds_metadata.tsv'
+                # If it is successful return the converted file
+                mmeds.MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
+            else:
+                file_path = cp.session['dir'] / 'mixs_metadata.tsv'
+                mmeds.mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
+            page = static.serve_file(file_path, 'application/x-download',
+                                     'attachment', os.path.basename(file_path))
+        # If there is an issue with the provided unit column display an error
         except MetaDataError as e:
             with open(HTML_DIR / 'welcome.html') as f:
                 page = f.read()
             page = insert_error(page, 31, e.message)
-            return page
-        return static.serve_file(file_path, 'application/x-download',
-                                 'attachment', os.path.basename(file_path))
+        return page
 
     ########################################
     ###########  No Logic Pages  ###########
