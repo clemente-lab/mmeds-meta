@@ -25,7 +25,6 @@ class MMEDSserver(object):
         self.users = set()
         self.processes = {}
         self.testing = testing
-        cp.log(testing)
 
     def __del__(self):
         temp_dirs = glob(STORAGE_DIR / 'temp_*')

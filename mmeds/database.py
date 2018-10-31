@@ -47,13 +47,21 @@ class Database:
         """
         Connect to the specified database.
         Initialize variables for this session.
+        ---------------------------------------
+        :path: A string. The path to the directory created for this session.
+        :user: A string. What account to login to the SQL server with (user or admin).
+        :owner: A string. The mmeds user account uploading or retrieving files.
+        :testing: A boolean. Changes the connection parameters for testing.
         """
         warnings.simplefilter('ignore')
         self.path = path
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.user = user
+
+        # If testing connect to test server
         if testing:
+            # Connect as the specified user
             if user == sec.SQL_USER_NAME:
                 self.db = pms.connect(host='localhost',
                                       user=sec.SQL_USER_NAME,
@@ -66,24 +74,31 @@ class Database:
                                       password='',
                                       database=SQL_DATABASE,
                                       local_infile=True)
-        else:
-            self.db = pms.connect(host=sec.SQL_HOST,
-                                  user=user,
-                                  password=sec.SQL_USER_PASS,
-                                  database=sec.SQL_DATABASE,
-                                  local_infile=True)
-
-        if testing:
+            # Connect to the mongo server
             self.mongo = men.connect(db='test',
                                      port=27017,
                                      host='127.0.0.1')
+        # Otherwise connect to the deployment server
         else:
+            if user == sec.SQL_USER_NAME:
+                self.db = pms.connect(host=sec.SQL_HOST,
+                                      user=user,
+                                      password=sec.SQL_USER_PASS,
+                                      database=sec.SQL_DATABASE,
+                                      local_infile=True)
+            else:
+                self.db = pms.connect(host=sec.SQL_HOST,
+                                      user=user,
+                                      password=sec.SQL_ADMIN_PASS,
+                                      database=sec.SQL_DATABASE,
+                                      local_infile=True)
             self.mongo = men.connect(db=sec.MONGO_DATABASE,
                                      username=sec.MONGO_ADMIN_NAME,
                                      password=sec.MONGO_ADMIN_PASS,
                                      port=sec.MONGO_PORT,
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
+
         self.cursor = self.db.cursor()
         # Setup RLS for regular users
         if user == sec.SQL_USER_NAME:
@@ -91,9 +106,11 @@ class Database:
             self.cursor.execute(sql)
             self.db.commit()
 
+        # If the owner is None set user_id to 0
         if owner is None:
             self.user_id = 0
             self.email = MMEDS_EMAIL
+        # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username="' + owner + '"'
             self.cursor.execute(sql)

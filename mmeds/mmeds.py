@@ -680,6 +680,13 @@ def send_email(toaddr, user, message='upload', **kwargs):
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
         msg['Subject'] = 'Analysis Complete'
+    elif message == 'error':
+        body = 'Hello {},\nThere was an error during requested {} analysis.\n'.format(toaddr,
+                                                                                      kwargs['analysis_type']) +\
+               'Please check the error file associated with this study.\n' +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Analysis Complete'
 
     msg.set_content(body)
 

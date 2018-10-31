@@ -9,6 +9,8 @@ import multiprocessing as mp
 from mmeds.database import Database
 from mmeds.config import get_salt
 from mmeds.mmeds import send_email
+from mmeds.authentication import get_email
+from mmeds.error import AnalysisError
 
 
 class Qiime1Analysis:
@@ -402,7 +404,7 @@ class Qiime2Analysis:
         ]
         run(' '.join(cmd), shell=True, check=True)
 
-    def beta_diversity(self, column='SampleDate'):
+    def beta_diversity(self, column='Nationality'):
         """
         Run core diversity.
         column: Some column from the metadata file
@@ -465,14 +467,17 @@ class Qiime2Analysis:
 
 def move_user_files(qiime):
     """ Move all files intended for the user to a set location. """
-    add_path(qiime, 'visualizations_dir', '')
-    files, path = qiime.db.get_mongo_files(qiime.access_code)
-    os.mkdir(files['visualizations_dir'])
-    for key in files.keys():
-        f = Path(files[key])
-        if '.qzv' in files[key]:
-            new_file = f.name
-            copyfile(files[key], Path(files['visualizations_dir']) / new_file)
+    try:
+        add_path(qiime, 'visualizations_dir', '')
+        files, path = qiime.db.get_mongo_files(qiime.access_code)
+        os.mkdir(files['visualizations_dir'])
+        for key in files.keys():
+            f = Path(files[key])
+            if '.qzv' in files[key]:
+                new_file = f.name
+                copyfile(files[key], Path(files['visualizations_dir']) / new_file)
+    except FileNotFoundError as e:
+        raise AnalysisError(e.args[0])
 
 
 def add_path(qiime, name, extension):
@@ -485,14 +490,22 @@ def add_path(qiime, name, extension):
 
 def run_qiime1(user, access_code):
     """ Run qiime analysis. """
-    qa = Qiime1Analysis(user, access_code)
-    qa.analysis()
+    try:
+        qa = Qiime1Analysis(user, access_code)
+        qa.analysis()
+    except AnalysisError:
+        email = get_email(user, testing=True)
+        send_email(email, user, 'error', analysis_type='Qiime1.9.1')
 
 
 def run_qiime2(user, access_code, atype):
     """ Run qiime analysis. """
-    qa = Qiime2Analysis(user, access_code, atype)
-    qa.analysis()
+    try:
+        qa = Qiime2Analysis(user, access_code, atype)
+        qa.analysis()
+    except AnalysisError:
+        email = get_email(user, testing=True)
+        send_email(email, user, 'error', analysis_type='Qiime2')
 
 
 def test(time, atype):

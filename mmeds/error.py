@@ -22,3 +22,10 @@ class MetaDataError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class AnalysisError(MmedsError):
+    """ Exception for errors during analysis. """
+
+    def __init__(self, message):
+        self.message = message

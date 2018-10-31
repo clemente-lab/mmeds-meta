@@ -1,5 +1,3 @@
-from smtplib import SMTP
-from email.message import EmailMessage
 from pathlib import Path
 import pymysql as pms
 import mmeds.secrets as sec
@@ -217,41 +215,3 @@ MIXS_MAP = {v: k for k, v in MMEDS_MAP.items()}
 
 def get_salt(length=10, numeric=False):
     return sec.get_salt(length, numeric)
-
-
-def send_email(toaddr, user, message='upload', **kwargs):
-    """ Sends a confirmation email to addess containing user and code. """
-    msg = EmailMessage()
-    msg['From'] = MMEDS_EMAIL
-    msg['To'] = toaddr
-    if message == 'upload':
-        body = 'Hello {},\nthe user {} uploaded data to the mmeds database server.\n'.format(toaddr, user) +\
-               'In order to gain access to this data without the password to\n{} you must provide '.format(user) +\
-               'the following access code:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['code']) +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'New data uploaded to mmeds database'
-    elif message == 'reset':
-        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
-               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'Password Reset'
-    elif message == 'change':
-        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
-               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'Password Change'
-    elif message == 'analysis':
-        body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(kwargs['analysis_type'],
-                                                                                         toaddr,
-                                                                                         kwargs['study_name']) +\
-               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(CONTACT_EMAIL)
-        msg['Subject'] = 'Analysis Complete'
-
-    msg.set_content(body)
-
-    server = SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(MMEDS_EMAIL, 'mmeds_server')
-    server.send_message(msg)
-    server.quit()
