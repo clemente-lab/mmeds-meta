@@ -168,7 +168,7 @@ try:
                      max_allowed_packet=2048000000,
                      local_infile=True)
 # Otherwise connect via secured credentials
-except pms.err.ProgrammingError:
+except pms.err.OperationalError:
     db = pms.connect(host=sec.SQL_HOST,
                      user=sec.SQL_ADMIN_NAME,
                      password=sec.SQL_ADMIN_PASS,

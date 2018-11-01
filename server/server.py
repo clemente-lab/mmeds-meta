@@ -25,7 +25,7 @@ class MMEDSserver(object):
         self.db = None
         self.users = set()
         self.processes = {}
-        self.testing = testing
+        self.testing = bool(int(testing))
 
     def __del__(self):
         temp_dirs = glob(STORAGE_DIR / 'temp_*')
@@ -61,7 +61,7 @@ class MMEDSserver(object):
             if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
-                    p = analysis_runner(tool, cp.session['user'], access_code)
+                    p = analysis_runner(tool, cp.session['user'], access_code, self.testing)
                     self.processes[access_code] = p
                     with open(HTML_DIR / 'welcome.html') as f:
                         page = f.read()
@@ -609,6 +609,9 @@ def secureheaders():
 
 
 if __name__ == '__main__':
-    testing = argv[1]
+    try:
+        testing = argv[1]
+    except IndexError:
+        testing = False
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
     cp.quickstart(MMEDSserver(testing), config=CONFIG)

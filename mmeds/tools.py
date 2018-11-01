@@ -16,11 +16,14 @@ from mmeds.error import AnalysisError
 class Qiime1Analysis:
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code):
+    def __init__(self, owner, access_code, testing):
         self.db = Database('', user='root', owner=owner, testing=True)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
+        self.testing = testing
+        if not testing:
+            self.jobfile = self.path / (get_salt(5) + '_job.lsf')
 
     def __del__(self):
         del self.db
@@ -29,7 +32,11 @@ class Qiime1Analysis:
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = 'source activate qiime1; validate_mapping_file.py -m {}'
-        run(cmd.format(files['mapping']), shell=True, check=True)
+        if self.testing:
+            run(cmd.format(files['mapping']), shell=True, check=True)
+        else:
+            with open(self.jobfile, 'w+') as f:
+                f.write(cmd + '\n')
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -86,7 +93,11 @@ class Qiime1Analysis:
         # Run the script
         cmd = 'source activate qiime1; split_libraries_fastq.py -o {} -i {} -b {} -m {}'
         command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
-        run(command, shell=True, check=True)
+        if self.testing:
+            run(command, shell=True, check=True)
+        else:
+            with open(self.jobfile, 'w+') as f:
+                f.write(command + '\n')
 
     def pick_otu(self, reference='open'):
         """ Run the pick OTU scripts. """
@@ -102,7 +113,11 @@ class Qiime1Analysis:
                              files['otu_output'],
                              Path(files['split_output']) / 'seqs.fna',
                              Path(path) / 'params.txt')
-        run(command, shell=True, check=True)
+        if self.testing:
+            run(command, shell=True, check=True)
+        else:
+            with open(self.jobfile, 'w+') as f:
+                f.write(command + '\n')
 
     def core_diversity(self):
         """ Run the core diversity analysis script. """
@@ -116,7 +131,11 @@ class Qiime1Analysis:
                              files['mapping'],
                              Path(files['otu_output']) / 'rep_set.tre',
                              1114)
-        run(command, shell=True, check=True)
+        if self.testing:
+            run(command, shell=True, check=True)
+        else:
+            with open(self.jobfile, 'w+') as f:
+                f.write(command + '\n')
 
     def analysis(self):
         """ Perform some analysis. """
@@ -127,7 +146,12 @@ class Qiime1Analysis:
         self.core_diversity()
         move_user_files(self)
         doc = self.db.get_metadata(self.access_code)
-        send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime1', study_name=doc.study)
+        send_email(doc.email,
+                   doc.owner,
+                   'analysis',
+                   analysis_type='Qiime1',
+                   study_name=doc.study,
+                   testing=self.testing)
 
 
 class Qiime2Analysis:
