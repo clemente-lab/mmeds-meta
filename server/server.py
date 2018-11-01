@@ -417,7 +417,7 @@ class MMEDSserver(object):
         return upload_successful
 
     @cp.expose
-    def convert_to_mmeds(self, convertTo, myMetaData, unitCol, skipRows):
+    def convert_metadata(self, convertTo, myMetaData, unitCol, skipRows):
         """
         Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
         """
