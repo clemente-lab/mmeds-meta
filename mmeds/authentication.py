@@ -1,11 +1,9 @@
 import hashlib
-
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
 from mmeds.mmeds import send_email
-
-LOGIN_FILE = '../server/data/login_info'
+import mmeds.secrets as sec
 
 
 def add_user(username, password, email, testing=False):
@@ -21,9 +19,9 @@ def add_user(username, password, email, testing=False):
         db.add_user(username, password_hash, salt, email)
 
 
-def remove_user(username):
+def remove_user(username, testing=False):
     """ Removes a user from the user sql table. """
-    with Database(STORAGE_DIR) as db:
+    with Database(STORAGE_DIR, testing=testing) as db:
         db.clear_user_data(username)
         db.remove_user(username)
 
@@ -36,7 +34,8 @@ def validate_password(username, password, testing=False):
         try:
             hashed_password, salt =\
                 db.get_col_values_from_table('password, salt',
-                                             'mmeds.user where username = "{}"'.format(username))[0]
+                                             '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
+                                                                                    username))[0]
         # An index error means that the username did not exist
         except IndexError:
             print('Username did not exist')
@@ -91,7 +90,7 @@ def check_username(username, testing=False):
     return
 
 
-def reset_password(username, email):
+def reset_password(username, email, testing=False):
     """ Reset the password for the current user. """
     # Create a new password
     password = get_salt(20)
@@ -101,7 +100,7 @@ def reset_password(username, email):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
 
-    with Database(STORAGE_DIR, user='root', owner=username) as db:
+    with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
         # Check the email matches the one on file
         if db.check_email(email):
             exit = db.change_password(password_hash, salt)
@@ -111,7 +110,7 @@ def reset_password(username, email):
     return exit
 
 
-def change_password(username, password):
+def change_password(username, password, testing=False):
     """ Reset the password for the current user. """
     # Create a new password
     salt = get_salt()
@@ -120,7 +119,22 @@ def change_password(username, password):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
 
-    with Database(STORAGE_DIR, user='root', owner=username) as db:
+    with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
         # Check the email matches the one on file
         db.change_password(password_hash, salt)
         send_email(db.get_email(), username, password, 'change')
+
+
+def get_email(username, testing=False):
+    """ Retrieve the email for the specified user account. """
+    with Database(STORAGE_DIR, testing=testing) as db:
+        # Get the values from the user table
+        try:
+            email = db.get_col_values_from_table('email',
+                                                 '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
+                                                                                        username))[0]
+            return email
+        # An index error means that the username did not exist
+        except IndexError:
+            print('Username did not exist')
+            return False

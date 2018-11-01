@@ -52,3 +52,10 @@ Distinguish between sample and speciman. Check FreezerWorks
      - [ ] What tools do we want to initally setup?
      - [ ] For highlighted error checks better as excel sheet or webpage?
      - [ ] Add functionality to maintain session during server restart?
+
+
+     For prezi
+      - Stress testings results
+      - MEMARKS standard
+      - Future directions
+

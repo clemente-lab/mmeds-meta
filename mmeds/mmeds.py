@@ -3,6 +3,8 @@ from numpy import std, mean, issubdtype, number
 from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
+from numpy import datetime64
+from mmeds.error import MetaDataError
 import mmeds.config as fig
 import pandas as pd
 
@@ -10,9 +12,9 @@ NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
 REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPrimerSequence', 'Lab', 'AnalysisTool', 'PrimaryInvestigator'])
 
-REQUIRED_HEADERS = set(['SampleID', 'BarcodeSequence', 'PrimaryInvestigator'])
+REQUIRED_HEADERS = set(['SpecimenID', 'BarcodeSequence', 'PrimaryInvestigator'])
 
-HIPAA_HEADERS = ['name', 'social_security', 'social_security_number', 'address', 'phone', 'phone_number']
+HIPAA_HEADERS = ['social_security', 'social_security_number', 'address', 'phone', 'phone_number']
 
 DNA = set('GATC')
 
@@ -23,7 +25,7 @@ ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 def insert_error(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<p><font color="red">' + error_message + '</font></p>'] + lines[line_number:]
+    new_lines = lines[:line_number] + ['<h4><font color="red">' + error_message + '</font></h4>'] + lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
@@ -31,7 +33,7 @@ def insert_error(page, line_number, error_message):
 def insert_warning(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<p><font color="orange">' + error_message + '</font></p>'] + lines[line_number:]
+    new_lines = lines[:line_number] + ['<h4><font color="orange">' + error_message + '</font></h4>'] + lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
@@ -58,24 +60,24 @@ def check_header(header, col_index):
 
     # Check if it's numeric
     if is_numeric(header):
-        errors.append(row_col + 'Column names cannot be numbers. Replace header %s of column\t%d ' %
+        errors.append(row_col + 'Number Header Error: Column names cannot be numbers. Replace header %s of column\t%d ' %
                       (header, col_index))
     # Check if it's NA
     if header in NAs + ['NA']:
-        errors.append(row_col + 'Column names cannot be NA. Replace  header %s of column\t%d ' %
+        errors.append(row_col + 'NA Header Error: Column names cannot be NA. Replace  header %s of column\t%d ' %
                       (header, col_index))
     # Check for illegal characters
     if ILLEGAL_IN_HEADER.intersection(set(header)):
         illegal_chars = ILLEGAL_IN_HEADER.intersection(set(header))
-        errors.append(row_col + 'Illegal character(s) %s. Replace header %s of column\t%d' %
+        errors.append(row_col + 'Illegal Header Error: Illegal character(s) %s. Replace header %s of column\t%d' %
                       (' '.join(illegal_chars), header, col_index))
     # Check for HIPAA non-compliant headers
     if header.lower() in HIPAA_HEADERS:
-        errors.append(row_col + 'Potentially identifying information in %s of column\t%d' %
+        errors.append(row_col + 'PHI Header Error: Potentially identifying information in %s of column\t%d' %
                       (header, col_index))
     # Check for trailing or preceding whitespace
     if not header == header.strip():
-        errors.append(row_col + 'Preceding or trailing whitespace %s in column %d' %
+        errors.append(row_col + 'Whitespace Header Error: Preceding or trailing whitespace %s in column %d' %
                       (header, col_index))
     return errors
 
@@ -90,35 +92,38 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
     :col_type: The known type of the column as a whole
     :check_date: If True check the cell for a valid date
     """
+    # An NA cell will not generate any errors
+    if cell == 'NA':
+        return []
     errors = []
     row_col = str(row_index) + '\t' + str(col_index) + '\t'
     # Check for non-standard NAs
     if cell in NAs:
-        errors.append(row_col + 'Non standard NA format %s\t%d,%d' %
+        errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
                       (cell, row_index, col_index))
 
     # Check for consistent types in the column
-    # Pandas stores 'str' as 'object' so check for that explicitly
-    if (is_numeric(cell) and not issubdtype(col_type, number)) or\
-       not col_type == type(cell) and\
-       (not isinstance(cell, str) and 'object' == col_type):
-        errors.append(row_col + 'Mixed datatypes in %s\t%d,%d' %
-                      (cell, row_index, col_index))
+    if not issubdtype(col_type, datetime64):
+        # If the cast fails for this cell the data must be the wrong type
+        try:
+            col_type(cell)
+        except ValueError:
+            errors.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
     # Check for empty fields
     if '' == cell or pd.isnull(cell):
-        errors.append(row_col + 'Empty cell value %s' % cell)
+        errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
     if type(cell) == str:
         # Check for trailing or preceding whitespace
         if not cell == cell.strip():
-            errors.append('%d\t%d\tPreceding or trailing whitespace %s in row %d' %
-                          (row_index, col_index, cell, row_index))
+            errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
+                          (cell, row_index))
     # Check if this is the cell with the invalid date
     if check_date:
         try:
             pd.to_datetime(cell)
         except ValueError:
-            errors.append('{}\t{}\tInvalid date {} in row {}'.format(row_index, col_index, cell, row_index))
+            errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
     return errors
 
 
@@ -129,7 +134,9 @@ def get_col_type(raw_column):
     :raw_column: The column to check for type
     """
     check_date = False
+    col_type = None
     if 'Date' in raw_column.name:
+        col_type = datetime64
         try:
             column = pd.to_datetime(raw_column)
         # If there is an error converting to datetime
@@ -137,11 +144,35 @@ def get_col_type(raw_column):
         except ValueError:
             column = raw_column
             check_date = True
-    elif not pd.isnull(raw_column[0]):
-        column = raw_column.astype(type(raw_column[0]))
+    # Try to set the type based on the most common type
     else:
         column = raw_column
-    return column, check_date
+        types = {
+            int: 0,
+            float: 0,
+            str: 0
+        }
+
+        for cell in raw_column:
+            # Don't count NA
+            if cell == 'NA':
+                continue
+            # Check if value is numeric
+            elif is_numeric(cell):
+                try:
+                    int(cell)
+                    types[int] += 1
+                except ValueError:
+                    types[float] += 1
+            # Check if it's a string
+            else:
+                try:
+                    str(cell)
+                    types[str] += 1
+                except TypeError:
+                    continue
+        col_type = max(types, key=types.get)
+    return column, col_type, check_date
 
 
 def check_column(raw_column, col_index):
@@ -151,7 +182,7 @@ def check_column(raw_column, col_index):
     :raw_column: The unmodified column from the metadata dataframe
     :col_index: The index of the column in the original dataframe
     """
-    column, check_date = get_col_type(raw_column)
+    column, col_type, check_date = get_col_type(raw_column)
 
     # Get the header
     header = column.name
@@ -162,28 +193,32 @@ def check_column(raw_column, col_index):
 
     # Check the remaining columns
     for i, cell in enumerate(column):
-        errors += check_cell(i, col_index, cell, column.dtype, check_date)
+        errors += check_cell(i, col_index, cell, col_type, check_date)
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
-        errors.append('-1\t-1\tError: Multiple studies in one metadata file')
+        errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
     # Check that values fall within standard deviation
-    if issubdtype(column.dtype, number):
-        stddev = std(column)
-        avg = mean(column)
-        for i, cell in enumerate(column):
-            if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
-                warnings.append('%d\t%d\tValue %s outside of two standard deviations of mean in column %d' %
-                                (i + 1, col_index, cell, i + 1))
+    if issubdtype(col_type, number):
+        try:
+            filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
+            stddev = std(filtered)
+            avg = mean(filtered)
+            for i, cell in enumerate(column):
+                if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
+                    warnings.append('%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d' %
+                                    (i + 1, col_index, cell, col_index))
+        except ValueError:
+            errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
     # Check for catagorical data
-    elif 'object' == column.dtype:
+    elif issubdtype(col_type, str):
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
         for val, count in counts.iteritems():
-            if count < avg - stddev and count < 3:
-                warnings.append('%d\t%d\tPotential catagorical data detected. Value %s may be in error, only %d found.' %
+            if count < (avg - stddev) and count < 3:
+                warnings.append('%d\t%d\tCatagorical Data Warning: Potential catagorical data detected. Value %s may be in error, only %d found.' %
                                 (-1, col_index, val, count))
 
     return errors, warnings
@@ -203,8 +238,8 @@ def check_duplicates(column, col_index):
     for dup_key in dups.keys():
         value = dups[dup_key]
         for val in value[1:]:
-            errors.append('%d\t%d\tValue %s in row %d duplicate of row %d.' %
-                          (val, col_index, dup_key, val, value[0]))
+            errors.append('%d\t%d\tDuplicate Value Error: Duplicate value of row %d, %s in row %d.' %
+                          (val, col_index, value[0], dup_key, val))
     return errors
 
 
@@ -214,7 +249,7 @@ def check_lengths(column, col_index):
     length = len(column[1])
     for i, cell in enumerate(column[2:]):
         if not len(cell) == length:
-            errors.append('%d\t%d\tValue %s has a different length from other values in column %d' %
+            errors.append('%d\t%d\tLength Error: Value %s has a different length from other values in column %d' %
                           (i + 2, col_index, cell, col_index))
     return errors
 
@@ -225,7 +260,7 @@ def check_barcode_chars(column, col_index):
     for i, cell in enumerate(column[1:]):
         diff = set(cell).difference(DNA)
         if diff:
-            errors.append('%d\t%d\tInvalid BarcodeSequence char(s) %s in row %d' %
+            errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' %
                           (i + 1, col_index, ', '.join(diff), i + 1))
     return errors
 
@@ -256,9 +291,34 @@ def check_dates(df):
     start_col = 0
     for i in range(len(df)):
         if df['StartDate'][i] > df['EndDate'][i]:
-            err = '{}\t{}\t End date {} is earlier than start date {} in row {}'
+            err = '{}\t{}\tData Range Error: End date {} is earlier than start date {} in row {}'
             errors.append(err.format(i + 1, start_col, df['EndDate'][i], df['StartDate'][i], i))
     return errors
+
+
+def check_table_column(table_df, name, header, col_index, row_index, study_name):
+    errors = []
+    warnings = []
+    if not name == 'AdditionalMetaData' and header not in fig.TABLE_COLS[name]:
+        errors.append('-1\t{}\tColumn Table Error: Column {} should not be in table {}'.format(col_index, header, name))
+    col = table_df[header]
+    new_errors, new_warnings = check_column(col, col_index)
+    errors += new_errors
+    warnings += new_warnings
+
+    # Perform column specific checks
+    if name == 'Specimen':
+        if header == 'BarcodeSequence':
+            errors += check_duplicates(col, col_index)
+            errors += check_lengths(col, col_index)
+            errors += check_barcode_chars(col, col_index)
+        elif header == 'SampleID':
+            errors += check_duplicates(col, col_index)
+        elif header == 'LinkerPrimerSequence':
+            errors += check_lengths(col, col_index)
+    elif study_name is None and name == 'Study':
+        study_name = table_df['StudyName'][row_index]
+    return errors, warnings
 
 
 def check_table(table_df, name, all_headers, study_name):
@@ -275,32 +335,27 @@ def check_table(table_df, name, all_headers, study_name):
     warnings = []
     start_col = None
     end_col = None
+    if not name == 'AdditionalMetaData':
+        missing_cols = set(fig.TABLE_COLS[name]).difference(table_df.columns)
+        if missing_cols:
+            errors.append('-1\t-1\tMissing Column Error: Columns {} missing from table {}'.format(', '.join(missing_cols), name))
     # For each table column
-    for i, header in enumerate(table_df.axes[1]):
-        col = table_df[header]
-        col_index = len(all_headers)
+    for i, header in enumerate(table_df.columns):
         # Check that end dates are after start dates
         if header == 'StartDate':
             start_col = i
         elif header == 'EndDate':
             end_col = i
-        new_errors, new_warnings = check_column(col, col_index)
+        col_index = len(all_headers)
+        new_errors, new_warnings = check_table_column(table_df,
+                                                      name,
+                                                      header,
+                                                      col_index,
+                                                      i,
+                                                      study_name)
+        all_headers.append(header)
         errors += new_errors
         warnings += new_warnings
-
-        all_headers.append(header)
-        # Perform column specific checks
-        if name == 'Specimen':
-            if header == 'BarcodeSequence':
-                errors += check_duplicates(col, col_index)
-                errors += check_lengths(col, col_index)
-                errors += check_barcode_chars(col, col_index)
-            elif header == 'SampleID':
-                errors += check_duplicates(col, col_index)
-            elif header == 'LinkerPrimerSequence':
-                errors += check_lengths(col, col_index)
-        elif study_name is None and name == 'Study':
-            study_name = table_df['StudyName'][i]
     # Compare the start and end dates
     if start_col is not None and end_col is not None:
         errors += check_dates(table_df)
@@ -326,6 +381,10 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     study_name = None
     # For each table
     for table in tables:
+        # If the table shouldn't exist add and error and skip checking it
+        if table not in fig.TABLE_ORDER:
+            errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
+            continue
         table_df = df[table]
         (new_errors,
          new_warnings,
@@ -340,12 +399,17 @@ def validate_mapping_file(file_fp, delimiter='\t'):
         for dup in dups:
             locs = [i for i, header in enumerate(all_headers) if header == 'dup']
             for loc in locs:
-                errors.append('1\t{}\tDuplicate header {}'.format(loc, dup))
+                errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
+
+    # Check for missing tables
+    missing_tables = set(fig.TABLE_ORDER).difference(set(tables))
+    if missing_tables:
+        errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
     # Check for missing headers
     missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
     if missing_headers:
-        errors.append('-1\t-1\tMissing required fields: ' + ', '.join(missing_headers))
+        errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
 
     return errors, warnings, study_name, df['Subjects']
 
@@ -356,17 +420,20 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    try:
-        float(s)
-        return True
-    except (TypeError, ValueError):
-        pass
-    try:
-        import unicodedata
-        unicodedata.numeric(s)
-        return True
-    except (TypeError, ValueError):
-        pass
+    if issubdtype(type(s), str):
+        if ('.e' in s or '.E' in s):
+            return False
+        try:
+            float(s)
+            return True
+        except (TypeError, ValueError):
+            pass
+        try:
+            import unicodedata
+            unicodedata.numeric(s)
+            return True
+        except (TypeError, ValueError):
+            pass
     return False
 
 
@@ -381,7 +448,7 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
         while True:
-            data = fp.read()
+            data = fp.read(8192)
             nf.write(data)
             if not data:
                 break
@@ -456,6 +523,148 @@ def generate_error_html(file_fp, errors, warnings):
     return html
 
 
+def split_data(column):
+    """
+    Split the data into multiple columns
+    ------------------------------------
+    :column: A pandas Series object
+    """
+    result = defaultdict(list)
+    if column.name == 'lat_lon':
+        for value in column:
+            parsed = value.strip('+').split('-')
+            result['Latitude'].append(parsed[0])
+            result['Longitude'].append(parsed[1])
+    elif column.name == 'assembly_name':
+        for value in column:
+            parsed = value.strip(' ')
+            result['Tool'].append(parsed[0])
+            result['Version'].append(parsed[1])
+    else:
+        raise ValueError
+    return result
+
+
+def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
+    """
+    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
+    ------------------------------------------------------------------------------
+    :file: The path to the file to convert
+    :out_file: The path to write the new metadata file to
+    :skip_rows: The number of rows to skip after the header
+    :unit_column: A string. If None then the function checks each cell for units.
+    """
+    # Read in the data file
+    df = pd.read_csv(file, header=0, sep='\t')
+    # Set the index to be the 'column_header' column
+    df.set_index('column_header', inplace=True)
+    # Remove rows with null indexes
+    df = df.loc[df.index.notnull()]
+    # Retrieve the unit column if one is specified
+    if unit_column is not None:
+        try:
+            units = df[unit_column]
+            df.drop(unit_column, axis=1, inplace=True)
+        except KeyError:
+            raise MetaDataError('The provided unit column is invalid.')
+    else:
+        units = {}
+    # Transpose the dataframe across the diagonal
+    df = df.T
+    # Drop unnamed columns
+    df.drop([x for x in df.axes[0] if 'Unnamed' in x], inplace=True)
+    # Drop any columns with only np.nan values
+    df.dropna(how='all', axis='columns', inplace=True)
+    # Replace np.nans with "NA"s
+    df.fillna('"NA"', inplace=True)
+    # Create a new dictionary for accessing the columns belonging to each table
+    all_cols = defaultdict(list)
+    all_cols.update(fig.TABLE_COLS)
+    # Find all columns that don't have a mapping and add them to AdditionalMetaData
+    unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
+    for item in unmapped_items:
+        # If there is no units entry for the item
+        if pd.isnull(units.get(item)):
+            first = df[item][0].split(' ')
+            # If the value is numeric grab the units in the data cell
+            if is_numeric(first[0]):
+                unit_col = item + ' ({})'.format(' '.join(first[1:]))
+                df[item] = df[item].map(lambda x: x.split(' ')[0])
+            else:
+                unit_col = item
+        # Add the units to the header if available
+        else:
+            unit_col = item + ' ({})'.format(units[item])
+        fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
+        fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
+        all_cols['AdditionalMetaData'].append(str(unit_col))
+
+    # Build the data for the new format
+    meta = {}
+    for col in df.columns:
+        (table, column) = fig.MMEDS_MAP[col]
+        if ':' in column:
+            cols = column.split(':')
+            data = split_data(df[col])
+            for new_col in cols:
+                meta[(table, new_col)] = data[new_col]
+        else:
+            meta[(table, column)] = df[col].astype(str)
+
+    # Write the file
+    write_mmeds_metadata(out_file, meta, all_cols, len(df))
+
+
+def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
+    """
+    Write out a mmeds metadate file based on the data provided
+    ----------------------------------------------------------
+    :out_file: The path to write the metadata to
+    :meta: A dictionary containing all the information to write
+    :all_cols: A dictionary specifying all the tables and columns
+        for this metadata file
+    :num_rows: An int. The number of rows in the original metadata
+    """
+
+    # Build the first two rows of the mmeds metadata file
+    table_row, column_row = [], []
+    for table in all_cols.keys():
+        for column in all_cols[table]:
+            table_row.append(table)
+            column_row.append(column)
+
+    # Write out each line of the file
+    with open(out_file, 'w') as f:
+        f.write('\t'.join(table_row) + '\n')
+        f.write('\t'.join(column_row) + '\n')
+        for i in range(num_rows):
+            row = []
+            for table, column in zip(table_row, column_row):
+                # Add the value to the row
+                try:
+                    row.append(meta[(table, column)][i])
+                # If a value doesn't exist for this table,column insert NA
+                except KeyError:
+                    row.append('"NA"')
+            f.write('\t'.join(row) + '\n')
+
+
+def mmeds_to_MIxS(file, out_file, skip_rows=0, unit_column=None):
+    """
+    A function to convert a mmeds formatted metadata file to a MIxS one.
+    """
+    # Read in the data file
+    df = pd.read_csv(file, header=[0, 1], sep='\t')
+    with open(out_file, 'w') as f:
+        for (col1, col2) in df.columns:
+            if df[col1][col2].notnull().any():
+                try:
+                    header = fig.MIXS_MAP[(col1, col2)]
+                except KeyError:
+                    header = col2
+                f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
+
+
 def send_email(toaddr, user, message='upload', **kwargs):
     """
     Sends a confirmation email to addess containing user and code.
@@ -488,6 +697,13 @@ def send_email(toaddr, user, message='upload', **kwargs):
         body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(toaddr,
                                                                                          kwargs['analysis_type'],
                                                                                          kwargs['study_name']) +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        msg['Subject'] = 'Analysis Complete'
+    elif message == 'error':
+        body = 'Hello {},\nThere was an error during requested {} analysis.\n'.format(toaddr,
+                                                                                      kwargs['analysis_type']) +\
+               'Please check the error file associated with this study.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
         msg['Subject'] = 'Analysis Complete'

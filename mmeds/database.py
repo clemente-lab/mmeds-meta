@@ -11,9 +11,10 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import SECURITY_TOKEN, TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, get_salt
-from mmeds.error import TableAccessError, MissingUploadError
+from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, SQL_DATABASE, get_salt
+from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
+import mmeds.secrets as sec
 
 DAYS = 13
 
@@ -27,6 +28,7 @@ class MetaData(men.DynamicDocument):
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
     path = men.StringField(max_length=100, required=True)
+    metadata = men.DictField()
     files = men.DictField()
 
     # When the document is updated record the
@@ -41,32 +43,74 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, database='mmeds', user='root', owner=None, connect=True, testing=False):
+    def __init__(self, path, user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
+        ---------------------------------------
+        :path: A string. The path to the directory created for this session.
+        :user: A string. What account to login to the SQL server with (user or admin).
+        :owner: A string. The mmeds user account uploading or retrieving files.
+        :testing: A boolean. Changes the connection parameters for testing.
         """
         warnings.simplefilter('ignore')
-        try:
-            if user == 'mmeds_user':
-                self.db = pms.connect('localhost', user, 'password', database, max_allowed_packet=2048000000, local_infile=True)
-            else:
-                self.db = pms.connect('localhost', user, '', database, max_allowed_packet=2048000000, local_infile=True)
-        except pms.err.ProgrammingError as e:
-            cp.log('Error connecting to ' + database)
-            raise e
-        self.mongo = men.connect('test', host='127.0.0.1', port=27017, connect=connect)
         self.path = path
         self.IDs = defaultdict(dict)
+        self.owner = owner
+        self.user = user
+
+        # If testing connect to test server
+        if testing:
+            # Connect as the specified user
+            if user == sec.SQL_USER_NAME:
+                self.db = pms.connect(host='localhost',
+                                      user=sec.SQL_USER_NAME,
+                                      password='password',
+                                      database=SQL_DATABASE,
+                                      local_infile=True)
+            else:
+                self.db = pms.connect(host='localhost',
+                                      user='root',
+                                      password='',
+                                      database=SQL_DATABASE,
+                                      local_infile=True)
+            # Connect to the mongo server
+            self.mongo = men.connect(db='test',
+                                     port=27017,
+                                     host='127.0.0.1')
+        # Otherwise connect to the deployment server
+        else:
+            if user == sec.SQL_USER_NAME:
+                self.db = pms.connect(host=sec.SQL_HOST,
+                                      user=user,
+                                      password=sec.SQL_USER_PASS,
+                                      database=sec.SQL_DATABASE,
+                                      local_infile=True)
+            else:
+                self.db = pms.connect(host=sec.SQL_HOST,
+                                      user=user,
+                                      password=sec.SQL_ADMIN_PASS,
+                                      database=sec.SQL_DATABASE,
+                                      local_infile=True)
+            self.mongo = men.connect(db=sec.MONGO_DATABASE,
+                                     username=sec.MONGO_ADMIN_NAME,
+                                     password=sec.MONGO_ADMIN_PASS,
+                                     port=sec.MONGO_PORT,
+                                     authentication_source=sec.MONGO_DATABASE,
+                                     host=sec.MONGO_HOST)
+
         self.cursor = self.db.cursor()
-        if user == 'mmeds_user':
-            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, SECURITY_TOKEN)
+        # Setup RLS for regular users
+        if user == sec.SQL_USER_NAME:
+            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, sec.SECURITY_TOKEN)
             self.cursor.execute(sql)
             self.db.commit()
-        self.owner = owner
+
+        # If the owner is None set user_id to 0
         if owner is None:
             self.user_id = 0
             self.email = MMEDS_EMAIL
+        # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username="' + owner + '"'
             self.cursor.execute(sql)
@@ -91,9 +135,10 @@ class Database:
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
-        sql = 'SELECT unset_connection_auth("{}")'.format(SECURITY_TOKEN)
-        self.cursor.execute(sql)
-        self.db.commit()
+        if self.user == sec.SQL_USER_NAME:
+            sql = 'SELECT unset_connection_auth("{}")'.format(sec.SECURITY_TOKEN)
+            self.cursor.execute(sql)
+            self.db.commit()
         self.db.close()
 
     def __enter__(self):
@@ -118,7 +163,7 @@ class Database:
 
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
-        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, SECURITY_TOKEN)
+        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, sec.SECURITY_TOKEN)
         self.cursor.execute(sql)
         set_user = self.cursor.fetchall()[0][0]
         self.db.commit()
@@ -252,6 +297,34 @@ class Database:
                     self.IDs[table][j] = current_key
                     current_key += 1
 
+    def create_import_line(self, df, table, structure, columns, row_index):
+        line = []
+        # For each column in the table
+        for j, col in enumerate(columns):
+
+            # If the column is a primary key
+            if structure[j][3] == 'PRI':
+                key_table = col.split('id')[-1]
+                # Get the approriate data from the dictionary
+                try:
+                    line.append(self.IDs[key_table][row_index])
+                except KeyError:
+                    raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, row_index))
+            elif structure[j][0] == 'user_id':
+                line.append(str(self.user_id))
+            elif structure[j][0] == 'AdditionalMetaDataRow':
+                line.append(str(row_index))
+            else:
+                # Otherwise see if the entry already exists
+                try:
+                    if pd.isnull(df[table].loc[row_index][col]):
+                        line.append('NULL')
+                    else:
+                        line.append(df[table].loc[row_index][col])
+                except KeyError:
+                    line.append(col)
+        return line
+
     def create_import_file(self, table, df):
         """
         Create the file to load into each table referenced in the
@@ -268,30 +341,11 @@ class Database:
             f.write('\t'.join(columns) + '\n')
             # For each row in the input file
             for i in range(len(df.index)):
-                line = []
-                # For each column in the table
-                for j, col in enumerate(columns):
-                    # If the column is a primary key
-                    if structure[j][3] == 'PRI':
-                        key_table = col.split('id')[-1]
-                        # Get the approriate data from the dictionary
-                        try:
-                            line.append(self.IDs[key_table][i])
-                        except KeyError:
-                            raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, i))
-                    elif structure[j][0] == 'user_id':
-                        line.append(str(self.user_id))
-                    elif structure[j][0] == 'AdditionalMetaDataRow':
-                        line.append(str(i))
-                    else:
-                        # Otherwise see if the entry already exists
-                        try:
-                            if pd.isnull(df[table].loc[i][col]):
-                                line.append('NULL')
-                            else:
-                                line.append(df[table].loc[i][col])
-                        except KeyError:
-                            line.append(col)
+                line = self.create_import_line(df,
+                                               table,
+                                               structure,
+                                               columns,
+                                               i)
                 f.write('\t'.join(list(map(str, line))) + '\n')
         return filename
 
@@ -339,8 +393,8 @@ class Database:
                 # Commit the inserted data
                 self.db.commit()
             except KeyError as e:
+                e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
-                pass
 
     def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):
         """
@@ -398,15 +452,15 @@ class Database:
     def add_user(self, username, password, salt, email):
         """ Add the user with the specified parameters. """
         # Create the SQL to add the user
-        sql = 'INSERT INTO mmeds.user (username, password, salt, email) VALUES\
-                ("{}", "{}", "{}", "{}");'.format(username, password, salt, email)
+        sql = 'INSERT INTO {}.user (username, password, salt, email) VALUES\
+                ("{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE, username, password, salt, email)
 
         self.cursor.execute(sql)
         self.db.commit()
 
     def remove_user(self, username):
         """ Remove a user from the database. """
-        sql = 'DELETE FROM mmeds.user WHERE username="{}"'.format(username)
+        sql = 'DELETE FROM {}.user WHERE username="{}"'.format(sec.SQL_DATABASE, username)
         self.cursor.execute(sql)
         self.db.commit()
 
@@ -418,7 +472,7 @@ class Database:
 
         """
         return
-        sql = 'SELECT user_id FROM mmeds.user where username="{}"'.format(username)
+        sql = 'SELECT user_id FROM {}.user where username="{}"'.format(sec.SQL_DATABASE, username)
         self.cursor.execute(sql)
         user_id = int(self.cursor.fetchone()[0])
         print(user_id)
@@ -566,7 +620,10 @@ class Database:
                 else:
                     sql += ' ABS(Subjects.' + column + ' - ' + str(value) + ') <= 0.01'
             sql += ' AND user_id = ' + str(self.user_id)
-            found = self.cursor.execute(sql)
+            try:
+                found = self.cursor.execute(sql)
+            except pms.err.InternalError as e:
+                raise MetaDataError(e.args[1])
             if found >= 1:
                 warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2, subject_col, j + 2))
         return warnings

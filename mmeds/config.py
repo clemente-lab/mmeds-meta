@@ -1,6 +1,6 @@
-from secrets import choice
-from string import digits, ascii_uppercase, ascii_lowercase
 from pathlib import Path
+import pymysql as pms
+import mmeds.secrets as sec
 import hashlib
 # Add some notes here
 # Add some more notes here
@@ -19,15 +19,16 @@ if not STORAGE_DIR.is_dir():
 if not STORAGE_DIR.is_dir():
     STORAGE_DIR = Path('./server/data').resolve()
 
-SECURITY_TOKEN = 'some_security_token'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+SQL_DATABASE = 'mmeds_data1'
 PORT = 8080
+HOST = '0.0.0.0'
 
 
 CONFIG = {
     'global': {
-        'server.socket_host': '0.0.0.0',
+        'server.socket_host': HOST,
         'server.socket_port': PORT,
         'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
         'server.ssl_module': 'builtin',
@@ -49,11 +50,10 @@ CONFIG = {
     # This sets up the https security
     '/protected/area': {
         'tools.auth_digest': True,
-        'tools.auth_digest.realm': 'localhost',
-        'tools.auth_digest.key': 'a565c2714791cfb',
+        'tools.auth_digest.realm': HOST,
+        'tools.auth_digest.key': sec.DIGEST_KEY,
     }
 }
-
 
 ###################
 ##### Testing #####
@@ -71,8 +71,8 @@ TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
 TEST_DIR = STORAGE_DIR / 'test_dir'
 TEST_DIR_0 = STORAGE_DIR / 'test_dir0'
-TEST_METADATA = str(TEST_PATH / 'test_qiime_metadata.csv')
-TEST_METADATA_FAIL = str(TEST_PATH / 'qiime_metadata.csv')
+TEST_METADATA = str(TEST_PATH / 'qiime_metadata.csv')
+TEST_METADATA_FAIL = str(TEST_PATH / 'test_qiime_metadata.csv')
 TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test0_metadata.csv')
 TEST_METADATA_VALID = str(TEST_PATH / 'validate_qiime_metadata.csv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
@@ -108,7 +108,7 @@ TABLE_ORDER = [
     'ResultsProtocols',
     'Type',
     'BodySite',
-    'Location',
+    'CollectionSite',
     'Subjects',
     'Illness',
     'Intervention',
@@ -129,8 +129,8 @@ TABLE_ORDER = [
 PROTECTED_TABLES = [
     'Lab',
     'Study',
+    'CollectionSite',
     'Experiment',
-    'Location',
     'Subjects',
     'Illness',
     'Intervention',
@@ -155,11 +155,63 @@ USER_FILES = set([
 # These are the tables that users are given direct access to
 PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
 
+# These are the columns for each table
+TABLE_COLS = {}
+ALL_COLS = []
+
+# Try connecting via the testing setup
+try:
+    db = pms.connect('localhost',
+                     'root',
+                     '',
+                     SQL_DATABASE,
+                     max_allowed_packet=2048000000,
+                     local_infile=True)
+# Otherwise connect via secured credentials
+except pms.err.ProgrammingError:
+    db = pms.connect(host=sec.SQL_HOST,
+                     user=sec.SQL_ADMIN_NAME,
+                     password=sec.SQL_ADMIN_PASS,
+                     database=sec.SQL_DATABASE,
+                     local_infile=True)
+c = db.cursor()
+for table in TABLE_ORDER:
+    if not table == 'AdditionalMetaData':
+        c.execute('DESCRIBE ' + table)
+        results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
+        TABLE_COLS[table] = results
+        ALL_COLS += results
+TABLE_COLS['AdditionalMetaData'] = []
+
+# Clean up
+del db
+
+
+MMEDS_MAP = {
+    'investigation_type': ('Study', 'StudyType'),
+    'project_name': ('Study', 'StudyName'),
+    'experimental_factor': None,
+    'collection_date': ('Specimen', 'CollectionDate'),
+    'lat_lon': ('CollectionSite', 'Latitude:Longitude'),
+    'geo_loc_name': ('CollectionSite', 'Name'),
+    'biome': ('CollectionSite', 'Biome'),
+    'feature': ('CollectionSite', 'Feature'),
+    'material': ('CollectionSite', 'Material'),
+    'env_package': ('CollectionSite', 'Environment'),
+    'depth': ('CollectionSite', 'Depth'),
+    'lib_reads_seqd': None,
+    'target_gene': ('RawDataProtocols', 'TargetGene'),
+    'pcr_primers': ('RawDataProtocols', 'Primer'),
+    'pcr_cond': ('RawDataProtocols', 'Conditions'),
+    'sequencing_meth': ('RawDataProtocols', 'SequencingMethod'),
+    'url': ('Study', 'RelevantLinks'),
+    'assembly': ('ResultsProtocols', 'Method'),
+    'assembly_name': ('ResultsProtocols', 'Name:Version'),
+    'isol_growth_condt': ('SampleProtocols', 'Conditions')
+}
+
+MIXS_MAP = {v: k for k, v in MMEDS_MAP.items()}
+
 
 def get_salt(length=10, numeric=False):
-    """ Get a randomly generated string for salting passwords. """
-    if numeric:
-        listy = digits
-    else:
-        listy = digits + ascii_uppercase + ascii_lowercase
-    return ''.join(choice(listy) for i in range(length))
+    return sec.get_salt(length, numeric)

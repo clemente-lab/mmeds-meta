@@ -27,6 +27,22 @@
           <button type="submit">Execute</button>
         </form>
       </p>
+      <h3>Convert Metadata File</h3>
+      <p>
+        <form action='convert_to_mmeds' id='convert_form' method='post' enctype='multipart/form-data'>
+          <p>
+            <h4> Convert file to </h4>
+            <select name='convertTo' placeholder='Convert file to' form='convert_form'>
+              <option value='mmeds'>MMEDS</option>
+              <option value='mixs'>MIxS</option>
+            </select>
+            <input type='file' placeholder='MIxS metadata file' name='myMetaData' required/> <br />
+            <input type='text' placeholder='Unit column header' name='unitCol'> <br />
+            <input type='number' placeholder='Number of rows to skip' name='skipRows'> <br />
+          </p>
+          <button type='submit' method='post'>Convert File</button>
+        </form>
+      </p>
       <h3>Forgot Access Code</h3>
       <p>
         <form action='reset_code' method='post'>

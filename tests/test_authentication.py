@@ -1,4 +1,3 @@
-import pytest
 import mmeds.authentication as auth
 
 
@@ -24,7 +23,7 @@ def test_validate_password():
 
 def test_remove_user():
     """ Test the add_user function """
-    assert not auth.remove_user(test_username2)
+    assert not auth.remove_user(test_username2, testing=True)
 
 
 def test_check_password():

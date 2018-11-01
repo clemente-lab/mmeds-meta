@@ -29,13 +29,13 @@ class MyTasks(TaskSet):
 
         # Get page for succesful download
         for i, f in enumerate(fig.TEST_FILES.keys()):
-            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+            page = insert_html(page, 22 + i, '<option value="{}">{}</option>'.format(f, f))
         self.download_success = page
 
         # Get page for busy download
         with open(fig.HTML_DIR / 'welcome.html') as f:
             page = f.read().format(user=self.user)
-        page = insert_error(page, 31, 'Requested study is currently unavailable')
+        page = insert_error(page, 22, 'Requested study is currently unavailable')
 
         self.download_failure = page
         with Database(self.dir, user='root', owner=self.user) as db:
@@ -44,6 +44,7 @@ class MyTasks(TaskSet):
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=self.code)
+        self.upload_files()
 
     def on_stop(self):
         self.logout()
@@ -64,7 +65,6 @@ class MyTasks(TaskSet):
             sess = response.headers['Set-Cookie']
             split = sess.split(';')
             session_id = split[0].split('=')[1]
-            print(session_id)
 
     @task
     def access_download(self):
@@ -86,11 +86,11 @@ class MyTasks(TaskSet):
     def select_download(self):
         """ Test download selection. """
         address = '/download_page?access_code={}'.format(self.code)
-        with self.client.get(address, catch_response=True) as result:
+        with self.client.get(address) as result:
             assert str(result.text) == self.download_success
             for download in fig.TEST_FILES.keys():
                 address = '/select_download'
-                with self.client.post(address, {'download': download}, catch_response=True) as dresult:
+                with self.client.post(address, {'download': download}) as dresult:
 
                     h1 = hashlib.md5()
                     h1.update(dresult.content)
@@ -104,7 +104,7 @@ class MyTasks(TaskSet):
     @task
     def upload_files(self):
         address = '/upload?study_type={}'.format('qiime')
-        with self.client.get(address, catch_response=True) as result:
+        with self.client.get(address):
             address = '/validate_qiime'
             with open(fig.TEST_METADATA, 'rb') as f:
                 metadata = f.read()
@@ -118,7 +118,8 @@ class MyTasks(TaskSet):
                 'barcodes': barcodes
             }
             # Test the upload
-            self.client.post(address, files=files)
+            with self.client.post(address, files=files) as result:
+                print(result)
 
 
 class MyUser(HttpLocust):
