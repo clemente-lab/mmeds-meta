@@ -19,6 +19,7 @@ if not STORAGE_DIR.is_dir():
 if not STORAGE_DIR.is_dir():
     STORAGE_DIR = Path('./server/data').resolve()
 
+JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
