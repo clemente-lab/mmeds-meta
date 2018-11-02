@@ -1,0 +1,12 @@
+#!/bin/bash
+#BSUB -q premium
+#BSUB -W {walltime}
+#BSUB -J {jobname}
+#BSUB -P acc_MMEDS
+#BSUB -n {nodes}
+#BSUB -R "span[hosts=1]"
+#BSUB -R rusage[mem={memory}]
+#BSUB -m mothra
+#BSUB -o {jobid}.stdout
+#BSUB -eo {jobid}.stderr
+#BSUB -L /bin/bash

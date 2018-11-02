@@ -17,13 +17,16 @@ class Qiime1Analysis:
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, testing):
-        self.db = Database('', user='root', owner=owner, testing=True)
+        self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
         self.testing = testing
-        if not testing:
-            self.jobfile = self.path / (get_salt(5) + '_job.lsf')
+        self.jobtext = []
+        if testing:
+            self.jobtext.append('source activate qiime1;')
+        else:
+            self.jobtext.append('module load qiime/1.9.1;')
 
     def __del__(self):
         del self.db
@@ -31,12 +34,8 @@ class Qiime1Analysis:
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
-        cmd = 'source activate qiime1; validate_mapping_file.py -m {}'
-        if self.testing:
-            run(cmd.format(files['mapping']), shell=True, check=True)
-        else:
-            with open(self.jobfile, 'w+') as f:
-                f.write(cmd + '\n')
+        cmd = 'validate_mapping_file.py -m {};'
+        self.jobtext.append(cmd)
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -91,13 +90,9 @@ class Qiime1Analysis:
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
-        cmd = 'source activate qiime1; split_libraries_fastq.py -o {} -i {} -b {} -m {}'
+        cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {};'
         command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
-        if self.testing:
-            run(command, shell=True, check=True)
-        else:
-            with open(self.jobfile, 'w+') as f:
-                f.write(command + '\n')
+        self.jobtext.append(command)
 
     def pick_otu(self, reference='open'):
         """ Run the pick OTU scripts. """
@@ -108,16 +103,12 @@ class Qiime1Analysis:
             f.write('pick_otus:enable_rev_strand_match True\n')
 
         # Run the script
-        cmd = 'source activate qiime1; pick_{}_reference_otus.py -o {} -i {} -p {}'
+        cmd = 'pick_{}_reference_otus.py -o {} -i {} -p {};'
         command = cmd.format(reference,
                              files['otu_output'],
                              Path(files['split_output']) / 'seqs.fna',
                              Path(path) / 'params.txt')
-        if self.testing:
-            run(command, shell=True, check=True)
-        else:
-            with open(self.jobfile, 'w+') as f:
-                f.write(command + '\n')
+        self.jobtext.append(command)
 
     def core_diversity(self):
         """ Run the core diversity analysis script. """
@@ -125,20 +116,17 @@ class Qiime1Analysis:
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
-        cmd = 'source activate qiime1; core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {}'
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {};'
         command = cmd.format(files['diversity_output'],
                              Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                              files['mapping'],
                              Path(files['otu_output']) / 'rep_set.tre',
                              1114)
-        if self.testing:
-            run(command, shell=True, check=True)
-        else:
-            with open(self.jobfile, 'w+') as f:
-                f.write(command + '\n')
+        self.jobtext.append(command)
 
     def analysis(self):
         """ Perform some analysis. """
+        self.jobfile = self.path / (get_salt(5) + '_job.lsf')
         self.create_qiime_mapping_file()
         self.validate_mapping()
         self.split_libraries()
