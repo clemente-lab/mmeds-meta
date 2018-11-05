@@ -230,6 +230,28 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
+    def user_purge(self):
+        """
+        Deletes every row from every table in the currently connected database.
+        """
+        self.cursor.execute('SHOW TABLES')
+        tables = [x[0] for x in self.cursor.fetchall()]
+        # Skip the user table
+        tables.remove('user')
+        r_tables = []
+        while True:
+            for table in tables:
+                try:
+                    self.cursor.execute('DELETE FROM {} WHERE user_id = {}'.format(table, self.user_id))
+                    self.db.commit()
+                except pms.err.IntegrityError:
+                    r_tables.append(table)
+            if len(r_tables) == 0:
+                break
+            else:
+                tables = r_tables
+                r_tables = []
+
     def check_file_header(self, fp, delimiter='\t'):
         """
         UNFINISHED
