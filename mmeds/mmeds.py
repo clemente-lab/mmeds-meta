@@ -684,14 +684,16 @@ def send_email(toaddr, user, message='upload', **kwargs):
                'If you have any issues please email: {cemail} with a description of your problem.\n'.format(cemail=fig.CONTACT_EMAIL)
         msg['Subject'] = 'New data uploaded to mmeds database'
     elif message == 'reset':
-        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
-               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+        body = 'Hello {user},\nYour password has been reset.\n' +\
+               'The new password is:\n{password}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {contact} with a description of your problem.\n'
+        body = body.format(user=user, password=kwargs['password'], contact=fig.CONTACT_EMAIL)
         msg['Subject'] = 'Password Reset'
     elif message == 'change':
-        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
+        body = 'Hello {user},\nYour password has been changed.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
+               'If you have any issues please email: {contact} with a description of your problem.\n'
+        body = body.format(user=user, contact=fig.CONTACT_EMAIL)
         msg['Subject'] = 'Password Change'
     elif message == 'analysis':
         body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(toaddr,
@@ -706,7 +708,7 @@ def send_email(toaddr, user, message='upload', **kwargs):
                'Please check the error file associated with this study.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
-        msg['Subject'] = 'Analysis Complete'
+        msg['Subject'] = 'Error During Analysis'
 
     msg.set_content(body)
 

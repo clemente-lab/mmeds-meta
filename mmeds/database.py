@@ -662,6 +662,16 @@ class Database:
         """
         return MetaData.objects(access_code=access_code, owner=self.owner).first()
 
+    def check_files(self, access_code):
+        """ Check that all files associated with the study actually exist. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        empty_files = []
+        for key, file in mdata.file.values():
+            if not os.path.exists(file):
+                empty_files.append(file)
+                del mdata.files[key]
+        return empty_files
+
     def clean(self):
         """ Remove all temporary and intermediate files. """
         docs = MetaData.objects().first()

@@ -282,7 +282,7 @@ class Qiime2Analysis:
 
         # Run the script
         cmd = [
-            ' qiime demux emp-single',
+            'qiime demux emp-single',
             '--i-seqs {}'.format(files['working_file']),
             '--m-barcodes-file {}'.format(files['mapping']),
             '--m-barcodes-column {}'.format('BarcodeSequence'),
@@ -555,6 +555,9 @@ def run_qiime1(user, access_code, testing):
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
         send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.args[1], testing=testing)
+    with Database('', owner=user, testing=testing) as db:
+        files = db.check_files(access_code)
+        print(files)
 
 
 def run_qiime2(user, access_code, atype, testing):
@@ -565,6 +568,9 @@ def run_qiime2(user, access_code, atype, testing):
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
         send_email(email, user, 'error', analysis_type='Qiime2', error=e.args[1], testing=testing)
+    with Database('', owner=user, testing=testing) as db:
+        files = db.check_files(access_code)
+        print(files)
 
 
 def test(time, atype):
