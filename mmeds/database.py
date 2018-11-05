@@ -232,7 +232,8 @@ class Database:
 
     def user_purge(self):
         """
-        Deletes every row from every table in the currently connected database.
+        Deletes every row belonging to a particular user
+        from every table in the currently connected database.
         """
         self.cursor.execute('SHOW TABLES')
         tables = [x[0] for x in self.cursor.fetchall()]
