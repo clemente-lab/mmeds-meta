@@ -65,9 +65,7 @@ class MyTasks(TaskSet):
     @task
     def read_root(self):
         with self.client.get('/', catch_response=True) as response:
-            sess = response.headers['Set-Cookie']
-            split = sess.split(';')
-            session_id = split[0].split('=')[1]
+            assert response.status_code == 200
 
     @task
     def access_download(self):
@@ -121,8 +119,8 @@ class MyTasks(TaskSet):
                 'barcodes': barcodes
             }
             # Test the upload
-            with self.client.post(address, files=files) as result:
-                print(result)
+            with self.client.post(address, files=files) as response:
+                assert response.status_code == 200
 
 
 class MyUser(HttpLocust):

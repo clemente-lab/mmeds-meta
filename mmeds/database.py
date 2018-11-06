@@ -576,7 +576,7 @@ class Database:
         It will not delete the files associated with those objects.
         """
 
-        obs = MetaData.object(access_code=access_code)
+        obs = MetaData.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
 
