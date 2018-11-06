@@ -38,7 +38,7 @@ class DatabaseTests(TestCase):
         Load data that is to be used by multiple test cases
         """
         add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        add_user(fig.TEST_USER + '0', fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER_0, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',

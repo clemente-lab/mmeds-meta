@@ -277,12 +277,12 @@ class Database:
         Fill out the dictionaries used to create the input files
         from the input data file.
         """
-        sql = 'SELECT id{table} FROM {table}'.format(table=table)
+        sql = 'SELECT MAX(id{table}) FROM {table}'.format(table=table)
         self.cursor.execute(sql)
-        vals = self.cursor.fetchall()
+        vals = self.cursor.fetchone()
         try:
-            current_key = int(max(vals, key=lambda x: x[0])[0]) + 1
-        except ValueError:
+            current_key = int(vals[0])
+        except TypeError:
             current_key = 1
         # Track keys for repeated values in this file
         seen = {}
@@ -481,9 +481,16 @@ class Database:
 
     def add_user(self, username, password, salt, email):
         """ Add the user with the specified parameters. """
+        self.cursor.execute('SELECT MAX(user_id) FROM user')
+        user_id = int(self.cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO {}.user (username, password, salt, email) VALUES\
-                ("{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE, username, password, salt, email)
+        sql = 'INSERT INTO {}.user (user_id, username, password, salt, email) VALUES\
+                ({}, "{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE,
+                                                      user_id,
+                                                      username,
+                                                      password,
+                                                      salt,
+                                                      email)
 
         self.cursor.execute(sql)
         self.db.commit()
