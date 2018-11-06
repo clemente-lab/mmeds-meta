@@ -54,8 +54,16 @@ class DatabaseTests(TestCase):
                                                               access_code=fig.TEST_CODE + '0')
         self.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], sep='\t')
         self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
-        self.db = pms.connect('localhost', 'root', '', fig.SQL_DATABASE, max_allowed_packet=2048000000, local_infile=True)
+        # Connect to the database
+        self.db = pms.connect('localhost',
+                              'root',
+                              '',
+                              fig.SQL_DATABASE,
+                              max_allowed_packet=2048000000,
+                              local_infile=True)
         self.c = self.db.cursor()
+
+        # Get the user id
         self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
         self.user_id = int(self.c.fetchone()[0])
 

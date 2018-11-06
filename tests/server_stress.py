@@ -1,7 +1,7 @@
 from locust import TaskSet, task, HttpLocust
 from mmeds.mmeds import insert_html, insert_error
 from mmeds.database import Database
-from mmeds.authentication import add_user
+from mmeds.authentication import add_user, remove_user
 from pathlib import Path
 from time import sleep
 import mmeds.config as fig
@@ -21,7 +21,7 @@ class MyTasks(TaskSet):
         self.dir = Path(str(fig.TEST_DIR) + self.ID)
         self.code = fig.TEST_CODE + self.ID
 
-        add_user(self.user, fig.TEST_PASS, fig.TEST_EMAIL)
+        add_user(self.user, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
         self.login()
 
         with open(fig.HTML_DIR / 'select_download.html') as f:
@@ -38,7 +38,7 @@ class MyTasks(TaskSet):
         page = insert_error(page, 22, 'Requested study is currently unavailable')
 
         self.download_failure = page
-        with Database(self.dir, user='root', owner=self.user) as db:
+        with Database(self.dir, user='root', owner=self.user, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
@@ -58,6 +58,7 @@ class MyTasks(TaskSet):
 
     def logout(self):
         self.client.post('/logout')
+        remove_user(self.user, True)
 
     @task
     def read_root(self):
@@ -128,5 +129,5 @@ class MyUser(HttpLocust):
     task_set = MyTasks
 
     def teardown(self):
-        with Database(self.dir, user='root', owner=self.user) as db:
+        with Database(self.dir, user='root', owner=self.user, testing=True) as db:
             db.mongo_clean(self.code)
