@@ -56,6 +56,8 @@ class DatabaseTests(TestCase):
         self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
         self.db = pms.connect('localhost', 'root', '', fig.SQL_DATABASE, max_allowed_packet=2048000000, local_infile=True)
         self.c = self.db.cursor()
+        self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
+        self.user_id = int(self.c.fetchone()[0])
 
     @classmethod
     def tearDownClass(self):
@@ -144,6 +146,8 @@ class DatabaseTests(TestCase):
             # so that SQL won't fail to match floats
             else:
                 sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+        if table in fig.PROTECTED_TABLES:
+            sql += ' AND user_id = ' + str(self.user_id)
 
         # Collect the matching foreign keys based on the infromation
         # in the current row of the data frame
@@ -167,8 +171,6 @@ class DatabaseTests(TestCase):
     ### Test SQL ###
     ################
     def test_tables(self):
-        self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
-        user_id = int(self.c.fetchone()[0])
 
         df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
 
@@ -179,7 +181,8 @@ class DatabaseTests(TestCase):
             for table in tables:
                 # Create the query
                 sql = self.build_sql(table, row)
-                sql += ' AND user_id = ' + str(user_id)
+                if table in fig.PROTECTED_TABLES:
+                    sql += ' AND user_id = ' + str(self.user_id)
                 found = self.c.execute(sql)
                 # Assert there exists at least one entry matching this description
                 try:
@@ -231,7 +234,6 @@ class DatabaseTests(TestCase):
                 # so that SQL won't fail to match floats
                 else:
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-            print(sql)
             self.c.execute(sql)
 
     def test_table_protection(self):

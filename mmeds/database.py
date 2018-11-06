@@ -15,6 +15,7 @@ from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, SQL_
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 import mmeds.secrets as sec
+import mmeds.config as fig
 
 DAYS = 13
 
@@ -276,9 +277,13 @@ class Database:
         Fill out the dictionaries used to create the input files
         from the input data file.
         """
-        sql = 'SELECT COUNT(*) FROM ' + table
+        sql = 'SELECT id{table} FROM {table}'.format(table=table)
         self.cursor.execute(sql)
-        current_key = int(self.cursor.fetchone()[0])
+        vals = self.cursor.fetchall()
+        try:
+            current_key = int(max(vals, key=lambda x: x[0])[0]) + 1
+        except ValueError:
+            current_key = 1
         # Track keys for repeated values in this file
         seen = {}
         # Go through each column
@@ -300,10 +305,12 @@ class Database:
                 # so that SQL won't fail to match floats
                 else:
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-            if table == 'Subjects':
+            # Add the user check for protected tables
+            if table in fig.PROTECTED_TABLES:
                 sql += ' AND user_id = ' + str(self.user_id)
+
             found = self.cursor.execute(sql)
-            if found == 1:
+            if found >= 1:
                 # Append the key found for that column
                 result = self.cursor.fetchone()
                 self.IDs[table][j] = int(result[0])
