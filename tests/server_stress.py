@@ -58,6 +58,8 @@ class MyTasks(TaskSet):
 
     def logout(self):
         self.client.post('/logout')
+        with Database(self.dir, user='root', owner=self.user, testing=True) as db:
+            db.mongo_clean(self.code)
         remove_user(self.user, True)
 
     @task
@@ -127,7 +129,3 @@ class MyUser(HttpLocust):
     host = 'https://localhost:{}'.format(fig.PORT)
     IDs = [str(i) for i in range(500)]
     task_set = MyTasks
-
-    def teardown(self):
-        with Database(self.dir, user='root', owner=self.user, testing=True) as db:
-            db.mongo_clean(self.code)
