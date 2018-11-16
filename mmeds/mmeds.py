@@ -5,6 +5,7 @@ from email.message import EmailMessage
 from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError
+from subprocess import run
 import mmeds.config as fig
 import pandas as pd
 
@@ -665,7 +666,7 @@ def mmeds_to_MIxS(file, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def send_email(toaddr, user, message='upload', **kwargs):
+def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     """
     Sends a confirmation email to addess containing user and code.
     ==============================================================
@@ -674,10 +675,6 @@ def send_email(toaddr, user, message='upload', **kwargs):
     :message: The type of message to send
     :kwargs: Any information that is specific to a paricular message type
     """
-    # Setup the email to be sent
-    msg = EmailMessage()
-    msg['From'] = fig.MMEDS_EMAIL
-    msg['To'] = toaddr
 
     # Templates for the different emails mmeds sends
     if message == 'upload':
@@ -685,31 +682,30 @@ def send_email(toaddr, user, message='upload', **kwargs):
                'In order to gain access to this data without the password to\n{user} you must provide ' +\
                'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
-        msg['Subject'] = 'New Data Uploaded'
+        subject = 'New Data Uploaded'
     elif message == 'reset':
         body = 'Hello {user},\nYour password has been reset.\n' +\
                'The new password is:\n{password}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {contact} with a description of your problem.\n'
-        msg['Subject'] = 'Password Reset'
+        subject = 'Password Reset'
     elif message == 'change':
         body = 'Hello {user},\nYour password has been changed.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
-        msg['Subject'] = 'Password Change'
+        subject = 'Password Change'
     elif message == 'analysis':
         body = 'Hello {user},\nYour requested {analysis} analysis on study {study} is complete.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
-        msg['Subject'] = 'Analysis Complete'
+        subject = 'Analysis Complete'
     elif message == 'error':
         body = 'Hello {user},\nThere was an error during requested {analysis} analysis.\n' +\
                'Please check the error file associated with this study.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
-        msg['Subject'] = 'Error During Analysis'
+        subject = 'Error During Analysis'
 
-    # Add in any necessary text fields
-    msg.set_content(body.format(
+    email_body = body.format(
         user=user,
         cemail=fig.CONTACT_EMAIL,
         email=toaddr,
@@ -717,11 +713,21 @@ def send_email(toaddr, user, message='upload', **kwargs):
         study=kwargs.get('study_name'),
         code=kwargs.get('code'),
         password=kwargs.get('password')
-    ))
+    )
+    if testing:
+        # Setup the email to be sent
+        msg = EmailMessage()
+        msg['From'] = fig.MMEDS_EMAIL
+        msg['To'] = toaddr
+        # Add in any necessary text fields
+        msg.set_content(email_body)
 
-    # Connect to the server and send the mail
-    server = SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(fig.MMEDS_EMAIL, 'mmeds_server')
-    server.send_message(msg)
-    server.quit()
+        # Connect to the server and send the mail
+        server = SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(fig.MMEDS_EMAIL, 'mmeds_server')
+        server.send_message(msg)
+        server.quit()
+    else:
+        script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
+        run(script.format(body=email_body, subject=subject, toaddr=toaddr), shell=True, check=True)

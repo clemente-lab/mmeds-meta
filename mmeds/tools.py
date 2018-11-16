@@ -1,6 +1,6 @@
 from pandas import read_csv
 from pathlib import Path
-from subprocess import run, CalledProcessError
+from subprocess import run, CalledProcessError, PIPE
 from shutil import copyfile
 from time import sleep
 import os
@@ -23,6 +23,7 @@ class Qiime1Analysis:
         self.path = Path(path)
         self.testing = testing
         self.jobtext = []
+        self.owner = owner
         if testing:
             self.jobtext.append('source activate qiime1;')
         else:
@@ -34,7 +35,7 @@ class Qiime1Analysis:
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
-        cmd = 'validate_mapping_file.py -m {};'.format(files['mapping'])
+        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
         self.jobtext.append(cmd)
 
     def create_qiime_mapping_file(self):
@@ -42,8 +43,7 @@ class Qiime1Analysis:
         # Open the metadata file for the study
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
-        with open(fp) as f:
-            mdata = read_csv(f, header=[1], sep='\t')
+        mdata = read_csv(fp, header=1, sep='\t')
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
@@ -147,18 +147,22 @@ class Qiime1Analysis:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
                 temp = f1.read()
-            # Add the appropriate values
-            f.write(temp.format(
-                walltime='01:00',
-                jobname=self.owner + '_' + run_id,
-                nodes=1,
-                memory=1000,
-                jobid=self.path / run_id))
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
+                # Add the appropriate values
+                f.write(temp.format(
+                    walltime='01:00',
+                    jobname=self.owner + '_' + run_id,
+                    nodes=1,
+                    memory=1000,
+                    jobid=self.path / run_id))
                 f.write('\n'.join(self.jobtext))
             # Submit the job
-            run('bsub < {}.lsf'.format(jobfile), shell=True, check=True)
+            output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+
+        wait_on_job(job_id)
+
         move_user_files(self)
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email,
@@ -173,7 +177,7 @@ class Qiime2Analysis:
     """ A class for qiime 2 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, atype, testing):
-        self.db = Database('', user='root', owner=owner, testing=testing)
+        self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.path = Path(path)
@@ -181,10 +185,11 @@ class Qiime2Analysis:
         self.overwrite = False
         self.jobtext = []
         self.testing = testing
+        self.owner = owner
         if testing:
             self.jobtext.append('source activate qiime2;')
         else:
-            self.jobtext.append('module load qiime/2;')
+            self.jobtext.append('module load qiime2/2018.4;')
 
     def __del__(self):
         del self.db
@@ -209,7 +214,7 @@ class Qiime2Analysis:
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
-        cmd = 'validate_mapping_file.py -m {};'.format(files['mapping'])
+        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
         self.jobtext.append(cmd)
 
     def create_qiime_mapping_file(self):
@@ -217,8 +222,7 @@ class Qiime2Analysis:
         # Open the metadata file for the study
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
-        with open(fp) as f:
-            mdata = read_csv(f, header=[1], sep='\t')
+        mdata = read_csv(fp, header=1, sep='\t')
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
@@ -507,21 +511,43 @@ class Qiime2Analysis:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
                 temp = f1.read()
-            # Add the appropriate values
-            f.write(temp.format(
-                walltime='01:00',
-                jobname=self.owner + '_' + run_id,
-                nodes=1,
-                memory=1000,
-                jobid=self.path / run_id))
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
+                # Add the appropriate values
+                f.write(temp.format(
+                    walltime='01:00',
+                    jobname=self.owner + '_' + run_id,
+                    nodes=1,
+                    memory=1000,
+                    jobid=self.path / run_id))
                 f.write('\n'.join(self.jobtext))
             # Submit the job
-            run('bsub < {}.lsf'.format(jobfile), shell=True, check=True)
+            output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+
+        wait_on_job(job_id)
         doc = self.db.get_metadata(self.access_code)
         move_user_files(self)
-        send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 ' + self.atype, study_name=doc.study)
+        send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
+
+
+def wait_on_job(job_id):
+    """
+    Wait until the specified job is finished.
+    Then return.
+    """
+    running = True
+    while running:
+        # Set running to false
+        running = False
+        output = run('bjobs', stdout=PIPE).stdout.decode('utf-8').split('\n')
+        for job in output:
+            # If the job is found set it back to true
+            if str(job_id) in job:
+                running = True
+        # Wait thirty seconds to check again
+        sleep(30)
+    return
 
 
 def move_user_files(qiime):
@@ -554,7 +580,7 @@ def run_qiime1(user, access_code, testing):
         qa.analysis()
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
-        send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.args[1], testing=testing)
+        send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.message, testing=testing)
     with Database('', owner=user, testing=testing) as db:
         files = db.check_files(access_code)
         print(files)
@@ -567,7 +593,7 @@ def run_qiime2(user, access_code, atype, testing):
         qa.analysis()
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
-        send_email(email, user, 'error', analysis_type='Qiime2', error=e.args[1], testing=testing)
+        send_email(email, user, 'error', analysis_type='Qiime2 (2018.4)', error=e.message, testing=testing)
     with Database('', owner=user, testing=testing) as db:
         files = db.check_files(access_code)
         print(files)
