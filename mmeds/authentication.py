@@ -132,7 +132,7 @@ def get_email(username, testing=False):
         try:
             email = db.get_col_values_from_table('email',
                                                  '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
-                                                                                        username))[0]
+                                                                                        username))[0][0]
             return email
         # An index error means that the username did not exist
         except IndexError:
