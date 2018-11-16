@@ -476,7 +476,7 @@ class Database:
     def get_col_values_from_table(self, column, table):
         sql = 'SELECT {} FROM {}'.format(column, table)
         self.cursor.execute(sql)
-        data = self.cursor.fetchall()
+        data = self.cursor.fetchone()
         return data
 
     def add_user(self, username, password, salt, email):
