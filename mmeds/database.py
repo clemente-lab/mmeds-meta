@@ -703,9 +703,9 @@ class Database:
         """ Check that all files associated with the study actually exist. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         empty_files = []
-        for key, file in mdata.file.values():
-            if not os.path.exists(file):
-                empty_files.append(file)
+        for key in mdata.files.keys():
+            if not os.path.exists(mdata.files[key]):
+                empty_files.append(mdata.files[key])
                 del mdata.files[key]
         return empty_files
 

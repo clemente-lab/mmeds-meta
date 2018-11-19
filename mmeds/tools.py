@@ -20,17 +20,43 @@ class Qiime1Analysis:
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
-        self.path = Path(path)
         self.testing = testing
         self.jobtext = []
         self.owner = owner
+        self.num_jobs = 10
         if testing:
             self.jobtext.append('source activate qiime1;')
         else:
             self.jobtext.append('module load qiime/1.9.1;')
+        self.path = None
+        self.path = self.setup_dir(path)
 
     def __del__(self):
         del self.db
+
+    def setup_dir(self, path):
+        """ Setup the directory to run the analysis. """
+        count = 0
+        new_dir = Path(path) / 'analysis{}'.format(count)
+        while os.path.exists(new_dir):
+            count += 1
+            new_dir = Path(path) / 'analysis{}'.format(count)
+
+        # Add the split directory to the MetaData object
+        add_path(self, 'analysis{}'.format(count), '')
+
+        files, path = self.db.get_mongo_files(self.access_code)
+
+        run('mkdir {}'.format(new_dir), shell=True, check=True)
+
+        # Create links to the files
+        run('ln {} {}'.format(files['barcodes'],
+                              new_dir / 'barcodes.fastq.gz'),
+            shell=True, check=True)
+        run('ln {} {}'.format(files['reads'],
+                              new_dir / 'sequences.fastq.gz'),
+            shell=True, check=True)
+        return new_dir
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
@@ -94,7 +120,7 @@ class Qiime1Analysis:
         command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
         self.jobtext.append(command)
 
-    def pick_otu(self, reference='open'):
+    def pick_otu(self, reference='closed'):
         """ Run the pick OTU scripts. """
         add_path(self, 'otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
@@ -103,8 +129,9 @@ class Qiime1Analysis:
             f.write('pick_otus:enable_rev_strand_match True\n')
 
         # Run the script
-        cmd = 'pick_{}_reference_otus.py -o {} -i {} -p {};'
+        cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
         command = cmd.format(reference,
+                             self.num_jobs,
                              files['otu_output'],
                              Path(files['split_output']) / 'seqs.fna',
                              Path(path) / 'params.txt')
@@ -126,6 +153,7 @@ class Qiime1Analysis:
 
     def analysis(self):
         """ Perform some analysis. """
+        self.setup_dir()
         self.create_qiime_mapping_file()
         self.validate_mapping()
         self.split_libraries()
@@ -150,12 +178,8 @@ class Qiime1Analysis:
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
                 # Add the appropriate values
-                f.write(temp.format(
-                    walltime='01:00',
-                    jobname=self.owner + '_' + run_id,
-                    nodes=1,
-                    memory=1000,
-                    jobid=self.path / run_id))
+                params = get_job_params(self.owner, self.path, run_id)
+                f.write(temp.format(**params))
                 f.write('\n'.join(self.jobtext))
             # Submit the job
             output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
@@ -179,8 +203,6 @@ class Qiime2Analysis:
     def __init__(self, owner, access_code, atype, testing):
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
-        files, path = self.db.get_mongo_files(self.access_code)
-        self.path = Path(path)
         self.atype = atype.split('-')[-1]
         self.overwrite = False
         self.jobtext = []
@@ -190,26 +212,36 @@ class Qiime2Analysis:
             self.jobtext.append('source activate qiime2;')
         else:
             self.jobtext.append('module load qiime2/2018.4;')
+        files, path = self.db.get_mongo_files(self.access_code)
+        self.path = None
+        self.path = self.setup_dir(path)
 
     def __del__(self):
         del self.db
 
-    def setup_dir(self):
+    def setup_dir(self, path):
         """ Setup the directory to run the analysis. """
+        count = 0
+        new_dir = Path(path) / 'analysis{}'.format(count)
+        while os.path.exists(Path(path) / new_dir):
+            count += 1
+            new_dir = 'analysis{}'.format(count)
+
         # Add the split directory to the MetaData object
-        add_path(self, 'working_dir', '')
+        add_path(self, new_dir, '')
 
         files, path = self.db.get_mongo_files(self.access_code)
 
-        run('mkdir {}'.format(files['working_dir']), shell=True, check=True)
+        run('mkdir {}'.format(new_dir), shell=True, check=True)
 
         # Create links to the files
         run('ln {} {}'.format(files['barcodes'],
-                              Path(files['working_dir']) / 'barcodes.fastq.gz'),
+                              Path(new_dir) / 'barcodes.fastq.gz'),
             shell=True, check=True)
         run('ln {} {}'.format(files['reads'],
-                              Path(files['working_dir']) / 'sequences.fastq.gz'),
+                              Path(new_dir) / 'sequences.fastq.gz'),
             shell=True, check=True)
+        return new_dir
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
@@ -270,12 +302,12 @@ class Qiime2Analysis:
         # Add the split directory to the MetaData object
         self.db.update_metadata(self.access_code,
                                 'working_file',
-                                Path(str(files['working_dir']) + '.qza'))
+                                'qiime_artifact.qza')
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-        command = cmd.format(itype, files['working_dir'], files['working_file'])
+        command = cmd.format(itype, self.path, files['working_file'])
         self.jobtext.append(command)
 
     def demultiplex(self):
@@ -513,13 +545,9 @@ class Qiime2Analysis:
                 temp = f1.read()
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
+                options = get_job_params(self.owner, self.path, run_id)
                 # Add the appropriate values
-                f.write(temp.format(
-                    walltime='01:00',
-                    jobname=self.owner + '_' + run_id,
-                    nodes=1,
-                    memory=1000,
-                    jobid=self.path / run_id))
+                f.write(temp.format(**options))
                 f.write('\n'.join(self.jobtext))
             # Submit the job
             output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
@@ -529,6 +557,17 @@ class Qiime2Analysis:
         doc = self.db.get_metadata(self.access_code)
         move_user_files(self)
         send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
+
+
+def get_job_params(owner, path, run_id):
+    params = {
+        'walltime': '48:00',
+        'jobname': owner + '_' + run_id,
+        'nodes': 10,
+        'memory': 1000,
+        'jobid': path / run_id
+    }
+    return params
 
 
 def wait_on_job(job_id):

@@ -10,3 +10,5 @@
 #BSUB -o {jobid}.stdout
 #BSUB -eo {jobid}.stderr
 #BSUB -L /bin/bash
+
+export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 6:00 -n 1 -R rusage[mem=2000]';
