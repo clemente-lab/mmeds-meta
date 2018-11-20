@@ -58,7 +58,7 @@ def load_html(file_path, **kwargs):
     Load the specified html file. Inserting the head and topbar
     """
     # Load the html page
-    with open(fig.HTML_DIR / file_path) as f:
+    with open(fig.HTML_DIR / (file_path + '.html')) as f:
         page = f.read().split('\n')
 
     # Load the head information
@@ -70,7 +70,7 @@ def load_html(file_path, **kwargs):
         topbar = f.read().split('\n')
 
     new_page = page[:2] + header + topbar + page[2:]
-    return new_page.join('\n').format(kwargs)
+    return '\n'.join(new_page).format(**kwargs)
 
 
 def check_header(header, col_index):
