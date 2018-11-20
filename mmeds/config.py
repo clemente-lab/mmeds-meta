@@ -19,6 +19,7 @@ if not STORAGE_DIR.is_dir():
 if not STORAGE_DIR.is_dir():
     STORAGE_DIR = Path('./server/data').resolve()
 
+JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
@@ -97,18 +98,19 @@ for key in TEST_FILES.keys():
 # before they are referenced as foreign keys
 TABLE_ORDER = [
     'Lab',
-    'Study',
-    'Experiment',
-    'Genotypes',
-    'Ethnicity',
-    'Illnesses',
     'Interventions',
     'SampleProtocols',
     'RawDataProtocols',
     'ResultsProtocols',
-    'Type',
+    'Illnesses',
+    'Interventions',
     'BodySite',
+    'Type',
     'CollectionSite',
+    'Study',
+    'Experiment',
+    'Genotypes',
+    'Ethnicity',
     'Subjects',
     'Illness',
     'Intervention',
@@ -129,7 +131,6 @@ TABLE_ORDER = [
 PROTECTED_TABLES = [
     'Lab',
     'Study',
-    'CollectionSite',
     'Experiment',
     'Subjects',
     'Illness',

@@ -15,6 +15,7 @@ from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, SQL_
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 import mmeds.secrets as sec
+import mmeds.config as fig
 
 DAYS = 13
 
@@ -230,6 +231,29 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
+    def user_purge(self):
+        """
+        Deletes every row belonging to a particular user
+        from every table in the currently connected database.
+        """
+        self.cursor.execute('SHOW TABLES')
+        tables = [x[0] for x in self.cursor.fetchall()]
+        # Skip the user table
+        tables.remove('user')
+        r_tables = []
+        while True:
+            for table in tables:
+                try:
+                    self.cursor.execute('DELETE FROM {} WHERE user_id = {}'.format(table, self.user_id))
+                    self.db.commit()
+                except pms.err.IntegrityError:
+                    r_tables.append(table)
+            if len(r_tables) == 0:
+                break
+            else:
+                tables = r_tables
+                r_tables = []
+
     def check_file_header(self, fp, delimiter='\t'):
         """
         UNFINISHED
@@ -253,9 +277,13 @@ class Database:
         Fill out the dictionaries used to create the input files
         from the input data file.
         """
-        sql = 'SELECT COUNT(*) FROM ' + table
+        sql = 'SELECT MAX(id{table}) FROM {table}'.format(table=table)
         self.cursor.execute(sql)
-        current_key = int(self.cursor.fetchone()[0])
+        vals = self.cursor.fetchone()
+        try:
+            current_key = int(vals[0])
+        except TypeError:
+            current_key = 1
         # Track keys for repeated values in this file
         seen = {}
         # Go through each column
@@ -277,10 +305,12 @@ class Database:
                 # so that SQL won't fail to match floats
                 else:
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-            if table == 'Subjects':
+            # Add the user check for protected tables
+            if table in fig.PROTECTED_TABLES:
                 sql += ' AND user_id = ' + str(self.user_id)
+
             found = self.cursor.execute(sql)
-            if found == 1:
+            if found >= 1:
                 # Append the key found for that column
                 result = self.cursor.fetchone()
                 self.IDs[table][j] = int(result[0])
@@ -451,9 +481,16 @@ class Database:
 
     def add_user(self, username, password, salt, email):
         """ Add the user with the specified parameters. """
+        self.cursor.execute('SELECT MAX(user_id) FROM user')
+        user_id = int(self.cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO {}.user (username, password, salt, email) VALUES\
-                ("{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE, username, password, salt, email)
+        sql = 'INSERT INTO {}.user (user_id, username, password, salt, email) VALUES\
+                ({}, "{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE,
+                                                      user_id,
+                                                      username,
+                                                      password,
+                                                      salt,
+                                                      email)
 
         self.cursor.execute(sql)
         self.db.commit()
@@ -539,7 +576,7 @@ class Database:
         It will not delete the files associated with those objects.
         """
 
-        obs = MetaData.object(access_code=access_code)
+        obs = MetaData.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
 
@@ -661,6 +698,16 @@ class Database:
         Any modifications should be done through the Database class.
         """
         return MetaData.objects(access_code=access_code, owner=self.owner).first()
+
+    def check_files(self, access_code):
+        """ Check that all files associated with the study actually exist. """
+        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        empty_files = []
+        for key in mdata.files.keys():
+            if not os.path.exists(mdata.files[key]):
+                empty_files.append(mdata.files[key])
+                del mdata.files[key]
+        return empty_files
 
     def clean(self):
         """ Remove all temporary and intermediate files. """

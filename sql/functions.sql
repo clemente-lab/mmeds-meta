@@ -54,7 +54,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `mmeds_data1`.`user` ;
 CREATE TABLE IF NOT EXISTS `mmeds_data1`.`user` (
-    user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id int NOT NULL PRIMARY KEY,
     username varchar(100),
     password varchar(64),
     salt varchar(10),

@@ -5,6 +5,7 @@ from email.message import EmailMessage
 from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError
+from subprocess import run
 import mmeds.config as fig
 import pandas as pd
 
@@ -665,7 +666,7 @@ def mmeds_to_MIxS(file, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def send_email(toaddr, user, message='upload', **kwargs):
+def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     """
     Sends a confirmation email to addess containing user and code.
     ==============================================================
@@ -674,44 +675,59 @@ def send_email(toaddr, user, message='upload', **kwargs):
     :message: The type of message to send
     :kwargs: Any information that is specific to a paricular message type
     """
-    msg = EmailMessage()
-    msg['From'] = fig.MMEDS_EMAIL
-    msg['To'] = toaddr
+
+    # Templates for the different emails mmeds sends
     if message == 'upload':
-        body = 'Hello {email},\nthe user {user} uploaded data to the mmeds database server.\n'.format(email=toaddr, user=user) +\
-               'In order to gain access to this data without the password to\n{user} you must provide '.format(user=user) +\
-               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n'.format(code=kwargs['code']) +\
-               'If you have any issues please email: {cemail} with a description of your problem.\n'.format(cemail=fig.CONTACT_EMAIL)
-        msg['Subject'] = 'New data uploaded to mmeds database'
+        body = 'Hello {email},\nthe user {user} uploaded data to the mmeds database server.\n' +\
+               'In order to gain access to this data without the password to\n{user} you must provide ' +\
+               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'New Data Uploaded'
     elif message == 'reset':
-        body = 'Hello {},\nYour password has been reset.\n'.format(toaddr) +\
-               'The new password is:\n{}\n\nBest,\nMmeds Team\n\n'.format(kwargs['password']) +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
-        msg['Subject'] = 'Password Reset'
+        body = 'Hello {user},\nYour password has been reset.\n' +\
+               'The new password is:\n{password}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {contact} with a description of your problem.\n'
+        subject = 'Password Reset'
     elif message == 'change':
-        body = 'Hello {},\nYour password has been changed.\n'.format(toaddr) +\
+        body = 'Hello {user},\nYour password has been changed.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
-        msg['Subject'] = 'Password Change'
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Password Change'
     elif message == 'analysis':
-        body = 'Hello {},\nYour requested {} analysis on study {} is complete.\n'.format(toaddr,
-                                                                                         kwargs['analysis_type'],
-                                                                                         kwargs['study_name']) +\
+        body = 'Hello {user},\nYour requested {analysis} analysis on study {study} is complete.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
-        msg['Subject'] = 'Analysis Complete'
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Analysis Complete'
     elif message == 'error':
-        body = 'Hello {},\nThere was an error during requested {} analysis.\n'.format(toaddr,
-                                                                                      kwargs['analysis_type']) +\
+        body = 'Hello {user},\nThere was an error during requested {analysis} analysis.\n' +\
                'Please check the error file associated with this study.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {} with a description of your problem.\n'.format(fig.CONTACT_EMAIL)
-        msg['Subject'] = 'Analysis Complete'
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Error During Analysis'
 
-    msg.set_content(body)
+    email_body = body.format(
+        user=user,
+        cemail=fig.CONTACT_EMAIL,
+        email=toaddr,
+        analysis=kwargs.get('analysis_type'),
+        study=kwargs.get('study_name'),
+        code=kwargs.get('code'),
+        password=kwargs.get('password')
+    )
+    if testing:
+        # Setup the email to be sent
+        msg = EmailMessage()
+        msg['From'] = fig.MMEDS_EMAIL
+        msg['To'] = toaddr
+        # Add in any necessary text fields
+        msg.set_content(email_body)
 
-    server = SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(fig.MMEDS_EMAIL, 'mmeds_server')
-    server.send_message(msg)
-    server.quit()
+        # Connect to the server and send the mail
+        server = SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(fig.MMEDS_EMAIL, 'mmeds_server')
+        server.send_message(msg)
+        server.quit()
+    else:
+        script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
+        run(script.format(body=email_body, subject=subject, toaddr=toaddr), shell=True, check=True)

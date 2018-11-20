@@ -16,15 +16,6 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds_data1`.`protected_Study` TO 'mmedsusers'@'%';
 
-DROP VIEW IF EXISTS `mmeds_data1`.`protected_CollectionSite`;
-CREATE
-SQL SECURITY DEFINER
-VIEW `mmeds_data1`.`protected_CollectionSite` AS
-SELECT cc.* FROM `mmeds_data1`.`CollectionSite` cc WHERE `mmeds_data1`.`owner_check`(cc.user_id)
-WITH CHECK OPTION;
-
-GRANT SELECT ON TABLE `mmeds_data1`.`protected_CollectionSite` TO 'mmedsusers'@'%';
-
 DROP VIEW IF EXISTS `mmeds_data1`.`protected_Experiment`;
 CREATE
 SQL SECURITY DEFINER
