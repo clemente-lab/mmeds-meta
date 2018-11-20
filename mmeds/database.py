@@ -561,7 +561,7 @@ class Database:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
-                         path=str(self.path))
+                         path=str(self.path.parent))
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)
@@ -636,7 +636,7 @@ class Database:
         """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
-        mdata.files[filekey] = str(self.path / filename)
+        mdata.files[filekey] = str(Path(self.path) / filename)
         mdata.save()
 
     def check_repeated_subjects(self, df, subject_col=-2):

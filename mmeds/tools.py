@@ -16,14 +16,14 @@ from mmeds.error import AnalysisError
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, testing):
+    def __init__(self, owner, access_code, testing, threads=10):
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.testing = testing
         self.jobtext = []
         self.owner = owner
-        self.num_jobs = 10
+        self.num_jobs = threads
         self.path, self.run_id = self.setup_dir(path)
 
         # Add the split directory to the MetaData object
@@ -263,7 +263,8 @@ class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, atype, testing):
-        super().__init__(owner, access_code, atype, testing)
+        super().__init__(owner, access_code, testing)
+        self.atype = atype.split('-')[1]
         if testing:
             self.jobtext.append('source activate qiime2;')
         else:
@@ -372,7 +373,8 @@ class Qiime2(Tool):
             '--p-trunc-len {}'.format(p_trunc_len),
             '--o-representative-sequences {}'.format(files['rep_seqs_dada2']),
             '--o-table {}'.format(files['table_dada2']),
-            '--o-denoising-stats {};'.format(files['stats_dada2'])
+            '--o-denoising-stats {}'.format(files['stats_dada2']),
+            '--p-n-threads {};'.format(self.num_jobs)
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -404,6 +406,7 @@ class Qiime2(Tool):
             '--o-representative-sequences {}'.format(files['rep_seqs_deblur']),
             '--o-table {}'.format(files['table_deblur']),
             '--p-sample-stats',
+            '--p-jobs-to-start {}'.format(self.num_jobs),
             '--o-stats {};'.format(files['stats_deblur'])
         ]
         self.jobtext.append(' '.join(cmd))
@@ -474,6 +477,7 @@ class Qiime2(Tool):
             '--i-table {}'.format(files['table_{}'.format(self.atype)]),
             '--p-sampling-depth {}'.format(p_sampling_depth),
             '--m-metadata-file {}'.format(files['mapping']),
+            '--p-n-jobs {} '.format(self.num_jobs),
             '--output-dir {};'.format(files['core_metrics_results'])
         ]
         self.jobtext.append(' '.join(cmd))
@@ -489,7 +493,7 @@ class Qiime2(Tool):
             'qiime diversity alpha-group-significance',
             '--i-alpha-diversity {}'.format(Path(files['core_metrics_results']) / '{}_vector.qza'.format(metric)),
             '--m-metadata-file {}'.format(files['mapping']),
-            '--o-visualization {};'.format(files['{}_group_significance'.format(metric)])
+            '--o-visualization {}&'.format(files['{}_group_significance'.format(metric)])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -506,7 +510,7 @@ class Qiime2(Tool):
             '--m-metadata-file {}'.format(files['mapping']),
             '--m-metadata-column {}'.format(column),
             '--o-visualization {}'.format(files['unweighted_{}_significance'.format(column)]),
-            '--p-pairwise;'
+            '--p-pairwise&'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -522,7 +526,7 @@ class Qiime2(Tool):
             '--i-phylogeny {}'.format(files['rooted_tree']),
             '--p-max-depth {}'.format(max_depth),
             '--m-metadata-file {}'.format(files['mapping']),
-            '--o-visualization {};'.format(files['alpha_rarefaction'])
+            '--o-visualization {}&'.format(files['alpha_rarefaction'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -543,9 +547,13 @@ class Qiime2(Tool):
         self.phylogeny_fasttree()
         self.phylogeny_midpoint_root()
         self.core_diversity()
+        # Run these commands in parallel
         self.alpha_diversity()
         self.beta_diversity()
         self.alpha_rarefaction()
+        # Wait for them all to finish
+        self.jobtext.append('wait')
+
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, 'lsf')
         error_log = self.path / self.run_id
@@ -585,9 +593,6 @@ def run_qiime1(user, access_code, testing):
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
         send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.message, testing=testing)
-    with Database('', owner=user, testing=testing) as db:
-        files = db.check_files(access_code)
-        print(files)
 
 
 def run_qiime2(user, access_code, atype, testing):
@@ -598,9 +603,6 @@ def run_qiime2(user, access_code, atype, testing):
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
         send_email(email, user, 'error', analysis_type='Qiime2 (2018.4)', error=e.message, testing=testing)
-    with Database('', owner=user, testing=testing) as db:
-        files = db.check_files(access_code)
-        print(files)
 
 
 def test(time, atype):
