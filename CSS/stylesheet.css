@@ -55,7 +55,13 @@ ul.topbar li a:hover {
 ul.topbar li a img{
   width: 210px;
   height: 100px;
-  padding: 0px
+  padding: 0px;
+}
+
+ul.topbar li a img.mmeds_logo{
+  width: 210px;
+  height: 70px;
+  padding: 0px;
 }
 
 div.inner {

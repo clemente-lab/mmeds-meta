@@ -38,8 +38,9 @@ class MMEDSserver(object):
     def index(self):
         """ Home page of the application """
         if cp.session.get('user'):
-            with open(HTML_DIR / 'welcome.html') as f:
-                page = f.read().format(user=cp.session['user'])
+            page = mmeds.load_html('welcome.html',
+                                   title='Welcome to Mmeds',
+                                   user=cp.session['user'])
         else:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
