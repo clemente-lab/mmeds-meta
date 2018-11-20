@@ -53,6 +53,26 @@ def insert_html(page, line_number, html):
     return new_page
 
 
+def load_html(file_path, **kwargs):
+    """
+    Load the specified html file. Inserting the head and topbar
+    """
+    # Load the html page
+    with open(fig.HTML_DIR / (file_path + '.html')) as f:
+        page = f.read().split('\n')
+
+    # Load the head information
+    with open(fig.HTML_DIR / 'header.html') as f:
+        header = f.read().split('\n')
+
+    # Load the topbar information
+    with open(fig.HTML_DIR / 'topbar.html') as f:
+        topbar = f.read().split('\n')
+
+    new_page = page[:2] + header + topbar + page[2:]
+    return '\n'.join(new_page).format(**kwargs)
+
+
 def check_header(header, col_index):
     """ Check the header field to ensure it complies with MMEDS requirements. """
     errors = []
