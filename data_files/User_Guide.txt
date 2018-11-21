@@ -1,0 +1,48 @@
+### MMEDS User Guide ###
+
+The format for the metadata file is as follows.
+See example_metadata.tsv
+The first row of the metadata file specifies the entity the metadata pertains
+to. The second row specifies the specific property. The third row specifies
+if this column is required for every sample. The fourht row specifies the
+datatype and the fifth row specifies the unit/format of the data.
+These rows are the header of the metadata file, the following rows should
+each contain all the information relating to a particular sample.
+
+For Example:
+1:	Subjects
+2:	Height
+3:	Optional
+4:	Number
+5:	Meters
+
+This column should contain the height in meters of the subject the
+sample described in this row was taken from.
+
+If the metadata doesn't exist for an optional column it should be filled in
+with 'NA'. If metadata exists that does not fit into any of the default columns
+additional columns may be added. Their format should be as follows
+
+For Example:
+1:	AdditionalMetaData
+2:	(Name of the metadata)
+3:	Optional
+4:	(Type of the metadata: Text, Number, Date, Time, etc)
+5:	(Unit of the metadata: If applicable)
+
+This metadata will be stored seperately from the default columns so
+possible analysis based on these columns may be limited.
+
+
+Certain terms in our metadata may be used differently in others contexts.
+For reference we define them as follows:
+
+Intervention: Any procedure, medication, or other type of treatment
+              performed on a subject.
+Specimen: The initial material collected prior to any analysis.
+Aliquot: Any sub-divisions of the inital specimen.
+Sample: The result of processing an aliquot through some type of
+        wet lab procedure.
+RawData: The result of sequencing a sample.
+Result: The final result of running a computational tool (such as Qiime)
+        on RawData.
