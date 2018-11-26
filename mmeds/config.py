@@ -40,6 +40,7 @@ CONFIG = {
         'tools.sessions.on': True,
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
+        'tools.sessions.timeout': 15,
         'tools.staticdir.root': Path().cwd().parent,
     },
     # Content in this directory will be made directly
