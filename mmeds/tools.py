@@ -68,7 +68,8 @@ class Tool:
             'jobname': self.owner + '_' + self.run_id,
             'nodes': 10,
             'memory': 1000,
-            'jobid': self.path / self.run_id
+            'jobid': self.path / self.run_id,
+            'queue': 'expressalloc'
         }
         return params
 

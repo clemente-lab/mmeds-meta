@@ -1,5 +1,5 @@
 #!/bin/bash
-#BSUB -q premium
+#BSUB -q {queue}
 #BSUB -W {walltime}
 #BSUB -J {jobname}
 #BSUB -P acc_MMEDS
@@ -11,4 +11,4 @@
 #BSUB -eo {jobid}.stderr
 #BSUB -L /bin/bash
 
-export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 6:00 -n 1 -R rusage[mem=2000]';
+export QIIME_BSUB_OPTIONS='-q {queue} -P acc_MMEDS -W 6:00 -n 1 -R rusage[mem=2000]';
