@@ -24,7 +24,6 @@ class MMEDSserver(object):
 
     def __init__(self, testing=False):
         self.db = None
-        self.users = set()
         self.processes = {}
         self.testing = bool(int(testing))
 
@@ -314,15 +313,9 @@ class MMEDSserver(object):
                 page = f.read()
             cp.log('Login Error: Invalid username or password')
             return insert_error(page, 23, 'Error: Invalid username or password.')
-        elif username in self.users:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-            cp.log('Login Error: User already logged in')
-            return insert_error(page, 23, 'Error: User is already logged in.')
         else:
             cp.session['user'] = username
             self.processes = {}
-            self.users.add(username)
             page = mmeds.load_html('welcome',
                                    title='Welcome to Mmeds',
                                    user=self.get_user())
@@ -338,12 +331,8 @@ class MMEDSserver(object):
 
     @cp.expose
     def logout(self):
-        """
-        Expires the session and returns to login page
-        """
-        self.users.remove(self.get_user())
-        cp.session['user'] = None
-
+        """ Expires the session and returns to login page """
+        cp.lib.sessions.expire()
         return open(HTML_DIR / 'index.html')
 
     @cp.expose
