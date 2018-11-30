@@ -23,7 +23,7 @@ JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
-PORT = 51952
+PORT = 52953
 HOST = '0.0.0.0'
 
 
