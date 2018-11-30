@@ -23,7 +23,7 @@ JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
-PORT = 8080
+PORT = 21953
 HOST = '0.0.0.0'
 
 
@@ -57,6 +57,9 @@ CONFIG = {
     }
 }
 
+
+
+
 ###################
 ##### Testing #####
 ###################
@@ -75,6 +78,7 @@ TEST_DIR = STORAGE_DIR / 'test_dir'
 TEST_DIR_0 = STORAGE_DIR / 'test_dir0'
 TEST_METADATA = str(TEST_PATH / 'qiime_metadata.csv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_qiime_metadata.csv')
+   
 TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test0_metadata.csv')
 TEST_METADATA_VALID = str(TEST_PATH / 'validate_qiime_metadata.csv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
