@@ -1,4 +1,5 @@
 from pathlib import Path
+from random import choice
 import pymysql as pms
 import mmeds.secrets as sec
 import hashlib
@@ -219,5 +220,6 @@ MMEDS_MAP = {
 MIXS_MAP = {v: k for k, v in MMEDS_MAP.items()}
 
 
-def get_salt(length=10, numeric=False):
-    return sec.get_salt(length, numeric)
+def get_salt(length=10):
+    listy = 'abcdefghijklmnopqrzsuvwxyz'
+    return ''.join(choice(listy) for i in range(length))
