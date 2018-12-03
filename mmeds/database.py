@@ -434,7 +434,7 @@ class Database:
         access_code = None
 
         # Read in the metadata file to import
-        df = pd.read_csv(metadata, sep=delimiter, header=[0, 1])
+        df = pd.read_csv(metadata, sep=delimiter, header=[0, 1], skiprows=[2, 3, 4])
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
         sql = 'SET FOREIGN_KEY_CHECKS=0'

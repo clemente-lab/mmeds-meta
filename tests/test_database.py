@@ -52,8 +52,8 @@ class DatabaseTests(TestCase):
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE + '0')
-        self.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], sep='\t')
-        self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
+        self.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
+        self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
         # Connect to the database
         self.db = pms.connect('localhost',
                               'root',
@@ -180,7 +180,10 @@ class DatabaseTests(TestCase):
     ################
     def test_tables(self):
 
-        df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], sep='\t')
+        df = pd.read_csv(fig.TEST_METADATA,
+                         header=[0, 1],
+                         skiprows=[2, 3, 4],
+                         sep='\t')
 
         tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
@@ -196,6 +199,7 @@ class DatabaseTests(TestCase):
                 try:
                     assert found > 0
                 except AssertionError as e:
+                    print("{}:{}".format(table, row))
                     print(self.c.fetchall())
                     raise e
 
@@ -285,3 +289,9 @@ class DatabaseTests(TestCase):
             args[fig.get_salt(5)] = fig.get_salt(10)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)
+
+#dt = DatabaseTests()
+
+#dt.setUpClass()
+#dt.test_tables()
+#dt.tearDownClass()

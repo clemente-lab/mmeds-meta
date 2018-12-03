@@ -7,13 +7,14 @@ import hashlib
 # Add some more notes here
 
 UPLOADED_FP = 'uploaded_file'
-ERROR_FP = 'error_log.csv'
+ERROR_FP = 'error_log.tsv'
 
 # The path changes depening on where this is being called
 # So that it will work with testing and the server
 HTML_DIR = Path('../html/').resolve()
 if not HTML_DIR.is_dir():
     HTML_DIR = Path('./html/').resolve()
+
 STORAGE_DIR = Path('./data').resolve()
 if not STORAGE_DIR.is_dir():
     STORAGE_DIR = Path('../server/data').resolve()
@@ -59,11 +60,9 @@ CONFIG = {
 }
 
 
-
-
-###################
-##### Testing #####
-###################
+###########
+# Testing #
+###########
 
 TEST_PATH = Path('./data_files/').resolve()
 if not TEST_PATH.is_dir():
@@ -77,11 +76,11 @@ TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
 TEST_DIR = STORAGE_DIR / 'test_dir'
 TEST_DIR_0 = STORAGE_DIR / 'test_dir0'
-TEST_METADATA = str(TEST_PATH / 'qiime_metadata.csv')
-TEST_METADATA_FAIL = str(TEST_PATH / 'test_qiime_metadata.csv')
-   
-TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test0_metadata.csv')
-TEST_METADATA_VALID = str(TEST_PATH / 'validate_qiime_metadata.csv')
+TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
+
+TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test_metadata_fail_0.tsv')
+TEST_METADATA_VALID = str(TEST_PATH / 'test_metadata_valid.tsv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_TOOL = 'tester-1'
@@ -118,6 +117,8 @@ TABLE_ORDER = [
     'Genotypes',
     'Ethnicity',
     'Subjects',
+    'Heights',
+    'Weights',
     'Illness',
     'Intervention',
     'Specimen',
@@ -139,6 +140,8 @@ PROTECTED_TABLES = [
     'Study',
     'Experiment',
     'Subjects',
+    'Heights',
+    'Weights',
     'Illness',
     'Intervention',
     'Specimen',
@@ -160,7 +163,9 @@ USER_FILES = set([
 ])
 
 # These are the tables that users are given direct access to
-PUBLIC_TABLES = set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData'])
+PUBLIC_TABLES = set(set(TABLE_ORDER) -
+                    set(PROTECTED_TABLES) -
+                    set(['AdditionalMetaData']))
 
 # These are the columns for each table
 TABLE_COLS = {}

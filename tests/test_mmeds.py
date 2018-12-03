@@ -145,6 +145,3 @@ def test_validate_mapping_files():
     with open(fig.TEST_METADATA_VALID) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
     assert 'Missing required fields' in errors[-1]
-
-
-test_check_duplicates()

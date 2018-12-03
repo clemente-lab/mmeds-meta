@@ -34,6 +34,24 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds_data1`.`protected_Subjects` TO 'mmedsusers'@'%';
 
+DROP VIEW IF EXISTS `mmeds_data1`.`protected_Heights`;
+CREATE
+SQL SECURITY DEFINER
+VIEW `mmeds_data1`.`protected_Heights` AS
+SELECT cc.* FROM `mmeds_data1`.`Heights` cc WHERE `mmeds_data1`.`owner_check`(cc.user_id)
+WITH CHECK OPTION;
+
+GRANT SELECT ON TABLE `mmeds_data1`.`protected_Heights` TO 'mmedsusers'@'%';
+
+DROP VIEW IF EXISTS `mmeds_data1`.`protected_Weights`;
+CREATE
+SQL SECURITY DEFINER
+VIEW `mmeds_data1`.`protected_Weights` AS
+SELECT cc.* FROM `mmeds_data1`.`Weights` cc WHERE `mmeds_data1`.`owner_check`(cc.user_id)
+WITH CHECK OPTION;
+
+GRANT SELECT ON TABLE `mmeds_data1`.`protected_Weights` TO 'mmedsusers'@'%';
+
 DROP VIEW IF EXISTS `mmeds_data1`.`protected_Illness`;
 CREATE
 SQL SECURITY DEFINER
@@ -124,21 +142,23 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds_data1`.`protected_Results` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`Illnesses` TO 'mmedsusers'@'%';
-
-GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmedsusers'@'%';
-
 GRANT SELECT ON TABLE `mmeds_data1`.`Genotypes` TO 'mmedsusers'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`CollectionSite` TO 'mmedsusers'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`SampleProtocols` TO 'mmedsusers'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`ResultsProtocols` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmedsusers'@'%';
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Ethnicity` TO 'mmedsusers'@'%';
+GRANT SELECT ON TABLE `mmeds_data1`.`Illnesses` TO 'mmedsusers'@'%';
 
 GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmedsusers'@'%';
 
+GRANT SELECT ON TABLE `mmeds_data1`.`Ethnicity` TO 'mmedsusers'@'%';
+
 GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmedsusers'@'%';
 
-GRANT SELECT ON TABLE `mmeds_data1`.`SampleProtocols` TO 'mmedsusers'@'%';
+GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmedsusers'@'%';
+
+GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmedsusers'@'%';
 

@@ -391,7 +391,11 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     """
     errors = []
     warnings = []
-    df = pd.read_csv(file_fp, sep=delimiter, header=[0, 1], na_filter=False)
+    df = pd.read_csv(file_fp,
+                     sep=delimiter,
+                     header=[0, 1],
+                     skiprows=[2, 3, 4],
+                     na_filter=False)
     # Get the tables in the dataframe while maintaining order
     tables = []
     for (table, header) in df.axes[1]:
@@ -481,11 +485,11 @@ def generate_error_html(file_fp, errors, warnings):
     Generates an html page marking the errors and warnings found in
     the given metadata file.
     ===============================================================
-    :file_fp: The destination the error file will be written to
+    :file_fp: The original metadata file
     :errors: A list of the errors the metadata file produced
     :warnings: A list of the warnings the metadata file produced
     """
-    df = pd.read_csv(file_fp, sep='\t', header=[0, 1])
+    df = pd.read_csv(file_fp, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
     html = '<!DOCTYPE html>\n<html>\n'
     html += '<link rel="stylesheet" href="/CSS/stylesheet.css">\n'
     markup = defaultdict(dict)
@@ -566,17 +570,17 @@ def split_data(column):
     return result
 
 
-def MIxS_to_mmeds(file, out_file, skip_rows=0, unit_column=None):
+def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
     """
     A function for converting a MIxS formatted datafile to a MMEDS formatted file.
     ------------------------------------------------------------------------------
-    :file: The path to the file to convert
+    :file_fp: The path to the file to convert
     :out_file: The path to write the new metadata file to
     :skip_rows: The number of rows to skip after the header
     :unit_column: A string. If None then the function checks each cell for units.
     """
     # Read in the data file
-    df = pd.read_csv(file, header=0, sep='\t')
+    df = pd.read_csv(file_fp, header=0, sep='\t')
     # Set the index to be the 'column_header' column
     df.set_index('column_header', inplace=True)
     # Remove rows with null indexes
@@ -670,12 +674,12 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
             f.write('\t'.join(row) + '\n')
 
 
-def mmeds_to_MIxS(file, out_file, skip_rows=0, unit_column=None):
+def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
     """
     A function to convert a mmeds formatted metadata file to a MIxS one.
     """
     # Read in the data file
-    df = pd.read_csv(file, header=[0, 1], sep='\t')
+    df = pd.read_csv(file_fp, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
     with open(out_file, 'w') as f:
         for (col1, col2) in df.columns:
             if df[col1][col2].notnull().any():
