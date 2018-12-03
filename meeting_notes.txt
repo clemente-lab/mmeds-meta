@@ -1,4 +1,3 @@
-
 **Internal to mount sinai we can link accounts to sinai accounts
 
 to use it externally we would need to handle account authentication
