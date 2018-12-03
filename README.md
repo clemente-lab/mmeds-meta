@@ -26,3 +26,6 @@ To start the server change to the server directory and run `python server.py 1`
 
 To connect to the server go to https://localhost:8080
 Allow access to the webpage despite your browsers warning. The security certificate is not signed.
+
+NOTE: Certain versions of openssl as installed by conda cause issues with cherrypy ssl. 
+To fix this run `conda install openssl=1.0.2g`. This version should work.
