@@ -202,7 +202,7 @@ class MMEDSserver(object):
                                                                   barcodes=barcodes_copy)
 
             # Send the confirmation email
-            send_email(email, username, code=access_code)
+            send_email(email, username, code=access_code, testing=self.testing)
 
             # Get the html for the upload page
             page = mmeds.load_html('welcome',
@@ -224,10 +224,7 @@ class MMEDSserver(object):
                                                               barcodes=data_copy2)
 
         # Send the confirmation email
-        send_email(email, username, code=access_code)
-        # new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
-        # os.rename(cp.session['dir'], new_dir)
-        # cp.session['dir'] = new_dir
+        send_email(email, username, code=access_code, testing=self.testing)
 
         # Get the html for the upload page
         page = mmeds.load_html('welcome',
@@ -295,7 +292,7 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 25, user_err)
         else:
-            add_user(username, password1, email)
+            add_user(username, password1, email, testing=self.testing)
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return page
@@ -466,7 +463,7 @@ class MMEDSserver(object):
         if self.processes.get(access_code) is None or\
                 self.processes[access_code].exitcode is not None:
             # Get the open file handler
-            with Database(cp.session['dir'], owner=self.get_user(), testing=testing) as db:
+            with Database(path='.', owner=self.get_user(), testing=testing) as db:
                 try:
                     files, path = db.get_mongo_files(access_code)
                 except MissingUploadError as e:
@@ -478,7 +475,7 @@ class MMEDSserver(object):
             i = 0
             for f in files.keys():
                 if f in USER_FILES:
-                    page = insert_html(page, 22 + i, '<option value="{}">{}</option>'.format(f, f))
+                    page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
                     i += 1
 
             cp.session['download_access'] = access_code
@@ -491,7 +488,7 @@ class MMEDSserver(object):
     @cp.expose
     def select_download(self, download):
         cp.log('User{} requests download {}'.format(self.get_user(), download))
-        with Database(cp.session['dir'], owner=self.get_user(), testing=testing) as db:
+        with Database('.', owner=self.get_user(), testing=testing) as db:
             try:
                 files, path = db.get_mongo_files(cp.session['download_access'])
             except MissingUploadError as e:

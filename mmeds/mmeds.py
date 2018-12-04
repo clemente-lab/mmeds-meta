@@ -743,6 +743,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         msg = EmailMessage()
         msg['From'] = fig.MMEDS_EMAIL
         msg['To'] = toaddr
+        msg['Subject'] = subject
         # Add in any necessary text fields
         msg.set_content(email_body)
 

@@ -11,15 +11,17 @@ ERROR_FP = 'error_log.tsv'
 
 # The path changes depening on where this is being called
 # So that it will work with testing and the server
-HTML_DIR = Path('../html/').resolve()
+HTML_DIR = Path('../html/')
 if not HTML_DIR.is_dir():
-    HTML_DIR = Path('./html/').resolve()
+    HTML_DIR = Path('./html/')
+HTML_DIR = HTML_DIR.resolve()
 
-STORAGE_DIR = Path('./data').resolve()
+STORAGE_DIR = Path('./data')
 if not STORAGE_DIR.is_dir():
-    STORAGE_DIR = Path('../server/data').resolve()
+    STORAGE_DIR = Path('../server/data')
 if not STORAGE_DIR.is_dir():
-    STORAGE_DIR = Path('./server/data').resolve()
+    STORAGE_DIR = Path('./server/data')
+STORAGE_DIR = STORAGE_DIR.resolve()
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
@@ -64,9 +66,10 @@ CONFIG = {
 # Testing #
 ###########
 
-TEST_PATH = Path('./data_files/').resolve()
+TEST_PATH = Path('./data_files/')
 if not TEST_PATH.is_dir():
-    TEST_PATH = Path('../data_files/').resolve()
+    TEST_PATH = Path('../data_files/')
+TEST_PATH = TEST_PATH.resolve()
 
 TEST_PASS = 'testpass'
 TEST_USER = 'testuser'

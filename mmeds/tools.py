@@ -112,39 +112,27 @@ class Tool:
             new_file = Path(self.path) / (str(name) + '_' + get_salt(5) + extension)
         self.db.update_metadata(self.access_code, str(name), new_file)
 
-
-class Qiime1(Tool):
-    """ A class for qiime 1.9.1 analysis of uploaded studies. """
-
-    def __init__(self, owner, access_code, testing):
-        super().__init__(owner, access_code, testing)
-        if testing:
-            self.jobtext.append('source activate qiime1;')
-        else:
-            self.jobtext.append('module load qiime/1.9.1;')
-
-    def validate_mapping(self):
-        """ Run validation on the Qiime mapping file """
-        files, path = self.db.get_mongo_files(self.access_code)
-        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
-        self.jobtext.append(cmd)
-
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
         # Open the metadata file for the study
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
-        mdata = read_csv(fp, header=1, sep='\t')
+        mdata = read_csv(fp, header=1, skiprows=[2, 3, 4], sep='\t')
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
 
         headers = list(mdata.columns)
 
-        si = headers.index('SpecimenID')
+        di = headers.index('RawDataID')
         hold = headers[0]
         headers[0] = '#SampleID'
-        headers[si] = hold
+        headers[di] = hold
+
+        di = headers.index('SampleID')
+        hold = headers[3]
+        headers[3] = 'MmedsSampleID'
+        headers[di] = hold
 
         hold = headers[1]
         di = headers.index('BarcodeSequence')
@@ -167,13 +155,32 @@ class Qiime1(Tool):
                 row = []
                 for header in headers:
                     if header == '#SampleID':
-                        row.append(str(mdata['SpecimenID'][row_index]))
+                        row.append(str(mdata['RawDataID'][row_index]))
+                    elif header == 'MmedsSampleID':
+                        row.append(str(mdata['SampleID'][row_index]))
                     else:
                         row.append(str(mdata[header][row_index]))
                 f.write('\t'.join(row) + '\n')
 
         # Add the mapping file to the MetaData object
         self.db.update_metadata(self.access_code, 'mapping', mapping_file)
+
+
+class Qiime1(Tool):
+    """ A class for qiime 1.9.1 analysis of uploaded studies. """
+
+    def __init__(self, owner, access_code, testing):
+        super().__init__(owner, access_code, testing)
+        if testing:
+            self.jobtext.append('source activate qiime1;')
+        else:
+            self.jobtext.append('module load qiime/1.9.1;')
+
+    def validate_mapping(self):
+        """ Run validation on the Qiime mapping file """
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
+        self.jobtext.append(cmd)
 
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
@@ -270,52 +277,6 @@ class Qiime2(Tool):
             self.jobtext.append('source activate qiime2;')
         else:
             self.jobtext.append('module load qiime2/2018.4;')
-
-    def create_qiime_mapping_file(self):
-        """ Create a qiime mapping file from the metadata """
-        # Open the metadata file for the study
-        metadata = self.db.get_metadata(self.access_code)
-        fp = metadata.files['metadata']
-        mdata = read_csv(fp, header=1, sep='\t')
-
-        # Create the Qiime mapping file
-        mapping_file = self.path / 'qiime_mapping_file.tsv'
-
-        headers = list(mdata.columns)
-
-        si = headers.index('SpecimenID')
-        hold = headers[0]
-        headers[0] = '#SampleID'
-        headers[si] = hold
-
-        hold = headers[1]
-        di = headers.index('BarcodeSequence')
-        headers[1] = 'BarcodeSequence'
-        headers[di] = hold
-
-        hold = headers[2]
-        di = headers.index('LinkerPrimerSequence')
-        headers[2] = 'LinkerPrimerSequence'
-        headers[di] = hold
-
-        hold = headers[-1]
-        di = headers.index('Description')
-        headers[-1] = 'Description'
-        headers[di] = hold
-
-        with open(mapping_file, 'w') as f:
-            f.write('\t'.join(headers) + '\n')
-            for row_index in range(len(mdata)):
-                row = []
-                for header in headers:
-                    if header == '#SampleID':
-                        row.append(str(mdata['SpecimenID'][row_index]))
-                    else:
-                        row.append(str(mdata[header][row_index]))
-                f.write('\t'.join(row) + '\n')
-
-        # Add the mapping file to the MetaData object
-        self.db.update_metadata(self.access_code, 'mapping', mapping_file)
 
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
