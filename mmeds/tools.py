@@ -1,8 +1,9 @@
-from pandas import read_csv
 from pathlib import Path
 from subprocess import run, CalledProcessError, PIPE
 from shutil import copyfile
 from time import sleep
+from pandas import read_csv
+
 import os
 import multiprocessing as mp
 
@@ -16,7 +17,7 @@ from mmeds.error import AnalysisError
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, testing, threads=10):
+    def __init__(self, owner, access_code, atype, testing, threads=10):
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
@@ -24,6 +25,7 @@ class Tool:
         self.jobtext = []
         self.owner = owner
         self.num_jobs = threads
+        self.atype = atype.split('-')[1]
         self.path, self.run_id = self.setup_dir(path)
 
         # Add the split directory to the MetaData object
@@ -169,8 +171,8 @@ class Tool:
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, testing):
-        super().__init__(owner, access_code, testing)
+    def __init__(self, owner, access_code, atype, testing):
+        super().__init__(owner, access_code, atype, testing)
         if testing:
             self.jobtext.append('source activate qiime1;')
         else:
@@ -192,7 +194,7 @@ class Qiime1(Tool):
         command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
         self.jobtext.append(command)
 
-    def pick_otu(self, reference='closed'):
+    def pick_otu(self):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
@@ -202,7 +204,7 @@ class Qiime1(Tool):
 
         # Run the script
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
-        command = cmd.format(reference,
+        command = cmd.format(self.atype,
                              self.num_jobs,
                              files['otu_output'],
                              Path(files['split_output']) / 'seqs.fna',
@@ -216,12 +218,35 @@ class Qiime1(Tool):
 
         # Run the script
         cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {};'
-        command = cmd.format(files['diversity_output'],
-                             Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
-                             files['mapping'],
-                             Path(files['otu_output']) / 'rep_set.tre',
-                             1114)
+        if self.atype == 'open':
+            command = cmd.format(files['diversity_output'],
+                                 Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
+                                 files['mapping'],
+                                 Path(files['otu_output']) / 'rep_set.tre',
+                                 1114)
+        else:
+            command = cmd.format(files['diversity_output'],
+                                 Path(files['otu_output']) / 'otu_table.biom',
+                                 files['mapping'],
+                                 Path(files['otu_output']) / '97_otus.tree',
+                                 1114)
+
         self.jobtext.append(command)
+
+    def sanity_check(self):
+        """ Check that counts match after split_libraries and pick_otu. """
+        files, path = self.db.get_mongo_files(self.access_code)
+
+        cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
+                                              Path(files['split_output']) / 'seqs.fna')
+        output = run(cmd, shell=True, stdin=PIPE, stderr=PIPE, stdout=PIPE)
+        initial_count = int(output.stdout.decode('utf-8').split('\n')[1].split(' ')[0])
+
+        with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
+            final_count = int(f.readlines()[2].split(':')[-1].strip().replace(',', ''))
+        if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
+            message = 'Large difference ({}) between initial and final counts'
+            raise AnalysisError(message.format(initial_count - final_count))
 
     def analysis(self):
         """ Perform some analysis. """
@@ -230,6 +255,7 @@ class Qiime1(Tool):
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
+        self.sanity_check()
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, 'lsf')
         error_log = self.path / self.run_id
@@ -271,8 +297,7 @@ class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, atype, testing):
-        super().__init__(owner, access_code, testing)
-        self.atype = atype.split('-')[1]
+        super().__init__(owner, access_code, atype, testing)
         if testing:
             self.jobtext.append('source activate qiime2;')
         else:
@@ -547,10 +572,10 @@ class Qiime2(Tool):
         send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
 
 
-def run_qiime1(user, access_code, testing):
+def run_qiime1(user, access_code, atype, testing):
     """ Run qiime analysis. """
     try:
-        qa = Qiime1(user, access_code, testing)
+        qa = Qiime1(user, access_code, atype, testing)
         qa.analysis()
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(user, testing=testing)
@@ -568,6 +593,7 @@ def run_qiime2(user, access_code, atype, testing):
 
 
 def test(time, atype):
+    """ Simple function for analysis called during testing """
     sleep(time)
 
 
