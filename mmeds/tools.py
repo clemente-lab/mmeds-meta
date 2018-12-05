@@ -255,7 +255,6 @@ class Qiime1(Tool):
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
-        self.sanity_check()
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, 'lsf')
         error_log = self.path / self.run_id
@@ -282,7 +281,7 @@ class Qiime1(Tool):
             job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
 
         self.wait_on_job(job_id)
-
+        self.sanity_check()
         self.move_user_files()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email,
@@ -319,7 +318,7 @@ class Qiime2(Tool):
         self.jobtext.append(command)
 
     def demultiplex(self):
-        """ Run the core diversity analysis script. """
+        """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
         self.add_path('demux_file', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
@@ -516,6 +515,9 @@ class Qiime2(Tool):
             '--o-visualization {}&'.format(files['alpha_rarefaction'])
         ]
         self.jobtext.append(' '.join(cmd))
+
+    def sanity_check(self):
+        """ Check that the counts after split_libraries and final counts match """
 
     def analysis(self):
         """ Perform some analysis. """
