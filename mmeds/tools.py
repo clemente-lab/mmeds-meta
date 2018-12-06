@@ -17,7 +17,7 @@ from mmeds.error import AnalysisError
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, testing, threads=4):
+    def __init__(self, owner, access_code, atype, testing, threads=3):
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
@@ -265,7 +265,7 @@ class Qiime1(Tool):
             with open(str(jobfile) + '.lsf', 'w') as f:
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            run('sh {}.lsf > {}.err'.format(jobfile, error_log), shell=True, check=True)
+            run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
         else:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
@@ -279,8 +279,7 @@ class Qiime1(Tool):
             # Submit the job
             output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
             job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-
-        self.wait_on_job(job_id)
+            self.wait_on_job(job_id)
         self.sanity_check()
         self.move_user_files()
         doc = self.db.get_metadata(self.access_code)
@@ -310,11 +309,17 @@ class Qiime2(Tool):
         self.db.update_metadata(self.access_code,
                                 'working_file',
                                 'qiime_artifact.qza')
-        os.mkdir(Path(self.path) / 'work_dir')
+        os.mkdir(Path(self.path) / 'import_dir')
         self.db.update_metadata(self.access_code,
                                 'working_dir',
-                                'import_dir')
+                                Path(self.path) / 'import_dir')
         files, path = self.db.get_mongo_files(self.access_code)
+        run('ln -s {} {}'.format(Path(self.path) / 'barcodes.fastq.gz',
+                                 Path(files['working_dir']) / 'barcodes.fastq.gz'),
+            shell=True, check=True)
+        run('ln -s {} {}'.format(Path(self.path) / 'sequences.fastq.gz',
+                                 Path(files['working_dir']) / 'sequences.fastq.gz'),
+            shell=True, check=True)
 
         # Run the script
         cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
@@ -548,8 +553,8 @@ class Qiime2(Tool):
         total_counts = sum(df['Sequence count'])
         print(total_counts)
 
-    def analysis(self):
-        """ Perform some analysis. """
+    def setup_analysis(self):
+        """ Create the job file for the analysis. """
         self.create_qiime_mapping_file()
         self.qimport()
         self.demultiplex()
@@ -573,35 +578,44 @@ class Qiime2(Tool):
         # Wait for them all to finish
         self.jobtext.append('wait')
 
-        jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, 'lsf')
-        error_log = self.path / self.run_id
-        self.add_path(error_log, 'err')
-        if self.testing:
-            self.jobtext = ['#!/usr/bin/bash'] + self.jobtext
-            # Open the jobfile to write all the commands
-            with open(str(jobfile) + '.lsf', 'w') as f:
-                f.write('\n'.join(self.jobtext))
-            # Run the command
-            run('sh {}.lsf > {}.err'.format(jobfile, error_log), shell=True, check=True)
-        else:
-            # Get the job header text from the template
-            with open(JOB_TEMPLATE) as f1:
-                temp = f1.read()
-            # Open the jobfile to write all the commands
-            with open(str(jobfile) + '.lsf', 'w') as f:
-                options = self.get_job_params()
-                # Add the appropriate values
-                f.write(temp.format(**options))
-                f.write('\n'.join(self.jobtext))
-            # Submit the job
-            output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+    def analysis(self):
+        """ Perform some analysis. """
+        self.setup_analysis()
+        if True:
+            jobfile = self.path / (self.run_id + '_job')
+            self.add_path(jobfile, 'lsf')
+            error_log = self.path / self.run_id
+            self.add_path(error_log, 'err')
+            if self.testing:
+                self.jobtext = ['#!/usr/bin/bash'] + self.jobtext
+                # Open the jobfile to write all the commands
+                with open(str(jobfile) + '.lsf', 'w') as f:
+                    f.write('\n'.join(self.jobtext))
+                # Run the command
+                run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+            else:
+                # Get the job header text from the template
+                with open(JOB_TEMPLATE) as f1:
+                    temp = f1.read()
+                # Open the jobfile to write all the commands
+                with open(str(jobfile) + '.lsf', 'w') as f:
+                    options = self.get_job_params()
+                    # Add the appropriate values
+                    f.write(temp.format(**options))
+                    f.write('\n'.join(self.jobtext))
+                # Submit the job
+                output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+                job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+                self.wait_on_job(job_id)
 
-        self.wait_on_job(job_id)
-        doc = self.db.get_metadata(self.access_code)
-        self.move_user_files()
-        send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
+            doc = self.db.get_metadata(self.access_code)
+            self.move_user_files()
+            send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
+        try:
+            print('hi')
+        except CalledProcessError as e:
+            raise e
+            raise AnalysisError(e.args[0])
 
 
 def run_qiime1(user, access_code, atype, testing):
@@ -632,7 +646,7 @@ def test(time, atype):
 def analysis_runner(atype, user, access_code, testing):
     """ Start running the analysis in a new process """
     if 'qiime1' in atype:
-        p = mp.Process(target=run_qiime1, args=(user, access_code, testing))
+        p = mp.Process(target=run_qiime1, args=(user, access_code, atype, testing))
     elif 'qiime2' in atype:
         p = mp.Process(target=run_qiime2, args=(user, access_code, atype, testing))
     elif 'test' in atype:
