@@ -1,0 +1,676 @@
+INFO(140231060051776)2018-12-06 13:51:13,089:*************************
+INFO(140231060051776)2018-12-06 13:51:13,089:deblurring started
+WARNING(140231060051776)2018-12-06 13:51:13,089:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data
+WARNING(140231060051776)2018-12-06 13:51:13,089:parameters: {'keep_tmp_files': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'left_trim_length': 0, 'indel_prob': 0.01, 'pos_ref_fp': (), 'jobs_to_start': 3, 'log_level': 2, 'min_size': 2, 'output_dir': '/tmp/tmpak1oj8ai', 'is_worker_thread': None, 'indel_max': 3, 'threads_per_sample': 1, 'min_reads': 10, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data', 'pos_ref_db_fp': (), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'neg_ref_fp': (), 'logger': <logging.Logger object at 0x7f89d92be080>, 'trim_length': 120, 'overwrite': True, 'neg_ref_db_fp': (), 'mean_error': 0.005}
+INFO(140231060051776)2018-12-06 13:51:13,089:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140231060051776)2018-12-06 13:51:13,090:deblur main program started
+INFO(140231060051776)2018-12-06 13:51:13,090:processing directory /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data
+INFO(140231060051776)2018-12-06 13:51:13,091:building negative db sortmerna index files
+INFO(140231060051776)2018-12-06 13:51:13,091:build_index_sortmerna files ['/home/david/anaconda3/envs/qiime2/lib/python3.5/site-packages/deblur/support_files/artifacts.fa'] to dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140231060051776)2018-12-06 13:51:13,155:building positive db sortmerna index files
+INFO(140231060051776)2018-12-06 13:51:13,155:build_index_sortmerna files ['/home/david/anaconda3/envs/qiime2/lib/python3.5/site-packages/deblur/support_files/88_otus.fasta'] to dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140231060051776)2018-12-06 13:52:08,551:parallel processing per sample fasta files
+INFO(140231060051776)2018-12-06 13:52:08,551:parallel deblur started for 34 inputs
+INFO(140574537148224)2018-12-06 13:52:10,087:*************************
+INFO(140574537148224)2018-12-06 13:52:10,087:deblurring started
+WARNING(140574537148224)2018-12-06 13:52:10,087:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S93_33_L001_R1_001.fastq.gz
+WARNING(140574537148224)2018-12-06 13:52:10,087:parameters: {'keep_tmp_files': True, 'indel_prob': 0.01, 'min_size': 2, 'logger': <logging.Logger object at 0x7fd9d196f6a0>, 'overwrite': True, 'output_dir': '/tmp/tmpak1oj8ai', 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'left_trim_length': 0, 'trim_length': 120, 'log_level': 2, 'mean_error': 0.005, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'pos_ref_fp': (), 'indel_max': 3, 'threads_per_sample': 1, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S93_33_L001_R1_001.fastq.gz', 'jobs_to_start': 1, 'min_reads': 10, 'neg_ref_fp': (), 'is_worker_thread': True, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',)}
+INFO(140574537148224)2018-12-06 13:52:10,087:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140574537148224)2018-12-06 13:52:10,087:deblur worker thread started
+INFO(140574537148224)2018-12-06 13:52:10,088:processing per sample fasta files
+INFO(140574537148224)2018-12-06 13:52:10,088:--------------------------------------------------------
+INFO(140574537148224)2018-12-06 13:52:10,088:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S93_33_L001_R1_001.fastq.gz
+INFO(140020559599424)2018-12-06 13:52:10,100:*************************
+INFO(140020559599424)2018-12-06 13:52:10,100:deblurring started
+WARNING(140020559599424)2018-12-06 13:52:10,100:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S174_27_L001_R1_001.fastq.gz
+WARNING(140020559599424)2018-12-06 13:52:10,100:parameters: {'min_size': 2, 'neg_ref_fp': (), 'pos_ref_fp': (), 'is_worker_thread': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'indel_max': 3, 'log_level': 2, 'indel_prob': 0.01, 'left_trim_length': 0, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'jobs_to_start': 1, 'overwrite': True, 'mean_error': 0.005, 'trim_length': 120, 'threads_per_sample': 1, 'logger': <logging.Logger object at 0x7f58d5f08710>, 'min_reads': 10, 'output_dir': '/tmp/tmpak1oj8ai', 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S174_27_L001_R1_001.fastq.gz', 'keep_tmp_files': True, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',)}
+INFO(140020559599424)2018-12-06 13:52:10,100:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140020559599424)2018-12-06 13:52:10,100:deblur worker thread started
+INFO(140020559599424)2018-12-06 13:52:10,101:processing per sample fasta files
+INFO(140020559599424)2018-12-06 13:52:10,101:--------------------------------------------------------
+INFO(140020559599424)2018-12-06 13:52:10,101:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S174_27_L001_R1_001.fastq.gz
+INFO(140657603651392)2018-12-06 13:52:10,109:*************************
+INFO(140657603651392)2018-12-06 13:52:10,109:deblurring started
+WARNING(140657603651392)2018-12-06 13:52:10,109:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S240_30_L001_R1_001.fastq.gz
+WARNING(140657603651392)2018-12-06 13:52:10,109:parameters: {'logger': <logging.Logger object at 0x7fed28bd5748>, 'min_size': 2, 'threads_per_sample': 1, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S240_30_L001_R1_001.fastq.gz', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'jobs_to_start': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'log_level': 2, 'trim_length': 120, 'neg_ref_fp': (), 'left_trim_length': 0, 'overwrite': True, 'is_worker_thread': True, 'mean_error': 0.005, 'pos_ref_fp': (), 'keep_tmp_files': True, 'indel_max': 3, 'min_reads': 10, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'indel_prob': 0.01}
+INFO(140657603651392)2018-12-06 13:52:10,109:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140657603651392)2018-12-06 13:52:10,109:deblur worker thread started
+INFO(140657603651392)2018-12-06 13:52:10,109:processing per sample fasta files
+INFO(140657603651392)2018-12-06 13:52:10,109:--------------------------------------------------------
+INFO(140657603651392)2018-12-06 13:52:10,109:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S240_30_L001_R1_001.fastq.gz
+INFO(140657603651392)2018-12-06 13:52:11,162:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S240_30_L001_R1_001.fastq.gz.trim
+INFO(140657603651392)2018-12-06 13:52:11,171:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S240_30_L001_R1_001.fastq.gz.trim.derep
+INFO(140020559599424)2018-12-06 13:52:11,247:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S174_27_L001_R1_001.fastq.gz.trim
+INFO(140020559599424)2018-12-06 13:52:11,256:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S174_27_L001_R1_001.fastq.gz.trim.derep
+INFO(140657603651392)2018-12-06 13:52:12,311:total sequences 110, passing sequences 110, failing sequences 0
+INFO(140657603651392)2018-12-06 13:52:12,311:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S240_30_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140020559599424)2018-12-06 13:52:12,363:total sequences 133, passing sequences 133, failing sequences 0
+INFO(140020559599424)2018-12-06 13:52:12,363:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S174_27_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140657603651392)2018-12-06 13:52:13,809:deblurring 110 sequences
+INFO(140657603651392)2018-12-06 13:52:13,818:40 unique sequences left following deblurring
+INFO(140657603651392)2018-12-06 13:52:13,819:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S240_30_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140657603651392)2018-12-06 13:52:13,831:finished processing file
+INFO(140657603651392)2018-12-06 13:52:13,832:finished processing per sample fasta files
+INFO(140657603651392)2018-12-06 13:52:13,832:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S240_30_L001_R1_001.fastq.gz finished
+INFO(140574537148224)2018-12-06 13:52:14,584:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S93_33_L001_R1_001.fastq.gz.trim
+INFO(140574537148224)2018-12-06 13:52:14,617:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S93_33_L001_R1_001.fastq.gz.trim.derep
+INFO(140020559599424)2018-12-06 13:52:14,638:deblurring 133 sequences
+INFO(140020559599424)2018-12-06 13:52:14,651:45 unique sequences left following deblurring
+INFO(140020559599424)2018-12-06 13:52:14,652:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S174_27_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140020559599424)2018-12-06 13:52:14,668:finished processing file
+INFO(140020559599424)2018-12-06 13:52:14,669:finished processing per sample fasta files
+INFO(140020559599424)2018-12-06 13:52:14,669:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S174_27_L001_R1_001.fastq.gz finished
+INFO(140318435170112)2018-12-06 13:52:15,589:*************************
+INFO(140318435170112)2018-12-06 13:52:15,589:deblurring started
+WARNING(140318435170112)2018-12-06 13:52:15,589:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S222_29_L001_R1_001.fastq.gz
+WARNING(140318435170112)2018-12-06 13:52:15,589:parameters: {'neg_ref_fp': (), 'pos_ref_fp': (), 'threads_per_sample': 1, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'log_level': 2, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S222_29_L001_R1_001.fastq.gz', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'overwrite': True, 'indel_max': 3, 'left_trim_length': 0, 'logger': <logging.Logger object at 0x7f9e30b907f0>, 'keep_tmp_files': True, 'min_size': 2, 'mean_error': 0.005, 'indel_prob': 0.01, 'output_dir': '/tmp/tmpak1oj8ai', 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'jobs_to_start': 1, 'min_reads': 10, 'trim_length': 120, 'is_worker_thread': True}
+INFO(140318435170112)2018-12-06 13:52:15,589:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140318435170112)2018-12-06 13:52:15,589:deblur worker thread started
+INFO(140318435170112)2018-12-06 13:52:15,589:processing per sample fasta files
+INFO(140318435170112)2018-12-06 13:52:15,589:--------------------------------------------------------
+INFO(140318435170112)2018-12-06 13:52:15,589:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S222_29_L001_R1_001.fastq.gz
+INFO(140574537148224)2018-12-06 13:52:15,805:total sequences 479, passing sequences 479, failing sequences 0
+INFO(140574537148224)2018-12-06 13:52:15,805:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S93_33_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140353327052608)2018-12-06 13:52:16,286:*************************
+INFO(140353327052608)2018-12-06 13:52:16,286:deblurring started
+WARNING(140353327052608)2018-12-06 13:52:16,286:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S155_26_L001_R1_001.fastq.gz
+WARNING(140353327052608)2018-12-06 13:52:16,286:parameters: {'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'indel_max': 3, 'indel_prob': 0.01, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S155_26_L001_R1_001.fastq.gz', 'jobs_to_start': 1, 'left_trim_length': 0, 'output_dir': '/tmp/tmpak1oj8ai', 'trim_length': 120, 'overwrite': True, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'mean_error': 0.005, 'min_reads': 10, 'log_level': 2, 'threads_per_sample': 1, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'keep_tmp_files': True, 'pos_ref_fp': (), 'min_size': 2, 'neg_ref_fp': (), 'logger': <logging.Logger object at 0x7fa650da50b8>, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'is_worker_thread': True}
+INFO(140353327052608)2018-12-06 13:52:16,287:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140353327052608)2018-12-06 13:52:16,287:deblur worker thread started
+INFO(140353327052608)2018-12-06 13:52:16,287:processing per sample fasta files
+INFO(140353327052608)2018-12-06 13:52:16,287:--------------------------------------------------------
+INFO(140353327052608)2018-12-06 13:52:16,287:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S155_26_L001_R1_001.fastq.gz
+INFO(140318435170112)2018-12-06 13:52:16,945:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S222_29_L001_R1_001.fastq.gz.trim
+INFO(140318435170112)2018-12-06 13:52:16,955:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S222_29_L001_R1_001.fastq.gz.trim.derep
+INFO(140353327052608)2018-12-06 13:52:17,316:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S155_26_L001_R1_001.fastq.gz.trim
+INFO(140353327052608)2018-12-06 13:52:17,325:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S155_26_L001_R1_001.fastq.gz.trim.derep
+INFO(140318435170112)2018-12-06 13:52:18,075:total sequences 144, passing sequences 144, failing sequences 0
+INFO(140318435170112)2018-12-06 13:52:18,076:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S222_29_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140353327052608)2018-12-06 13:52:18,458:total sequences 98, passing sequences 98, failing sequences 0
+INFO(140353327052608)2018-12-06 13:52:18,458:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S155_26_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140574537148224)2018-12-06 13:52:19,465:deblurring 479 sequences
+INFO(140574537148224)2018-12-06 13:52:19,552:96 unique sequences left following deblurring
+INFO(140574537148224)2018-12-06 13:52:19,553:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S93_33_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140574537148224)2018-12-06 13:52:19,575:finished processing file
+INFO(140574537148224)2018-12-06 13:52:19,575:finished processing per sample fasta files
+INFO(140574537148224)2018-12-06 13:52:19,576:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S93_33_L001_R1_001.fastq.gz finished
+INFO(140353327052608)2018-12-06 13:52:19,621:deblurring 98 sequences
+INFO(140353327052608)2018-12-06 13:52:19,628:32 unique sequences left following deblurring
+INFO(140353327052608)2018-12-06 13:52:19,628:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S155_26_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140353327052608)2018-12-06 13:52:19,640:finished processing file
+INFO(140353327052608)2018-12-06 13:52:19,640:finished processing per sample fasta files
+INFO(140353327052608)2018-12-06 13:52:19,640:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S155_26_L001_R1_001.fastq.gz finished
+INFO(140318435170112)2018-12-06 13:52:20,560:deblurring 144 sequences
+INFO(140318435170112)2018-12-06 13:52:20,573:49 unique sequences left following deblurring
+INFO(140318435170112)2018-12-06 13:52:20,573:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S222_29_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140318435170112)2018-12-06 13:52:20,588:finished processing file
+INFO(140318435170112)2018-12-06 13:52:20,588:finished processing per sample fasta files
+INFO(140318435170112)2018-12-06 13:52:20,588:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S222_29_L001_R1_001.fastq.gz finished
+INFO(140621204309824)2018-12-06 13:52:21,289:*************************
+INFO(140621204309824)2018-12-06 13:52:21,290:deblurring started
+WARNING(140621204309824)2018-12-06 13:52:21,290:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S68_32_L001_R1_001.fastq.gz
+WARNING(140621204309824)2018-12-06 13:52:21,290:parameters: {'log_level': 2, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'mean_error': 0.005, 'keep_tmp_files': True, 'min_size': 2, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S68_32_L001_R1_001.fastq.gz', 'neg_ref_fp': (), 'indel_prob': 0.01, 'overwrite': True, 'threads_per_sample': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'trim_length': 120, 'left_trim_length': 0, 'min_reads': 10, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'logger': <logging.Logger object at 0x7fe4af2b77b8>, 'is_worker_thread': True, 'pos_ref_fp': (), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'indel_max': 3, 'jobs_to_start': 1, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',)}
+INFO(140621204309824)2018-12-06 13:52:21,290:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140621204309824)2018-12-06 13:52:21,290:deblur worker thread started
+INFO(140621204309824)2018-12-06 13:52:21,290:processing per sample fasta files
+INFO(140621204309824)2018-12-06 13:52:21,290:--------------------------------------------------------
+INFO(140621204309824)2018-12-06 13:52:21,290:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S68_32_L001_R1_001.fastq.gz
+INFO(140402414835520)2018-12-06 13:52:21,354:*************************
+INFO(140402414835520)2018-12-06 13:52:21,354:deblurring started
+WARNING(140402414835520)2018-12-06 13:52:21,354:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S104_25_L001_R1_001.fastq.gz
+WARNING(140402414835520)2018-12-06 13:52:21,354:parameters: {'keep_tmp_files': True, 'log_level': 2, 'overwrite': True, 'indel_prob': 0.01, 'jobs_to_start': 1, 'logger': <logging.Logger object at 0x7fb1be4cec18>, 'min_reads': 10, 'is_worker_thread': True, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'mean_error': 0.005, 'pos_ref_fp': (), 'min_size': 2, 'output_dir': '/tmp/tmpak1oj8ai', 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'trim_length': 120, 'indel_max': 3, 'neg_ref_fp': (), 'threads_per_sample': 1, 'left_trim_length': 0, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S104_25_L001_R1_001.fastq.gz', 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',)}
+INFO(140402414835520)2018-12-06 13:52:21,354:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140402414835520)2018-12-06 13:52:21,355:deblur worker thread started
+INFO(140402414835520)2018-12-06 13:52:21,355:processing per sample fasta files
+INFO(140402414835520)2018-12-06 13:52:21,355:--------------------------------------------------------
+INFO(140402414835520)2018-12-06 13:52:21,355:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S104_25_L001_R1_001.fastq.gz
+INFO(139623208531776)2018-12-06 13:52:22,179:*************************
+INFO(139623208531776)2018-12-06 13:52:22,179:deblurring started
+WARNING(139623208531776)2018-12-06 13:52:22,179:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S203_28_L001_R1_001.fastq.gz
+WARNING(139623208531776)2018-12-06 13:52:22,180:parameters: {'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S203_28_L001_R1_001.fastq.gz', 'is_worker_thread': True, 'min_reads': 10, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'output_dir': '/tmp/tmpak1oj8ai', 'log_level': 2, 'jobs_to_start': 1, 'logger': <logging.Logger object at 0x7efc51fc6be0>, 'pos_ref_fp': (), 'mean_error': 0.005, 'indel_max': 3, 'left_trim_length': 0, 'indel_prob': 0.01, 'min_size': 2, 'keep_tmp_files': True, 'neg_ref_fp': (), 'overwrite': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'trim_length': 120, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'threads_per_sample': 1}
+INFO(139623208531776)2018-12-06 13:52:22,180:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139623208531776)2018-12-06 13:52:22,180:deblur worker thread started
+INFO(139623208531776)2018-12-06 13:52:22,180:processing per sample fasta files
+INFO(139623208531776)2018-12-06 13:52:22,180:--------------------------------------------------------
+INFO(139623208531776)2018-12-06 13:52:22,180:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S203_28_L001_R1_001.fastq.gz
+INFO(140402414835520)2018-12-06 13:52:22,695:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S104_25_L001_R1_001.fastq.gz.trim
+INFO(140402414835520)2018-12-06 13:52:22,704:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S104_25_L001_R1_001.fastq.gz.trim.derep
+INFO(139623208531776)2018-12-06 13:52:23,363:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S203_28_L001_R1_001.fastq.gz.trim
+INFO(139623208531776)2018-12-06 13:52:23,372:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S203_28_L001_R1_001.fastq.gz.trim.derep
+INFO(140402414835520)2018-12-06 13:52:23,811:total sequences 148, passing sequences 148, failing sequences 0
+INFO(140402414835520)2018-12-06 13:52:23,811:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S104_25_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(139623208531776)2018-12-06 13:52:24,480:total sequences 136, passing sequences 136, failing sequences 0
+INFO(139623208531776)2018-12-06 13:52:24,480:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S203_28_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140621204309824)2018-12-06 13:52:24,902:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S68_32_L001_R1_001.fastq.gz.trim
+INFO(140621204309824)2018-12-06 13:52:24,916:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S68_32_L001_R1_001.fastq.gz.trim.derep
+INFO(140621204309824)2018-12-06 13:52:26,036:total sequences 438, passing sequences 438, failing sequences 0
+INFO(140621204309824)2018-12-06 13:52:26,036:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S68_32_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140402414835520)2018-12-06 13:52:26,310:deblurring 148 sequences
+INFO(140402414835520)2018-12-06 13:52:26,322:45 unique sequences left following deblurring
+INFO(140402414835520)2018-12-06 13:52:26,323:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S104_25_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140402414835520)2018-12-06 13:52:26,336:finished processing file
+INFO(140402414835520)2018-12-06 13:52:26,336:finished processing per sample fasta files
+INFO(140402414835520)2018-12-06 13:52:26,336:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S104_25_L001_R1_001.fastq.gz finished
+INFO(139623208531776)2018-12-06 13:52:26,574:deblurring 136 sequences
+INFO(139623208531776)2018-12-06 13:52:26,598:53 unique sequences left following deblurring
+INFO(139623208531776)2018-12-06 13:52:26,599:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L5S203_28_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139623208531776)2018-12-06 13:52:26,617:finished processing file
+INFO(139623208531776)2018-12-06 13:52:26,617:finished processing per sample fasta files
+INFO(139623208531776)2018-12-06 13:52:26,618:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L5S203_28_L001_R1_001.fastq.gz finished
+INFO(140069425121088)2018-12-06 13:52:28,123:*************************
+INFO(140069425121088)2018-12-06 13:52:28,123:deblurring started
+WARNING(140069425121088)2018-12-06 13:52:28,123:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S63_24_L001_R1_001.fastq.gz
+WARNING(140069425121088)2018-12-06 13:52:28,124:parameters: {'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'neg_ref_fp': (), 'indel_prob': 0.01, 'jobs_to_start': 1, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'logger': <logging.Logger object at 0x7f64368d42e8>, 'min_size': 2, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S63_24_L001_R1_001.fastq.gz', 'keep_tmp_files': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'min_reads': 10, 'log_level': 2, 'left_trim_length': 0, 'pos_ref_fp': (), 'overwrite': True, 'is_worker_thread': True, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'trim_length': 120, 'threads_per_sample': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'mean_error': 0.005, 'indel_max': 3}
+INFO(140069425121088)2018-12-06 13:52:28,124:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140069425121088)2018-12-06 13:52:28,124:deblur worker thread started
+INFO(140069425121088)2018-12-06 13:52:28,124:processing per sample fasta files
+INFO(140069425121088)2018-12-06 13:52:28,124:--------------------------------------------------------
+INFO(140069425121088)2018-12-06 13:52:28,124:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S63_24_L001_R1_001.fastq.gz
+INFO(140548897761088)2018-12-06 13:52:28,368:*************************
+INFO(140548897761088)2018-12-06 13:52:28,368:deblurring started
+WARNING(140548897761088)2018-12-06 13:52:28,368:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S378_21_L001_R1_001.fastq.gz
+WARNING(140548897761088)2018-12-06 13:52:28,368:parameters: {'pos_ref_fp': (), 'threads_per_sample': 1, 'neg_ref_fp': (), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'indel_prob': 0.01, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S378_21_L001_R1_001.fastq.gz', 'overwrite': True, 'min_size': 2, 'mean_error': 0.005, 'logger': <logging.Logger object at 0x7fd3d958f828>, 'left_trim_length': 0, 'indel_max': 3, 'min_reads': 10, 'log_level': 2, 'is_worker_thread': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'keep_tmp_files': True, 'jobs_to_start': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'trim_length': 120}
+INFO(140548897761088)2018-12-06 13:52:28,368:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140548897761088)2018-12-06 13:52:28,368:deblur worker thread started
+INFO(140548897761088)2018-12-06 13:52:28,368:processing per sample fasta files
+INFO(140548897761088)2018-12-06 13:52:28,368:--------------------------------------------------------
+INFO(140548897761088)2018-12-06 13:52:28,368:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S378_21_L001_R1_001.fastq.gz
+INFO(140548897761088)2018-12-06 13:52:29,193:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S378_21_L001_R1_001.fastq.gz.trim
+INFO(140548897761088)2018-12-06 13:52:29,202:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S378_21_L001_R1_001.fastq.gz.trim.derep
+INFO(140621204309824)2018-12-06 13:52:30,135:deblurring 438 sequences
+INFO(140621204309824)2018-12-06 13:52:30,199:70 unique sequences left following deblurring
+INFO(140621204309824)2018-12-06 13:52:30,199:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S68_32_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140621204309824)2018-12-06 13:52:30,226:finished processing file
+INFO(140621204309824)2018-12-06 13:52:30,226:finished processing per sample fasta files
+INFO(140621204309824)2018-12-06 13:52:30,226:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S68_32_L001_R1_001.fastq.gz finished
+INFO(140548897761088)2018-12-06 13:52:30,312:total sequences 125, passing sequences 125, failing sequences 0
+INFO(140548897761088)2018-12-06 13:52:30,312:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S378_21_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140548897761088)2018-12-06 13:52:31,922:deblurring 125 sequences
+INFO(140548897761088)2018-12-06 13:52:31,964:73 unique sequences left following deblurring
+INFO(140548897761088)2018-12-06 13:52:31,965:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S378_21_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140221661992768)2018-12-06 13:52:31,978:*************************
+INFO(140221661992768)2018-12-06 13:52:31,978:deblurring started
+WARNING(140221661992768)2018-12-06 13:52:31,978:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S20_31_L001_R1_001.fastq.gz
+WARNING(140221661992768)2018-12-06 13:52:31,978:parameters: {'output_dir': '/tmp/tmpak1oj8ai', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'min_reads': 10, 'keep_tmp_files': True, 'indel_max': 3, 'neg_ref_fp': (), 'mean_error': 0.005, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'threads_per_sample': 1, 'indel_prob': 0.01, 'is_worker_thread': True, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'overwrite': True, 'pos_ref_fp': (), 'trim_length': 120, 'left_trim_length': 0, 'jobs_to_start': 1, 'logger': <logging.Logger object at 0x7f87a89796a0>, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S20_31_L001_R1_001.fastq.gz', 'log_level': 2, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'min_size': 2}
+INFO(140221661992768)2018-12-06 13:52:31,978:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140221661992768)2018-12-06 13:52:31,978:deblur worker thread started
+INFO(140221661992768)2018-12-06 13:52:31,978:processing per sample fasta files
+INFO(140221661992768)2018-12-06 13:52:31,978:--------------------------------------------------------
+INFO(140221661992768)2018-12-06 13:52:31,979:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S20_31_L001_R1_001.fastq.gz
+INFO(140548897761088)2018-12-06 13:52:31,985:finished processing file
+INFO(140548897761088)2018-12-06 13:52:31,986:finished processing per sample fasta files
+INFO(140548897761088)2018-12-06 13:52:31,986:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S378_21_L001_R1_001.fastq.gz finished
+INFO(140165171500864)2018-12-06 13:52:33,603:*************************
+INFO(140165171500864)2018-12-06 13:52:33,603:deblurring started
+WARNING(140165171500864)2018-12-06 13:52:33,603:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S360_20_L001_R1_001.fastq.gz
+WARNING(140165171500864)2018-12-06 13:52:33,603:parameters: {'threads_per_sample': 1, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S360_20_L001_R1_001.fastq.gz', 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'mean_error': 0.005, 'indel_max': 3, 'indel_prob': 0.01, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'pos_ref_fp': (), 'log_level': 2, 'jobs_to_start': 1, 'keep_tmp_files': True, 'trim_length': 120, 'logger': <logging.Logger object at 0x7f7a817f12b0>, 'overwrite': True, 'min_reads': 10, 'is_worker_thread': True, 'min_size': 2, 'neg_ref_fp': (), 'output_dir': '/tmp/tmpak1oj8ai', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'left_trim_length': 0}
+INFO(140165171500864)2018-12-06 13:52:33,604:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140165171500864)2018-12-06 13:52:33,604:deblur worker thread started
+INFO(140165171500864)2018-12-06 13:52:33,604:processing per sample fasta files
+INFO(140165171500864)2018-12-06 13:52:33,604:--------------------------------------------------------
+INFO(140165171500864)2018-12-06 13:52:33,604:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S360_20_L001_R1_001.fastq.gz
+INFO(140165171500864)2018-12-06 13:52:34,474:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S360_20_L001_R1_001.fastq.gz.trim
+INFO(140165171500864)2018-12-06 13:52:34,485:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S360_20_L001_R1_001.fastq.gz.trim.derep
+INFO(140069425121088)2018-12-06 13:52:34,736:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S63_24_L001_R1_001.fastq.gz.trim
+INFO(140069425121088)2018-12-06 13:52:34,761:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S63_24_L001_R1_001.fastq.gz.trim.derep
+INFO(140165171500864)2018-12-06 13:52:35,679:total sequences 181, passing sequences 181, failing sequences 0
+INFO(140165171500864)2018-12-06 13:52:35,679:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S360_20_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140221661992768)2018-12-06 13:52:35,915:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S20_31_L001_R1_001.fastq.gz.trim
+INFO(140221661992768)2018-12-06 13:52:35,929:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S20_31_L001_R1_001.fastq.gz.trim.derep
+INFO(140069425121088)2018-12-06 13:52:36,035:total sequences 1143, passing sequences 1143, failing sequences 0
+INFO(140069425121088)2018-12-06 13:52:36,035:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S63_24_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140221661992768)2018-12-06 13:52:37,117:total sequences 387, passing sequences 387, failing sequences 0
+INFO(140221661992768)2018-12-06 13:52:37,117:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S20_31_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140069425121088)2018-12-06 13:52:37,576:deblurring 1143 sequences
+INFO(140069425121088)2018-12-06 13:52:38,783:641 unique sequences left following deblurring
+INFO(140069425121088)2018-12-06 13:52:38,787:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S63_24_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140069425121088)2018-12-06 13:52:38,925:finished processing file
+INFO(140069425121088)2018-12-06 13:52:38,926:finished processing per sample fasta files
+INFO(140069425121088)2018-12-06 13:52:38,926:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S63_24_L001_R1_001.fastq.gz finished
+INFO(140165171500864)2018-12-06 13:52:39,461:deblurring 181 sequences
+INFO(140165171500864)2018-12-06 13:52:39,525:158 unique sequences left following deblurring
+INFO(140165171500864)2018-12-06 13:52:39,526:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S360_20_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140165171500864)2018-12-06 13:52:39,561:finished processing file
+INFO(140165171500864)2018-12-06 13:52:39,561:finished processing per sample fasta files
+INFO(140165171500864)2018-12-06 13:52:39,561:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S360_20_L001_R1_001.fastq.gz finished
+INFO(140221661992768)2018-12-06 13:52:40,522:deblurring 387 sequences
+INFO(139710129407808)2018-12-06 13:52:40,553:*************************
+INFO(139710129407808)2018-12-06 13:52:40,553:deblurring started
+WARNING(139710129407808)2018-12-06 13:52:40,553:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S137_23_L001_R1_001.fastq.gz
+WARNING(139710129407808)2018-12-06 13:52:40,553:parameters: {'indel_max': 3, 'log_level': 2, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S137_23_L001_R1_001.fastq.gz', 'is_worker_thread': True, 'min_reads': 10, 'left_trim_length': 0, 'overwrite': True, 'neg_ref_fp': (), 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'indel_prob': 0.01, 'keep_tmp_files': True, 'mean_error': 0.005, 'min_size': 2, 'logger': <logging.Logger object at 0x7f108edfac18>, 'output_dir': '/tmp/tmpak1oj8ai', 'pos_ref_fp': (), 'trim_length': 120, 'threads_per_sample': 1, 'jobs_to_start': 1}
+INFO(139710129407808)2018-12-06 13:52:40,553:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139710129407808)2018-12-06 13:52:40,553:deblur worker thread started
+INFO(139710129407808)2018-12-06 13:52:40,553:processing per sample fasta files
+INFO(139710129407808)2018-12-06 13:52:40,553:--------------------------------------------------------
+INFO(139710129407808)2018-12-06 13:52:40,553:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S137_23_L001_R1_001.fastq.gz
+INFO(140221661992768)2018-12-06 13:52:40,572:77 unique sequences left following deblurring
+INFO(140221661992768)2018-12-06 13:52:40,573:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L6S20_31_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140221661992768)2018-12-06 13:52:40,592:finished processing file
+INFO(140221661992768)2018-12-06 13:52:40,592:finished processing per sample fasta files
+INFO(140221661992768)2018-12-06 13:52:40,592:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L6S20_31_L001_R1_001.fastq.gz finished
+INFO(140201231607616)2018-12-06 13:52:41,365:*************************
+INFO(140201231607616)2018-12-06 13:52:41,365:deblurring started
+WARNING(140201231607616)2018-12-06 13:52:41,365:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S341_19_L001_R1_001.fastq.gz
+WARNING(140201231607616)2018-12-06 13:52:41,366:parameters: {'indel_max': 3, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'min_size': 2, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'logger': <logging.Logger object at 0x7f82e74206a0>, 'mean_error': 0.005, 'left_trim_length': 0, 'is_worker_thread': True, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S341_19_L001_R1_001.fastq.gz', 'output_dir': '/tmp/tmpak1oj8ai', 'trim_length': 120, 'neg_ref_fp': (), 'min_reads': 10, 'keep_tmp_files': True, 'indel_prob': 0.01, 'log_level': 2, 'pos_ref_fp': (), 'overwrite': True, 'threads_per_sample': 1, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'jobs_to_start': 1}
+INFO(140201231607616)2018-12-06 13:52:41,366:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140201231607616)2018-12-06 13:52:41,366:deblur worker thread started
+INFO(140201231607616)2018-12-06 13:52:41,366:processing per sample fasta files
+INFO(140201231607616)2018-12-06 13:52:41,366:--------------------------------------------------------
+INFO(140201231607616)2018-12-06 13:52:41,366:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S341_19_L001_R1_001.fastq.gz
+INFO(140201231607616)2018-12-06 13:52:42,147:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S341_19_L001_R1_001.fastq.gz.trim
+INFO(140201231607616)2018-12-06 13:52:42,155:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S341_19_L001_R1_001.fastq.gz.trim.derep
+INFO(140685234095936)2018-12-06 13:52:42,337:*************************
+INFO(140685234095936)2018-12-06 13:52:42,337:deblurring started
+WARNING(140685234095936)2018-12-06 13:52:42,337:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S313_18_L001_R1_001.fastq.gz
+WARNING(140685234095936)2018-12-06 13:52:42,338:parameters: {'min_reads': 10, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S313_18_L001_R1_001.fastq.gz', 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'trim_length': 120, 'min_size': 2, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'log_level': 2, 'jobs_to_start': 1, 'indel_prob': 0.01, 'keep_tmp_files': True, 'indel_max': 3, 'left_trim_length': 0, 'logger': <logging.Logger object at 0x7ff397a06710>, 'threads_per_sample': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'overwrite': True, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'is_worker_thread': True, 'mean_error': 0.005, 'pos_ref_fp': (), 'neg_ref_fp': ()}
+INFO(140685234095936)2018-12-06 13:52:42,338:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140685234095936)2018-12-06 13:52:42,338:deblur worker thread started
+INFO(140685234095936)2018-12-06 13:52:42,338:processing per sample fasta files
+INFO(140685234095936)2018-12-06 13:52:42,338:--------------------------------------------------------
+INFO(140685234095936)2018-12-06 13:52:42,338:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S313_18_L001_R1_001.fastq.gz
+INFO(140685234095936)2018-12-06 13:52:43,134:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S313_18_L001_R1_001.fastq.gz.trim
+INFO(140685234095936)2018-12-06 13:52:43,142:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S313_18_L001_R1_001.fastq.gz.trim.derep
+INFO(140201231607616)2018-12-06 13:52:43,298:total sequences 136, passing sequences 136, failing sequences 0
+INFO(140201231607616)2018-12-06 13:52:43,298:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S341_19_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140685234095936)2018-12-06 13:52:44,247:total sequences 136, passing sequences 136, failing sequences 0
+INFO(140685234095936)2018-12-06 13:52:44,247:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S313_18_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140201231607616)2018-12-06 13:52:45,327:deblurring 136 sequences
+INFO(140201231607616)2018-12-06 13:52:45,352:107 unique sequences left following deblurring
+INFO(140201231607616)2018-12-06 13:52:45,353:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S341_19_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140201231607616)2018-12-06 13:52:45,375:finished processing file
+INFO(140201231607616)2018-12-06 13:52:45,375:finished processing per sample fasta files
+INFO(140201231607616)2018-12-06 13:52:45,375:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S341_19_L001_R1_001.fastq.gz finished
+INFO(140685234095936)2018-12-06 13:52:46,357:deblurring 136 sequences
+INFO(140685234095936)2018-12-06 13:52:46,380:96 unique sequences left following deblurring
+INFO(140685234095936)2018-12-06 13:52:46,381:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S313_18_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140685234095936)2018-12-06 13:52:46,412:finished processing file
+INFO(140685234095936)2018-12-06 13:52:46,412:finished processing per sample fasta files
+INFO(140685234095936)2018-12-06 13:52:46,412:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S313_18_L001_R1_001.fastq.gz finished
+INFO(140003232163648)2018-12-06 13:52:46,956:*************************
+INFO(140003232163648)2018-12-06 13:52:46,956:deblurring started
+WARNING(140003232163648)2018-12-06 13:52:46,956:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S382_15_L001_R1_001.fastq.gz
+WARNING(140003232163648)2018-12-06 13:52:46,956:parameters: {'logger': <logging.Logger object at 0x7f54cd24ea90>, 'is_worker_thread': True, 'neg_ref_fp': (), 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'jobs_to_start': 1, 'indel_prob': 0.01, 'mean_error': 0.005, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'min_size': 2, 'trim_length': 120, 'min_reads': 10, 'left_trim_length': 0, 'log_level': 2, 'pos_ref_fp': (), 'overwrite': True, 'indel_max': 3, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S382_15_L001_R1_001.fastq.gz', 'threads_per_sample': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'keep_tmp_files': True}
+INFO(140003232163648)2018-12-06 13:52:46,956:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140003232163648)2018-12-06 13:52:46,956:deblur worker thread started
+INFO(140003232163648)2018-12-06 13:52:46,956:processing per sample fasta files
+INFO(140003232163648)2018-12-06 13:52:46,956:--------------------------------------------------------
+INFO(140003232163648)2018-12-06 13:52:46,956:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S382_15_L001_R1_001.fastq.gz
+INFO(139710129407808)2018-12-06 13:52:47,774:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S137_23_L001_R1_001.fastq.gz.trim
+INFO(139710129407808)2018-12-06 13:52:47,799:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S137_23_L001_R1_001.fastq.gz.trim.derep
+INFO(139705764824896)2018-12-06 13:52:47,988:*************************
+INFO(139705764824896)2018-12-06 13:52:47,988:deblurring started
+WARNING(139705764824896)2018-12-06 13:52:47,988:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S294_17_L001_R1_001.fastq.gz
+WARNING(139705764824896)2018-12-06 13:52:47,988:parameters: {'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'overwrite': True, 'mean_error': 0.005, 'is_worker_thread': True, 'log_level': 2, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'left_trim_length': 0, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'neg_ref_fp': (), 'output_dir': '/tmp/tmpak1oj8ai', 'trim_length': 120, 'min_reads': 10, 'min_size': 2, 'jobs_to_start': 1, 'pos_ref_fp': (), 'indel_prob': 0.01, 'threads_per_sample': 1, 'logger': <logging.Logger object at 0x7f0f8ab984e0>, 'indel_max': 3, 'keep_tmp_files': True, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S294_17_L001_R1_001.fastq.gz'}
+INFO(139705764824896)2018-12-06 13:52:47,988:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139705764824896)2018-12-06 13:52:47,988:deblur worker thread started
+INFO(139705764824896)2018-12-06 13:52:47,988:processing per sample fasta files
+INFO(139705764824896)2018-12-06 13:52:47,988:--------------------------------------------------------
+INFO(139705764824896)2018-12-06 13:52:47,988:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S294_17_L001_R1_001.fastq.gz
+INFO(139705764824896)2018-12-06 13:52:48,871:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S294_17_L001_R1_001.fastq.gz.trim
+INFO(139705764824896)2018-12-06 13:52:48,879:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S294_17_L001_R1_001.fastq.gz.trim.derep
+INFO(139710129407808)2018-12-06 13:52:48,974:total sequences 963, passing sequences 963, failing sequences 0
+INFO(139710129407808)2018-12-06 13:52:48,974:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S137_23_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(139705764824896)2018-12-06 13:52:50,009:total sequences 135, passing sequences 135, failing sequences 0
+INFO(139705764824896)2018-12-06 13:52:50,010:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S294_17_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(139710129407808)2018-12-06 13:52:50,070:deblurring 963 sequences
+INFO(140003232163648)2018-12-06 13:52:50,387:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S382_15_L001_R1_001.fastq.gz.trim
+INFO(140003232163648)2018-12-06 13:52:50,402:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S382_15_L001_R1_001.fastq.gz.trim.derep
+INFO(139710129407808)2018-12-06 13:52:50,530:307 unique sequences left following deblurring
+INFO(139710129407808)2018-12-06 13:52:50,532:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S137_23_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139710129407808)2018-12-06 13:52:50,593:finished processing file
+INFO(139710129407808)2018-12-06 13:52:50,594:finished processing per sample fasta files
+INFO(139710129407808)2018-12-06 13:52:50,594:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S137_23_L001_R1_001.fastq.gz finished
+INFO(140003232163648)2018-12-06 13:52:51,562:total sequences 506, passing sequences 506, failing sequences 0
+INFO(140003232163648)2018-12-06 13:52:51,562:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S382_15_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140003232163648)2018-12-06 13:52:52,068:deblurring 506 sequences
+INFO(139705764824896)2018-12-06 13:52:52,081:deblurring 135 sequences
+INFO(139705764824896)2018-12-06 13:52:52,105:82 unique sequences left following deblurring
+INFO(139705764824896)2018-12-06 13:52:52,106:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S294_17_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139705764824896)2018-12-06 13:52:52,126:finished processing file
+INFO(139705764824896)2018-12-06 13:52:52,127:finished processing per sample fasta files
+INFO(139705764824896)2018-12-06 13:52:52,127:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S294_17_L001_R1_001.fastq.gz finished
+INFO(140499672393536)2018-12-06 13:52:52,144:*************************
+INFO(140499672393536)2018-12-06 13:52:52,145:deblurring started
+WARNING(140499672393536)2018-12-06 13:52:52,145:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S112_22_L001_R1_001.fastq.gz
+WARNING(140499672393536)2018-12-06 13:52:52,145:parameters: {'indel_prob': 0.01, 'min_reads': 10, 'indel_max': 3, 'overwrite': True, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'logger': <logging.Logger object at 0x7fc8634da5c0>, 'is_worker_thread': True, 'pos_ref_fp': (), 'left_trim_length': 0, 'keep_tmp_files': True, 'output_dir': '/tmp/tmpak1oj8ai', 'jobs_to_start': 1, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'threads_per_sample': 1, 'trim_length': 120, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S112_22_L001_R1_001.fastq.gz', 'neg_ref_fp': (), 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'mean_error': 0.005, 'min_size': 2, 'log_level': 2}
+INFO(140499672393536)2018-12-06 13:52:52,145:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140499672393536)2018-12-06 13:52:52,145:deblur worker thread started
+INFO(140499672393536)2018-12-06 13:52:52,145:processing per sample fasta files
+INFO(140499672393536)2018-12-06 13:52:52,145:--------------------------------------------------------
+INFO(140499672393536)2018-12-06 13:52:52,145:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S112_22_L001_R1_001.fastq.gz
+INFO(140003232163648)2018-12-06 13:52:52,332:263 unique sequences left following deblurring
+INFO(140003232163648)2018-12-06 13:52:52,334:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S382_15_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140003232163648)2018-12-06 13:52:52,388:finished processing file
+INFO(140003232163648)2018-12-06 13:52:52,388:finished processing per sample fasta files
+INFO(140003232163648)2018-12-06 13:52:52,388:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S382_15_L001_R1_001.fastq.gz finished
+INFO(140431792596800)2018-12-06 13:52:53,742:*************************
+INFO(140431792596800)2018-12-06 13:52:53,742:deblurring started
+WARNING(140431792596800)2018-12-06 13:52:53,742:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S242_16_L001_R1_001.fastq.gz
+WARNING(140431792596800)2018-12-06 13:52:53,742:parameters: {'output_dir': '/tmp/tmpak1oj8ai', 'mean_error': 0.005, 'logger': <logging.Logger object at 0x7fb8955a1a20>, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S242_16_L001_R1_001.fastq.gz', 'log_level': 2, 'trim_length': 120, 'is_worker_thread': True, 'keep_tmp_files': True, 'indel_max': 3, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'jobs_to_start': 1, 'neg_ref_fp': (), 'left_trim_length': 0, 'min_size': 2, 'overwrite': True, 'pos_ref_fp': (), 'indel_prob': 0.01, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'min_reads': 10, 'threads_per_sample': 1, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',)}
+INFO(140431792596800)2018-12-06 13:52:53,742:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140431792596800)2018-12-06 13:52:53,742:deblur worker thread started
+INFO(140431792596800)2018-12-06 13:52:53,742:processing per sample fasta files
+INFO(140431792596800)2018-12-06 13:52:53,742:--------------------------------------------------------
+INFO(140431792596800)2018-12-06 13:52:53,742:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S242_16_L001_R1_001.fastq.gz
+INFO(140067643893568)2018-12-06 13:52:53,994:*************************
+INFO(140067643893568)2018-12-06 13:52:53,994:deblurring started
+WARNING(140067643893568)2018-12-06 13:52:53,995:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S357_14_L001_R1_001.fastq.gz
+WARNING(140067643893568)2018-12-06 13:52:53,995:parameters: {'min_reads': 10, 'trim_length': 120, 'logger': <logging.Logger object at 0x7f63cc65c4a8>, 'left_trim_length': 0, 'threads_per_sample': 1, 'log_level': 2, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S357_14_L001_R1_001.fastq.gz', 'is_worker_thread': True, 'neg_ref_fp': (), 'indel_prob': 0.01, 'pos_ref_fp': (), 'indel_max': 3, 'output_dir': '/tmp/tmpak1oj8ai', 'overwrite': True, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'keep_tmp_files': True, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'jobs_to_start': 1, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'min_size': 2, 'mean_error': 0.005, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log'}
+INFO(140067643893568)2018-12-06 13:52:53,995:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140067643893568)2018-12-06 13:52:53,995:deblur worker thread started
+INFO(140067643893568)2018-12-06 13:52:53,995:processing per sample fasta files
+INFO(140067643893568)2018-12-06 13:52:53,995:--------------------------------------------------------
+INFO(140067643893568)2018-12-06 13:52:53,995:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S357_14_L001_R1_001.fastq.gz
+INFO(140431792596800)2018-12-06 13:52:54,543:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S242_16_L001_R1_001.fastq.gz.trim
+INFO(140431792596800)2018-12-06 13:52:54,553:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S242_16_L001_R1_001.fastq.gz.trim.derep
+INFO(140431792596800)2018-12-06 13:52:55,788:total sequences 114, passing sequences 114, failing sequences 0
+INFO(140431792596800)2018-12-06 13:52:55,788:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S242_16_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140067643893568)2018-12-06 13:52:56,408:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S357_14_L001_R1_001.fastq.gz.trim
+INFO(140067643893568)2018-12-06 13:52:56,420:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S357_14_L001_R1_001.fastq.gz.trim.derep
+INFO(140431792596800)2018-12-06 13:52:57,083:deblurring 114 sequences
+INFO(140431792596800)2018-12-06 13:52:57,104:43 unique sequences left following deblurring
+INFO(140431792596800)2018-12-06 13:52:57,105:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L3S242_16_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140431792596800)2018-12-06 13:52:57,119:finished processing file
+INFO(140431792596800)2018-12-06 13:52:57,119:finished processing per sample fasta files
+INFO(140431792596800)2018-12-06 13:52:57,119:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L3S242_16_L001_R1_001.fastq.gz finished
+INFO(140067643893568)2018-12-06 13:52:57,584:total sequences 377, passing sequences 377, failing sequences 0
+INFO(140067643893568)2018-12-06 13:52:57,584:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S357_14_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140499672393536)2018-12-06 13:52:58,509:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S112_22_L001_R1_001.fastq.gz.trim
+INFO(140499672393536)2018-12-06 13:52:58,532:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S112_22_L001_R1_001.fastq.gz.trim.derep
+INFO(139910562039616)2018-12-06 13:52:58,710:*************************
+INFO(139910562039616)2018-12-06 13:52:58,710:deblurring started
+WARNING(139910562039616)2018-12-06 13:52:58,710:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S240_12_L001_R1_001.fastq.gz
+WARNING(139910562039616)2018-12-06 13:52:58,710:parameters: {'indel_max': 3, 'log_level': 2, 'min_size': 2, 'output_dir': '/tmp/tmpak1oj8ai', 'keep_tmp_files': True, 'mean_error': 0.005, 'threads_per_sample': 1, 'jobs_to_start': 1, 'neg_ref_fp': (), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'is_worker_thread': True, 'trim_length': 120, 'logger': <logging.Logger object at 0x7f3f399706a0>, 'indel_prob': 0.01, 'left_trim_length': 0, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'pos_ref_fp': (), 'overwrite': True, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S240_12_L001_R1_001.fastq.gz', 'min_reads': 10, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',)}
+INFO(139910562039616)2018-12-06 13:52:58,710:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139910562039616)2018-12-06 13:52:58,710:deblur worker thread started
+INFO(139910562039616)2018-12-06 13:52:58,710:processing per sample fasta files
+INFO(139910562039616)2018-12-06 13:52:58,710:--------------------------------------------------------
+INFO(139910562039616)2018-12-06 13:52:58,710:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S240_12_L001_R1_001.fastq.gz
+INFO(140499672393536)2018-12-06 13:52:59,682:total sequences 957, passing sequences 957, failing sequences 0
+INFO(140499672393536)2018-12-06 13:52:59,682:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S112_22_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140067643893568)2018-12-06 13:53:00,558:deblurring 377 sequences
+INFO(140067643893568)2018-12-06 13:53:00,656:157 unique sequences left following deblurring
+INFO(140067643893568)2018-12-06 13:53:00,657:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S357_14_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140067643893568)2018-12-06 13:53:00,701:finished processing file
+INFO(140067643893568)2018-12-06 13:53:00,702:finished processing per sample fasta files
+INFO(140067643893568)2018-12-06 13:53:00,702:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S357_14_L001_R1_001.fastq.gz finished
+INFO(140499672393536)2018-12-06 13:53:00,825:deblurring 957 sequences
+INFO(140499672393536)2018-12-06 13:53:01,593:413 unique sequences left following deblurring
+INFO(140499672393536)2018-12-06 13:53:01,596:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L4S112_22_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140499672393536)2018-12-06 13:53:01,683:finished processing file
+INFO(140499672393536)2018-12-06 13:53:01,684:finished processing per sample fasta files
+INFO(140499672393536)2018-12-06 13:53:01,684:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L4S112_22_L001_R1_001.fastq.gz finished
+INFO(140143007876928)2018-12-06 13:53:02,355:*************************
+INFO(140143007876928)2018-12-06 13:53:02,355:deblurring started
+WARNING(140143007876928)2018-12-06 13:53:02,355:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S309_13_L001_R1_001.fastq.gz
+WARNING(140143007876928)2018-12-06 13:53:02,355:parameters: {'pos_ref_fp': (), 'logger': <logging.Logger object at 0x7f7558710828>, 'threads_per_sample': 1, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S309_13_L001_R1_001.fastq.gz', 'left_trim_length': 0, 'indel_max': 3, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'neg_ref_fp': (), 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'min_reads': 10, 'trim_length': 120, 'keep_tmp_files': True, 'indel_prob': 0.01, 'is_worker_thread': True, 'log_level': 2, 'jobs_to_start': 1, 'min_size': 2, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'output_dir': '/tmp/tmpak1oj8ai', 'overwrite': True, 'mean_error': 0.005}
+INFO(140143007876928)2018-12-06 13:53:02,355:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140143007876928)2018-12-06 13:53:02,355:deblur worker thread started
+INFO(140143007876928)2018-12-06 13:53:02,355:processing per sample fasta files
+INFO(140143007876928)2018-12-06 13:53:02,355:--------------------------------------------------------
+INFO(140143007876928)2018-12-06 13:53:02,355:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S309_13_L001_R1_001.fastq.gz
+INFO(140072323712832)2018-12-06 13:53:03,261:*************************
+INFO(140072323712832)2018-12-06 13:53:03,261:deblurring started
+WARNING(140072323712832)2018-12-06 13:53:03,261:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S175_9_L001_R1_001.fastq.gz
+WARNING(140072323712832)2018-12-06 13:53:03,261:parameters: {'keep_tmp_files': True, 'threads_per_sample': 1, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'left_trim_length': 0, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'jobs_to_start': 1, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S175_9_L001_R1_001.fastq.gz', 'min_size': 2, 'pos_ref_fp': (), 'output_dir': '/tmp/tmpak1oj8ai', 'indel_max': 3, 'indel_prob': 0.01, 'logger': <logging.Logger object at 0x7f64e3561668>, 'is_worker_thread': True, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'overwrite': True, 'trim_length': 120, 'log_level': 2, 'mean_error': 0.005, 'neg_ref_fp': (), 'min_reads': 10}
+INFO(140072323712832)2018-12-06 13:53:03,261:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140072323712832)2018-12-06 13:53:03,261:deblur worker thread started
+INFO(140072323712832)2018-12-06 13:53:03,261:processing per sample fasta files
+INFO(140072323712832)2018-12-06 13:53:03,261:--------------------------------------------------------
+INFO(140072323712832)2018-12-06 13:53:03,261:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S175_9_L001_R1_001.fastq.gz
+INFO(139910562039616)2018-12-06 13:53:03,280:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S240_12_L001_R1_001.fastq.gz.trim
+INFO(139910562039616)2018-12-06 13:53:03,300:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S240_12_L001_R1_001.fastq.gz.trim.derep
+INFO(140143007876928)2018-12-06 13:53:03,828:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S309_13_L001_R1_001.fastq.gz.trim
+INFO(140143007876928)2018-12-06 13:53:03,840:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S309_13_L001_R1_001.fastq.gz.trim.derep
+INFO(139910562039616)2018-12-06 13:53:04,438:total sequences 596, passing sequences 596, failing sequences 0
+INFO(139910562039616)2018-12-06 13:53:04,438:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S240_12_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140143007876928)2018-12-06 13:53:04,959:total sequences 294, passing sequences 294, failing sequences 0
+INFO(140143007876928)2018-12-06 13:53:04,959:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S309_13_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(139910562039616)2018-12-06 13:53:05,090:deblurring 596 sequences
+INFO(139910562039616)2018-12-06 13:53:05,187:96 unique sequences left following deblurring
+INFO(139910562039616)2018-12-06 13:53:05,188:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S240_12_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139910562039616)2018-12-06 13:53:05,211:finished processing file
+INFO(139910562039616)2018-12-06 13:53:05,212:finished processing per sample fasta files
+INFO(139910562039616)2018-12-06 13:53:05,212:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S240_12_L001_R1_001.fastq.gz finished
+INFO(139908824794944)2018-12-06 13:53:06,737:*************************
+INFO(139908824794944)2018-12-06 13:53:06,737:deblurring started
+WARNING(139908824794944)2018-12-06 13:53:06,737:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S222_11_L001_R1_001.fastq.gz
+WARNING(139908824794944)2018-12-06 13:53:06,737:parameters: {'is_worker_thread': True, 'output_dir': '/tmp/tmpak1oj8ai', 'log_level': 2, 'pos_ref_fp': (), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S222_11_L001_R1_001.fastq.gz', 'logger': <logging.Logger object at 0x7f3ed20ac550>, 'mean_error': 0.005, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'threads_per_sample': 1, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'jobs_to_start': 1, 'min_size': 2, 'left_trim_length': 0, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'keep_tmp_files': True, 'indel_prob': 0.01, 'overwrite': True, 'indel_max': 3, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'trim_length': 120, 'min_reads': 10, 'neg_ref_fp': ()}
+INFO(139908824794944)2018-12-06 13:53:06,737:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139908824794944)2018-12-06 13:53:06,737:deblur worker thread started
+INFO(139908824794944)2018-12-06 13:53:06,737:processing per sample fasta files
+INFO(139908824794944)2018-12-06 13:53:06,737:--------------------------------------------------------
+INFO(139908824794944)2018-12-06 13:53:06,737:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S222_11_L001_R1_001.fastq.gz
+INFO(140143007876928)2018-12-06 13:53:06,836:deblurring 294 sequences
+INFO(140143007876928)2018-12-06 13:53:06,931:181 unique sequences left following deblurring
+INFO(140143007876928)2018-12-06 13:53:06,932:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S309_13_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140143007876928)2018-12-06 13:53:06,970:finished processing file
+INFO(140143007876928)2018-12-06 13:53:06,971:finished processing per sample fasta files
+INFO(140143007876928)2018-12-06 13:53:06,971:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S309_13_L001_R1_001.fastq.gz finished
+INFO(140072323712832)2018-12-06 13:53:07,403:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S175_9_L001_R1_001.fastq.gz.trim
+INFO(140072323712832)2018-12-06 13:53:07,428:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S175_9_L001_R1_001.fastq.gz.trim.derep
+INFO(140555874621248)2018-12-06 13:53:08,564:*************************
+INFO(140555874621248)2018-12-06 13:53:08,564:deblurring started
+WARNING(140555874621248)2018-12-06 13:53:08,564:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S76_6_L001_R1_001.fastq.gz
+WARNING(140555874621248)2018-12-06 13:53:08,564:parameters: {'indel_prob': 0.01, 'jobs_to_start': 1, 'mean_error': 0.005, 'output_dir': '/tmp/tmpak1oj8ai', 'neg_ref_fp': (), 'is_worker_thread': True, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'threads_per_sample': 1, 'left_trim_length': 0, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'indel_max': 3, 'min_size': 2, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S76_6_L001_R1_001.fastq.gz', 'min_reads': 10, 'keep_tmp_files': True, 'trim_length': 120, 'pos_ref_fp': (), 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'logger': <logging.Logger object at 0x7fd579378c88>, 'log_level': 2, 'overwrite': True}
+INFO(140555874621248)2018-12-06 13:53:08,564:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140555874621248)2018-12-06 13:53:08,564:deblur worker thread started
+INFO(140555874621248)2018-12-06 13:53:08,564:processing per sample fasta files
+INFO(140555874621248)2018-12-06 13:53:08,564:--------------------------------------------------------
+INFO(140555874621248)2018-12-06 13:53:08,564:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S76_6_L001_R1_001.fastq.gz
+INFO(140072323712832)2018-12-06 13:53:08,588:total sequences 676, passing sequences 676, failing sequences 0
+INFO(140072323712832)2018-12-06 13:53:08,588:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S175_9_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140072323712832)2018-12-06 13:53:09,331:deblurring 676 sequences
+INFO(140072323712832)2018-12-06 13:53:09,667:299 unique sequences left following deblurring
+INFO(140072323712832)2018-12-06 13:53:09,669:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S175_9_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140072323712832)2018-12-06 13:53:09,733:finished processing file
+INFO(140072323712832)2018-12-06 13:53:09,734:finished processing per sample fasta files
+INFO(140072323712832)2018-12-06 13:53:09,734:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S175_9_L001_R1_001.fastq.gz finished
+INFO(139908824794944)2018-12-06 13:53:10,011:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S222_11_L001_R1_001.fastq.gz.trim
+INFO(139908824794944)2018-12-06 13:53:10,035:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S222_11_L001_R1_001.fastq.gz.trim.derep
+INFO(139908824794944)2018-12-06 13:53:11,318:total sequences 610, passing sequences 610, failing sequences 0
+INFO(139908824794944)2018-12-06 13:53:11,319:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S222_11_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140543152904000)2018-12-06 13:53:11,479:*************************
+INFO(140543152904000)2018-12-06 13:53:11,479:deblurring started
+WARNING(140543152904000)2018-12-06 13:53:11,479:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S155_8_L001_R1_001.fastq.gz
+WARNING(140543152904000)2018-12-06 13:53:11,479:parameters: {'keep_tmp_files': True, 'left_trim_length': 0, 'min_size': 2, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'log_level': 2, 'min_reads': 10, 'logger': <logging.Logger object at 0x7fd282f18668>, 'output_dir': '/tmp/tmpak1oj8ai', 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S155_8_L001_R1_001.fastq.gz', 'pos_ref_fp': (), 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'mean_error': 0.005, 'overwrite': True, 'neg_ref_fp': (), 'trim_length': 120, 'threads_per_sample': 1, 'indel_prob': 0.01, 'jobs_to_start': 1, 'is_worker_thread': True, 'indel_max': 3}
+INFO(140543152904000)2018-12-06 13:53:11,479:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140543152904000)2018-12-06 13:53:11,479:deblur worker thread started
+INFO(140543152904000)2018-12-06 13:53:11,479:processing per sample fasta files
+INFO(140543152904000)2018-12-06 13:53:11,479:--------------------------------------------------------
+INFO(140543152904000)2018-12-06 13:53:11,479:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S155_8_L001_R1_001.fastq.gz
+INFO(139908824794944)2018-12-06 13:53:11,960:deblurring 610 sequences
+INFO(140555874621248)2018-12-06 13:53:12,469:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S76_6_L001_R1_001.fastq.gz.trim
+INFO(140555874621248)2018-12-06 13:53:12,497:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S76_6_L001_R1_001.fastq.gz.trim.derep
+INFO(139908824794944)2018-12-06 13:53:12,537:450 unique sequences left following deblurring
+INFO(139908824794944)2018-12-06 13:53:12,541:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S222_11_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139908824794944)2018-12-06 13:53:12,646:finished processing file
+INFO(139908824794944)2018-12-06 13:53:12,647:finished processing per sample fasta files
+INFO(139908824794944)2018-12-06 13:53:12,647:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S222_11_L001_R1_001.fastq.gz finished
+INFO(140555874621248)2018-12-06 13:53:13,800:total sequences 509, passing sequences 509, failing sequences 0
+INFO(140555874621248)2018-12-06 13:53:13,800:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S76_6_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140555874621248)2018-12-06 13:53:14,333:deblurring 509 sequences
+INFO(140348346627904)2018-12-06 13:53:14,342:*************************
+INFO(140348346627904)2018-12-06 13:53:14,342:deblurring started
+WARNING(140348346627904)2018-12-06 13:53:14,342:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S204_10_L001_R1_001.fastq.gz
+WARNING(140348346627904)2018-12-06 13:53:14,342:parameters: {'logger': <logging.Logger object at 0x7fa52795a6d8>, 'log_level': 2, 'indel_prob': 0.01, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'left_trim_length': 0, 'mean_error': 0.005, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'is_worker_thread': True, 'neg_ref_fp': (), 'trim_length': 120, 'overwrite': True, 'indel_max': 3, 'keep_tmp_files': True, 'jobs_to_start': 1, 'threads_per_sample': 1, 'min_reads': 10, 'min_size': 2, 'pos_ref_fp': (), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S204_10_L001_R1_001.fastq.gz', 'output_dir': '/tmp/tmpak1oj8ai'}
+INFO(140348346627904)2018-12-06 13:53:14,342:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140348346627904)2018-12-06 13:53:14,342:deblur worker thread started
+INFO(140348346627904)2018-12-06 13:53:14,342:processing per sample fasta files
+INFO(140348346627904)2018-12-06 13:53:14,342:--------------------------------------------------------
+INFO(140348346627904)2018-12-06 13:53:14,342:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S204_10_L001_R1_001.fastq.gz
+INFO(140555874621248)2018-12-06 13:53:14,444:117 unique sequences left following deblurring
+INFO(140555874621248)2018-12-06 13:53:14,445:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S76_6_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140555874621248)2018-12-06 13:53:14,476:finished processing file
+INFO(140555874621248)2018-12-06 13:53:14,476:finished processing per sample fasta files
+INFO(140555874621248)2018-12-06 13:53:14,476:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S76_6_L001_R1_001.fastq.gz finished
+INFO(140543152904000)2018-12-06 13:53:15,249:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S155_8_L001_R1_001.fastq.gz.trim
+INFO(140543152904000)2018-12-06 13:53:15,269:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S155_8_L001_R1_001.fastq.gz.trim.derep
+INFO(140382163437376)2018-12-06 13:53:16,034:*************************
+INFO(140382163437376)2018-12-06 13:53:16,034:deblurring started
+WARNING(140382163437376)2018-12-06 13:53:16,034:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S57_5_L001_R1_001.fastq.gz
+WARNING(140382163437376)2018-12-06 13:53:16,034:parameters: {'is_worker_thread': True, 'mean_error': 0.005, 'min_size': 2, 'indel_max': 3, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'trim_length': 120, 'min_reads': 10, 'left_trim_length': 0, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'neg_ref_fp': (), 'jobs_to_start': 1, 'log_level': 2, 'logger': <logging.Logger object at 0x7fad07394710>, 'pos_ref_fp': (), 'indel_prob': 0.01, 'threads_per_sample': 1, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S57_5_L001_R1_001.fastq.gz', 'overwrite': True, 'output_dir': '/tmp/tmpak1oj8ai', 'keep_tmp_files': True}
+INFO(140382163437376)2018-12-06 13:53:16,034:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140382163437376)2018-12-06 13:53:16,034:deblur worker thread started
+INFO(140382163437376)2018-12-06 13:53:16,035:processing per sample fasta files
+INFO(140382163437376)2018-12-06 13:53:16,035:--------------------------------------------------------
+INFO(140382163437376)2018-12-06 13:53:16,035:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S57_5_L001_R1_001.fastq.gz
+INFO(140543152904000)2018-12-06 13:53:16,435:total sequences 596, passing sequences 596, failing sequences 0
+INFO(140543152904000)2018-12-06 13:53:16,435:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S155_8_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140543152904000)2018-12-06 13:53:17,095:deblurring 596 sequences
+INFO(140348346627904)2018-12-06 13:53:17,111:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S204_10_L001_R1_001.fastq.gz.trim
+INFO(140348346627904)2018-12-06 13:53:17,125:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S204_10_L001_R1_001.fastq.gz.trim.derep
+INFO(140543152904000)2018-12-06 13:53:17,413:308 unique sequences left following deblurring
+INFO(140543152904000)2018-12-06 13:53:17,415:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S155_8_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140543152904000)2018-12-06 13:53:17,478:finished processing file
+INFO(140543152904000)2018-12-06 13:53:17,478:finished processing per sample fasta files
+INFO(140543152904000)2018-12-06 13:53:17,478:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S155_8_L001_R1_001.fastq.gz finished
+INFO(140348346627904)2018-12-06 13:53:18,366:total sequences 473, passing sequences 473, failing sequences 0
+INFO(140348346627904)2018-12-06 13:53:18,366:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S204_10_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140711165859648)2018-12-06 13:53:19,058:*************************
+INFO(140711165859648)2018-12-06 13:53:19,058:deblurring started
+WARNING(140711165859648)2018-12-06 13:53:19,059:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S8_7_L001_R1_001.fastq.gz
+WARNING(140711165859648)2018-12-06 13:53:19,059:parameters: {'indel_max': 3, 'neg_ref_fp': (), 'threads_per_sample': 1, 'trim_length': 120, 'overwrite': True, 'indel_prob': 0.01, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S8_7_L001_R1_001.fastq.gz', 'log_level': 2, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'min_size': 2, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'is_worker_thread': True, 'left_trim_length': 0, 'mean_error': 0.005, 'min_reads': 10, 'output_dir': '/tmp/tmpak1oj8ai', 'logger': <logging.Logger object at 0x7ff9a147c7b8>, 'keep_tmp_files': True, 'pos_ref_fp': (), 'jobs_to_start': 1}
+INFO(140711165859648)2018-12-06 13:53:19,059:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140711165859648)2018-12-06 13:53:19,059:deblur worker thread started
+INFO(140711165859648)2018-12-06 13:53:19,059:processing per sample fasta files
+INFO(140711165859648)2018-12-06 13:53:19,059:--------------------------------------------------------
+INFO(140711165859648)2018-12-06 13:53:19,059:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S8_7_L001_R1_001.fastq.gz
+INFO(140382163437376)2018-12-06 13:53:20,408:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S57_5_L001_R1_001.fastq.gz.trim
+INFO(140382163437376)2018-12-06 13:53:20,437:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S57_5_L001_R1_001.fastq.gz.trim.derep
+INFO(140382163437376)2018-12-06 13:53:21,634:total sequences 572, passing sequences 572, failing sequences 0
+INFO(140382163437376)2018-12-06 13:53:21,634:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S57_5_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140382163437376)2018-12-06 13:53:22,210:deblurring 572 sequences
+INFO(140382163437376)2018-12-06 13:53:22,350:129 unique sequences left following deblurring
+INFO(140382163437376)2018-12-06 13:53:22,352:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S57_5_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140382163437376)2018-12-06 13:53:22,387:finished processing file
+INFO(140382163437376)2018-12-06 13:53:22,387:finished processing per sample fasta files
+INFO(140382163437376)2018-12-06 13:53:22,387:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S57_5_L001_R1_001.fastq.gz finished
+INFO(140711165859648)2018-12-06 13:53:23,588:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S8_7_L001_R1_001.fastq.gz.trim
+INFO(140711165859648)2018-12-06 13:53:23,606:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S8_7_L001_R1_001.fastq.gz.trim.derep
+INFO(139942604678976)2018-12-06 13:53:23,940:*************************
+INFO(139942604678976)2018-12-06 13:53:23,940:deblurring started
+WARNING(139942604678976)2018-12-06 13:53:23,941:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S281_4_L001_R1_001.fastq.gz
+WARNING(139942604678976)2018-12-06 13:53:23,941:parameters: {'indel_max': 3, 'pos_ref_fp': (), 'threads_per_sample': 1, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'keep_tmp_files': True, 'log_level': 2, 'jobs_to_start': 1, 'min_reads': 10, 'neg_ref_fp': (), 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'output_dir': '/tmp/tmpak1oj8ai', 'overwrite': True, 'left_trim_length': 0, 'is_worker_thread': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S281_4_L001_R1_001.fastq.gz', 'trim_length': 120, 'logger': <logging.Logger object at 0x7f46af7ae940>, 'min_size': 2, 'indel_prob': 0.01, 'mean_error': 0.005}
+INFO(139942604678976)2018-12-06 13:53:23,941:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139942604678976)2018-12-06 13:53:23,941:deblur worker thread started
+INFO(139942604678976)2018-12-06 13:53:23,941:processing per sample fasta files
+INFO(139942604678976)2018-12-06 13:53:23,941:--------------------------------------------------------
+INFO(139942604678976)2018-12-06 13:53:23,941:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S281_4_L001_R1_001.fastq.gz
+INFO(140348346627904)2018-12-06 13:53:24,220:deblurring 473 sequences
+INFO(140348346627904)2018-12-06 13:53:24,422:254 unique sequences left following deblurring
+INFO(140348346627904)2018-12-06 13:53:24,424:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L2S204_10_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140348346627904)2018-12-06 13:53:24,476:finished processing file
+INFO(140348346627904)2018-12-06 13:53:24,476:finished processing per sample fasta files
+INFO(140348346627904)2018-12-06 13:53:24,476:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L2S204_10_L001_R1_001.fastq.gz finished
+INFO(140711165859648)2018-12-06 13:53:24,806:total sequences 624, passing sequences 624, failing sequences 0
+INFO(140711165859648)2018-12-06 13:53:24,806:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S8_7_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140711165859648)2018-12-06 13:53:25,552:deblurring 624 sequences
+INFO(140711165859648)2018-12-06 13:53:25,666:75 unique sequences left following deblurring
+INFO(140711165859648)2018-12-06 13:53:25,666:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S8_7_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140711165859648)2018-12-06 13:53:25,694:finished processing file
+INFO(140711165859648)2018-12-06 13:53:25,694:finished processing per sample fasta files
+INFO(140711165859648)2018-12-06 13:53:25,694:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S8_7_L001_R1_001.fastq.gz finished
+INFO(140408657090368)2018-12-06 13:53:26,173:*************************
+INFO(140408657090368)2018-12-06 13:53:26,173:deblurring started
+WARNING(140408657090368)2018-12-06 13:53:26,174:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S257_3_L001_R1_001.fastq.gz
+WARNING(140408657090368)2018-12-06 13:53:26,174:parameters: {'is_worker_thread': True, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S257_3_L001_R1_001.fastq.gz', 'neg_ref_fp': (), 'threads_per_sample': 1, 'logger': <logging.Logger object at 0x7fb3325e3748>, 'min_reads': 10, 'indel_prob': 0.01, 'output_dir': '/tmp/tmpak1oj8ai', 'jobs_to_start': 1, 'pos_ref_fp': (), 'keep_tmp_files': True, 'indel_max': 3, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'left_trim_length': 0, 'mean_error': 0.005, 'log_level': 2, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'overwrite': True, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'min_size': 2, 'trim_length': 120}
+INFO(140408657090368)2018-12-06 13:53:26,174:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140408657090368)2018-12-06 13:53:26,174:deblur worker thread started
+INFO(140408657090368)2018-12-06 13:53:26,174:processing per sample fasta files
+INFO(140408657090368)2018-12-06 13:53:26,174:--------------------------------------------------------
+INFO(140408657090368)2018-12-06 13:53:26,174:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S257_3_L001_R1_001.fastq.gz
+INFO(139888711685952)2018-12-06 13:53:27,260:*************************
+INFO(139888711685952)2018-12-06 13:53:27,260:deblurring started
+WARNING(139888711685952)2018-12-06 13:53:27,260:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S105_0_L001_R1_001.fastq.gz
+WARNING(139888711685952)2018-12-06 13:53:27,260:parameters: {'min_reads': 10, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S105_0_L001_R1_001.fastq.gz', 'mean_error': 0.005, 'indel_prob': 0.01, 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'min_size': 2, 'threads_per_sample': 1, 'log_level': 2, 'pos_ref_fp': (), 'neg_ref_fp': (), 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'left_trim_length': 0, 'jobs_to_start': 1, 'output_dir': '/tmp/tmpak1oj8ai', 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'logger': <logging.Logger object at 0x7f3a23350ba8>, 'indel_max': 3, 'keep_tmp_files': True, 'is_worker_thread': True, 'overwrite': True, 'trim_length': 120}
+INFO(139888711685952)2018-12-06 13:53:27,260:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(139888711685952)2018-12-06 13:53:27,260:deblur worker thread started
+INFO(139888711685952)2018-12-06 13:53:27,260:processing per sample fasta files
+INFO(139888711685952)2018-12-06 13:53:27,261:--------------------------------------------------------
+INFO(139888711685952)2018-12-06 13:53:27,261:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S105_0_L001_R1_001.fastq.gz
+INFO(139942604678976)2018-12-06 13:53:27,284:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S281_4_L001_R1_001.fastq.gz.trim
+INFO(139942604678976)2018-12-06 13:53:27,305:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S281_4_L001_R1_001.fastq.gz.trim.derep
+INFO(139942604678976)2018-12-06 13:53:28,455:total sequences 494, passing sequences 494, failing sequences 0
+INFO(139942604678976)2018-12-06 13:53:28,455:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S281_4_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140408657090368)2018-12-06 13:53:29,223:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S257_3_L001_R1_001.fastq.gz.trim
+INFO(140408657090368)2018-12-06 13:53:29,244:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S257_3_L001_R1_001.fastq.gz.trim.derep
+INFO(140408657090368)2018-12-06 13:53:30,371:total sequences 436, passing sequences 436, failing sequences 0
+INFO(140408657090368)2018-12-06 13:53:30,371:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S257_3_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(139888711685952)2018-12-06 13:53:31,441:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S105_0_L001_R1_001.fastq.gz.trim
+INFO(139888711685952)2018-12-06 13:53:31,458:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S105_0_L001_R1_001.fastq.gz.trim.derep
+INFO(139942604678976)2018-12-06 13:53:32,243:deblurring 494 sequences
+INFO(139942604678976)2018-12-06 13:53:32,403:153 unique sequences left following deblurring
+INFO(139942604678976)2018-12-06 13:53:32,404:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S281_4_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139942604678976)2018-12-06 13:53:32,447:finished processing file
+INFO(139942604678976)2018-12-06 13:53:32,447:finished processing per sample fasta files
+INFO(139942604678976)2018-12-06 13:53:32,447:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S281_4_L001_R1_001.fastq.gz finished
+INFO(139888711685952)2018-12-06 13:53:32,624:total sequences 627, passing sequences 627, failing sequences 0
+INFO(139888711685952)2018-12-06 13:53:32,624:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S105_0_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140408657090368)2018-12-06 13:53:33,212:deblurring 436 sequences
+INFO(139888711685952)2018-12-06 13:53:33,259:deblurring 627 sequences
+INFO(140408657090368)2018-12-06 13:53:33,335:145 unique sequences left following deblurring
+INFO(140408657090368)2018-12-06 13:53:33,336:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S257_3_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140408657090368)2018-12-06 13:53:33,371:finished processing file
+INFO(140408657090368)2018-12-06 13:53:33,372:finished processing per sample fasta files
+INFO(140408657090368)2018-12-06 13:53:33,372:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S257_3_L001_R1_001.fastq.gz finished
+INFO(139888711685952)2018-12-06 13:53:33,400:122 unique sequences left following deblurring
+INFO(139888711685952)2018-12-06 13:53:33,401:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S105_0_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(139888711685952)2018-12-06 13:53:33,433:finished processing file
+INFO(139888711685952)2018-12-06 13:53:33,434:finished processing per sample fasta files
+INFO(139888711685952)2018-12-06 13:53:33,434:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S105_0_L001_R1_001.fastq.gz finished
+INFO(140074674235200)2018-12-06 13:53:34,843:*************************
+INFO(140074674235200)2018-12-06 13:53:34,843:deblurring started
+WARNING(140074674235200)2018-12-06 13:53:34,843:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S208_2_L001_R1_001.fastq.gz
+WARNING(140074674235200)2018-12-06 13:53:34,843:parameters: {'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'overwrite': True, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'min_size': 2, 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'indel_prob': 0.01, 'left_trim_length': 0, 'trim_length': 120, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'log_level': 2, 'jobs_to_start': 1, 'neg_ref_fp': (), 'pos_ref_fp': (), 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S208_2_L001_R1_001.fastq.gz', 'mean_error': 0.005, 'is_worker_thread': True, 'indel_max': 3, 'min_reads': 10, 'keep_tmp_files': True, 'threads_per_sample': 1, 'logger': <logging.Logger object at 0x7f656f706710>, 'output_dir': '/tmp/tmpak1oj8ai'}
+INFO(140074674235200)2018-12-06 13:53:34,843:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140074674235200)2018-12-06 13:53:34,843:deblur worker thread started
+INFO(140074674235200)2018-12-06 13:53:34,843:processing per sample fasta files
+INFO(140074674235200)2018-12-06 13:53:34,843:--------------------------------------------------------
+INFO(140074674235200)2018-12-06 13:53:34,843:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S208_2_L001_R1_001.fastq.gz
+INFO(140074674235200)2018-12-06 13:53:38,833:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S208_2_L001_R1_001.fastq.gz.trim
+INFO(140074674235200)2018-12-06 13:53:38,848:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S208_2_L001_R1_001.fastq.gz.trim.derep
+INFO(140074674235200)2018-12-06 13:53:39,937:total sequences 557, passing sequences 557, failing sequences 0
+INFO(140074674235200)2018-12-06 13:53:39,937:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S208_2_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140074674235200)2018-12-06 13:53:40,482:deblurring 557 sequences
+INFO(140074674235200)2018-12-06 13:53:40,633:156 unique sequences left following deblurring
+INFO(140074674235200)2018-12-06 13:53:40,634:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S208_2_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140074674235200)2018-12-06 13:53:40,673:finished processing file
+INFO(140074674235200)2018-12-06 13:53:40,674:finished processing per sample fasta files
+INFO(140074674235200)2018-12-06 13:53:40,674:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S208_2_L001_R1_001.fastq.gz finished
+INFO(140639141504832)2018-12-06 13:53:42,321:*************************
+INFO(140639141504832)2018-12-06 13:53:42,321:deblurring started
+WARNING(140639141504832)2018-12-06 13:53:42,322:deblur version 1.0.4 workflow started on /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S140_1_L001_R1_001.fastq.gz
+WARNING(140639141504832)2018-12-06 13:53:42,322:parameters: {'min_size': 2, 'left_trim_length': 0, 'log_level': 2, 'keep_tmp_files': True, 'min_reads': 10, 'is_worker_thread': True, 'trim_length': 120, 'indel_max': 3, 'error_dist': [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005], 'pos_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/88_otus',), 'neg_ref_fp': (), 'threads_per_sample': 1, 'logger': <logging.Logger object at 0x7fe8dc4f5748>, 'seqs_fp': '/tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S140_1_L001_R1_001.fastq.gz', 'jobs_to_start': 1, 'log_file': '/home/david/Work/mmeds-meta/server/deblur.log', 'mean_error': 0.005, 'output_dir': '/tmp/tmpak1oj8ai', 'neg_ref_db_fp': ('/tmp/tmpak1oj8ai/deblur_working_dir/artifacts',), 'overwrite': True, 'pos_ref_fp': (), 'indel_prob': 0.01}
+INFO(140639141504832)2018-12-06 13:53:42,322:error_dist is : [1, 0.06, 0.02, 0.02, 0.01, 0.005, 0.005, 0.005, 0.001, 0.001, 0.001, 0.0005]
+INFO(140639141504832)2018-12-06 13:53:42,322:deblur worker thread started
+INFO(140639141504832)2018-12-06 13:53:42,322:processing per sample fasta files
+INFO(140639141504832)2018-12-06 13:53:42,322:--------------------------------------------------------
+INFO(140639141504832)2018-12-06 13:53:42,322:launch_workflow for file /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S140_1_L001_R1_001.fastq.gz
+INFO(140639141504832)2018-12-06 13:53:45,772:dereplicate seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S140_1_L001_R1_001.fastq.gz.trim
+INFO(140639141504832)2018-12-06 13:53:45,786:remove_artifacts_seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S140_1_L001_R1_001.fastq.gz.trim.derep
+INFO(140639141504832)2018-12-06 13:53:46,853:total sequences 515, passing sequences 515, failing sequences 0
+INFO(140639141504832)2018-12-06 13:53:46,853:multiple_sequence_alignment seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S140_1_L001_R1_001.fastq.gz.trim.derep.no_artifacts
+INFO(140639141504832)2018-12-06 13:53:47,350:deblurring 515 sequences
+INFO(140639141504832)2018-12-06 13:53:47,466:128 unique sequences left following deblurring
+INFO(140639141504832)2018-12-06 13:53:47,467:remove_chimeras_denovo_from_seqs seqs file /tmp/tmpak1oj8ai/deblur_working_dir/L1S140_1_L001_R1_001.fastq.gz.trim.derep.no_artifacts.msa.deblurto working dir /tmp/tmpak1oj8ai/deblur_working_dir
+INFO(140639141504832)2018-12-06 13:53:47,502:finished processing file
+INFO(140639141504832)2018-12-06 13:53:47,503:finished processing per sample fasta files
+INFO(140639141504832)2018-12-06 13:53:47,503:worker thread for /tmp/qiime2-archive-064uhbqo/1961d1d7-9ae1-4f0a-82bf-cd6cb5a4a1e5/data/L1S140_1_L001_R1_001.fastq.gz finished
+INFO(140231060051776)2018-12-06 13:53:47,703:create_otu_table for 34 samples, into output table /tmp/tmpak1oj8ai/all.biom
+INFO(140231060051776)2018-12-06 13:53:47,973:for output biom table loaded 34 samples, 1878 unique sequences
+INFO(140231060051776)2018-12-06 13:53:47,976:keeping 612 (out of 1878 sequences) with >=10 reads
+INFO(140231060051776)2018-12-06 13:53:48,015:saved to biom file /tmp/tmpak1oj8ai/all.biom
+INFO(140231060051776)2018-12-06 13:53:48,016:saved sequence fasta file to /tmp/tmpak1oj8ai/all.seqs.fa
+INFO(140231060051776)2018-12-06 13:53:48,017:getting 16s sequences from the biom table
+INFO(140231060051776)2018-12-06 13:53:48,018:remove_artifacts_seqs file /tmp/tmpak1oj8ai/all.seqs.fa
+INFO(140231060051776)2018-12-06 13:53:53,242:total sequences 612, passing sequences 608, failing sequences 4
+WARNING(140231060051776)2018-12-06 13:53:53,257:removed 24 samples with reads per sample<1
+INFO(140231060051776)2018-12-06 13:53:53,263:wrote artifact only filtered biom table to /tmp/tmpak1oj8ai/reference-non-hit.biom
+INFO(140231060051776)2018-12-06 13:53:53,263:saved biom table sequences to fasta file /tmp/tmpak1oj8ai/reference-non-hit.seqs.fa
+INFO(140231060051776)2018-12-06 13:53:53,273:wrote 16s filtered biom table to /tmp/tmpak1oj8ai/reference-hit.biom
+INFO(140231060051776)2018-12-06 13:53:53,274:saved biom table sequences to fasta file /tmp/tmpak1oj8ai/reference-hit.seqs.fa
+INFO(140231060051776)2018-12-06 13:53:53,274:Keeping temp files
+INFO(140231060051776)2018-12-06 13:53:53,274:deblur workflow finished
+INFO(140231060051776)2018-12-06 13:53:53,274:output saved to /tmp/tmpak1oj8ai/all.biom
+INFO(140231060051776)2018-12-06 13:53:53,274:------------------

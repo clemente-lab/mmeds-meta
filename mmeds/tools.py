@@ -386,6 +386,9 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def dada2_visualize(self):
+        """ Visualize the dada2 results. """
+
     def deblur_filter(self):
         """ Run Deblur analysis on the demultiplexed file. """
         self.add_path('demux_filtered', '.qza')
@@ -465,7 +468,7 @@ class Qiime2(Tool):
         self.jobtext.append(' '.join(cmd))
 
     def phylogeny_midpoint_root(self):
-        """ Generate a tree for phylogenetic diversity analysis. Step 3"""
+        """ Generate a tree for phylogenetic diversity analysis. Step 4"""
         self.add_path('rooted_tree', '.qza')
         files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
@@ -538,20 +541,29 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    # Unfinished
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
-        # files, path = self.db.get_mongo_files(self.access_code)
-        # Temp
-        files = {}
-        files['demux_file'] = '/home/david/Work/mmeds-meta/server/data/david_4/analysis0/demux_viz.qzv'
-        files['demux_export'] = '/home/david/Work/mmeds-meta/server/data/david_4/analysis0/demux_export'
-        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0], files['demux_file'], files['demux_export'])
+        files, path = self.db.get_mongo_files(self.access_code)
+        # Check the counts at the beginning of the analysis
+        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                files['demux_file'],
+                                                                files['demux_export'])
         run(cmd, shell=True, check=True)
 
         df = read_csv(Path(files['demux_export']) / 'per-sample-fastq-counts.csv', sep=',', header=0)
-        total_counts = sum(df['Sequence count'])
-        print(total_counts)
+        initial_count = sum(df['Sequence count'])
+        # Check the counts after DADA2/DeBlur
+        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                files['table_{}'.format(self.atype)],
+                                                                files['stats_export'])
+        run(cmd, shell=True, check=True)
+
+        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0], Path(files['stats_export']) / 'feature-table.biom')
+        result = run(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
+        if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
+            message = 'Large difference ({}) between initial and final counts'
+            raise AnalysisError(message.format(initial_count - final_count))
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
@@ -581,7 +593,7 @@ class Qiime2(Tool):
     def analysis(self):
         """ Perform some analysis. """
         self.setup_analysis()
-        if True:
+        try:
             jobfile = self.path / (self.run_id + '_job')
             self.add_path(jobfile, 'lsf')
             error_log = self.path / self.run_id
@@ -608,13 +620,11 @@ class Qiime2(Tool):
                 job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
 
+            self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
             send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
-        try:
-            print('hi')
         except CalledProcessError as e:
-            raise e
             raise AnalysisError(e.args[0])
 
 
