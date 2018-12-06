@@ -17,7 +17,7 @@ from mmeds.error import AnalysisError
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, testing, threads=10):
+    def __init__(self, owner, access_code, atype, testing, threads=4):
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
@@ -310,11 +310,15 @@ class Qiime2(Tool):
         self.db.update_metadata(self.access_code,
                                 'working_file',
                                 'qiime_artifact.qza')
+        os.mkdir(Path(self.path) / 'work_dir')
+        self.db.update_metadata(self.access_code,
+                                'working_dir',
+                                'import_dir')
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-        command = cmd.format(itype, self.path, files['working_file'])
+        command = cmd.format(itype, files['working_dir'], files['working_file'])
         self.jobtext.append(command)
 
     def demultiplex(self):
@@ -330,6 +334,19 @@ class Qiime2(Tool):
             '--m-barcodes-file {}'.format(files['mapping']),
             '--m-barcodes-column {}'.format('BarcodeSequence'),
             '--o-per-sample-sequences {};'.format(files['demux_file'])
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def demux_visualize(self):
+        """ Create visualization summary for the demux file. """
+        self.add_path('demux_viz', '.qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+
+        # Run the script
+        cmd = [
+            'qiime demux summarize',
+            '--i-data {}'.format(files['demux_file']),
+            '--o-visualization {};'.format(files['demux_viz'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -516,14 +533,27 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    # Unfinished
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
+        # files, path = self.db.get_mongo_files(self.access_code)
+        # Temp
+        files = {}
+        files['demux_file'] = '/home/david/Work/mmeds-meta/server/data/david_4/analysis0/demux_viz.qzv'
+        files['demux_export'] = '/home/david/Work/mmeds-meta/server/data/david_4/analysis0/demux_export'
+        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0], files['demux_file'], files['demux_export'])
+        run(cmd, shell=True, check=True)
+
+        df = read_csv(Path(files['demux_export']) / 'per-sample-fastq-counts.csv', sep=',', header=0)
+        total_counts = sum(df['Sequence count'])
+        print(total_counts)
 
     def analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.qimport()
         self.demultiplex()
+        self.demux_visualize()
         if self.atype == 'deblur':
             self.deblur_filter()
             self.deblur_denoise()
