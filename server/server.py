@@ -14,7 +14,7 @@ from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_err
 from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
-from mmeds.tools import analysis_runner
+from mmeds.tools import spawn_analysis
 from mmeds.error import MissingUploadError, MetaDataError
 
 absDir = Path(os.getcwd())
@@ -73,7 +73,7 @@ class MMEDSserver(object):
             if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
-                    p = analysis_runner(tool, self.get_user(), access_code, self.testing)
+                    p = spawn_analysis(tool, self.get_user(), access_code, self.testing)
                     self.processes[access_code] = p
                     page = mmeds.load_html('welcome',
                                            title='Welcome to Mmeds',

@@ -3,9 +3,12 @@ from subprocess import run, CalledProcessError, PIPE
 from shutil import copyfile
 from time import sleep
 from pandas import read_csv
+from glob import glob
+from shutil import rmtree
 
 import os
 import multiprocessing as mp
+import nbformat as nbf
 
 from mmeds.database import Database
 from mmeds.config import get_salt, JOB_TEMPLATE
@@ -26,10 +29,12 @@ class Tool:
         self.owner = owner
         self.num_jobs = threads
         self.atype = atype.split('-')[1]
+        self.sampling_depth = 1114  # This should be chosen intellegently
         self.path, self.run_id = self.setup_dir(path)
 
         # Add the split directory to the MetaData object
         self.add_path('analysis{}'.format(self.run_id), '')
+        self.columns = []
 
     def __del__(self):
         del self.db
@@ -120,6 +125,7 @@ class Tool:
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
         mdata = read_csv(fp, header=1, skiprows=[2, 3, 4], sep='\t')
+        self.columns = list(mdata.columns)
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
@@ -223,13 +229,13 @@ class Qiime1(Tool):
                                  Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  files['mapping'],
                                  Path(files['otu_output']) / 'rep_set.tre',
-                                 1114)
+                                 self.sampling_depth)
         else:
             command = cmd.format(files['diversity_output'],
                                  Path(files['otu_output']) / 'otu_table.biom',
                                  files['mapping'],
                                  Path(files['otu_output']) / '97_otus.tree',
-                                 1114)
+                                 self.sampling_depth)
 
         self.jobtext.append(command)
 
@@ -281,6 +287,7 @@ class Qiime1(Tool):
             job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             self.wait_on_job(job_id)
         self.sanity_check()
+        self.summarize()
         self.move_user_files()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email,
@@ -289,6 +296,52 @@ class Qiime1(Tool):
                    analysis_type='Qiime1',
                    study_name=doc.study,
                    testing=self.testing)
+
+    def summarize(self):
+        """ Create summary of analysis results """
+        files, path = self.db.get_mongo_files(self.access_code)
+        diversity = Path(files['diversity_output'])
+        summary = {}
+
+        # Convert and store the otu table
+        cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
+        run(cmd.format(self.jobtext[0],
+                       Path(files['otu_output']) / 'otu_table.biom',
+                       self.path / 'otu_table.tsv'),
+            shell=True, check=True)
+
+        with open(self.path / 'otu_table.tsv') as f:
+            summary[Path(f.name).name] = f.read()
+
+        def collect_files(path):
+            """ Collect the contents of all files match the regex in path """
+            files = glob(str(diversity / path.format(depth=self.sampling_depth)))
+            for data in files:
+                with open(data) as f:
+                    summary[Path(f.name).name] = f.read()
+
+        collect_files('biom_table_summary.txt')                     # Biom summary
+        collect_files('arare_max{depth}/alpha_div_collated/*.txt')  # Alpha div
+        collect_files('bdiv_even{depth}/*.txt')                     # Beta div
+        collect_files('taxa_plots/*.txt')                           # Taxa summary
+
+        os.mkdir(Path(self.path) / 'summary')
+        self.add_path('summary', '')
+        # Put all the files in one location
+        for key in summary.keys():
+            print(key)
+            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
+                f.write(summary[key])
+
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        run(cmd, shell=True, check=True)
+
+        self.summary_analysis(summary)
+
+    def summary_analysis(self, summary):
+        """ Create python notebook for generating anlysis of the data. """
+        nn = nbf.v4.new_notebook(summary)
+        nbf.write(nn, self.path / 'analysis.ipynb')
 
 
 class Qiime2(Tool):
@@ -301,6 +354,9 @@ class Qiime2(Tool):
         else:
             self.jobtext.append('module load qiime2/2018.4;')
 
+    # ======================= #
+    # # # Qiime2 Commands # # #
+    # ======================= #
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
         files, path = self.db.get_mongo_files(self.access_code)
@@ -585,7 +641,8 @@ class Qiime2(Tool):
         self.core_diversity()
         # Run these commands in parallel
         self.alpha_diversity()
-        self.beta_diversity()
+        for col in self.columns:
+            self.beta_diversity(col)
         self.alpha_rarefaction()
         # Wait for them all to finish
         self.jobtext.append('wait')
@@ -627,25 +684,37 @@ class Qiime2(Tool):
         except CalledProcessError as e:
             raise AnalysisError(e.args[0])
 
+    def summarize(self):
+        """ Create summary of the files produced by the qiime2 analysis. """
+        files, path = self.db.get_mongo_files(self.access_code)
+        files['alpha_rarefaction'] = '/home/david/Work/mmeds-meta/server/data/david_0/qiime2-dada/'
+        summary = {}
+        # Get Alpha rarefaction
+        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                files['alpha_rarefaction'],
+                                                                self.path / 'temp')
+        run(cmd, shell=True, check=True)
+        with open(self.path / 'temp/observed_otus.csv') as f:
+            summary[Path(f.name).name] = f.read()
+        rmtree(self.path / 'temp')
 
-def run_qiime1(user, access_code, atype, testing):
+        # Get Beta
+        # Get Taxa
+
+
+def run_analysis(qiime):
     """ Run qiime analysis. """
     try:
-        qa = Qiime1(user, access_code, atype, testing)
-        qa.analysis()
+        qiime.analysis()
+        qiime.summarize()
     except (AnalysisError, CalledProcessError) as e:
-        email = get_email(user, testing=testing)
-        send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.message, testing=testing)
-
-
-def run_qiime2(user, access_code, atype, testing):
-    """ Run qiime analysis. """
-    try:
-        qa = Qiime2(user, access_code, atype, testing)
-        qa.analysis()
-    except (AnalysisError, CalledProcessError) as e:
-        email = get_email(user, testing=testing)
-        send_email(email, user, 'error', analysis_type='Qiime2 (2018.4)', error=e.message, testing=testing)
+        email = get_email(qiime.owner, testing=qiime.testing)
+        send_email(email,
+                   qiime.owner,
+                   'error',
+                   analysis_type=qiime.atype,
+                   error=e.message,
+                   testing=qiime.testing)
 
 
 def test(time, atype):
@@ -653,12 +722,14 @@ def test(time, atype):
     sleep(time)
 
 
-def analysis_runner(atype, user, access_code, testing):
+def spawn_analysis(atype, user, access_code, testing):
     """ Start running the analysis in a new process """
     if 'qiime1' in atype:
-        p = mp.Process(target=run_qiime1, args=(user, access_code, atype, testing))
+        qiime = Qiime1(user, access_code, atype, testing)
+        p = mp.Process(target=run_analysis, args=(qiime,))
     elif 'qiime2' in atype:
-        p = mp.Process(target=run_qiime2, args=(user, access_code, atype, testing))
+        qiime = Qiime2(user, access_code, atype, testing)
+        p = mp.Process(target=run_analysis, args=(qiime,))
     elif 'test' in atype:
         time = float(atype.split('-')[-1])
         p = mp.Process(target=test, args=(time, atype))

@@ -35,7 +35,7 @@ class MetaData(men.DynamicDocument):
     # When the document is updated record the
     # location of all files in a new file
     def save(self):
-        with open(str(Path(self.path).parent / 'file_index.tsv'), 'w') as f:
+        with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
             f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
             f.write('Key\tPath\n')
             for key in self.files:
