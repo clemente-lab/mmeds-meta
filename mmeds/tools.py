@@ -356,8 +356,8 @@ class Qiime1(Tool):
 
     def summary_analysis(self, summary, execute=False, export='PDF'):
         """ Create python notebook for generating anlysis of the data. """
-        path = Path(self.path)
         # Get the files to summarize from the index
+        path = Path(self.path)
         files = defaultdict(list)
         with open(path / 'file_index.tsv') as f:
             lines = f.readlines()
@@ -367,20 +367,32 @@ class Qiime1(Tool):
 
         otu_source = [
             "from pandas import read_csv",
+            "import rpy2.rinterface",
             "df = read_csv('{filename}', skiprows=1, header=0, sep='\t')",
-            "df.set_index('{index}')"
+            "df.set_index('{index}', inplace=True)",
+            "df.head()"
+
         ]
         otu_source = '\n'.join(otu_source).format(filename='otu_table.tsv', index='taxonomy')
-        alpha_source = "read_csv('{file1}', sep='\t')"
+        alpha_source = "df = read_csv('{file1}', sep='\t')"
+
+        plot_source = [
+            "%%R -i df",
+            "require(ggplot2)",
+            "qplot(x=rownames(df), y=iteration, data=df, size=sequences.per.sample, geom='jitter')"
+        ]
+        plot_source = '\n'.join(plot_source)
+
+        cells = []
 
         with open(path / 'biom_table_summary.txt') as f:
             output = f.read()
 
         # Add all the cells containing the different files
-        cells = []
         cells.append(v4.new_markdown_cell(source='# OTU Summary'))
         cells.append(v4.new_raw_cell(source=output))
         cells.append(v4.new_markdown_cell(source='To view the full otu table, execute the code cell below'))
+        cells.append(v4.new_code_cell(source="%load_ext rpy2.ipython"))
         cells.append(v4.new_code_cell(source=otu_source))
         cells.append(v4.new_markdown_cell(source='# Taxa Diversity Summary'))
         for f in files['taxa']:
@@ -390,6 +402,8 @@ class Qiime1(Tool):
         for f in files['alpha']:
             cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=f)))
             cells.append(v4.new_code_cell(source=alpha_source.format(file1=f)))
+            if 'chao' in f:
+                cells.append(v4.new_code_cell(source=plot_source))
         cells.append(v4.new_markdown_cell(source='# Beta Diversity Summary'))
         for f in files['beta']:
             if 'dm' in f:
@@ -398,15 +412,17 @@ class Qiime1(Tool):
 
         nn = nbf.v4.new_notebook(cells=cells)
         meta = {
-            'authors': [{'name': 'David Wallach', 'email': 'david.wallach@mssm.edu'}],
-            'name': 'MMEDS Analysis Summary',
-            'title': 'MMEDS Analysis Summary'
+            'metadata': {
+                'authors': [{'name': 'David Wallach', 'email': 'david.wallach@mssm.edu'}],
+                'name': 'MMEDS Analysis Summary',
+                'title': 'MMEDS Analysis Summary'
+            }
         }
         nn.update(meta)
 
         # nn = nbf.read(str(path / 'analysis.ipynb'), as_version=4)
 
-        nbf.write(nn, str(path / 'analysis2.ipynb'))
+        nbf.write(nn, str(path / 'analysis3.ipynb'))
 
         exp = PDFExporter()
         if execute:

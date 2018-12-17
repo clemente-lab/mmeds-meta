@@ -34,3 +34,7 @@ Latex Dependencies
 adjustbox
 upquote
 ulem
+
+Other Dependencies
+rpy2: 2.9.1
+readline headers
