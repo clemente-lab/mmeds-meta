@@ -6,24 +6,41 @@ from nbconvert import PDFExporter
 from nbconvert.preprocessors import ExecutePreprocessor
 
 r_source = """%%R -i df
-rndf <- melt(df, id='X.OTU.ID')
+rndf <- melt(df, id="X.OTU.ID")
 p <- ggplot(rndf, aes(x = variable, y = value, fill = X.OTU.ID)) +
-    geom_bar(stat = "identity") +
-    ggtitle('Taxa Summary') +
-    labs(x = 'Sample ID') +
-    theme(text = element_text(size = 8.5, face='bold'), element_line(size = 0.1)) +
-    scale_y_discrete(name = "OTU Percentage", limits = c(0, 1), expand = c(0, 0)) +
-    theme(legend.text=element_text(size=7),
-          legend.key.size = unit(0.1,"in"),
-          legend.position = 'bottom',
-          legend.direction="vertical",
-          plot.title = element_text(hjust = 0.5))
+     geom_bar(stat = "identity") +
+     ggtitle("Taxa Summary") +
+     labs(x = "Sample ID") +
+     theme(text = element_text(size = 8.5,
+                               face = "bold"),
+           element_line(size = 0.1)) +
+     scale_y_discrete(name = "OTU Percentage",
+                      limits = c(0, 1),
+                      expand = c(0, 0)) +
+     theme(legend.text=element_text(size=7),
+           legend.key.size = unit(0.1, "in"),
+           legend.position = "bottom",
+           legend.direction="vertical",
+           plot.title = element_text(hjust = 0.5))
 
-ggsave('{plot}', height = 8, width = 12)
+ggsave("{plot}", height = 8, width = 12)
 """
 
 
 def taxa_plots(path, data_file):
+    """ Create plots for taxa summary files. """
+    source = "df = read_csv('{file1}', skiprows=1, sep='\t')"
+    filename = data_file.split('.')[0] + '.png'
+    cells = []
+    cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
+    cells.append(v4.new_code_cell(source=source.format(file1=data_file)))
+    cells.append(v4.new_code_cell(source=r_source.format(plot=filename)))
+    cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+    return cells
+
+
+def alpha_plots(path, data_file):
+    """ Create plots for alpha diversity files. """
     source = "df = read_csv('{file1}', skiprows=1, sep='\t')"
     filename = data_file.split('.')[0] + '.png'
     cells = []
@@ -35,6 +52,7 @@ def taxa_plots(path, data_file):
 
 
 def summerize(path, execute):
+    """ Create the python notebook containing the summary of analysis results. """
     # Get the files to summarize from the index
     files = defaultdict(list)
     with open(path / 'file_index.tsv') as f:
@@ -53,7 +71,10 @@ def summerize(path, execute):
 
     ]
     otu_source = '\n'.join(otu_source).format(filename='otu_table.tsv', index='taxonomy')
-    alpha_source = "df = read_csv('{file1}', skiprows=1, sep='\t')"
+    alpha_source = [
+        "df = read_csv('chao1.txt', sep='	')",
+        "df.drop('Unnamed: 0', axis=1, inplace=True)"
+    ]   
 
     plot_source = [
         "%%R",
@@ -65,11 +86,11 @@ def summerize(path, execute):
     cells = []
 
     with open(path / 'biom_table_summary.txt') as f:
-        output = f.read()
+        output = f.read().replace('\n', '  \n').replace('\r', '  \r')
 
     # Add all the cells containing the different files
     cells.append(v4.new_markdown_cell(source='# OTU Summary'))
-    cells.append(v4.new_raw_cell(source=output))
+    cells.append(v4.new_markdown_cell(source=output))
     cells.append(v4.new_code_cell(source="%load_ext rpy2.ipython"))
     cells.append(v4.new_code_cell(source=plot_source))
     cells.append(v4.new_markdown_cell(source='To view the full otu table, execute the code cell below'))
@@ -105,7 +126,7 @@ def summerize(path, execute):
 
 
 def write_notebook(nn):
-    nbf.write(nn, str(path / 'analysis3.ipynb'))
+    nbf.write(nn, str(path / 'analysis.ipynb'))
 
     exp = PDFExporter()
     if execute:
@@ -117,7 +138,7 @@ def write_notebook(nn):
         f.write(pdf_data)
 
 
-execute = True
+execute = False
 path = Path('/home/david/Work/data-mmeds/summary')
 
 nn = summerize(path, execute)
