@@ -3,16 +3,10 @@ from subprocess import run, CalledProcessError, PIPE
 from shutil import copyfile
 from time import sleep
 from pandas import read_csv
-from glob import glob
 from shutil import rmtree
-from collections import defaultdict
-from nbformat import v4
-from nbconvert import PDFExporter
-from nbconvert.preprocessors import ExecutePreprocessor
 
 import os
 import multiprocessing as mp
-import nbformat as nbf
 
 from mmeds.database import Database
 from mmeds.config import get_salt, JOB_TEMPLATE
@@ -300,138 +294,6 @@ class Qiime1(Tool):
                    analysis_type='Qiime1',
                    study_name=doc.study,
                    testing=self.testing)
-
-    def summarize(self):
-        """ Create summary of analysis results """
-        files, path = self.db.get_mongo_files(self.access_code)
-        diversity = Path(files['diversity_output'])
-        summary = {}
-        index = defaultdict(list)
-
-        # Convert and store the otu table
-        cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
-        run(cmd.format(self.jobtext[0],
-                       Path(files['otu_output']) / 'otu_table.biom',
-                       self.path / 'otu_table.tsv'),
-            shell=True, check=True)
-
-        # Copy the file contents
-        with open(self.path / 'otu_table.tsv') as f:
-            summary[Path(f.name).name] = f.read()
-            index['otu'].append(Path(f.name).name)
-
-        def collect_files(path, cat):
-            """ Collect the contents of all files match the regex in path """
-            files = glob(str(diversity / path.format(depth=self.sampling_depth)))
-            for data in files:
-                with open(data) as f:
-                    summary[Path(f.name).name] = f.read()
-                    index[cat].append(Path(f.name).name)
-
-        collect_files('biom_table_summary.txt', 'otu')                       # Biom summary
-        collect_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
-        collect_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
-        collect_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
-
-        os.mkdir(Path(self.path) / 'summary')
-        self.add_path('summary', '')
-
-        # Put all the files in one location
-        for key in summary.keys():
-            print(key)
-            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
-                f.write(summary[key])
-
-        # Write the index
-        with open(Path(self.path) / 'summary/file_index.tsv') as f:
-            for key in index.keys():
-                for f in index[key]:
-                    f.write("{}\t{}\n".format(key, f))
-
-        # Add the folder to an archive for download
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
-        run(cmd, shell=True, check=True)
-
-        self.summary_analysis(summary)
-
-    def summary_analysis(self, summary, execute=False, export='PDF'):
-        """ Create python notebook for generating anlysis of the data. """
-        # Get the files to summarize from the index
-        path = Path(self.path)
-        files = defaultdict(list)
-        with open(path / 'file_index.tsv') as f:
-            lines = f.readlines()
-        for line in lines:
-            parts = line.strip('\n').split('\t')
-            files[parts[0]].append(parts[1])
-
-        otu_source = [
-            "from pandas import read_csv",
-            "import rpy2.rinterface",
-            "df = read_csv('{filename}', skiprows=1, header=0, sep='\t')",
-            "df.set_index('{index}', inplace=True)",
-            "df.head()"
-
-        ]
-        otu_source = '\n'.join(otu_source).format(filename='otu_table.tsv', index='taxonomy')
-        alpha_source = "df = read_csv('{file1}', sep='\t')"
-
-        plot_source = [
-            "%%R -i df",
-            "require(ggplot2)",
-            "qplot(x=rownames(df), y=iteration, data=df, size=sequences.per.sample, geom='jitter')"
-        ]
-        plot_source = '\n'.join(plot_source)
-
-        cells = []
-
-        with open(path / 'biom_table_summary.txt') as f:
-            output = f.read()
-
-        # Add all the cells containing the different files
-        cells.append(v4.new_markdown_cell(source='# OTU Summary'))
-        cells.append(v4.new_raw_cell(source=output))
-        cells.append(v4.new_markdown_cell(source='To view the full otu table, execute the code cell below'))
-        cells.append(v4.new_code_cell(source="%load_ext rpy2.ipython"))
-        cells.append(v4.new_code_cell(source=otu_source))
-        cells.append(v4.new_markdown_cell(source='# Taxa Diversity Summary'))
-        for f in files['taxa']:
-            cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=f)))
-            cells.append(v4.new_code_cell(source=alpha_source.format(file1=f)))
-        cells.append(v4.new_markdown_cell(source='# Alpha Diversity Summary'))
-        for f in files['alpha']:
-            cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=f)))
-            cells.append(v4.new_code_cell(source=alpha_source.format(file1=f)))
-            if 'chao' in f:
-                cells.append(v4.new_code_cell(source=plot_source))
-        cells.append(v4.new_markdown_cell(source='# Beta Diversity Summary'))
-        for f in files['beta']:
-            if 'dm' in f:
-                cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=f)))
-                cells.append(v4.new_code_cell(source=alpha_source.format(file1=f)))
-
-        nn = nbf.v4.new_notebook(cells=cells)
-        meta = {
-            'metadata': {
-                'authors': [{'name': 'David Wallach', 'email': 'david.wallach@mssm.edu'}],
-                'name': 'MMEDS Analysis Summary',
-                'title': 'MMEDS Analysis Summary'
-            }
-        }
-        nn.update(meta)
-
-        # nn = nbf.read(str(path / 'analysis.ipynb'), as_version=4)
-
-        nbf.write(nn, str(path / 'analysis3.ipynb'))
-
-        exp = PDFExporter()
-        if execute:
-            ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-            ep.preprocess(nn, {'metadata': {'path': '{path}/'.format(path=path)}})
-
-        (pdf_data, resources) = exp.from_notebook_node(nn)
-        with open(path / 'notebook.pdf', 'wb') as f:
-            f.write(pdf_data)
 
 
 class Qiime2(Tool):
