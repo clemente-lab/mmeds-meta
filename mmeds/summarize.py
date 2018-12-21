@@ -8,24 +8,24 @@ from nbconvert.preprocessors import ExecutePreprocessor
 from mmeds.config import STORAGE_DIR
 
 
-def run(execute, run_path='/home/david/Work/data-mmeds/summary'):
+def run(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
     # Load the code templates
     with open(STORAGE_DIR / 'summary_code.txt') as f:
-        data = f.read().split('=====\n')
+        data = f.read().split('\n=====\n')
 
     # Dict for storing all the different code templates
     source = {}
     for code in data:
         parts = code.split('<source>\n')
+
         source[parts[0]] = parts[1]
 
     def taxa_plots(path, data_file):
         """ Create plots for taxa summary files. """
-        tsource = "df = read_csv('{file1}', skiprows=1, sep='\t')"
         filename = data_file.split('.')[0] + '.png'
         cells = []
         cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
-        cells.append(v4.new_code_cell(source=tsource.format(file1=data_file)))
+        cells.append(v4.new_code_cell(source=source['taxa_py'].format(file1=data_file)))
         cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
@@ -36,7 +36,17 @@ def run(execute, run_path='/home/david/Work/data-mmeds/summary'):
         cells = []
         cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_py'].format(file1=data_file)))
-        cells.append(v4.new_code_cell(source=source['alpha_r'].format(plot=filename)))
+        cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename)))
+        cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+        return cells
+
+    def beta_plots(path, data_file):
+        """ Create plots for alpha diversity files. """
+        filename = data_file.split('.')[0] + '.png'
+        cells = []
+        cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
+        cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file)))
+        cells.append(v4.new_code_cell(source=source['beta_r'].format(file1=filename)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
@@ -71,13 +81,12 @@ def run(execute, run_path='/home/david/Work/data-mmeds/summary'):
         for data_file in files['alpha']:
             cells += alpha_plots(path, data_file)
         cells.append(v4.new_markdown_cell(source='# Beta Diversity Summary'))
-        for data_file in files['beta']:
+        for data_file in sorted(files['beta']):
             if 'dm' in data_file:
                 cells.append(v4.new_markdown_cell(source="## View {file1}".format(file1=data_file)))
-                cells.append(v4.new_code_cell(source="read_csv('{file1}', sep='\t')".format(file1=data_file)))
+                cells.append(v4.new_code_cell(source="df = read_csv('{file1}', sep='\t')".format(file1=data_file)))
             else:
-                cells.append(v4.new_markdown_cell(source="## View {file1}".format(file1=data_file)))
-                cells.append(v4.new_code_cell(source="#read_csv('{file1}', sep='\t')".format(file1=data_file)))
+                cells += beta_plots(path, data_file)
 
         nn = nbf.v4.new_notebook(cells=cells)
         meta = {
@@ -89,12 +98,10 @@ def run(execute, run_path='/home/david/Work/data-mmeds/summary'):
         }
         nn.update(meta)
 
-        # nn = nbf.read(str(path / 'analysis.ipynb'), as_version=4)
-
         return nn
 
     def write_notebook(nn):
-        nbf.write(nn, str(path / 'analysis3.ipynb'))
+        nbf.write(nn, str(path / '{}.ipynb'.format(name)))
 
         exp = PDFExporter()
         if execute:
