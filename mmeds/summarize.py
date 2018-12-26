@@ -74,9 +74,13 @@ def run(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'
         cells.append(v4.new_markdown_cell(source=output))
         cells.append(v4.new_markdown_cell(source='To view the full otu table, execute the code cell below'))
         cells.append(v4.new_code_cell(source=source['otu_py']))
-        cells.append(v4.new_markdown_cell(source='# Taxa Diversity Summary'))
+        cells.append(v4.new_markdown_cell(source='# Taxa Summary'))
         for data_file in files['taxa']:
             cells += taxa_plots(path, data_file)
+        cells.append(v4.new_markdown_cell(source='# Diversity Plot Legend'))
+        cells.append(v4.new_code_cell(source=source['legend_py'].format()))
+        cells.append(v4.new_code_cell(source=source['legend_r'].format(plot='legend.png')))
+        cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot='legend.png')))
         cells.append(v4.new_markdown_cell(source='# Alpha Diversity Summary'))
         for data_file in files['alpha']:
             cells += alpha_plots(path, data_file)

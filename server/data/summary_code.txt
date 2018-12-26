@@ -26,13 +26,13 @@ for group_name in mdf.columns:
     color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
     
 # Shuffle the colors so value near each other won't be similar shades
-shuffle(max_colors)
+shuffle(max_colors, lambda: 0.25)
 
 # Load the extention for jupyter
 %load_ext rpy2.ipython
 =====
 r_setup<source>
-%%R -i max_colors
+%%R -i max_colors -o allColors
 require(ggplot2)
 require(RColorBrewer)
 require(GGally)
@@ -73,6 +73,39 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
            plot.title = element_text(hjust = 0.5))
 
 ggsave("{plot}", height = 8, width = 12)
+=====
+legend_py<source>
+# Create the list for the legend
+color_groups = []
+# Create a mapping from the color names to the identifying strings
+colors = {{list(allColors.names)[x]:list(allColors)[x] for x in range(len(allColors))}}
+for group_name in mdf.columns:
+    group = mdf[group_name]
+    # Only show colors for catagories that will be graphed
+    if group.nunique() > 1 and group.nunique() < len(group) and 'Date' not in group_name:
+        color_names = [colors[color_maps[group_name][x]] for x in group]
+        # Create a dataframe with the colors and grouping
+        group = pd.DataFrame({{'Grouping': group, 'Color': color_names}})
+        # Add the name of each group for the title
+        group = group.assign(GroupName=[group_name for x in range(len(group))])
+        # Drop duplicates and add to the list
+        color_groups.append(group.drop_duplicates('Color'))
+=====
+legend_r<source>
+%%R -i color_groups
+png('{plot}', width = 10, height = 10, unit='in', res=100)
+attach(mtcars)
+layout(mat=matrix(c(1:9), 3, 3, byrow = TRUE))
+par(mar=c(0.0,0.0,0.0,0.0))
+for (i in c(1:length(color_groups))) {{
+    plot(NULL, xaxt='n',yaxt='n',bty='n',ylab='n',xlab='n', xlim=0:1, ylim=0:1)
+    legend("top",
+           legend = color_groups[[i]]$Grouping,
+           col = color_groups[[i]]$Color,
+           title = color_groups[[i]]$GroupName[[1]],
+           pch=16, pt.cex=2, cex=1.5)
+}}
+dev.off()
 =====
 alpha_py<source>
 # Read in the data
