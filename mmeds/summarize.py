@@ -35,7 +35,7 @@ def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/s
         filename = data_file.split('.')[0] + '.png'
         cells = []
         cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
-        cells.append(v4.new_code_cell(source=source['alpha_py'].format(file1=data_file)))
+        cells.append(v4.new_code_cell(source=source['alpha_py_qiime1'].format(file1=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis='SequencesPerSample')))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
@@ -113,15 +113,10 @@ def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/s
             ep.preprocess(nn, {'metadata': {'path': '{path}/'.format(path=path)}})
 
         (pdf_data, resources) = exp.from_notebook_node(nn)
-        with open(path / 'notebook.pdf', 'wb') as f:
+        with open(path / '{}.pdf'.format(name), 'wb') as f:
             f.write(pdf_data)
 
     path = Path(run_path)
 
     nn = summerize(path, execute)
     write_notebook(nn)
-
-def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
-    # Load the code templates
-    with open(STORAGE_DIR / 'summary_code.txt') as f:
-        data = f.read().split('\n=====\n')
