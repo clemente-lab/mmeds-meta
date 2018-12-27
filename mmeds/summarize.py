@@ -8,7 +8,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 from mmeds.config import STORAGE_DIR
 
 
-def run(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
+def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
     # Load the code templates
     with open(STORAGE_DIR / 'summary_code.txt') as f:
         data = f.read().split('\n=====\n')
@@ -36,7 +36,7 @@ def run(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'
         cells = []
         cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_py'].format(file1=data_file)))
-        cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename)))
+        cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis='SequencesPerSample')))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
@@ -120,3 +120,8 @@ def run(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'
 
     nn = summerize(path, execute)
     write_notebook(nn)
+
+def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
+    # Load the code templates
+    with open(STORAGE_DIR / 'summary_code.txt') as f:
+        data = f.read().split('\n=====\n')

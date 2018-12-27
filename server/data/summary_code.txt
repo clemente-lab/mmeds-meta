@@ -107,7 +107,7 @@ for (i in c(1:length(color_groups))) {{
 }}
 dev.off()
 =====
-alpha_py<source>
+alpha_py_qiime1<source>
 # Read in the data
 df = read_csv('{file1}', sep='\t')
 
@@ -162,11 +162,66 @@ for group_name in mdf.columns:
 # Stack all the different groups into a single dataframe
 df = pd.concat(group_means, axis=0, sort=False)
 =====
+alpha_py_qiime2<source>
+# Read in the data
+df = read_csv({file1}, sep=',')
+
+# Reshape the data into (mostly) long format
+headers = list(set(mdf.columns).intersection(set(df.columns)))
+df = df.melt(id_vars=['sample-id'] + headers)
+
+# Remove info on specific iterations to allow for grouping by value
+replacements = {{x:int(x.split('_')[0].split('-')[1]) for x in df.variable.unique()}}
+df.variable.replace(replacements, inplace=True)
+
+# For storing 
+group_means = []
+
+for group_name in headers:
+    # Only create groups for values that aren't all the same or all unique
+    if (mdf[group_name].nunique() > 1 and
+        mdf[group_name].nunique() < len(mdf[group_name]) and
+        'Date' not in group_name):
+        
+        # Remove the metadata not relevant to this grouping
+        groups = df[['sample-id', 'variable', 'value', group_name]]
+        
+        # Calculate the means accross iterations
+        agger = {{'value': 'mean', group_name: 'first'}}
+        groups = groups.groupby(['sample-id', 'variable']).agg(agger).reset_index()
+        
+        # Add a column to store the errors
+        groups = groups.assign(Error=groups.value)
+        
+        # Group by metadata value and calculate the means and error
+        agger = {{'Error': 'sem', 'value': 'mean'}}
+        group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
+        
+        # Assign information for the colors
+        colors = [color_maps[group_name][x] for x in group[group_name]]
+        group = group.assign(GroupID=colors)
+        
+        # Assign information for grouping, drop specific catagories
+        group_names = [group_name for x in group[group_name]]
+        group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
+        
+        # Rename columns and append to the list of dataframes
+        new_names = {{
+            'variable': 'SamplingDepth',
+            'value': 'AverageValue',
+             group_name: 'Grouping'
+        }}
+        group_means.append(group.rename(index=str, columns=new_names))
+        
+# Stack all the different groups into a single dataframe
+df = pd.concat(group_means, axis=0, sort=False)
+df.SamplingDepth = df.SamplingDepth.astype(int)
+=====
 alpha_r<source>
 %%R -i df
 pd <- position_dodge(width = 50)
 
-p <- ggplot(data = df, aes(x = SequencesPerSample, y = AverageValue, color = GroupID)) +
+p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
      geom_errorbar(aes(ymin=AverageValue-Error, ymax=AverageValue+Error), width=100, position = pd) +
      geom_point(stat='identity', position = pd, size = 1) +
      geom_line(stat='identity', position = pd) +

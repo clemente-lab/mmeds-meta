@@ -4,6 +4,7 @@ from shutil import copyfile
 from time import sleep
 from pandas import read_csv
 from shutil import rmtree
+from glob import glob
 
 import os
 import multiprocessing as mp
@@ -251,6 +252,51 @@ class Qiime1(Tool):
         if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
             message = 'Large difference ({}) between initial and final counts'
             raise AnalysisError(message.format(initial_count - final_count))
+
+    def summarize(self):
+        """ Create summary of analysis results """
+        files, path = self.db.get_mongo_files(self.access_code)
+        diversity = Path(files['diversity_output'])
+        summary = {}
+
+        # Convert and store the otu table
+        cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
+        run(cmd.format(self.jobtext[0],
+                       Path(files['otu_output']) / 'otu_table.biom',
+                       self.path / 'otu_table.tsv'),
+            shell=True, check=True)
+
+        with open(self.path / 'otu_table.tsv') as f:
+            summary[Path(f.name).name] = f.read()
+
+        def collect_files(path):
+            """ Collect the contents of all files match the regex in path """
+            files = glob(str(diversity / path.format(depth=self.sampling_depth)))
+            for data in files:
+                with open(data) as f:
+                    summary[Path(f.name).name] = f.read()
+
+        collect_files('biom_table_summary.txt')                     # Biom summary
+        collect_files('arare_max{depth}/alpha_div_collated/*.txt')  # Alpha div
+        collect_files('bdiv_even{depth}/*.txt')                     # Beta div
+        collect_files('taxa_plots/*.txt')                           # Taxa summary
+
+        os.mkdir(Path(self.path) / 'summary')
+        self.add_path('summary', '')
+        # Put all the files in one location
+        for key in summary.keys():
+            print(key)
+            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
+                f.write(summary[key])
+
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        run(cmd, shell=True, check=True)
+
+        self.summary_analysis(summary)
+
+    def summary_analysis(self, summary):
+        """ Create python notebook for generating anlysis of the data. """
+        pass
 
     def analysis(self):
         """ Perform some analysis. """
@@ -639,9 +685,12 @@ class Qiime2(Tool):
     def summarize(self):
         """ Create summary of the files produced by the qiime2 analysis. """
         files, path = self.db.get_mongo_files(self.access_code)
-        files['alpha_rarefaction'] = '/home/david/Work/mmeds-meta/server/data/david_0/qiime2-dada/'
+        files['alpha_rarefaction'] = '/home/david/Work/mmeds-meta/server/data/david_0/q2-dada/'
+        files['core_metrics_results'] = '/home/david/Work/mmeds-meta/server/data/david_0/q2-dada/core_metrics_results_cqyob'
+
         summary = {}
         # Get Alpha rarefaction
+        # Get Taxa
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 files['alpha_rarefaction'],
                                                                 self.path / 'temp')
@@ -651,7 +700,38 @@ class Qiime2(Tool):
         rmtree(self.path / 'temp')
 
         # Get Beta
-        # Get Taxa
+        for pref in ['', 'un']:
+            beta_file = Path(files['core_metrics_results']) / '{}weighted_unifrac_distance_matrix.qza'.format(pref)
+
+            cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                    beta_file,
+                                                                    self.path / 'temp')
+            run(cmd, shell=True, check=True)
+            with open(self.path / 'temp/distance-matrix.tsv') as f:
+                summary['beta-' + str(Path(f.name).name)] = f.read()
+            rmtree(self.path / 'temp')
+
+        # Get Beta
+        for metric in ['shannon', 'evenness', 'faith_pd']:
+            alpha_file = Path(files['core_metrics_results']) / '{}_vector.qza'.format(metric)
+
+            cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                    alpha_file,
+                                                                    self.path / 'temp')
+            run(cmd, shell=True, check=True)
+            with open(self.path / 'temp/alpha-diversity.tsv') as f:
+                summary['{}-'.format(metric) + str(Path(f.name).name)] = f.read()
+            rmtree(self.path / 'temp')
+
+        for key in summary.keys():
+            print(key)
+            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
+                f.write(summary[key])
+
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        run(cmd, shell=True, check=True)
+
+        self.summary_analysis(summary)
 
 
 def run_analysis(qiime):
