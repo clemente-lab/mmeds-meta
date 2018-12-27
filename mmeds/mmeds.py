@@ -1,8 +1,8 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number
 from os.path import join, exists
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError

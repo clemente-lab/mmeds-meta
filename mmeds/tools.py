@@ -10,10 +10,11 @@ import os
 import multiprocessing as mp
 
 from mmeds.database import Database
-from mmeds.config import get_salt, JOB_TEMPLATE
+from mmeds.config import get_salt, JOB_TEMPLATE, STORAGE_DIR
 from mmeds.mmeds import send_email
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
+from mmeds.summarize import run_qiime1
 
 
 class Tool:
@@ -77,6 +78,8 @@ class Tool:
             'jobid': self.path / self.run_id,
             'queue': 'expressalloc'
         }
+        if self.testing:
+            params['nodes'] = 2
         return params
 
     def wait_on_job(self, job_id):
@@ -244,8 +247,10 @@ class Qiime1(Tool):
 
         cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
                                               Path(files['split_output']) / 'seqs.fna')
-        output = run(cmd, shell=True, stdin=PIPE, stderr=PIPE, stdout=PIPE)
-        initial_count = int(output.stdout.decode('utf-8').split('\n')[1].split(' ')[0])
+        output = run(cmd, shell=True, check=True, stdout=PIPE)
+        out = output.stdout.decode('utf-8')
+        print(out)
+        initial_count = int(out.split('\n')[1].split(' ')[0])
 
         with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
             final_count = int(f.readlines()[2].split(':')[-1].strip().replace(',', ''))
@@ -285,18 +290,14 @@ class Qiime1(Tool):
         self.add_path('summary', '')
         # Put all the files in one location
         for key in summary.keys():
-            print(key)
             with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
                 f.write(summary[key])
 
         cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
         run(cmd, shell=True, check=True)
 
-        self.summary_analysis(summary)
-
-    def summary_analysis(self, summary):
-        """ Create python notebook for generating anlysis of the data. """
-        pass
+        run_qiime1(True, name='analysis', run_path=self.path / 'summary')
+        return self.path / 'summary/analysis.pdf'
 
     def analysis(self):
         """ Perform some analysis. """
@@ -330,8 +331,9 @@ class Qiime1(Tool):
             output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
             job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             self.wait_on_job(job_id)
+        sleep(5)
         self.sanity_check()
-        self.summarize()
+        summary = self.summarize()
         self.move_user_files()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email,
@@ -339,7 +341,8 @@ class Qiime1(Tool):
                    'analysis',
                    analysis_type='Qiime1',
                    study_name=doc.study,
-                   testing=self.testing)
+                   testing=self.testing,
+                   summary=summary)
 
 
 class Qiime2(Tool):
@@ -595,6 +598,20 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def classify_taxa(self, classifier):
+        """
+        Create plots for alpha rarefaction.
+        """
+        self.add_path('taxonomy', '.qza')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'qiime feature-classifier classify-sklearn'
+            '--i-classifier {}'.format(classifier),
+            '--i-reads {}'.format(files['rep_seq_{}'.format(self.atype)]),
+            '--o-classification {}&'.format(files['taxonomy'])
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         files, path = self.db.get_mongo_files(self.access_code)
@@ -642,6 +659,7 @@ class Qiime2(Tool):
         for col in self.columns:
             self.beta_diversity(col)
         self.alpha_rarefaction()
+        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         # Wait for them all to finish
         self.jobtext.append('wait')
 
