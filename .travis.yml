@@ -8,7 +8,7 @@ install:
 - mysql -u root < setup.sql
 script:
 - pytest 2> /dev/null
-- cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../tests/server_stress.py
+- cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
 before_install:
 - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
   -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
