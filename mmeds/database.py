@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, SQL_DATABASE, get_salt
+from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 import mmeds.secrets as sec
@@ -120,7 +120,7 @@ class Database:
             self.user_id = int(result[0])
             self.email = result[1]
 
-        self.check_file = STORAGE_DIR / 'last_check.dat'
+        self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
         if not testing:
             # Do housekeeping for removing old files

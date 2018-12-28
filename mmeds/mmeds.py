@@ -705,7 +705,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :message: The type of message to send
     :kwargs: Any information that is specific to a paricular message type
     """
-    log('Send email to: {} on behalve of {}'.format(toaddr, user))
+    log('Send email to: {} on behalf of {}'.format(toaddr, user))
     for key in kwargs.keys():
         log('{}: {}'.format(key, kwargs[key]))
 

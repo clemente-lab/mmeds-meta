@@ -15,9 +15,10 @@ ERROR_FP = 'error_log.tsv'
 ROOT = Path(mmeds.__file__).parent.resolve()
 HTML_DIR = Path(html.__file__).parent.resolve()
 STORAGE_DIR = Path(resources.__file__).parent.resolve()
+DATABASE_DIR = Path('/home/david/Work/mmeds_server_data')
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
-MMEDS_LOG = STORAGE_DIR / 'mmeds_log.txt'
+MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
@@ -46,7 +47,7 @@ CONFIG = {
     # available on the web server
     '/CSS': {
         'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'mmeds/CSS'
+        'tools.staticdir.dir': 'CSS'
     },
     # This sets up the https security
     '/protected/area': {
@@ -162,9 +163,7 @@ USER_FILES = set([
 ])
 
 # These are the tables that users are given direct access to
-PUBLIC_TABLES = set(set(TABLE_ORDER) -
-                    set(PROTECTED_TABLES) -
-                    set(['AdditionalMetaData']))
+PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData']))
 
 # These are the columns for each table
 TABLE_COLS = {}

@@ -52,9 +52,9 @@ class Tool:
         while os.path.exists(new_dir):
             run_id += 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+            log('Run analysis')
         if self.analysis:
             files, path = self.db.get_mongo_files(self.access_code)
-
             run('mkdir {}'.format(new_dir), shell=True, check=True)
 
             # Create links to the files
@@ -70,6 +70,7 @@ class Tool:
         else:
             run_id -= 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+            log("Skip analysis")
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id)
 
@@ -251,9 +252,11 @@ class Qiime1(Tool):
 
     def sanity_check(self):
         """ Check that counts match after split_libraries and pick_otu. """
+        log('Job Text')
+        log('\n'.join(self.jobtext))
         files, path = self.db.get_mongo_files(self.access_code)
 
-        cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
+        cmd = '{} count_seqs.py -i {}'.format(self.jobtext[1],
                                               Path(files['split_output']) / 'seqs.fna')
         log('Run command: {}'.format(cmd))
         output = run(cmd, shell=True, check=True, stdout=PIPE)

@@ -11,7 +11,7 @@ import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
 from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
-from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES
+from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
 from mmeds.tools import spawn_analysis
@@ -119,9 +119,9 @@ class MMEDSserver(object):
         else:
             # Create a unique dir for handling files uploaded by this user
             count = 0
-            new_dir = STORAGE_DIR / ('{}_{}'.format(self.get_user(), count))
+            new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
             while os.path.exists(new_dir):
-                new_dir = STORAGE_DIR / ('{}_{}'.format(self.get_user(), count))
+                new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
                 count += 1
             os.makedirs(new_dir)
         cp.session['dir'] = new_dir
