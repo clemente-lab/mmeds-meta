@@ -6,6 +6,7 @@ import mmeds.secrets as sec
 import mmeds.html as html
 import mmeds.test_files as test_files
 import mmeds.resources as resources
+import mmeds
 import hashlib
 # Add some notes here
 # Add some more notes here
@@ -13,6 +14,7 @@ import hashlib
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
+ROOT = Path(mmeds.__file__).parent.resolve()
 HTML_DIR = Path(html.__file__).parent.resolve()
 STORAGE_DIR = Path(resources.__file__).parent.resolve()
 
@@ -39,7 +41,7 @@ CONFIG = {
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
         'tools.sessions.timeout': 15,
-        'tools.staticdir.root': Path().cwd().parent,
+        'tools.staticdir.root': str(ROOT)
     },
     # Content in this directory will be made directly
     # available on the web server
