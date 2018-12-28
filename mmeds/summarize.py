@@ -8,7 +8,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 from mmeds.config import STORAGE_DIR
 
 
-def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
+def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
     # Load the code templates
     with open(STORAGE_DIR / 'summary_code.txt') as f:
         data = f.read().split('\n=====\n')
@@ -50,15 +50,16 @@ def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/s
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
-    def summerize(path, execute):
+    def summarize(path, execute, no_files=False):
         """ Create the python notebook containing the summary of analysis results. """
         # Get the files to summarize from the index
-        files = defaultdict(list)
-        with open(path / 'file_index.tsv') as f:
-            lines = f.readlines()
-        for line in lines:
-            parts = line.strip('\n').split('\t')
-            files[parts[0]].append(parts[1])
+        if no_files:
+            files = defaultdict(list)
+            with open(path.parent / 'file_index.tsv') as f:
+                lines = f.readlines()
+            for line in lines:
+                parts = line.strip('\n').split('\t')
+                files[parts[0]].append(parts[1])
 
         # Create the list to store all cells
         cells = []
@@ -97,10 +98,12 @@ def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/s
             'metadata': {
                 'authors': [{'name': 'David Wallach', 'email': 'david.wallach@mssm.edu'}],
                 'name': 'MMEDS Analysis Summary',
-                'title': 'MMEDS Analysis Summary'
+                'title': 'MMEDS Analysis Summary',
+                'path': '{path}/'.format(path=path)
             }
         }
         nn.update(meta)
+        print(nn.metadata.get('title'))
 
         return nn
 
@@ -110,7 +113,7 @@ def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/s
         exp = PDFExporter()
         if execute:
             ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-            ep.preprocess(nn, {'metadata': {'path': '{path}/'.format(path=path)}})
+            ep.preprocess(nn, resources={})
 
         (pdf_data, resources) = exp.from_notebook_node(nn)
         with open(path / '{}.pdf'.format(name), 'wb') as f:
@@ -118,5 +121,5 @@ def run_qiime1(execute, name='analysis', run_path='/home/david/Work/data-mmeds/s
 
     path = Path(run_path)
 
-    nn = summerize(path, execute)
+    nn = summarize(path, execute)
     write_notebook(nn)

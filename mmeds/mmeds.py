@@ -1,8 +1,7 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number
 from os.path import join, exists
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from email.message import EmailMessage
 from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError
@@ -691,6 +690,12 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
+def log(text):
+    """ Write provided text to the log file. """
+    with open(fig.MMEDS_LOG, 'a+') as f:
+        f.write(text + '\n')
+
+
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     """
     Sends a confirmation email to addess containing user and code.
@@ -700,6 +705,9 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :message: The type of message to send
     :kwargs: Any information that is specific to a paricular message type
     """
+    log('Send email to: {} on behalve of {}'.format(toaddr, user))
+    for key in kwargs.keys():
+        log('{}: {}'.format(key, kwargs[key]))
 
     # Templates for the different emails mmeds sends
     if message == 'upload':
@@ -741,14 +749,17 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     )
     if testing:
         # Setup the email to be sent
-        msg = MIMEMultipart()
+        msg = EmailMessage()
         msg['From'] = fig.MMEDS_EMAIL
         msg['To'] = toaddr
         msg['Subject'] = subject
         # Add in any necessary text fields
         msg.set_content(email_body)
         if 'summary' in kwargs.keys():
-            msg.attach(MIMEText(open(kwargs['summary'], 'rb').read()))
+            with open(kwargs['summary'], 'rb') as f:
+                msg.add_attachment(f.read(),
+                                   maintype='application',
+                                   subtype='pdf')
 
         # Connect to the server and send the mail
         server = SMTP('smtp.gmail.com', 587)

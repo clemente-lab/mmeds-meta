@@ -1,0 +1,4 @@
+include mmeds/html/*
+include mmeds/CSS/*
+include mmeds/resources/*
+include mmeds/test_files/*

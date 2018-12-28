@@ -1,7 +1,11 @@
 from pathlib import Path
 from random import choice
+#from pkg_resources import resource_string, resource_listdir
 import pymysql as pms
 import mmeds.secrets as sec
+import mmeds.html as html
+import mmeds.test_files as test_files
+import mmeds.resources as resources
 import hashlib
 # Add some notes here
 # Add some more notes here
@@ -9,21 +13,11 @@ import hashlib
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
-# The path changes depening on where this is being called
-# So that it will work with testing and the server
-HTML_DIR = Path('../html/')
-if not HTML_DIR.is_dir():
-    HTML_DIR = Path('./html/')
-HTML_DIR = HTML_DIR.resolve()
-
-STORAGE_DIR = Path('./data')
-if not STORAGE_DIR.is_dir():
-    STORAGE_DIR = Path('../server/data')
-if not STORAGE_DIR.is_dir():
-    STORAGE_DIR = Path('./server/data')
-STORAGE_DIR = STORAGE_DIR.resolve()
+HTML_DIR = Path(html.__file__).parent.resolve()
+STORAGE_DIR = Path(resources.__file__).parent.resolve()
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
+MMEDS_LOG = STORAGE_DIR / 'mmeds_log.txt'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
@@ -51,7 +45,7 @@ CONFIG = {
     # available on the web server
     '/CSS': {
         'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'CSS'
+        'tools.staticdir.dir': 'mmeds/CSS'
     },
     # This sets up the https security
     '/protected/area': {
@@ -66,10 +60,7 @@ CONFIG = {
 # Testing #
 ###########
 
-TEST_PATH = Path('./data_files/')
-if not TEST_PATH.is_dir():
-    TEST_PATH = Path('../data_files/')
-TEST_PATH = TEST_PATH.resolve()
+TEST_PATH = Path(test_files.__file__).parent.resolve()
 
 TEST_PASS = 'testpass'
 TEST_USER = 'testuser'

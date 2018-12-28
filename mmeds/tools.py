@@ -5,31 +5,37 @@ from time import sleep
 from pandas import read_csv
 from shutil import rmtree
 from glob import glob
+from collections import defaultdict
 
 import os
 import multiprocessing as mp
 
 from mmeds.database import Database
 from mmeds.config import get_salt, JOB_TEMPLATE, STORAGE_DIR
-from mmeds.mmeds import send_email
+from mmeds.mmeds import send_email, log
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
-from mmeds.summarize import run_qiime1
+from mmeds.summarize import summarize_qiime1
 
 
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, testing, threads=3):
+    def __init__(self, owner, access_code, atype, testing, threads=10, analysis=False):
+        log('Start analysis')
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.testing = testing
         self.jobtext = []
         self.owner = owner
-        self.num_jobs = threads
+        if testing:
+            self.num_jobs = 2
+        else:
+            self.num_jobs = threads
         self.atype = atype.split('-')[1]
         self.sampling_depth = 1114  # This should be chosen intellegently
+        self.analysis = analysis
         self.path, self.run_id = self.setup_dir(path)
 
         # Add the split directory to the MetaData object
@@ -46,21 +52,25 @@ class Tool:
         while os.path.exists(new_dir):
             run_id += 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+        if self.analysis:
+            files, path = self.db.get_mongo_files(self.access_code)
 
-        files, path = self.db.get_mongo_files(self.access_code)
+            run('mkdir {}'.format(new_dir), shell=True, check=True)
 
-        run('mkdir {}'.format(new_dir), shell=True, check=True)
-
-        # Create links to the files
-        run('ln {} {}'.format(files['barcodes'],
-                              new_dir / 'barcodes.fastq.gz'),
-            shell=True, check=True)
-        run('ln {} {}'.format(files['reads'],
-                              new_dir / 'sequences.fastq.gz'),
-            shell=True, check=True)
-        run('ln {} {}'.format(files['metadata'],
-                              new_dir / 'metadata.tsv'),
-            shell=True, check=True)
+            # Create links to the files
+            run('ln {} {}'.format(files['barcodes'],
+                                  new_dir / 'barcodes.fastq.gz'),
+                shell=True, check=True)
+            run('ln {} {}'.format(files['reads'],
+                                  new_dir / 'sequences.fastq.gz'),
+                shell=True, check=True)
+            run('ln {} {}'.format(files['metadata'],
+                                  new_dir / 'metadata.tsv'),
+                shell=True, check=True)
+        else:
+            run_id -= 1
+            new_dir = Path(path) / 'analysis{}'.format(run_id)
+        log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id)
 
     def validate_mapping(self):
@@ -73,13 +83,11 @@ class Tool:
         params = {
             'walltime': '48:00',
             'jobname': self.owner + '_' + self.run_id,
-            'nodes': 10,
+            'nodes': self.num_jobs,
             'memory': 1000,
             'jobid': self.path / self.run_id,
             'queue': 'expressalloc'
         }
-        if self.testing:
-            params['nodes'] = 2
         return params
 
     def wait_on_job(self, job_id):
@@ -247,22 +255,31 @@ class Qiime1(Tool):
 
         cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
                                               Path(files['split_output']) / 'seqs.fna')
+        log('Run command: {}'.format(cmd))
         output = run(cmd, shell=True, check=True, stdout=PIPE)
         out = output.stdout.decode('utf-8')
-        print(out)
+        log('Output: {}'.format(out))
         initial_count = int(out.split('\n')[1].split(' ')[0])
 
         with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
-            final_count = int(f.readlines()[2].split(':')[-1].strip().replace(',', ''))
+            lines = f.readlines()
+            log('Check lines: {}'.format(lines))
+            final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
         if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
             message = 'Large difference ({}) between initial and final counts'
+            log('Raise analysis error')
             raise AnalysisError(message.format(initial_count - final_count))
+        log('Sanity check completed successfully')
 
     def summarize(self):
-        """ Create summary of analysis results """
+        """
+        Create summary of analysis results
+        """
+        log('Run summarize')
         files, path = self.db.get_mongo_files(self.access_code)
         diversity = Path(files['diversity_output'])
         summary = {}
+        summary_files = defaultdict(list)
 
         # Convert and store the otu table
         cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
@@ -273,18 +290,20 @@ class Qiime1(Tool):
 
         with open(self.path / 'otu_table.tsv') as f:
             summary[Path(f.name).name] = f.read()
+        summary_files['otu'].append('otu_table.tsv')
 
-        def collect_files(path):
+        def collect_files(path, catagory):
             """ Collect the contents of all files match the regex in path """
             files = glob(str(diversity / path.format(depth=self.sampling_depth)))
             for data in files:
                 with open(data) as f:
                     summary[Path(f.name).name] = f.read()
+                summary_files[catagory].append(Path(data).name)
 
-        collect_files('biom_table_summary.txt')                     # Biom summary
-        collect_files('arare_max{depth}/alpha_div_collated/*.txt')  # Alpha div
-        collect_files('bdiv_even{depth}/*.txt')                     # Beta div
-        collect_files('taxa_plots/*.txt')                           # Taxa summary
+        collect_files('biom_table_summary.txt', 'otu')                       # Biom summary
+        collect_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
+        collect_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
+        collect_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
 
         os.mkdir(Path(self.path) / 'summary')
         self.add_path('summary', '')
@@ -296,10 +315,14 @@ class Qiime1(Tool):
         cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
         run(cmd, shell=True, check=True)
 
-        run_qiime1(True, name='analysis', run_path=self.path / 'summary')
+        cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
+        run(cmd, shell=True, check=True)
+
+        summarize_qiime1(files=summary_files, execute=True, name='analysis', run_path=self.path / 'summary')
+        log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'
 
-    def analysis(self):
+    def run_analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.validate_mapping()
@@ -307,9 +330,9 @@ class Qiime1(Tool):
         self.pick_otu()
         self.core_diversity()
         jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, 'lsf')
+        self.add_path(jobfile, '.lsf')
         error_log = self.path / self.run_id
-        self.add_path(error_log, 'err')
+        self.add_path(error_log, '.err')
         if self.testing:
             self.jobtext = ['#!/usr/bin/bash'] + self.jobtext
             # Open the jobfile to write all the commands
@@ -331,7 +354,11 @@ class Qiime1(Tool):
             output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
             job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             self.wait_on_job(job_id)
-        sleep(5)
+
+    def run(self):
+        """ Execute all the necessary actions. """
+        if self.analysis:
+            self.run_analysis()
         self.sanity_check()
         summary = self.summarize()
         self.move_user_files()
@@ -755,8 +782,7 @@ class Qiime2(Tool):
 def run_analysis(qiime):
     """ Run qiime analysis. """
     try:
-        qiime.analysis()
-        qiime.summarize()
+        qiime.run()
     except (AnalysisError, CalledProcessError) as e:
         email = get_email(qiime.owner, testing=qiime.testing)
         send_email(email,
