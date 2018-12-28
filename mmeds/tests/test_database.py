@@ -290,8 +290,9 @@ class DatabaseTests(TestCase):
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)
 
-#dt = DatabaseTests()
 
-#dt.setUpClass()
-#dt.test_tables()
-#dt.tearDownClass()
+dt = DatabaseTests()
+
+dt.setUpClass()
+dt.test_tables()
+dt.tearDownClass()

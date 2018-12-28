@@ -1,6 +1,5 @@
 from pathlib import Path
 from random import choice
-#from pkg_resources import resource_string, resource_listdir
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -8,8 +7,7 @@ import mmeds.test_files as test_files
 import mmeds.resources as resources
 import mmeds
 import hashlib
-# Add some notes here
-# Add some more notes here
+import os
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
@@ -27,6 +25,7 @@ PORT = 52953
 HOST = '0.0.0.0'
 
 
+# Configuration for the CherryPy server
 CONFIG = {
     'global': {
         'server.socket_host': HOST,
@@ -63,6 +62,12 @@ CONFIG = {
 ###########
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
+TEST_DIR = Path('/tmp/test_dir')
+if not os.path.exists(TEST_DIR):
+    os.mkdir(TEST_DIR)
+TEST_DIR_0 = Path('/tmp/test_dir0')
+if not os.path.exists(TEST_DIR_0):
+    os.mkdir(TEST_DIR_0)
 
 TEST_PASS = 'testpass'
 TEST_USER = 'testuser'
@@ -70,8 +75,6 @@ TEST_USER_0 = 'testuser0'
 TEST_EMAIL = 'mmeds.tester@gmail.com'
 TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
-TEST_DIR = STORAGE_DIR / 'test_dir'
-TEST_DIR_0 = STORAGE_DIR / 'test_dir0'
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
 

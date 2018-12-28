@@ -21,7 +21,7 @@ from mmeds.summarize import summarize_qiime1
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, testing, threads=10, analysis=True):
         log('Start analysis')
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
