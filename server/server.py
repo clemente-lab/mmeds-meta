@@ -61,7 +61,7 @@ class MMEDSserver(object):
     ########################################
 
     @cp.expose
-    def run_analysis(self, access_code, tool):
+    def run_analysis(self, access_code, tool, config):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -73,7 +73,7 @@ class MMEDSserver(object):
             if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
-                    p = spawn_analysis(tool, self.get_user(), access_code, self.testing)
+                    p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
                     self.processes[access_code] = p
                     page = mmeds.load_html('welcome',
                                            title='Welcome to Mmeds',
