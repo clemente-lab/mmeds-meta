@@ -52,6 +52,7 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
 
     def summarize(path, execute, no_files=False):
         """ Create the python notebook containing the summary of analysis results. """
+        global files
         # Get the files to summarize from the index
         if no_files:
             files = defaultdict(list)

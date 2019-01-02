@@ -234,9 +234,12 @@ class Qiime1(Tool):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
-
+        settings = [
+            'pick_otus:enable_rev_strand_match True',
+            'alpha_diversity:metrics shannon, PD_whole_tree,chao1,observed_species'
+        ]
         with open(Path(path) / 'params.txt', 'w') as f:
-            f.write('pick_otus:enable_rev_strand_match True\n')
+            f.write('\n'.join(settings))
 
         # Run the script
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
@@ -275,10 +278,8 @@ class Qiime1(Tool):
     def sanity_check(self):
         """ Check that counts match after split_libraries and pick_otu. """
         try:
-            log('Job Text')
-            log('\n'.join(self.jobtext))
+            # Count the sequences prior to diversity analysis
             files, path = self.db.get_mongo_files(self.access_code)
-
             cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
                                                   Path(files['split_output']) / 'seqs.fna')
             log('Run command: {}'.format(cmd))
@@ -287,17 +288,20 @@ class Qiime1(Tool):
             log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
+            # Count the sequences in the output of the diversity analysis
             with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
                 log('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
+
+            # Check that the counts are approximately equal
             if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
                 message = 'Large difference ({}) between initial and final counts'
                 log('Raise analysis error')
                 raise AnalysisError(message.format(initial_count - final_count))
             log('Sanity check completed successfully')
+
         except ValueError as e:
-            log('Got error')
             log(str(e))
             raise AnalysisError(e.args[0])
 
@@ -643,6 +647,19 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def taxa_diversity(self):
+        """ Create visualizations of taxa summaries at each level. """
+        self.add_path('taxa_bar_plot', '.qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'qiime taxa barplot',
+            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
+            '--i-taxonomy {}'.foramt(files['taxonomy']),
+            '--m-metadata-file {}'.format(files['mapping']),
+            '--o-visualization {}&'.format(files['taxa_bar_plot'])
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def alpha_rarefaction(self, max_depth=4000):
         """
         Create plots for alpha rarefaction.
@@ -717,6 +734,7 @@ class Qiime2(Tool):
         self.core_diversity()
         # Run these commands in parallel
         self.alpha_diversity()
+        self.taxa_diversity()
         for col in self.columns:
             self.beta_diversity(col)
         self.alpha_rarefaction()
