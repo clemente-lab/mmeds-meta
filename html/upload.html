@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div class='inner'>
+      <h2>
+        Welcome {user}
+      </h2>
+      <p>
+        <h3>Select type of data for upload</h3>
+        <form action='upload' method='post' enctype='multipart/form-data' id='upload_form'>
+          <select name='study_type' form='upload_form'>
+            <option value="qiime">Qiime</option>
+            <option value="other">Other</option>
+          </select>
+          <button type='submit' method='post'>Upload Data</button>
+        </form>
+      </p>
+      <p>
+        <h3>Modify a previous upload</h3>
+        <form action='modify_upload' method='post' enctype='multipart/form-data'>
+          <p> Data File: <br> <input type='file' name='myData' required/> </p>
+          <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
+          <p> <button type='submit' method='post'>Modify Upload</button> </p>
+        </form>
+      </p>
+      <p>
+        <h3>Change Password</h3>
+        <form action='input_password' method='post'>
+          <button type='submit' method='post'>Change Password</button>
+        </form>
+      </p>
+    </div>
+  </body>
+</html>
