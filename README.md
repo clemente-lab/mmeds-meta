@@ -29,12 +29,3 @@ Allow access to the webpage despite your browsers warning. The security certific
 
 NOTE: Certain versions of openssl as installed by conda cause issues with cherrypy ssl. 
 To fix this run `conda install openssl=1.0.2p`. This version should work.
-
-Latex Dependencies  
-adjustbox
-upquote
-ulem
-
-Other Dependencies
-rpy2: 2.9.1
-readline headers

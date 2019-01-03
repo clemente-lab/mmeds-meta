@@ -25,10 +25,12 @@
 # Server logs
 server/data/*
 server/site.log
-server/session
 
 # All backup files
 .*
 *.bak
-/data/privkey.pem
+/keyrings/live/pubring.gpg~
+/keyrings/live/pubring.kbx~
+/keyrings/live/secring.gpg
+/server/data/privkey.pem
 /mmeds/secrets.py

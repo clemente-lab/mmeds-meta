@@ -2,23 +2,26 @@ from pathlib import Path
 from random import choice
 import pymysql as pms
 import mmeds.secrets as sec
-import mmeds.html as html
-import mmeds.test_files as test_files
-import mmeds.resources as resources
-import mmeds
 import hashlib
-import os
+# Add some notes here
+# Add some more notes here
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
-ROOT = Path(mmeds.__file__).parent.resolve()
-HTML_DIR = Path(html.__file__).parent.resolve()
-STORAGE_DIR = Path(resources.__file__).parent.resolve()
-DATABASE_DIR = Path('/home/david/Work/mmeds_server_data')
+# The path changes depening on where this is being called
+# So that it will work with testing and the server
+HTML_DIR = Path('../html/').resolve()
+if not HTML_DIR.is_dir():
+    HTML_DIR = Path('./html/').resolve()
+
+STORAGE_DIR = Path('./data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('../server/data').resolve()
+if not STORAGE_DIR.is_dir():
+    STORAGE_DIR = Path('./server/data').resolve()
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
-MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
@@ -26,7 +29,6 @@ PORT = 52953
 HOST = '0.0.0.0'
 
 
-# Configuration for the CherryPy server
 CONFIG = {
     'global': {
         'server.socket_host': HOST,
@@ -41,7 +43,7 @@ CONFIG = {
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
         'tools.sessions.timeout': 15,
-        'tools.staticdir.root': str(ROOT)
+        'tools.staticdir.root': Path().cwd().parent,
     },
     # Content in this directory will be made directly
     # available on the web server
@@ -62,13 +64,9 @@ CONFIG = {
 # Testing #
 ###########
 
-TEST_PATH = Path(test_files.__file__).parent.resolve()
-TEST_DIR = Path('/tmp/test_dir')
-if not os.path.exists(TEST_DIR):
-    os.mkdir(TEST_DIR)
-TEST_DIR_0 = Path('/tmp/test_dir0')
-if not os.path.exists(TEST_DIR_0):
-    os.mkdir(TEST_DIR_0)
+TEST_PATH = Path('./data_files/').resolve()
+if not TEST_PATH.is_dir():
+    TEST_PATH = Path('../data_files/').resolve()
 
 TEST_PASS = 'testpass'
 TEST_USER = 'testuser'
@@ -76,6 +74,8 @@ TEST_USER_0 = 'testuser0'
 TEST_EMAIL = 'mmeds.tester@gmail.com'
 TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
+TEST_DIR = STORAGE_DIR / 'test_dir'
+TEST_DIR_0 = STORAGE_DIR / 'test_dir0'
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
 
@@ -163,7 +163,9 @@ USER_FILES = set([
 ])
 
 # These are the tables that users are given direct access to
-PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData']))
+PUBLIC_TABLES = set(set(TABLE_ORDER) -
+                    set(PROTECTED_TABLES) -
+                    set(['AdditionalMetaData']))
 
 # These are the columns for each table
 TABLE_COLS = {}

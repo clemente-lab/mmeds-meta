@@ -39,48 +39,4 @@ put jose's and my names on the requestc
 Earth microbiome project - GIthub repo published in nature
 
 American Gut - Msystems
-===========================================
-Analysis Summary
 
-Rotate labels for OTU plot. Use theme.element.text (Angle = 90)  
-
-Sort the samples so they correspond to metadata catagories. 
-
-Have taxa summarized by group rather than just per sample. Use averages from each samples 
-
-Default of 1000 reads for filtering
-Add a warning message about 'this many samples were filtered out'
-
-open issue on control and contaminants
-
-Have settings for different pipelines, remove nothing, remove all contaminants, etc... 
- 
-Add a config file for the analysis
-
-in time Add source tracker, american gut, earth microbiome
-
-Set max number of columns for taxa summary legends so they aren't cutoff
-
-Add code to create taxa summaries for qiime 2
-
-Add plots for every cataqory mentioned.
-
--- 
-Add legend for groups to every plot where it would be relevant
-
-Have a template for the text 'Alpha diversity using metric (chao1) , also text for 
-what the plot represents. Indicate the number of samples. Basically auto
-generate all the info necessary for the caption of the figure
-
-Allow user to upload a particular list of variables.
-By default create graphs where each sample is plotted individually. 
-
-Add shannon for alpha div for qiime1
-
-Add to title/caption what variable is used for grouping
-
-Should be able to read plot text from a print out 
-
-ggrepel - Add sample labels to each dot in a separate plot
-
-Have an option for using continuous colors for particular variables

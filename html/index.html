@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <link rel='stylesheet' href='/CSS/stylesheet.css'>
+  <head>
+    <title>Mmeds Login</title>
+    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
+  </head>
+  <body>
+    <h2>
+      <a href='home'>
+        <img src='/CSS/MS_Icahn_RGB.jpg' alt='Icahn School Logo' width='210em' height='100em'>
+      </a>
+    </h2>
+    <p>
+      <form action='login' method='post' enctype='multipart/form-data'>
+        <p> <input type="text"
+                   placeholder="Enter Username"
+                   name="username"
+                   required> </p>
+        <p> <input type="password"
+                   placeholder="Enter Password"
+                   name="password"
+                   required> </p>
+        <button type="submit">Login</button>
+      </form>
+      <form action="sign_up_page">
+        <h4> Don't have an account? </h4>
+        <p> <button type="submit">Sign Up</button> </p>
+      </form>
+      <form action="password_recovery" method='post' enctype='multipart/form-data'>
+        <h4> Forgot your password? </h4>
+        <p> <input type="text" placeholder="Enter Username" name="username" required> </p>
+        <p> <input type='email' name='email' placeholder='Enter Email' required/> </p>
+        <p> <button type="submit">Recover</button> </p>
+      </form>
+    </p>
+    <h5> Created by the Clemente Lab</h5>
+  </body>
+</html>
