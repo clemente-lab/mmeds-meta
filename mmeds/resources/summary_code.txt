@@ -52,7 +52,11 @@ df.set_index('taxonomy', inplace=True)
 df.iloc[:5, :5]
 =====
 taxa_py_qiime1<source>
-df = read_csv('{file1}', skiprows=1, sep='\t').melt(id_vars='#OTU ID')
+df = read_csv('{file1}', skiprows=1, sep='\t')
+mdf_lite = mdf.reset_index()
+mdf_lite = mdf_lite[['#SampleID', 'Ethnicity']].rename({{'#SampleID': 'variable'}}, axis='columns')
+df = df.melt(id_vars='#OTU ID')
+df = df.merge(mdf_lite, how='inner').sort_values(['Ethnicity', 'variable'])
 =====
 taxa_py_qiime2<source>
 df = read_csv('{file1}', sep=',')
@@ -68,6 +72,7 @@ df.rename({{'index': 'variable', 'variable': 'X.OTU.ID'}}, axis='columns', inpla
 =====
 taxa_r<source>
 %%R -i df
+df$variable <- factor(df$variable, levels = unique(df$variable))
 p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
      geom_bar(stat = "identity") +
      ggtitle("Taxa Summary") +
