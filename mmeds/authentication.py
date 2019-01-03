@@ -32,10 +32,9 @@ def validate_password(username, password, testing=False):
     with Database(STORAGE_DIR, testing=testing) as db:
         # Get the values from the user table
         try:
-            hashed_password, salt =\
-                db.get_col_values_from_table('password, salt',
-                                             '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
-                                                                                    username))[0]
+            hashed_password, salt = db.get_col_values_from_table('password, salt',
+                                                                 '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
+                                                                                                        username))[0]
         # An index error means that the username did not exist
         except IndexError:
             print('Username did not exist')
@@ -69,7 +68,7 @@ def check_password(password1, password2):
     if len(password1) <= 10:
         errors.append('Error: Passwords must be longer than 10 characters.')
 
-    return '<br \>'.join(errors)
+    return '<br />'.join(errors)
 
 
 def check_username(username, testing=False):

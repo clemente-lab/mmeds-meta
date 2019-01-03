@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, STORAGE_DIR, SQL_DATABASE, get_salt
+from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
 from mmeds.mmeds import send_email
 import mmeds.secrets as sec
@@ -36,6 +36,7 @@ class MetaData(men.DynamicDocument):
     # location of all files in a new file
     def save(self):
         with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
+            f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
             f.write('Key\tPath\n')
             for key in self.files:
                 f.write('{}\t{}\n'.format(key, self.files[key]))
@@ -44,7 +45,7 @@ class MetaData(men.DynamicDocument):
 
 class Database:
 
-    def __init__(self, path, user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
+    def __init__(self, path='.', user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -119,7 +120,7 @@ class Database:
             self.user_id = int(result[0])
             self.email = result[1]
 
-        self.check_file = STORAGE_DIR / 'last_check.dat'
+        self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
         if not testing:
             # Do housekeeping for removing old files

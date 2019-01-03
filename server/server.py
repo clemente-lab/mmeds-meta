@@ -11,10 +11,10 @@ import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
 from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
-from mmeds.config import CONFIG, UPLOADED_FP, STORAGE_DIR, HTML_DIR, USER_FILES
+from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
 from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
 from mmeds.database import Database
-from mmeds.tools import analysis_runner
+from mmeds.tools import spawn_analysis
 from mmeds.error import MissingUploadError, MetaDataError
 
 absDir = Path(os.getcwd())
@@ -61,7 +61,7 @@ class MMEDSserver(object):
     ########################################
 
     @cp.expose
-    def run_analysis(self, access_code, tool):
+    def run_analysis(self, access_code, tool, config):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -73,7 +73,7 @@ class MMEDSserver(object):
             if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
-                    p = analysis_runner(tool, self.get_user(), access_code, self.testing)
+                    p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
                     self.processes[access_code] = p
                     page = mmeds.load_html('welcome',
                                            title='Welcome to Mmeds',
@@ -119,9 +119,9 @@ class MMEDSserver(object):
         else:
             # Create a unique dir for handling files uploaded by this user
             count = 0
-            new_dir = STORAGE_DIR / ('{}_{}'.format(self.get_user(), count))
+            new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
             while os.path.exists(new_dir):
-                new_dir = STORAGE_DIR / ('{}_{}'.format(self.get_user(), count))
+                new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
                 count += 1
             os.makedirs(new_dir)
         cp.session['dir'] = new_dir
@@ -202,7 +202,7 @@ class MMEDSserver(object):
                                                                   barcodes=barcodes_copy)
 
             # Send the confirmation email
-            send_email(email, username, code=access_code)
+            send_email(email, username, code=access_code, testing=self.testing)
 
             # Get the html for the upload page
             page = mmeds.load_html('welcome',
@@ -224,10 +224,7 @@ class MMEDSserver(object):
                                                               barcodes=data_copy2)
 
         # Send the confirmation email
-        send_email(email, username, code=access_code)
-        # new_dir = Path(str(cp.session['dir']).replace('temp', 'upload'))
-        # os.rename(cp.session['dir'], new_dir)
-        # cp.session['dir'] = new_dir
+        send_email(email, username, code=access_code, testing=self.testing)
 
         # Get the html for the upload page
         page = mmeds.load_html('welcome',
@@ -295,7 +292,7 @@ class MMEDSserver(object):
                 page = f.read()
             return insert_error(page, 25, user_err)
         else:
-            add_user(username, password1, email)
+            add_user(username, password1, email, testing=self.testing)
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return page
@@ -466,7 +463,7 @@ class MMEDSserver(object):
         if self.processes.get(access_code) is None or\
                 self.processes[access_code].exitcode is not None:
             # Get the open file handler
-            with Database(cp.session['dir'], owner=self.get_user(), testing=testing) as db:
+            with Database(path='.', owner=self.get_user(), testing=testing) as db:
                 try:
                     files, path = db.get_mongo_files(access_code)
                 except MissingUploadError as e:
@@ -478,7 +475,7 @@ class MMEDSserver(object):
             i = 0
             for f in files.keys():
                 if f in USER_FILES:
-                    page = insert_html(page, 22 + i, '<option value="{}">{}</option>'.format(f, f))
+                    page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
                     i += 1
 
             cp.session['download_access'] = access_code
@@ -491,7 +488,7 @@ class MMEDSserver(object):
     @cp.expose
     def select_download(self, download):
         cp.log('User{} requests download {}'.format(self.get_user(), download))
-        with Database(cp.session['dir'], owner=self.get_user(), testing=testing) as db:
+        with Database('.', owner=self.get_user(), testing=testing) as db:
             try:
                 files, path = db.get_mongo_files(cp.session['download_access'])
             except MissingUploadError as e:
