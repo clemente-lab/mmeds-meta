@@ -27,8 +27,8 @@ server/data/*
 server/site.log
 
 # All backup files
-.*
 *.bak
+.cache
 /keyrings/live/pubring.gpg~
 /keyrings/live/pubring.kbx~
 /keyrings/live/secring.gpg
