@@ -214,6 +214,13 @@ class Qiime1(Tool):
         else:
             self.jobtext.append('module load qiime/1.9.1;')
 
+        settings = [
+            'pick_otus:enable_rev_strand_match True',
+            'alpha_diversity:metrics shannon,PD_whole_tree,chao1,observed_species'
+        ]
+        with open(Path(self.path) / 'params.txt', 'w') as f:
+            f.write('\n'.join(settings))
+
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         files, path = self.db.get_mongo_files(self.access_code)
@@ -234,12 +241,6 @@ class Qiime1(Tool):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
-        settings = [
-            'pick_otus:enable_rev_strand_match True',
-            'alpha_diversity:metrics shannon, PD_whole_tree,chao1,observed_species'
-        ]
-        with open(Path(path) / 'params.txt', 'w') as f:
-            f.write('\n'.join(settings))
 
         # Run the script
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
@@ -247,7 +248,7 @@ class Qiime1(Tool):
                              self.num_jobs,
                              files['otu_output'],
                              Path(files['split_output']) / 'seqs.fna',
-                             Path(path) / 'params.txt')
+                             Path(self.path) / 'params.txt')
         self.jobtext.append(command)
 
     def core_diversity(self):
@@ -257,21 +258,23 @@ class Qiime1(Tool):
         catagories = 'Ethnicity'
 
         # Run the script
-        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {};'
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
         if self.atype == 'open':
             command = cmd.format(files['diversity_output'],
                                  Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  files['mapping'],
                                  Path(files['otu_output']) / 'rep_set.tre',
                                  self.config['sampling_depth'],
-                                 catagories)
+                                 catagories,
+                                 Path(self.path) / 'params.txt')
         else:
             command = cmd.format(files['diversity_output'],
                                  Path(files['otu_output']) / 'otu_table.biom',
                                  files['mapping'],
                                  Path(files['otu_output']) / '97_otus.tree',
                                  self.config['sampling_depth'],
-                                 catagories)
+                                 catagories,
+                                 Path(self.path) / 'params.txt')
 
         self.jobtext.append(command)
 

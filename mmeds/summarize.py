@@ -1,11 +1,10 @@
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
+from subprocess import run
 
 import nbformat as nbf
 import os
-from nbconvert import PDFExporter
-from nbconvert.preprocessors import ExecutePreprocessor
 from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log
 
@@ -97,6 +96,10 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
             else:
                 cells += beta_plots(path, data_file)
 
+        # Hide the code in all cells
+        for cell in cells:
+            cell.metadata['hide_code'] = True
+            cell.metadata['hide_input'] = True
         nn = nbf.v4.new_notebook(cells=cells)
         meta = {
             'metadata': {
@@ -112,14 +115,10 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
     def write_notebook(nn):
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
 
-        exp = PDFExporter()
+        cmd = 'jupyter nbconvert --template=nbextensions --to=html {}.ipynb'.format(name)
         if execute:
-            ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
-            ep.preprocess(nn, resources={})
-
-        (pdf_data, resources) = exp.from_notebook_node(nn)
-        with open(path / '{}.pdf'.format(name), 'wb') as f:
-            f.write(pdf_data)
+            cmd += ' --execute'
+        run(cmd, shell=True, check=True)
 
     path = Path(run_path)
 
