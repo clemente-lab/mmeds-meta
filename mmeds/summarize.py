@@ -3,12 +3,17 @@ from nbformat import v4
 from collections import defaultdict
 
 import nbformat as nbf
+import os
 from nbconvert import PDFExporter
 from nbconvert.preprocessors import ExecutePreprocessor
 from mmeds.config import STORAGE_DIR
+from mmeds.mmeds import log
 
 
 def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
+    log('Start summary notebook')
+    original_path = Path.cwd()
+    os.chdir(run_path)
     # Load the code templates
     with open(STORAGE_DIR / 'summary_code.txt') as f:
         data = f.read().split('\n=====\n')
@@ -24,7 +29,7 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
         filename = data_file.split('.')[0] + '.png'
         cells = []
         cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
-        cells.append(v4.new_code_cell(source=source['taxa_py'].format(file1=data_file)))
+        cells.append(v4.new_code_cell(source=source['taxa_py_qiime1'].format(file1=data_file)))
         cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
@@ -120,3 +125,4 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
 
     nn = summarize(path, files, execute)
     write_notebook(nn)
+    os.chdir(original_path)
