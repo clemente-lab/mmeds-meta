@@ -38,3 +38,5 @@ ulem
 Other Dependencies
 rpy2: 2.9.1
 readline headers
+jupyter_contrib_nbextensions
+Enable extension Printview

@@ -51,8 +51,20 @@ df = read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
 df.set_index('taxonomy', inplace=True)
 df.iloc[:5, :5]
 =====
-taxa_py<source>
+taxa_py_qiime1<source>
 df = read_csv('{file1}', skiprows=1, sep='\t').melt(id_vars='#OTU ID')
+=====
+taxa_py_qiime2<source>
+df = read_csv('{file1}', sep=',')
+# Remove unnecessary metadata
+headers = list(filter(lambda x: 'k__' in x, df.columns)) + ['index']
+df = df.filter(headers).set_index('index').T
+# Calculate relative abundances
+df = df.apply(lambda x: x / x.sum(), axis='index')
+# Transpose the dataframe and convert to long format
+df = df.T.reset_index(level=0).melt('index')
+# Rename the columns
+df.rename({{'index': 'variable', 'variable': 'X.OTU.ID'}}, axis='columns', inplace=True)
 =====
 taxa_r<source>
 %%R -i df

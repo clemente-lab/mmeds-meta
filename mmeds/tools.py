@@ -52,7 +52,6 @@ class Tool:
         while os.path.exists(new_dir):
             run_id += 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
-            log('Run analysis')
         if self.analysis:
             files, path = self.db.get_mongo_files(self.access_code)
             run('mkdir {}'.format(new_dir), shell=True, check=True)
@@ -67,6 +66,7 @@ class Tool:
             run('ln {} {}'.format(files['metadata'],
                                   new_dir / 'metadata.tsv'),
                 shell=True, check=True)
+            log('Run analysis')
         else:
             run_id -= 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
@@ -354,6 +354,8 @@ class Qiime1(Tool):
         cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
         run(cmd, shell=True, check=True)
 
+        log('Summary path')
+        log(self.path / 'summary')
         summarize_qiime1(files=summary_files, execute=True, name='analysis', run_path=self.path / 'summary')
         log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'

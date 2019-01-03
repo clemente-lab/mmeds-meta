@@ -693,7 +693,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
 def log(text):
     """ Write provided text to the log file. """
     with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write(text + '\n')
+        f.write(str(text) + '\n')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

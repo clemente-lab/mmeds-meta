@@ -17,7 +17,6 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
     source = {}
     for code in data:
         parts = code.split('<source>\n')
-
         source[parts[0]] = parts[1]
 
     def taxa_plots(path, data_file):
@@ -50,9 +49,8 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
-    def summarize(path, execute, no_files=False):
+    def summarize(path, files, execute, no_files=False):
         """ Create the python notebook containing the summary of analysis results. """
-        global files
         # Get the files to summarize from the index
         if no_files:
             files = defaultdict(list)
@@ -104,8 +102,6 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
             }
         }
         nn.update(meta)
-        print(nn.metadata.get('title'))
-
         return nn
 
     def write_notebook(nn):
@@ -122,5 +118,5 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
 
     path = Path(run_path)
 
-    nn = summarize(path, execute)
+    nn = summarize(path, files, execute)
     write_notebook(nn)
