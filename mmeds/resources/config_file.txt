@@ -1,1 +1,8 @@
+# Sampling depth for qiime1 analysis
 sampling_depth	1114
+# The metadata columns to include in analysis
+# To include all columns set to 'all' (no quotes)
+# Otherwise list all the column names seperated by commas
+# Example:
+# metadata all
+metadata	Ethnicity,SpecimenBodySite

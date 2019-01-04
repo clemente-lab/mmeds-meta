@@ -31,7 +31,7 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'], files={}, execute=Fa
         cells = []
         for column in metadata:
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
-            cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
+            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file, group=column)))
             cells.append(v4.new_code_cell(source=source['taxa_py_qiime1'].format(file1=data_file, group=column)))
             cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename, group=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
@@ -49,12 +49,13 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'], files={}, execute=Fa
 
     def beta_plots(path, data_file):
         """ Create plots for alpha diversity files. """
-        filename = data_file.split('.')[0] + '.png'
         cells = []
-        cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
-        cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file)))
-        cells.append(v4.new_code_cell(source=source['beta_r'].format(file1=filename)))
-        cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+        for column in metadata:
+            filename = '{}-{}.png'.format(data_file.split('.')[0], column)
+            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file, group=column)))
+            cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file, group=column)))
+            cells.append(v4.new_code_cell(source=source['beta_r'].format(file1=filename)))
+            cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
     def summarize(path, files, execute, no_files=False):

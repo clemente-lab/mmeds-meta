@@ -1,9 +1,8 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError, PIPE
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from time import sleep
 from pandas import read_csv
-from shutil import rmtree
 from glob import glob
 from collections import defaultdict
 
@@ -70,20 +69,30 @@ class Tool:
         else:
             run_id -= 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+            if os.path.exists(new_dir / 'summary'):
+                rmtree(new_dir / 'summary')
             log("Skip analysis")
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id)
 
     def read_config_file(self, config_file):
         """ Read the provided config file to determine settings for the analysis. """
+        files, path = self.db.get_mongo_files(self.access_code)
         config = {}
+        # If no config was provided load the default
         if config_file.file is None:
+            log('Using default config')
             with open(STORAGE_DIR / 'config_file.txt', 'r') as f:
                 page = f.read()
         else:
+            # Otherwise write the file to the analysis directory for future reference
+            log('Using custom config: {}'.format(self.path / 'config_file.txt'))
+            contents = config_file.file.read()
             with open(self.path / 'config_file.txt', 'wb+') as f:
-                f.write(config_file.file)
-            page = config_file.file.decode('utf-8')
+                f.write(contents)
+            # And load the file contents
+            page = contents.decode('utf-8')
+        # Parse the config
         lines = page.split('\n')
         for line in lines:
             if line.startswith('#') or line == '':
@@ -91,6 +100,19 @@ class Tool:
             else:
                 parts = line.split('\t')
                 config[parts[0]] = parts[1]
+
+        # Parse the metadata values to be included in the analysis
+        if config['metadata'] == 'all':
+            # If it's set to all get all the headers from the mapping file
+            with open(files['mapping']) as f:
+                header = f.readline()
+            config['metadata'] = header.strip().split('\t')
+        else:
+            # Otherwise split the values into a list
+            config['metadata'] = config['metadata'].split(',')
+        # Ensure #SampleID isn't included
+        if '#SampleID' in config['metadata']:
+            config['metadata'].remove('#SampleID')
         return config
 
     def validate_mapping(self):
@@ -255,7 +277,6 @@ class Qiime1(Tool):
         """ Run the core diversity analysis script. """
         self.add_path('diversity_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
-        catagories = 'Ethnicity'
 
         # Run the script
         cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
@@ -265,7 +286,7 @@ class Qiime1(Tool):
                                  files['mapping'],
                                  Path(files['otu_output']) / 'rep_set.tre',
                                  self.config['sampling_depth'],
-                                 catagories,
+                                 ','.join(self.config['metadata']),
                                  Path(self.path) / 'params.txt')
         else:
             command = cmd.format(files['diversity_output'],
@@ -273,7 +294,7 @@ class Qiime1(Tool):
                                  files['mapping'],
                                  Path(files['otu_output']) / '97_otus.tree',
                                  self.config['sampling_depth'],
-                                 catagories,
+                                 ','.join(self.config['metadata']),
                                  Path(self.path) / 'params.txt')
 
         self.jobtext.append(command)
@@ -359,7 +380,11 @@ class Qiime1(Tool):
 
         log('Summary path')
         log(self.path / 'summary')
-        summarize_qiime1(files=summary_files, execute=True, name='analysis', run_path=self.path / 'summary')
+        summarize_qiime1(metadata=self.config['metadata'],
+                         files=summary_files,
+                         execute=True,
+                         name='analysis',
+                         run_path=self.path / 'summary')
         log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'
 

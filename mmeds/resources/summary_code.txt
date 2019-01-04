@@ -274,9 +274,8 @@ cols = {{x:'PC{{}}'.format(x + 1) for x in df.columns}}
 df = df.rename(index=str, columns=cols)
 
 # Assign GroupIDs based on metadata
-col = 'SpecimenBodySite'
-samples = mdf[col][df.axes[0]]
-df = df.assign(GroupID=[color_maps[col][x] for x in samples])
+samples = mdf['{group}'][df.axes[0]]
+df = df.assign(GroupID=[color_maps['{group}'][x] for x in samples])
 =====
 beta_r<source>
 %%R -i df
