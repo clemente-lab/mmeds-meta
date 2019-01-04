@@ -54,9 +54,9 @@ df.iloc[:5, :5]
 taxa_py_qiime1<source>
 df = read_csv('{file1}', skiprows=1, sep='\t')
 mdf_lite = mdf.reset_index()
-mdf_lite = mdf_lite[['#SampleID', 'Ethnicity']].rename({{'#SampleID': 'variable'}}, axis='columns')
+mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 df = df.melt(id_vars='#OTU ID')
-df = df.merge(mdf_lite, how='inner').sort_values(['Ethnicity', 'variable'])
+df = df.merge(mdf_lite, how='inner')
 =====
 taxa_py_qiime2<source>
 df = read_csv('{file1}', sep=',')
@@ -72,11 +72,11 @@ df.rename({{'index': 'variable', 'variable': 'X.OTU.ID'}}, axis='columns', inpla
 =====
 taxa_r<source>
 %%R -i df
-df$variable <- factor(df$variable, levels = unique(df$variable))
 p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
      geom_bar(stat = "identity") +
-     ggtitle("Taxa Summary") +
-     labs(x = "Sample ID") +
+     labs(x = "Sample ID",
+          title = 'Taxa Summary',
+          subtitle = 'Grouped by {group}') +
      scale_y_discrete(name = "OTU Percentage",
                       limits = c(0, 1),
                       expand = c(0, 0)) +
@@ -86,10 +86,12 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
            legend.text = element_text(size=7),
            legend.key.size = unit(0.1, "in"),
            legend.position = "bottom",
-           legend.direction="vertical",
+           legend.direction ="vertical",
            axis.text.x = element_text(angle = 300),
-           plot.title = element_text(hjust = 0.5)) +
-     guides(fill=guide_legend(ncol=2))
+           plot.title = element_text(hjust = 0.5),
+           plot.subtitle = element_text(hjust = 0.5)) +
+     guides(fill = guide_legend(ncol = 4)) +
+     facet_grid(~{group}, scales = "free", space = "free")
 
 ggsave("{plot}", height = 6, width = 8)
 =====

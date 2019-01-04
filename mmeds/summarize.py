@@ -9,7 +9,10 @@ from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log
 
 
-def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
+def summarize_qiime1(metadata=['Ethnicity', 'Nationality'], files={}, execute=False, name='analysis', run_path='/home/david/Work/data-mmeds/summary'):
+    """
+    Create the summary PDF for qiime1 analysis
+    """
     log('Start summary notebook')
     original_path = Path.cwd()
     os.chdir(run_path)
@@ -25,12 +28,13 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
 
     def taxa_plots(path, data_file):
         """ Create plots for taxa summary files. """
-        filename = data_file.split('.')[0] + '.png'
         cells = []
-        cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
-        cells.append(v4.new_code_cell(source=source['taxa_py_qiime1'].format(file1=data_file)))
-        cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename)))
-        cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+        for column in metadata:
+            filename = '{}-{}.png'.format(data_file.split('.')[0], column)
+            cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
+            cells.append(v4.new_code_cell(source=source['taxa_py_qiime1'].format(file1=data_file, group=column)))
+            cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename, group=column)))
+            cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
     def alpha_plots(path, data_file):
@@ -115,9 +119,17 @@ def summarize_qiime1(files={}, execute=False, name='analysis', run_path='/home/d
     def write_notebook(nn):
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
 
-        cmd = 'jupyter nbconvert --template=nbextensions --to=html {}.ipynb'.format(name)
+        cmd = 'jupyter nbconvert --template=nbextensions --to=latex {}.ipynb'.format(name)
         if execute:
             cmd += ' --execute'
+        run(cmd, shell=True, check=True)
+
+        # Add the line missing from the template
+        cmd = r"sed -i '1i\\\documentclass[]{{article}}' {}.tex".format(name)
+        run(cmd, shell=True, check=True)
+
+        # Convert to pdf
+        cmd = 'pdflatex {name}.tex {name}.pdf'.format(name=name)
         run(cmd, shell=True, check=True)
 
     path = Path(run_path)
