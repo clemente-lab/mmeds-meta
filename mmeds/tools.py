@@ -20,7 +20,18 @@ from mmeds.summarize import summarize_qiime1
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
+        """
+        Setup the Tool class
+        ====================
+        :owner: A string. The owner of the files being analyzed.
+        :access_code: A string. The code for accessing the files to be analyzed.
+        :atype: A string. The type of analysis to perform. Qiime1 or 2, DADA2 or DeBlur.
+        :config: A file object. A custom config file, may be None.
+        :testing: A boolean. If True run with configurations for a local server.
+        :threads: An int. The number of threads to use during analysis, is overwritten if testing==True.
+        :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
+        """
         log('Start analysis')
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
@@ -52,18 +63,20 @@ class Tool:
         while os.path.exists(new_dir):
             run_id += 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+        new_dir = new_dir.resolve()
+        root_files, path = self.db.get_mongo_files(self.access_code)
         if self.analysis:
             run('mkdir {}'.format(new_dir), shell=True, check=True)
 
             # Create links to the files
-            run('ln {} {}'.format(files['barcodes'],
+            run('ln {} {}'.format(root_files['barcodes'],
                                   new_dir / 'barcodes.fastq.gz'),
                 shell=True, check=True)
 
-            run('ln {} {}'.format(files['reads'],
+            run('ln {} {}'.format(root_files['reads'],
                                   new_dir / 'sequences.fastq.gz'),
                 shell=True, check=True)
-            run('ln {} {}'.format(files['metadata'],
+            run('ln {} {}'.format(root_files['metadata'],
                                   new_dir / 'metadata.tsv'),
                 shell=True, check=True)
 
@@ -163,16 +176,23 @@ class Tool:
             os.mkdir(self.files['visualizations_dir'])
             for key in self.files.keys():
                 f = Path(self.files[key])
-                if '.qzv' in self.files[key]:
+                if '.qzv' in str(self.files[key]):
                     new_file = f.name
                     copyfile(self.files[key], Path(self.files['visualizations_dir']) / new_file)
             self.db.update_metadata('analysis{}'.format(self.run_id), self.files)
+
+            # Create the file index
+            with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
+                f.write('{}\t{}\n'.format(self.owner, self.access_code))
+                f.write('Key\tPath\n')
+                for key in self.files:
+                    f.write('{}\t{}\n'.format(key, self.files[key]))
         except FileNotFoundError as e:
             raise AnalysisError(e.args[0])
 
     def add_path(self, name, extension):
-        """ Add a file or directory to the document identified by qiime.access_code. """
-        self.files[name] = name + extension
+        """ Add a file or directory with the full path to self.files. """
+        self.files[name] = '{}{}'.format(self.path / name, extension)
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
