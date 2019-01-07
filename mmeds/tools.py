@@ -1,35 +1,45 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError, PIPE
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from time import sleep
 from pandas import read_csv
+from glob import glob
+from collections import defaultdict
 
 import os
 import multiprocessing as mp
 
 from mmeds.database import Database
-from mmeds.config import get_salt, JOB_TEMPLATE
-from mmeds.mmeds import send_email
+from mmeds.config import get_salt, JOB_TEMPLATE, STORAGE_DIR
+from mmeds.mmeds import send_email, log
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
+from mmeds.summarize import summarize_qiime1
 
 
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, testing, threads=3):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+        log('Start analysis')
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.testing = testing
         self.jobtext = []
         self.owner = owner
-        self.num_jobs = threads
+        if testing:
+            self.num_jobs = 2
+        else:
+            self.num_jobs = threads
         self.atype = atype.split('-')[1]
+        self.analysis = analysis
         self.path, self.run_id = self.setup_dir(path)
 
         # Add the split directory to the MetaData object
         self.add_path('analysis{}'.format(self.run_id), '')
+        self.columns = []
+        self.config = self.read_config_file(config)
 
     def __del__(self):
         del self.db
@@ -41,22 +51,69 @@ class Tool:
         while os.path.exists(new_dir):
             run_id += 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+        if self.analysis:
+            files, path = self.db.get_mongo_files(self.access_code)
+            run('mkdir {}'.format(new_dir), shell=True, check=True)
 
-        files, path = self.db.get_mongo_files(self.access_code)
-
-        run('mkdir {}'.format(new_dir), shell=True, check=True)
-
-        # Create links to the files
-        run('ln {} {}'.format(files['barcodes'],
-                              new_dir / 'barcodes.fastq.gz'),
-            shell=True, check=True)
-        run('ln {} {}'.format(files['reads'],
-                              new_dir / 'sequences.fastq.gz'),
-            shell=True, check=True)
-        run('ln {} {}'.format(files['metadata'],
-                              new_dir / 'metadata.tsv'),
-            shell=True, check=True)
+            # Create links to the files
+            run('ln {} {}'.format(files['barcodes'],
+                                  new_dir / 'barcodes.fastq.gz'),
+                shell=True, check=True)
+            run('ln {} {}'.format(files['reads'],
+                                  new_dir / 'sequences.fastq.gz'),
+                shell=True, check=True)
+            run('ln {} {}'.format(files['metadata'],
+                                  new_dir / 'metadata.tsv'),
+                shell=True, check=True)
+            log('Run analysis')
+        else:
+            run_id -= 1
+            new_dir = Path(path) / 'analysis{}'.format(run_id)
+            if os.path.exists(new_dir / 'summary'):
+                rmtree(new_dir / 'summary')
+            log("Skip analysis")
+        log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id)
+
+    def read_config_file(self, config_file):
+        """ Read the provided config file to determine settings for the analysis. """
+        files, path = self.db.get_mongo_files(self.access_code)
+        config = {}
+        # If no config was provided load the default
+        if config_file.file is None:
+            log('Using default config')
+            with open(STORAGE_DIR / 'config_file.txt', 'r') as f:
+                page = f.read()
+        else:
+            # Otherwise write the file to the analysis directory for future reference
+            log('Using custom config: {}'.format(self.path / 'config_file.txt'))
+            contents = config_file.file.read()
+            with open(self.path / 'config_file.txt', 'wb+') as f:
+                f.write(contents)
+            # And load the file contents
+            page = contents.decode('utf-8')
+        # Parse the config
+        lines = page.split('\n')
+        for line in lines:
+            if line.startswith('#') or line == '':
+                continue
+            else:
+                parts = line.split('\t')
+                config[parts[0]] = parts[1]
+
+        # Parse the metadata values to be included in the analysis
+        if config['metadata'] == 'all':
+            # If it's set to all get all the headers from the mapping file
+            with open(files['mapping']) as f:
+                header = f.readline()
+            config['metadata'] = header.strip().split('\t')
+        else:
+            # Otherwise split the values into a list
+            config['metadata'] = config['metadata'].split(',')
+        # Ensure #SampleID isn't included
+        if '#SampleID' in config['metadata']:
+            config['metadata'].remove('#SampleID')
+        return config
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
@@ -68,7 +125,7 @@ class Tool:
         params = {
             'walltime': '48:00',
             'jobname': self.owner + '_' + self.run_id,
-            'nodes': 10,
+            'nodes': self.num_jobs,
             'memory': 1000,
             'jobid': self.path / self.run_id,
             'queue': 'expressalloc'
@@ -120,6 +177,7 @@ class Tool:
         metadata = self.db.get_metadata(self.access_code)
         fp = metadata.files['metadata']
         mdata = read_csv(fp, header=1, skiprows=[2, 3, 4], sep='\t')
+        self.columns = list(mdata.columns)
 
         # Create the Qiime mapping file
         mapping_file = self.path / 'qiime_mapping_file.tsv'
@@ -171,12 +229,19 @@ class Tool:
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, testing):
-        super().__init__(owner, access_code, atype, testing)
+    def __init__(self, owner, access_code, atype, config, testing):
+        super().__init__(owner, access_code, atype, config, testing)
         if testing:
             self.jobtext.append('source activate qiime1;')
         else:
             self.jobtext.append('module load qiime/1.9.1;')
+
+        settings = [
+            'pick_otus:enable_rev_strand_match True',
+            'alpha_diversity:metrics shannon,PD_whole_tree,chao1,observed_species'
+        ]
+        with open(Path(self.path) / 'params.txt', 'w') as f:
+            f.write('\n'.join(settings))
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
@@ -199,16 +264,13 @@ class Qiime1(Tool):
         self.add_path('otu_output', '')
         files, path = self.db.get_mongo_files(self.access_code)
 
-        with open(Path(path) / 'params.txt', 'w') as f:
-            f.write('pick_otus:enable_rev_strand_match True\n')
-
         # Run the script
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
         command = cmd.format(self.atype,
                              self.num_jobs,
                              files['otu_output'],
                              Path(files['split_output']) / 'seqs.fna',
-                             Path(path) / 'params.txt')
+                             Path(self.path) / 'params.txt')
         self.jobtext.append(command)
 
     def core_diversity(self):
@@ -217,38 +279,116 @@ class Qiime1(Tool):
         files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
-        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {};'
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
         if self.atype == 'open':
             command = cmd.format(files['diversity_output'],
                                  Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  files['mapping'],
                                  Path(files['otu_output']) / 'rep_set.tre',
-                                 1114)
+                                 self.config['sampling_depth'],
+                                 ','.join(self.config['metadata']),
+                                 Path(self.path) / 'params.txt')
         else:
             command = cmd.format(files['diversity_output'],
                                  Path(files['otu_output']) / 'otu_table.biom',
                                  files['mapping'],
                                  Path(files['otu_output']) / '97_otus.tree',
-                                 1114)
+                                 self.config['sampling_depth'],
+                                 ','.join(self.config['metadata']),
+                                 Path(self.path) / 'params.txt')
 
         self.jobtext.append(command)
 
     def sanity_check(self):
         """ Check that counts match after split_libraries and pick_otu. """
+        try:
+            # Count the sequences prior to diversity analysis
+            files, path = self.db.get_mongo_files(self.access_code)
+            cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
+                                                  Path(files['split_output']) / 'seqs.fna')
+            log('Run command: {}'.format(cmd))
+            output = run(cmd, shell=True, check=True, stdout=PIPE)
+            out = output.stdout.decode('utf-8')
+            log('Output: {}'.format(out))
+            initial_count = int(out.split('\n')[1].split(' ')[0])
+
+            # Count the sequences in the output of the diversity analysis
+            with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
+                lines = f.readlines()
+                log('Check lines: {}'.format(lines))
+                final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
+
+            # Check that the counts are approximately equal
+            if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
+                message = 'Large difference ({}) between initial and final counts'
+                log('Raise analysis error')
+                raise AnalysisError(message.format(initial_count - final_count))
+            log('Sanity check completed successfully')
+
+        except ValueError as e:
+            log(str(e))
+            raise AnalysisError(e.args[0])
+
+    def summarize(self):
+        """
+        Create summary of analysis results
+        """
+        log('Run summarize')
         files, path = self.db.get_mongo_files(self.access_code)
+        diversity = Path(files['diversity_output'])
+        summary = {}
+        summary_files = defaultdict(list)
 
-        cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
-                                              Path(files['split_output']) / 'seqs.fna')
-        output = run(cmd, shell=True, stdin=PIPE, stderr=PIPE, stdout=PIPE)
-        initial_count = int(output.stdout.decode('utf-8').split('\n')[1].split(' ')[0])
+        # Convert and store the otu table
+        cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
+        cmd = cmd.format(self.jobtext[0],
+                         Path(files['otu_output']) / 'otu_table.biom',
+                         self.path / 'otu_table.tsv')
+        log(cmd)
+        run(cmd, shell=True, check=True)
 
-        with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
-            final_count = int(f.readlines()[2].split(':')[-1].strip().replace(',', ''))
-        if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
-            message = 'Large difference ({}) between initial and final counts'
-            raise AnalysisError(message.format(initial_count - final_count))
+        # Add the text OTU table to the summary
+        with open(self.path / 'otu_table.tsv') as f:
+            summary[Path(f.name).name] = f.read()
+        summary_files['otu'].append('otu_table.tsv')
 
-    def analysis(self):
+        def collect_files(path, catagory):
+            """ Collect the contents of all files match the regex in path """
+            files = glob(str(diversity / path.format(depth=self.config['sampling_depth'])))
+            for data in files:
+                with open(data) as f:
+                    summary[Path(f.name).name] = f.read()
+                summary_files[catagory].append(Path(data).name)
+
+        collect_files('biom_table_summary.txt', 'otu')                       # Biom summary
+        collect_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
+        collect_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
+        collect_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
+
+        os.mkdir(Path(self.path) / 'summary')
+        self.add_path('summary', '')
+        # Put all the files in one location
+        for key in summary.keys():
+            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
+                f.write(summary[key])
+
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        run(cmd, shell=True, check=True)
+
+        cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
+        run(cmd, shell=True, check=True)
+
+        log('Summary path')
+        log(self.path / 'summary')
+        summarize_qiime1(metadata=self.config['metadata'],
+                         files=summary_files,
+                         execute=True,
+                         name='analysis',
+                         run_path=self.path / 'summary')
+        log('Summary completed successfully')
+        return self.path / 'summary/analysis.pdf'
+
+    def run_analysis(self):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.validate_mapping()
@@ -256,11 +396,10 @@ class Qiime1(Tool):
         self.pick_otu()
         self.core_diversity()
         jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, 'lsf')
+        self.add_path(jobfile, '.lsf')
         error_log = self.path / self.run_id
-        self.add_path(error_log, 'err')
+        self.add_path(error_log, '.err')
         if self.testing:
-            self.jobtext = ['#!/usr/bin/bash'] + self.jobtext
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
                 f.write('\n'.join(self.jobtext))
@@ -280,7 +419,16 @@ class Qiime1(Tool):
             output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
             job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             self.wait_on_job(job_id)
+
+    def run(self):
+        """ Execute all the necessary actions. """
+        if self.analysis:
+            try:
+                self.run_analysis()
+            except CalledProcessError as e:
+                raise AnalysisError(e.args[0])
         self.sanity_check()
+        summary = self.summarize()
         self.move_user_files()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email,
@@ -288,7 +436,8 @@ class Qiime1(Tool):
                    'analysis',
                    analysis_type='Qiime1',
                    study_name=doc.study,
-                   testing=self.testing)
+                   testing=self.testing,
+                   summary=summary)
 
 
 class Qiime2(Tool):
@@ -301,6 +450,9 @@ class Qiime2(Tool):
         else:
             self.jobtext.append('module load qiime2/2018.4;')
 
+    # ======================= #
+    # # # Qiime2 Commands # # #
+    # ======================= #
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
         files, path = self.db.get_mongo_files(self.access_code)
@@ -525,6 +677,19 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def taxa_diversity(self):
+        """ Create visualizations of taxa summaries at each level. """
+        self.add_path('taxa_bar_plot', '.qzv')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'qiime taxa barplot',
+            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
+            '--i-taxonomy {}'.foramt(files['taxonomy']),
+            '--m-metadata-file {}'.format(files['mapping']),
+            '--o-visualization {}&'.format(files['taxa_bar_plot'])
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def alpha_rarefaction(self, max_depth=4000):
         """
         Create plots for alpha rarefaction.
@@ -538,6 +703,20 @@ class Qiime2(Tool):
             '--p-max-depth {}'.format(max_depth),
             '--m-metadata-file {}'.format(files['mapping']),
             '--o-visualization {}&'.format(files['alpha_rarefaction'])
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def classify_taxa(self, classifier):
+        """
+        Create plots for alpha rarefaction.
+        """
+        self.add_path('taxonomy', '.qza')
+        files, path = self.db.get_mongo_files(self.access_code)
+        cmd = [
+            'qiime feature-classifier classify-sklearn'
+            '--i-classifier {}'.format(classifier),
+            '--i-reads {}'.format(files['rep_seq_{}'.format(self.atype)]),
+            '--o-classification {}&'.format(files['taxonomy'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -585,8 +764,11 @@ class Qiime2(Tool):
         self.core_diversity()
         # Run these commands in parallel
         self.alpha_diversity()
-        self.beta_diversity()
+        self.taxa_diversity()
+        for col in self.columns:
+            self.beta_diversity(col)
         self.alpha_rarefaction()
+        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         # Wait for them all to finish
         self.jobtext.append('wait')
 
@@ -627,25 +809,70 @@ class Qiime2(Tool):
         except CalledProcessError as e:
             raise AnalysisError(e.args[0])
 
+    def summarize(self):
+        """ Create summary of the files produced by the qiime2 analysis. """
+        files, path = self.db.get_mongo_files(self.access_code)
+        files['alpha_rarefaction'] = '/home/david/Work/mmeds-meta/server/data/david_0/q2-dada/'
+        files['core_metrics_results'] = '/home/david/Work/mmeds-meta/server/data/david_0/q2-dada/core_metrics_results_cqyob'
 
-def run_qiime1(user, access_code, atype, testing):
+        summary = {}
+        # Get Alpha rarefaction
+        # Get Taxa
+        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                files['alpha_rarefaction'],
+                                                                self.path / 'temp')
+        run(cmd, shell=True, check=True)
+        with open(self.path / 'temp/observed_otus.csv') as f:
+            summary[Path(f.name).name] = f.read()
+        rmtree(self.path / 'temp')
+
+        # Get Beta
+        for pref in ['', 'un']:
+            beta_file = Path(files['core_metrics_results']) / '{}weighted_unifrac_distance_matrix.qza'.format(pref)
+
+            cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                    beta_file,
+                                                                    self.path / 'temp')
+            run(cmd, shell=True, check=True)
+            with open(self.path / 'temp/distance-matrix.tsv') as f:
+                summary['beta-' + str(Path(f.name).name)] = f.read()
+            rmtree(self.path / 'temp')
+
+        # Get Beta
+        for metric in ['shannon', 'evenness', 'faith_pd']:
+            alpha_file = Path(files['core_metrics_results']) / '{}_vector.qza'.format(metric)
+
+            cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                    alpha_file,
+                                                                    self.path / 'temp')
+            run(cmd, shell=True, check=True)
+            with open(self.path / 'temp/alpha-diversity.tsv') as f:
+                summary['{}-'.format(metric) + str(Path(f.name).name)] = f.read()
+            rmtree(self.path / 'temp')
+
+        for key in summary.keys():
+            print(key)
+            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
+                f.write(summary[key])
+
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        run(cmd, shell=True, check=True)
+
+        self.summary_analysis(summary)
+
+
+def run_analysis(qiime):
     """ Run qiime analysis. """
     try:
-        qa = Qiime1(user, access_code, atype, testing)
-        qa.analysis()
-    except (AnalysisError, CalledProcessError) as e:
-        email = get_email(user, testing=testing)
-        send_email(email, user, 'error', analysis_type='Qiime1.9.1', error=e.message, testing=testing)
-
-
-def run_qiime2(user, access_code, atype, testing):
-    """ Run qiime analysis. """
-    try:
-        qa = Qiime2(user, access_code, atype, testing)
-        qa.analysis()
-    except (AnalysisError, CalledProcessError) as e:
-        email = get_email(user, testing=testing)
-        send_email(email, user, 'error', analysis_type='Qiime2 (2018.4)', error=e.message, testing=testing)
+        qiime.run()
+    except AnalysisError as e:
+        email = get_email(qiime.owner, testing=qiime.testing)
+        send_email(email,
+                   qiime.owner,
+                   'error',
+                   analysis_type=qiime.atype,
+                   error=e.message,
+                   testing=qiime.testing)
 
 
 def test(time, atype):
@@ -653,12 +880,14 @@ def test(time, atype):
     sleep(time)
 
 
-def analysis_runner(atype, user, access_code, testing):
+def spawn_analysis(atype, user, access_code, config, testing):
     """ Start running the analysis in a new process """
     if 'qiime1' in atype:
-        p = mp.Process(target=run_qiime1, args=(user, access_code, atype, testing))
+        qiime = Qiime1(user, access_code, atype, config, testing)
+        p = mp.Process(target=run_analysis, args=(qiime,))
     elif 'qiime2' in atype:
-        p = mp.Process(target=run_qiime2, args=(user, access_code, atype, testing))
+        qiime = Qiime2(user, access_code, atype, config, testing)
+        p = mp.Process(target=run_analysis, args=(qiime,))
     elif 'test' in atype:
         time = float(atype.split('-')[-1])
         p = mp.Process(target=test, args=(time, atype))
