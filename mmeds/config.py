@@ -15,7 +15,9 @@ ERROR_FP = 'error_log.tsv'
 ROOT = Path(mmeds.__file__).parent.resolve()
 HTML_DIR = Path(html.__file__).parent.resolve()
 STORAGE_DIR = Path(resources.__file__).parent.resolve()
-DATABASE_DIR = Path('/home/david/Work/mmeds_server_data')
+DATABASE_DIR = Path().home() / 'mmeds_server_data'
+if not os.path.exists(DATABASE_DIR):
+    os.mkdir(DATABASE_DIR)
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
@@ -63,10 +65,10 @@ CONFIG = {
 ###########
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
-TEST_DIR = Path('/tmp/test_dir')
+TEST_DIR = DATABASE_DIR / 'test_dir'
 if not os.path.exists(TEST_DIR):
     os.mkdir(TEST_DIR)
-TEST_DIR_0 = Path('/tmp/test_dir0')
+TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
 if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 

@@ -17,7 +17,7 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
                      run_path='/home/david/Work/data-mmeds/summary'):
     """
     Create the summary PDF for qiime1 analysis
-    ------------------------------------------
+    ==========================================
     :metadata: A list of strings. Includes the names of metadata columns to include in the analysis.
     :files: A dictionary of locations for the files to use when creating plots.
     :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
@@ -28,7 +28,7 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
     def taxa_plots(data_file):
         """
         Create plots for taxa summary files.
-        ------------------------------------
+        ====================================
         :data_file: The location of the file to create the plotting code for.
         """
         cells = []
@@ -43,7 +43,7 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
     def alpha_plots(data_file):
         """
         Create plots for alpha diversity files.
-        ---------------------------------------
+        =======================================
         :data_file: The location of the file to create the plotting code for.
         """
         filename = data_file.split('.')[0] + '.png'
@@ -57,7 +57,7 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
     def beta_plots(data_file):
         """
         Create plots for alpha diversity files.
-        ---------------------------------------
+        =======================================
         :data_file: The location of the file to create the plotting code for.
         """
         cells = []
@@ -76,7 +76,7 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
     def summarize(path, files, execute, no_files=False):
         """
         Create the python notebook containing the summary of analysis results.
-        ----------------------------------------------------------------------
+        ======================================================================
         :path: A file path. The path to the directory containing the files to plot
         :files: A dictionary of locations for the files to use when creating plots.
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
