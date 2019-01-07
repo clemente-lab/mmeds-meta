@@ -2,6 +2,7 @@ from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
 from subprocess import run
+from itertools import combinations
 
 import nbformat as nbf
 import os
@@ -51,11 +52,15 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'], files={}, execute=Fa
         """ Create plots for alpha diversity files. """
         cells = []
         for column in metadata:
-            filename = '{}-{}.png'.format(data_file.split('.')[0], column)
+            plot = '{}-{}.png'.format(data_file.split('.')[0], column)
+            subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
             cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file, group=column)))
             cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file, group=column)))
-            cells.append(v4.new_code_cell(source=source['beta_r'].format(file1=filename)))
-            cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+            cells.append(v4.new_code_cell(source=source['beta_r'].format(plot=plot, subplot=subplot, cat=column)))
+            cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=plot)))
+            for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
+                cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=subplot % (x, y))))
+
         return cells
 
     def summarize(path, files, execute, no_files=False):
