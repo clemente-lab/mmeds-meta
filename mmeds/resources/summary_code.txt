@@ -70,6 +70,11 @@ df = df.apply(lambda x: x / x.sum(), axis='index')
 df = df.T.reset_index(level=0).melt('index')
 # Rename the columns
 df.rename({{'index': 'variable', 'variable': 'X.OTU.ID'}}, axis='columns', inplace=True)
+# Modify the metadata
+mdf_lite = mdf.reset_index()
+mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
+# Merge with the data
+df = df.merge(mdf_lite, how='inner')
 =====
 taxa_r<source>
 %%R -i df
@@ -186,7 +191,7 @@ df = pd.concat(group_means, axis=0, sort=False)
 =====
 alpha_py_qiime2<source>
 # Read in the data
-df = read_csv({file1}, sep=',')
+df = read_csv('{file1}', sep=',')
 
 # Reshape the data into (mostly) long format
 headers = list(set(mdf.columns).intersection(set(df.columns)))

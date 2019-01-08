@@ -14,7 +14,7 @@ from mmeds.config import get_salt, JOB_TEMPLATE, STORAGE_DIR
 from mmeds.mmeds import send_email, log
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
-from mmeds.summarize import summarize_qiime1
+from mmeds.summarize import summarize
 
 
 class Tool:
@@ -375,19 +375,20 @@ class Qiime1(Tool):
             with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
                 f.write(summary[key])
 
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
         run(cmd, shell=True, check=True)
 
-        cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
         run(cmd, shell=True, check=True)
 
         log('Summary path')
         log(self.path / 'summary')
-        summarize_qiime1(metadata=self.config['metadata'],
-                         files=summary_files,
-                         execute=True,
-                         name='analysis',
-                         run_path=self.path / 'summary')
+        summarize(metadata=self.config['metadata'],
+                  analysis_type='qiime2',
+                  files=summary_files,
+                  execute=True,
+                  name='analysis',
+                  run_path=self.path / 'summary')
         log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'
 
@@ -820,11 +821,15 @@ class Qiime2(Tool):
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
+            summary = self.summarize()
+            log('Send email')
             send_email(doc.email,
                        doc.owner,
                        'analysis',
                        analysis_type='Qiime2 (2018.4) ' + self.atype,
-                       study_name=doc.study)
+                       study_name=doc.study,
+                       summary=summary,
+                       testing=self.testing)
         except CalledProcessError as e:
             raise AnalysisError(e.args[0])
 
@@ -834,50 +839,70 @@ class Qiime2(Tool):
         files, path = self.db.get_mongo_files(self.access_code)
 
         summary = {}
-        # Get Alpha rarefaction
+        summary_files = defaultdict(list)
+        # Get Taxa
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                files['alpha_rarefaction'],
+                                                                files['taxa_bar_plot'],
                                                                 self.path / 'temp')
         run(cmd, shell=True, check=True)
-        with open(self.path / 'temp/observed_otus.csv') as f:
-            summary[Path(f.name).name] = f.read()
+        taxa_files = (self.path / 'temp').glob('level*.csv')
+        for taxa_file in taxa_files:
+            with open(taxa_file) as f:
+                summary[taxa_file.name] = f.read()
+                summary_files['taxa'].append(taxa_file.name)
         rmtree(self.path / 'temp')
 
-        # Get Taxa
-        for pref in ['', 'un']:
-            beta_file = Path(files['core_metrics_results']) / '{}weighted_unifrac_distance_matrix.qza'.format(pref)
-
+        # Get Beta
+        beta_files = Path(files['core_metrics_results']).glob('*pcoa*')
+        for beta_file in beta_files:
             cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                     beta_file,
                                                                     self.path / 'temp')
             run(cmd, shell=True, check=True)
-            with open(self.path / 'temp/distance-matrix.tsv') as f:
-                summary['beta-' + str(Path(f.name).name)] = f.read()
+
+            with open(self.path / 'temp' / 'ordination.txt') as f:
+                summary[beta_file.name] = f.read()
+                summary_files['beta'].append(beta_file.name)
             rmtree(self.path / 'temp')
 
-        # Get Beta
-        for metric in ['shannon', 'evenness', 'faith_pd']:
-            alpha_file = Path(files['core_metrics_results']) / '{}_vector.qza'.format(metric)
-
+        # Get Alpha
+        for metric in ['shannon', 'faith_pd', 'observed_otus']:
+            alpha_file = Path(files['alpha_rarefaction'])
             cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                     alpha_file,
                                                                     self.path / 'temp')
             run(cmd, shell=True, check=True)
-            with open(self.path / 'temp/alpha-diversity.tsv') as f:
-                summary['{}-'.format(metric) + str(Path(f.name).name)] = f.read()
+            with open(self.path / 'temp/{}.csv'.format(metric)) as f:
+                name = str(Path(f.name).name)
+                summary[name] = f.read()
+                summary_files['alpha'].append(name)
             rmtree(self.path / 'temp')
 
         if not os.path.exists(self.path / 'summary'):
             os.mkdir(self.path / 'summary')
         for key in summary.keys():
-            print(key)
             with open(self.path / 'summary' / key, 'w') as f:
                 f.write(summary[key])
 
+        # Get the mapping file
+        cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
+        run(cmd, shell=True, check=True)
+
+        log('Summary path')
+        log(self.path / 'summary')
+        summarize(metadata=self.config['metadata'],
+                  analysis_type='qiime2',
+                  files=summary_files,
+                  execute=True,
+                  name='analysis',
+                  run_path=self.path / 'summary')
+
+        # Create a zip of the summary
         cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
         run(cmd, shell=True, check=True)
 
-        self.summary_analysis(summary)
+        log('Summary completed succesfully')
+        return self.path / 'summary' / 'analysis.pdf'
 
 
 def run_analysis(qiime):

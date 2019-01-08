@@ -10,11 +10,12 @@ from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log
 
 
-def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
-                     files={},
-                     execute=False,
-                     name='analysis',
-                     run_path='/home/david/Work/data-mmeds/summary'):
+def summarize(metadata=['Ethnicity', 'Nationality'],
+              analysis_type='qiime1',
+              files={},
+              execute=False,
+              name='analysis',
+              run_path='/home/david/Work/data-mmeds/summary'):
     """
     Create the summary PDF for qiime1 analysis
     ==========================================
@@ -34,9 +35,12 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
         cells = []
         for column in metadata:
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
-            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file, group=column)))
-            cells.append(v4.new_code_cell(source=source['taxa_py_qiime1'].format(file1=data_file, group=column)))
-            cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename, group=column)))
+            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file,
+                                                                                             group=column)))
+            cells.append(v4.new_code_cell(source=source['taxa_py_{}'.format(analysis_type)].format(file1=data_file,
+                                                                                                   group=column)))
+            cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename,
+                                                                         group=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
@@ -46,11 +50,15 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
+        if analysis_type == 'qiime1':
+            xaxis = 'SequencesPerSample'
+        elif analysis_type == 'qiime2':
+            xaxis = 'SamplingDepth'
         filename = data_file.split('.')[0] + '.png'
         cells = []
         cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
-        cells.append(v4.new_code_cell(source=source['alpha_py_qiime1'].format(file1=data_file)))
-        cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis='SequencesPerSample')))
+        cells.append(v4.new_code_cell(source=source['alpha_py_{}'.format(analysis_type)].format(file1=data_file)))
+        cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis=xaxis)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         return cells
 
@@ -64,9 +72,13 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
         for column in metadata:
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
-            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file, group=column)))
-            cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file, group=column)))
-            cells.append(v4.new_code_cell(source=source['beta_r'].format(plot=plot, subplot=subplot, cat=column)))
+            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file,
+                                                                                             group=column)))
+            cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file,
+                                                                          group=column)))
+            cells.append(v4.new_code_cell(source=source['beta_r'].format(plot=plot,
+                                                                         subplot=subplot,
+                                                                         cat=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=plot)))
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
                 cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=subplot % (x, y))))
@@ -94,19 +106,19 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
         # Used to store the notebook cells
         cells = []
 
-        with open(path / 'biom_table_summary.txt') as f:
-            output = f.read().replace('\n', '  \n').replace('\r', '  \r')
-
         # Add cells for setting up the R and Python environments
         cells.append(v4.new_markdown_cell(source='# Notebook Setup'))
         cells.append(v4.new_code_cell(source=source['py_setup']))
         cells.append(v4.new_code_cell(source=source['r_setup']))
 
         # Add the cells for the OTU summary
-        cells.append(v4.new_markdown_cell(source='# OTU Summary'))
-        cells.append(v4.new_markdown_cell(source=output))
-        cells.append(v4.new_markdown_cell(source='To view the full otu table, execute the code cell below'))
-        cells.append(v4.new_code_cell(source=source['otu_py']))
+        if analysis_type == 'qiime1':
+            with open(path / 'biom_table_summary.txt') as f:
+                output = f.read().replace('\n', '  \n').replace('\r', '  \r')
+            cells.append(v4.new_markdown_cell(source='# OTU Summary'))
+            cells.append(v4.new_markdown_cell(source=output))
+            cells.append(v4.new_markdown_cell(source='To view the full otu table, execute the code cell below'))
+            cells.append(v4.new_code_cell(source=source['otu_py']))
 
         # Add the cells for the Taxa summaries
         cells.append(v4.new_markdown_cell(source='# Taxa Summary'))
