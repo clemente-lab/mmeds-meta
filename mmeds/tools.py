@@ -172,8 +172,10 @@ class Tool:
     def move_user_files(self):
         """ Move all files intended for the user to a set location. """
         try:
+            log('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
-            os.mkdir(self.files['visualizations_dir'])
+            if not os.path.exists(self.files['visualizations_dir']):
+                os.mkdir(self.files['visualizations_dir'])
             for key in self.files.keys():
                 f = Path(self.files[key])
                 if '.qzv' in str(self.files[key]):
@@ -182,13 +184,14 @@ class Tool:
             self.db.update_metadata('analysis{}'.format(self.run_id), self.files)
 
             # Create the file index
-            with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
+            with open(str(self.path / 'file_index.tsv'), 'w') as f:
                 f.write('{}\t{}\n'.format(self.owner, self.access_code))
                 f.write('Key\tPath\n')
                 for key in self.files:
                     f.write('{}\t{}\n'.format(key, self.files[key]))
         except FileNotFoundError as e:
-            raise AnalysisError(e.args[0])
+            log(e)
+            raise AnalysisError(e.args[1])
 
     def add_path(self, name, extension):
         """ Add a file or directory with the full path to self.files. """
@@ -462,8 +465,8 @@ class Qiime1(Tool):
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, testing):
-        super().__init__(owner, access_code, atype, testing)
+    def __init__(self, owner, access_code, atype, config, testing):
+        super().__init__(owner, access_code, atype, config, testing)
         if testing:
             self.jobtext.append('source activate qiime2;')
         else:
@@ -478,6 +481,8 @@ class Qiime2(Tool):
         # Add the split directory to the MetaData object
         self.files['working_dir'] = Path(self.path) / 'import_dir'
         self.files['working_file'] = Path(self.path) / 'qiime_artifact.qza'
+        if not os.path.exists(self.files['working_dir']):
+            os.mkdir(self.files['working_dir'])
 
         run('ln -s {} {}'.format(Path(self.path) / 'barcodes.fastq.gz',
                                  Path(self.files['working_dir']) / 'barcodes.fastq.gz'),
@@ -558,7 +563,8 @@ class Qiime2(Tool):
             'qiime quality-filter q-score',
             '--i-demux {}'.format(self.files['demux_file']),
             '--o-filtered-sequences {}'.format(self.files['demux_filtered']),
-            '--o-filter-stats {};'.format(self.files['demux_filter_stats'])
+            '--o-filter-stats {};'.format(self.files['demux_filter_stats']),
+            '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -575,7 +581,8 @@ class Qiime2(Tool):
             '--o-table {}'.format(self.files['table_deblur']),
             '--p-sample-stats',
             '--p-jobs-to-start {}'.format(self.num_jobs),
-            '--o-stats {};'.format(self.files['stats_deblur'])
+            '--o-stats {};'.format(self.files['stats_deblur']),
+            '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -585,7 +592,8 @@ class Qiime2(Tool):
         cmd = [
             'qiime deblur visualize-stats',
             '--i-deblur-stats {}'.format(self.files['stats_deblur']),
-            '--o-visualization {};'.format(self.files['stats_deblur_visual'])
+            '--o-visualization {};'.format(self.files['stats_deblur_visual']),
+            '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -665,7 +673,8 @@ class Qiime2(Tool):
         self.add_path('unweighted_{}_significance'.format(column), '.qzv')
         cmd = [
             'qiime diversity beta-group-significance',
-            '--i-distance-matrix {}'.format(Path(self.files['core_metrics_results']) / 'unweighted_unifrac_distance_matrix.qza'),
+            '--i-distance-matrix {}'.format(Path(self.files['core_metrics_results']) /
+                                            'unweighted_unifrac_distance_matrix.qza'),
             '--m-metadata-file {}'.format(self.files['mapping']),
             '--m-metadata-column {}'.format(column),
             '--o-visualization {}'.format(self.files['unweighted_{}_significance'.format(column)]),
@@ -679,7 +688,7 @@ class Qiime2(Tool):
         cmd = [
             'qiime taxa barplot',
             '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
-            '--i-taxonomy {}'.foramt(self.files['taxonomy']),
+            '--i-taxonomy {}'.format(self.files['taxonomy']),
             '--m-metadata-file {}'.format(self.files['mapping']),
             '--o-visualization {}&'.format(self.files['taxa_bar_plot'])
         ]
@@ -706,35 +715,48 @@ class Qiime2(Tool):
         """
         self.add_path('taxonomy', '.qza')
         cmd = [
-            'qiime feature-classifier classify-sklearn'
+            'qiime feature-classifier classify-sklearn',
             '--i-classifier {}'.format(classifier),
-            '--i-reads {}'.format(self.files['rep_seq_{}'.format(self.atype)]),
-            '--o-classification {}&'.format(self.files['taxonomy'])
+            '--i-reads {}'.format(self.files['rep_seqs_{}'.format(self.atype)]),
+            '--o-classification {}'.format(self.files['taxonomy']),
+            '--p-n-jobs {}'.format(self.num_jobs)
         ]
         self.jobtext.append(' '.join(cmd))
 
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
+        log('Run sanity check on qiime2')
+        files, path = self.db.get_mongo_files(self.access_code)
         # Check the counts at the beginning of the analysis
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                self.files['demux_file'],
-                                                                self.files['demux_export'])
+                                                                self.files['demux_viz'],
+                                                                self.path / 'temp')
         run(cmd, shell=True, check=True)
 
-        df = read_csv(Path(self.files['demux_export']) / 'per-sample-fastq-counts.csv', sep=',', header=0)
+        df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
+        rmtree(self.path / 'temp')
+
         # Check the counts after DADA2/DeBlur
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['table_{}'.format(self.atype)],
-                                                                self.files['stats_export'])
+                                                                self.path / 'temp')
         run(cmd, shell=True, check=True)
+        log(cmd)
 
-        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0], Path(self.files['stats_export']) / 'feature-table.biom')
+        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0], self.path / 'temp' / 'feature-table.biom')
         result = run(cmd, stdout=PIPE, stderr=PIPE, shell=True)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
+        rmtree(self.path / 'temp')
+
+        # Compare the difference
         if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
-            message = 'Large difference ({}) between initial and final counts'
-            raise AnalysisError(message.format(initial_count - final_count))
+            message = 'Large difference ({}%) between initial and final counts'
+            message = message.format(int(100 * (initial_count - final_count) /
+                                         (initial_count + final_count)))
+            log('Sanity check result')
+            log(message)
+            raise AnalysisError(message)
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
@@ -756,59 +778,62 @@ class Qiime2(Tool):
         self.core_diversity()
         # Run these commands in parallel
         self.alpha_diversity()
-        self.taxa_diversity()
-        for col in self.columns:
+        for col in self.config['metadata']:
             self.beta_diversity(col)
         self.alpha_rarefaction()
-        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         # Wait for them all to finish
         self.jobtext.append('wait')
+        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
+        self.taxa_diversity()
 
-    def analysis(self):
+    def run(self):
         """ Perform some analysis. """
-        self.setup_analysis()
         try:
-            jobfile = self.path / (self.run_id + '_job')
-            self.add_path(jobfile, 'lsf')
-            error_log = self.path / self.run_id
-            self.add_path(error_log, 'err')
-            if self.testing:
-                self.jobtext = ['#!/usr/bin/bash'] + self.jobtext
-                # Open the jobfile to write all the commands
-                with open(str(jobfile) + '.lsf', 'w') as f:
-                    f.write('\n'.join(self.jobtext))
-                # Run the command
-                run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
-            else:
-                # Get the job header text from the template
-                with open(JOB_TEMPLATE) as f1:
-                    temp = f1.read()
-                # Open the jobfile to write all the commands
-                with open(str(jobfile) + '.lsf', 'w') as f:
-                    options = self.get_job_params()
-                    # Add the appropriate values
-                    f.write(temp.format(**options))
-                    f.write('\n'.join(self.jobtext))
-                # Submit the job
-                output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-                job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
-                self.wait_on_job(job_id)
+            if self.analysis:
+                self.setup_analysis()
+                jobfile = self.path / (self.run_id + '_job')
+                self.add_path(jobfile, 'lsf')
+                error_log = self.path / self.run_id
+                self.add_path(error_log, 'err')
+                if self.testing:
+                    # Open the jobfile to write all the commands
+                    with open(str(jobfile) + '.lsf', 'w') as f:
+                        f.write('\n'.join(self.jobtext))
+                    # Run the command
+                    run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+                else:
+                    # Get the job header text from the template
+                    with open(JOB_TEMPLATE) as f1:
+                        temp = f1.read()
+                    # Open the jobfile to write all the commands
+                    with open(str(jobfile) + '.lsf', 'w') as f:
+                        options = self.get_job_params()
+                        # Add the appropriate values
+                        f.write(temp.format(**options))
+                        f.write('\n'.join(self.jobtext))
+                    # Submit the job
+                    output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+                    job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+                    self.wait_on_job(job_id)
 
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
-            send_email(doc.email, doc.owner, 'analysis', analysis_type='Qiime2 (2018.4) ' + self.atype, study_name=doc.study)
+            send_email(doc.email,
+                       doc.owner,
+                       'analysis',
+                       analysis_type='Qiime2 (2018.4) ' + self.atype,
+                       study_name=doc.study)
         except CalledProcessError as e:
             raise AnalysisError(e.args[0])
 
     def summarize(self):
         """ Create summary of the files produced by the qiime2 analysis. """
-        self.files['alpha_rarefaction'] = '/home/david/Work/mmeds-meta/server/data/david_0/q2-dada/'
-        self.files['core_metrics_results'] = '/home/david/Work/mmeds-meta/server/data/david_0/q2-dada/core_metrics_results_cqyob'
+        log('Start Qiime2 summary')
+        files, path = self.db.get_mongo_files(self.access_code)
 
         summary = {}
         # Get Alpha rarefaction
-        # Get Taxa
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['alpha_rarefaction'],
                                                                 self.path / 'temp')
@@ -817,7 +842,7 @@ class Qiime2(Tool):
             summary[Path(f.name).name] = f.read()
         rmtree(self.path / 'temp')
 
-        # Get Beta
+        # Get Taxa
         for pref in ['', 'un']:
             beta_file = Path(self.files['core_metrics_results']) / '{}weighted_unifrac_distance_matrix.qza'.format(pref)
 
@@ -841,9 +866,11 @@ class Qiime2(Tool):
                 summary['{}-'.format(metric) + str(Path(f.name).name)] = f.read()
             rmtree(self.path / 'temp')
 
+        if not os.path.exists(self.path / 'summary'):
+            os.mkdir(self.path / 'summary')
         for key in summary.keys():
             print(key)
-            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
+            with open(self.path / 'summary' / key, 'w') as f:
                 f.write(summary[key])
 
         cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
