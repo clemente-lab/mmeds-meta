@@ -10,7 +10,7 @@ import os
 import multiprocessing as mp
 
 from mmeds.database import Database
-from mmeds.config import get_salt, JOB_TEMPLATE, STORAGE_DIR
+from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
 from mmeds.mmeds import send_email, log
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
@@ -20,7 +20,18 @@ from mmeds.summarize import summarize
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
+        """
+        Setup the Tool class
+        ====================
+        :owner: A string. The owner of the files being analyzed.
+        :access_code: A string. The code for accessing the files to be analyzed.
+        :atype: A string. The type of analysis to perform. Qiime1 or 2, DADA2 or DeBlur.
+        :config: A file object. A custom config file, may be None.
+        :testing: A boolean. If True run with configurations for a local server.
+        :threads: An int. The number of threads to use during analysis, is overwritten if testing==True.
+        :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
+        """
         log('Start analysis')
         self.db = Database('', owner=owner, testing=testing)
         self.access_code = access_code
@@ -34,7 +45,7 @@ class Tool:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
         self.analysis = analysis
-        self.path, self.run_id = self.setup_dir(path)
+        self.path, self.run_id, self.files = self.setup_dir(path)
 
         # Add the split directory to the MetaData object
         self.add_path('analysis{}'.format(self.run_id), '')
@@ -46,25 +57,34 @@ class Tool:
 
     def setup_dir(self, path):
         """ Setup the directory to run the analysis. """
+        files = {}
         run_id = 0
         new_dir = Path(path) / 'analysis{}'.format(run_id)
         while os.path.exists(new_dir):
             run_id += 1
             new_dir = Path(path) / 'analysis{}'.format(run_id)
+        new_dir = new_dir.resolve()
+        root_files, path = self.db.get_mongo_files(self.access_code)
         if self.analysis:
-            files, path = self.db.get_mongo_files(self.access_code)
             run('mkdir {}'.format(new_dir), shell=True, check=True)
 
             # Create links to the files
-            run('ln {} {}'.format(files['barcodes'],
+            run('ln {} {}'.format(root_files['barcodes'],
                                   new_dir / 'barcodes.fastq.gz'),
                 shell=True, check=True)
-            run('ln {} {}'.format(files['reads'],
+
+            run('ln {} {}'.format(root_files['reads'],
                                   new_dir / 'sequences.fastq.gz'),
                 shell=True, check=True)
-            run('ln {} {}'.format(files['metadata'],
+            run('ln {} {}'.format(root_files['metadata'],
                                   new_dir / 'metadata.tsv'),
                 shell=True, check=True)
+
+            # Add the links to the files dict for this analysis
+            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+            files['reads'] = new_dir / 'sequences.fastq.gz'
+            files['metadata'] = new_dir / 'metadata.tsv'
+
             log('Run analysis')
         else:
             run_id -= 1
@@ -73,11 +93,10 @@ class Tool:
                 rmtree(new_dir / 'summary')
             log("Skip analysis")
         log("Analysis directory is {}".format(new_dir))
-        return new_dir, str(run_id)
+        return new_dir, str(run_id), files
 
     def read_config_file(self, config_file):
         """ Read the provided config file to determine settings for the analysis. """
-        files, path = self.db.get_mongo_files(self.access_code)
         config = {}
         # If no config was provided load the default
         if config_file.file is None:
@@ -104,7 +123,7 @@ class Tool:
         # Parse the metadata values to be included in the analysis
         if config['metadata'] == 'all':
             # If it's set to all get all the headers from the mapping file
-            with open(files['mapping']) as f:
+            with open(self.files['mapping']) as f:
                 header = f.readline()
             config['metadata'] = header.strip().split('\t')
         else:
@@ -155,30 +174,33 @@ class Tool:
         try:
             log('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
-            files, path = self.db.get_mongo_files(self.access_code)
-            if not os.path.exists(files['visualizations_dir']):
-                os.mkdir(files['visualizations_dir'])
-            for key in files.keys():
-                f = Path(files[key])
-                if '.qzv' in files[key]:
+            if not os.path.exists(self.files['visualizations_dir']):
+                os.mkdir(self.files['visualizations_dir'])
+            for key in self.files.keys():
+                f = Path(self.files[key])
+                if '.qzv' in str(self.files[key]):
                     new_file = f.name
-                    copyfile(files[key], Path(files['visualizations_dir']) / new_file)
+                    copyfile(self.files[key], Path(self.files['visualizations_dir']) / new_file)
+            self.db.update_metadata('analysis{}'.format(self.run_id), self.files)
+
+            # Create the file index
+            with open(str(self.path / 'file_index.tsv'), 'w') as f:
+                f.write('{}\t{}\n'.format(self.owner, self.access_code))
+                f.write('Key\tPath\n')
+                for key in self.files:
+                    f.write('{}\t{}\n'.format(key, self.files[key]))
         except FileNotFoundError as e:
             log(e)
             raise AnalysisError(e.args[1])
 
     def add_path(self, name, extension):
-        """ Add a file or directory to the document identified by qiime.access_code. """
-        new_file = Path(self.path) / (str(name) + '_' + get_salt(5) + extension)
-        while os.path.exists(new_file):
-            new_file = Path(self.path) / (str(name) + '_' + get_salt(5) + extension)
-        self.db.update_metadata(self.access_code, str(name), new_file)
+        """ Add a file or directory with the full path to self.files. """
+        self.files[name] = '{}{}'.format(self.path / name, extension)
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
         # Open the metadata file for the study
-        metadata = self.db.get_metadata(self.access_code)
-        fp = metadata.files['metadata']
+        fp = self.files['metadata']
         mdata = read_csv(fp, header=1, skiprows=[2, 3, 4], sep='\t')
         self.columns = list(mdata.columns)
 
@@ -226,7 +248,7 @@ class Tool:
                 f.write('\t'.join(row) + '\n')
 
         # Add the mapping file to the MetaData object
-        self.db.update_metadata(self.access_code, 'mapping', mapping_file)
+        self.files['mapping'] = mapping_file
 
 
 class Qiime1(Tool):
@@ -248,54 +270,53 @@ class Qiime1(Tool):
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
-        files, path = self.db.get_mongo_files(self.access_code)
-        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
+        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.files['mapping'], self.path)
         self.jobtext.append(cmd)
 
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
         self.add_path('split_output', '')
-        files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {};'
-        command = cmd.format(files['split_output'], files['reads'], files['barcodes'], files['mapping'])
+        command = cmd.format(self.files['split_output'],
+                             self.files['reads'],
+                             self.files['barcodes'],
+                             self.files['mapping'])
         self.jobtext.append(command)
 
     def pick_otu(self):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
-        files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
         command = cmd.format(self.atype,
                              self.num_jobs,
-                             files['otu_output'],
-                             Path(files['split_output']) / 'seqs.fna',
+                             self.files['otu_output'],
+                             Path(self.files['split_output']) / 'seqs.fna',
                              Path(self.path) / 'params.txt')
         self.jobtext.append(command)
 
     def core_diversity(self):
         """ Run the core diversity analysis script. """
         self.add_path('diversity_output', '')
-        files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
         if self.atype == 'open':
-            command = cmd.format(files['diversity_output'],
-                                 Path(files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
-                                 files['mapping'],
-                                 Path(files['otu_output']) / 'rep_set.tre',
+            command = cmd.format(self.files['diversity_output'],
+                                 Path(self.files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
+                                 self.files['mapping'],
+                                 Path(self.files['otu_output']) / 'rep_set.tre',
                                  self.config['sampling_depth'],
                                  ','.join(self.config['metadata']),
                                  Path(self.path) / 'params.txt')
         else:
-            command = cmd.format(files['diversity_output'],
-                                 Path(files['otu_output']) / 'otu_table.biom',
-                                 files['mapping'],
-                                 Path(files['otu_output']) / '97_otus.tree',
+            command = cmd.format(self.files['diversity_output'],
+                                 Path(self.files['otu_output']) / 'otu_table.biom',
+                                 self.files['mapping'],
+                                 Path(self.files['otu_output']) / '97_otus.tree',
                                  self.config['sampling_depth'],
                                  ','.join(self.config['metadata']),
                                  Path(self.path) / 'params.txt')
@@ -306,9 +327,8 @@ class Qiime1(Tool):
         """ Check that counts match after split_libraries and pick_otu. """
         try:
             # Count the sequences prior to diversity analysis
-            files, path = self.db.get_mongo_files(self.access_code)
             cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
-                                                  Path(files['split_output']) / 'seqs.fna')
+                                                  Path(self.files['split_output']) / 'seqs.fna')
             log('Run command: {}'.format(cmd))
             output = run(cmd, shell=True, check=True, stdout=PIPE)
             out = output.stdout.decode('utf-8')
@@ -316,7 +336,7 @@ class Qiime1(Tool):
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
             # Count the sequences in the output of the diversity analysis
-            with open(Path(files['diversity_output']) / 'biom_table_summary.txt') as f:
+            with open(Path(self.files['diversity_output']) / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
                 log('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
@@ -337,15 +357,14 @@ class Qiime1(Tool):
         Create summary of analysis results
         """
         log('Run summarize')
-        files, path = self.db.get_mongo_files(self.access_code)
-        diversity = Path(files['diversity_output'])
+        diversity = Path(self.files['diversity_output'])
         summary = {}
         summary_files = defaultdict(list)
 
         # Convert and store the otu table
         cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
         cmd = cmd.format(self.jobtext[0],
-                         Path(files['otu_output']) / 'otu_table.biom',
+                         Path(self.files['otu_output']) / 'otu_table.biom',
                          self.path / 'otu_table.tsv')
         log(cmd)
         run(cmd, shell=True, check=True)
@@ -375,10 +394,7 @@ class Qiime1(Tool):
             with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
                 f.write(summary[key])
 
-        cmd = 'cp {} {}'.format(files['mapping'], self.path / 'summary/.')
-        run(cmd, shell=True, check=True)
-
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        cmd = 'cp {} {}'.format(self.files['mapping'], self.path / 'summary/.')
         run(cmd, shell=True, check=True)
 
         log('Summary path')
@@ -389,6 +405,7 @@ class Qiime1(Tool):
                   execute=True,
                   name='analysis',
                   run_path=self.path / 'summary')
+        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
         log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'
 
@@ -459,66 +476,59 @@ class Qiime2(Tool):
     # ======================= #
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
-        files, path = self.db.get_mongo_files(self.access_code)
 
         # Add the split directory to the MetaData object
-        self.db.update_metadata(self.access_code,
-                                'working_file',
-                                Path(self.path) / 'qiime_artifact.qza')
-        os.mkdir(Path(self.path) / 'import_dir')
-        self.db.update_metadata(self.access_code,
-                                'working_dir',
-                                Path(self.path) / 'import_dir')
-        files, path = self.db.get_mongo_files(self.access_code)
+        self.files['working_dir'] = Path(self.path) / 'import_dir'
+        self.files['working_file'] = Path(self.path) / 'qiime_artifact.qza'
+        if not os.path.exists(self.files['working_dir']):
+            os.mkdir(self.files['working_dir'])
+
         run('ln -s {} {}'.format(Path(self.path) / 'barcodes.fastq.gz',
-                                 Path(files['working_dir']) / 'barcodes.fastq.gz'),
+                                 Path(self.files['working_dir']) / 'barcodes.fastq.gz'),
             shell=True, check=True)
         run('ln -s {} {}'.format(Path(self.path) / 'sequences.fastq.gz',
-                                 Path(files['working_dir']) / 'sequences.fastq.gz'),
+                                 Path(self.files['working_dir']) / 'sequences.fastq.gz'),
             shell=True, check=True)
 
         # Run the script
         cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-        command = cmd.format(itype, files['working_dir'], files['working_file'])
+        command = cmd.format(itype, self.files['working_dir'], self.files['working_file'])
         self.jobtext.append(command)
 
     def demultiplex(self):
         """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
         self.add_path('demux_file', '.qza')
-        files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = [
             'qiime demux emp-single',
-            '--i-seqs {}'.format(files['working_file']),
-            '--m-barcodes-file {}'.format(files['mapping']),
+            '--i-seqs {}'.format(self.files['working_file']),
+            '--m-barcodes-file {}'.format(self.files['mapping']),
             '--m-barcodes-column {}'.format('BarcodeSequence'),
-            '--o-per-sample-sequences {};'.format(files['demux_file'])
+            '--o-per-sample-sequences {};'.format(self.files['demux_file'])
         ]
         self.jobtext.append(' '.join(cmd))
 
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
-        files, path = self.db.get_mongo_files(self.access_code)
 
         # Run the script
         cmd = [
             'qiime demux summarize',
-            '--i-data {}'.format(files['demux_file']),
-            '--o-visualization {};'.format(files['demux_viz'])
+            '--i-data {}'.format(self.files['demux_file']),
+            '--o-visualization {};'.format(self.files['demux_viz'])
         ]
         self.jobtext.append(' '.join(cmd))
 
     def tabulate(self):
         """ Run tabulate visualization. """
         self.add_path('stats_{}_visual'.format(self.atype), '.qzv')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime metadata tabulate',
-            '--m-input-file {}'.format(files['stats_{}'.format(self.atype)]),
-            '--o-visualization {};'.format(files['stats_{}_visual'.format(self.atype)])
+            '--m-input-file {}'.format(self.files['stats_{}'.format(self.atype)]),
+            '--o-visualization {};'.format(self.files['stats_{}_visual'.format(self.atype)])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -529,15 +539,14 @@ class Qiime2(Tool):
         self.add_path('table_dada2', '.qza')
         self.add_path('stats_dada2', '.qza')
 
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime dada2 denoise-single',
-            '--i-demultiplexed-seqs {}'.format(files['demux_file']),
+            '--i-demultiplexed-seqs {}'.format(self.files['demux_file']),
             '--p-trim-left {}'.format(p_trim_left),
             '--p-trunc-len {}'.format(p_trunc_len),
-            '--o-representative-sequences {}'.format(files['rep_seqs_dada2']),
-            '--o-table {}'.format(files['table_dada2']),
-            '--o-denoising-stats {}'.format(files['stats_dada2']),
+            '--o-representative-sequences {}'.format(self.files['rep_seqs_dada2']),
+            '--o-table {}'.format(self.files['table_dada2']),
+            '--o-denoising-stats {}'.format(self.files['stats_dada2']),
             '--p-n-threads {};'.format(self.num_jobs)
         ]
         self.jobtext.append(' '.join(cmd))
@@ -549,13 +558,12 @@ class Qiime2(Tool):
         """ Run Deblur analysis on the demultiplexed file. """
         self.add_path('demux_filtered', '.qza')
         self.add_path('demux_filter_stats', '.qza')
-
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime quality-filter q-score',
-            '--i-demux {}'.format(files['demux_file']),
-            '--o-filtered-sequences {}'.format(files['demux_filtered']),
-            '--o-filter-stats {};'.format(files['demux_filter_stats'])
+            '--i-demux {}'.format(self.files['demux_file']),
+            '--o-filtered-sequences {}'.format(self.files['demux_filtered']),
+            '--o-filter-stats {};'.format(self.files['demux_filter_stats']),
+            '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -564,88 +572,81 @@ class Qiime2(Tool):
         self.add_path('rep_seqs_deblur', '.qza')
         self.add_path('table_deblur', '.qza')
         self.add_path('stats_deblur', '.qza')
-
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime deblur denoise-16S',
-            '--i-demultiplexed-seqs {}'.format(files['demux_filtered']),
+            '--i-demultiplexed-seqs {}'.format(self.files['demux_filtered']),
             '--p-trim-length {}'.format(p_trim_length),
-            '--o-representative-sequences {}'.format(files['rep_seqs_deblur']),
-            '--o-table {}'.format(files['table_deblur']),
+            '--o-representative-sequences {}'.format(self.files['rep_seqs_deblur']),
+            '--o-table {}'.format(self.files['table_deblur']),
             '--p-sample-stats',
             '--p-jobs-to-start {}'.format(self.num_jobs),
-            '--o-stats {};'.format(files['stats_deblur'])
+            '--o-stats {};'.format(self.files['stats_deblur']),
+            '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
 
     def deblur_visualize(self):
         """ Create visualizations from deblur analysis. """
         self.add_path('stats_deblur_visual', '.qzv')
-
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime deblur visualize-stats',
-            '--i-deblur-stats {}'.format(files['stats_deblur']),
-            '--o-visualization {};'.format(files['stats_deblur_visual'])
+            '--i-deblur-stats {}'.format(self.files['stats_deblur']),
+            '--o-visualization {};'.format(self.files['stats_deblur_visual']),
+            '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
 
     def alignment_mafft(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 1"""
         self.add_path('alignment', '.qza')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime alignment mafft',
-            '--i-sequences {}'.format(files['rep_seqs_{}'.format(self.atype)]),
-            '--o-alignment {};'.format(files['alignment'])
+            '--i-sequences {}'.format(self.files['rep_seqs_{}'.format(self.atype)]),
+            '--o-alignment {};'.format(self.files['alignment'])
         ]
         self.jobtext.append(' '.join(cmd))
 
     def alignment_mask(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 2"""
         self.add_path('masked_alignment', '.qza')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime alignment mask',
-            '--i-alignment {}'.format(files['alignment']),
-            '--o-masked-alignment {};'.format(files['masked_alignment'])
+            '--i-alignment {}'.format(self.files['alignment']),
+            '--o-masked-alignment {};'.format(self.files['masked_alignment'])
         ]
         self.jobtext.append(' '.join(cmd))
 
     def phylogeny_fasttree(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 3"""
         self.add_path('unrooted_tree', '.qza')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime phylogeny fasttree',
-            '--i-alignment {}'.format(files['masked_alignment']),
-            '--o-tree {};'.format(files['unrooted_tree'])
+            '--i-alignment {}'.format(self.files['masked_alignment']),
+            '--o-tree {};'.format(self.files['unrooted_tree'])
         ]
         self.jobtext.append(' '.join(cmd))
 
     def phylogeny_midpoint_root(self):
         """ Generate a tree for phylogenetic diversity analysis. Step 4"""
         self.add_path('rooted_tree', '.qza')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime phylogeny midpoint-root',
-            '--i-tree {}'.format(files['unrooted_tree']),
-            '--o-rooted-tree {};'.format(files['rooted_tree'])
+            '--i-tree {}'.format(self.files['unrooted_tree']),
+            '--o-rooted-tree {};'.format(self.files['rooted_tree'])
         ]
         self.jobtext.append(' '.join(cmd))
 
     def core_diversity(self, p_sampling_depth=1109):
         """ Run core diversity """
         self.add_path('core_metrics_results', '')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime diversity core-metrics-phylogenetic',
-            '--i-phylogeny {}'.format(files['rooted_tree']),
-            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
+            '--i-phylogeny {}'.format(self.files['rooted_tree']),
+            '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
             '--p-sampling-depth {}'.format(p_sampling_depth),
-            '--m-metadata-file {}'.format(files['mapping']),
+            '--m-metadata-file {}'.format(self.files['mapping']),
             '--p-n-jobs {} '.format(self.num_jobs),
-            '--output-dir {};'.format(files['core_metrics_results'])
+            '--output-dir {};'.format(self.files['core_metrics_results'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -655,12 +656,11 @@ class Qiime2(Tool):
         metric : ('faith_pd' or 'evenness')
         """
         self.add_path('{}_group_significance'.format(metric), '.qzv')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime diversity alpha-group-significance',
-            '--i-alpha-diversity {}'.format(Path(files['core_metrics_results']) / '{}_vector.qza'.format(metric)),
-            '--m-metadata-file {}'.format(files['mapping']),
-            '--o-visualization {}&'.format(files['{}_group_significance'.format(metric)])
+            '--i-alpha-diversity {}'.format(Path(self.files['core_metrics_results']) / '{}_vector.qza'.format(metric)),
+            '--m-metadata-file {}'.format(self.files['mapping']),
+            '--o-visualization {}&'.format(self.files['{}_group_significance'.format(metric)])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -670,14 +670,13 @@ class Qiime2(Tool):
         column: Some column from the metadata file
         """
         self.add_path('unweighted_{}_significance'.format(column), '.qzv')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime diversity beta-group-significance',
-            '--i-distance-matrix {}'.format(Path(files['core_metrics_results']) /
+            '--i-distance-matrix {}'.format(Path(self.files['core_metrics_results']) /
                                             'unweighted_unifrac_distance_matrix.qza'),
-            '--m-metadata-file {}'.format(files['mapping']),
+            '--m-metadata-file {}'.format(self.files['mapping']),
             '--m-metadata-column {}'.format(column),
-            '--o-visualization {}'.format(files['unweighted_{}_significance'.format(column)]),
+            '--o-visualization {}'.format(self.files['unweighted_{}_significance'.format(column)]),
             '--p-pairwise&'
         ]
         self.jobtext.append(' '.join(cmd))
@@ -685,13 +684,12 @@ class Qiime2(Tool):
     def taxa_diversity(self):
         """ Create visualizations of taxa summaries at each level. """
         self.add_path('taxa_bar_plot', '.qzv')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime taxa barplot',
-            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
-            '--i-taxonomy {}'.format(files['taxonomy']),
-            '--m-metadata-file {}'.format(files['mapping']),
-            '--o-visualization {}'.format(files['taxa_bar_plot'])
+            '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
+            '--i-taxonomy {}'.format(self.files['taxonomy']),
+            '--m-metadata-file {}'.format(self.files['mapping']),
+            '--o-visualization {}&'.format(self.files['taxa_bar_plot'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -700,14 +698,13 @@ class Qiime2(Tool):
         Create plots for alpha rarefaction.
         """
         self.add_path('alpha_rarefaction', '.qzv')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime diversity alpha-rarefaction',
-            '--i-table {}'.format(files['table_{}'.format(self.atype)]),
-            '--i-phylogeny {}'.format(files['rooted_tree']),
+            '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
+            '--i-phylogeny {}'.format(self.files['rooted_tree']),
             '--p-max-depth {}'.format(max_depth),
-            '--m-metadata-file {}'.format(files['mapping']),
-            '--o-visualization {}&'.format(files['alpha_rarefaction'])
+            '--m-metadata-file {}'.format(self.files['mapping']),
+            '--o-visualization {}&'.format(self.files['alpha_rarefaction'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -716,12 +713,12 @@ class Qiime2(Tool):
         Create plots for alpha rarefaction.
         """
         self.add_path('taxonomy', '.qza')
-        files, path = self.db.get_mongo_files(self.access_code)
         cmd = [
             'qiime feature-classifier classify-sklearn',
             '--i-classifier {}'.format(classifier),
-            '--i-reads {}'.format(files['rep_seqs_{}'.format(self.atype)]),
-            '--o-classification {}'.format(files['taxonomy'])
+            '--i-reads {}'.format(self.files['rep_seqs_{}'.format(self.atype)]),
+            '--o-classification {}'.format(self.files['taxonomy']),
+            '--p-n-jobs {}'.format(self.num_jobs)
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -731,7 +728,7 @@ class Qiime2(Tool):
         files, path = self.db.get_mongo_files(self.access_code)
         # Check the counts at the beginning of the analysis
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                files['demux_viz'],
+                                                                self.files['demux_viz'],
                                                                 self.path / 'temp')
         run(cmd, shell=True, check=True)
 
@@ -741,7 +738,7 @@ class Qiime2(Tool):
 
         # Check the counts after DADA2/DeBlur
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                files['table_{}'.format(self.atype)],
+                                                                self.files['table_{}'.format(self.atype)],
                                                                 self.path / 'temp')
         run(cmd, shell=True, check=True)
         log(cmd)
@@ -758,7 +755,7 @@ class Qiime2(Tool):
                                          (initial_count + final_count)))
             log('Sanity check result')
             log(message)
-            #  raise AnalysisError(message)
+            raise AnalysisError(message)
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
@@ -842,7 +839,7 @@ class Qiime2(Tool):
         summary_files = defaultdict(list)
         # Get Taxa
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                files['taxa_bar_plot'],
+                                                                self.files['alpha_rarefaction'],
                                                                 self.path / 'temp')
         run(cmd, shell=True, check=True)
         taxa_files = (self.path / 'temp').glob('level*.csv')

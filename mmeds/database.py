@@ -39,7 +39,12 @@ class MetaData(men.DynamicDocument):
             f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
             f.write('Key\tPath\n')
             for key in self.files:
-                f.write('{}\t{}\n'.format(key, self.files[key]))
+                # If it's a key for an analysis point to the file index for that analysis
+                if isinstance(self.files[key], dict):
+                    f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
+                # Otherwise just write the value
+                else:
+                    f.write('{}\t{}\n'.format(key, self.files[key]))
         super(MetaData, self).save()
 
 
@@ -627,17 +632,18 @@ class Database:
         self.db.commit()
         return True
 
-    def update_metadata(self, access_code, filekey, filename):
+    def update_metadata(self, access_code, filekey, value):
         """
         Add a file to a metadata object
         ====================================
         :access_code: Code identifiying the document to update
         :filekey: The key the new file should be indexed under
-        :filename: The path to the new file
+        :value: Either a path to a file or a dictionary containing
+                file locations in a subdirectory
         """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
-        mdata.files[filekey] = str(Path(self.path) / filename)
+        mdata.files[filekey] = value
         mdata.save()
 
     def check_repeated_subjects(self, df, subject_col=-2):
