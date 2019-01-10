@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError, PIPE
-from shutil import copy, rmtree
+from shutil import copy, rmtree, make_archive
 from time import sleep
 from pandas import read_csv
 from collections import defaultdict
@@ -17,7 +17,7 @@ from mmeds.summarize import summarize
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
         """
         Setup the Tool class
         ====================
@@ -37,7 +37,7 @@ class Tool:
         self.jobtext = []
         self.owner = owner
         if testing:
-            self.num_jobs = 4
+            self.num_jobs = 3
         else:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
@@ -401,7 +401,12 @@ class Qiime1(Tool):
                   execute=True,
                   name='analysis',
                   run_path=self.path / 'summary')
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
+        log('Make archive')
+        result = make_archive(self.path / 'summary{}'.format(self.run_id),
+                              format='zip',
+                              root_dir=self.path,
+                              base_dir='summary')
+        log(result)
         log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'
 
@@ -883,8 +888,12 @@ class Qiime2(Tool):
                   run_path=self.path / 'summary')
 
         # Create a zip of the summary
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
-        run(cmd, shell=True, check=True)
+        result = make_archive(self.path / 'summary{}'.format(self.run_id),
+                              format='zip',
+                              root_dir=self.path,
+                              base_dir='summary')
+        log('Create archive of summary')
+        log(result)
 
         log('Summary completed succesfully')
         return self.path / 'summary' / 'analysis.pdf'
