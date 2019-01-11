@@ -17,7 +17,7 @@ from mmeds.summarize import summarize
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
         """
         Setup the Tool class
         ====================

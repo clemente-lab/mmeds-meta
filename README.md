@@ -34,8 +34,12 @@ Latex Dependencies
 adjustbox  
 upquote  
 ulem  
+revtex  
+braket  
 
 Other Dependencies  
 rpy2: 2.9.1  
 readline headers  
 jupyter_contrib_nbextensions  
+
+latex_template: https://michaelgoerz.net/notes/custom-template-for-converting-jupyter-notebooks-to-latex.html
