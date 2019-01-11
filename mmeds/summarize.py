@@ -113,8 +113,9 @@ def summarize_qiime1(metadata=['Ethnicity', 'Nationality'],
         for data_file in files['taxa']:
             cells += taxa_plots(data_file)
         cells.append(v4.new_markdown_cell(source='# Diversity Plot Legend'))
-        cells.append(v4.new_code_cell(source=source['legend_py'].format()))
-        cells.append(v4.new_code_cell(source=source['legend_r'].format(plot='legend.png')))
+        cells.append(v4.new_code_cell(source=source['legend_py'].format(fontfile=STORAGE_DIR / 'ABeeZee-Regular.otf',
+                                                                        fontsize=15,
+                                                                        legend='legend.png')))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot='legend.png')))
 
         # Add the cells for Alpha Diversity
