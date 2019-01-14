@@ -30,5 +30,5 @@ server/session
 # All backup files
 .*
 *.bak
-/data/privkey.pem
+/mmeds/resources/privkey.pem
 /mmeds/secrets.py
