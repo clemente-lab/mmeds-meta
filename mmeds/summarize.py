@@ -60,6 +60,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         cells.append(v4.new_code_cell(source=source['alpha_py_{}'.format(analysis_type)].format(file1=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis=xaxis)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+        cells.append(v4.new_code_cell(source='Image("legend.png")'))
         return cells
 
     def beta_plots(data_file):
@@ -80,6 +81,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
                                                                          subplot=subplot,
                                                                          cat=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=plot)))
+            cells.append(v4.new_code_cell(source='Image("legend.png")'))
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
                 cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=subplot % (x, y))))
 

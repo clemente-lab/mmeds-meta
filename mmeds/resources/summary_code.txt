@@ -35,7 +35,7 @@ shuffle(max_colors, lambda: 0.25)
 %load_ext rpy2.ipython
 =====
 r_setup<source>
-%%R -i max_colors -o allColors
+%%R -i max_colors -o allRGB
 require(ggplot2)
 require(RColorBrewer)
 require(GGally)
@@ -49,6 +49,8 @@ allColors <- colorMaker(length(unique(max_colors)))
 names(allColors) <- max_colors
 colScale <- scale_color_manual(name = ~GroupID, values = allColors)
 colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
+# Get the RGB values for the colors
+allRGB <- data.frame(apply(data.frame(allColors), 1, col2rgb))
 =====
 otu_py<source>
 df = read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
@@ -110,7 +112,13 @@ font_size = {fontsize}
 offset = float(font_size) / 2
 v_offset = 0
 fnt = ImageFont.truetype('{fontfile}', size=font_size)
-height = len(new_legend) * 30
+height = 0
+for group_name in mdf.columns:
+    if (mdf[group_name].nunique() > 1 and
+        mdf[group_name].nunique() < len(mdf[group_name]) and
+        'Date' not in group_name):
+        for sample in mdf[group_name].drop_duplicates():
+            height += 30
 
 # Create a new image and setup the draw object
 im = PImage.new('RGB', (300, height), color='white')
