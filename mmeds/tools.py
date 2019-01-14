@@ -392,7 +392,10 @@ class Qiime1(Tool):
         move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
         move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
         move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
+        # Get the mapping file
         copy(self.files['mapping'], self.path / 'summary/.')
+        # Get the template
+        copy(STORAGE_DIR / 'revtex.tplx', self.files['summary'])
         log('Summary path')
         log(self.path / 'summary')
         summarize(metadata=self.config['metadata'],
@@ -877,6 +880,8 @@ class Qiime2(Tool):
 
         # Get the mapping file
         copy(self.files['mapping'], self.files['summary'])
+        # Get the template
+        copy(STORAGE_DIR / 'revtex.tplx', self.files['summary'])
 
         log('Summary path')
         log(self.path / 'summary')

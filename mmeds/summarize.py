@@ -42,6 +42,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
             cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename,
                                                                          group=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+            cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
 
     def alpha_plots(data_file):
@@ -61,6 +62,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis=xaxis)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         cells.append(v4.new_code_cell(source='Image("legend.png")'))
+        cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
 
     def beta_plots(data_file):
@@ -81,9 +83,12 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
                                                                          subplot=subplot,
                                                                          cat=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=plot)))
-            cells.append(v4.new_code_cell(source='Image("legend.png")'))
+            cells.append(v4.new_code_cell(source='Image("{group}-legend.png")'.format(group=column)))
+            cells.append(v4.new_markdown_cell(source=source['page_break']))
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
                 cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=subplot % (x, y))))
+                cells.append(v4.new_code_cell(source='Image("{group}-legend.png")'.format(group=column)))
+                cells.append(v4.new_markdown_cell(source=source['page_break']))
 
         return cells
 
@@ -108,7 +113,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         # Used to store the notebook cells
         cells = []
 
-        # Add cells for setting up the R and Python environments
+        # Add cells for setting up the notebook
         cells.append(v4.new_code_cell(source=source['py_setup']))
         cells.append(v4.new_code_cell(source=source['r_setup']))
 
@@ -125,11 +130,9 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         cells.append(v4.new_markdown_cell(source='# Taxa Summary'))
         for data_file in sorted(files['taxa']):
             cells += taxa_plots(data_file)
-        cells.append(v4.new_markdown_cell(source='# Diversity Plot Legend'))
         cells.append(v4.new_code_cell(source=source['legend_py'].format(fontfile=STORAGE_DIR / 'ABeeZee-Regular.otf',
                                                                         fontsize=15,
                                                                         legend='legend.png')))
-        cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot='legend.png')))
 
         # Add the cells for Alpha Diversity
         cells.append(v4.new_markdown_cell(source='# Alpha Diversity Summary'))
@@ -152,9 +155,11 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
                 'affiliation': 'Icahn School of Medicine at Mount Sinai',
                 'name': 'MMEDS Analysis Summary',
                 'title': 'MMEDS Analysis Summary'
-            },
-            'hide_input': True
+            }
         }
+        for cell in cells:
+            if cell.cell_type == 'code':
+                cell.metadata['hide_input'] = True
         nn = nbf.v4.new_notebook(cells=cells, metadata=meta)
         return nn
 
@@ -165,17 +170,16 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         :nn: A python notebook object.
         """
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
-        cmd = 'jupyter nbconvert --template={}/revtex.tplx --to=latex {}.ipynb'.format(STORAGE_DIR, name)
+        cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
         if execute:
             cmd += ' --execute'
-        run(cmd, shell=True, check=True)
-
-        # Add the line missing from the template
-        cmd = r"sed -i '1i\\\documentclass[]{{article}}' {}.tex".format(name)
+        log(cmd)
         run(cmd, shell=True, check=True)
 
         # Convert to pdf
-        cmd = 'pdflatex {name}.tex {name}.pdf'.format(name=name)
+        cmd = 'pdflatex {name}.tex'.format(name=name)
+        run(cmd, shell=True, check=True)
+        cmd = 'pdflatex {name}.tex'.format(name=name)
         run(cmd, shell=True, check=True)
 
     log('Start summary notebook')

@@ -8,7 +8,7 @@
 %===============================================================================
 
 ((* block docclass *))
-\documentclass[10pt,notitlepage,onecolumn,aps]{revtex4-1}
+\documentclass[10pt,notitlepage,onecolumn,aps,pra]{revtex4-1}
 ((* endblock docclass *))
 
 %===============================================================================
@@ -70,6 +70,7 @@
 % Title Page
 %===============================================================================
 
+((* set cell_style = 'style_bw_python.tplx' *))
 ((* block title -*))
 ((*- endblock title *))
 ((* block author -*))
@@ -119,12 +120,12 @@
 %===============================================================================
 
 ((* block output_group -*))
-((*- if cell.metadata.cell_type == 'markdown': -*))
-\newcommand{\sectionbreak}{\clearpage}
-((*- endif -*))
 ((*- if cell.metadata.hide_output: -*))
 ((*- else -*))
     ((( super() )))
+((*- endif -*))
+((*- if cell.metadata.page_break: -*))
+    \clearpage
 ((*- endif -*))
 ((* endblock output_group *))
 

@@ -52,6 +52,9 @@ colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
 # Get the RGB values for the colors
 allRGB <- data.frame(apply(data.frame(allColors), 1, col2rgb))
 =====
+page_break<source>
+<div style="page-break-after: always;"></div>
+=====
 otu_py<source>
 df = read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
 df.set_index('taxonomy', inplace=True)
@@ -113,12 +116,14 @@ offset = float(font_size) / 2
 v_offset = 0
 fnt = ImageFont.truetype('{fontfile}', size=font_size)
 height = 0
+height = 0
 for group_name in mdf.columns:
     if (mdf[group_name].nunique() > 1 and
         mdf[group_name].nunique() < len(mdf[group_name]) and
         'Date' not in group_name):
+        height += 30
         for sample in mdf[group_name].drop_duplicates():
-            height += 30
+            height += 20
 
 # Create a new image and setup the draw object
 im = PImage.new('RGB', (300, height), color='white')
@@ -130,14 +135,24 @@ for group_name in mdf.columns:
     if (mdf[group_name].nunique() > 1 and
         mdf[group_name].nunique() < len(mdf[group_name]) and
         'Date' not in group_name):
+        sub_im = PImage.new('RGB',
+                            (300, 30 + (20 * len(group.drop_duplicates()))),
+                            color='white')
+        sub_draw = ImageDraw.Draw(sub_im)
         # Add the metadata catagory
         draw.text((20, 20 - offset + v_offset),
                   str(group_name),
                   fill=(0, 0, 0),
                   font=fnt)
+        sub_draw.text((20, 20 - offset),
+                      str(group_name),
+                      fill=(0, 0, 0),
+                      font=fnt)
+        sub_offset = 0
         # Remove duplicate values
         for sample in group.sort_values().drop_duplicates():
             v_offset += 20  # Update offset
+            sub_offset += 20
             # Get the color
             RGB = tuple(allRGB[color_maps[group_name][sample]])
             # Draw the color
@@ -145,12 +160,22 @@ for group_name in mdf.columns:
                             30, 30 + v_offset],
                            outline=RGB,
                            fill=RGB)
+            sub_draw.rectangle([10, 10 + sub_offset,
+                                30, 30 + sub_offset],
+                               outline=RGB,
+                               fill=RGB)
             # Add the metadata value
             draw.text((40, 20 - offset + v_offset),
                       str(sample),
                       fill=(0, 0, 0, 0),
                       font=fnt)
+            sub_draw.text((40, 20 - offset + sub_offset),
+                          str(sample),
+                          fill=(0, 0, 0, 0),
+                          font=fnt)
+        sub_im.save(group_name + '-{legend}', 'PNG')
         v_offset += 30
+        del sub_draw
 del draw
 
 # write to stdout

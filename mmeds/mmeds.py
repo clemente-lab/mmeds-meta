@@ -759,8 +759,10 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
             with open(kwargs['summary'], 'rb') as f:
                 msg.add_attachment(f.read(),
                                    maintype='application',
-                                   subtype='pdf')
+                                   subtype='pdf',
+                                   filename=kwargs['summary'].name)
 
+                msg.add_attachment
         # Connect to the server and send the mail
         server = SMTP('smtp.gmail.com', 587)
         server.starttls()
