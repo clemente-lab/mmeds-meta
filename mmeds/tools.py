@@ -20,7 +20,7 @@ from mmeds.summarize import summarize_qiime1
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
         """
         Setup the Tool class
         ====================
@@ -91,6 +91,10 @@ class Tool:
             new_dir = Path(path) / 'analysis{}'.format(run_id)
             if os.path.exists(new_dir / 'summary'):
                 rmtree(new_dir / 'summary')
+            log('Get files from mongo')
+            log(new_dir.name)
+            log(root_files[new_dir.name].keys())
+            files.update(root_files[new_dir.name])
             log("Skip analysis")
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id), files
@@ -726,7 +730,7 @@ class Qiime2(Tool):
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
-        files, path = self.db.get_mongo_files(self.access_code)
+        log(self.files.keys())
         # Check the counts at the beginning of the analysis
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['demux_viz'],
@@ -750,7 +754,7 @@ class Qiime2(Tool):
         rmtree(self.path / 'temp')
 
         # Compare the difference
-        if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
+        if abs(initial_count - final_count) > 0.30 * (initial_count + final_count):
             message = 'Large difference ({}%) between initial and final counts'
             message = message.format(int(100 * (initial_count - final_count) /
                                          (initial_count + final_count)))

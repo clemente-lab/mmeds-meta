@@ -5,6 +5,9 @@ import rpy2.rinterface
 from warnings import filterwarnings
 from IPython.display import Image
 from random import shuffle
+from PIL import Image as PImage
+from PIL import ImageDraw, ImageFont
+
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
 # Load metadata file
