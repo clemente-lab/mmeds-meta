@@ -31,12 +31,11 @@ NOTE: Certain versions of openssl as installed by conda cause issues with cherry
 To fix this run `conda install openssl=1.0.2p`. This version should work.
 
 Latex Dependencies  
-adjustbox
-upquote
-ulem
+adjustbox  
+upquote  
+ulem  
 
-Other Dependencies
-rpy2: 2.9.1
-readline headers
-jupyter_contrib_nbextensions
-Enable extension Printview
+Other Dependencies  
+rpy2: 2.9.1  
+readline headers  
+jupyter_contrib_nbextensions  
