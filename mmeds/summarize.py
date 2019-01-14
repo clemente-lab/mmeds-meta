@@ -35,8 +35,8 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         cells = []
         for column in metadata:
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
-            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file,
-                                                                                             group=column)))
+            cells.append(v4.new_markdown_cell(source='## {f} grouped by {group}'.format(f=data_file,
+                                                                                        group=column)))
             cells.append(v4.new_code_cell(source=source['taxa_py_{}'.format(analysis_type)].format(file1=data_file,
                                                                                                    group=column)))
             cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename,
@@ -56,7 +56,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
             xaxis = 'SamplingDepth'
         filename = data_file.split('.')[0] + '.png'
         cells = []
-        cells.append(v4.new_markdown_cell(source='## View {f}'.format(f=data_file)))
+        cells.append(v4.new_markdown_cell(source='## {f}'.format(f=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_py_{}'.format(analysis_type)].format(file1=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis=xaxis)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
@@ -73,8 +73,8 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         for column in metadata:
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
-            cells.append(v4.new_markdown_cell(source='## View {f} grouped by {group}'.format(f=data_file,
-                                                                                             group=column)))
+            cells.append(v4.new_markdown_cell(source='## {f} grouped by {group}'.format(f=data_file,
+                                                                                        group=column)))
             cells.append(v4.new_code_cell(source=source['beta_py'].format(file1=data_file,
                                                                           group=column)))
             cells.append(v4.new_code_cell(source=source['beta_r'].format(plot=plot,
@@ -90,7 +90,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
     def summarize(path, files, execute, no_files=False):
         """
         Create the python notebook containing the summary of analysis results.
-        ======================================================================
+        =====================================================================
         :path: A file path. The path to the directory containing the files to plot
         :files: A dictionary of locations for the files to use when creating plots.
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
@@ -109,7 +109,6 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         cells = []
 
         # Add cells for setting up the R and Python environments
-        cells.append(v4.new_markdown_cell(source='# Notebook Setup'))
         cells.append(v4.new_code_cell(source=source['py_setup']))
         cells.append(v4.new_code_cell(source=source['r_setup']))
 
@@ -124,7 +123,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
 
         # Add the cells for the Taxa summaries
         cells.append(v4.new_markdown_cell(source='# Taxa Summary'))
-        for data_file in files['taxa']:
+        for data_file in sorted(files['taxa']):
             cells += taxa_plots(data_file)
         cells.append(v4.new_markdown_cell(source='# Diversity Plot Legend'))
         cells.append(v4.new_code_cell(source=source['legend_py'].format(fontfile=STORAGE_DIR / 'ABeeZee-Regular.otf',
@@ -141,23 +140,20 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         cells.append(v4.new_markdown_cell(source='# Beta Diversity Summary'))
         for data_file in sorted(files['beta']):
             if 'dm' in data_file:
-                cells.append(v4.new_markdown_cell(source="## View {file1}".format(file1=data_file)))
+                cells.append(v4.new_markdown_cell(source="## {file1}".format(file1=data_file)))
                 cells.append(v4.new_code_cell(source="df = read_csv('{file1}', sep='\t')".format(file1=data_file)))
             else:
                 cells += beta_plots(data_file)
 
-        # Hide the code in all cells
-        for cell in cells:
-            cell.metadata['hide_input'] = True
-
         # Create the notebook and
         meta = {
-            'metadata': {
-                'authors': [{'name': 'David Wallach', 'email': 'david.wallach@mssm.edu'}],
+            'latex_metadata': {
+                'author': 'Clemente Lab',
+                'affiliation': 'Icahn School of Medicine at Mount Sinai',
                 'name': 'MMEDS Analysis Summary',
-                'title': 'MMEDS Analysis Summary',
-                'path': '{path}/'.format(path=path)
-            }
+                'title': 'MMEDS Analysis Summary'
+            },
+            'hide_input': True
         }
         nn = nbf.v4.new_notebook(cells=cells, metadata=meta)
         return nn
@@ -169,7 +165,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         :nn: A python notebook object.
         """
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
-        cmd = 'jupyter nbconvert --template=nbextensions --to=latex {}.ipynb'.format(name)
+        cmd = 'jupyter nbconvert --template={}/revtex.tplx --to=latex {}.ipynb'.format(STORAGE_DIR, name)
         if execute:
             cmd += ' --execute'
         run(cmd, shell=True, check=True)
