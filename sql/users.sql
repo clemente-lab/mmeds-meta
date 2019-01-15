@@ -3,12 +3,31 @@ DROP PROCEDURE IF EXISTS `mmeds_data1`.`add_users` //
 
 CREATE PROCEDURE `mmeds_data1`.`add_users`()
 BEGIN
-  -- Create a security token for that account
-  INSERT INTO security_token (username, security_token) VALUES ('mmedsusers@localhost', 'some_security_token');
+    -- Only run this code when in a test database
+    IF NOT (SELECT @@HOSTNAME) = 'data1' THEN
+        IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmedsadmin') THEN
+            DROP USER 'mmedsadmin'@'%';
+            DELETE FROM security_token WHERE username='mmedsadmin@localhost';
+        END IF;
 
-  IF NOT EXISTS(SELECT * FROM mmeds_data1.user WHERE user_id = 1) THEN
-    INSERT INTO user VALUES (1, 'Public', '', '', '');
-  END IF;
+        -- Create the user for the mmeds user activites
+        CREATE USER 'mmedsadmin'@'%' IDENTIFIED BY 'password';
+
+        IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmedsusers') THEN
+            DROP USER 'mmedsusers'@'%';
+            DELETE FROM security_token WHERE username='mmedsusers@localhost';
+        END IF;
+
+        -- Create the user for the mmeds user activites
+        CREATE USER 'mmedsusers'@'%' IDENTIFIED BY 'password';
+    END IF;
+
+    -- Create a security token for that account
+    INSERT INTO security_token (username, security_token) VALUES ('mmedsusers@localhost', 'some_security_token');
+
+    IF NOT EXISTS(SELECT * FROM mmeds_data1.user WHERE user_id = 1) THEN
+        INSERT INTO user VALUES (1, 'Public', '', '', '');
+    END IF;
 END //
 
 CALL `mmeds_data1`.`add_users`();
