@@ -3,22 +3,6 @@ DROP PROCEDURE IF EXISTS `mmeds_data1`.`add_users` //
 
 CREATE PROCEDURE `mmeds_data1`.`add_users`()
 BEGIN
-  IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmedsadmin') THEN
-    DROP USER 'mmedsadmin'@'%';
-    DELETE FROM security_token WHERE username='mmedsadmin@localhost';
-  END IF;
-
-  -- Create the user for the mmeds user activites
-  CREATE USER 'mmedsadmin'@'%' IDENTIFIED BY 'password';
-
-  IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmedsusers') THEN
-    DROP USER 'mmedsusers'@'%';
-    DELETE FROM security_token WHERE username='mmedsusers@localhost';
-  END IF;
-
-  -- Create the user for the mmeds user activites
-  CREATE USER 'mmedsusers'@'%' IDENTIFIED BY 'password';
-
   -- Create a security token for that account
   INSERT INTO security_token (username, security_token) VALUES ('mmedsusers@localhost', 'some_security_token');
 

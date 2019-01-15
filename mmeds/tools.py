@@ -17,7 +17,7 @@ from mmeds.summarize import summarize
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
         """
         Setup the Tool class
         ====================
@@ -136,7 +136,8 @@ class Tool:
 
     def get_job_params(self):
         params = {
-            'walltime': '48:00',
+            'walltime': '4:00',
+            'walltime2': '2:00',
             'jobname': self.owner + '_' + self.run_id,
             'nodes': self.num_jobs,
             'memory': 1000,

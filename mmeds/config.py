@@ -15,7 +15,10 @@ ERROR_FP = 'error_log.tsv'
 ROOT = Path(mmeds.__file__).parent.resolve()
 HTML_DIR = Path(html.__file__).parent.resolve()
 STORAGE_DIR = Path(resources.__file__).parent.resolve()
-DATABASE_DIR = Path().home() / 'mmeds_server_data'
+if os.environ.get('MMEDS'):
+    DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
+else:
+    DATABASE_DIR = Path().home() / 'mmeds_server_data'
 if not os.path.exists(DATABASE_DIR):
     os.mkdir(DATABASE_DIR)
 

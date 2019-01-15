@@ -771,4 +771,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         server.quit()
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
-        run(script.format(body=email_body, subject=subject, toaddr=toaddr), shell=True, check=True)
+        if 'summary' in kwargs.keys():
+            script += ' -A {summary}'.format(kwargs['summary'])
+        cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
+        log(cmd)
+        run(cmd, shell=True, check=True)
