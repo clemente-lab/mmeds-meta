@@ -30,6 +30,10 @@ Allow access to the webpage despite your browsers warning. The security certific
 NOTE: Certain versions of openssl as installed by conda cause issues with cherrypy ssl. 
 To fix this run `conda install openssl=1.0.2p`. This version should work.
 
+The directory that uploads are saved in are determined by the value of
+the `MMEDS` environment variable. If this variable is not set it defaults
+to the current user's home directory.
+
 Latex Dependencies  
 adjustbox  
 upquote  
