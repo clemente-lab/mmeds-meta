@@ -156,6 +156,12 @@ PROTECTED_TABLES = [
     'Results'
 ]
 
+JUNCTION_TABLES = [
+    'Subjects_has_Ethnicity',
+    'Subjects_has_Experiment',
+    'Subjects_has_Genotypes'
+]
+
 USER_FILES = set([
     'reads',
     'barcodes',

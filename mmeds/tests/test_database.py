@@ -176,10 +176,9 @@ class DatabaseTests(TestCase):
         return sql
 
     ################
-    ### Test SQL ###
+    #   Test SQL   #
     ################
     def test_tables(self):
-
         df = pd.read_csv(fig.TEST_METADATA,
                          header=[0, 1],
                          skiprows=[2, 3, 4],
@@ -194,6 +193,7 @@ class DatabaseTests(TestCase):
                 sql = self.build_sql(table, row)
                 if table in fig.PROTECTED_TABLES:
                     sql += ' AND user_id = ' + str(self.user_id)
+                print(sql)
                 found = self.c.execute(sql)
                 # Assert there exists at least one entry matching this description
                 try:
@@ -214,7 +214,7 @@ class DatabaseTests(TestCase):
                 # Ensure an entry exists for this value
                 assert jresult > 0
 
-    def error_test_modify_tables(self):
+    def test_modify_tables(self):
         self.c.execute('SHOW TABLES')
         tables = [x[0] for x in self.c.fetchall() if 'protected' not in x[0]]
         del tables[tables.index('session')]
@@ -278,7 +278,7 @@ class DatabaseTests(TestCase):
                                     assert result[i] in self.df0[table][col].tolist()
 
     ####################
-    ### Test MongoDB ###
+    #   Test MongoDB   #
     ####################
     def test_mongo_import(self):
         """ Test the import of files into mongo. """
