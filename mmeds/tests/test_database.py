@@ -1,6 +1,7 @@
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
+from mmeds.mmeds import log
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
@@ -61,6 +62,7 @@ class DatabaseTests(TestCase):
                               fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
                               local_infile=True)
+        self.db.autocommit(True)
         self.c = self.db.cursor()
 
         # Get the user id
@@ -178,7 +180,8 @@ class DatabaseTests(TestCase):
     ################
     #   Test SQL   #
     ################
-    def test_tables(self):
+    def test_a_tables(self):
+        pass
         df = pd.read_csv(fig.TEST_METADATA,
                          header=[0, 1],
                          skiprows=[2, 3, 4],
@@ -196,12 +199,13 @@ class DatabaseTests(TestCase):
                 try:
                     assert found > 0
                 except AssertionError as e:
-                    print(sql)
-                    print("{}:{}".format(table, row))
-                    print(self.c.fetchall())
+                    log(sql)
+                    log("{}:{}".format(table, row))
+                    log(self.c.fetchall())
                     raise e
 
-    def test_junction_tables(self):
+    def test_b_junction_tables(self):
+        pass
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
@@ -246,7 +250,7 @@ class DatabaseTests(TestCase):
                     sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
             self.c.execute(sql)
 
-    def test_table_protection(self):
+    def test_c_table_protection(self):
         """
         The purpose of this test is to ensure that a user can only access data
         that they uploaded or that is made public. It does this by querying
@@ -255,6 +259,7 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
+        pass
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=True) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
@@ -274,6 +279,42 @@ class DatabaseTests(TestCase):
                                     assert result[i] in pd.to_datetime(self.df0[table][col], yearfirst=True).tolist()
                                 else:
                                     assert result[i] in self.df0[table][col].tolist()
+
+    def test_d_clear_user_data(self):
+        """
+        Test that Database.clear_user_data('user') will
+        empty all rows belonging exclusively to user
+        and only those rows.
+        """
+        sql = 'SELECT user_id FROM {}.user WHERE username = "{}"'
+        self.c.execute(sql.format(fig.SQL_DATABASE, fig.TEST_USER_0))
+        user_id = int(self.c.fetchone()[0])
+        log(user_id)
+        table_counts = {}
+        user_counts = {}
+
+        # Check the tables that would be affected
+        for table in fig.PROTECTED_TABLES + fig.JUNCTION_TABLES:
+            # Get the total number of entries
+            sql = 'SELECT COUNT(*) FROM {}'.format(table)
+            self.c.execute(sql)
+            table_counts[table] = int(self.c.fetchone()[0])
+            # Get the number of entries belonging to the test user to be cleared
+            sql = 'SELECT COUNT(*) FROM {} WHERE user_id = {}'.format(table, user_id)
+            self.c.execute(sql)
+            user_counts[table] = int(self.c.fetchone()[0])
+
+        # Clear the tables
+        with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0, testing=True) as db:
+            db.clear_user_data(fig.TEST_USER_0)
+
+        # Get the new table counts
+        for table in fig.PROTECTED_TABLES + fig.JUNCTION_TABLES:
+            # Get the new total number of entries
+            sql = 'SELECT COUNT(*) FROM {}'.format(table)
+            self.c.execute(sql)
+            # Check that the difference is equal to the rows belonging to the cleared user
+            assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
 
     ####################
     #   Test MongoDB   #
