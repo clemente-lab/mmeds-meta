@@ -11,7 +11,13 @@ import pandas as pd
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
-REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPrimerSequence', 'Lab', 'AnalysisTool', 'PrimaryInvestigator'])
+REQUIRED_HEADERS = set(['Description',
+                        '#SampleID'
+                        'BarcodeSequence'
+                        'LinkerPrimerSequence'
+                        'Lab'
+                        'AnalysisTool'
+                        'PrimaryInvestigator'])
 
 REQUIRED_HEADERS = set(['SpecimenID', 'BarcodeSequence', 'PrimaryInvestigator'])
 
@@ -34,7 +40,9 @@ def insert_error(page, line_number, error_message):
 def insert_warning(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<h4><font color="orange">' + error_message + '</font></h4>'] + lines[line_number:]
+    new_lines = lines[:line_number] +\
+        ['<h4><font color="orange">' + error_message + '</font></h4>'] +\
+        lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
@@ -81,8 +89,8 @@ def check_header(header, col_index):
 
     # Check if it's numeric
     if is_numeric(header):
-        errors.append(row_col + 'Number Header Error: Column names cannot be numbers. Replace header %s of column\t%d ' %
-                      (header, col_index))
+        text = 'Number Header Error: Column names cannot be numbers. Replace header %s of column\t%d '
+        errors.append(row_col + text % (header, col_index))
     # Check if it's NA
     if header in NAs + ['NA']:
         errors.append(row_col + 'NA Header Error: Column names cannot be NA. Replace  header %s of column\t%d ' %
@@ -228,8 +236,8 @@ def check_column(raw_column, col_index):
             avg = mean(filtered)
             for i, cell in enumerate(column):
                 if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
-                    warnings.append('%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d' %
-                                    (i + 1, col_index, cell, col_index))
+                    text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
+                    warnings.append(text % (i + 1, col_index, cell, col_index))
         except ValueError:
             errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
     # Check for catagorical data
@@ -239,8 +247,9 @@ def check_column(raw_column, col_index):
         avg = mean(counts.values)
         for val, count in counts.iteritems():
             if count < (avg - stddev) and count < 3:
-                warnings.append('%d\t%d\tCatagorical Data Warning: Potential catagorical data detected. Value %s may be in error, only %d found.' %
-                                (-1, col_index, val, count))
+                text = '%d\t%d\tCatagorical Data Warning: Potential catagorical data detected.\
+                    Value %s may be in error, only %d found.'
+                warnings.append(text % (-1, col_index, val, count))
 
     return errors, warnings
 
@@ -359,7 +368,8 @@ def check_table(table_df, name, all_headers, study_name):
     if not name == 'AdditionalMetaData':
         missing_cols = set(fig.TABLE_COLS[name]).difference(table_df.columns)
         if missing_cols:
-            errors.append('-1\t-1\tMissing Column Error: Columns {} missing from table {}'.format(', '.join(missing_cols), name))
+            text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
+            errors.append(text.format(', '.join(missing_cols), name))
     # For each table column
     for i, header in enumerate(table_df.columns):
         # Check that end dates are after start dates
@@ -538,7 +548,9 @@ def generate_error_html(file_fp, errors, warnings):
             # Add the error/warning if there is one
             try:
                 color, issue = markup[row + 2][try_col]
-                html += '<td style="color:black" bgcolor={}>{}<div style="font-weight:bold"><br>-----------<br>{}</div></td>\n'.format(color, item, issue)
+                html += '<td style="color:black" bgcolor={}>\
+                    {}<div style="font-weight:bold">\
+                    <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
             # Otherwise add the table item
             except KeyError:
                 html += '<td style="color:black">{}</td>\n'.format(item)
