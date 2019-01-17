@@ -93,7 +93,7 @@ class Tool:
         """ Read the provided config file to determine settings for the analysis. """
         config = {}
         # If no config was provided load the default
-        if config_file.file is None:
+        if config_file is None or config_file.file is None:
             log('Using default config')
             with open(STORAGE_DIR / 'config_file.txt', 'r') as f:
                 page = f.read()
