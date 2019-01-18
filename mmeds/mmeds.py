@@ -241,7 +241,7 @@ def check_column(raw_column, col_index):
         except ValueError:
             errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
     # Check for catagorical data
-    elif issubdtype(col_type, str):
+    elif issubdtype(col_type, 'str'):
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
@@ -455,7 +455,7 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    if issubdtype(type(s), str):
+    if issubdtype(type(s), 'str'):
         if ('.e' in s or '.E' in s):
             return False
         try:
