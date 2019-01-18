@@ -53,7 +53,15 @@ class ToolTests(TestCase):
         assert (fig.TEST_DIR / 'analysis0') / 'testfile.txt' == self.tool.files['testfile']
 
     def test_read_config_file(self):
-        pass
+        """ Assert that config files are loaded correctly """
+        config0 = self.tool.read_config_file(None)
+        with open(fig.STORAGE_DIR / 'config_file.txt') as f:
+            contents = f.read()
+        configd0 = self.tool.config
+        config1 = self.tool.read_config_file(contents)
+        configd1 = self.tool.config
+        assert config0 == config1
+        assert configd0 == configd1
 
     def test_get_job_params(self):
         pass
@@ -73,10 +81,12 @@ class ToolTests(TestCase):
         assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
 
 
-tt = ToolTests()
-
-tt.setUpClass()
-tt.test_setup_dir()
-tt.test_add_path()
-tt.test_move_user_files()
-tt.tearDownClass()
+if __name__ == '__main__':
+    tt = ToolTests()
+    tt.setUpClass()
+    tt.test_setup_dir()
+    tt.test_move_user_files()
+    tt.test_read_config_file()
+    tt.test_add_path()
+    tt.test_get_job_params()
+    tt.tearDownClass()

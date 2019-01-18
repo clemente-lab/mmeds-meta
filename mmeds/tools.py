@@ -93,18 +93,17 @@ class Tool:
         """ Read the provided config file to determine settings for the analysis. """
         config = {}
         # If no config was provided load the default
-        if config_file is None or config_file.file is None:
+        if config_file is None:
             log('Using default config')
             with open(STORAGE_DIR / 'config_file.txt', 'r') as f:
                 page = f.read()
         else:
             # Otherwise write the file to the analysis directory for future reference
             log('Using custom config: {}'.format(self.path / 'config_file.txt'))
-            contents = config_file.file.read()
-            with open(self.path / 'config_file.txt', 'wb+') as f:
-                f.write(contents)
+            with open(self.path / 'config_file.txt', 'w+') as f:
+                f.write(config_file)
             # And load the file contents
-            page = contents.decode('utf-8')
+            page = config_file
         # Parse the config
         lines = page.split('\n')
         for line in lines:

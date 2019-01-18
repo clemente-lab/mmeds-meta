@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-from shutil import rmtree
-from glob import glob
 from subprocess import run
 from sys import argv
 
@@ -10,9 +8,21 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
-from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
+from mmeds.mmeds import (send_email,
+                         generate_error_html,
+                         insert_html,
+                         insert_error,
+                         insert_warning,
+                         validate_mapping_file,
+                         log,
+                         create_local_copy)
 from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
-from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
+from mmeds.authentication import (validate_password,
+                                  check_username,
+                                  check_password,
+                                  add_user,
+                                  reset_password,
+                                  change_password)
 from mmeds.database import Database
 from mmeds.tools import spawn_analysis
 from mmeds.error import MissingUploadError, MetaDataError
@@ -26,12 +36,6 @@ class MMEDSserver(object):
         self.db = None
         self.processes = {}
         self.testing = bool(int(testing))
-
-    def __del__(self):
-        temp_dirs = glob(STORAGE_DIR / 'temp_*')
-        for temp in temp_dirs:
-            cp.log('Removing temporary dir ' + temp)
-            rmtree(temp)
 
     @cp.expose
     def get_user(self):
@@ -57,7 +61,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    #############  Validation  #############
+    #              Validation              #
     ########################################
 
     @cp.expose
@@ -73,8 +77,15 @@ class MMEDSserver(object):
             if 'qiime' in tool or 'test' in tool:
                 try:
                     cp.log('Running analysis with ' + tool)
-                    p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
-                    self.processes[access_code] = p
+                    if config is None:
+                        p = spawn_analysis(tool, self.get_user(), access_code, None, self.testing)
+                    else:
+                        p = spawn_analysis(tool,
+                                           self.get_user(),
+                                           access_code,
+                                           config.file.read().decode('utf-8'),
+                                           self.testing)
+                        self.processes[access_code] = p
                     page = mmeds.load_html('welcome',
                                            title='Welcome to Mmeds',
                                            user=self.get_user())
@@ -102,6 +113,9 @@ class MMEDSserver(object):
     @cp.expose
     def validate_qiime(self, myMetaData, reads, barcodes, public='off'):
         """ The page returned after a file is uploaded. """
+        log(myMetaData.file)
+        log(type(myMetaData.file))
+        log(dir(myMetaData.file))
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
@@ -233,7 +247,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    ###########  Authentication  ###########
+    #            Authentication            #
     ########################################
 
     @cp.expose
@@ -363,7 +377,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    ###########   Upload Pages   ###########
+    #             Upload Pages             #
     ########################################
 
     @cp.expose
@@ -429,7 +443,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    ###########  No Logic Pages  ###########
+    #            No Logic Pages            #
     ########################################
 
     @cp.expose
@@ -454,7 +468,7 @@ class MMEDSserver(object):
         return open(HTML_DIR / 'sign_up_page.html')
 
     ########################################
-    ###########  Download Pages  ###########
+    #            Download Pages            #
     ########################################
 
     @cp.expose
