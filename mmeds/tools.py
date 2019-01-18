@@ -93,18 +93,17 @@ class Tool:
         """ Read the provided config file to determine settings for the analysis. """
         config = {}
         # If no config was provided load the default
-        if config_file.file is None:
+        if config_file is None:
             log('Using default config')
             with open(STORAGE_DIR / 'config_file.txt', 'r') as f:
                 page = f.read()
         else:
             # Otherwise write the file to the analysis directory for future reference
             log('Using custom config: {}'.format(self.path / 'config_file.txt'))
-            contents = config_file.file.read()
-            with open(self.path / 'config_file.txt', 'wb+') as f:
-                f.write(contents)
+            with open(self.path / 'config_file.txt', 'w+') as f:
+                f.write(config_file)
             # And load the file contents
-            page = contents.decode('utf-8')
+            page = config_file
         # Parse the config
         lines = page.split('\n')
         for line in lines:
@@ -141,7 +140,6 @@ class Tool:
             'jobname': self.owner + '_' + self.run_id,
             'nodes': self.num_jobs,
             'memory': 1000,
-            'jobid': self.path / self.run_id,
             'queue': 'expressalloc'
         }
         return params
@@ -165,7 +163,7 @@ class Tool:
         return
 
     def move_user_files(self):
-        """ Move all files intended for the user to a set location. """
+        """ Move all visualization files intended for the user to a set location. """
         try:
             log('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
@@ -176,29 +174,27 @@ class Tool:
                 if '.qzv' in str(self.files[key]):
                     new_file = f.name
                     copy(self.files[key], self.files['visualizations_dir'] / new_file)
-
-            log('before string ')
-            log(self.files.keys())
-            string_files = {str(key): str(self.files[key]) for key in self.files.keys()}
-            log('after string ')
-            log(self.files.keys())
-            self.db.update_metadata(self.access_code,
-                                    'analysis{}'.format(self.run_id),
-                                    string_files)
-            log('after update')
-            log(self.files.keys())
-
-            # Create the file index
-            with open(self.path / 'file_index.tsv', 'w') as f:
-                f.write('{}\t{}\n'.format(self.owner, self.access_code))
-                f.write('Key\tPath\n')
-                for key in self.files:
-                    f.write('{}\t{}\n'.format(key, self.files[key]))
-            log('After writing')
-            log(self.files.keys())
         except FileNotFoundError as e:
             log(e)
             raise AnalysisError(e.args[1])
+
+    def write_file_locations(self):
+        """
+        Update the relevant document's metadata and
+        create a file_index in the analysis directoy.
+        """
+        string_files = {str(key): str(self.files[key]) for key in self.files.keys()}
+        self.db.update_metadata(self.access_code,
+                                'analysis{}'.format(self.run_id),
+                                string_files)
+
+        # Create the file index
+        with open(self.path / 'file_index.tsv', 'w') as f:
+            f.write('{}\t{}\n'.format(self.owner, self.access_code))
+            f.write('Key\tPath\n')
+            for key in self.files:
+                f.write('{}\t{}\n'.format(key, self.files[key]))
+        log(self.files.keys())
 
     def add_path(self, name, extension=''):
         """ Add a file or directory with the full path to self.files. """
@@ -456,6 +452,7 @@ class Qiime1(Tool):
         self.sanity_check()
         summary = self.summarize()
         self.move_user_files()
+        self.write_file_locations()
         doc = self.db.get_metadata(self.access_code)
         send_email(doc.email,
                    doc.owner,
@@ -821,6 +818,7 @@ class Qiime2(Tool):
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
+            self.write_file_locations()
             summary = self.summarize()
             log('Send email')
             send_email(doc.email,

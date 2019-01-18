@@ -521,6 +521,9 @@ class Database:
         # Commit the changes
         self.db.commit()
 
+        # Clear the mongo files
+        self.clear_mongo_data(username)
+
     ########################################
     #               MongoDB                #
     ########################################
@@ -541,7 +544,7 @@ class Database:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
-                         path=str(self.path.parent))
+                         path=str(self.path))
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)
@@ -691,6 +694,12 @@ class Database:
                 empty_files.append(mdata.files[key])
                 del mdata.files[key]
         return empty_files
+
+    def clear_mongo_data(self, username):
+        """ Clear all metadata documents associated with the provided username. """
+        data = MetaData.objects(owner=username)
+        for doc in data:
+            doc.delete()
 
     def clean(self):
         """ Remove all temporary and intermediate files. """

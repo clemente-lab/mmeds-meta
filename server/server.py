@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-from shutil import rmtree
-from glob import glob
 from subprocess import run
 from sys import argv
 
@@ -10,9 +8,20 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
-from mmeds.mmeds import send_email, generate_error_html, insert_html, insert_error, insert_warning, validate_mapping_file, create_local_copy
+from mmeds.mmeds import (send_email,
+                         generate_error_html,
+                         insert_html,
+                         insert_error,
+                         insert_warning,
+                         validate_mapping_file,
+                         create_local_copy)
 from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
-from mmeds.authentication import validate_password, check_username, check_password, add_user, reset_password, change_password
+from mmeds.authentication import (validate_password,
+                                  check_username,
+                                  check_password,
+                                  add_user,
+                                  reset_password,
+                                  change_password)
 from mmeds.database import Database
 from mmeds.tools import spawn_analysis
 from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError
@@ -51,7 +60,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    #############  Validation  #############
+    #              Validation              #
     ########################################
 
     @cp.expose
@@ -68,8 +77,15 @@ class MMEDSserver(object):
                 if 'qiime' in tool or 'test' in tool:
                     try:
                         cp.log('Running analysis with ' + tool)
-                        p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
-                        self.processes[access_code] = p
+                        if config.file is None:
+                            p = spawn_analysis(tool, self.get_user(), access_code, None, self.testing)
+                        else:
+                            p = spawn_analysis(tool,
+                                               self.get_user(),
+                                               access_code,
+                                               config.file.read().decode('utf-8'),
+                                               self.testing)
+                            self.processes[access_code] = p
                         page = mmeds.load_html('welcome',
                                                title='Welcome to Mmeds',
                                                user=self.get_user())
@@ -80,13 +96,11 @@ class MMEDSserver(object):
                                                user=self.get_user())
                         return page.format(self.get_user())
                 else:
-                    return '<html> <h1> Tool {} does not exist. </h1> </html>'.format(tool)
-            else:
-                page = mmeds.load_html('welcome',
-                                       title='Welcome to Mmeds',
-                                       user=self.get_user())
-                page = insert_error(page, 31, 'Requested study is currently unavailable')
-                return page.format(user=self.get_user())
+                    page = mmeds.load_html('welcome',
+                                           title='Welcome to Mmeds',
+                                           user=self.get_user())
+                    page = insert_error(page, 31, 'Requested study is currently unavailable')
+                    return page.format(user=self.get_user())
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -103,7 +117,7 @@ class MMEDSserver(object):
         """ The page returned after a file is uploaded. """
         try:
             # Check the file that's uploaded
-            valid_extensions = ['txt', 'csv', 'tsv']
+            valid_extensions = ['txt', 'csv', 'tsv', 'zip', 'tar', 'tar.gz']
             file_extension = myMetaData.filename.split('.')[-1]
             if file_extension not in valid_extensions:
                 page = mmeds.load_html('upload', title='Upload data')
@@ -122,93 +136,95 @@ class MMEDSserver(object):
                 new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
                 while os.path.exists(new_dir):
                     new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
-                    count += 1
-                os.makedirs(new_dir)
-            cp.session['dir'] = new_dir
-            cp.log('New directory for {}: {}'.format(self.get_user(), cp.session['dir']))
+                    while os.path.exists(new_dir):
+                        new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
+                        count += 1
+                    os.makedirs(new_dir)
+                cp.session['dir'] = new_dir
+                cp.log('New directory for {}: {}'.format(self.get_user(), cp.session['dir']))
 
-            # Create a copy of the Data file
-            if reads.file is not None:
-                reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
-            else:
-                reads_copy = None
+                # Create a copy of the Data file
+                if reads.file is not None:
+                    reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
+                else:
+                    reads_copy = None
 
-            # Create a copy of the Data file
-            if barcodes.file is not None:
-                barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
-            else:
-                barcodes_copy = None
+                # Create a copy of the Data file
+                if barcodes.file is not None:
+                    barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
+                else:
+                    barcodes_copy = None
 
-            # Create a copy of the MetaData
-            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+                # Create a copy of the MetaData
+                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
 
-            # Set the User
-            if public == 'on':
-                username = 'public'
-            else:
-                username = self.get_user()
+                # Set the User
+                if public == 'on':
+                    username = 'public'
+                else:
+                    username = self.get_user()
 
-            # Check the metadata file for errors
-            errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
-            for error in errors:
-                cp.log(error)
+                # Check the metadata file for errors
+                errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
+                for error in errors:
+                    cp.log(error)
 
-            with Database(cp.session['dir'], owner=username, testing=self.testing) as db:
-                try:
-                    warnings += db.check_repeated_subjects(subjects)
-                    errors += db.check_user_study_name(study_name)
-                except MetaDataError as e:
-                    errors.append('-1\t-1\t' + e.message)
+                with Database(cp.session['dir'], owner=username, testing=self.testing) as db:
+                    try:
+                        warnings += db.check_repeated_subjects(subjects)
+                        errors += db.check_user_study_name(study_name)
+                    except MetaDataError as e:
+                        errors.append('-1\t-1\t' + e.message)
 
-            # If there are errors report them and return the error page
-            if len(errors) > 0:
-                cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
-                # Write the errors to a file
-                with open(cp.session['error_file'], 'w') as f:
-                    f.write('\n'.join(errors + warnings))
+                # If there are errors report them and return the error page
+                if len(errors) > 0:
+                    cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
+                    # Write the errors to a file
+                    with open(cp.session['error_file'], 'w') as f:
+                        f.write('\n'.join(errors + warnings))
 
-                uploaded_output = mmeds.load_html('error', title='Errors')
-                uploaded_output = insert_error(
-                    uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
-                for i, warning in enumerate(warnings):
-                    uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-                for i, error in enumerate(errors):
-                    uploaded_output = insert_error(uploaded_output, 22 + i, error)
+                    uploaded_output = mmeds.load_html('error', title='Errors')
+                    uploaded_output = insert_error(
+                        uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
+                    for i, warning in enumerate(warnings):
+                        uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
+                    for i, error in enumerate(errors):
+                        uploaded_output = insert_error(uploaded_output, 22 + i, error)
 
-                html = generate_error_html(metadata_copy, errors, warnings)
-                cp.log('Created error html')
+                    html = generate_error_html(metadata_copy, errors, warnings)
+                    cp.log('Created error html')
 
-                return html
-            elif len(warnings) > 0:
-                cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
-                # Write the errors to a file
-                with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
-                    f.write('\n'.join(warnings))
+                    return html
+                elif len(warnings) > 0:
+                    cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
+                    # Write the errors to a file
+                    with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
+                        f.write('\n'.join(warnings))
 
-                # Get the html for the upload page
-                uploaded_output = mmeds.load_html('warning', title='Warnings')
+                    # Get the html for the upload page
+                    uploaded_output = mmeds.load_html('warning', title='Warnings')
 
-                for i, warning in enumerate(warnings):
-                    uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
+                    for i, warning in enumerate(warnings):
+                        uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
 
-                return uploaded_output
-            else:
-                # Otherwise upload the metadata to the database
-                os.mkdir(cp.session['dir'] / 'database_files')
-                with Database(cp.session['dir'] / 'database_files', owner=username, testing=self.testing) as db:
-                    access_code, study_name, email = db.read_in_sheet(metadata_copy,
-                                                                      'qiime',
-                                                                      reads=reads_copy,
-                                                                      barcodes=barcodes_copy)
+                    return uploaded_output
+                else:
+                    # Otherwise upload the metadata to the database
+                    os.mkdir(cp.session['dir'] / 'database_files')
+                    with Database(cp.session['dir'] / 'database_files', owner=username, testing=self.testing) as db:
+                        access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                                          'qiime',
+                                                                          reads=reads_copy,
+                                                                          barcodes=barcodes_copy)
 
-                # Send the confirmation email
-                send_email(email, username, code=access_code, testing=self.testing)
+                    # Send the confirmation email
+                    send_email(email, username, code=access_code, testing=self.testing)
 
-                # Get the html for the upload page
-                page = mmeds.load_html('welcome',
-                                       title='Welcome to Mmeds',
-                                       user=self.get_user())
-                return page
+                    # Get the html for the upload page
+                    page = mmeds.load_html('welcome',
+                                           title='Welcome to Mmeds',
+                                           user=self.get_user())
+                    return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -241,7 +257,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    ###########  Authentication  ###########
+    #            Authentication            #
     ########################################
 
     @cp.expose
@@ -363,6 +379,7 @@ class MMEDSserver(object):
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
         return page
+
     @cp.expose
     def change_password(self, password0, password1, password2):
         """
@@ -392,7 +409,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    ###########   Upload Pages   ###########
+    #             Upload Pages             #
     ########################################
 
     @cp.expose
@@ -422,6 +439,7 @@ class MMEDSserver(object):
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
         return page
+
     @cp.expose
     def modify_upload(self, myData, access_code):
         """ Modify the data of an existing upload. """
@@ -474,7 +492,7 @@ class MMEDSserver(object):
         return page
 
     ########################################
-    ###########  No Logic Pages  ###########
+    #            No Logic Pages            #
     ########################################
 
     @cp.expose
@@ -514,7 +532,7 @@ class MMEDSserver(object):
         return open(HTML_DIR / 'sign_up_page.html')
 
     ########################################
-    ###########  Download Pages  ###########
+    #            Download Pages            #
     ########################################
 
     @cp.expose
@@ -564,7 +582,10 @@ class MMEDSserver(object):
             file_path = str(Path(path) / files[download])
             if 'dir' in download:
                 run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                   Path(file_path).parent, Path(file_path).name), shell=True, check=True)
+                                                   Path(file_path).parent,
+                                                   Path(file_path).name),
+                    shell=True,
+                    check=True)
                 file_path += '.tar.gz'
             cp.log('Fetching {}'.format(file_path))
 
