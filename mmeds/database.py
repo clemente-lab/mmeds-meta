@@ -60,7 +60,8 @@ class Database:
         :testing: A boolean. Changes the connection parameters for testing.
         """
         warnings.simplefilter('ignore')
-        self.path = path
+
+        self.path = Path(path) / 'database_files'
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.user = user
@@ -423,6 +424,8 @@ class Database:
         """
         access_code = None
 
+        if not self.path.is_dir():
+            self.path.mkdir()
         # Read in the metadata file to import
         df = pd.read_csv(metadata, sep=delimiter, header=[0, 1], skiprows=[2, 3, 4])
         df = df.reindex_axis(df.columns, axis=1)
@@ -544,7 +547,7 @@ class Database:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
-                         path=str(self.path))
+                         path=str(self.path.parent))
 
         # Add the files approprate to the type of study
         mdata.files.update(kwargs)

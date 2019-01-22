@@ -42,7 +42,7 @@ class Tool:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
         self.analysis = analysis
-        self.path, self.run_id, self.files = self.setup_dir(Path(path))
+        self.path, self.run_id, self.files, self.demuxed = self.setup_dir(Path(path))
 
         # Add the split directory to the MetaData object
         self.add_path('analysis{}'.format(self.run_id), '')
@@ -54,6 +54,7 @@ class Tool:
 
     def setup_dir(self, path):
         """ Setup the directory to run the analysis. """
+        log('In setup_dir')
         files = {}
         run_id = 0
         new_dir = path / 'analysis{}'.format(run_id)
@@ -65,16 +66,28 @@ class Tool:
         if self.analysis:
             run('mkdir {}'.format(new_dir), shell=True, check=True)
 
-            # Create links to the files
-            (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
-            (new_dir / 'sequences.fastq.gz').symlink_to(root_files['reads'])
+            if '.fastq.gz' == Path(root_files['reads']).suffix:
+                # Create links to the files
+                (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
+                (new_dir / 'sequences.fastq.gz').symlink_to(root_files['reads'])
+
+                # Add the links to the files dict for this analysis
+                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+                files['reads'] = new_dir / 'sequences.fastq.gz'
+
+                demuxed = False
+            elif '.zip' == Path(root_files['reads']).suffix:
+                (new_dir / 'data.zip').symlink_to(root_files['reads'])
+                files['data'] = new_dir / 'data.zip'
+                demuxed = True
+            else:
+                demuxed = False
+                log('Invalid extension')
+                log(root_files['reads'])
+                ## This should be caught when uploading the data
+
             (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
-
-            # Add the links to the files dict for this analysis
-            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-            files['reads'] = new_dir / 'sequences.fastq.gz'
             files['metadata'] = new_dir / 'metadata.tsv'
-
             log('Run analysis')
         else:
             run_id -= 1
@@ -86,8 +99,10 @@ class Tool:
             log("Loaded files")
             log(files.keys())
             log("Skip analysis")
+            demuxed = False
+
         log("Analysis directory is {}".format(new_dir))
-        return new_dir, str(run_id), files
+        return new_dir, str(run_id), files, demuxed
 
     def read_config_file(self, config_file):
         """ Read the provided config file to determine settings for the analysis. """
@@ -276,16 +291,28 @@ class Qiime1(Tool):
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.files['mapping'], self.path)
         self.jobtext.append(cmd)
 
+    def unzip(self):
+        """ Split the libraries and perform quality analysis. """
+        self.add_path('reads', '')
+        command = 'unzip {} -d {}'.format(self.files['data'],
+                                          self.files['reads'])
+        self.jobtext.append(command)
+
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
         self.add_path('split_output', '')
 
         # Run the script
-        cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {};'
-        command = cmd.format(self.files['split_output'],
-                             self.files['reads'],
-                             self.files['barcodes'],
-                             self.files['mapping'])
+        if self.demuxed:
+            cmd = 'multiple_split_libraries_fastq.py -o {} -i {};'
+            command = cmd.format(self.files['split_output'],
+                                 self.files['reads'])
+        else:
+            cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {};'
+            command = cmd.format(self.files['split_output'],
+                                 self.files['reads'],
+                                 self.files['barcodes'],
+                                 self.files['mapping'])
         self.jobtext.append(command)
 
     def pick_otu(self):
@@ -414,6 +441,8 @@ class Qiime1(Tool):
         """ Perform some analysis. """
         self.create_qiime_mapping_file()
         self.validate_mapping()
+        if self.demuxed:
+            self.unzip()
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
@@ -479,24 +508,34 @@ class Qiime2(Tool):
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
 
-        # Create a directory to import as a Qiime2 object
-        self.files['working_dir'] = self.path / 'import_dir'
         self.files['working_file'] = self.path / 'qiime_artifact.qza'
-        if not self.files['working_dir'].is_dir():
-            self.files['working_dir'].mkdir()
+        # Create a directory to import as a Qiime2 object
+        if self.demuxed:
+            cmd = [
+                'qiime tools import ',
+                '--type {} '.format('"SampleData[PairedEndSequencesWithQuality]"'),
+                '--input-path {}'.format(self.files['reads']),
+                '--source_format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
+                '--output-path {};'.format(self.files['working_file'])
+            ]
+            self.jobtext.append(cmd)
+        else:
+            self.files['working_dir'] = self.path / 'import_dir'
+            if not self.files['working_dir'].is_dir():
+                self.files['working_dir'].mkdir()
 
-        # Create links to the data in the qiime2 import directory
-        (self.files['working_dir'] /
-         'barcodes.fastq.gz').symlink_to(self.path /
-                                         'barcodes.fastq.gz')
-        (self.files['working_dir'] /
-         'sequences.fastq.gz').symlink_to(self.path /
-                                          'sequences.fastq.gz')
+            # Create links to the data in the qiime2 import directory
+            (self.files['working_dir'] /
+             'barcodes.fastq.gz').symlink_to(self.path /
+                                             'barcodes.fastq.gz')
+            (self.files['working_dir'] /
+             'sequences.fastq.gz').symlink_to(self.path /
+                                              'sequences.fastq.gz')
 
-        # Run the script
-        cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-        command = cmd.format(itype, self.files['working_dir'], self.files['working_file'])
-        self.jobtext.append(command)
+            # Run the script
+            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+            command = cmd.format(itype, self.files['working_dir'], self.files['working_file'])
+            self.jobtext.append(command)
 
     def demultiplex(self):
         """ Demultiplex the reads. """
@@ -761,8 +800,9 @@ class Qiime2(Tool):
         """ Create the job file for the analysis. """
         self.create_qiime_mapping_file()
         self.qimport()
-        self.demultiplex()
-        self.demux_visualize()
+        if not self.demuxed:
+            self.demultiplex()
+            self.demux_visualize()
         if self.atype == 'deblur':
             self.deblur_filter()
             self.deblur_denoise()

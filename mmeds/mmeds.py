@@ -6,6 +6,7 @@ from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError
 from subprocess import run
+from datetime import datetime
 import mmeds.config as fig
 import pandas as pd
 
@@ -142,7 +143,7 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
     if '' == cell or pd.isnull(cell):
         errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
-    if type(cell) == str:
+    if isinstance(cell, str):
         # Check for trailing or preceding whitespace
         if not cell == cell.strip():
             errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
@@ -705,7 +706,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
 def log(text):
     """ Write provided text to the log file. """
     with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write(str(text) + '\n')
+        f.write('{}: {}\n'.format(datetime.now(), text))
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

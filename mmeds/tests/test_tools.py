@@ -35,15 +35,14 @@ class ToolTests(TestCase):
             rmtree(new_dir)
 
     def test_setup_dir(self):
-        new_dir, run_id, files = self.tool.setup_dir(fig.TEST_DIR)
+        new_dir, run_id, files, demuxed = self.tool.setup_dir(fig.TEST_DIR)
         self.dirs.append(new_dir)
 
         assert int(run_id) == 1
         assert new_dir == fig.TEST_DIR / 'analysis1'
-
-        for file_key in ['barcodes', 'reads', 'metadata']:
-            assert (file_key in files.keys())
-            assert files[file_key].is_symlink()
+        assert not demuxed
+        assert 'metadata' in files.keys()
+        assert files['metadata'].is_symlink()
 
     def test_add_path(self):
         """ Test that adding files to the tool object works properly """
@@ -51,7 +50,7 @@ class ToolTests(TestCase):
         self.tool.add_path('testfile', '.txt')
 
         assert 'testfile' in self.tool.files.keys()
-        assert (fig.TEST_DIR / 'analysis0') / 'testfile.txt' == self.tool.files['testfile']
+        assert ((fig.TEST_DIR / 'analysis0') / 'testfile.txt') == self.tool.files['testfile']
 
     def test_read_config_file(self):
         """ Assert that config files are loaded correctly """

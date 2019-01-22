@@ -1,10 +1,9 @@
 import os
 from pathlib import Path
 from subprocess import run
+from multiprocessing import Process
 from sys import argv
-from datetime import datetime as dt
 import cherrypy as cp
-import mmeds.config as fig
 import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
@@ -30,8 +29,50 @@ from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError
 absDir = Path(os.getcwd())
 
 
-class MMEDSserver(object):
+def handle_data_upload(metadata_copy, reads, barcodes, username, path, testing):
+    """
+    Thread that handles the upload of large data files.
+    ===================================================
+    :metadata_copy: A string. Location of the metadata.
+    :reads: A file
+    :barcodes: @Todo
+    :username: @Todo
+    :path: @Todo
+    :testing: True if the server is running locally.
+    """
+    log('In handle_data_upload')
 
+    # Create a copy of the Data file
+    if reads.file is not None:
+        reads_copy = None
+        reads_copy = create_local_copy(reads.file, reads.filename, path)
+    else:
+        reads_copy = None
+    log('after read')
+
+    # Create a copy of the Data file
+    if barcodes.file is not None:
+        barcodes_copy = None
+        barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, path)
+    else:
+        barcodes_copy = None
+    log('after barcodes')
+
+    log('after meta copy')
+
+    # Otherwise upload the metadata to the database
+    with Database(path, owner=username, testing=testing) as db:
+        access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                          'qiime',
+                                                          reads=reads_copy,
+                                                          barcodes=barcodes_copy)
+
+    # Send the confirmation email
+    send_email(email, username, code=access_code, testing=testing)
+    log('Email sent')
+
+
+class MMEDSserver(object):
     def __init__(self, testing=False):
         self.db = None
         self.processes = {}
@@ -72,6 +113,7 @@ class MMEDSserver(object):
         :access_code: The code that identifies the dataset to run the tool on
         :tool: The tool to run on the chosen dataset
         """
+        log('In run_analysis')
         try:
             if self.processes.get(access_code) is None or\
                     self.processes[access_code].exitcode is not None:
@@ -111,14 +153,15 @@ class MMEDSserver(object):
     @cp.expose
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
+        log('In view_corrections')
         return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
     def validate_metadata(self, myMetaData):
         """ The page returned after a file is uploaded. """
+        log('In validate_metadata')
         try:
             log('In validate qiime')
-            log(str(dt.now()))
 
             # Check the file that's uploaded
             valid_extensions = ['txt', 'csv', 'tsv']
@@ -187,8 +230,46 @@ class MMEDSserver(object):
                 return uploaded_output
             else:
                 # If there are no errors or warnings proceed to upload the data files
+                cp.session['uploaded_files'] = [metadata_copy]
                 page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
                 return page
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+            return page
+
+    @cp.expose
+    def process_data(self, reads, barcodes, public='off'):
+        log('In process_data')
+        try:
+            # Create a unique dir for handling files uploaded by this user
+            metadata_copy = cp.session['uploaded_files'].pop()
+
+            # Set the User
+            if public == 'on':
+                username = 'public'
+            else:
+                username = self.get_user()
+
+            # Start a process to handle loading the data
+            p = Process(target=handle_data_upload,
+                        args=(metadata_copy,
+                              reads,
+                              barcodes,
+                              username,
+                              cp.session['dir'],
+                              self.testing))
+            log('Starting upload process')
+            p.start()
+
+            # Get the html for the upload page
+            page = mmeds.load_html('welcome',
+                                   title='Welcome to Mmeds',
+                                   user=self.get_user())
+            html = '<h1> Your data is being uploaded, you will recieve an email when this finishes </h1>'
+            page = insert_error(page, 22, html)
+            log('Finish validate')
+            return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -199,120 +280,9 @@ class MMEDSserver(object):
     ########################################
 
     @cp.expose
-    def proceed_with_warning(self):
-        """ Proceed with upload after recieving a/some warning(s). """
-        try:
-            metadata_copy, data_copy1, data_copy2, username = cp.session['uploaded_files']
-            # Otherwise upload the metadata to the database
-            cp.log(str(cp.session['dir']))
-            os.mkdir(cp.session['dir'] / 'database_files')
-            with Database(cp.session['dir'] / 'database_files', owner=username, testing=self.testing) as db:
-                access_code, study_name, email = db.read_in_sheet(metadata_copy,
-                                                                  'qiime',
-                                                                  reads=data_copy1,
-                                                                  barcodes=data_copy2)
-
-            # Send the confirmation email
-            send_email(email, username, code=access_code, testing=self.testing)
-
-            # Get the html for the upload page
-            page = mmeds.load_html('welcome',
-                                   title='Welcome to Mmeds',
-                                   user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
-
-    @cp.expose
-    def process_data(self, reads, barcodes, public='off'):
-        try:
-            log('In upload_data')
-            # Create a unique dir for handling files uploaded by this user
-            metadata_copy = cp.session['uploaded_files'].pop()
-
-            cp.log('New directory for {}: {}'.format(self.get_user(), cp.session['dir']))
-            log('made dir')
-
-            # Create a copy of the Data file
-            if reads.file is not None:
-                reads_copy = None
-                reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
-            else:
-                reads_copy = None
-            log('after read')
-
-            # Create a copy of the Data file
-            if barcodes.file is not None:
-                barcodes_copy = None
-                barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
-            else:
-                barcodes_copy = None
-            log('after barcodes')
-
-            log('after meta copy')
-
-            # Set the User
-            if public == 'on':
-                username = 'public'
-            else:
-                username = self.get_user()
-
-            # Otherwise upload the metadata to the database
-            os.mkdir(cp.session['dir'] / 'database_files')
-            with Database(cp.session['dir'] / 'database_files', owner=username, testing=self.testing) as db:
-                access_code, study_name, email = db.read_in_sheet(metadata_copy,
-                                                                  'qiime',
-                                                                  reads=reads_copy,
-                                                                  barcodes=barcodes_copy)
-
-            # Send the confirmation email
-            send_email(email, username, code=access_code, testing=self.testing)
-
-            # Get the html for the upload page
-            page = mmeds.load_html('welcome',
-                                   title='Welcome to Mmeds',
-                                   user=self.get_user())
-            log('Finish validate')
-            log(str(dt.now()))
-            return page
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-            return page
-
-    @cp.expose
-    def upload_data(self):
-        try:
-            # If there are no errors or warnings proceed to upload the data files
-            page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
-            return page
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-            return page
-
-    @cp.expose
-    def upload_metadata(self, study_type):
-        """ Page for uploading Qiime data """
-        try:
-            if 'qiime' in study_type:
-                page = mmeds.load_html('upload_metadata',
-                                       title='Upload Qiime',
-                                       user=self.get_user(),
-                                       version=study_type)
-            else:
-                page = '<html> <h1> Sorry {user}, this page not available </h1> </html>'
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        log('Exit upload')
-        log(str(dt.now()))
-        return page
-
-    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
+        log('In retry_upload')
         try:
             with open(HTML_DIR / 'upload.html') as f:
                 page = f.read()
@@ -325,6 +295,7 @@ class MMEDSserver(object):
     @cp.expose
     def modify_upload(self, myData, access_code):
         """ Modify the data of an existing upload. """
+        log('In modify_upload')
         try:
             # Create a copy of the Data file
             data_copy = create_local_copy(myData.file, myData.filename)
@@ -376,6 +347,31 @@ class MMEDSserver(object):
     ########################################
     #            No Logic Pages            #
     ########################################
+
+    @cp.expose
+    def upload_data(self):
+        try:
+            # If there are no errors or warnings proceed to upload the data files
+            page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
+            return page
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+            return page
+
+    @cp.expose
+    def upload_metadata(self, study_type):
+        """ Page for uploading Qiime data """
+        try:
+            page = mmeds.load_html('upload_metadata',
+                                   title='Upload Qiime',
+                                   user=self.get_user(),
+                                   version=study_type)
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        log('Exit upload')
+        return page
 
     @cp.expose
     def query_page(self):
