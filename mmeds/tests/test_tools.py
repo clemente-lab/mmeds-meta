@@ -5,6 +5,7 @@ from mmeds.tools import Tool
 from mmeds.database import Database
 
 from shutil import rmtree
+from subprocess import run
 import mmeds.config as fig
 
 
@@ -24,7 +25,7 @@ class ToolTests(TestCase):
                          fig.TEST_CODE,
                          'test-1',
                          None, True,
-                         10, True)
+                         8, True)
         self.dirs = [self.tool.path]
 
     @classmethod
@@ -64,7 +65,26 @@ class ToolTests(TestCase):
         assert configd0 == configd1
 
     def test_get_job_params(self):
-        pass
+        params = self.tool.get_job_params()
+        assert params['jobname'] == '{}_{}'.format(fig.TEST_USER, 0)
+        assert params['nodes'] == 3
+
+    def test_create_qiime_mapping_file(self):
+        """ travis doesn't have qiime installed to run this """
+        return
+        self.tool.create_qiime_mapping_file()
+        cmd = 'source activate qiime1; validate_mapping_file.py -s -m {} -o {};'.format(self.tool.files['mapping'],
+                                                                                        self.tool.path)
+        run(cmd, shell=True, check=True)
+        with open(str(self.tool.files['mapping']) + '.log') as f:
+            lines = f.read().split('\n')
+
+        # Check that there are no errors
+        # Warnings are okay
+        for i, line in enumerate(lines):
+            if i == 2:
+                assert 'Warnings' in line
+                break
 
     def test_move_user_files(self):
         """ Test the method for finishing analysis and writing file locations. """
@@ -80,13 +100,20 @@ class ToolTests(TestCase):
         assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
         assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
 
+    def test_write_file_locations(self):
+        pass
+
 
 if __name__ == '__main__':
     tt = ToolTests()
     tt.setUpClass()
-    tt.test_setup_dir()
-    tt.test_move_user_files()
-    tt.test_read_config_file()
-    tt.test_add_path()
-    tt.test_get_job_params()
+    try:
+        tt.test_setup_dir()
+        tt.test_move_user_files()
+        tt.test_read_config_file()
+        tt.test_add_path()
+        tt.test_get_job_params()
+        tt.test_create_qiime_mapping_file()
+    except AssertionError:
+        pass
     tt.tearDownClass()

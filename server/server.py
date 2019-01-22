@@ -14,7 +14,6 @@ from mmeds.mmeds import (send_email,
                          insert_error,
                          insert_warning,
                          validate_mapping_file,
-                         log,
                          create_local_copy)
 from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
 from mmeds.authentication import (validate_password,
@@ -78,7 +77,7 @@ class MMEDSserver(object):
                 if 'qiime' in tool or 'test' in tool:
                     try:
                         cp.log('Running analysis with ' + tool)
-                        if config is None:
+                        if config.file is None:
                             p = spawn_analysis(tool, self.get_user(), access_code, None, self.testing)
                         else:
                             p = spawn_analysis(tool,
@@ -121,7 +120,7 @@ class MMEDSserver(object):
             log(type(myMetaData.file))
             log(dir(myMetaData.file))
             # Check the file that's uploaded
-            valid_extensions = ['txt', 'csv', 'tsv']
+            valid_extensions = ['txt', 'csv', 'tsv', 'zip', 'tar', 'tar.gz']
             file_extension = myMetaData.filename.split('.')[-1]
             if file_extension not in valid_extensions:
                 page = mmeds.load_html('upload', title='Upload data')
