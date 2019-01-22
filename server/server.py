@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from subprocess import run
 from sys import argv
-
+from datetime import datetime as dt
 import cherrypy as cp
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -14,6 +14,7 @@ from mmeds.mmeds import (send_email,
                          insert_error,
                          insert_warning,
                          validate_mapping_file,
+                         log,
                          create_local_copy)
 from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
 from mmeds.authentication import (validate_password,
@@ -113,125 +114,89 @@ class MMEDSserver(object):
         return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_qiime(self, myMetaData, reads, barcodes, public='off'):
+    def validate_metadata(self, myMetaData):
         """ The page returned after a file is uploaded. """
         try:
-            log(myMetaData.file)
-            log(type(myMetaData.file))
-            log(dir(myMetaData.file))
+            log('In validate qiime')
+            log(str(dt.now()))
+
             # Check the file that's uploaded
-            valid_extensions = ['txt', 'csv', 'tsv', 'zip', 'tar', 'tar.gz']
+            valid_extensions = ['txt', 'csv', 'tsv']
             file_extension = myMetaData.filename.split('.')[-1]
             if file_extension not in valid_extensions:
                 page = mmeds.load_html('upload', title='Upload data')
                 return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
-            # Specify a particular test directory
-            if fig.TEST_USER in self.get_user():
-                ID = self.get_user().strip(fig.TEST_USER)
-                new_dir = Path(str(fig.TEST_DIR) + ID)
-                cp.log(str(new_dir))
-                if not os.path.exists(new_dir):
-                    os.makedirs(new_dir)
-                    cp.log('Created dir {}'.format(new_dir))
-            else:
-                # Create a unique dir for handling files uploaded by this user
-                count = 0
+
+            count = 0
+            new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
+            while new_dir.is_dir():
                 new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
-                while os.path.exists(new_dir):
-                    new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
-                    while os.path.exists(new_dir):
-                        new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
-                        count += 1
-                    os.makedirs(new_dir)
-                cp.session['dir'] = new_dir
-                cp.log('New directory for {}: {}'.format(self.get_user(), cp.session['dir']))
+                count += 1
+            new_dir.mkdir()
+            cp.session['dir'] = new_dir
 
-                # Create a copy of the Data file
-                if reads.file is not None:
-                    reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
-                else:
-                    reads_copy = None
+            # Create a copy of the MetaData
+            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
 
-                # Create a copy of the Data file
-                if barcodes.file is not None:
-                    barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
-                else:
-                    barcodes_copy = None
+            # Check the metadata file for errors
+            errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
 
-                # Create a copy of the MetaData
-                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+            for error in errors:
+                cp.log(error)
 
-                # Set the User
-                if public == 'on':
-                    username = 'public'
-                else:
-                    username = self.get_user()
+            # The database for any issues with previous uploads
+            with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
+                try:
+                    warnings += db.check_repeated_subjects(subjects)
+                    errors += db.check_user_study_name(study_name)
+                except MetaDataError as e:
+                    errors.append('-1\t-1\t' + e.message)
 
-                # Check the metadata file for errors
-                errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
-                for error in errors:
-                    cp.log(error)
+            # If there are errors report them and return the error page
+            if len(errors) > 0:
+                cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
+                # Write the errors to a file
+                with open(cp.session['error_file'], 'w') as f:
+                    f.write('\n'.join(errors + warnings))
 
-                with Database(cp.session['dir'], owner=username, testing=self.testing) as db:
-                    try:
-                        warnings += db.check_repeated_subjects(subjects)
-                        errors += db.check_user_study_name(study_name)
-                    except MetaDataError as e:
-                        errors.append('-1\t-1\t' + e.message)
+                uploaded_output = mmeds.load_html('error', title='Errors')
+                uploaded_output = insert_error(
+                    uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
+                for i, warning in enumerate(warnings):
+                    uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
+                for i, error in enumerate(errors):
+                    uploaded_output = insert_error(uploaded_output, 22 + i, error)
 
-                # If there are errors report them and return the error page
-                if len(errors) > 0:
-                    cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
-                    # Write the errors to a file
-                    with open(cp.session['error_file'], 'w') as f:
-                        f.write('\n'.join(errors + warnings))
+                html = generate_error_html(metadata_copy, errors, warnings)
+                cp.log('Created error html')
 
-                    uploaded_output = mmeds.load_html('error', title='Errors')
-                    uploaded_output = insert_error(
-                        uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
-                    for i, warning in enumerate(warnings):
-                        uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-                    for i, error in enumerate(errors):
-                        uploaded_output = insert_error(uploaded_output, 22 + i, error)
+                return html
 
-                    html = generate_error_html(metadata_copy, errors, warnings)
-                    cp.log('Created error html')
+            elif len(warnings) > 0:
+                cp.session['uploaded_files'] = [metadata_copy]
+                # Write the errors to a file
+                with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
+                    f.write('\n'.join(warnings))
 
-                    return html
-                elif len(warnings) > 0:
-                    cp.session['uploaded_files'] = [metadata_copy, reads_copy, barcodes_copy, username]
-                    # Write the errors to a file
-                    with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
-                        f.write('\n'.join(warnings))
+                # Get the html for the upload page
+                uploaded_output = mmeds.load_html('warning', title='Warnings')
 
-                    # Get the html for the upload page
-                    uploaded_output = mmeds.load_html('warning', title='Warnings')
+                for i, warning in enumerate(warnings):
+                    uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
 
-                    for i, warning in enumerate(warnings):
-                        uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-
-                    return uploaded_output
-                else:
-                    # Otherwise upload the metadata to the database
-                    os.mkdir(cp.session['dir'] / 'database_files')
-                    with Database(cp.session['dir'] / 'database_files', owner=username, testing=self.testing) as db:
-                        access_code, study_name, email = db.read_in_sheet(metadata_copy,
-                                                                          'qiime',
-                                                                          reads=reads_copy,
-                                                                          barcodes=barcodes_copy)
-
-                    # Send the confirmation email
-                    send_email(email, username, code=access_code, testing=self.testing)
-
-                    # Get the html for the upload page
-                    page = mmeds.load_html('welcome',
-                                           title='Welcome to Mmeds',
-                                           user=self.get_user())
-                    return page
+                return uploaded_output
+            else:
+                # If there are no errors or warnings proceed to upload the data files
+                page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
+                return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return page
+
+    ########################################
+    #             Upload Pages             #
+    ########################################
 
     @cp.expose
     def proceed_with_warning(self):
@@ -259,168 +224,80 @@ class MMEDSserver(object):
                 page = f.read()
         return page
 
-    ########################################
-    #            Authentication            #
-    ########################################
-
     @cp.expose
-    def reset_code(self, study_name, study_email):
-        """ Skip uploading a file. """
+    def process_data(self, reads, barcodes, public='off'):
         try:
-            # Get the open file handler
-            with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
-                try:
-                    db.reset_access_code(study_name, study_email)
-                    page = mmeds.load_html('success', title='Success', user=self.get_user())
-                except MissingUploadError:
-                    page = mmeds.load_html('download_error', title='Download Error', user=self.get_user())
+            log('In upload_data')
+            # Create a unique dir for handling files uploaded by this user
+            metadata_copy = cp.session['uploaded_files'].pop()
+
+            cp.log('New directory for {}: {}'.format(self.get_user(), cp.session['dir']))
+            log('made dir')
+
+            # Create a copy of the Data file
+            if reads.file is not None:
+                reads_copy = None
+                reads_copy = create_local_copy(reads.file, reads.filename, cp.session['dir'])
+            else:
+                reads_copy = None
+            log('after read')
+
+            # Create a copy of the Data file
+            if barcodes.file is not None:
+                barcodes_copy = None
+                barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, cp.session['dir'])
+            else:
+                barcodes_copy = None
+            log('after barcodes')
+
+            log('after meta copy')
+
+            # Set the User
+            if public == 'on':
+                username = 'public'
+            else:
+                username = self.get_user()
+
+            # Otherwise upload the metadata to the database
+            os.mkdir(cp.session['dir'] / 'database_files')
+            with Database(cp.session['dir'] / 'database_files', owner=username, testing=self.testing) as db:
+                access_code, study_name, email = db.read_in_sheet(metadata_copy,
+                                                                  'qiime',
+                                                                  reads=reads_copy,
+                                                                  barcodes=barcodes_copy)
+
+            # Send the confirmation email
+            send_email(email, username, code=access_code, testing=self.testing)
+
+            # Get the html for the upload page
+            page = mmeds.load_html('welcome',
+                                   title='Welcome to Mmeds',
+                                   user=self.get_user())
+            log('Finish validate')
+            log(str(dt.now()))
+            return page
         except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
-
-    @cp.expose
-    def query(self, query):
-        try:
-            # Set the session to use the current user
-            username = self.get_user()
-            with Database(cp.session['dir'], user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
-                data, header = db.execute(query)
-                html_data = db.format(data, header)
-                page = mmeds.load_html('success', title='Run Query', user=self.get_user())
-
-            cp.session['query'] = 'query.tsv'
-            html = '<form action="download_query" method="post">\n\
-                    <button type="submit">Download Results</button>\n\
-                    </form>'
-            page = insert_html(page, 10, html)
-            page = insert_error(page, 10, html_data)
-            if header is not None:
-                data = [header] + list(data)
-            with open(cp.session['dir'] / cp.session['query'], 'w') as f:
-                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
-
-    @cp.expose
-    def get_data(self):
-        """ Return the data file uploaded by the user. """
-        path = cp.session['dir'] / cp.session['data_file']
-        return static.serve_file(path, 'application/x-download',
-                                 'attachment', os.path.basename(path))
-
-    @cp.expose
-    def sign_up(self, username, password1, password2, email):
-        """
-        Perform the actions necessary to sign up a new user.
-        """
-        pass_err = check_password(password1, password2)
-        user_err = check_username(username)
-        if pass_err:
-            with open(HTML_DIR / 'sign_up_page.html') as f:
-                page = f.read()
-            return insert_error(page, 25, pass_err)
-        elif user_err:
-            with open(HTML_DIR / 'sign_up_page.html') as f:
-                page = f.read()
-            return insert_error(page, 25, user_err)
-        else:
-            add_user(username, password1, email, testing=self.testing)
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             return page
 
     @cp.expose
-    def login(self, username, password):
-        """
-        Opens the page to upload files if the user has been authenticated.
-        Otherwise returns to the login page with an error message.
-        """
-        cp.log('Login attempt for user: {}'.format(username))
-
-        if not validate_password(username, password, testing=self.testing):
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-            cp.log('Login Error: Invalid username or password')
-            return insert_error(page, 23, 'Error: Invalid username or password.')
-        else:
-            cp.session['user'] = username
-            self.processes = {}
-            page = mmeds.load_html('welcome',
-                                   title='Welcome to Mmeds',
-                                   user=self.get_user())
-            cp.log('Login Successful')
-            return page.format(user=username)
-
-    @cp.expose
-    def home(self):
-        """ Return the home page of the server for a user already logged in. """
+    def upload_data(self):
         try:
-            page = mmeds.load_html('welcome',
-                                   title='Welcome to Mmeds',
-                                   user=self.get_user())
+            # If there are no errors or warnings proceed to upload the data files
+            page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
+            return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
-        return page
+            return page
 
     @cp.expose
-    def logout(self):
-        """ Expires the session and returns to login page """
-        cp.log('Logout user {}'.format(cp.session['user']))
-        cp.lib.sessions.expire()
-        return open(HTML_DIR / 'index.html')
-
-    @cp.expose
-    def input_password(self):
-        """ Load page for changing the user's password """
-        try:
-            page = mmeds.load_html('change_password', title='Change Password')
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
-
-    @cp.expose
-    def change_password(self, password0, password1, password2):
-        """
-        Change the user's password
-        ===============================
-        :password0: The old password
-        :password1: The new password
-        :password2: A second entry of the new password
-        """
-        try:
-            page = mmeds.load_html('change_password', title='Change Password')
-
-            # Check the old password matches
-            if validate_password(self.get_user(), password0):
-                # Check the two copies of the new password match
-                errors = check_password(password1, password2)
-                if len(errors) == 0:
-                    change_password(self.get_user(), password1)
-                    page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
-                else:
-                    page = insert_html(page, 9, errors)
-            else:
-                page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
-
-    ########################################
-    #             Upload Pages             #
-    ########################################
-
-    @cp.expose
-    def upload(self, study_type):
+    def upload_metadata(self, study_type):
         """ Page for uploading Qiime data """
         try:
             if 'qiime' in study_type:
-                page = mmeds.load_html('upload_qiime',
+                page = mmeds.load_html('upload_metadata',
                                        title='Upload Qiime',
                                        user=self.get_user(),
                                        version=study_type)
@@ -429,6 +306,8 @@ class MMEDSserver(object):
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
+        log('Exit upload')
+        log(str(dt.now()))
         return page
 
     @cp.expose
@@ -684,6 +563,158 @@ class MMEDSserver(object):
             path = cp.session['dir'] / cp.session['query']
             page = static.serve_file(path, 'application/x-download',
                                      'attachment', os.path.basename(path))
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
+
+    ########################################
+    #            Authentication            #
+    ########################################
+
+    @cp.expose
+    def reset_code(self, study_name, study_email):
+        """ Skip uploading a file. """
+        try:
+            # Get the open file handler
+            with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
+                try:
+                    db.reset_access_code(study_name, study_email)
+                    page = mmeds.load_html('success', title='Success', user=self.get_user())
+                except MissingUploadError:
+                    page = mmeds.load_html('download_error', title='Download Error', user=self.get_user())
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
+
+    @cp.expose
+    def query(self, query):
+        try:
+            # Set the session to use the current user
+            username = self.get_user()
+            with Database(cp.session['dir'], user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
+                data, header = db.execute(query)
+                html_data = db.format(data, header)
+                page = mmeds.load_html('success', title='Run Query', user=self.get_user())
+
+            cp.session['query'] = 'query.tsv'
+            html = '<form action="download_query" method="post">\n\
+                    <button type="submit">Download Results</button>\n\
+                    </form>'
+            page = insert_html(page, 10, html)
+            page = insert_error(page, 10, html_data)
+            if header is not None:
+                data = [header] + list(data)
+            with open(cp.session['dir'] / cp.session['query'], 'w') as f:
+                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
+
+    @cp.expose
+    def get_data(self):
+        """ Return the data file uploaded by the user. """
+        path = cp.session['dir'] / cp.session['data_file']
+        return static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
+
+    @cp.expose
+    def sign_up(self, username, password1, password2, email):
+        """
+        Perform the actions necessary to sign up a new user.
+        """
+        pass_err = check_password(password1, password2)
+        user_err = check_username(username)
+        if pass_err:
+            with open(HTML_DIR / 'sign_up_page.html') as f:
+                page = f.read()
+            return insert_error(page, 25, pass_err)
+        elif user_err:
+            with open(HTML_DIR / 'sign_up_page.html') as f:
+                page = f.read()
+            return insert_error(page, 25, user_err)
+        else:
+            add_user(username, password1, email, testing=self.testing)
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+            return page
+
+    @cp.expose
+    def login(self, username, password):
+        """
+        Opens the page to upload files if the user has been authenticated.
+        Otherwise returns to the login page with an error message.
+        """
+        cp.log('Login attempt for user: {}'.format(username))
+
+        if not validate_password(username, password, testing=self.testing):
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+            cp.log('Login Error: Invalid username or password')
+            return insert_error(page, 23, 'Error: Invalid username or password.')
+        else:
+            cp.session['user'] = username
+            self.processes = {}
+            page = mmeds.load_html('welcome',
+                                   title='Welcome to Mmeds',
+                                   user=self.get_user())
+            cp.log('Login Successful')
+            return page.format(user=username)
+
+    @cp.expose
+    def home(self):
+        """ Return the home page of the server for a user already logged in. """
+        try:
+            page = mmeds.load_html('welcome',
+                                   title='Welcome to Mmeds',
+                                   user=self.get_user())
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
+
+    @cp.expose
+    def logout(self):
+        """ Expires the session and returns to login page """
+        cp.log('Logout user {}'.format(cp.session['user']))
+        cp.lib.sessions.expire()
+        return open(HTML_DIR / 'index.html')
+
+    @cp.expose
+    def input_password(self):
+        """ Load page for changing the user's password """
+        try:
+            page = mmeds.load_html('change_password', title='Change Password')
+        except LoggedOutError:
+            with open(HTML_DIR / 'index.html') as f:
+                page = f.read()
+        return page
+
+    @cp.expose
+    def change_password(self, password0, password1, password2):
+        """
+        Change the user's password
+        ===============================
+        :password0: The old password
+        :password1: The new password
+        :password2: A second entry of the new password
+        """
+        try:
+            page = mmeds.load_html('change_password', title='Change Password')
+
+            # Check the old password matches
+            if validate_password(self.get_user(), password0):
+                # Check the two copies of the new password match
+                errors = check_password(password1, password2)
+                if len(errors) == 0:
+                    change_password(self.get_user(), password1)
+                    page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
+                else:
+                    page = insert_html(page, 9, errors)
+            else:
+                page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()

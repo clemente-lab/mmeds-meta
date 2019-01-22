@@ -36,10 +36,13 @@ CONFIG = {
     'global': {
         'server.socket_host': HOST,
         'server.socket_port': PORT,
-        'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
+        'server.socket_timeout': 1000000000,
+        'server.max_request_body_size': 10000000000,
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
         'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
+
+        'log.error_file': str(DATABASE_DIR / 'site.log'),
         'request.scheme': 'https',
         'secureheaders.on': True,
         'tools.sessions.on': True,
