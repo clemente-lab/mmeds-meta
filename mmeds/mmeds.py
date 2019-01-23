@@ -475,19 +475,27 @@ def is_numeric(s):
 
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
+    log("In create_local_copy.")
     # Create the filename
     file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+
     # Ensure there is not already a file with the same name
     while exists(file_copy):
         file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+    log('Created filepath {}'.format(file_copy))
 
+    count = 0
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
+        log('File opened')
         while True:
+            log('Write data round {}'.format(count))
             data = fp.read(8192)
             nf.write(data)
             if not data:
                 break
+            count += 1
+    log('Copy finished')
     return file_copy
 
 

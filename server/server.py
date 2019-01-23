@@ -44,28 +44,24 @@ def handle_data_upload(metadata_copy, reads, barcodes, username, path, testing):
 
     # Create a copy of the Data file
     if reads.file is not None:
-        reads_copy = None
         reads_copy = create_local_copy(reads.file, reads.filename, path)
     else:
         reads_copy = None
-    log('after read')
 
     # Create a copy of the Data file
     if barcodes.file is not None:
-        barcodes_copy = None
         barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, path)
     else:
         barcodes_copy = None
-    log('after barcodes')
 
-    log('after meta copy')
-
+    log('Copies created')
     # Otherwise upload the metadata to the database
     with Database(path, owner=username, testing=testing) as db:
         access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                           'qiime',
                                                           reads=reads_copy,
                                                           barcodes=barcodes_copy)
+    log('Added to database')
 
     # Send the confirmation email
     send_email(email, username, code=access_code, testing=testing)
@@ -161,8 +157,6 @@ class MMEDSserver(object):
         """ The page returned after a file is uploaded. """
         log('In validate_metadata')
         try:
-            log('In validate qiime')
-
             # Check the file that's uploaded
             valid_extensions = ['txt', 'csv', 'tsv']
             file_extension = myMetaData.filename.split('.')[-1]
@@ -177,15 +171,13 @@ class MMEDSserver(object):
                 count += 1
             new_dir.mkdir()
             cp.session['dir'] = new_dir
+            log("Upload dir {}".format(new_dir))
 
             # Create a copy of the MetaData
             metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
 
             # Check the metadata file for errors
             errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
-
-            for error in errors:
-                cp.log(error)
 
             # The database for any issues with previous uploads
             with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
@@ -197,6 +189,7 @@ class MMEDSserver(object):
 
             # If there are errors report them and return the error page
             if len(errors) > 0:
+                log('Errors in metadata')
                 cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
                 # Write the errors to a file
                 with open(cp.session['error_file'], 'w') as f:
@@ -214,8 +207,8 @@ class MMEDSserver(object):
                 cp.log('Created error html')
 
                 return html
-
             elif len(warnings) > 0:
+                log('Some warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 # Write the errors to a file
                 with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
@@ -230,6 +223,7 @@ class MMEDSserver(object):
                 return uploaded_output
             else:
                 # If there are no errors or warnings proceed to upload the data files
+                log('No errors or warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
                 return page
@@ -241,6 +235,7 @@ class MMEDSserver(object):
     @cp.expose
     def process_data(self, reads, barcodes, public='off'):
         log('In process_data')
+        cp.log('In process_data')
         try:
             # Create a unique dir for handling files uploaded by this user
             metadata_copy = cp.session['uploaded_files'].pop()
@@ -260,6 +255,7 @@ class MMEDSserver(object):
                               cp.session['dir'],
                               self.testing))
             log('Starting upload process')
+            cp.log('Starting upload process')
             p.start()
 
             # Get the html for the upload page
@@ -320,6 +316,7 @@ class MMEDSserver(object):
         """
         Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
         """
+        log('In convert_metadata')
         try:
             meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
             # Try the conversion
@@ -350,6 +347,8 @@ class MMEDSserver(object):
 
     @cp.expose
     def upload_data(self):
+        log('In upload_data')
+        cp.log('In upload_data')
         try:
             # If there are no errors or warnings proceed to upload the data files
             page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
@@ -362,6 +361,7 @@ class MMEDSserver(object):
     @cp.expose
     def upload_metadata(self, study_type):
         """ Page for uploading Qiime data """
+        log('In upload_metadata')
         try:
             page = mmeds.load_html('upload_metadata',
                                    title='Upload Qiime',
@@ -376,6 +376,7 @@ class MMEDSserver(object):
     @cp.expose
     def query_page(self):
         """ Skip uploading a file. """
+        log('In query_page')
         try:
             # Get the html for the upload page
             page = mmeds.load_html('success', title='Skipped Upload')
