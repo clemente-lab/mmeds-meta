@@ -84,7 +84,7 @@ class Tool:
                 demuxed = False
                 log('Invalid extension')
                 log(root_files['reads'])
-                ## This should be caught when uploading the data
+                # This should be caught when uploading the data
 
             (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
             files['metadata'] = new_dir / 'metadata.tsv'
@@ -103,6 +103,13 @@ class Tool:
 
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id), files, demuxed
+
+    def unzip(self):
+        """ Split the libraries and perform quality analysis. """
+        self.add_path('reads', '')
+        command = 'unzip {} -d {}'.format(self.files['data'],
+                                          self.files['reads'])
+        self.jobtext.append(command)
 
     def read_config_file(self, config_file):
         """ Read the provided config file to determine settings for the analysis. """
@@ -290,13 +297,6 @@ class Qiime1(Tool):
         """ Run validation on the Qiime mapping file """
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.files['mapping'], self.path)
         self.jobtext.append(cmd)
-
-    def unzip(self):
-        """ Split the libraries and perform quality analysis. """
-        self.add_path('reads', '')
-        command = 'unzip {} -d {}'.format(self.files['data'],
-                                          self.files['reads'])
-        self.jobtext.append(command)
 
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
@@ -508,17 +508,17 @@ class Qiime2(Tool):
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
 
-        self.files['working_file'] = self.path / 'qiime_artifact.qza'
+        self.files['demux_file'] = self.path / 'qiime_artifact.qza'
         # Create a directory to import as a Qiime2 object
         if self.demuxed:
             cmd = [
                 'qiime tools import ',
                 '--type {} '.format('"SampleData[PairedEndSequencesWithQuality]"'),
                 '--input-path {}'.format(self.files['reads']),
-                '--source_format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
-                '--output-path {};'.format(self.files['working_file'])
+                '--source-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
+                '--output-path {};'.format(self.files['demux_file'])
             ]
-            self.jobtext.append(cmd)
+            self.jobtext.append(' '.join(cmd))
         else:
             self.files['working_dir'] = self.path / 'import_dir'
             if not self.files['working_dir'].is_dir():
@@ -799,10 +799,14 @@ class Qiime2(Tool):
     def setup_analysis(self):
         """ Create the job file for the analysis. """
         self.create_qiime_mapping_file()
-        self.qimport()
-        if not self.demuxed:
+        if self.demuxed:
+            self.unzip()
+            self.qimport()
+        else:
+            self.qimport()
             self.demultiplex()
             self.demux_visualize()
+
         if self.atype == 'deblur':
             self.deblur_filter()
             self.deblur_denoise()
@@ -824,6 +828,7 @@ class Qiime2(Tool):
         self.jobtext.append('wait')
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
+        log(self.jobtext)
 
     def run(self):
         """ Perform some analysis. """
