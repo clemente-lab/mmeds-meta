@@ -799,13 +799,13 @@ class Qiime2(Tool):
     def setup_analysis(self):
         """ Create the job file for the analysis. """
         self.create_qiime_mapping_file()
+
         if self.demuxed:
             self.unzip()
-            self.qimport()
-        else:
-            self.qimport()
+        self.qimport()
+        if not self.demuxed:
             self.demultiplex()
-            self.demux_visualize()
+        self.demux_visualize()
 
         if self.atype == 'deblur':
             self.deblur_filter()
@@ -814,6 +814,7 @@ class Qiime2(Tool):
         elif self.atype == 'dada2':
             self.dada2()
             self.tabulate()
+
         self.alignment_mafft()
         self.alignment_mask()
         self.phylogeny_fasttree()
