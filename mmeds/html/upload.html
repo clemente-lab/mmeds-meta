@@ -17,8 +17,12 @@
       </p>
       <p>
         <h3>Modify a previous upload</h3>
-        <form action='modify_upload' method='post' enctype='multipart/form-data'>
+        <form action='modify_upload' method='post' enctype='multipart/form-data', id='modify_form'>
           <p> Data File: <br> <input type='file' name='myData' required/> </p>
+          <p><select name='data_type' form='modify_form'>
+            <option value="reads">Reads</option>
+            <option value="barcodes">Barcodes</option>
+          </select></p>
           <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
           <p> <button type='submit' method='post'>Modify Upload</button> </p>
         </form>

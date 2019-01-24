@@ -566,13 +566,15 @@ class Database:
         for ob in obs:
             ob.delete()
 
-    def modify_data(self, new_data, access_code):
+    def modify_data(self, new_data, access_code, data_type):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
-        # Open the data file
-        with open(new_data, 'rb') as data_file:
-            mdata.data.replace(data_file)
-            mdata.save()
+
+        # Remove the old data file
+        if mdata.files.get(data_type) is not None:
+            Path(mdata.files[data_type]).unlink()
+
+        mdata.files[data_type] = str(new_data)
 
     def reset_access_code(self, study_name, email):
         """
@@ -668,7 +670,7 @@ class Database:
             return []
 
     def get_mongo_files(self, access_code):
-        """ Return the three files necessary for qiime analysis. """
+        """ Return mdata.files, mdata.path for the provided access_code. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist

@@ -29,6 +29,14 @@ from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError
 absDir = Path(os.getcwd())
 
 
+def handle_modify_data(access_code, myData, data_type, testing):
+    with Database('.', testing=testing) as db:
+        # Create a copy of the Data file
+        files, path = db.get_mongo_files(access_code=access_code)
+        data_copy = create_local_copy(myData.file, myData.filename, path=path)
+        db.modify_data(data_copy, access_code, data_type)
+
+
 def handle_data_upload(metadata_copy, reads, barcodes, username, path, testing):
     """
     Thread that handles the upload of large data files.
@@ -82,8 +90,8 @@ class MMEDSserver(object):
         """
         try:
             return cp.session['user']
-        except KeyError as e:
-            raise LoggedOutError(e.args[0])
+        except KeyError:
+            raise LoggedOutError('No user logged in')
 
     @cp.expose
     def index(self):
@@ -174,13 +182,13 @@ class MMEDSserver(object):
             log("Upload dir {}".format(new_dir))
 
             # Create a copy of the MetaData
-            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, new_dir)
 
             # Check the metadata file for errors
             errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
 
             # The database for any issues with previous uploads
-            with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
+            with Database(new_dir, owner=self.get_user(), testing=self.testing) as db:
                 try:
                     warnings += db.check_repeated_subjects(subjects)
                     errors += db.check_user_study_name(study_name)
@@ -190,7 +198,7 @@ class MMEDSserver(object):
             # If there are errors report them and return the error page
             if len(errors) > 0:
                 log('Errors in metadata')
-                cp.session['error_file'] = cp.session['dir'] / ('errors_' + str(myMetaData.filename))
+                cp.session['error_file'] = new_dir / ('errors_' + str(myMetaData.filename))
                 # Write the errors to a file
                 with open(cp.session['error_file'], 'w') as f:
                     f.write('\n'.join(errors + warnings))
@@ -211,7 +219,7 @@ class MMEDSserver(object):
                 log('Some warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 # Write the errors to a file
-                with open(cp.session['dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
+                with open(new_dir / ('warnings_' + myMetaData.filename), 'w') as f:
                     f.write('\n'.join(warnings))
 
                 # Get the html for the upload page
@@ -289,27 +297,33 @@ class MMEDSserver(object):
         return page
 
     @cp.expose
-    def modify_upload(self, myData, access_code):
+    def modify_upload(self, myData, data_type, access_code):
         """ Modify the data of an existing upload. """
         log('In modify_upload')
         try:
-            # Create a copy of the Data file
-            data_copy = create_local_copy(myData.file, myData.filename)
-
-            with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
-                try:
-                    db.modify_data(data_copy, access_code)
-                except MissingUploadError:
-                    with open(HTML_DIR / 'download_error.html') as f:
-                        download_error = f.read()
-                    return download_error.format(self.get_user())
+            try:
+                with Database('.', owner=self.get_user(), testing=testing) as db:
+                    # Create a copy of the Data file
+                    files, path = db.get_mongo_files(access_code=access_code)
+                # Start a process to handle loading the data
+                p = Process(target=handle_modify_data,
+                            args=(access_code,
+                                  myData,
+                                  self.get_user(),
+                                  data_type,
+                                  self.testing))
+                p.start()
+            except MissingUploadError:
+                with open(HTML_DIR / 'download_error.html') as f:
+                    download_error = f.read()
+                    return download_error.format(user=self.get_user())
             # Get the html for the upload page
             with open(HTML_DIR / 'success.html', 'r') as f:
                 page = f.read()
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
-        return page
+                return page
 
     @cp.expose
     def convert_metadata(self, convertTo, myMetaData, unitCol, skipRows):
