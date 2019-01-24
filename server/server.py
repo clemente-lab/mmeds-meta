@@ -7,8 +7,7 @@ import cherrypy as cp
 import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
-from mmeds.mmeds import (send_email,
-                         generate_error_html,
+from mmeds.mmeds import (generate_error_html,
                          insert_html,
                          insert_error,
                          insert_warning,
@@ -23,57 +22,10 @@ from mmeds.authentication import (validate_password,
                                   reset_password,
                                   change_password)
 from mmeds.database import Database
-from mmeds.tools import spawn_analysis
+from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data
 from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError
 
 absDir = Path(os.getcwd())
-
-
-def handle_modify_data(access_code, myData, data_type, testing):
-    with Database('.', testing=testing) as db:
-        # Create a copy of the Data file
-        files, path = db.get_mongo_files(access_code=access_code)
-        data_copy = create_local_copy(myData.file, myData.filename, path=path)
-        db.modify_data(data_copy, access_code, data_type)
-
-
-def handle_data_upload(metadata_copy, reads, barcodes, username, path, testing):
-    """
-    Thread that handles the upload of large data files.
-    ===================================================
-    :metadata_copy: A string. Location of the metadata.
-    :reads: A file
-    :barcodes: @Todo
-    :username: @Todo
-    :path: @Todo
-    :testing: True if the server is running locally.
-    """
-    log('In handle_data_upload')
-
-    # Create a copy of the Data file
-    if reads.file is not None:
-        reads_copy = create_local_copy(reads.file, reads.filename, path)
-    else:
-        reads_copy = None
-
-    # Create a copy of the Data file
-    if barcodes.file is not None:
-        barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, path)
-    else:
-        barcodes_copy = None
-
-    log('Copies created')
-    # Otherwise upload the metadata to the database
-    with Database(path, owner=username, testing=testing) as db:
-        access_code, study_name, email = db.read_in_sheet(metadata_copy,
-                                                          'qiime',
-                                                          reads=reads_copy,
-                                                          barcodes=barcodes_copy)
-    log('Added to database')
-
-    # Send the confirmation email
-    send_email(email, username, code=access_code, testing=testing)
-    log('Email sent')
 
 
 class MMEDSserver(object):

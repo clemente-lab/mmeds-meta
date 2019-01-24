@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.tools import Tool
+from mmeds.tool import Tool
 from mmeds.database import Database
 
 from shutil import rmtree

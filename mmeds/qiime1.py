@@ -6,7 +6,7 @@ from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
 from mmeds.mmeds import send_email, log
 from mmeds.error import AnalysisError
 from mmeds.summarize import summarize
-from mmeds.tools import Tool
+from mmeds.tool import Tool
 
 
 class Qiime1(Tool):
