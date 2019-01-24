@@ -368,6 +368,7 @@ class Qiime2(Tool):
                     # Get the job header text from the template
                     with open(JOB_TEMPLATE) as f1:
                         temp = f1.read()
+
                     # Open the jobfile to write all the commands
                     with open(str(jobfile) + '.lsf', 'w') as f:
                         options = self.get_job_params()

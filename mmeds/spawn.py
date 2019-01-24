@@ -7,6 +7,7 @@ from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
+from mmeds.config import DATABASE_DIR
 
 
 def run_analysis(qiime):
@@ -51,7 +52,7 @@ def handle_modify_data(access_code, myData, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def handle_data_upload(metadata_copy, reads, barcodes, username, path, testing):
+def handle_data_upload(metadata, reads, barcodes, username, testing):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -59,26 +60,35 @@ def handle_data_upload(metadata_copy, reads, barcodes, username, path, testing):
     :reads: A file
     :barcodes: @Todo
     :username: @Todo
-    :path: @Todo
     :testing: True if the server is running locally.
     """
     log('In handle_data_upload')
+    count = 0
+    new_dir = DATABASE_DIR / ('{}_{}'.format(username, count))
+    while new_dir.is_dir():
+        new_dir = DATABASE_DIR / ('{}_{}'.format(username, count))
+        count += 1
+    new_dir.mkdir()
+
+    # Create a copy of the MetaData
+    with open(metadata, 'rb') as f:
+        metadata_copy = create_local_copy(f, metadata.name, new_dir)
 
     # Create a copy of the Data file
     if reads.file is not None:
-        reads_copy = create_local_copy(reads.file, reads.filename, path)
+        reads_copy = create_local_copy(reads.file, reads.filename, new_dir)
     else:
         reads_copy = None
 
     # Create a copy of the Data file
     if barcodes.file is not None:
-        barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, path)
+        barcodes_copy = create_local_copy(barcodes.file, barcodes.filename, new_dir)
     else:
         barcodes_copy = None
 
     log('Copies created')
     # Otherwise upload the metadata to the database
-    with Database(path, owner=username, testing=testing) as db:
+    with Database(new_dir, owner=username, testing=testing) as db:
         access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                           'qiime',
                                                           reads=reads_copy,

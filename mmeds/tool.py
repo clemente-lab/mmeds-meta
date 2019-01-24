@@ -153,9 +153,9 @@ class Tool:
 
     def get_job_params(self):
         params = {
-            'walltime': '4:00',
+            'walltime': '6:00',
             'walltime2': '2:00',
-            'jobname': self.owner + '_' + self.run_id,
+            'jobname': '{}-{}-{}'.format(self.owner, self.atype, self.run_id),
             'nodes': self.num_jobs,
             'memory': 1000,
             'queue': 'expressalloc'
