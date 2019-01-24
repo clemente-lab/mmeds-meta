@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pathlib import Path
 from subprocess import run
 from multiprocessing import Process
@@ -14,7 +15,7 @@ from mmeds.mmeds import (generate_error_html,
                          validate_mapping_file,
                          log,
                          create_local_copy)
-from mmeds.config import CONFIG, UPLOADED_FP, DATABASE_DIR, HTML_DIR, USER_FILES
+from mmeds.config import CONFIG, UPLOADED_FP, HTML_DIR, USER_FILES
 from mmeds.authentication import (validate_password,
                                   check_username,
                                   check_password,
@@ -110,7 +111,7 @@ class MMEDSserver(object):
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
         log('In view_corrections')
-        return open(cp.session['dir'] / (UPLOADED_FP + '.html'))
+        return open(cp.session['working_dir'] / (UPLOADED_FP + '.html'))
 
     @cp.expose
     def validate_metadata(self, myMetaData):
@@ -124,23 +125,14 @@ class MMEDSserver(object):
                 page = mmeds.load_html('upload', title='Upload data')
                 return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
 
-            count = 0
-            new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
-            while new_dir.is_dir():
-                new_dir = DATABASE_DIR / ('{}_{}'.format(self.get_user(), count))
-                count += 1
-            new_dir.mkdir()
-            cp.session['dir'] = new_dir
-            log("Upload dir {}".format(new_dir))
-
             # Create a copy of the MetaData
-            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, new_dir)
+            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
 
             # Check the metadata file for errors
             errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
 
             # The database for any issues with previous uploads
-            with Database(new_dir, owner=self.get_user(), testing=self.testing) as db:
+            with Database('.', owner=self.get_user(), testing=self.testing) as db:
                 try:
                     warnings += db.check_repeated_subjects(subjects)
                     errors += db.check_user_study_name(study_name)
@@ -150,7 +142,7 @@ class MMEDSserver(object):
             # If there are errors report them and return the error page
             if len(errors) > 0:
                 log('Errors in metadata')
-                cp.session['error_file'] = new_dir / ('errors_' + str(myMetaData.filename))
+                cp.session['error_file'] = cp.session['working_dir'] / ('errors_' + str(myMetaData.filename))
                 # Write the errors to a file
                 with open(cp.session['error_file'], 'w') as f:
                     f.write('\n'.join(errors + warnings))
@@ -171,7 +163,7 @@ class MMEDSserver(object):
                 log('Some warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 # Write the errors to a file
-                with open(new_dir / ('warnings_' + myMetaData.filename), 'w') as f:
+                with open(cp.session['working_dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
                     f.write('\n'.join(warnings))
 
                 # Get the html for the upload page
@@ -198,7 +190,7 @@ class MMEDSserver(object):
         cp.log('In process_data')
         try:
             # Create a unique dir for handling files uploaded by this user
-            metadata_copy = cp.session['uploaded_files'].pop()
+            metadata = Path(cp.session['uploaded_files'].pop())
 
             # Set the User
             if public == 'on':
@@ -208,11 +200,10 @@ class MMEDSserver(object):
 
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
-                        args=(metadata_copy,
+                        args=(metadata,
                               reads,
                               barcodes,
                               username,
-                              cp.session['dir'],
                               self.testing))
             log('Starting upload process')
             cp.log('Starting upload process')
@@ -284,15 +275,15 @@ class MMEDSserver(object):
         """
         log('In convert_metadata')
         try:
-            meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['dir'])
+            meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
             # Try the conversion
             try:
                 if convertTo == 'mmeds':
-                    file_path = cp.session['dir'] / 'mmeds_metadata.tsv'
+                    file_path = cp.session['working_dir'] / 'mmeds_metadata.tsv'
                     # If it is successful return the converted file
                     mmeds.MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
                 else:
-                    file_path = cp.session['dir'] / 'mixs_metadata.tsv'
+                    file_path = cp.session['working_dir'] / 'mixs_metadata.tsv'
                     mmeds.mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
                 page = static.serve_file(file_path, 'application/x-download',
                                          'attachment', os.path.basename(file_path))
@@ -619,6 +610,8 @@ class MMEDSserver(object):
             return insert_error(page, 23, 'Error: Invalid username or password.')
         else:
             cp.session['user'] = username
+            cp.session['temp_dir'] = tempfile.TemporaryDirectory()
+            cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
             self.processes = {}
             page = mmeds.load_html('welcome',
                                    title='Welcome to Mmeds',

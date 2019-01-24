@@ -65,7 +65,7 @@ class ToolTests(TestCase):
 
     def test_get_job_params(self):
         params = self.tool.get_job_params()
-        assert params['jobname'] == '{}_{}'.format(fig.TEST_USER, 0)
+        assert params['jobname'] == '{}-{}-{}'.format(fig.TEST_USER, 1, 0)
         assert params['nodes'] == 3
 
     def test_create_qiime_mapping_file(self):
