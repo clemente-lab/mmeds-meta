@@ -172,6 +172,8 @@ class Qiime1(Tool):
                 self.run_analysis()
             self.sanity_check()
             self.move_user_files()
+            self.write_file_locations()
+            self.summary()
             doc = self.db.get_metadata(self.access_code)
             send_email(doc.email,
                        doc.owner,
