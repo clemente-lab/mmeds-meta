@@ -18,7 +18,7 @@ class Qiime2(Tool):
         if testing:
             self.jobtext.append('source activate qiime2;')
         else:
-            self.jobtext.append('module load qiime2/2018.4;')
+            self.jobtext.append('module use /hpc/packages/minerva-common/modulefiles; module load qiime2/2018.4;')
 
     # ======================= #
     # # # Qiime2 Commands # # #
@@ -376,9 +376,11 @@ class Qiime2(Tool):
                         f.write(temp.format(**options))
                         f.write('\n'.join(self.jobtext))
                     # Submit the job
-                    output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-                    job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
-                    self.wait_on_job(job_id)
+                    #output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+                    output = run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+                    log(output)
+                    #job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+                    #self.wait_on_job(job_id)
 
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
