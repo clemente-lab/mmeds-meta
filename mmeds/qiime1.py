@@ -206,20 +206,22 @@ class Qiime1(Tool):
 
     def run(self):
         """ Execute all the necessary actions. """
-        if self.analysis:
-            try:
+        try:
+            if self.analysis:
                 self.run_analysis()
-            except CalledProcessError as e:
-                raise AnalysisError(e.args[0])
-        self.sanity_check()
-        summary = self.summarize()
-        self.move_user_files()
-        self.write_file_locations()
-        doc = self.db.get_metadata(self.access_code)
-        send_email(doc.email,
-                   doc.owner,
-                   'analysis',
-                   analysis_type='Qiime1',
-                   study_name=doc.study,
-                   testing=self.testing,
-                   summary=summary)
+            self.sanity_check()
+            summary = self.summarize()
+            self.move_user_files()
+            self.write_file_locations()
+            doc = self.db.get_metadata(self.access_code)
+            send_email(doc.email,
+                       doc.owner,
+                       'analysis',
+                       analysis_type='Qiime1',
+                       study_name=doc.study,
+                       testing=self.testing,
+                       summary=summary)
+        except CalledProcessError as e:
+            self.move_user_files()
+            self.write_file_locations()
+            raise AnalysisError(e.args[0])

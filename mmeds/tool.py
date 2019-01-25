@@ -13,7 +13,7 @@ from mmeds.error import AnalysisError
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
         """
         Setup the Tool class
         ====================
@@ -155,7 +155,10 @@ class Tool:
         params = {
             'walltime': '6:00',
             'walltime2': '2:00',
-            'jobname': '{}-{}-{}'.format(self.owner, self.atype, self.run_id),
+            'jobname': '{}/{}-{}-{}'.format(self.path,
+                                            self.owner,
+                                            self.atype,
+                                            self.run_id),
             'nodes': self.num_jobs,
             'memory': 1000,
             'queue': 'expressalloc'

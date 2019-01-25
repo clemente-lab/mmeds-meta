@@ -394,6 +394,8 @@ class Qiime2(Tool):
                        summary=summary,
                        testing=self.testing)
         except CalledProcessError as e:
+            self.move_user_files()
+            self.write_file_locations()
             raise AnalysisError(e.args[0])
 
     def summarize(self):
