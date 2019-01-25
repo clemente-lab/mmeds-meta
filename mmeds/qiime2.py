@@ -1,12 +1,10 @@
 from subprocess import run, CalledProcessError, PIPE
-from shutil import copy, rmtree, make_archive
-from collections import defaultdict
+from shutil import rmtree
 from pandas import read_csv
 
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
 from mmeds.mmeds import send_email, log
 from mmeds.error import AnalysisError
-from mmeds.summarize import summarize
 from mmeds.tool import Tool
 
 
@@ -27,8 +25,9 @@ class Qiime2(Tool):
         """ Split the libraries and perform quality analysis. """
 
         self.files['demux_file'] = self.path / 'qiime_artifact.qza'
-        # Create a directory to import as a Qiime2 object
+
         if self.demuxed:
+            # If the reads are already demultiplexed import the whole directory
             cmd = [
                 'qiime tools import ',
                 '--type {} '.format('"SampleData[PairedEndSequencesWithQuality]"'),
@@ -38,17 +37,16 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
         else:
+            # Create a directory to import as a Qiime2 object
+            self.files['working_file'] = self.path / 'qiime_artifact.qza'
             self.files['working_dir'] = self.path / 'import_dir'
+
             if not self.files['working_dir'].is_dir():
                 self.files['working_dir'].mkdir()
 
             # Create links to the data in the qiime2 import directory
-            (self.files['working_dir'] /
-             'barcodes.fastq.gz').symlink_to(self.path /
-                                             'barcodes.fastq.gz')
-            (self.files['working_dir'] /
-             'sequences.fastq.gz').symlink_to(self.path /
-                                              'sequences.fastq.gz')
+            (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
+            (self.files['working_dir'] / 'sequences.fastq.gz').symlink_to(self.files['reads'])
 
             # Run the script
             cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
@@ -279,6 +277,23 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def summary(self):
+        """ Add commands for creating the summary. """
+
+        self.add_path('summary')
+        if not (self.path / 'summary').is_dir():
+            (self.path / 'summary').mkdir()
+
+        cmd = [
+            'source activate mmeds-stable; ',
+            'summarize.py ',
+            '--path {}'.format(self.path),
+            '--tool_type qiime2',
+            '--metadata {}'.format(','.join(self.config['metadata'])),
+            '--load_info "{}";'.format(self.jobtext[0])
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
@@ -384,87 +399,16 @@ class Qiime2(Tool):
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
             self.write_file_locations()
-            summary = self.summarize()
+            self.summary()
             log('Send email')
             send_email(doc.email,
                        doc.owner,
                        'analysis',
                        analysis_type='Qiime2 (2018.4) ' + self.atype,
                        study_name=doc.study,
-                       summary=summary,
+                       summary=str(self.path / 'summary/analysis.pdf'),
                        testing=self.testing)
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
             raise AnalysisError(e.args[0])
-
-    def summarize(self):
-        """ Create summary of the files produced by the qiime2 analysis. """
-        log('Start Qiime2 summary')
-
-        # Setup the summary directory
-        summary_files = defaultdict(list)
-        self.add_path('summary')
-        if not (self.path / 'summary').is_dir():
-            (self.path / 'summary').mkdir()
-
-        # Get Taxa
-        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                self.files['taxa_bar_plot'],
-                                                                self.path / 'temp')
-        run(cmd, shell=True, check=True)
-        taxa_files = (self.path / 'temp').glob('level*.csv')
-        for taxa_file in taxa_files:
-            copy(taxa_file, self.files['summary'])
-            summary_files['taxa'].append(taxa_file.name)
-        rmtree(self.path / 'temp')
-
-        # Get Beta
-        beta_files = self.files['core_metrics_results'].glob('*pcoa*')
-        for beta_file in beta_files:
-            cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                    beta_file,
-                                                                    self.path / 'temp')
-            run(cmd, shell=True, check=True)
-            dest_file = self.files['summary'] / (beta_file.name.split('.')[0] + '.txt')
-            copy(self.path / 'temp' / 'ordination.txt', dest_file)
-            log(dest_file)
-            summary_files['beta'].append(dest_file.name)
-            rmtree(self.path / 'temp')
-
-        # Get Alpha
-        for metric in ['shannon', 'faith_pd', 'observed_otus']:
-            cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                    self.files['alpha_rarefaction'],
-                                                                    self.path / 'temp')
-            run(cmd, shell=True, check=True)
-
-            metric_file = self.path / 'temp/{}.csv'.format(metric)
-            copy(metric_file, self.files['summary'])
-            summary_files['alpha'].append(metric_file.name)
-            rmtree(self.path / 'temp')
-
-        # Get the mapping file
-        copy(self.files['mapping'], self.files['summary'])
-        # Get the template
-        copy(STORAGE_DIR / 'revtex.tplx', self.files['summary'])
-
-        log('Summary path')
-        log(self.path / 'summary')
-        summarize(metadata=self.config['metadata'],
-                  analysis_type='qiime2',
-                  files=summary_files,
-                  execute=True,
-                  name='analysis',
-                  run_path=self.path / 'summary')
-
-        # Create a zip of the summary
-        result = make_archive(self.path / 'summary{}'.format(self.run_id),
-                              format='zip',
-                              root_dir=self.path,
-                              base_dir='summary')
-        log('Create archive of summary')
-        log(result)
-
-        log('Summary completed succesfully')
-        return self.path / 'summary' / 'analysis.pdf'

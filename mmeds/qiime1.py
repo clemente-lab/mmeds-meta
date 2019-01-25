@@ -115,60 +115,22 @@ class Qiime1(Tool):
             log(str(e))
             raise AnalysisError(e.args[0])
 
-    def summarize(self):
-        """
-        Create summary of analysis results
-        """
-        log('Run summarize')
-        diversity = self.files['diversity_output']
-        summary_files = defaultdict(list)
+    def summary(self):
+        """ Setup script to create summary. """
+        self.add_path('summary')
+        if not (self.path / 'summary').is_dir():
+            (self.path / 'summary').mkdir()
 
-        (self.path / 'summary').mkdir()
-        self.add_path('summary', '')
-
-        # Convert and store the otu table
-        cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
-        cmd = cmd.format(self.jobtext[0],
-                         self.files['otu_output'] / 'otu_table.biom',
-                         self.path / 'otu_table.tsv')
-        log(cmd)
-        run(cmd, shell=True, check=True)
-
-        # Add the text OTU table to the summary
-        copy(self.path / 'otu_table.tsv', self.files['summary'])
-        summary_files['otu'].append('otu_table.tsv')
-
-        def move_files(path, catagory):
-            """ Collect the contents of all files match the regex in path """
-            files = diversity.glob(path.format(depth=self.config['sampling_depth']))
-            for data in files:
-                copy(data, self.files['summary'])
-                summary_files[catagory].append(data.name)
-
-        move_files('biom_table_summary.txt', 'otu')                       # Biom summary
-        move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
-        move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
-        move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
-        # Get the mapping file
-        copy(self.files['mapping'], self.path / 'summary/.')
-        # Get the template
-        copy(STORAGE_DIR / 'revtex.tplx', self.files['summary'])
-        log('Summary path')
-        log(self.path / 'summary')
-        summarize(metadata=self.config['metadata'],
-                  analysis_type='qiime1',
-                  files=summary_files,
-                  execute=True,
-                  name='analysis',
-                  run_path=self.path / 'summary')
-        log('Make archive')
-        result = make_archive(self.path / 'summary{}'.format(self.run_id),
-                              format='zip',
-                              root_dir=self.path,
-                              base_dir='summary')
-        log(result)
-        log('Summary completed successfully')
-        return self.path / 'summary/analysis.pdf'
+        cmd = [
+            'source activate mmeds-stable; ',
+            'summarize.py ',
+            '--path {}'.format(self.path),
+            '--tool_type qiime2',
+            '--metadata {}'.format(','.join(self.config['metadata'])),
+            '--sampling_depth {}'.format(self.config['sampling_depth']),
+            '--load_info "{}";'.format(self.jobtext[0])
+        ]
+        self.jobtext.append(' '.join(cmd))
 
     def run_analysis(self):
         """ Perform some analysis. """
@@ -210,9 +172,9 @@ class Qiime1(Tool):
             if self.analysis:
                 self.run_analysis()
             self.sanity_check()
-            summary = self.summarize()
             self.move_user_files()
             self.write_file_locations()
+            self.summary()
             doc = self.db.get_metadata(self.access_code)
             send_email(doc.email,
                        doc.owner,

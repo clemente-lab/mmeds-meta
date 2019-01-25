@@ -13,7 +13,7 @@ from mmeds.error import AnalysisError
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
         """
         Setup the Tool class
         ====================
@@ -59,10 +59,12 @@ class Tool:
             new_dir = path / 'analysis{}'.format(run_id)
         new_dir = new_dir.resolve()
         root_files, root_path = self.db.get_mongo_files(self.access_code)
-        if self.analysis:
-            run('mkdir {}'.format(new_dir), shell=True, check=True)
 
-            if '.fastq.gz' == Path(root_files['reads']).suffix:
+        if self.analysis:
+            log('File type {}'.format(Path(root_files['reads']).suffixes))
+
+            new_dir.mkdir()
+            if '.fastq' in Path(root_files['reads']).suffixes:
                 # Create links to the files
                 (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
                 (new_dir / 'sequences.fastq.gz').symlink_to(root_files['reads'])
@@ -70,32 +72,34 @@ class Tool:
                 # Add the links to the files dict for this analysis
                 files['barcodes'] = new_dir / 'barcodes.fastq.gz'
                 files['reads'] = new_dir / 'sequences.fastq.gz'
-
                 demuxed = False
-            elif '.zip' == Path(root_files['reads']).suffix:
+                log('Create links, not demuxed')
+            elif Path(root_files['reads']).suffix in ['.zip', '.tar']:
                 (new_dir / 'data.zip').symlink_to(root_files['reads'])
                 files['data'] = new_dir / 'data.zip'
                 demuxed = True
-            else:
-                demuxed = False
-                log('Invalid extension')
-                log(root_files['reads'])
-                # This should be caught when uploading the data
 
             (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
             files['metadata'] = new_dir / 'metadata.tsv'
             log('Run analysis')
         else:
+            # If creating a summary from a previous analysis
             run_id -= 1
             new_dir = path / 'analysis{}'.format(run_id)
+
+            # Clear any previous summary files
             if (new_dir / 'summary').is_dir():
                 rmtree(new_dir / 'summary')
+
+            # Get the file locations from the MetaData document
             string_files = root_files['analysis{}'.format(run_id)]
             files = {key: Path(string_files[key]) for key in string_files.keys()}
             log("Loaded files")
             log(files.keys())
             log("Skip analysis")
-            demuxed = False
+
+            # Check if the files were demultiplexed
+            demuxed = ('.zip' == Path(root_files['reads']).suffix)
 
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id), files, demuxed
@@ -155,10 +159,10 @@ class Tool:
         params = {
             'walltime': '6:00',
             'walltime2': '2:00',
-            'jobname': '{}/{}-{}-{}'.format(self.path,
-                                            self.owner,
-                                            self.atype,
-                                            self.run_id),
+            'jobname': '{}-{}-{}'.format(self.owner,
+                                         self.atype,
+                                         self.run_id),
+            'path': self.path,
             'nodes': self.num_jobs,
             'memory': 1000,
             'queue': 'expressalloc'
