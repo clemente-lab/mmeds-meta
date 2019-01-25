@@ -35,6 +35,7 @@ setup(name='mmeds',
           'mongoengine',
           'prettytable',
           'pint',
-          'jupyter'
+          'jupyter',
+          'pillow'
       ],
       zip_safe=False)
