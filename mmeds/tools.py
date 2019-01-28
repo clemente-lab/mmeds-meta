@@ -1,20 +1,17 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError, PIPE
-from shutil import copyfile, rmtree
+from shutil import copy, rmtree, make_archive
 from time import sleep
 from pandas import read_csv
-from glob import glob
 from collections import defaultdict
-
-import os
-import multiprocessing as mp
+from multiprocessing import Process
 
 from mmeds.database import Database
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
 from mmeds.mmeds import send_email, log
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
-from mmeds.summarize import summarize_qiime1
+from mmeds.summarize import summarize
 
 
 class Tool:
@@ -40,12 +37,12 @@ class Tool:
         self.jobtext = []
         self.owner = owner
         if testing:
-            self.num_jobs = 2
+            self.num_jobs = 3
         else:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
         self.analysis = analysis
-        self.path, self.run_id, self.files = self.setup_dir(path)
+        self.path, self.run_id, self.files = self.setup_dir(Path(path))
 
         # Add the split directory to the MetaData object
         self.add_path('analysis{}'.format(self.run_id), '')
@@ -59,26 +56,19 @@ class Tool:
         """ Setup the directory to run the analysis. """
         files = {}
         run_id = 0
-        new_dir = Path(path) / 'analysis{}'.format(run_id)
-        while os.path.exists(new_dir):
+        new_dir = path / 'analysis{}'.format(run_id)
+        while new_dir.is_dir():
             run_id += 1
-            new_dir = Path(path) / 'analysis{}'.format(run_id)
+            new_dir = path / 'analysis{}'.format(run_id)
         new_dir = new_dir.resolve()
-        root_files, path = self.db.get_mongo_files(self.access_code)
+        root_files, root_path = self.db.get_mongo_files(self.access_code)
         if self.analysis:
             run('mkdir {}'.format(new_dir), shell=True, check=True)
 
             # Create links to the files
-            run('ln {} {}'.format(root_files['barcodes'],
-                                  new_dir / 'barcodes.fastq.gz'),
-                shell=True, check=True)
-
-            run('ln {} {}'.format(root_files['reads'],
-                                  new_dir / 'sequences.fastq.gz'),
-                shell=True, check=True)
-            run('ln {} {}'.format(root_files['metadata'],
-                                  new_dir / 'metadata.tsv'),
-                shell=True, check=True)
+            (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
+            (new_dir / 'sequences.fastq.gz').symlink_to(root_files['reads'])
+            (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
 
             # Add the links to the files dict for this analysis
             files['barcodes'] = new_dir / 'barcodes.fastq.gz'
@@ -88,9 +78,13 @@ class Tool:
             log('Run analysis')
         else:
             run_id -= 1
-            new_dir = Path(path) / 'analysis{}'.format(run_id)
-            if os.path.exists(new_dir / 'summary'):
+            new_dir = path / 'analysis{}'.format(run_id)
+            if (new_dir / 'summary').is_dir():
                 rmtree(new_dir / 'summary')
+            string_files = root_files['analysis{}'.format(run_id)]
+            files = {key: Path(string_files[key]) for key in string_files.keys()}
+            log("Loaded files")
+            log(files.keys())
             log("Skip analysis")
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id), files
@@ -174,28 +168,40 @@ class Tool:
         try:
             log('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
-            if not os.path.exists(self.files['visualizations_dir']):
-                os.mkdir(self.files['visualizations_dir'])
+            if not self.files['visualizations_dir'].is_dir():
+                self.files['visualizations_dir'].mkdir()
             for key in self.files.keys():
-                f = Path(self.files[key])
+                f = self.files[key]
                 if '.qzv' in str(self.files[key]):
                     new_file = f.name
-                    copyfile(self.files[key], Path(self.files['visualizations_dir']) / new_file)
-            self.db.update_metadata('analysis{}'.format(self.run_id), self.files)
+                    copy(self.files[key], self.files['visualizations_dir'] / new_file)
+
+            log('before string ')
+            log(self.files.keys())
+            string_files = {str(key): str(self.files[key]) for key in self.files.keys()}
+            log('after string ')
+            log(self.files.keys())
+            self.db.update_metadata(self.access_code,
+                                    'analysis{}'.format(self.run_id),
+                                    string_files)
+            log('after update')
+            log(self.files.keys())
 
             # Create the file index
-            with open(str(self.path / 'file_index.tsv'), 'w') as f:
+            with open(self.path / 'file_index.tsv', 'w') as f:
                 f.write('{}\t{}\n'.format(self.owner, self.access_code))
                 f.write('Key\tPath\n')
                 for key in self.files:
                     f.write('{}\t{}\n'.format(key, self.files[key]))
+            log('After writing')
+            log(self.files.keys())
         except FileNotFoundError as e:
             log(e)
             raise AnalysisError(e.args[1])
 
-    def add_path(self, name, extension):
+    def add_path(self, name, extension=''):
         """ Add a file or directory with the full path to self.files. """
-        self.files[name] = '{}{}'.format(self.path / name, extension)
+        self.files[name] = Path('{}{}'.format(self.path / name, extension))
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -265,7 +271,7 @@ class Qiime1(Tool):
             'pick_otus:enable_rev_strand_match True',
             'alpha_diversity:metrics shannon,PD_whole_tree,chao1,observed_species'
         ]
-        with open(Path(self.path) / 'params.txt', 'w') as f:
+        with open(self.path / 'params.txt', 'w') as f:
             f.write('\n'.join(settings))
 
     def validate_mapping(self):
@@ -294,8 +300,8 @@ class Qiime1(Tool):
         command = cmd.format(self.atype,
                              self.num_jobs,
                              self.files['otu_output'],
-                             Path(self.files['split_output']) / 'seqs.fna',
-                             Path(self.path) / 'params.txt')
+                             self.files['split_output'] / 'seqs.fna',
+                             self.path / 'params.txt')
         self.jobtext.append(command)
 
     def core_diversity(self):
@@ -306,20 +312,20 @@ class Qiime1(Tool):
         cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
         if self.atype == 'open':
             command = cmd.format(self.files['diversity_output'],
-                                 Path(self.files['otu_output']) / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
+                                 self.files['otu_output'] / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  self.files['mapping'],
-                                 Path(self.files['otu_output']) / 'rep_set.tre',
+                                 self.files['otu_output'] / 'rep_set.tre',
                                  self.config['sampling_depth'],
                                  ','.join(self.config['metadata']),
-                                 Path(self.path) / 'params.txt')
+                                 self.path / 'params.txt')
         else:
             command = cmd.format(self.files['diversity_output'],
-                                 Path(self.files['otu_output']) / 'otu_table.biom',
+                                 self.files['otu_output'] / 'otu_table.biom',
                                  self.files['mapping'],
-                                 Path(self.files['otu_output']) / '97_otus.tree',
+                                 self.files['otu_output'] / '97_otus.tree',
                                  self.config['sampling_depth'],
                                  ','.join(self.config['metadata']),
-                                 Path(self.path) / 'params.txt')
+                                 self.path / 'params.txt')
 
         self.jobtext.append(command)
 
@@ -328,7 +334,7 @@ class Qiime1(Tool):
         try:
             # Count the sequences prior to diversity analysis
             cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
-                                                  Path(self.files['split_output']) / 'seqs.fna')
+                                                  self.files['split_output'] / 'seqs.fna')
             log('Run command: {}'.format(cmd))
             output = run(cmd, shell=True, check=True, stdout=PIPE)
             out = output.stdout.decode('utf-8')
@@ -336,13 +342,13 @@ class Qiime1(Tool):
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
             # Count the sequences in the output of the diversity analysis
-            with open(Path(self.files['diversity_output']) / 'biom_table_summary.txt') as f:
+            with open(self.files['diversity_output'] / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
                 log('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
 
             # Check that the counts are approximately equal
-            if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
+            if abs(initial_count - final_count) > 0.30 * (initial_count + final_count):
                 message = 'Large difference ({}) between initial and final counts'
                 log('Raise analysis error')
                 raise AnalysisError(message.format(initial_count - final_count))
@@ -357,56 +363,50 @@ class Qiime1(Tool):
         Create summary of analysis results
         """
         log('Run summarize')
-        diversity = Path(self.files['diversity_output'])
-        summary = {}
+        diversity = self.files['diversity_output']
         summary_files = defaultdict(list)
+
+        (self.path / 'summary').mkdir()
+        self.add_path('summary', '')
 
         # Convert and store the otu table
         cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
         cmd = cmd.format(self.jobtext[0],
-                         Path(self.files['otu_output']) / 'otu_table.biom',
+                         self.files['otu_output'] / 'otu_table.biom',
                          self.path / 'otu_table.tsv')
         log(cmd)
         run(cmd, shell=True, check=True)
 
         # Add the text OTU table to the summary
-        with open(self.path / 'otu_table.tsv') as f:
-            summary[Path(f.name).name] = f.read()
+        copy(self.path / 'otu_table.tsv', self.files['summary'])
         summary_files['otu'].append('otu_table.tsv')
 
-        def collect_files(path, catagory):
+        def move_files(path, catagory):
             """ Collect the contents of all files match the regex in path """
-            files = glob(str(diversity / path.format(depth=self.config['sampling_depth'])))
+            files = diversity.glob(path.format(depth=self.config['sampling_depth']))
             for data in files:
-                with open(data) as f:
-                    summary[Path(f.name).name] = f.read()
-                summary_files[catagory].append(Path(data).name)
+                copy(data, self.files['summary'])
+                summary_files[catagory].append(data.name)
 
-        collect_files('biom_table_summary.txt', 'otu')                       # Biom summary
-        collect_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
-        collect_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
-        collect_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
-
-        os.mkdir(Path(self.path) / 'summary')
-        self.add_path('summary', '')
-        # Put all the files in one location
-        for key in summary.keys():
-            with open(Path(self.path) / 'summary/{}'.format(key), 'w') as f:
-                f.write(summary[key])
-
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
-        run(cmd, shell=True, check=True)
-
-        cmd = 'cp {} {}'.format(self.files['mapping'], self.path / 'summary/.')
-        run(cmd, shell=True, check=True)
-
+        move_files('biom_table_summary.txt', 'otu')                       # Biom summary
+        move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
+        move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
+        move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
+        copy(self.files['mapping'], self.path / 'summary/.')
         log('Summary path')
         log(self.path / 'summary')
-        summarize_qiime1(metadata=self.config['metadata'],
-                         files=summary_files,
-                         execute=True,
-                         name='analysis',
-                         run_path=self.path / 'summary')
+        summarize(metadata=self.config['metadata'],
+                  analysis_type='qiime1',
+                  files=summary_files,
+                  execute=True,
+                  name='analysis',
+                  run_path=self.path / 'summary')
+        log('Make archive')
+        result = make_archive(self.path / 'summary{}'.format(self.run_id),
+                              format='zip',
+                              root_dir=self.path,
+                              base_dir='summary')
+        log(result)
         log('Summary completed successfully')
         return self.path / 'summary/analysis.pdf'
 
@@ -478,18 +478,19 @@ class Qiime2(Tool):
     def qimport(self, itype='EMPSingleEndSequences'):
         """ Split the libraries and perform quality analysis. """
 
-        # Add the split directory to the MetaData object
-        self.files['working_dir'] = Path(self.path) / 'import_dir'
-        self.files['working_file'] = Path(self.path) / 'qiime_artifact.qza'
-        if not os.path.exists(self.files['working_dir']):
-            os.mkdir(self.files['working_dir'])
+        # Create a directory to import as a Qiime2 object
+        self.files['working_dir'] = self.path / 'import_dir'
+        self.files['working_file'] = self.path / 'qiime_artifact.qza'
+        if not self.files['working_dir'].is_dir():
+            self.files['working_dir'].mkdir()
 
-        run('ln -s {} {}'.format(Path(self.path) / 'barcodes.fastq.gz',
-                                 Path(self.files['working_dir']) / 'barcodes.fastq.gz'),
-            shell=True, check=True)
-        run('ln -s {} {}'.format(Path(self.path) / 'sequences.fastq.gz',
-                                 Path(self.files['working_dir']) / 'sequences.fastq.gz'),
-            shell=True, check=True)
+        # Create links to the data in the qiime2 import directory
+        (self.files['working_dir'] /
+         'barcodes.fastq.gz').symlink_to(self.path /
+                                         'barcodes.fastq.gz')
+        (self.files['working_dir'] /
+         'sequences.fastq.gz').symlink_to(self.path /
+                                          'sequences.fastq.gz')
 
         # Run the script
         cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
@@ -551,9 +552,6 @@ class Qiime2(Tool):
             '--p-n-threads {};'.format(self.num_jobs)
         ]
         self.jobtext.append(' '.join(cmd))
-
-    def dada2_visualize(self):
-        """ Visualize the dada2 results. """
 
     def deblur_filter(self):
         """ Run Deblur analysis on the demultiplexed file. """
@@ -659,7 +657,7 @@ class Qiime2(Tool):
         self.add_path('{}_group_significance'.format(metric), '.qzv')
         cmd = [
             'qiime diversity alpha-group-significance',
-            '--i-alpha-diversity {}'.format(Path(self.files['core_metrics_results']) / '{}_vector.qza'.format(metric)),
+            '--i-alpha-diversity {}'.format(self.files['core_metrics_results'] / '{}_vector.qza'.format(metric)),
             '--m-metadata-file {}'.format(self.files['mapping']),
             '--o-visualization {}&'.format(self.files['{}_group_significance'.format(metric)])
         ]
@@ -673,7 +671,7 @@ class Qiime2(Tool):
         self.add_path('unweighted_{}_significance'.format(column), '.qzv')
         cmd = [
             'qiime diversity beta-group-significance',
-            '--i-distance-matrix {}'.format(Path(self.files['core_metrics_results']) /
+            '--i-distance-matrix {}'.format(self.files['core_metrics_results'] /
                                             'unweighted_unifrac_distance_matrix.qza'),
             '--m-metadata-file {}'.format(self.files['mapping']),
             '--m-metadata-column {}'.format(column),
@@ -690,7 +688,7 @@ class Qiime2(Tool):
             '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
             '--i-taxonomy {}'.format(self.files['taxonomy']),
             '--m-metadata-file {}'.format(self.files['mapping']),
-            '--o-visualization {}&'.format(self.files['taxa_bar_plot'])
+            '--o-visualization {}'.format(self.files['taxa_bar_plot'])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -750,7 +748,7 @@ class Qiime2(Tool):
         rmtree(self.path / 'temp')
 
         # Compare the difference
-        if abs(initial_count - final_count) > 0.05 * (initial_count + final_count):
+        if abs(initial_count - final_count) > 0.30 * (initial_count + final_count):
             message = 'Large difference ({}%) between initial and final counts'
             message = message.format(int(100 * (initial_count - final_count) /
                                          (initial_count + final_count)))
@@ -819,64 +817,86 @@ class Qiime2(Tool):
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
+            summary = self.summarize()
+            log('Send email')
             send_email(doc.email,
                        doc.owner,
                        'analysis',
                        analysis_type='Qiime2 (2018.4) ' + self.atype,
-                       study_name=doc.study)
+                       study_name=doc.study,
+                       summary=summary,
+                       testing=self.testing)
         except CalledProcessError as e:
             raise AnalysisError(e.args[0])
 
     def summarize(self):
         """ Create summary of the files produced by the qiime2 analysis. """
         log('Start Qiime2 summary')
-        files, path = self.db.get_mongo_files(self.access_code)
 
-        summary = {}
-        # Get Alpha rarefaction
-        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                self.files['alpha_rarefaction'],
-                                                                self.path / 'temp')
-        run(cmd, shell=True, check=True)
-        with open(self.path / 'temp/observed_otus.csv') as f:
-            summary[Path(f.name).name] = f.read()
-        rmtree(self.path / 'temp')
+        # Setup the summary directory
+        summary_files = defaultdict(list)
+        self.add_path('summary')
+        if not (self.path / 'summary').is_dir():
+            (self.path / 'summary').mkdir()
 
         # Get Taxa
-        for pref in ['', 'un']:
-            beta_file = Path(self.files['core_metrics_results']) / '{}weighted_unifrac_distance_matrix.qza'.format(pref)
+        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
+                                                                self.files['taxa_bar_plot'],
+                                                                self.path / 'temp')
+        run(cmd, shell=True, check=True)
+        taxa_files = (self.path / 'temp').glob('level*.csv')
+        for taxa_file in taxa_files:
+            copy(taxa_file, self.files['summary'])
+            summary_files['taxa'].append(taxa_file.name)
+        rmtree(self.path / 'temp')
 
+        # Get Beta
+        beta_files = self.files['core_metrics_results'].glob('*pcoa*')
+        for beta_file in beta_files:
             cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                     beta_file,
                                                                     self.path / 'temp')
             run(cmd, shell=True, check=True)
-            with open(self.path / 'temp/distance-matrix.tsv') as f:
-                summary['beta-' + str(Path(f.name).name)] = f.read()
+            dest_file = self.files['summary'] / (beta_file.name.split('.')[0] + '.txt')
+            copy(self.path / 'temp' / 'ordination.txt', dest_file)
+            log(dest_file)
+            summary_files['beta'].append(dest_file.name)
             rmtree(self.path / 'temp')
 
-        # Get Beta
-        for metric in ['shannon', 'evenness', 'faith_pd']:
-            alpha_file = Path(self.files['core_metrics_results']) / '{}_vector.qza'.format(metric)
-
+        # Get Alpha
+        for metric in ['shannon', 'faith_pd', 'observed_otus']:
             cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                    alpha_file,
+                                                                    self.files['alpha_rarefaction'],
                                                                     self.path / 'temp')
             run(cmd, shell=True, check=True)
-            with open(self.path / 'temp/alpha-diversity.tsv') as f:
-                summary['{}-'.format(metric) + str(Path(f.name).name)] = f.read()
+
+            metric_file = self.path / 'temp/{}.csv'.format(metric)
+            copy(metric_file, self.files['summary'])
+            summary_files['alpha'].append(metric_file.name)
             rmtree(self.path / 'temp')
 
-        if not os.path.exists(self.path / 'summary'):
-            os.mkdir(self.path / 'summary')
-        for key in summary.keys():
-            print(key)
-            with open(self.path / 'summary' / key, 'w') as f:
-                f.write(summary[key])
+        # Get the mapping file
+        copy(self.files['mapping'], self.files['summary'])
 
-        cmd = 'zip -r {} {}'.format(self.path / 'summary.zip', self.path / 'summary')
-        run(cmd, shell=True, check=True)
+        log('Summary path')
+        log(self.path / 'summary')
+        summarize(metadata=self.config['metadata'],
+                  analysis_type='qiime2',
+                  files=summary_files,
+                  execute=True,
+                  name='analysis',
+                  run_path=self.path / 'summary')
 
-        self.summary_analysis(summary)
+        # Create a zip of the summary
+        result = make_archive(self.path / 'summary{}'.format(self.run_id),
+                              format='zip',
+                              root_dir=self.path,
+                              base_dir='summary')
+        log('Create archive of summary')
+        log(result)
+
+        log('Summary completed succesfully')
+        return self.path / 'summary' / 'analysis.pdf'
 
 
 def run_analysis(qiime):
@@ -902,12 +922,12 @@ def spawn_analysis(atype, user, access_code, config, testing):
     """ Start running the analysis in a new process """
     if 'qiime1' in atype:
         qiime = Qiime1(user, access_code, atype, config, testing)
-        p = mp.Process(target=run_analysis, args=(qiime,))
+        p = Process(target=run_analysis, args=(qiime,))
     elif 'qiime2' in atype:
         qiime = Qiime2(user, access_code, atype, config, testing)
-        p = mp.Process(target=run_analysis, args=(qiime,))
+        p = Process(target=run_analysis, args=(qiime,))
     elif 'test' in atype:
         time = float(atype.split('-')[-1])
-        p = mp.Process(target=test, args=(time, atype))
+        p = Process(target=test, args=(time, atype))
     p.start()
     return p
