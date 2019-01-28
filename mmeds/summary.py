@@ -140,7 +140,8 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
                             files={},
                             execute=False,
                             name='analysis',
-                            run_path='/home/david/Work/data-mmeds/summary'):
+                            run_path='/home/david/Work/data-mmeds/summary',
+                            fontsize=15):
     """
     Create the summary PDF for qiime1 analysis
     ==========================================
@@ -149,6 +150,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
     :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
     :name: A string. The name of the notebook and PDF document.
     :run_path: A file path. The path to the directory containing all the summary files.
+    :fontsize: An Int. The size of the font used in the legends.
     """
 
     def taxa_plots(data_file):
@@ -157,16 +159,25 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
         ====================================
         :data_file: The location of the file to create the plotting code for.
         """
+        level = data_file.split('.')[0][-1]
         cells = []
-        for column in metadata:
+        cells.append(v4.new_markdown_cell(source='## OTU level {level}'.format(level=level)))
+        for i, column in enumerate(metadata):
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
-            cells.append(v4.new_markdown_cell(source='## {f} grouped by {group}'.format(f=data_file,
-                                                                                        group=column)))
             cells.append(v4.new_code_cell(source=source['taxa_py_{}'.format(analysis_type)].format(file1=data_file,
+                                                                                                   level=level,
                                                                                                    group=column)))
+            if i == 0:
+                cells.append(v4.new_code_cell(source=source['taxa_color_r'].format(level=level)))
+                cells.append(v4.new_code_cell(source=source['taxa_color_py'].format(level=level,
+                                                                                    fontfile=(STORAGE_DIR /
+                                                                                              'ABeeZee-Regular.otf'),
+                                                                                    fontsize=fontsize)))
             cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename,
+                                                                         level=level,
                                                                          group=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+            cells.append(v4.new_code_cell(source='Image("taxa_legend_{level}.png")'.format(level=level)))
             cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
 
@@ -256,7 +267,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
         for data_file in sorted(files['taxa']):
             cells += taxa_plots(data_file)
         cells.append(v4.new_code_cell(source=source['legend_py'].format(fontfile=STORAGE_DIR / 'ABeeZee-Regular.otf',
-                                                                        fontsize=15,
+                                                                        fontsize=fontsize,
                                                                         legend='legend.png')))
 
         # Add the cells for Alpha Diversity

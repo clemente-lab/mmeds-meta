@@ -16,6 +16,7 @@ mdf.set_index('#SampleID', inplace=True)
 
 # Load the columns to use for analysis
 metadata_columns = Path('metadata_columns.txt').read_text().strip().split('\n')
+metadata_columns.sort()
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 group_ids = []
@@ -70,6 +71,8 @@ mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 df = df.melt(id_vars='#OTU ID')
 df = df.merge(mdf_lite, how='inner')
+# Add colors for plotting
+otu_max_colors_{level} = sorted(df['X.OTU.ID'].unique())
 =====
 taxa_py_qiime2<source>
 df = pd.read_csv('{file1}', sep=',')
@@ -87,6 +90,57 @@ mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 # Merge with the data
 df = df.merge(mdf_lite, how='inner')
+# Add colors for plotting
+otu_max_colors_{level} = sorted(df['X.OTU.ID'].unique())
+=====
+taxa_color_r<source>
+%%R -i otu_max_colors_{level} -o otuAllRGB{level}
+
+# Create custom color palette
+otuColors{level} <- brewer.pal(12, "Paired")
+otuColorMaker{level} <- colorRampPalette(otuColors{level})
+otuAllColors{level} <- otuColorMaker{level}(length(otu_max_colors_{level}))
+names(otuAllColors{level}) <- otu_max_colors_{level}
+# Create the functions for applying it to plots
+otuColScale{level} <- scale_color_manual(name = ~X.OTU.ID, values = otuAllColors{level})
+otuColFill{level} <- scale_fill_manual(name = ~X.OTU.ID, values = otuAllColors{level})
+# Get the RGB values for the colors
+otuAllRGB{level} <- data.frame(apply(data.frame(otuAllColors{level}), 1, col2rgb))
+names(otuAllRGB{level}) <- otu_max_colors_{level}
+=====
+taxa_color_py<source>
+# Set parameters used when making the legend
+font_size = 15
+offset = float(font_size) / 2
+v_offset = 0
+fnt = ImageFont.truetype('{fontfile}', size=font_size)
+# Set the height and width based on the number/size of the values to display
+height = 20 + 20 * len(otu_max_colors_{level})
+width = 30 + 8 * len(max(otu_max_colors_{level}, key=len))
+
+# Create a new image and setup the draw object
+im = PImage.new('RGB', (width, height), color='white')
+draw = ImageDraw.Draw(im)
+
+# Remove duplicate values
+for otu in otu_max_colors_{level}:
+    v_offset += 20  # Update offset
+    # Get the color
+    RGB = tuple(otuAllRGB{level}[otu])
+    # Draw the color
+    draw.rectangle([10, v_offset,
+                    30, 20 + v_offset],
+                   outline=RGB,
+                   fill=RGB)
+    # Add the metadata value
+    draw.text((40, 10 - offset + v_offset),
+              otu,
+              fill=(0, 0, 0, 0),
+              font=fnt)
+del draw
+
+# write to stdout
+im.save('taxa_legend_{level}.png', 'PNG')
 =====
 taxa_r<source>
 %%R -i df
@@ -109,7 +163,8 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5)) +
      guides(fill = guide_legend(ncol = 4)) +
-     facet_grid(~{group}, scales = "free", space = "free")
+     facet_grid(~{group}, scales = "free", space = "free") +
+     otuColScale{level} + otuColFill{level}
 
 ggsave("{plot}", height = 6, width = 8)
 =====
@@ -122,12 +177,9 @@ fnt = ImageFont.truetype('{fontfile}', size=font_size)
 height = 0
 height = 0
 for group_name in mdf.columns:
-    if (mdf[group_name].nunique() > 1 and
-        mdf[group_name].nunique() < len(mdf[group_name]) and
-        'Date' not in group_name):
-        height += 30
-        for sample in mdf[group_name].drop_duplicates():
-            height += 20
+    height += 30
+    for sample in mdf[group_name].drop_duplicates():
+        height += 20
 
 # Create a new image and setup the draw object
 im = PImage.new('RGB', (300, height), color='white')
@@ -135,51 +187,47 @@ draw = ImageDraw.Draw(im)
 
 for group_name in metadata_columns:
     group = mdf[group_name]
-    # Only create groups for values that aren't all the same or all unique
-    if (mdf[group_name].nunique() > 1 and
-        mdf[group_name].nunique() < len(mdf[group_name]) and
-        'Date' not in group_name):
-        sub_im = PImage.new('RGB',
-                            (300, 30 + (20 * len(group.drop_duplicates()))),
-                            color='white')
-        sub_draw = ImageDraw.Draw(sub_im)
-        # Add the metadata catagory
-        draw.text((20, 20 - offset + v_offset),
+    sub_im = PImage.new('RGB',
+                        (300, 30 + (20 * len(group.drop_duplicates()))),
+                        color='white')
+    sub_draw = ImageDraw.Draw(sub_im)
+    # Add the metadata catagory
+    draw.text((20, 20 - offset + v_offset),
+              str(group_name),
+              fill=(0, 0, 0),
+              font=fnt)
+    sub_draw.text((20, 20 - offset),
                   str(group_name),
                   fill=(0, 0, 0),
                   font=fnt)
-        sub_draw.text((20, 20 - offset),
-                      str(group_name),
-                      fill=(0, 0, 0),
-                      font=fnt)
-        sub_offset = 0
-        # Remove duplicate values
-        for sample in group.sort_values().drop_duplicates():
-            v_offset += 20  # Update offset
-            sub_offset += 20
-            # Get the color
-            RGB = tuple(allRGB[color_maps[group_name][sample]])
-            # Draw the color
-            draw.rectangle([10, 10 + v_offset,
-                            30, 30 + v_offset],
+    sub_offset = 0
+    # Remove duplicate values
+    for sample in group.sort_values().drop_duplicates():
+        v_offset += 20  # Update offset
+        sub_offset += 20
+        # Get the color
+        RGB = tuple(allRGB[color_maps[group_name][sample]])
+        # Draw the color
+        draw.rectangle([10, 10 + v_offset,
+                        30, 30 + v_offset],
+                       outline=RGB,
+                       fill=RGB)
+        sub_draw.rectangle([10, 10 + sub_offset,
+                            30, 30 + sub_offset],
                            outline=RGB,
                            fill=RGB)
-            sub_draw.rectangle([10, 10 + sub_offset,
-                                30, 30 + sub_offset],
-                               outline=RGB,
-                               fill=RGB)
-            # Add the metadata value
-            draw.text((40, 20 - offset + v_offset),
+        # Add the metadata value
+        draw.text((40, 20 - offset + v_offset),
+                  str(sample),
+                  fill=(0, 0, 0, 0),
+                  font=fnt)
+        sub_draw.text((40, 20 - offset + sub_offset),
                       str(sample),
                       fill=(0, 0, 0, 0),
                       font=fnt)
-            sub_draw.text((40, 20 - offset + sub_offset),
-                          str(sample),
-                          fill=(0, 0, 0, 0),
-                          font=fnt)
-        sub_im.save(group_name + '-{legend}', 'PNG')
-        v_offset += 30
-        del sub_draw
+    sub_im.save(group_name + '-{legend}', 'PNG')
+    v_offset += 30
+    del sub_draw
 del draw
 
 # write to stdout
