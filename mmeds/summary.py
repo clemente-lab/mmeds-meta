@@ -295,7 +295,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
         :nn: A python notebook object.
         """
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
-        cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
+        cmd = 'source activate mmeds-stable; jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
         if execute:
             cmd += ' --execute'
         log(cmd)
