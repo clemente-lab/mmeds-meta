@@ -1,5 +1,5 @@
 py_setup<source>
-from pandas import read_csv
+from pathlib import Path
 import pandas as pd
 import rpy2.rinterface
 from warnings import filterwarnings
@@ -11,22 +11,26 @@ from PIL import ImageDraw, ImageFont
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
 # Load metadata file
-mdf = read_csv('qiime_mapping_file.tsv', sep='\t')
+mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
+
+# Load the columns to use for analysis
+metadata_columns = Path('metadata_columns.txt').read_text().strip().split('\n')
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 group_ids = []
 color_maps = {}
 max_colors = []
 # Create information for R color palettes
-for group_name in mdf.columns:
-    grouping = mdf[group_name]
-    uni = grouping.nunique()
-    group_ids.append(['color' + str(i) for i in range(uni)])
-    # Get the category with the most colors to use for palette creation
-    if uni > len(max_colors):
-        max_colors = group_ids[-1]
-    color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
+for group_name in metadata_columns:
+    if not mdf[group_name].isnull().all():
+        grouping = mdf[group_name]
+        uni = grouping.nunique()
+        group_ids.append(['color' + str(i) for i in range(uni)])
+        # Get the category with the most colors to use for palette creation
+        if uni > len(max_colors):
+            max_colors = group_ids[-1]
+        color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
 
 # Shuffle the colors so value near each other won't be similar shades
 shuffle(max_colors, lambda: 0.25)
@@ -56,19 +60,19 @@ page_break<source>
 <div style="page-break-after: always;"></div>
 =====
 otu_py<source>
-df = read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
+df = pd.read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
 df.set_index('taxonomy', inplace=True)
 df.iloc[:5, :5]
 =====
 taxa_py_qiime1<source>
-df = read_csv('{file1}', skiprows=1, sep='\t')
+df = pd.read_csv('{file1}', skiprows=1, sep='\t')
 mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 df = df.melt(id_vars='#OTU ID')
 df = df.merge(mdf_lite, how='inner')
 =====
 taxa_py_qiime2<source>
-df = read_csv('{file1}', sep=',')
+df = pd.read_csv('{file1}', sep=',')
 # Remove unnecessary metadata
 headers = list(filter(lambda x: 'k__' in x, df.columns)) + ['index']
 df = df.filter(headers).set_index('index').T
@@ -129,7 +133,7 @@ for group_name in mdf.columns:
 im = PImage.new('RGB', (300, height), color='white')
 draw = ImageDraw.Draw(im)
 
-for group_name in mdf.columns:
+for group_name in metadata_columns:
     group = mdf[group_name]
     # Only create groups for values that aren't all the same or all unique
     if (mdf[group_name].nunique() > 1 and
@@ -183,7 +187,7 @@ im.save('{legend}', 'PNG')
 =====
 alpha_py_qiime1<source>
 # Read in the data
-df = read_csv('{file1}', sep='\t')
+df = pd.read_csv('{file1}', sep='\t')
 
 # Drop unused columns
 df.drop('Unnamed: 0', axis=1, inplace=True)
@@ -195,7 +199,7 @@ df.set_index('sequences per sample', inplace=True)
 # Create groupings based on metadata values
 group_means = []
 
-for group_name in mdf.columns:
+for group_name in metadata_columns:
     grouping = mdf[group_name]
     # Only create groups for values that aren't all the same or all unique
     if grouping.nunique() > 1 and grouping.nunique() < len(grouping) and 'Date' not in group_name:
@@ -238,7 +242,7 @@ df = pd.concat(group_means, axis=0, sort=False)
 =====
 alpha_py_qiime2<source>
 # Read in the data
-df = read_csv('{file1}', sep=',')
+df = pd.read_csv('{file1}', sep=',')
 
 # Reshape the data into (mostly) long format
 headers = list(set(mdf.columns).intersection(set(df.columns)))
@@ -251,41 +255,36 @@ df.variable.replace(replacements, inplace=True)
 # For storing
 group_means = []
 
-for group_name in headers:
-    # Only create groups for values that aren't all the same or all unique
-    if (mdf[group_name].nunique() > 1 and
-        mdf[group_name].nunique() < len(mdf[group_name]) and
-        'Date' not in group_name):
+for group_name in metadata_columns:
+    # Remove the metadata not relevant to this grouping
+    groups = df[['sample-id', 'variable', 'value', group_name]]
 
-        # Remove the metadata not relevant to this grouping
-        groups = df[['sample-id', 'variable', 'value', group_name]]
+    # Calculate the means accross iterations
+    agger = {{'value': 'mean', group_name: 'first'}}
+    groups = groups.groupby(['sample-id', 'variable']).agg(agger).reset_index()
 
-        # Calculate the means accross iterations
-        agger = {{'value': 'mean', group_name: 'first'}}
-        groups = groups.groupby(['sample-id', 'variable']).agg(agger).reset_index()
+    # Add a column to store the errors
+    groups = groups.assign(Error=groups.value)
 
-        # Add a column to store the errors
-        groups = groups.assign(Error=groups.value)
+    # Group by metadata value and calculate the means and error
+    agger = {{'Error': 'sem', 'value': 'mean'}}
+    group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
 
-        # Group by metadata value and calculate the means and error
-        agger = {{'Error': 'sem', 'value': 'mean'}}
-        group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
+    # Assign information for the colors
+    colors = [color_maps[group_name][x] for x in group[group_name]]
+    group = group.assign(GroupID=colors)
 
-        # Assign information for the colors
-        colors = [color_maps[group_name][x] for x in group[group_name]]
-        group = group.assign(GroupID=colors)
+    # Assign information for grouping, drop specific catagories
+    group_names = [group_name for x in group[group_name]]
+    group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
 
-        # Assign information for grouping, drop specific catagories
-        group_names = [group_name for x in group[group_name]]
-        group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
-
-        # Rename columns and append to the list of dataframes
-        new_names = {{
-            'variable': 'SamplingDepth',
-            'value': 'AverageValue',
-             group_name: 'Grouping'
-        }}
-        group_means.append(group.rename(index=str, columns=new_names))
+    # Rename columns and append to the list of dataframes
+    new_names = {{
+        'variable': 'SamplingDepth',
+        'value': 'AverageValue',
+         group_name: 'Grouping'
+    }}
+    group_means.append(group.rename(index=str, columns=new_names))
 
 # Stack all the different groups into a single dataframe
 df = pd.concat(group_means, axis=0, sort=False)
@@ -302,6 +301,7 @@ p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
      facet_wrap(~GroupName) + colFill + colScale +
      labs(title = 'Alpha Diveristy',
           subtitle = 'Grouped by Metadata Catagory') +
+     theme_bw() +
      theme(legend.position = 'none',
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5))
@@ -340,6 +340,7 @@ beta_r<source>
 # Create the plots for the first three PCs
 png('{plot}', width = 6, height = 6, unit='in', res=200)
 p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df))) +
+         theme_bw() +
          theme(legend.position = 'none',
                plot.title = element_text(hjust = 0.5),
                plot.subtitle = element_text(hjust = 0.5)) +

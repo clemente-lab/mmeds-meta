@@ -2,6 +2,7 @@
 
 import click
 from pathlib import Path
+from pandas import read_csv
 from mmeds.summary import summarize_qiime2, summarize_qiime1
 
 __author__ = "David Wallach"
@@ -39,12 +40,32 @@ def run_summarize(file_index, tool_type, path, metadata, load_info, sampling_dep
         parts = line.split('\t')
         files[parts[0]] = Path(parts[1])
 
-    metadata = metadata.split(',')
+    # Create the summary directory
+    if not files['summary'].is_dir():
+        files['summary'].mkdir()
+
+    # Filter out any catagories containing only NaN
+    # Or containing only a single metadata value
+    # Or where every sample contains a different value
+    metadata_cols = metadata.split(',')
+    summary_cols = []
+    df = read_csv(files['mapping'], sep='\t')
+    for col in metadata_cols:
+        # Handle the qiime name for this column
+        if col == 'RawDataID':
+            col = '#SampleID'
+        if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
+            continue
+        else:
+            summary_cols.append(col)
+
+    # Create a file the indicate which columns to do analysis for
+    (files['summary'] / 'metadata_columns.txt').write_text('\n'.join(summary_cols))
 
     if tool_type == 'qiime1':
-        summarize_qiime1(path, files, metadata, load_info, sampling_depth)
+        summarize_qiime1(path, files, summary_cols, load_info, sampling_depth)
     elif tool_type == 'qiime2':
-        summarize_qiime2(path, files, metadata, load_info)
+        summarize_qiime2(path, files, summary_cols, load_info)
 
 
 if __name__ == "__main__":

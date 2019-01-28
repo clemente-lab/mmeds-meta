@@ -115,9 +115,6 @@ class Qiime1(Tool):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        if not (self.path / 'summary').is_dir():
-            (self.path / 'summary').mkdir()
-
         self.jobtext.append('source deactivate;')
         self.jobtext.append('source activate mmeds-stable;')
         cmd = [
