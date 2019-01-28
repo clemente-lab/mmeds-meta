@@ -155,10 +155,10 @@ class Tool:
         params = {
             'walltime': '6:00',
             'walltime2': '2:00',
-            'jobname': '{}/{}-{}-{}'.format(self.path,
-                                            self.owner,
-                                            self.atype,
-                                            self.run_id),
+            'jobname': '{}-{}-{}'.format(self.owner,
+                                         self.atype,
+                                         self.run_id),
+            'path': self.path,
             'nodes': self.num_jobs,
             'memory': 1000,
             'queue': 'expressalloc'
