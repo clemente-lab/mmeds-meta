@@ -30,6 +30,72 @@ ILLEGAL_IN_HEADER = set('/\\ *?')  # Limit to alpha numeric, underscore, dot, hy
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
 
+def load_config(config_file, path):
+    """ Read the provided config file to determine settings for the analysis. """
+    mapping_file = path / 'qiime_mapping_file.tsv'
+
+    config = {}
+    # If no config was provided load the default
+    if config_file is None:
+        log('Using default config')
+        with open(fig.STORAGE_DIR / 'config_file.txt', 'r') as f:
+            page = f.read()
+    else:
+        # Otherwise write the file to the analysis directory for future reference
+        (path / 'config_file.txt').write_text(config_file)
+
+        # And load the file contents
+        page = config_file
+
+    # Parse the config
+    lines = page.split('\n')
+    for line in lines:
+        if line.startswith('#') or line == '':
+            continue
+        else:
+            parts = line.split('\t')
+            config[parts[0]] = parts[1]
+
+    # Parse the values/levels to be included in the analysis
+    for option in ['taxa_levels', 'metadata']:
+        if config[option] == 'all':
+            if option == 'metadata':
+                config[option] = get_valid_columns(mapping_file)
+            elif option == 'taxa_levels':
+                config[option] = [i + 1 for i in range(7)]
+        else:
+            # Otherwise split the values into a list
+            config[option] = config[option].split(',')
+
+    return config
+
+
+def get_valid_columns(mapping_file):
+    """
+    Get the column headers for metadata columns meeting the
+    criteria to be used in analysis.
+    =======================================================
+    :mapping_file: Path to the mapping file for this analysis.
+    """
+    summary_cols = []
+    # Filter out any catagories containing only NaN
+    # Or containing only a single metadata value
+    # Or where every sample contains a different value
+    df = pd.read_csv(mapping_file, sep='\t')
+    for col in df.columns:
+        # Handle the qiime name for this column
+        if col == 'RawDataID':
+            col = '#SampleID'
+        if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
+            continue
+        else:
+            summary_cols.append(col)
+    # Ensure #SampleID isn't included
+    if '#SampleID' in summary_cols:
+        summary_cols.remove('#SampleID')
+    return summary_cols
+
+
 def insert_error(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
@@ -242,7 +308,7 @@ def check_column(raw_column, col_index):
         except ValueError:
             errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
     # Check for catagorical data
-    elif issubdtype(col_type, 'str'):
+    elif issubdtype(col_type, str):
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
@@ -456,7 +522,7 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    if issubdtype(type(s), 'str'):
+    if issubdtype(type(s), str):
         if ('.e' in s or '.E' in s):
             return False
         try:
