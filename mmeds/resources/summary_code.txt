@@ -71,6 +71,7 @@ mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 df = df.melt(id_vars='#OTU ID')
 df = df.merge(mdf_lite, how='inner')
+df.{group} = df.{group}.astype(str)
 # Add colors for plotting
 otu_max_colors_{level} = sorted(df['X.OTU.ID'].unique())
 =====
@@ -90,6 +91,7 @@ mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 # Merge with the data
 df = df.merge(mdf_lite, how='inner')
+df.{group} = df.{group}.astype(str)
 # Add colors for plotting
 otu_max_colors_{level} = sorted(df['X.OTU.ID'].unique())
 =====
@@ -110,37 +112,112 @@ names(otuAllRGB{level}) <- otu_max_colors_{level}
 =====
 taxa_color_py<source>
 # Set parameters used when making the legend
-font_size = 15
+font_size = {fontsize}
 offset = float(font_size) / 2
 v_offset = 0
-fnt = ImageFont.truetype('{fontfile}', size=font_size)
+fnt = ImageFont.truetype('{font}', size=font_size)
+title_fnt = ImageFont.truetype('{titlefont}', size=int(1.2 * font_size))
 # Set the height and width based on the number/size of the values to display
-height = 20 + 20 * len(otu_max_colors_{level})
-width = 30 + 8 * len(max(otu_max_colors_{level}, key=len))
+height = 40 + 20 * len(otu_max_colors_{level})
+width = 80 + 9 * len(max(otu_max_colors_{level}, key=len))
 
 # Create a new image and setup the draw object
 im = PImage.new('RGB', (width, height), color='white')
 draw = ImageDraw.Draw(im)
 
+# Get the mean percentage of each taxon
+otu_percs = df.groupby('X.OTU.ID').mean()
+
+# Add headers
+draw.text((0, 0),
+          'Color AverageRelativeAbundence OTU',
+          fill=(0, 0, 0, 0),
+          font=title_fnt)
+
+v_offset += 30
 # Remove duplicate values
 for otu in otu_max_colors_{level}:
-    v_offset += 20  # Update offset
     # Get the color
     RGB = tuple(otuAllRGB{level}[otu])
     # Draw the color
     draw.rectangle([10, v_offset,
                     30, 20 + v_offset],
-                   outline=RGB,
+                   outline=(0, 0, 0),
                    fill=RGB)
+
+    # Align sample names
+    perc = 100 * float(otu_percs.loc[otu])
+    if perc < 1:
+        line_text = '<0.01% {{}}'.format(otu)
+    elif perc < 10:
+        line_text = ' {{:.2f}}% {{}}'.format(perc, otu)
+    else:
+        line_text = '{{:.2f}}% {{}}'.format(perc, otu)
     # Add the metadata value
-    draw.text((40, 10 - offset + v_offset),
-              otu,
+    draw.text((40, 12 - offset + v_offset),
+              line_text,
               fill=(0, 0, 0, 0),
               font=fnt)
+    v_offset += 20  # Update offset
 del draw
 
 # write to stdout
 im.save('taxa_legend_{level}.png', 'PNG')
+=====
+taxa_group_color_py<source>
+# Set parameters used when making the legend
+v_offset = 0
+min_abundence = {min_abundence}
+
+# Filter by abundence
+filtered_df = df[df.value > min_abundence]
+
+# Set the height and width based on the number/size of the values to display
+height = ((20 * (filtered_df['{group}'].nunique() - 1)) +
+          (20 * filtered_df['X.OTU.ID'].nunique() *
+           filtered_df['{group}'].nunique()))
+width = 80 + 9 * len(max(filtered_df['X.OTU.ID'], key=len))
+
+# Create a new image and setup the draw object
+im = PImage.new('RGB', (width, height), color='white')
+draw = ImageDraw.Draw(im)
+
+groups = filtered_df.groupby('{group}')
+for name, group in groups:
+    # Add the metadata value
+    draw.text((40, 12 - offset + v_offset),
+              name,
+              fill=(0, 0, 0, 0),
+              font=title_fnt)
+    v_offset += 25  # Update offset
+    # Get the means for each group
+    means = group.groupby('X.OTU.ID').mean()
+    for row in means.itertuples():
+        perc = 100 * float(row.value)
+        # Align sample names
+        if perc < 10:
+            line_text = ' {{:.2f}}% {{}}'.format(perc, row.Index)
+        else:
+            line_text = '{{:.2f}}% {{}}'.format(perc, row.Index)
+
+        # Add the metadata value
+        draw.text((40, 10 - offset + v_offset),
+                  line_text,
+                  fill=(0, 0, 0, 0),
+                  font=fnt)
+        # Get the color
+        RGB = tuple(otuAllRGB{level}[str(row.Index)])
+        # Draw the color
+        draw.rectangle([10, v_offset,
+                        30, 20 + v_offset],
+                       outline=(0, 0, 0),
+                       fill=RGB)
+        v_offset += 20
+    v_offset += 5  # Update offset
+del draw
+
+# write to stdout
+im.save('taxa_{group}_legend_{level}.png', 'PNG')
 =====
 taxa_r<source>
 %%R -i df
@@ -155,10 +232,7 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
      theme(text = element_text(size = 8.5,
                                face = "bold"),
            element_line(size = 0.1),
-           legend.text = element_text(size=7),
-           legend.key.size = unit(0.1, "in"),
-           legend.position = "bottom",
-           legend.direction ="vertical",
+           legend.position = "none",
            axis.text.x = element_text(angle = 300),
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5)) +
@@ -210,11 +284,11 @@ for group_name in metadata_columns:
         # Draw the color
         draw.rectangle([10, 10 + v_offset,
                         30, 30 + v_offset],
-                       outline=RGB,
+                       outline=(0, 0, 0),
                        fill=RGB)
         sub_draw.rectangle([10, 10 + sub_offset,
                             30, 30 + sub_offset],
-                           outline=RGB,
+                           outline=(0, 0, 0),
                            fill=RGB)
         # Add the metadata value
         draw.text((40, 20 - offset + v_offset),
@@ -427,3 +501,15 @@ for(i in 1:p$nrow) {{
         }}
     }}
 }}
+=====
+taxa_caption<source>
+The above plot represents the percentage of each sample belonging to particular taxon summarized at level {level}.
+=====
+alpha_caption_qiime1<source>
+Add this
+=====
+alpha_caption_qiime2<source>
+The above plot represents the average value of alpha diversity at each sampling depth. The error bars show the standard error within each group. Groups are determined by the metadata value in each category specified in the plot.
+=====
+beta_caption<source>
+The above plot represents the first three compenents created when performing Principle Component Analysis on the Beta diversity of the samples.

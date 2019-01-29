@@ -170,14 +170,22 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
             if i == 0:
                 cells.append(v4.new_code_cell(source=source['taxa_color_r'].format(level=level)))
                 cells.append(v4.new_code_cell(source=source['taxa_color_py'].format(level=level,
-                                                                                    fontfile=(STORAGE_DIR /
-                                                                                              'ABeeZee-Regular.otf'),
-                                                                                    fontsize=fontsize)))
+                                                                                    font=(STORAGE_DIR /
+                                                                                          'code_new_roman.otf'),
+                                                                                    titlefont=(STORAGE_DIR /
+                                                                                               'code_new_roman_b.otf'),
+                                                                                    fontsize=15)))
+            cells.append(v4.new_code_cell(source=source['taxa_group_color_py'].format(level=level,
+                                                                                      min_abundence=0.01,
+                                                                                      group=column)))
             cells.append(v4.new_code_cell(source=source['taxa_r'].format(plot=filename,
                                                                          level=level,
                                                                          group=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+            cells.append(v4.new_markdown_cell(source=source['taxa_caption']))
             cells.append(v4.new_code_cell(source='Image("taxa_legend_{level}.png")'.format(level=level)))
+            cells.append(v4.new_code_cell(source='Image("taxa_{group}_legend_{level}.png")'.format(level=level,
+                                                                                                   group=column)))
             cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
 
@@ -197,6 +205,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
         cells.append(v4.new_code_cell(source=source['alpha_py_{}'.format(analysis_type)].format(file1=data_file)))
         cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis=xaxis)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
+        cells.append(v4.new_markdown_cell(source=source['alpha_caption_{}'.format(analysis_type)]))
         cells.append(v4.new_code_cell(source='Image("legend.png")'))
         cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
@@ -219,6 +228,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
                                                                          subplot=subplot,
                                                                          cat=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=plot)))
+            cells.append(v4.new_markdown_cell(source=source['beta_caption']))
             cells.append(v4.new_code_cell(source='Image("{group}-legend.png")'.format(group=column)))
             cells.append(v4.new_markdown_cell(source=source['page_break']))
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
