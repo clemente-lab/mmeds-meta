@@ -1,4 +1,5 @@
 from mmeds import mmeds
+from pathlib import Path
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -74,8 +75,8 @@ def test_check_column():
     errors, warnings = mmeds.check_column(test_df['Test']['EmptyCell2'], 0)
     assert 'Empty cell value' in errors[0]
 
-    errors, warnings = mmeds.check_column(test_df['Test']['Catagorical'], 0)
-    assert 'Catagorical Data' in warnings[0]
+    errors, warnings = mmeds.check_column(test_df['Test']['Categorical'], 0)
+    assert 'Categorical Data' in warnings[0]
 
     errors, warnings = mmeds.check_column(test_df['Test']['Whitespace'], 0)
     assert 'Whitespace' in errors[0]
@@ -146,4 +147,24 @@ def test_validate_mapping_files():
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
     assert 'Missing required fields' in errors[-1]
 
-test_validate_mapping_files()
+
+def test_get_valid_columns():
+    columns, col_types = mmeds.get_valid_columns(fig.TEST_MAPPING, 'all')
+    assert len(columns) == 11
+    for key in col_types.keys():
+        assert key in columns
+
+    columns, col_types = mmeds.get_valid_columns(fig.TEST_MAPPING, 'Ethnicity,BarcodeSequence,Nationality,StudyName')
+    assert len(columns) == 2
+
+
+def test_load_config_file():
+    config = mmeds.load_config(None, fig.TEST_PATH)
+    assert len(config.keys()) == 6
+
+    # Test when no config is given
+    no_config = Path(fig.TEST_PATH) / 'config_file.txt'
+    assert not no_config.is_file()
+    config = mmeds.load_config(Path(fig.TEST_CONFIG_FILE).read_text(), fig.TEST_PATH)
+    assert no_config.is_file()
+    no_config.unlink()

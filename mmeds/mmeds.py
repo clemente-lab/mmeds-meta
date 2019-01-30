@@ -76,11 +76,16 @@ def get_valid_columns(mapping_file, option):
     criteria to be used in analysis.
     =======================================================
     :mapping_file: Path to the mapping file for this analysis.
-    :option: A str. Either a comma seperated list of columns or 'all' for all columns
+    :option: A string. Either a comma separated list of columns or 'all' for all columns
+    Returns:
+        :summary_cols: A list of columns that are valid for summary analysis
+        :col_types: A dictionary with the values of summary_cols as keys.
+            True indicates that the column contains continuous values.
+            False indicates that it contains discrete value.
     """
     summary_cols = []
     col_types = {}
-    # Filter out any catagories containing only NaN
+    # Filter out any categories containing only NaN
     # Or containing only a single metadata value
     # Or where every sample contains a different value
     df = pd.read_csv(mapping_file, sep='\t')
@@ -315,14 +320,14 @@ def check_column(raw_column, col_index):
                     warnings.append(text % (i + 1, col_index, cell, col_index))
         except ValueError:
             errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
-    # Check for catagorical data
+    # Check for categorical data
     elif issubdtype(col_type, str):
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
         for val, count in counts.iteritems():
             if count < (avg - stddev) and count < 3:
-                text = '%d\t%d\tCatagorical Data Warning: Potential catagorical data detected.\
+                text = '%d\t%d\tCategorical Data Warning: Potential categorical data detected.\
                     Value %s may be in error, only %d found.'
                 warnings.append(text % (-1, col_index, val, count))
 

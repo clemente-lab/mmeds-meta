@@ -1,5 +1,5 @@
 Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	Test	GoodDates	GoodDates	BadDates	BadDates	Subjects
-Non-standard1	MixedTypes	Non-standard2	StudyName	Whitespace	Stddev	Catagorical	EmptyCell1	EmptyCell2	GoodString	GoodNumber	BadBarcodes	GoodBarcodes	GoodBarcodes	BadDate	GoodDate	StartDate	EndDate	StartDate	EndDate	SomeSubs
+Non-standard1	MixedTypes	Non-standard2	StudyName	Whitespace	Stddev	Categorical	EmptyCell1	EmptyCell2	GoodString	GoodNumber	BadBarcodes	GoodBarcodes	GoodBarcodes	BadDate	GoodDate	StartDate	EndDate	StartDate	EndDate	SomeSubs
 n.a.	1234	N/A	Good_Study	Illuminate 	100	gut	100	asdf	asdf	1	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	2016-13-01	2016-01-01	2016-01-01	2016-01-02	2016-01-01	2016-01-02	Gary
 n.a.	1234	N/A	Good_Study	Illuminate   	100	gut			asdf	2	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	2016-13-02	2016-01-02	2016-01-02	2016-01-03	2016-01-02	2016-01-03	Gary
 n.a.	1234	N/A	Good_Study	  Limun	101	gut		asdf	asdf	3	asdf	GTGCCAGCGCCGCGGTAA	GTGCCAGCGCCGCGGTAA	2016-13-03	2016-01-03	2016-01-03	2016-01-04	2016-01-03	2016-01-04	Gary
