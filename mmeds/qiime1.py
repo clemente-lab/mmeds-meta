@@ -158,9 +158,10 @@ class Qiime1(Tool):
                 f.write(temp.format(**params))
                 f.write('\n'.join(self.jobtext))
             # Submit the job
-            output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-            self.wait_on_job(job_id)
+            #output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            output = run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            #job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+            #self.wait_on_job(job_id)
 
     def run(self):
         """ Execute all the necessary actions. """
