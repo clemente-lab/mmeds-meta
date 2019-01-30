@@ -58,10 +58,10 @@ def load_config(config_file, path):
 
     # Parse the values/levels to be included in the analysis
     for option in ['taxa_levels', 'metadata']:
-        if config[option] == 'all':
-            if option == 'metadata':
-                config[option] = get_valid_columns(mapping_file)
-            elif option == 'taxa_levels':
+        if option == 'metadata':
+            config[option], config['metadata_continuous'] = get_valid_columns(mapping_file, config[option])
+        elif config[option] == 'all':
+            if option == 'taxa_levels':
                 config[option] = [i + 1 for i in range(7)]
         else:
             # Otherwise split the values into a list
@@ -70,19 +70,25 @@ def load_config(config_file, path):
     return config
 
 
-def get_valid_columns(mapping_file):
+def get_valid_columns(mapping_file, option):
     """
     Get the column headers for metadata columns meeting the
     criteria to be used in analysis.
     =======================================================
     :mapping_file: Path to the mapping file for this analysis.
+    :option: A str. Either a comma seperated list of columns or 'all' for all columns
     """
     summary_cols = []
+    col_types = {}
     # Filter out any catagories containing only NaN
     # Or containing only a single metadata value
     # Or where every sample contains a different value
     df = pd.read_csv(mapping_file, sep='\t')
-    for col in df.columns:
+    if option == 'all':
+        cols = df.columns
+    else:
+        cols = option.split(',')
+    for col in cols:
         # Handle the qiime name for this column
         if col == 'RawDataID':
             col = '#SampleID'
@@ -90,10 +96,12 @@ def get_valid_columns(mapping_file):
             continue
         else:
             summary_cols.append(col)
+            col_types[col] = pd.api.types.is_numeric_dtype(df[col])
+
     # Ensure #SampleID isn't included
     if '#SampleID' in summary_cols:
         summary_cols.remove('#SampleID')
-    return summary_cols
+    return summary_cols, col_types
 
 
 def insert_error(page, line_number, error_message):

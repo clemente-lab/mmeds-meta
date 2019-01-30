@@ -173,18 +173,18 @@ def create_summary_notebook(analysis_type, files, execute, name, run_path, confi
                                                                    'code_new_roman_b.otf'),
                                                         abundance_threshold=config['abundance_threshold'],
                                                         fontsize=config['font_size']))
-                add_code(source['taxa_group_color_py'].format(level=level,
-                                                              abundance_threshold=config['abundance_threshold'],
-                                                              group=column))
-                add_code(source['taxa_r'].format(plot=filename,
-                                                 level=level,
-                                                 group=column))
-                add_code('Image("{plot}")'.format(plot=filename))
-                add_markdown(source['taxa_caption'])
-                add_code('Image("taxa_legend_{level}.png")'.format(level=level))
-                add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level,
-                                                                           group=column))
-                add_markdown(source['page_break'])
+            add_code(source['taxa_group_color_py'].format(level=level,
+                                                          abundance_threshold=config['abundance_threshold'],
+                                                          group=column))
+            add_code(source['taxa_r'].format(plot=filename,
+                                             level=level,
+                                             group=column))
+            add_code('Image("{plot}")'.format(plot=filename))
+            add_markdown(source['taxa_caption'])
+            add_code('Image("taxa_legend_{level}.png")'.format(level=level))
+            add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level,
+                                                                       group=column))
+            add_markdown(source['page_break'])
 
     def alpha_plots(data_file):
         """
@@ -220,7 +220,8 @@ def create_summary_notebook(analysis_type, files, execute, name, run_path, confi
                                               group=column))
             add_code(source['beta_r'].format(plot=plot,
                                              subplot=subplot,
-                                             cat=column))
+                                             cat=column,
+                                             continuous=config['metadata_continuous'][column]))
             add_code('Image("{plot}")'.format(plot=plot))
             add_markdown(source['beta_caption'])
             add_code('Image("{group}-legend.png")'.format(group=column))
