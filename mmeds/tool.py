@@ -5,15 +5,14 @@ from time import sleep
 from pandas import read_csv
 
 from mmeds.database import Database
-from mmeds.config import STORAGE_DIR
-from mmeds.mmeds import log
+from mmeds.mmeds import log, load_config
 from mmeds.error import AnalysisError
 
 
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=False):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
         """
         Setup the Tool class
         ====================
@@ -114,41 +113,7 @@ class Tool:
 
     def read_config_file(self, config_file):
         """ Read the provided config file to determine settings for the analysis. """
-        config = {}
-        # If no config was provided load the default
-        if config_file is None:
-            log('Using default config')
-            with open(STORAGE_DIR / 'config_file.txt', 'r') as f:
-                page = f.read()
-        else:
-            # Otherwise write the file to the analysis directory for future reference
-            log('Using custom config: {}'.format(self.path / 'config_file.txt'))
-            with open(self.path / 'config_file.txt', 'w+') as f:
-                f.write(config_file)
-            # And load the file contents
-            page = config_file
-        # Parse the config
-        lines = page.split('\n')
-        for line in lines:
-            if line.startswith('#') or line == '':
-                continue
-            else:
-                parts = line.split('\t')
-                config[parts[0]] = parts[1]
-
-        # Parse the metadata values to be included in the analysis
-        if config['metadata'] == 'all':
-            # If it's set to all get all the headers from the mapping file
-            with open(self.files['mapping']) as f:
-                header = f.readline()
-            config['metadata'] = header.strip().split('\t')
-        else:
-            # Otherwise split the values into a list
-            config['metadata'] = config['metadata'].split(',')
-        # Ensure #SampleID isn't included
-        if '#SampleID' in config['metadata']:
-            config['metadata'].remove('#SampleID')
-        return config
+        return load_config(config_file, self.path)
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """

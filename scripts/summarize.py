@@ -25,15 +25,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-p', '--path', required=False,
               type=click.Path(exists=True),
               help='Path to analysis directory')
-@click.option('-m', '--metadata', required=False,
-              help='List of metadata fields to analyze')
+@click.option('-c', '--config_file', required=False,
+              default=None, type=click.Path(exists=True),
+              help='Path to configuration file for analysis.')
 @click.option('-l', '--load_info', required=False,
               help='Commands to run before scripts to load modules/environments')
-@click.option('-s', '--sampling_depth', required=False,
-              help='Commands to run before scripts to load modules/environments')
-def run_summarize(file_index, tool_type, path, metadata, load_info, sampling_depth):
-    path = Path(path)
+def run_summarize(file_index, tool_type, path, load_info, config_file):
     # Load the files
+    config_file = Path(config_file)
+    path = Path(path)
     files = {}
     lines = (path / 'file_index.tsv').read_text().strip().split('\n')
     for line in lines:
@@ -44,29 +44,7 @@ def run_summarize(file_index, tool_type, path, metadata, load_info, sampling_dep
     if not files['summary'].is_dir():
         files['summary'].mkdir()
 
-    # Filter out any catagories containing only NaN
-    # Or containing only a single metadata value
-    # Or where every sample contains a different value
-    metadata_cols = metadata.split(',')
-    summary_cols = []
-    df = read_csv(files['mapping'], sep='\t')
-    for col in metadata_cols:
-        # Handle the qiime name for this column
-        if col == 'RawDataID':
-            col = '#SampleID'
-        if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
-            continue
-        else:
-            summary_cols.append(col)
-
-    # Create a file the indicate which columns to do analysis for
-    (files['summary'] / 'metadata_columns.txt').write_text('\n'.join(summary_cols))
-
-    if tool_type == 'qiime1':
-        summarize_qiime1(path, files, summary_cols, load_info, sampling_depth)
-    elif tool_type == 'qiime2':
-        summarize_qiime2(path, files, summary_cols, load_info)
-
+    summarize_qiime(path, files, load_info, config_file, tool_type)
 
 
 if __name__ == "__main__":

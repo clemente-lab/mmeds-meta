@@ -1,5 +1,6 @@
 py_setup<source>
 from pathlib import Path
+from copy import deepcopy
 import pandas as pd
 import rpy2.rinterface
 from warnings import filterwarnings
@@ -7,6 +8,7 @@ from IPython.display import Image
 from random import shuffle
 from PIL import Image as PImage
 from PIL import ImageDraw, ImageFont
+from mmeds.mmeds import load_config
 
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
@@ -15,8 +17,8 @@ mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
 
 # Load the columns to use for analysis
-metadata_columns = Path('metadata_columns.txt').read_text().strip().split('\n')
-metadata_columns.sort()
+config = load_config(Path('../config_file.txt').read_text(), Path().cwd())
+metadata_columns = sorted(config['metadata'])
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 group_ids = []
@@ -33,14 +35,15 @@ for group_name in metadata_columns:
             max_colors = group_ids[-1]
         color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
 
-# Shuffle the colors so value near each other won't be similar shades
+# Shuffle the non-continuous colors so values near each other won't be similar shades
+max_colors_con = deepcopy(max_colors)
 shuffle(max_colors, lambda: 0.25)
 
 # Load the extention for jupyter
 %load_ext rpy2.ipython
 =====
 r_setup<source>
-%%R -i max_colors -o allRGB
+%%R -i max_colors -i max_colors_con -o allRGB -o allRGBCon
 require(ggplot2)
 require(RColorBrewer)
 require(GGally)
@@ -50,12 +53,23 @@ require(ggrepel)
 myColors <- brewer.pal(12, "Paired")
 colorMaker <- colorRampPalette(myColors)
 allColors <- colorMaker(length(unique(max_colors)))
+# Custom continuous(ish) color palette
+myColorsCon <- brewer.pal(9, "YlOrRd")
+colorMakerCon <- colorRampPalette(myColorsCon)
+allColorsCon <- colorMakerCon(length(unique(max_colors_con)))
 # Rename the colors to match with the groups
 names(allColors) <- max_colors
 colScale <- scale_color_manual(name = ~GroupID, values = allColors)
 colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
+
+# Rename the colors to match with the groups
+names(allColorsCon) <- max_colors_con
+colScaleCon <- scale_color_manual(name = ~GroupID, values = allColorsCon)
+colFillCon <- scale_fill_manual(name = ~GroupID, values = allColorsCon)
 # Get the RGB values for the colors
 allRGB <- data.frame(apply(data.frame(allColors), 1, col2rgb))
+# Get the RGB values for the colors
+allRGBCon <- data.frame(apply(data.frame(allColorsCon), 1, col2rgb))
 =====
 page_break<source>
 <div style="page-break-after: always;"></div>
@@ -126,7 +140,7 @@ im = PImage.new('RGB', (width, height), color='white')
 draw = ImageDraw.Draw(im)
 
 # Get the mean percentage of each taxon
-otu_percs = df.groupby('X.OTU.ID').mean()
+otu_percs = df[df.value > {abundance_threshold}].groupby('X.OTU.ID').mean()
 
 # Add headers
 draw.text((0, 0),
@@ -136,7 +150,8 @@ draw.text((0, 0),
 
 v_offset += 30
 # Remove duplicate values
-for otu in otu_max_colors_{level}:
+for row in otu_percs.itertuples():
+    otu = row.Index
     # Get the color
     RGB = tuple(otuAllRGB{level}[otu])
     # Draw the color
@@ -167,10 +182,9 @@ im.save('taxa_legend_{level}.png', 'PNG')
 taxa_group_color_py<source>
 # Set parameters used when making the legend
 v_offset = 0
-min_abundence = {min_abundence}
 
-# Filter by abundence
-filtered_df = df[df.value > min_abundence]
+# Filter by abundance
+filtered_df = df[df.value > {abundance_threshold}]
 
 # Set the height and width based on the number/size of the values to display
 height = ((20 * (filtered_df['{group}'].nunique() - 1)) +
@@ -243,12 +257,7 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
 ggsave("{plot}", height = 6, width = 8)
 =====
 legend_py<source>
-# Set parameters used when making the legend
-font_size = {fontsize}
-offset = float(font_size) / 2
 v_offset = 0
-fnt = ImageFont.truetype('{fontfile}', size=font_size)
-height = 0
 height = 0
 for group_name in mdf.columns:
     height += 30
@@ -262,7 +271,7 @@ draw = ImageDraw.Draw(im)
 for group_name in metadata_columns:
     group = mdf[group_name]
     sub_im = PImage.new('RGB',
-                        (300, 30 + (20 * len(group.drop_duplicates()))),
+                        (300, 40 + (20 * len(group.drop_duplicates()))),
                         color='white')
     sub_draw = ImageDraw.Draw(sub_im)
     # Add the metadata catagory
@@ -273,14 +282,17 @@ for group_name in metadata_columns:
     sub_draw.text((20, 20 - offset),
                   str(group_name),
                   fill=(0, 0, 0),
-                  font=fnt)
+                  font=title_fnt)
     sub_offset = 0
     # Remove duplicate values
     for sample in group.sort_values().drop_duplicates():
         v_offset += 20  # Update offset
         sub_offset += 20
         # Get the color
-        RGB = tuple(allRGB[color_maps[group_name][sample]])
+        if config['metadata_continuous'][group_name]:
+            RGB = tuple(allRGB[color_maps[group_name][sample]])
+        else:
+            RGB = tuple(allRGB[color_maps[group_name][sample]])
         # Draw the color
         draw.rectangle([10, 10 + v_offset,
                         30, 30 + v_offset],
@@ -472,7 +484,11 @@ p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df))) +
 # Add the color palette to each of the plots
 for(i in 1:p$nrow) {{
     for(j in 1:p$ncol){{
-        p[i,j] <- p[i,j] + colScale + colFill
+        if ({continuous}){{
+            p[i,j] <- p[i,j] + colScaleCon + colFillCon
+        }} else {{
+            p[i,j] <- p[i,j] + colScale + colFill
+        }}
     }}
 }}
 print(p)

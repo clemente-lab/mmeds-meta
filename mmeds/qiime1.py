@@ -127,20 +127,24 @@ class Qiime1(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def run_analysis(self):
-        """ Perform some analysis. """
+    def setup_analysis(self):
+        """ Add all the necessary commands to the jobfile """
         self.validate_mapping()
         if self.demuxed:
             self.unzip()
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
+        self.summary()
+        self.write_file_locations()
+
+    def run_analysis(self):
+        """ Perform some analysis. """
+        self.setup_analysis()
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, '.lsf')
         error_log = self.path / self.run_id
         self.add_path(error_log, '.err')
-        self.summary()
-        self.write_file_locations()
         if self.testing:
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
@@ -158,15 +162,18 @@ class Qiime1(Tool):
                 f.write(temp.format(**params))
                 f.write('\n'.join(self.jobtext))
             # Submit the job
-            #output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            output = run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            #job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-            #self.wait_on_job(job_id)
+            #  Temporary for testing on Minerva
+            #  FIXME
+            #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+            #  self.wait_on_job(job_id)
 
     def run(self):
         """ Execute all the necessary actions. """
         try:
             if self.analysis:
+                self.setup_analysis()
                 self.run_analysis()
             self.sanity_check()
             self.move_user_files()

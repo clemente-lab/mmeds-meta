@@ -38,8 +38,7 @@ class ToolTests(TestCase):
         new_dir, run_id, files, demuxed = self.tool.setup_dir(fig.TEST_DIR)
         self.dirs.append(new_dir)
 
-        assert int(run_id) == 1
-        assert new_dir == fig.TEST_DIR / 'analysis1'
+        assert str(fig.TEST_DIR / 'analysis') in str(new_dir)
         assert not demuxed
         assert 'metadata' in files.keys()
         assert files['metadata'].is_symlink()
@@ -48,9 +47,8 @@ class ToolTests(TestCase):
         """ Test that adding files to the tool object works properly """
         assert 'testfile' not in self.tool.files.keys()
         self.tool.add_path('testfile', '.txt')
-
         assert 'testfile' in self.tool.files.keys()
-        assert ((fig.TEST_DIR / 'analysis0') / 'testfile.txt') == self.tool.files['testfile']
+        assert not self.tool.files['testfile'].is_file()
 
     def test_read_config_file(self):
         """ Assert that config files are loaded correctly """
@@ -65,25 +63,8 @@ class ToolTests(TestCase):
 
     def test_get_job_params(self):
         params = self.tool.get_job_params()
-        assert params['jobname'] == '{}-{}-{}'.format(fig.TEST_USER, 1, 0)
+        assert '{}-{}'.format(fig.TEST_USER, 1) in params['jobname']
         assert params['nodes'] == 3
-
-    def test_create_qiime_mapping_file(self):
-        """ travis doesn't have qiime installed to run this """
-        return
-        self.tool.create_qiime_mapping_file()
-        cmd = 'source activate qiime1; validate_mapping_file.py -s -m {} -o {};'.format(self.tool.files['mapping'],
-                                                                                        self.tool.path)
-        run(cmd, shell=True, check=True)
-        with open(str(self.tool.files['mapping']) + '.log') as f:
-            lines = f.read().split('\n')
-
-        # Check that there are no errors
-        # Warnings are okay
-        for i, line in enumerate(lines):
-            if i == 2:
-                assert 'Warnings' in line
-                break
 
     def test_move_user_files(self):
         """ Test the method for finishing analysis and writing file locations. """
@@ -98,21 +79,3 @@ class ToolTests(TestCase):
         assert (self.tool.path / 'visualizations_dir').is_dir()
         assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
         assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
-
-    def test_write_file_locations(self):
-        pass
-
-
-if __name__ == '__main__':
-    tt = ToolTests()
-    tt.setUpClass()
-    try:
-        tt.test_setup_dir()
-        tt.test_move_user_files()
-        tt.test_read_config_file()
-        tt.test_add_path()
-        tt.test_get_job_params()
-        tt.test_create_qiime_mapping_file()
-    except AssertionError:
-        pass
-    tt.tearDownClass()

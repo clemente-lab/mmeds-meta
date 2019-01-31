@@ -5,6 +5,7 @@ import mmeds.secrets as sec
 import mmeds.html as html
 import mmeds.test_files as test_files
 import mmeds.resources as resources
+import mmeds.CSS as css
 import mmeds
 import hashlib
 import os
@@ -14,6 +15,7 @@ ERROR_FP = 'error_log.tsv'
 
 ROOT = Path(mmeds.__file__).parent.resolve()
 HTML_DIR = Path(html.__file__).parent.resolve()
+CSS_DIR = Path(css.__file__).parent.resolve()
 STORAGE_DIR = Path(resources.__file__).parent.resolve()
 if os.environ.get('MMEDS'):
     DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
@@ -41,21 +43,19 @@ CONFIG = {
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
         'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
-
         'log.error_file': str(DATABASE_DIR / 'site.log'),
         'request.scheme': 'https',
         'secureheaders.on': True,
         'tools.sessions.on': True,
         'tools.sessions.secure': True,
         'tools.sessions.httponly': True,
-        'tools.sessions.timeout': 15,
-        'tools.staticdir.root': str(ROOT)
+        'tools.sessions.timeout': 15
     },
     # Content in this directory will be made directly
     # available on the web server
     '/CSS': {
         'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'CSS'
+        'tools.staticdir.dir': str(CSS_DIR)
     },
     # This sets up the https security
     '/protected/area': {
@@ -84,6 +84,8 @@ TEST_USER_0 = 'testuser0'
 TEST_EMAIL = 'mmeds.tester@gmail.com'
 TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
+TEST_CONFIG_FILE = str(TEST_PATH / 'test_config_file.txt')
+TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
 

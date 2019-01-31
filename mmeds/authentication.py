@@ -32,9 +32,8 @@ def validate_password(username, password, testing=False):
     with Database(STORAGE_DIR, testing=testing) as db:
         # Get the values from the user table
         try:
-            hashed_password, salt = db.get_col_values_from_table('password, salt',
-                                                                 '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
-                                                                                                        username))[0]
+            query = '{}.user where username = "{}"'.format(sec.SQL_DATABASE, username)
+            hashed_password, salt = db.get_col_values_from_table('password, salt', query)[0]
         # An index error means that the username did not exist
         except IndexError:
             print('Username did not exist')
@@ -121,7 +120,8 @@ def change_password(username, password, testing=False):
     with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
         # Check the email matches the one on file
         db.change_password(password_hash, salt)
-        send_email(db.get_email(), username, password, 'change')
+        if not testing:
+            send_email(db.get_email(), username, password, 'change', testing=testing)
 
 
 def get_email(username, testing=False):
