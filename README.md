@@ -1,5 +1,9 @@
 # mmeds-meta
 
+
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+
+
 ### Instructions
 
 In order to run the mmeds server locally you will need.
