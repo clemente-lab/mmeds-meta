@@ -604,7 +604,7 @@ class Database:
         self.cursor.execute(sql)
 
         # Insert the user with the updated password
-        sql = 'INSERT INTO mmeds.user (user_id, username, password, salt, email) VALUES\
+        sql = 'INSERT INTO user (user_id, username, password, salt, email) VALUES\
                 ({}, "{}", "{}", "{}", "{}");'.format(result[0],
                                                       result[1],
                                                       new_password,
