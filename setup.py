@@ -36,7 +36,7 @@ setup(name='mmeds',
           'jupyter',
           'pillow',
           'locustio',
-          'pytest-cov',
-          'codecov'
+          'codecov',
+          'pytest-cov'
       ],
       zip_safe=False)
