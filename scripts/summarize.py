@@ -2,6 +2,7 @@
 
 import click
 from pathlib import Path
+from pandas import read_csv
 from mmeds.summary import summarize_qiime2, summarize_qiime1
 
 __author__ = "David Wallach"
