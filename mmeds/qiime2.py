@@ -281,7 +281,11 @@ class Qiime2(Tool):
         """ Add commands for creating the summary. """
 
         self.add_path('summary')
+        if not (self.path / 'summary').is_dir():
+            (self.path / 'summary').mkdir()
+
         self.jobtext.append('source deactivate;')
+        self.jobtext.append('module unload qiime2/2018.4;')
         self.jobtext.append('source activate mmeds-stable;')
 
         cmd = [
@@ -336,7 +340,7 @@ class Qiime2(Tool):
         self.qimport()
         if not self.demuxed:
             self.demultiplex()
-        self.demux_visualize()
+            self.demux_visualize()
 
         if self.atype == 'deblur':
             self.deblur_filter()

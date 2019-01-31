@@ -2,7 +2,7 @@
 
 import click
 from pathlib import Path
-from mmeds.summary import summarize_qiime
+from mmeds.summary import summarize_qiime2, summarize_qiime1
 
 __author__ = "David Wallach"
 __copyright__ = "Copyright 2018, The Clemente Lab"
