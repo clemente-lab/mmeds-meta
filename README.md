@@ -1,6 +1,16 @@
 # mmeds-meta
 
-### Instructions
+
+
+#### Master
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+
+#### Development
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/development/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+
+
+
+## Instructions
 
 In order to run the mmeds server locally you will need.
 
