@@ -33,3 +33,6 @@ server/deblur.log
 *.bak
 /mmeds/resources/privkey.pem
 /mmeds/secrets.py
+
+# Coverage reports
+htmlcov/
