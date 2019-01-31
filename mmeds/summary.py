@@ -3,6 +3,7 @@ from nbformat import v4
 from collections import defaultdict
 from subprocess import run
 from itertools import combinations
+from shutil import copy, rmtree, make_archive
 
 import nbformat as nbf
 import os
@@ -10,12 +11,136 @@ from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log
 
 
-def summarize(metadata=['Ethnicity', 'Nationality'],
-              analysis_type='qiime1',
-              files={},
-              execute=False,
-              name='analysis',
-              run_path='/home/david/Work/data-mmeds/summary'):
+def summarize_qiime1(path, files, metadata, load_info, sampling_depth):
+    """
+    Create summary of analysis results
+    """
+    log('Run summarize')
+    diversity = files['diversity_output']
+    summary_files = defaultdict(list)
+
+    # Convert and store the otu table
+    cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
+    cmd = cmd.format(load_info,
+                     files['otu_output'] / 'otu_table.biom',
+                     path / 'otu_table.tsv')
+    log(cmd)
+    run(cmd, shell=True, check=True)
+
+    # Add the text OTU table to the summary
+    copy(path / 'otu_table.tsv', files['summary'])
+    summary_files['otu'].append('otu_table.tsv')
+
+    def move_files(path, catagory):
+        """ Collect the contents of all files match the regex in path """
+        data_files = diversity.glob(path.format(depth=sampling_depth))
+        for data in data_files:
+            copy(data, files['summary'])
+            summary_files[catagory].append(data.name)
+
+    move_files('biom_table_summary.txt', 'otu')                       # Biom summary
+    move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
+    move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
+    move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
+
+    # Get the mapping file
+    copy(files['mapping'], path / 'summary/.')
+
+    # Get the template
+    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
+    log('Summary path')
+    log(path / 'summary')
+    create_summary_notebook(metadata=metadata,
+                            analysis_type='qiime1',
+                            files=summary_files,
+                            execute=True,
+                            name='analysis',
+                            run_path=path / 'summary')
+
+    log('Make archive')
+    result = make_archive(path / 'summary',
+                          format='zip',
+                          root_dir=path,
+                          base_dir='summary')
+    log(result)
+    log('Summary completed successfully')
+    return path / 'summary/analysis.pdf'
+
+
+def summarize_qiime2(path, files, metadata, loadinfo):
+    """ Create summary of the files produced by the qiime2 analysis. """
+    log('Start Qiime2 summary')
+
+    # Setup the summary directory
+    summary_files = defaultdict(list)
+
+    # Get Taxa
+    cmd = '{} qiime tools export {} --output-dir {}'.format(loadinfo,
+                                                            files['taxa_bar_plot'],
+                                                            path / 'temp')
+    run(cmd, shell=True, check=True)
+    taxa_files = (path / 'temp').glob('level*.csv')
+    for taxa_file in taxa_files:
+        copy(taxa_file, files['summary'])
+        summary_files['taxa'].append(taxa_file.name)
+    rmtree(path / 'temp')
+
+    # Get Beta
+    beta_files = files['core_metrics_results'].glob('*pcoa*')
+    for beta_file in beta_files:
+        cmd = '{} qiime tools export {} --output-dir {}'.format(loadinfo,
+                                                                beta_file,
+                                                                path / 'temp')
+        run(cmd, shell=True, check=True)
+        dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
+        copy(path / 'temp' / 'ordination.txt', dest_file)
+        log(dest_file)
+        summary_files['beta'].append(dest_file.name)
+        rmtree(path / 'temp')
+
+    # Get Alpha
+    for metric in ['shannon', 'faith_pd', 'observed_otus']:
+        cmd = '{} qiime tools export {} --output-dir {}'.format(loadinfo,
+                                                                files['alpha_rarefaction'],
+                                                                path / 'temp')
+        run(cmd, shell=True, check=True)
+
+        metric_file = path / 'temp/{}.csv'.format(metric)
+        copy(metric_file, files['summary'])
+        summary_files['alpha'].append(metric_file.name)
+        rmtree(path / 'temp')
+
+    # Get the mapping file
+    copy(files['mapping'], files['summary'])
+    # Get the template
+    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
+
+    # Create the summary
+    create_summary_notebook(metadata=metadata,
+                            analysis_type='qiime2',
+                            files=summary_files,
+                            execute=True,
+                            name='analysis',
+                            run_path=path / 'summary')
+
+    # Create a zip of the summary
+    result = make_archive(path / 'summary',
+                          format='zip',
+                          root_dir=path,
+                          base_dir='summary')
+    log('Create archive of summary')
+    log(result)
+
+    log('Summary completed succesfully')
+    return path / 'summary/analysis.pdf'
+
+
+def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
+                            analysis_type='qiime1',
+                            files={},
+                            execute=False,
+                            name='analysis',
+                            run_path='/home/david/Work/data-mmeds/summary'):
     """
     Create the summary PDF for qiime1 analysis
     ==========================================
@@ -170,7 +295,7 @@ def summarize(metadata=['Ethnicity', 'Nationality'],
         :nn: A python notebook object.
         """
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
-        cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
+        cmd = 'source activate mmeds-stable; jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
         if execute:
             cmd += ' --execute'
         log(cmd)

@@ -26,6 +26,7 @@
 server/data/*
 server/site.log
 server/session
+server/deblur.log
 
 # All backup files
 .*

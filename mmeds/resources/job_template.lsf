@@ -7,8 +7,8 @@
 #BSUB -R "span[hosts=1]"
 #BSUB -R rusage[mem={memory}]
 #BSUB -m mothra
-#BSUB -o {jobname}.stdout
-#BSUB -eo {jobname}.stderr
+#BSUB -o {path}/{jobname}.stdout
+#BSUB -eo {path}/{jobname}.stderr
 #BSUB -L /bin/bash
 
 export QIIME_BSUB_OPTIONS='-q {queue} -P acc_MMEDS -W {walltime2} -n 1 -R rusage[mem=2000]';

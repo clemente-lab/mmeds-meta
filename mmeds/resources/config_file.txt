@@ -4,5 +4,5 @@ sampling_depth	1114
 # To include all columns set to 'all' (no quotes)
 # Otherwise list all the column names seperated by commas
 # Example:
-# metadata all
+# metadata	all
 metadata	Ethnicity,SpecimenBodySite
