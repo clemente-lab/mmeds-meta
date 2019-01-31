@@ -5,6 +5,8 @@ sudo: true
 services:
 - mysql
 - mongodb
+env:
+- CODECOV_TOKEN="25e45d73-b9ba-402a-af6b-e0936fab5519"
 before_install:
 - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
   -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
