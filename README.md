@@ -3,9 +3,11 @@
 
 
 #### Master
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.svg?branch=master)](https://travis-ci.com/clemente-lab/mmeds-meta)
 [![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 
 #### Development
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.svg?branch=development)](https://travis-ci.com/clemente-lab/mmeds-meta)
 [![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/development/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 
 
