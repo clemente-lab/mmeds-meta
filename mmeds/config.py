@@ -15,7 +15,10 @@ ERROR_FP = 'error_log.tsv'
 ROOT = Path(mmeds.__file__).parent.resolve()
 HTML_DIR = Path(html.__file__).parent.resolve()
 STORAGE_DIR = Path(resources.__file__).parent.resolve()
-DATABASE_DIR = Path().home() / 'mmeds_server_data'
+if os.environ.get('MMEDS'):
+    DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
+else:
+    DATABASE_DIR = Path().home() / 'mmeds_server_data'
 if not os.path.exists(DATABASE_DIR):
     os.mkdir(DATABASE_DIR)
 
@@ -33,10 +36,13 @@ CONFIG = {
     'global': {
         'server.socket_host': HOST,
         'server.socket_port': PORT,
-        'log.error_file': str(STORAGE_DIR.parent / 'site.log'),
+        'server.socket_timeout': 1000000000,
+        'server.max_request_body_size': 10000000000,
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
         'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
+
+        'log.error_file': str(DATABASE_DIR / 'site.log'),
         'request.scheme': 'https',
         'secureheaders.on': True,
         'tools.sessions.on': True,
@@ -154,6 +160,12 @@ PROTECTED_TABLES = [
     'RawData',
     'ResultsProtocol',
     'Results'
+]
+
+JUNCTION_TABLES = [
+    'Subjects_has_Ethnicity',
+    'Subjects_has_Experiment',
+    'Subjects_has_Genotypes'
 ]
 
 USER_FILES = set([

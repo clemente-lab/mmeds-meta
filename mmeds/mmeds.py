@@ -6,12 +6,19 @@ from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError
 from subprocess import run
+from datetime import datetime
 import mmeds.config as fig
 import pandas as pd
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
-REQUIRED_HEADERS = set(['Description', '#SampleID', 'BarcodeSequence', 'LinkerPrimerSequence', 'Lab', 'AnalysisTool', 'PrimaryInvestigator'])
+REQUIRED_HEADERS = set(['Description',
+                        '#SampleID'
+                        'BarcodeSequence'
+                        'LinkerPrimerSequence'
+                        'Lab'
+                        'AnalysisTool'
+                        'PrimaryInvestigator'])
 
 REQUIRED_HEADERS = set(['SpecimenID', 'BarcodeSequence', 'PrimaryInvestigator'])
 
@@ -34,7 +41,9 @@ def insert_error(page, line_number, error_message):
 def insert_warning(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<h4><font color="orange">' + error_message + '</font></h4>'] + lines[line_number:]
+    new_lines = lines[:line_number] +\
+        ['<h4><font color="orange">' + error_message + '</font></h4>'] +\
+        lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
 
@@ -81,8 +90,8 @@ def check_header(header, col_index):
 
     # Check if it's numeric
     if is_numeric(header):
-        errors.append(row_col + 'Number Header Error: Column names cannot be numbers. Replace header %s of column\t%d ' %
-                      (header, col_index))
+        text = 'Number Header Error: Column names cannot be numbers. Replace header %s of column\t%d '
+        errors.append(row_col + text % (header, col_index))
     # Check if it's NA
     if header in NAs + ['NA']:
         errors.append(row_col + 'NA Header Error: Column names cannot be NA. Replace  header %s of column\t%d ' %
@@ -134,7 +143,7 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
     if '' == cell or pd.isnull(cell):
         errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
-    if type(cell) == str:
+    if isinstance(cell, str):
         # Check for trailing or preceding whitespace
         if not cell == cell.strip():
             errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
@@ -228,19 +237,20 @@ def check_column(raw_column, col_index):
             avg = mean(filtered)
             for i, cell in enumerate(column):
                 if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
-                    warnings.append('%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d' %
-                                    (i + 1, col_index, cell, col_index))
+                    text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
+                    warnings.append(text % (i + 1, col_index, cell, col_index))
         except ValueError:
             errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
     # Check for catagorical data
-    elif issubdtype(col_type, str):
+    elif issubdtype(col_type, 'str'):
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
         for val, count in counts.iteritems():
             if count < (avg - stddev) and count < 3:
-                warnings.append('%d\t%d\tCatagorical Data Warning: Potential catagorical data detected. Value %s may be in error, only %d found.' %
-                                (-1, col_index, val, count))
+                text = '%d\t%d\tCatagorical Data Warning: Potential catagorical data detected.\
+                    Value %s may be in error, only %d found.'
+                warnings.append(text % (-1, col_index, val, count))
 
     return errors, warnings
 
@@ -359,7 +369,8 @@ def check_table(table_df, name, all_headers, study_name):
     if not name == 'AdditionalMetaData':
         missing_cols = set(fig.TABLE_COLS[name]).difference(table_df.columns)
         if missing_cols:
-            errors.append('-1\t-1\tMissing Column Error: Columns {} missing from table {}'.format(', '.join(missing_cols), name))
+            text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
+            errors.append(text.format(', '.join(missing_cols), name))
     # For each table column
     for i, header in enumerate(table_df.columns):
         # Check that end dates are after start dates
@@ -445,7 +456,7 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    if issubdtype(type(s), str):
+    if issubdtype(type(s), 'str'):
         if ('.e' in s or '.E' in s):
             return False
         try:
@@ -464,19 +475,27 @@ def is_numeric(s):
 
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
+    log("In create_local_copy.")
     # Create the filename
     file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+
     # Ensure there is not already a file with the same name
     while exists(file_copy):
         file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+    log('Created filepath {}'.format(file_copy))
 
+    count = 0
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
+        log('File opened')
         while True:
+            log('Write data round {}'.format(count))
             data = fp.read(8192)
             nf.write(data)
             if not data:
                 break
+            count += 1
+    log('Copy finished')
     return file_copy
 
 
@@ -538,7 +557,9 @@ def generate_error_html(file_fp, errors, warnings):
             # Add the error/warning if there is one
             try:
                 color, issue = markup[row + 2][try_col]
-                html += '<td style="color:black" bgcolor={}>{}<div style="font-weight:bold"><br>-----------<br>{}</div></td>\n'.format(color, item, issue)
+                html += '<td style="color:black" bgcolor={}>\
+                    {}<div style="font-weight:bold">\
+                    <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
             # Otherwise add the table item
             except KeyError:
                 html += '<td style="color:black">{}</td>\n'.format(item)
@@ -693,7 +714,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
 def log(text):
     """ Write provided text to the log file. """
     with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write(str(text) + '\n')
+        f.write('{}: {}\n'.format(datetime.now(), text))
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
@@ -759,8 +780,10 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
             with open(kwargs['summary'], 'rb') as f:
                 msg.add_attachment(f.read(),
                                    maintype='application',
-                                   subtype='pdf')
+                                   subtype='pdf',
+                                   filename=kwargs['summary'].name)
 
+                msg.add_attachment
         # Connect to the server and send the mail
         server = SMTP('smtp.gmail.com', 587)
         server.starttls()
@@ -769,4 +792,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         server.quit()
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
-        run(script.format(body=email_body, subject=subject, toaddr=toaddr), shell=True, check=True)
+        if 'summary' in kwargs.keys():
+            script += ' -A {summary}'.format(kwargs['summary'])
+        cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
+        log(cmd)
+        run(cmd, shell=True, check=True)

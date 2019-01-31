@@ -29,3 +29,10 @@ class AnalysisError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class LoggedOutError(MmedsError):
+    """ Exception for errors caused by not being logged in"""
+
+    def __init__(self, message):
+        self.message = message

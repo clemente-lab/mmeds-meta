@@ -1,6 +1,18 @@
 # mmeds-meta
 
-### Instructions
+
+
+#### Master
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.svg?branch=master)](https://travis-ci.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+
+#### Development
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.svg?branch=development)](https://travis-ci.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/development/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+
+
+
+## Instructions
 
 In order to run the mmeds server locally you will need.
 
@@ -30,12 +42,22 @@ Allow access to the webpage despite your browsers warning. The security certific
 NOTE: Certain versions of openssl as installed by conda cause issues with cherrypy ssl. 
 To fix this run `conda install openssl=1.0.2p`. This version should work.
 
+The directory that uploads are saved in are determined by the value of
+the `MMEDS` environment variable. If this variable is not set it defaults
+to the current user's home directory.
+
 Latex Dependencies  
 adjustbox  
 upquote  
 ulem  
+revtex  
+braket  
 
 Other Dependencies  
 rpy2: 2.9.1  
 readline headers  
 jupyter_contrib_nbextensions  
+
+latex_template: https://michaelgoerz.net/notes/custom-template-for-converting-jupyter-notebooks-to-latex.html
+
+font: https://www.1001fonts.com/code-new-roman-font.html

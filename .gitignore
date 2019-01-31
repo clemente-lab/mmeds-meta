@@ -26,9 +26,10 @@
 server/data/*
 server/site.log
 server/session
+server/deblur.log
 
 # All backup files
 .*
 *.bak
-/data/privkey.pem
+/mmeds/resources/privkey.pem
 /mmeds/secrets.py

@@ -13,7 +13,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
-from mmeds.mmeds import send_email
+from mmeds.mmeds import send_email, log
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -49,7 +49,6 @@ class MetaData(men.DynamicDocument):
 
 
 class Database:
-
     def __init__(self, path='.', user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
         Connect to the specified database.
@@ -61,7 +60,8 @@ class Database:
         :testing: A boolean. Changes the connection parameters for testing.
         """
         warnings.simplefilter('ignore')
-        self.path = path
+
+        self.path = Path(path) / 'database_files'
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.user = user
@@ -127,7 +127,7 @@ class Database:
 
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-        if not testing:
+        if False:
             # Do housekeeping for removing old files
             if os.path.isfile(self.check_file):
                 with open(self.check_file, 'rb') as f:
@@ -157,7 +157,7 @@ class Database:
         del self
 
     ########################################
-    ###############  MySQL  ################
+    #                MySQL                 #
     ########################################
 
     def check_email(self, email):
@@ -237,29 +237,6 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def user_purge(self):
-        """
-        Deletes every row belonging to a particular user
-        from every table in the currently connected database.
-        """
-        self.cursor.execute('SHOW TABLES')
-        tables = [x[0] for x in self.cursor.fetchall()]
-        # Skip the user table
-        tables.remove('user')
-        r_tables = []
-        while True:
-            for table in tables:
-                try:
-                    self.cursor.execute('DELETE FROM {} WHERE user_id = {}'.format(table, self.user_id))
-                    self.db.commit()
-                except pms.err.IntegrityError:
-                    r_tables.append(table)
-            if len(r_tables) == 0:
-                break
-            else:
-                tables = r_tables
-                r_tables = []
-
     def check_file_header(self, fp, delimiter='\t'):
         """
         UNFINISHED
@@ -282,12 +259,14 @@ class Database:
         """
         Fill out the dictionaries used to create the input files
         from the input data file.
+        :table: The table in the database to create the import data for
+        :df: The dataframe containing all the metadata
         """
         sql = 'SELECT MAX(id{table}) FROM {table}'.format(table=table)
         self.cursor.execute(sql)
         vals = self.cursor.fetchone()
         try:
-            current_key = int(vals[0])
+            current_key = int(vals[0]) + 1
         except TypeError:
             current_key = 1
         # Track keys for repeated values in this file
@@ -298,13 +277,13 @@ class Database:
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
                 value = df[table][column][j]
-                if pd.isnull(value):
+                if pd.isnull(value):  # Use NULL for NA values
                     value = 'NULL'
                 if i == 0:
                     sql += ' '
                 else:
                     sql += ' AND '
-                # Add qoutes around string values
+                # Add quotes around string values
                 if type(value) == str:
                     sql += column + ' = "' + value + '"'
                 # Otherwise check the absolute value of the difference is small
@@ -334,12 +313,18 @@ class Database:
                     current_key += 1
 
     def create_import_line(self, df, table, structure, columns, row_index):
+        """
+        Creates a single line of the input file for the specified metadata table
+        :table: The name of the table the input is for
+        :structure: ...
+        :columns: ...
+        :row_index: ...
+        """
         line = []
         # For each column in the table
         for j, col in enumerate(columns):
-
-            # If the column is a primary key
-            if structure[j][3] == 'PRI':
+            # If the column is a primary key or foreign key
+            if structure[j][3] == 'PRI' or structure[j][3] == 'MUL':
                 key_table = col.split('id')[-1]
                 # Get the approriate data from the dictionary
                 try:
@@ -389,11 +374,8 @@ class Database:
         """
         Create and load the import files for every junction table.
         """
-        self.cursor.execute('SHOW TABLES')
-        tables = list(filter(lambda x: '_has_' in x,
-                             [l[0] for l in self.cursor.fetchall()]))
         # Import data for each junction table
-        for table in tables:
+        for table in fig.JUNCTION_TABLES:
             sql = 'DESCRIBE ' + table
             self.cursor.execute(sql)
             columns = list(map(lambda x: x[0].split('_')[0],
@@ -404,8 +386,11 @@ class Database:
                 # Get the appropriate foreign keys from the IDs dict
                 for key in self.IDs[columns[0]].keys():
                     keys_list = []
-                    for column in columns:
+                    # Ignore user_id column
+                    for column in columns[:-1]:
                         keys_list.append(str(self.IDs[column][key]))
+                    # Add user_id
+                    keys_list.append(str(self.user_id))
                     key_pairs.append('\t'.join(keys_list) + '\n')
 
                 # Remove any repeated pairs of foreign keys
@@ -414,9 +399,9 @@ class Database:
 
                 # Create the input file for the juntion table
                 with open(filename, 'w') as f:
-                    f.write(columns[0] + '\t' + columns[1] + '\n')
+                    f.write('\t'.join(columns) + '\n')
                     for pair in unique_pairs:
-                        f.write(pair + '\n')
+                        f.write(pair)
 
                 if isinstance(filename, WindowsPath):
                     filename = str(filename).replace('\\', '\\\\')
@@ -439,6 +424,8 @@ class Database:
         """
         access_code = None
 
+        if not self.path.is_dir():
+            self.path.mkdir()
         # Read in the metadata file to import
         df = pd.read_csv(metadata, sep=delimiter, header=[0, 1], skiprows=[2, 3, 4])
         df = df.reindex_axis(df.columns, axis=1)
@@ -510,45 +497,38 @@ class Database:
     def clear_user_data(self, username):
         """
         Remove all data in the database belonging to username.
-
-        DOES NOT WORK
-
+        ======================================================
+        :username: The name of the user to remove files for
         """
-        return
+        # Get the user_id for the provided username
         sql = 'SELECT user_id FROM {}.user where username="{}"'.format(sec.SQL_DATABASE, username)
         self.cursor.execute(sql)
         user_id = int(self.cursor.fetchone()[0])
-        print(user_id)
 
-        self.cursor.execute('SHOW TABLES')
-        tables = [x[0] for x in self.cursor.fetchall()]
-        # Skip the user table
-        tables.remove('user')
-        r_tables = []
-        while True:
-            for table in tables:
-                try:
-                    sql = 'DESCRIBE {}'.format(table)
-                    self.cursor.execute(sql)
-                    columns = self.cursor.fetchall()
-                    labels = [col[0] for col in columns]
-                    if 'user_id' in labels:
-                        sql = 'DELETE FROM {} WHERE user_id={}'.format(table, user_id)
-                        print(sql)
-                        self.cursor.execute(sql)
-                        self.db.commit()
-                    else:
-                        continue
-                except pms.err.IntegrityError:
-                    r_tables.append(table)
-            if len(r_tables) == 0:
-                break
-            else:
-                tables = r_tables
-                r_tables = []
+        # Only delete values from the tables that are protected
+        tables = list(filter(lambda x: x in fig.PROTECTED_TABLES,
+                             fig.TABLE_ORDER)) + fig.JUNCTION_TABLES
+        # Start with the tables that link to other tables rather than one that are linked to
+        tables.reverse()
+        for table in tables:
+            try:
+                # Remove all values from the table belonging to that user
+                sql = 'DELETE FROM {} WHERE user_id={}'.format(table, user_id)
+                self.cursor.execute(sql)
+            except pms.err.IntegrityError as e:
+                # If there is a dependency remaining
+                log(e)
+                log('Failed on table {}'.format(table))
+                raise MetaDataError(e.args[0])
+
+        # Commit the changes
+        self.db.commit()
+
+        # Clear the mongo files
+        self.clear_mongo_data(username)
 
     ########################################
-    ##############  MongoDB  ###############
+    #               MongoDB                #
     ########################################
 
     def mongo_import(self, study_name, study_type, **kwargs):
@@ -586,13 +566,15 @@ class Database:
         for ob in obs:
             ob.delete()
 
-    def modify_data(self, new_data, access_code):
+    def modify_data(self, new_data, access_code, data_type):
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
-        # Open the data file
-        with open(new_data, 'rb') as data_file:
-            mdata.data.replace(data_file)
-            mdata.save()
+
+        # Remove the old data file
+        if mdata.files.get(data_type) is not None:
+            Path(mdata.files[data_type]).unlink()
+
+        mdata.files[data_type] = str(new_data)
 
     def reset_access_code(self, study_name, email):
         """
@@ -669,7 +651,9 @@ class Database:
             except pms.err.InternalError as e:
                 raise MetaDataError(e.args[1])
             if found >= 1:
-                warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2, subject_col, j + 2))
+                warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2,
+                                                                                                  subject_col,
+                                                                                                  j + 2))
         return warnings
 
     def check_user_study_name(self, study_name):
@@ -677,16 +661,16 @@ class Database:
 
         sql = 'SELECT * FROM Study WHERE user_id = {} and Study.StudyName = "{}"'
         found = self.cursor.execute(sql.format(self.user_id, study_name))
-        ######### TEMPORARY ##########
+        # TEMPORARY #
         return []
-        #########################
+        #############
         if found >= 1:
             return ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
             return []
 
     def get_mongo_files(self, access_code):
-        """ Return the three files necessary for qiime analysis. """
+        """ Return mdata.files, mdata.path for the provided access_code. """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
@@ -715,6 +699,12 @@ class Database:
                 empty_files.append(mdata.files[key])
                 del mdata.files[key]
         return empty_files
+
+    def clear_mongo_data(self, username):
+        """ Clear all metadata documents associated with the provided username. """
+        data = MetaData.objects(owner=username)
+        for doc in data:
+            doc.delete()
 
     def clean(self):
         """ Remove all temporary and intermediate files. """

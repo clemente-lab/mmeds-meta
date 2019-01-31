@@ -26,8 +26,6 @@ setup(name='mmeds',
       include_package_data=True,
       scripts=glob('scripts/*.py') + ['server/server.py'],
       install_requires=[
-          'locustio',
-          'pytest',
           'numpy',
           'cherrypy',
           'pymysql',
@@ -35,6 +33,10 @@ setup(name='mmeds',
           'mongoengine',
           'prettytable',
           'pint',
-          'jupyter'
+          'jupyter',
+          'pillow',
+          'locustio',
+          'codecov',
+          'pytest-cov'
       ],
       zip_safe=False)
