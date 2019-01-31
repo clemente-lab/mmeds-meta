@@ -142,6 +142,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
                             name='analysis',
                             run_path='/home/david/Work/data-mmeds/summary',
                             fontsize=15):
+
     """
     Create the summary PDF for qiime1 analysis
     ==========================================
@@ -151,6 +152,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
     :name: A string. The name of the notebook and PDF document.
     :run_path: A file path. The path to the directory containing all the summary files.
     :fontsize: An Int. The size of the font used in the legends.
+
     """
 
     def taxa_plots(data_file):
@@ -186,6 +188,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
             cells.append(v4.new_code_cell(source='Image("taxa_legend_{level}.png")'.format(level=level)))
             cells.append(v4.new_code_cell(source='Image("taxa_{group}_legend_{level}.png")'.format(level=level,
                                                                                                    group=column)))
+
             cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
 
@@ -206,6 +209,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
         cells.append(v4.new_code_cell(source=source['alpha_r'].format(file1=filename, xaxis=xaxis)))
         cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=filename)))
         cells.append(v4.new_markdown_cell(source=source['alpha_caption_{}'.format(analysis_type)]))
+
         cells.append(v4.new_code_cell(source='Image("legend.png")'))
         cells.append(v4.new_markdown_cell(source=source['page_break']))
         return cells
@@ -229,6 +233,7 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
                                                                          cat=column)))
             cells.append(v4.new_code_cell(source='Image("{plot}")'.format(plot=plot)))
             cells.append(v4.new_markdown_cell(source=source['beta_caption']))
+
             cells.append(v4.new_code_cell(source='Image("{group}-legend.png")'.format(group=column)))
             cells.append(v4.new_markdown_cell(source=source['page_break']))
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
@@ -316,7 +321,8 @@ def create_summary_notebook(metadata=['Ethnicity', 'Nationality'],
         :nn: A python notebook object.
         """
         nbf.write(nn, str(path / '{}.ipynb'.format(name)))
-        cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
+
+        cmd = 'source activate mmeds-stable; jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(name)
         if execute:
             cmd += ' --execute'
         log(cmd)
