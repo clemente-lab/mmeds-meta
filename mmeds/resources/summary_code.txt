@@ -1,5 +1,5 @@
 py_setup<source>
-from pandas import read_csv
+from pathlib import Path
 import pandas as pd
 import rpy2.rinterface
 from warnings import filterwarnings
@@ -11,22 +11,27 @@ from PIL import ImageDraw, ImageFont
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
 # Load metadata file
-mdf = read_csv('qiime_mapping_file.tsv', sep='\t')
+mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
+
+# Load the columns to use for analysis
+metadata_columns = Path('metadata_columns.txt').read_text().strip().split('\n')
+metadata_columns.sort()
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 group_ids = []
 color_maps = {}
 max_colors = []
 # Create information for R color palettes
-for group_name in mdf.columns:
-    grouping = mdf[group_name]
-    uni = grouping.nunique()
-    group_ids.append(['color' + str(i) for i in range(uni)])
-    # Get the category with the most colors to use for palette creation
-    if uni > len(max_colors):
-        max_colors = group_ids[-1]
-    color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
+for group_name in metadata_columns:
+    if not mdf[group_name].isnull().all():
+        grouping = mdf[group_name]
+        uni = grouping.nunique()
+        group_ids.append(['color' + str(i) for i in range(uni)])
+        # Get the category with the most colors to use for palette creation
+        if uni > len(max_colors):
+            max_colors = group_ids[-1]
+        color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
 
 # Shuffle the colors so value near each other won't be similar shades
 shuffle(max_colors, lambda: 0.25)
@@ -56,19 +61,22 @@ page_break<source>
 <div style="page-break-after: always;"></div>
 =====
 otu_py<source>
-df = read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
+df = pd.read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
 df.set_index('taxonomy', inplace=True)
 df.iloc[:5, :5]
 =====
 taxa_py_qiime1<source>
-df = read_csv('{file1}', skiprows=1, sep='\t')
+df = pd.read_csv('{file1}', skiprows=1, sep='\t')
 mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 df = df.melt(id_vars='#OTU ID')
 df = df.merge(mdf_lite, how='inner')
+df.{group} = df.{group}.astype(str)
+# Add colors for plotting
+otu_max_colors_{level} = sorted(df['X.OTU.ID'].unique())
 =====
 taxa_py_qiime2<source>
-df = read_csv('{file1}', sep=',')
+df = pd.read_csv('{file1}', sep=',')
 # Remove unnecessary metadata
 headers = list(filter(lambda x: 'k__' in x, df.columns)) + ['index']
 df = df.filter(headers).set_index('index').T
@@ -83,6 +91,133 @@ mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
 # Merge with the data
 df = df.merge(mdf_lite, how='inner')
+df.{group} = df.{group}.astype(str)
+# Add colors for plotting
+otu_max_colors_{level} = sorted(df['X.OTU.ID'].unique())
+=====
+taxa_color_r<source>
+%%R -i otu_max_colors_{level} -o otuAllRGB{level}
+
+# Create custom color palette
+otuColors{level} <- brewer.pal(12, "Paired")
+otuColorMaker{level} <- colorRampPalette(otuColors{level})
+otuAllColors{level} <- otuColorMaker{level}(length(otu_max_colors_{level}))
+names(otuAllColors{level}) <- otu_max_colors_{level}
+# Create the functions for applying it to plots
+otuColScale{level} <- scale_color_manual(name = ~X.OTU.ID, values = otuAllColors{level})
+otuColFill{level} <- scale_fill_manual(name = ~X.OTU.ID, values = otuAllColors{level})
+# Get the RGB values for the colors
+otuAllRGB{level} <- data.frame(apply(data.frame(otuAllColors{level}), 1, col2rgb))
+names(otuAllRGB{level}) <- otu_max_colors_{level}
+=====
+taxa_color_py<source>
+# Set parameters used when making the legend
+font_size = {fontsize}
+offset = float(font_size) / 2
+v_offset = 0
+fnt = ImageFont.truetype('{font}', size=font_size)
+title_fnt = ImageFont.truetype('{titlefont}', size=int(1.2 * font_size))
+# Set the height and width based on the number/size of the values to display
+height = 40 + 20 * len(otu_max_colors_{level})
+width = 80 + 9 * len(max(otu_max_colors_{level}, key=len))
+
+# Create a new image and setup the draw object
+im = PImage.new('RGB', (width, height), color='white')
+draw = ImageDraw.Draw(im)
+
+# Get the mean percentage of each taxon
+otu_percs = df.groupby('X.OTU.ID').mean()
+
+# Add headers
+draw.text((0, 0),
+          'Color AverageRelativeAbundence OTU',
+          fill=(0, 0, 0, 0),
+          font=title_fnt)
+
+v_offset += 30
+# Remove duplicate values
+for otu in otu_max_colors_{level}:
+    # Get the color
+    RGB = tuple(otuAllRGB{level}[otu])
+    # Draw the color
+    draw.rectangle([10, v_offset,
+                    30, 20 + v_offset],
+                   outline=(0, 0, 0),
+                   fill=RGB)
+
+    # Align sample names
+    perc = 100 * float(otu_percs.loc[otu])
+    if perc < 1:
+        line_text = '<0.01% {{}}'.format(otu)
+    elif perc < 10:
+        line_text = ' {{:.2f}}% {{}}'.format(perc, otu)
+    else:
+        line_text = '{{:.2f}}% {{}}'.format(perc, otu)
+    # Add the metadata value
+    draw.text((40, 12 - offset + v_offset),
+              line_text,
+              fill=(0, 0, 0, 0),
+              font=fnt)
+    v_offset += 20  # Update offset
+del draw
+
+# write to stdout
+im.save('taxa_legend_{level}.png', 'PNG')
+=====
+taxa_group_color_py<source>
+# Set parameters used when making the legend
+v_offset = 0
+min_abundence = {min_abundence}
+
+# Filter by abundence
+filtered_df = df[df.value > min_abundence]
+
+# Set the height and width based on the number/size of the values to display
+height = ((20 * (filtered_df['{group}'].nunique() - 1)) +
+          (20 * filtered_df['X.OTU.ID'].nunique() *
+           filtered_df['{group}'].nunique()))
+width = 80 + 9 * len(max(filtered_df['X.OTU.ID'], key=len))
+
+# Create a new image and setup the draw object
+im = PImage.new('RGB', (width, height), color='white')
+draw = ImageDraw.Draw(im)
+
+groups = filtered_df.groupby('{group}')
+for name, group in groups:
+    # Add the metadata value
+    draw.text((40, 12 - offset + v_offset),
+              name,
+              fill=(0, 0, 0, 0),
+              font=title_fnt)
+    v_offset += 25  # Update offset
+    # Get the means for each group
+    means = group.groupby('X.OTU.ID').mean()
+    for row in means.itertuples():
+        perc = 100 * float(row.value)
+        # Align sample names
+        if perc < 10:
+            line_text = ' {{:.2f}}% {{}}'.format(perc, row.Index)
+        else:
+            line_text = '{{:.2f}}% {{}}'.format(perc, row.Index)
+
+        # Add the metadata value
+        draw.text((40, 10 - offset + v_offset),
+                  line_text,
+                  fill=(0, 0, 0, 0),
+                  font=fnt)
+        # Get the color
+        RGB = tuple(otuAllRGB{level}[str(row.Index)])
+        # Draw the color
+        draw.rectangle([10, v_offset,
+                        30, 20 + v_offset],
+                       outline=(0, 0, 0),
+                       fill=RGB)
+        v_offset += 20
+    v_offset += 5  # Update offset
+del draw
+
+# write to stdout
+im.save('taxa_{group}_legend_{level}.png', 'PNG')
 =====
 taxa_r<source>
 %%R -i df
@@ -97,15 +232,13 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
      theme(text = element_text(size = 8.5,
                                face = "bold"),
            element_line(size = 0.1),
-           legend.text = element_text(size=7),
-           legend.key.size = unit(0.1, "in"),
-           legend.position = "bottom",
-           legend.direction ="vertical",
+           legend.position = "none",
            axis.text.x = element_text(angle = 300),
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5)) +
      guides(fill = guide_legend(ncol = 4)) +
-     facet_grid(~{group}, scales = "free", space = "free")
+     facet_grid(~{group}, scales = "free", space = "free") +
+     otuColScale{level} + otuColFill{level}
 
 ggsave("{plot}", height = 6, width = 8)
 =====
@@ -118,64 +251,57 @@ fnt = ImageFont.truetype('{fontfile}', size=font_size)
 height = 0
 height = 0
 for group_name in mdf.columns:
-    if (mdf[group_name].nunique() > 1 and
-        mdf[group_name].nunique() < len(mdf[group_name]) and
-        'Date' not in group_name):
-        height += 30
-        for sample in mdf[group_name].drop_duplicates():
-            height += 20
+    height += 30
+    for sample in mdf[group_name].drop_duplicates():
+        height += 20
 
 # Create a new image and setup the draw object
 im = PImage.new('RGB', (300, height), color='white')
 draw = ImageDraw.Draw(im)
 
-for group_name in mdf.columns:
+for group_name in metadata_columns:
     group = mdf[group_name]
-    # Only create groups for values that aren't all the same or all unique
-    if (mdf[group_name].nunique() > 1 and
-        mdf[group_name].nunique() < len(mdf[group_name]) and
-        'Date' not in group_name):
-        sub_im = PImage.new('RGB',
-                            (300, 30 + (20 * len(group.drop_duplicates()))),
-                            color='white')
-        sub_draw = ImageDraw.Draw(sub_im)
-        # Add the metadata catagory
-        draw.text((20, 20 - offset + v_offset),
+    sub_im = PImage.new('RGB',
+                        (300, 30 + (20 * len(group.drop_duplicates()))),
+                        color='white')
+    sub_draw = ImageDraw.Draw(sub_im)
+    # Add the metadata catagory
+    draw.text((20, 20 - offset + v_offset),
+              str(group_name),
+              fill=(0, 0, 0),
+              font=fnt)
+    sub_draw.text((20, 20 - offset),
                   str(group_name),
                   fill=(0, 0, 0),
                   font=fnt)
-        sub_draw.text((20, 20 - offset),
-                      str(group_name),
-                      fill=(0, 0, 0),
-                      font=fnt)
-        sub_offset = 0
-        # Remove duplicate values
-        for sample in group.sort_values().drop_duplicates():
-            v_offset += 20  # Update offset
-            sub_offset += 20
-            # Get the color
-            RGB = tuple(allRGB[color_maps[group_name][sample]])
-            # Draw the color
-            draw.rectangle([10, 10 + v_offset,
-                            30, 30 + v_offset],
-                           outline=RGB,
+    sub_offset = 0
+    # Remove duplicate values
+    for sample in group.sort_values().drop_duplicates():
+        v_offset += 20  # Update offset
+        sub_offset += 20
+        # Get the color
+        RGB = tuple(allRGB[color_maps[group_name][sample]])
+        # Draw the color
+        draw.rectangle([10, 10 + v_offset,
+                        30, 30 + v_offset],
+                       outline=(0, 0, 0),
+                       fill=RGB)
+        sub_draw.rectangle([10, 10 + sub_offset,
+                            30, 30 + sub_offset],
+                           outline=(0, 0, 0),
                            fill=RGB)
-            sub_draw.rectangle([10, 10 + sub_offset,
-                                30, 30 + sub_offset],
-                               outline=RGB,
-                               fill=RGB)
-            # Add the metadata value
-            draw.text((40, 20 - offset + v_offset),
+        # Add the metadata value
+        draw.text((40, 20 - offset + v_offset),
+                  str(sample),
+                  fill=(0, 0, 0, 0),
+                  font=fnt)
+        sub_draw.text((40, 20 - offset + sub_offset),
                       str(sample),
                       fill=(0, 0, 0, 0),
                       font=fnt)
-            sub_draw.text((40, 20 - offset + sub_offset),
-                          str(sample),
-                          fill=(0, 0, 0, 0),
-                          font=fnt)
-        sub_im.save(group_name + '-{legend}', 'PNG')
-        v_offset += 30
-        del sub_draw
+    sub_im.save(group_name + '-{legend}', 'PNG')
+    v_offset += 30
+    del sub_draw
 del draw
 
 # write to stdout
@@ -183,7 +309,7 @@ im.save('{legend}', 'PNG')
 =====
 alpha_py_qiime1<source>
 # Read in the data
-df = read_csv('{file1}', sep='\t')
+df = pd.read_csv('{file1}', sep='\t')
 
 # Drop unused columns
 df.drop('Unnamed: 0', axis=1, inplace=True)
@@ -195,7 +321,7 @@ df.set_index('sequences per sample', inplace=True)
 # Create groupings based on metadata values
 group_means = []
 
-for group_name in mdf.columns:
+for group_name in metadata_columns:
     grouping = mdf[group_name]
     # Only create groups for values that aren't all the same or all unique
     if grouping.nunique() > 1 and grouping.nunique() < len(grouping) and 'Date' not in group_name:
@@ -238,7 +364,7 @@ df = pd.concat(group_means, axis=0, sort=False)
 =====
 alpha_py_qiime2<source>
 # Read in the data
-df = read_csv('{file1}', sep=',')
+df = pd.read_csv('{file1}', sep=',')
 
 # Reshape the data into (mostly) long format
 headers = list(set(mdf.columns).intersection(set(df.columns)))
@@ -251,41 +377,36 @@ df.variable.replace(replacements, inplace=True)
 # For storing
 group_means = []
 
-for group_name in headers:
-    # Only create groups for values that aren't all the same or all unique
-    if (mdf[group_name].nunique() > 1 and
-        mdf[group_name].nunique() < len(mdf[group_name]) and
-        'Date' not in group_name):
+for group_name in metadata_columns:
+    # Remove the metadata not relevant to this grouping
+    groups = df[['sample-id', 'variable', 'value', group_name]]
 
-        # Remove the metadata not relevant to this grouping
-        groups = df[['sample-id', 'variable', 'value', group_name]]
+    # Calculate the means accross iterations
+    agger = {{'value': 'mean', group_name: 'first'}}
+    groups = groups.groupby(['sample-id', 'variable']).agg(agger).reset_index()
 
-        # Calculate the means accross iterations
-        agger = {{'value': 'mean', group_name: 'first'}}
-        groups = groups.groupby(['sample-id', 'variable']).agg(agger).reset_index()
+    # Add a column to store the errors
+    groups = groups.assign(Error=groups.value)
 
-        # Add a column to store the errors
-        groups = groups.assign(Error=groups.value)
+    # Group by metadata value and calculate the means and error
+    agger = {{'Error': 'sem', 'value': 'mean'}}
+    group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
 
-        # Group by metadata value and calculate the means and error
-        agger = {{'Error': 'sem', 'value': 'mean'}}
-        group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
+    # Assign information for the colors
+    colors = [color_maps[group_name][x] for x in group[group_name]]
+    group = group.assign(GroupID=colors)
 
-        # Assign information for the colors
-        colors = [color_maps[group_name][x] for x in group[group_name]]
-        group = group.assign(GroupID=colors)
+    # Assign information for grouping, drop specific catagories
+    group_names = [group_name for x in group[group_name]]
+    group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
 
-        # Assign information for grouping, drop specific catagories
-        group_names = [group_name for x in group[group_name]]
-        group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
-
-        # Rename columns and append to the list of dataframes
-        new_names = {{
-            'variable': 'SamplingDepth',
-            'value': 'AverageValue',
-             group_name: 'Grouping'
-        }}
-        group_means.append(group.rename(index=str, columns=new_names))
+    # Rename columns and append to the list of dataframes
+    new_names = {{
+        'variable': 'SamplingDepth',
+        'value': 'AverageValue',
+         group_name: 'Grouping'
+    }}
+    group_means.append(group.rename(index=str, columns=new_names))
 
 # Stack all the different groups into a single dataframe
 df = pd.concat(group_means, axis=0, sort=False)
@@ -302,6 +423,7 @@ p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
      facet_wrap(~GroupName) + colFill + colScale +
      labs(title = 'Alpha Diveristy',
           subtitle = 'Grouped by Metadata Catagory') +
+     theme_bw() +
      theme(legend.position = 'none',
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5))
@@ -340,6 +462,7 @@ beta_r<source>
 # Create the plots for the first three PCs
 png('{plot}', width = 6, height = 6, unit='in', res=200)
 p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df))) +
+         theme_bw() +
          theme(legend.position = 'none',
                plot.title = element_text(hjust = 0.5),
                plot.subtitle = element_text(hjust = 0.5)) +
@@ -378,3 +501,15 @@ for(i in 1:p$nrow) {{
         }}
     }}
 }}
+=====
+taxa_caption<source>
+The above plot represents the percentage of each sample belonging to particular taxon summarized at level {level}.
+=====
+alpha_caption_qiime1<source>
+Add this
+=====
+alpha_caption_qiime2<source>
+The above plot represents the average value of alpha diversity at each sampling depth. The error bars show the standard error within each group. Groups are determined by the metadata value in each category specified in the plot.
+=====
+beta_caption<source>
+The above plot represents the first three compenents created when performing Principle Component Analysis on the Beta diversity of the samples.

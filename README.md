@@ -59,3 +59,5 @@ readline headers
 jupyter_contrib_nbextensions  
 
 latex_template: https://michaelgoerz.net/notes/custom-template-for-converting-jupyter-notebooks-to-latex.html
+
+font: https://www.1001fonts.com/code-new-roman-font.html

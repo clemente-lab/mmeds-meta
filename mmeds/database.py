@@ -127,7 +127,7 @@ class Database:
 
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-        if not testing:
+        if False:
             # Do housekeeping for removing old files
             if os.path.isfile(self.check_file):
                 with open(self.check_file, 'rb') as f:
