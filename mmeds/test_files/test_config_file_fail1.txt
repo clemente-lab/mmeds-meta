@@ -6,7 +6,7 @@ sampling_depth	1114
 # Example:
 # metadata	all
 metadata	Ethnicity,SpecimenBodySite
-# The minimum abundance a taxon must have in a sample in order to be included in the legend
-abundance_threshold	0.01
+# The levels of taxa summary to include in the final summary of the analysis
+taxa_levels	2,3,4
 # The size of the font in the plot legends
 font_size	15
