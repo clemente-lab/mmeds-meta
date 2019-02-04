@@ -56,14 +56,19 @@ def load_config(config_file, metadata):
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
+            # Get approriate metadata columns based on the metadata file
             if option == 'metadata':
                 config[option], config['metadata_continuous'] = get_valid_columns(metadata, config[option])
+            # Split taxa_levels into a list or create the list if 'all'
             elif option == 'taxa_levels':
                 if config[option] == 'all':
                     config[option] = [i + 1 for i in range(7)]
                 else:
                     # Otherwise split the values into a list
                     config[option] = config[option].split(',')
+            # Otherwise just ensure the parameter exists.
+            else:
+                config[option]
     except KeyError:
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
 
