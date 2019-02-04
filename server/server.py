@@ -24,7 +24,7 @@ from mmeds.authentication import (validate_password,
                                   change_password)
 from mmeds.database import Database
 from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data
-from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError
+from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError, InvalidConfigError
 
 absDir = Path(os.getcwd())
 
@@ -85,22 +85,28 @@ class MMEDSserver(object):
                                                access_code,
                                                config.file.read().decode('utf-8'),
                                                self.testing)
-                            self.processes[access_code] = p
+                        cp.log('Valid config file')
+                        self.processes[access_code] = p
                         page = mmeds.load_html('welcome',
                                                title='Welcome to Mmeds',
                                                user=self.get_user())
-                        return page
+                    except InvalidConfigError as e:
+                            page = mmeds.load_html('welcome',
+                                                   title='Welcome to Mmeds',
+                                                   user=self.get_user())
+                            page = insert_error(page, 22, e.message)
                     except MissingUploadError:
-                        page = mmeds.load_html('download_error',
-                                               title='Download Error',
+                        page = mmeds.load_html('welcome',
+                                               title='Welcome to Mmeds',
                                                user=self.get_user())
-                        return page.format(self.get_user())
+                        err = 'No upload exists for user {} with given access_code.'.format(self.get_user())
+                        page = insert_error(page, 22, err)
                 else:
                     page = mmeds.load_html('welcome',
                                            title='Welcome to Mmeds',
                                            user=self.get_user())
-                    page = insert_error(page, 31, 'Requested study is currently unavailable')
-                    return page.format(user=self.get_user())
+                    page = insert_error(page, 22, 'Requested study is currently unavailable')
+            return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()

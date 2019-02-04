@@ -45,11 +45,12 @@ def summarize_qiime1(path, files, metadata, load_info, sampling_depth):
 
     # Get the mapping file
     copy(files['mapping'], path / 'summary/.')
+    copy(files['metadata'], files['summary'] / 'metadata.csv')
 
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
-    log('Summary path')
-    log(path / 'summary')
+
+    # Create the summary
     create_summary_notebook(metadata=metadata,
                             analysis_type='qiime1',
                             files=summary_files,
@@ -112,6 +113,8 @@ def summarize_qiime2(path, files, metadata, loadinfo):
 
     # Get the mapping file
     copy(files['mapping'], files['summary'])
+    copy(files['metadata'], files['summary'] / 'metadata.csv')
+
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 

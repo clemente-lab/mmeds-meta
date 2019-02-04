@@ -17,7 +17,7 @@ mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
 
 # Load the columns to use for analysis
-config = load_config(Path('../config_file.txt').read_text(), Path().cwd())
+config = load_config(Path('../config_file.txt').read_text(), Path('../metadata.tsv'))
 metadata_columns = sorted(config['metadata'])
 
 # Stores a list of values shared accross groups but unique within (for graphing)

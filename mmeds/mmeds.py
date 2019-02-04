@@ -4,7 +4,7 @@ from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
 from numpy import datetime64
-from mmeds.error import MetaDataError
+from mmeds.error import MetaDataError, InvalidConfigError
 from subprocess import run
 from datetime import datetime
 import mmeds.config as fig
@@ -30,10 +30,8 @@ ILLEGAL_IN_HEADER = set('/\\ *?')  # Limit to alpha numeric, underscore, dot, hy
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
 
-def load_config(config_file, path):
+def load_config(config_file, metadata):
     """ Read the provided config file to determine settings for the analysis. """
-    mapping_file = path / 'qiime_mapping_file.tsv'
-
     config = {}
     # If no config was provided load the default
     if config_file is None:
@@ -41,10 +39,7 @@ def load_config(config_file, path):
         with open(fig.STORAGE_DIR / 'config_file.txt', 'r') as f:
             page = f.read()
     else:
-        # Otherwise write the file to the analysis directory for future reference
-        (path / 'config_file.txt').write_text(config_file)
-
-        # And load the file contents
+        # Load the file contents
         page = config_file
 
     # Parse the config
@@ -54,28 +49,33 @@ def load_config(config_file, path):
             continue
         else:
             parts = line.split('\t')
+            if parts[0] not in fig.CONFIG_PARAMETERS:
+                raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
             config[parts[0]] = parts[1]
 
-    # Parse the values/levels to be included in the analysis
-    for option in ['taxa_levels', 'metadata']:
-        if option == 'metadata':
-            config[option], config['metadata_continuous'] = get_valid_columns(mapping_file, config[option])
-        elif config[option] == 'all':
-            if option == 'taxa_levels':
-                config[option] = [i + 1 for i in range(7)]
-        else:
-            # Otherwise split the values into a list
-            config[option] = config[option].split(',')
+    try:
+        # Parse the values/levels to be included in the analysis
+        for option in fig.CONFIG_PARAMETERS:
+            if option == 'metadata':
+                config[option], config['metadata_continuous'] = get_valid_columns(metadata, config[option])
+            elif option == 'taxa_levels':
+                if config[option] == 'all':
+                    config[option] = [i + 1 for i in range(7)]
+                else:
+                    # Otherwise split the values into a list
+                    config[option] = config[option].split(',')
+    except KeyError:
+        raise InvalidConfigError('Missing parameter {} in config file'.format(option))
 
     return config
 
 
-def get_valid_columns(mapping_file, option):
+def get_valid_columns(metadata_file, option):
     """
     Get the column headers for metadata columns meeting the
     criteria to be used in analysis.
     =======================================================
-    :mapping_file: Path to the mapping file for this analysis.
+    :metadata_file: Path to the metadata file for this analysis.
     :option: A string. Either a comma separated list of columns or 'all' for all columns
     Returns:
         :summary_cols: A list of columns that are valid for summary analysis
@@ -88,24 +88,26 @@ def get_valid_columns(mapping_file, option):
     # Filter out any categories containing only NaN
     # Or containing only a single metadata value
     # Or where every sample contains a different value
-    df = pd.read_csv(mapping_file, sep='\t')
+    df = pd.read_csv(metadata_file, header=1, sep='\t')
     if option == 'all':
         cols = df.columns
     else:
         cols = option.split(',')
-    for col in cols:
-        # Handle the qiime name for this column
-        if col == 'RawDataID':
-            col = '#SampleID'
-        if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
-            continue
-        else:
-            summary_cols.append(col)
-            col_types[col] = pd.api.types.is_numeric_dtype(df[col])
-
-    # Ensure #SampleID isn't included
-    if '#SampleID' in summary_cols:
-        summary_cols.remove('#SampleID')
+    # Ensure there aren't any invalid columns specified to be included in the analysis
+    try:
+        for col in cols:
+            # If 'all' only select columns that don't have all the same or all unique values
+            if option == 'all' and (df[col].isnull().all() or
+                                    df[col].nunique() == 1 or
+                                    df[col].nunique() == len(df[col])):
+                continue
+            # If the columns is explicitly specified only check that it exists in the metadata
+            else:
+                df[col]
+                summary_cols.append(col)
+                col_types[col] = pd.api.types.is_numeric_dtype(df[col])
+    except KeyError:
+        raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
     return summary_cols, col_types
 
 

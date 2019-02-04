@@ -1,5 +1,7 @@
 from mmeds import mmeds
+from mmeds.error import InvalidConfigError
 from pathlib import Path
+from pytest import raises
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -149,22 +151,32 @@ def test_validate_mapping_files():
 
 
 def test_get_valid_columns():
-    columns, col_types = mmeds.get_valid_columns(fig.TEST_MAPPING, 'all')
-    assert len(columns) == 11
+    columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA, 'all')
     for key in col_types.keys():
         assert key in columns
 
-    columns, col_types = mmeds.get_valid_columns(fig.TEST_MAPPING, 'Ethnicity,BarcodeSequence,Nationality,StudyName')
-    assert len(columns) == 2
+    columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA, 'Ethnicity,BarcodeSequence,Nationality,StudyName')
+    assert columns == 'Ethnicity,BarcodeSequence,Nationality,StudyName'.split(',')
+
+    with raises(InvalidConfigError) as e_info:
+        columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA, 'Ethnicity,BarSequence,Nationality,StudyName')
+    assert 'Invalid metadata column' in e_info.value.message
 
 
 def test_load_config_file():
-    config = mmeds.load_config(None, fig.TEST_PATH)
+    # Test when no config is given
+    config = mmeds.load_config(None, fig.TEST_METADATA)
     assert len(config.keys()) == 6
 
-    # Test when no config is given
-    no_config = Path(fig.TEST_PATH) / 'config_file.txt'
-    assert not no_config.is_file()
-    config = mmeds.load_config(Path(fig.TEST_CONFIG_FILE).read_text(), fig.TEST_PATH)
-    assert no_config.is_file()
-    no_config.unlink()
+    # Check the config file fail states
+    with raises(InvalidConfigError) as e_info:
+        config = mmeds.load_config(Path(fig.TEST_CONFIG_1).read_text(), fig.TEST_METADATA)
+    assert 'Missing parameter' in e_info.value.message
+
+    with raises(InvalidConfigError) as e_info:
+        config = mmeds.load_config(Path(fig.TEST_CONFIG_2).read_text(), fig.TEST_METADATA)
+    assert 'Invalid metadata column' in e_info.value.message
+
+    with raises(InvalidConfigError) as e_info:
+        config = mmeds.load_config(Path(fig.TEST_CONFIG_3).read_text(), fig.TEST_METADATA)
+    assert 'Invalid parameter' in e_info.value.message

@@ -5,7 +5,7 @@ from time import sleep
 from pandas import read_csv
 
 from mmeds.database import Database
-from mmeds.mmeds import log, load_config
+from mmeds.mmeds import log
 from mmeds.error import AnalysisError
 
 
@@ -37,13 +37,13 @@ class Tool:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
         self.analysis = analysis
-        self.path, self.run_id, self.files, self.demuxed = self.setup_dir(Path(path))
-
-        # Add the split directory to the MetaData object
-        self.add_path('analysis{}'.format(self.run_id), '')
+        self.config = config
         self.columns = []
+        self.path, self.run_id, self.files, self.demuxed = self.setup_dir(Path(path))
+        self.add_path('analysis{}'.format(self.run_id), '')
+        self.write_config()
         self.create_qiime_mapping_file()
-        self.config = self.read_config_file(config)
+
 
     def __del__(self):
         del self.db
@@ -104,16 +104,22 @@ class Tool:
         log("Analysis directory is {}".format(new_dir))
         return new_dir, str(run_id), files, demuxed
 
+    def write_config(self):
+        """ Write out the config file being used to the working directory. """
+        config_text = []
+        for (key, value) in self.config.items():
+            if isinstance(value, list):
+                config_text.append('{}\t{}'.format(key, ','.join(value)))
+            else:
+                config_text.append('{}\t{}'.format(key, value))
+        (self.path / 'config_file.txt').write_text('\n'.join(config_text))
+
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
         self.add_path('reads', '')
         command = 'unzip {} -d {}'.format(self.files['data'],
                                           self.files['reads'])
         self.jobtext.append(command)
-
-    def read_config_file(self, config_file):
-        """ Read the provided config file to determine settings for the analysis. """
-        return load_config(config_file, self.path)
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
