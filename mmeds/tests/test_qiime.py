@@ -5,6 +5,7 @@ from mmeds.authentication import add_user, remove_user
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.database import Database
+from mmeds.mmeds import load_config
 import mmeds.config as fig
 
 
@@ -20,6 +21,7 @@ class QiimeTests(TestCase):
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
+        self.config = load_config(None, fig.TEST_METADATA)
 
     @classmethod
     def tearDownClass(self):
@@ -29,14 +31,14 @@ class QiimeTests(TestCase):
         qiime_open = Qiime1(fig.TEST_USER,
                             fig.TEST_CODE,
                             'qiime1-open',
-                            None, True)
+                            self.config, True)
         qiime_open.setup_analysis()
         rmtree(qiime_open.path)
 
         qiime_closed = Qiime1(fig.TEST_USER,
                               fig.TEST_CODE,
                               'qiime1-closed',
-                              None, True)
+                              self.config, True)
         qiime_closed.setup_analysis()
         rmtree(qiime_closed.path)
 
@@ -44,13 +46,13 @@ class QiimeTests(TestCase):
         qiime_open = Qiime2(fig.TEST_USER,
                             fig.TEST_CODE,
                             'qiime2-dada2',
-                            None, True)
+                            self.config, True)
         qiime_open.setup_analysis()
         rmtree(qiime_open.path)
 
         qiime_closed = Qiime2(fig.TEST_USER,
                               fig.TEST_CODE,
                               'qiime2-deblur',
-                              None, True)
+                              self.config, True)
         qiime_closed.setup_analysis()
         rmtree(qiime_closed.path)

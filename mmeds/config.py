@@ -26,6 +26,13 @@ if not os.path.exists(DATABASE_DIR):
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
+CONFIG_PARAMETERS = [
+    'sampling_depth',
+    'metadata',
+    'taxa_levels',
+    'abundance_threshold',
+    'font_size'
+]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
@@ -85,6 +92,9 @@ TEST_EMAIL = 'mmeds.tester@gmail.com'
 TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
 TEST_CONFIG_FILE = str(TEST_PATH / 'test_config_file.txt')
+TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
+TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
+TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')

@@ -1,0 +1,12 @@
+# Sampling depth for qiime1 analysis
+sampling_depth	1114
+# The metadata columns to include in analysis
+# To include all columns set to 'all' (no quotes)
+# Otherwise list all the column names separated by commas
+# Example:
+# metadata	all
+metadata	Ethnicity,SpecimenBodySite
+# The levels of taxa summary to include in the final summary of the analysis
+taxa_levels	2,3,4
+# The size of the font in the plot legends
+font_size	15

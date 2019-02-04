@@ -3,6 +3,7 @@ from unittest import TestCase
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
 from mmeds.database import Database
+from mmeds.mmeds import load_config
 
 from shutil import rmtree
 from subprocess import run
@@ -21,10 +22,11 @@ class ToolTests(TestCase):
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
+        self.config = load_config(None, fig.TEST_METADATA)
         self.tool = Tool(fig.TEST_USER,
                          fig.TEST_CODE,
                          'test-1',
-                         None, True,
+                         self.config, True,
                          8, True)
         self.dirs = [self.tool.path]
 
@@ -49,17 +51,6 @@ class ToolTests(TestCase):
         self.tool.add_path('testfile', '.txt')
         assert 'testfile' in self.tool.files.keys()
         assert not self.tool.files['testfile'].is_file()
-
-    def test_read_config_file(self):
-        """ Assert that config files are loaded correctly """
-        config0 = self.tool.read_config_file(None)
-        with open(fig.STORAGE_DIR / 'config_file.txt') as f:
-            contents = f.read()
-        configd0 = self.tool.config
-        config1 = self.tool.read_config_file(contents)
-        configd1 = self.tool.config
-        assert config0 == config1
-        assert configd0 == configd1
 
     def test_get_job_params(self):
         params = self.tool.get_job_params()

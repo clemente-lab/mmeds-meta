@@ -36,3 +36,10 @@ class LoggedOutError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class InvalidConfigError(MmedsError):
+    """ Exception for errors caused by selecting invalid columns in the config file"""
+
+    def __init__(self, message):
+        self.message = message
