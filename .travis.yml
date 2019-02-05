@@ -16,17 +16,8 @@ before_install:
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes conda
     - mkdir .modules
-    - echo "#%Module1.0
-## qiime1 modulefile
-set curMod [module-info name]
-module-info name qiime1
-module-info version 1.9.1
-prepend-path PATH ~/anaconda3/envs/qiime1/bin" > .modules/qiime1
-    - echo "#%Module1.0
-## mmeds-stable modulefile
-set curMod [module-info name]
-module-info name mmeds-stable
-module-info version 1.5.1" > .modules/mmeds-stable
+    - echo "#%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/anaconda3/envs/qiime1/bin" > .modules/qiime1
+    - echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1" > .modules/mmeds-stable
 install:
     - pip install .
     - mysql -u root < setup.sql
