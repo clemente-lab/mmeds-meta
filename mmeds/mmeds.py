@@ -1,12 +1,12 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number
-from os.path import join, exists
 from email.message import EmailMessage
 from smtplib import SMTP
 from numpy import datetime64
 from mmeds.error import MetaDataError, InvalidConfigError
 from subprocess import run
 from datetime import datetime
+from pathlib import Path
 import mmeds.config as fig
 import pandas as pd
 
@@ -562,27 +562,28 @@ def is_numeric(s):
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
     log("In create_local_copy.")
+    # If the fp is None return None
+    if fp is None:
+        return None
+
     # Create the filename
-    file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+    file_copy = Path(path) / filename
 
     # Ensure there is not already a file with the same name
-    while exists(file_copy):
-        file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+    while file_copy.is_file():
+        file_copy = Path(path) / '_'.join([fig.get_salt(5), filename])
     log('Created filepath {}'.format(file_copy))
 
-    count = 0
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
         log('File opened')
         while True:
-            log('Write data round {}'.format(count))
             data = fp.read(8192)
             nf.write(data)
             if not data:
                 break
-            count += 1
     log('Copy finished')
-    return file_copy
+    return str(file_copy)
 
 
 def generate_error_html(file_fp, errors, warnings):

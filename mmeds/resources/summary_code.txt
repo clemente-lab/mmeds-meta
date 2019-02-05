@@ -12,17 +12,26 @@ from mmeds.mmeds import load_config
 
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
+# Load the configuration
+config = load_config(Path('../config_file.txt').read_text(), Path('../metadata.tsv'))
+
+# Set parameters used when making the legend
+font_size = int(config['font_size'])
+offset = float(font_size) / 2
+v_offset = 0
+fnt = ImageFont.truetype('{font}', size=font_size)
+title_fnt = ImageFont.truetype('{titlefont}', size=int(1.2 * font_size))
+
 # Load metadata file
 mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
 
 # Load the columns to use for analysis
-config = load_config(Path('../config_file.txt').read_text(), Path('../metadata.tsv'))
 metadata_columns = sorted(config['metadata'])
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 group_ids = []
-color_maps = {}
+color_maps = {{}}
 max_colors = []
 # Create information for R color palettes
 for group_name in metadata_columns:
@@ -33,7 +42,7 @@ for group_name in metadata_columns:
         # Get the category with the most colors to use for palette creation
         if uni > len(max_colors):
             max_colors = group_ids[-1]
-        color_maps[group_name] = {x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}
+        color_maps[group_name] = {{x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}}
 
 # Shuffle the non-continuous colors so values near each other won't be similar shades
 max_colors_con = deepcopy(max_colors)
@@ -83,7 +92,7 @@ taxa_py_qiime1<source>
 df = pd.read_csv('{file1}', skiprows=1, sep='\t')
 mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
-df = df.melt(id_vars='#OTU ID')
+df = df.rename({{'#OTU ID':'X.OTU.ID'}}, axis='columns').melt(id_vars='X.OTU.ID')
 df = df.merge(mdf_lite, how='inner')
 df.{group} = df.{group}.astype(str)
 # Add colors for plotting
@@ -125,12 +134,6 @@ otuAllRGB{level} <- data.frame(apply(data.frame(otuAllColors{level}), 1, col2rgb
 names(otuAllRGB{level}) <- otu_max_colors_{level}
 =====
 taxa_color_py<source>
-# Set parameters used when making the legend
-font_size = {fontsize}
-offset = float(font_size) / 2
-v_offset = 0
-fnt = ImageFont.truetype('{font}', size=font_size)
-title_fnt = ImageFont.truetype('{titlefont}', size=int(1.2 * font_size))
 # Set the height and width based on the number/size of the values to display
 height = 40 + 20 * len(otu_max_colors_{level})
 width = 80 + 9 * len(max(otu_max_colors_{level}, key=len))
@@ -140,7 +143,7 @@ im = PImage.new('RGB', (width, height), color='white')
 draw = ImageDraw.Draw(im)
 
 # Get the mean percentage of each taxon
-otu_percs = df[df.value > {abundance_threshold}].groupby('X.OTU.ID').mean()
+otu_percs = df[df.value > float(config['abundance_threshold'])].groupby('X.OTU.ID').mean()
 
 # Add headers
 draw.text((0, 0),
@@ -184,7 +187,7 @@ taxa_group_color_py<source>
 v_offset = 0
 
 # Filter by abundance
-filtered_df = df[df.value > {abundance_threshold}]
+filtered_df = df[df.value > float(config['abundance_threshold'])]
 
 # Set the height and width based on the number/size of the values to display
 height = ((20 * (filtered_df['{group}'].nunique() - 1)) +

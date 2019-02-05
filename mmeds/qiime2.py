@@ -277,26 +277,6 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def summary(self):
-        """ Add commands for creating the summary. """
-
-        self.add_path('summary')
-        if not (self.path / 'summary').is_dir():
-            (self.path / 'summary').mkdir()
-
-        self.jobtext.append('source deactivate;')
-        self.jobtext.append('module unload qiime2/2018.4;')
-        self.jobtext.append('source activate mmeds-stable;')
-
-        cmd = [
-            'summarize.py ',
-            '--path {}'.format(self.path),
-            '--tool_type qiime2',
-            '--metadata {}'.format(','.join(self.config['metadata'])),
-            '--load_info "{}";'.format(self.jobtext[0])
-        ]
-        self.jobtext.append(' '.join(cmd))
-
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')

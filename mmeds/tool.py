@@ -25,7 +25,7 @@ class Tool:
         :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
         """
         log('Start analysis')
-        self.db = Database('', owner=owner, testing=testing)
+        self.db = Database(owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.testing = testing
@@ -36,6 +36,7 @@ class Tool:
         else:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
+        self.tool = atype.split('-')[0]
         self.analysis = analysis
         self.config = config
         self.columns = []
@@ -43,7 +44,6 @@ class Tool:
         self.add_path('analysis{}'.format(self.run_id), '')
         self.write_config()
         self.create_qiime_mapping_file()
-
 
     def __del__(self):
         del self.db
@@ -249,3 +249,17 @@ class Tool:
 
         # Add the mapping file to the MetaData object
         self.files['mapping'] = mapping_file
+
+    def summary(self):
+        """ Setup script to create summary. """
+        self.add_path('summary')
+        self.jobtext.append('module purge;')
+        self.jobtext.append('module load mmeds-stable;')
+        cmd = [
+            'summarize.py ',
+            '--path {}'.format(self.path),
+            '--tool_type {}'.format(self.tool),
+            '--config_file {}'.format(self.path / 'config_file.txt'),
+            '--load_info "{}";'.format(self.jobtext[0])
+        ]
+        self.jobtext.append(' '.join(cmd))

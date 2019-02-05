@@ -567,14 +567,20 @@ class Database:
             ob.delete()
 
     def modify_data(self, new_data, access_code, data_type):
+        """
+        :new_data: A string or pathlike pointing to the location of the new data file.
+        :access_code: The code for identifying this dataset.
+        :data_type: A string. Either 'reads' or 'barcodes' depending on which is being modified.
+        """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
 
-        # Remove the old data file
+        # Remove the old data file if it exits
         if mdata.files.get(data_type) is not None:
             Path(mdata.files[data_type]).unlink()
 
         mdata.files[data_type] = str(new_data)
+        mdata.save()
 
     def reset_access_code(self, study_name, email):
         """

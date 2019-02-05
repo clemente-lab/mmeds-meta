@@ -168,6 +168,9 @@ def test_load_config_file():
     config = mmeds.load_config(None, fig.TEST_METADATA)
     assert len(config.keys()) == 6
 
+    config = mmeds.load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+    assert len(config.keys()) == 6
+
     # Check the config file fail states
     with raises(InvalidConfigError) as e_info:
         config = mmeds.load_config(Path(fig.TEST_CONFIG_1).read_text(), fig.TEST_METADATA)

@@ -91,12 +91,13 @@ TEST_USER_0 = 'testuser0'
 TEST_EMAIL = 'mmeds.tester@gmail.com'
 TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'asdfasdfasdfasdf'
-TEST_CONFIG_FILE = str(TEST_PATH / 'test_config_file.txt')
+TEST_CONFIG = str(TEST_PATH / 'test_config_file.txt')
 TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
 TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
 TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
 
 TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test_metadata_fail_0.tsv')

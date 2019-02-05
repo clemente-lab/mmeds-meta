@@ -204,11 +204,21 @@ class MMEDSserver(object):
             else:
                 username = self.get_user()
 
+            if reads is None:
+                reads_upload = (None, None)
+            else:
+                reads_upload = (reads.filename, reads.file)
+
+            if barcodes is None:
+                barcodes_upload = (None, None)
+            else:
+                barcodes_upload = (barcodes.filename, barcodes.file)
+
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
                         args=(metadata,
-                              reads,
-                              barcodes,
+                              reads_upload,
+                              barcodes_upload,
                               username,
                               self.testing))
             log('Starting upload process')
@@ -251,13 +261,10 @@ class MMEDSserver(object):
         log('In modify_upload')
         try:
             try:
-                with Database('.', owner=self.get_user(), testing=testing) as db:
-                    # Create a copy of the Data file
-                    files, path = db.get_mongo_files(access_code=access_code)
                 # Start a process to handle loading the data
                 p = Process(target=handle_modify_data,
                             args=(access_code,
-                                  myData,
+                                  (myData.filename, myData.file),
                                   self.get_user(),
                                   data_type,
                                   self.testing))

@@ -12,14 +12,17 @@ class Qiime1(Tool):
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
         if testing:
-            self.jobtext.append('source activate qiime1;')
+            self.jobtext.append('module load qiime1;')
+            settings = [
+                'alpha_diversity:metrics	shannon'
+            ]
         else:
             self.jobtext.append('module load qiime/1.9.1;')
+            settings = [
+                'pick_otus:enable_rev_strand_match	True',
+                'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species'
+            ]
 
-        settings = [
-            'pick_otus:enable_rev_strand_match True',
-            'alpha_diversity:metrics shannon,PD_whole_tree,chao1,observed_species'
-        ]
         with open(self.path / 'params.txt', 'w') as f:
             f.write('\n'.join(settings))
 
@@ -63,14 +66,13 @@ class Qiime1(Tool):
         self.add_path('diversity_output', '')
 
         # Run the script
-        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {};'
         if self.atype == 'open':
             command = cmd.format(self.files['diversity_output'],
                                  self.files['otu_output'] / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  self.files['mapping'],
                                  self.files['otu_output'] / 'rep_set.tre',
                                  self.config['sampling_depth'],
-                                 ','.join(self.config['metadata']),
                                  self.path / 'params.txt')
         else:
             command = cmd.format(self.files['diversity_output'],
@@ -78,8 +80,10 @@ class Qiime1(Tool):
                                  self.files['mapping'],
                                  self.files['otu_output'] / '97_otus.tree',
                                  self.config['sampling_depth'],
-                                 ','.join(self.config['metadata']),
                                  self.path / 'params.txt')
+        if not self.testing:
+
+            command = command.strip(';') + '{};'.format(','.join(self.config['metadata']))
 
         self.jobtext.append(command)
 
@@ -112,21 +116,6 @@ class Qiime1(Tool):
             log(str(e))
             raise AnalysisError(e.args[0])
 
-    def summary(self):
-        """ Setup script to create summary. """
-        self.add_path('summary')
-        self.jobtext.append('source deactivate;')
-        self.jobtext.append('source activate mmeds-stable;')
-        cmd = [
-            'summarize.py ',
-            '--path {}'.format(self.path),
-            '--tool_type qiime1',
-            '--metadata {}'.format(','.join(self.config['metadata'])),
-            '--sampling_depth {}'.format(self.config['sampling_depth']),
-            '--load_info "{}";'.format(self.jobtext[0])
-        ]
-        self.jobtext.append(' '.join(cmd))
-
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
         self.validate_mapping()
@@ -148,9 +137,11 @@ class Qiime1(Tool):
         if self.testing:
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
+                f.write('#!/usr/bin/env bash\n')
+                f.write('module use $HOME/.modules;\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+            run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
         else:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
