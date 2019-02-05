@@ -10,9 +10,27 @@ before_install:
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
     - openssl aes-256-cbc -K $encrypted_ad273e68e13c_key -iv $encrypted_ad273e68e13c_iv
       -in ./mmeds/secrets.py.enc -out ./mmeds/secrets.py -d
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - chmod +x miniconda.sh
+    - ./miniconda.sh -b
+    - export PATH=/home/travis/miniconda/bin:$PATH
+    - conda update --yes conda
+    - mkdir .modules
+    - echo "#%Module1.0
+## qiime1 modulefile
+set curMod [module-info name]
+module-info name qiime1
+module-info version 1.9.1
+prepend-path PATH ~/anaconda3/envs/qiime1/bin" > .modules/qiime1
+    - echo "#%Module1.0
+## mmeds-stable modulefile
+set curMod [module-info name]
+module-info name mmeds-stable
+module-info version 1.5.1" > .modules/mmeds-stable
 install:
     - pip install .
     - mysql -u root < setup.sql
+    - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning 2> /dev/null
     - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py

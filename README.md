@@ -1,7 +1,7 @@
 # mmeds-meta
 
-[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Test-AnalysisPipline)](https://travis-cl.com/clemente-lab/mmeds-meta)
-[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Test-AnalysisPipline/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Test-Travis)](https://travis-cl.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Test-Travis/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 
 
 ## Instructions
