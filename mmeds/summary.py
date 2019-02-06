@@ -105,7 +105,7 @@ def summarize_qiime2(path, files, config, load_info):
     cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
                                                             files['taxa_bar_plot'],
                                                             path / 'temp')
-    run(cmd, shell=True, check=True)
+    run('bash -c "{}"'.format(cmd), shell=True, check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -118,7 +118,7 @@ def summarize_qiime2(path, files, config, load_info):
         cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
                                                                 beta_file,
                                                                 path / 'temp')
-        run(cmd, shell=True, check=True)
+        run('bash -c "{}"'.format(cmd), shell=True, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
@@ -130,7 +130,7 @@ def summarize_qiime2(path, files, config, load_info):
         cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
                                                                 files['alpha_rarefaction'],
                                                                 path / 'temp')
-        run(cmd, shell=True, check=True)
+        run('bash -c "{}"'.format(cmd), shell=True, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
@@ -360,8 +360,9 @@ class MMEDSNotebook():
 
         # Convert to pdf
         cmd = 'pdflatex {name}.tex'.format(name=self.name)
+        # Run the command twice because otherwise the chapter
+        # headings don't show up...
         run(cmd, shell=True, check=True)
-        cmd = 'pdflatex {name}.tex'.format(name=self.name)
         run(cmd, shell=True, check=True)
 
     def create_notebook(self):
