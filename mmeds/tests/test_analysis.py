@@ -2,9 +2,11 @@ from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
 from mmeds.summary import summarize_qiime
+
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
+from shutil import rmtree
 
 import mmeds.config as fig
 
@@ -20,6 +22,12 @@ class AnalysisTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
+        # Delete the files
+        return
+        with Database(owner=fig.TEST_USER, testing=True) as db:
+            self.files, self.path = db.get_mongo_files(access_code=self.code)
+        rmtree(self.files['metadata'].parent)
+
         remove_user(fig.TEST_USER, testing=True)
 
     def handle_data_upload(self):
