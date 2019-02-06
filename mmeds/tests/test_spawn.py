@@ -64,10 +64,10 @@ class SpawnTests(TestCase):
                                  True)
         while p.is_alive():
             sleep(5)
-        self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
+        self.assertTrue((Path(self.path) / 'analysis0/summary/analysis.pdf'.format(count)).is_file())
 
     def test_spawn_functions(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
-        self.spawn_analysis('qiime2-dada2', 1)
+        self.spawn_analysis('qiime2-dada2', 0)
