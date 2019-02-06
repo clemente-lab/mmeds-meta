@@ -11,8 +11,10 @@ git:
 services:
     - mysql
     - mongodb
-    - module
 before_install:
+    - sudo apt-get install environment-modules
+    - add.modules
+    - module --version
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
     - openssl aes-256-cbc -K $encrypted_ad273e68e13c_key -iv $encrypted_ad273e68e13c_iv
@@ -22,8 +24,6 @@ before_install:
     - ~/miniconda.sh -b &> ~/install_log.txt
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>> ~/install_log.txt
-    - sudo apt-get install environment-modules
-    - module --version
 install:
     - conda create -n mmeds-stable python=3.7 --yes --quiet &>> install_log.txt
     - bash travis_setup.sh
