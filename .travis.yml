@@ -22,11 +22,11 @@ before_install:
     - ~/miniconda.sh -b &> ~/install_log.txt
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>> ~/install_log.txt
-    - apt-get install environment-modules
+    - sudo apt-get install environment-modules
     - module --version
 install:
-    - bash travis_setup.sh
     - conda create -n mmeds-stable python=3.7 --yes --quiet &>> install_log.txt
+    - bash travis_setup.sh
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
