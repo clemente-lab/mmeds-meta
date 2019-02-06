@@ -13,7 +13,7 @@ services:
     - mongodb
 before_install:
     - sudo apt-get install environment-modules
-    - $(yes | add.modules) | echo "Okay"
+    - yes | add.modules || echo "Okay";
     - source ~/.bashrc
     - source ~/.bash_profile
     - module --version
