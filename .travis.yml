@@ -13,8 +13,9 @@ services:
     - mongodb
 before_install:
     - sudo apt-get install environment-modules
-    - yes | add.modules
+    - $(yes | add.modules) | echo "Okay"
     - source ~/.bashrc
+    - source ~/.bash_profile
     - module --version
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
