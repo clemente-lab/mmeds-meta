@@ -16,7 +16,7 @@ before_install:
     - yes | add.modules || echo "Okay";
     - source ~/.bashrc
     - cat ~/.bashrc
-    - ls /usr/Modules
+    - ls /usr/bin
     - source ~/.bash_profile
     - module --version
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
