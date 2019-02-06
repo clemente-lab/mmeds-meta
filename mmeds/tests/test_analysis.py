@@ -23,7 +23,6 @@ class AnalysisTests(TestCase):
     @classmethod
     def tearDownClass(self):
         # Delete the files
-        return
         with Database(owner=fig.TEST_USER, testing=True) as db:
             self.files, self.path = db.get_mongo_files(access_code=self.code)
         rmtree(self.files['metadata'].parent)
@@ -86,5 +85,5 @@ class AnalysisTests(TestCase):
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
         self.summarize(0, 'qiime1')
-        self.spawn_analysis('qiime2-dada2', 0)
-        self.summarize(0, 'qiime2')
+        self.spawn_analysis('qiime2-dada2', 1)
+        self.summarize(1, 'qiime2')

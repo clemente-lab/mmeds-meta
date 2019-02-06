@@ -34,7 +34,7 @@ class DatabaseTests(TestCase):
     """ Tests of top-level functions """
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(self):
         """
         Load data that is to be used by multiple test cases
         """
@@ -53,27 +53,27 @@ class DatabaseTests(TestCase):
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE + '0')
-        cls.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
-        cls.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
+        self.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
+        self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
         # Connect to the database
-        cls.db = pms.connect('localhost',
+        self.db = pms.connect('localhost',
                               'root',
                               '',
                               fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
                               local_infile=True)
-        cls.db.autocommit(True)
-        cls.c = cls.db.cursor()
+        self.db.autocommit(True)
+        self.c = self.db.cursor()
 
         # Get the user id
-        cls.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
-        cls.user_id = int(cls.c.fetchone()[0])
+        self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
+        self.user_id = int(self.c.fetchone()[0])
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=True)
         remove_user(fig.TEST_USER_0, testing=True)
-        cls.db.close()
+        self.db.close()
 
     def build_sql(self, table, row):
         """

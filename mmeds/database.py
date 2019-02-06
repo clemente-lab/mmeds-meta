@@ -711,9 +711,6 @@ class Database:
         """ Clear all metadata documents associated with the provided username. """
         data = MetaData.objects(owner=username)
         for doc in data:
-            # Delete the primary directory for this upload
-            if not self.testing:
-                shutil.rmtree(Path(doc.files['metadata']).parent)
             doc.delete()
 
     def clean(self):

@@ -814,6 +814,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :kwargs: Any information that is specific to a paricular message type
     """
     log('Send email to: {} on behalf of {}'.format(toaddr, user))
+    if testing:
+        return
     for key in kwargs.keys():
         log('{}: {}'.format(key, kwargs[key]))
 
@@ -855,32 +857,9 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         code=kwargs.get('code'),
         password=kwargs.get('password')
     )
-    if testing:
-        # Setup the email to be sent
-        msg = EmailMessage()
-        msg['From'] = fig.MMEDS_EMAIL
-        msg['To'] = toaddr
-        msg['Subject'] = subject
-        # Add in any necessary text fields
-        msg.set_content(email_body)
-        if 'summary' in kwargs.keys():
-            with open(kwargs['summary'], 'rb') as f:
-                msg.add_attachment(f.read(),
-                                   maintype='application',
-                                   subtype='pdf',
-                                   filename=kwargs['summary'].name)
-
-                msg.add_attachment
-        # Connect to the server and send the mail
-        server = SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(fig.MMEDS_EMAIL, 'mmeds_server')
-        server.send_message(msg)
-        server.quit()
-    else:
-        script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
-        if 'summary' in kwargs.keys():
-            script += ' -A {summary}'.format(kwargs['summary'])
-        cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
-        log(cmd)
-        run(cmd, shell=True, check=True)
+    script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
+    if 'summary' in kwargs.keys():
+        script += ' -A {summary}'.format(kwargs['summary'])
+    cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
+    log(cmd)
+    run(cmd, shell=True, check=True)
