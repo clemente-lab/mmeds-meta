@@ -7,7 +7,7 @@ cache:
     - directories:
         - ~/.modules
 git:
-    - depth: 1
+    depth: 1
 services:
     - mysql
     - mongodb
