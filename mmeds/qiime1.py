@@ -170,13 +170,14 @@ class Qiime1(Tool):
             self.write_file_locations()
             self.summary()
             doc = self.db.get_metadata(self.access_code)
-            send_email(doc.email,
-                       doc.owner,
-                       'analysis',
-                       analysis_type='Qiime1',
-                       study_name=doc.study,
-                       testing=self.testing,
-                       summary=self.path / 'summary/analysis.pdf')
+            if not self.testing:
+                send_email(doc.email,
+                           doc.owner,
+                           'analysis',
+                           analysis_type='Qiime1',
+                           study_name=doc.study,
+                           testing=self.testing,
+                           summary=self.path / 'summary/analysis.pdf')
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()

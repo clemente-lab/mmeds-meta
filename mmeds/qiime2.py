@@ -388,13 +388,14 @@ class Qiime2(Tool):
             self.write_file_locations()
             self.summary()
             log('Send email')
-            send_email(doc.email,
-                       doc.owner,
-                       'analysis',
-                       analysis_type='Qiime2 (2018.4) ' + self.atype,
-                       study_name=doc.study,
-                       summary=self.path / 'summary/analysis.pdf',
-                       testing=self.testing)
+            if not self.testing:
+                send_email(doc.email,
+                           doc.owner,
+                           'analysis',
+                           analysis_type='Qiime2 (2018.4) ' + self.atype,
+                           study_name=doc.study,
+                           summary=self.path / 'summary/analysis.pdf',
+                           testing=self.testing)
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
