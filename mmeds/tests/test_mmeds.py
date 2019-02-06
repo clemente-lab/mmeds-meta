@@ -96,6 +96,14 @@ def test_check_column():
     assert len(errors) == 0 and len(warnings) == 0
 
 
+def test_check_table_column():
+    pass
+
+
+def test_check_table():
+    pass
+
+
 def test_check_duplicates():
     test_df = pd.read_csv(fig.TEST_METADATA_VALID, header=[0, 1], sep='\t', na_filter=False)
     errors = mmeds.check_duplicates(test_df['Test']['GoodNumber'], 0)

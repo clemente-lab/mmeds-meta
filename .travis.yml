@@ -22,6 +22,7 @@ before_install:
     - ~/miniconda.sh -b &> ~/install_log.txt
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>> ~/install_log.txt
+    - apt-get install environment-modules
     - module --version
 install:
     - bash travis_setup.sh
