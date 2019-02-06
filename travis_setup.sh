@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+if [ ! -f ~/.install_log.txt ]; then
+    touch ~/.install_log.txt;
+fi
 
 if [ ! -d ~/.modules ]; then
     echo "Make .modules";
@@ -22,10 +25,10 @@ if [ ! -f "~/.modules/modulefiles/mmeds-stable" ]; then
 fi
 if [ ! -d "~/.modules/qiime1" ]; then
     echo "Create qiime1 environment"
-    conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>> install_log.txt;
+    conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>> ~/install_log.txt;
 fi
 if [ ! -d "~/.modules/qiime2" ]; then
     echo "Create qiime2 environment"
-    wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet
-    conda env create --file ~/qiime2.yml --quiet --copy -p ~/.modules/qiime2 &>> install_log.txt;
+    wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
+    conda env create --file ~/qiime2.yml --quiet --copy -p ~/.modules/qiime2 &>> ~/install_log.txt;
 fi
