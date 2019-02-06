@@ -10,22 +10,20 @@ before_install:
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
     - openssl aes-256-cbc -K $encrypted_ad273e68e13c_key -iv $encrypted_ad273e68e13c_iv
       -in ./mmeds/secrets.py.enc -out ./mmeds/secrets.py -d
-    - pwd;
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh --quiet
     - chmod +x ~/miniconda.sh
-    - ~/miniconda.sh -b 
+    - ~/miniconda.sh -b 2> install_log.txt
     - export PATH=~/miniconda2/bin:$PATH
-    - echo $PATH
-    - conda update --yes conda
+    - conda update --yes conda 2>> install_log.txt
     - wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet
-    - mkdir .modules
-    - echo "#%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/miniconda2/envs/qiime1/bin" > .modules/qiime1
-    - echo "#%Module1.0\n## qiime2 modulefile\nset curMod [module-info name]\nmodule-info name qiime2\nmodule-info version 2019.1\nprepend-path PATH ~/miniconda2/envs/qiime2/bin" > .modules/qiime2
-    - echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > .modules/mmeds-stable
+    - mkdir ~/.modules
+    - echo "#%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/miniconda2/envs/qiime1/bin" > ~/.modules/qiime1
+    - echo "#%Module1.0\n## qiime2 modulefile\nset curMod [module-info name]\nmodule-info name qiime2\nmodule-info version 2019.1\nprepend-path PATH ~/miniconda2/envs/qiime2/bin" > ~/.modules/qiime2
+    - echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/mmeds-stable
 install:
-    - conda create -n mmeds-stable python=3.7 --yes --quiet
-    - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet
-    - conda env create -n qiime2 --file ~/qiime2.yml --quiet
+    - conda create -n mmeds-stable python=3.7 --yes --quiet 2>> install_log.txt
+    - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet 2>> install_log.txt
+    - conda env create -n qiime2 --file ~/qiime2.yml --quiet 2>> install_log.txt
     - conda activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
