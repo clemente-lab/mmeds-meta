@@ -12,7 +12,7 @@ services:
     - mysql
     - mongodb
 before_install:
-    - sudo apt-get install environment-modules
+    - sudo apt-get install tcl environment-modules
     - yes | add.modules || echo "Okay";
     - source ~/.bashrc
     - source ~/.bash_profile
