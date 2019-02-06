@@ -429,7 +429,7 @@ def check_table_column(table_df, name, header, col_index, row_index, study_name)
             errors += check_duplicates(col, col_index)
             errors += check_lengths(col, col_index)
             errors += check_barcode_chars(col, col_index)
-        elif header == 'SampleID':
+        elif header == 'RawDataID':
             errors += check_duplicates(col, col_index)
         elif header == 'LinkerPrimerSequence':
             errors += check_lengths(col, col_index)
