@@ -65,6 +65,7 @@ class Database:
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.user = user
+        self.testing = testing
 
         # If testing connect to test server
         if testing:

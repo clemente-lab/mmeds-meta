@@ -110,7 +110,7 @@ class Tool:
         for (key, value) in self.config.items():
             if isinstance(value, list):
                 config_text.append('{}\t{}'.format(key, ','.join(value)))
-            elif value == 'metadata_continuous':
+            elif key == 'metadata_continuous':
                 continue
             else:
                 config_text.append('{}\t{}'.format(key, value))
