@@ -22,11 +22,6 @@ class AnalysisTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        # Delete the files
-        with Database(owner=fig.TEST_USER, testing=True) as db:
-            self.files, self.path = db.get_mongo_files(access_code=self.code)
-        rmtree(self.files['metadata'].parent)
-
         remove_user(fig.TEST_USER, testing=True)
 
     def handle_data_upload(self):

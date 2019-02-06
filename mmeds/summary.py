@@ -358,6 +358,9 @@ class MMEDSNotebook():
             log(cmd)
             run(cmd, shell=True, check=True)
 
+        # Mute output
+        cmd += ' &>/dev/null;'
+
         # Convert to pdf
         cmd = 'pdflatex {name}.tex'.format(name=self.name)
         # Run the command twice because otherwise the chapter
