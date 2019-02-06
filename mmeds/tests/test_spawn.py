@@ -15,10 +15,12 @@ class SpawnTests(TestCase):
     def setUpClass(self):
         add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
         self.code = None
+        self.files = None
+        self.path = None
+
 
     @classmethod
     def tearDownClass(self):
-        return
         remove_user(fig.TEST_USER, testing=True)
 
     def handle_data_upload(self):
@@ -29,22 +31,17 @@ class SpawnTests(TestCase):
                                                  (Path(fig.TEST_BARCODES).name, barcodes),
                                                  fig.TEST_USER,
                                                  True)
+        # Get the files to check
         with Database(owner=fig.TEST_USER, testing=True) as db:
-            # Create a copy of the Data file
-            files, path = db.get_mongo_files(access_code=self.code)
+            self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
-        self.assertEqual(Path(files['metadata']).read_bytes(), Path(fig.TEST_METADATA_SHORT).read_bytes())
-        self.assertEqual(Path(files['reads']).read_bytes(), Path(fig.TEST_METADATA).read_bytes())
-        self.assertEqual(Path(files['barcodes']).read_bytes(), Path(fig.TEST_BARCODES).read_bytes())
+        self.assertEqual(Path(self.files['metadata']).read_bytes(), Path(fig.TEST_METADATA_SHORT).read_bytes())
+        self.assertEqual(Path(self.files['reads']).read_bytes(), Path(fig.TEST_METADATA).read_bytes())
+        self.assertEqual(Path(self.files['barcodes']).read_bytes(), Path(fig.TEST_BARCODES).read_bytes())
 
     def handle_modify_data(self):
         """ Test the modification of a previous upload. """
-        log(self.code)
-        with Database(owner=fig.TEST_USER, testing=True) as db:
-            # Create a copy of the Data file
-            files, path = db.get_mongo_files(access_code=self.code)
-        log('Accessed')
         with open(fig.TEST_READS, 'rb') as reads:
             spawn.handle_modify_data(self.code,
                                      (Path(fig.TEST_READS).name, reads),
@@ -52,14 +49,14 @@ class SpawnTests(TestCase):
                                      'reads',
                                      True)
 
+        # Update the files
         with Database(owner=fig.TEST_USER, testing=True) as db:
-            # Create a copy of the Data file
-            files, path = db.get_mongo_files(access_code=self.code)
+            self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
-        self.assertEqual(Path(files['reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
+        self.assertEqual(Path(self.files['reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
 
-    def spawn_analysis(self, tool):
+    def spawn_analysis(self, tool, count):
         p = spawn.spawn_analysis(tool,
                                  fig.TEST_USER,
                                  self.code,
@@ -67,9 +64,10 @@ class SpawnTests(TestCase):
                                  True)
         while p.is_alive():
             sleep(5)
+        self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
     def test_spawn_functions(self):
         self.handle_data_upload()
         self.handle_modify_data()
-        self.spawn_analysis('test-1')
-        self.spawn_analysis('qiime1-closed')
+        self.spawn_analysis('qiime1-closed', 0)
+        self.spawn_analysis('qiime2-dada2', 1)
