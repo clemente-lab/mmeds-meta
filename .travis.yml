@@ -22,12 +22,11 @@ before_install:
     - echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/mmeds-stable
 install:
     - conda create -n mmeds-stable python=3.7 --yes --quiet 2>> install_log.txt
-    - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet 2>> install_log.txt
+      # - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet 2>> install_log.txt
     - conda env create -n qiime2 --file ~/qiime2.yml --quiet 2>> install_log.txt
-    - conda activate mmeds-stable
+    - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
-    - conda deactivate
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning 2> /dev/null
     - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py

@@ -364,7 +364,7 @@ class Qiime2(Tool):
                         f.write('module use $HOME/.modules;\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+                    run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
                 else:
                     # Get the job header text from the template
                     with open(JOB_TEMPLATE) as f1:
