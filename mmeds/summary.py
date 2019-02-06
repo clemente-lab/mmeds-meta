@@ -44,12 +44,15 @@ def summarize_qiime1(path, files, config, load_info):
     summary_files = defaultdict(list)
 
     # Convert and store the otu table
+    # Set the environment
+    environ = {'SHELL': '/usr/bin/env bash'}
+    environ.update(os.environ)
     cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
     cmd = cmd.format(load_info,
                      files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
     log(cmd)
-    run(cmd, shell=True, check=True)
+    run(cmd, shell=True, check=True, env=environ)
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])

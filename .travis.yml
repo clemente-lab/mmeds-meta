@@ -5,8 +5,19 @@ sudo: true
 cache:
     - pip
     - directories:
-        - ~/miniconda/envs/qiime1
-        - ~/miniconda/envs/qiime2
+        - ~/miniconda2/bin
+        - ~/miniconda2/conda-meta
+        - ~/miniconda2/etc
+        - ~/miniconda2/gcc
+        - ~/miniconda2/include
+        - ~/miniconda2/lib
+        - ~/miniconda2/lib64
+        - ~/miniconda2/libexec
+        - ~/miniconda2/sbin
+        - ~/miniconda2/share
+        - ~/miniconda2/ssl
+        - ~/miniconda2/envs/qiime1
+        - ~/miniconda2/envs/qiime2
 services:
     - mysql
     - mongodb
@@ -33,7 +44,7 @@ install:
     - pip install .
     - mysql -u root < setup.sql
 script:
-    - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning &> /dev/null
+    - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
     - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
 after_success:
     - bash <(curl -s https://codecov.io/bash)
