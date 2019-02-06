@@ -711,7 +711,8 @@ class Database:
         data = MetaData.objects(owner=username)
         for doc in data:
             # Delete the primary directory for this upload
-            shutil.rmtree(Path(doc.files['metadata']).parent)
+            if not self.testing:
+                shutil.rmtree(Path(doc.files['metadata']).parent)
             doc.delete()
 
     def clean(self):

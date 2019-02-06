@@ -25,7 +25,7 @@ before_install:
 install:
     - conda create -n mmeds-stable python=3.7 --yes
     - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes
-    - conda env create -n qiime2 --file ~/qiime2.yml --yes
+    - conda env create -n qiime2 --file ~/qiime2.yml
     - conda activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql

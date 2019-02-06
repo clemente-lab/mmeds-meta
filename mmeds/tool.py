@@ -110,6 +110,8 @@ class Tool:
         for (key, value) in self.config.items():
             if isinstance(value, list):
                 config_text.append('{}\t{}'.format(key, ','.join(value)))
+            elif value == 'metadata_continuous':
+                continue
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
