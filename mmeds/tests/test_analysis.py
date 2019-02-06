@@ -1,7 +1,7 @@
 from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
-from mmeds.mmeds import log
 from mmeds.database import Database
+from mmeds.summary import summarize_qiime
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
@@ -9,7 +9,7 @@ from time import sleep
 import mmeds.config as fig
 
 
-class SpawnTests(TestCase):
+class AnalysisTests(TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -65,8 +65,18 @@ class SpawnTests(TestCase):
             sleep(5)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
+    def summarize(self, count, tool):
+        analysis_path = Path(self.path) / 'analysis{}'.format(count)
+        summarize_qiime(analysis_path,
+                        'module load {}'.format(tool),
+                        analysis_path / 'config_file.txt',
+                        tool)
+        self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
+
     def test_spawn_functions(self):
         self.handle_data_upload()
         self.handle_modify_data()
-        #  self.spawn_analysis('qiime1-closed', 0)
-        self.spawn_analysis('qiime2-dada2', 0)
+        self.spawn_analysis('qiime1-closed', 0)
+        self.summarize(0, 'qiime1')
+        self.spawn_analysis('qiime2-dada2', 1)
+        self.summarize(1, 'qiime2')
