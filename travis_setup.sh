@@ -15,10 +15,10 @@ fi
 if [ ! -f "~/.modules/modulefiles/mmeds-stable" ]; then
     echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
 fi
-if [ ! -d ~/.modules/qiime1]; then
+if [ ! -d "~/.modules/qiime1" ]; then
     conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>> install_log.txt;
 fi
-if [ ! -d ~/.modules/qiime2]; then
+if [ ! -d "~/.modules/qiime2" ]; then
     wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet
     conda env create --file ~/qiime2.yml --quiet --copy -p ~/.modules/qiime2 &>> install_log.txt;
 fi
