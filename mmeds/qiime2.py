@@ -14,7 +14,7 @@ class Qiime2(Tool):
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
         if testing:
-            self.jobtext.append('module load qiime2;')
+            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime2;')
         else:
             self.jobtext.append('module use /hpc/packages/minerva-common/modulefiles; module load qiime2/2018.4;')
 
@@ -361,7 +361,6 @@ class Qiime2(Tool):
                     # Open the jobfile to write all the commands
                     with open(str(jobfile) + '.lsf', 'w') as f:
                         f.write('#!/usr/bin/env bash\n')
-                        f.write('module use $HOME/.modules;\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
                     run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)

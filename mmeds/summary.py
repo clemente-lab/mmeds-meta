@@ -45,14 +45,12 @@ def summarize_qiime1(path, files, config, load_info):
 
     # Convert and store the otu table
     # Set the environment
-    environ = {'SHELL': '/usr/bin/env bash'}
-    environ.update(os.environ)
     cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
     cmd = cmd.format(load_info,
                      files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
     log(cmd)
-    run(cmd, shell=True, check=True, env=environ)
+    run('bash -c "{}"'.format(cmd), shell=True, check=True)
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])
@@ -82,7 +80,8 @@ def summarize_qiime1(path, files, config, load_info):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary')
+                        run_path=path / 'summary',
+                        load_info=load_info)
     mnb.create_notebook()
 
     log('Make archive')
@@ -95,7 +94,7 @@ def summarize_qiime1(path, files, config, load_info):
     return path / 'summary/analysis.pdf'
 
 
-def summarize_qiime2(path, files, config, loadinfo):
+def summarize_qiime2(path, files, config, load_info):
     """ Create summary of the files produced by the qiime2 analysis. """
     log('Start Qiime2 summary')
 
@@ -103,7 +102,7 @@ def summarize_qiime2(path, files, config, loadinfo):
     summary_files = defaultdict(list)
 
     # Get Taxa
-    cmd = '{} qiime tools export {} --output-dir {}'.format(loadinfo,
+    cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
                                                             files['taxa_bar_plot'],
                                                             path / 'temp')
     run(cmd, shell=True, check=True)
@@ -116,7 +115,7 @@ def summarize_qiime2(path, files, config, loadinfo):
     # Get Beta
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
-        cmd = '{} qiime tools export {} --output-dir {}'.format(loadinfo,
+        cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
                                                                 beta_file,
                                                                 path / 'temp')
         run(cmd, shell=True, check=True)
@@ -128,7 +127,7 @@ def summarize_qiime2(path, files, config, loadinfo):
 
     # Get Alpha
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
-        cmd = '{} qiime tools export {} --output-dir {}'.format(loadinfo,
+        cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
                                                                 files['alpha_rarefaction'],
                                                                 path / 'temp')
         run(cmd, shell=True, check=True)
@@ -149,7 +148,8 @@ def summarize_qiime2(path, files, config, loadinfo):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary')
+                        run_path=path / 'summary',
+                        load_info=load_info)
 
     mnb.create_notebook()
     # Create a zip of the summary
@@ -167,7 +167,7 @@ def summarize_qiime2(path, files, config, loadinfo):
 class MMEDSNotebook():
     """ A class for handling the creation and execution of the summary notebooks. """
 
-    def __init__(self, config, analysis_type, files, execute, name, run_path):
+    def __init__(self, config, analysis_type, files, execute, name, run_path, load_info):
 
         """
         Create the summary PDF for qiime1 analysis
@@ -185,6 +185,7 @@ class MMEDSNotebook():
         self.name = name
         self.run_path = run_path
         self.config = config
+        self.load_info = load_info
 
         # Load the code templates
         with open(STORAGE_DIR / 'summary_code.txt') as f:
@@ -350,8 +351,7 @@ class MMEDSNotebook():
         """
         nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
 
-        cmd = 'module load mmeds-stable; ' \
-            'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
+        cmd = '{} jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.load_info, self.name)
         if self.execute:
             cmd += ' --execute'
             log(cmd)

@@ -12,7 +12,7 @@ class Qiime1(Tool):
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
         if testing:
-            self.jobtext.append('module load qiime1;')
+            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime1;')
             settings = [
                 'alpha_diversity:metrics	shannon'
             ]
@@ -138,7 +138,6 @@ class Qiime1(Tool):
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
                 f.write('#!/usr/bin/env bash\n')
-                f.write('module use $HOME/.modules;\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
             run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)

@@ -5,19 +5,7 @@ sudo: true
 cache:
     - pip
     - directories:
-        - ~/miniconda2/bin
-        - ~/miniconda2/conda-meta
-        - ~/miniconda2/etc
-        - ~/miniconda2/gcc
-        - ~/miniconda2/include
-        - ~/miniconda2/lib
-        - ~/miniconda2/lib64
-        - ~/miniconda2/libexec
-        - ~/miniconda2/sbin
-        - ~/miniconda2/share
-        - ~/miniconda2/ssl
-        - ~/miniconda2/envs/qiime1
-        - ~/miniconda2/envs/qiime2
+        - ~/.modules
 services:
     - mysql
     - mongodb
@@ -31,20 +19,21 @@ before_install:
     - ~/miniconda.sh -b &> install_log.txt
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>> install_log.txt
-    - wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet
     - mkdir ~/.modules
-    - echo "#%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/miniconda2/envs/qiime1/bin" > ~/.modules/qiime1
-    - echo "#%Module1.0\n## qiime2 modulefile\nset curMod [module-info name]\nmodule-info name qiime2\nmodule-info version 2019.1\nprepend-path PATH ~/miniconda2/envs/qiime2/bin" > ~/.modules/qiime2
-    - echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/mmeds-stable
+    - mkdir ~/.modules/modulefiles
+    - echo "#%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin" > ~/.modules/modulefiles/qiime1
+    - echo "#%Module1.0\n## qiime2 modulefile\nset curMod [module-info name]\nmodule-info name qiime2\nmodule-info version 2019.1\nprepend-path PATH ~/.modules/qiime2/bin" > ~/.modules/modulefiles/qiime2
+    - echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
 install:
+    - conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>> install_log.txt || ls ~/.modules;
+    - wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet
+    - conda env create --file ~/qiime2.yml --quiet --copy -p ~/.modules/qiime2 &>> install_log.txt || ls ~/.modules;
     - conda create -n mmeds-stable python=3.7 --yes --quiet &>> install_log.txt
-    - conda create -n qiime1 python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet &>> install_log.txt
-    - conda env create -n qiime2 --file ~/qiime2.yml --quiet &>> install_log.txt
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-    - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
+    # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
 after_success:
     - bash <(curl -s https://codecov.io/bash)
