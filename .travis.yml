@@ -19,6 +19,9 @@ before_install:
     - source ~/.bashrc
     - source ~/.bash_profile
     - module --version
+    - echo $PATH
+    - module use ~/.modules/modulefiles
+    - echo $PATH
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
     - openssl aes-256-cbc -K $encrypted_ad273e68e13c_key -iv $encrypted_ad273e68e13c_iv
