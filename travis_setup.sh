@@ -22,23 +22,17 @@ fi
 if [ ! -f ~/.modules/modulefiles/mmeds-stable ]; then
     echo "Create mmeds-stable module";
     echo "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
-else
-    echo "Already created";
 fi
 if [ ! -d ~/.modules/qiime1 ]; then
     echo "Create qiime1 environment"
     ls -a ~/.modules;
     conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1;
-else
-    echo "Already loaded";
 fi
 if [ ! -d ~/.modules/qiime2 ]; then
     echo "Create qiime2 environment"
     wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
     ls -a ~/.modules;
     conda env create --file ~/qiime2.yml --quiet -p ~/.modules/qiime2;
-else
-    echo "Already loaded";
 fi
 
 if [ ! -d ~/envmodule.tar.gz ]; then
@@ -46,9 +40,9 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     cd;
     tar -zxvf modules-4.2.1.tar.gz;
     cd ~/modules-4.2.1;
-    ./configure;
-    make;
-    sudo make install;
+    ./configure &>/dev/null;
+    make &>/dev/null;
+    sudo make install &>/dev/null;
     module use ~/.modules/modulefiles;
     module avail;
 fi
