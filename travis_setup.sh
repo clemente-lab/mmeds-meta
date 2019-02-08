@@ -40,3 +40,14 @@ if [ ! -d ~/.modules/qiime2 ]; then
 else
     echo "Already loaded";
 fi
+
+if [ ! -d ~/envmodule.tar.gz ]; then
+    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz/download ~/modules-4.2.1.tar.gz;
+    tar -zxvf modules-4.2.1.tar.gz;
+    cd ~/modules-4.2.1;
+    ./configure;
+    make;
+    sudo make install;
+    module use ~/.modules/modulefiles;
+    module avail;
+fi
