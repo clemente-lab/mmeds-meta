@@ -352,7 +352,7 @@ class MMEDSNotebook():
         nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
         module_info = self.load_info.split(';')[0]
         jupyter_cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
-        cmd = '; '.join([module_info, 'module load mmeds-stable', jupyter_cmd])
+        cmd = '; '.join([module_info, 'modulecmd bash load mmeds-stable', jupyter_cmd])
         if self.execute:
             cmd += ' --execute'
             log(cmd)

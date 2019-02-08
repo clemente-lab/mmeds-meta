@@ -34,6 +34,7 @@ fi
 if [ ! -d "~/.modules/qiime2" ]; then
     echo "Create qiime2 environment"
     wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
+    ls -a ~/;
     conda env create --file ~/qiime2.yml --quiet -p ~/.modules/qiime2;
 else
     echo "Already loaded";

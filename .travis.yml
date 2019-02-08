@@ -34,12 +34,15 @@ before_install:
     - modulecmd bash use ~/.modules/modulefiles
     - echo $PATH
 install:
+    - modulecmd bash use ~/.modules/modulefiles
+    - modulecmd bash avail
     - conda create -n mmeds-stable python=3.7 --yes --quiet &>> install_log.txt
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
 script:
-    - module avail
+    - modulecmd bash use ~/.modules/modulefiles
+    - modulecmd bash avail
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
 after_success:
