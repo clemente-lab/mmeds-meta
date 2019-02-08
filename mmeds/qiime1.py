@@ -42,11 +42,12 @@ class Qiime1(Tool):
             command = cmd.format(self.files['split_output'],
                                  self.files['reads'])
         else:
-            cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {};'
+            cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
             command = cmd.format(self.files['split_output'],
                                  self.files['reads'],
                                  self.files['barcodes'],
-                                 self.files['mapping'])
+                                 self.files['mapping'],
+                                 12)
         self.jobtext.append(command)
 
     def pick_otu(self):
