@@ -38,11 +38,16 @@ fi
 if [ ! -d ~/envmodule.tar.gz ]; then
     wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/modules-4.2.1.tar.gz;
     cd;
-    tar -zxvf modules-4.2.1.tar.gz;
+    tar -zxf modules-4.2.1.tar.gz;
+    echo "Unzipped"
     cd ~/modules-4.2.1;
+    echo "In dir";
     ./configure &>/dev/null;
+    echo "configured"
     make &>/dev/null;
-    sudo make install &>/dev/null;
+    echo "made"
+    sudo make install;
+    echo "installed"
     module use ~/.modules/modulefiles;
     module avail;
 fi
