@@ -1,5 +1,6 @@
 from pathlib import Path
 from random import choice
+from pandas import read_csv
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -97,6 +98,7 @@ TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
 TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
 
@@ -219,6 +221,25 @@ for table in TABLE_ORDER:
         TABLE_COLS[table] = results
         ALL_COLS += results
 TABLE_COLS['AdditionalMetaData'] = []
+COLUMN_TYPES = {
+
+}
+tdf = read_csv(TEST_METADATA,
+               sep='\t',
+               header=[0, 1],
+               skiprows=[2, 4],
+               na_filter=False)
+
+for table in TABLE_COLS:
+    COLUMN_TYPES[table] = {}
+    for column in TABLE_COLS[table]:
+        col_type = tdf[table][column].iloc[0]
+        if 'Text' in col_type:
+            COLUMN_TYPES[table][column] = 'str'
+        elif 'Number' in col_type:
+            COLUMN_TYPES[table][column] = 'float'
+        elif 'Date' in col_type:
+            COLUMN_TYPES[table][column] = 'datetime64'
 
 # Clean up
 del db

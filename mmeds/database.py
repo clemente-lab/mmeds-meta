@@ -7,6 +7,7 @@ import shutil
 import pickle
 import warnings
 
+from numpy import nan
 from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
@@ -644,6 +645,8 @@ class Database:
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df):
                 value = df[column][j]
+                if pd.isnull(value):  # Use NULL for NA values
+                    value = 'NULL'
                 if i == 0:
                     sql += ' '
                 else:

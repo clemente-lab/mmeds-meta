@@ -1,7 +1,5 @@
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number
-from email.message import EmailMessage
-from smtplib import SMTP
+from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
 from mmeds.error import MetaDataError, InvalidConfigError
 from subprocess import run
@@ -219,14 +217,14 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
                       (cell, row_index, col_index))
 
     # Check for consistent types in the column
-    if not issubdtype(col_type, datetime64):
+    if not (issubdtype(col_type, datetime64) or issubdtype(col_type, object)):
         # If the cast fails for this cell the data must be the wrong type
         try:
             col_type(cell)
         except ValueError:
-            errors.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
+            error.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
     # Check for empty fields
-    if '' == cell or pd.isnull(cell):
+    if '' == cell:
         errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
     if isinstance(cell, str):
@@ -316,7 +314,7 @@ def check_column(raw_column, col_index):
         errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
     # Check that values fall within standard deviation
-    if issubdtype(col_type, number):
+    if issubdtype(col_type, number) and not isinstance(raw_column.dtype, object):
         try:
             filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
             stddev = std(filtered)
@@ -326,7 +324,7 @@ def check_column(raw_column, col_index):
                     text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
                     warnings.append(text % (i + 1, col_index, cell, col_index))
         except ValueError:
-            errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
+            warnings.append("-1\t-1\tMixed Type Warning: Cannot get average of column {}. Mixed types".format(column))
     # Check for categorical data
     elif issubdtype(col_type, str):
         counts = column.value_counts()
@@ -493,10 +491,18 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                      header=[0, 1],
                      skiprows=[2, 3, 4],
                      na_filter=False)
+    df.replace('NA', nan, inplace=True)
+    log('start')
+    log(df.columns)
     # Get the tables in the dataframe while maintaining order
     tables = []
     for (table, header) in df.axes[1]:
         tables.append(table)
+        for column in df[table]:
+            try:
+                df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
+            except KeyError:
+                df[table].assign(column=df[table][column].astype('object'))
     tables = list(dict.fromkeys(tables))
 
     all_headers = []
@@ -533,6 +539,8 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     if missing_headers:
         errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
 
+    log('end')
+    log(df.columns)
     return errors, warnings, study_name, df['Subjects']
 
 
@@ -643,7 +651,7 @@ def generate_error_html(file_fp, errors, warnings):
                 try_col = col
             # Add the error/warning if there is one
             try:
-                color, issue = markup[row + 2][try_col]
+                color, issue = markup[row + 4][try_col]
                 html += '<td style="color:black" bgcolor={}>\
                     {}<div style="font-weight:bold">\
                     <br>-----------<br>{}</div></td>\n'.format(color, item, issue)

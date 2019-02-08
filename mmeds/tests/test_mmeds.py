@@ -153,6 +153,13 @@ def test_validate_mapping_files():
     assert len(errors) == 0
     assert len(warnings) == 0
 
+    with open(fig.TEST_METADATA_1) as f:
+        errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
+    assert len(errors) == 1
+    assert 'Empty Cell' in errors[-1]
+    assert len(warnings) == 1
+    assert 'Categorical Data Warning' in warnings[-1]
+
     with open(fig.TEST_METADATA_VALID) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
     assert 'Missing required fields' in errors[-1]

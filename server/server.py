@@ -148,6 +148,7 @@ class MMEDSserver(object):
             # If there are errors report them and return the error page
             if len(errors) > 0:
                 log('Errors in metadata')
+                log('\n'.join(errors))
                 cp.session['error_file'] = cp.session['working_dir'] / ('errors_' + str(myMetaData.filename))
                 # Write the errors to a file
                 with open(cp.session['error_file'], 'w') as f:
