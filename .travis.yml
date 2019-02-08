@@ -21,7 +21,7 @@ before_install:
     - module --version
     - module avail
     - echo $PATH
-    - module use ~/.modules/modulefiles
+    - modulecmd bash use ~/.modules/modulefiles
     - echo $PATH
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
