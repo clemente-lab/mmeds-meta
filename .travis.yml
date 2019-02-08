@@ -12,13 +12,14 @@ services:
     - mysql
     - mongodb
 before_install:
-    - sudo apt-get install tcl tcl8.4-dev environment-modules
+    - sudo apt-get install tcl tcl8.4-dev environment-modules Lmod
     - yes | add.modules || echo "Okay";
     - sed -i '7 s/^/#/' ~/.bashrc
     - sed -i '8 s/^#//' ~/.bashrc
     - source ~/.bashrc
     - source ~/.bash_profile
     - module --version
+    - module avail
     - modulecmd bash avail
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
@@ -35,6 +36,8 @@ before_install:
     - ls ~/.modules
     - ls ~/.modules/modulefiles
     - modulecmd bash avail
+    - module use ~/.modules/modulefiles
+    - module avail
     - bash travis_setup.sh
 install:
     - modulecmd bash use ~/.modules/modulefiles
