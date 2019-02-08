@@ -36,7 +36,7 @@ if [ ! -d ~/.modules/qiime2 ]; then
 fi
 
 if [ ! -d ~/envmodule.tar.gz ]; then
-    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz/download ~/modules-4.2.1.tar.gz;
+    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/modules-4.2.1.tar.gz;
     cd;
     tar -zxvf modules-4.2.1.tar.gz;
     cd ~/modules-4.2.1;
