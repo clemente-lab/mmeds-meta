@@ -33,7 +33,7 @@ before_install:
     - modulecmd bash use ~/.modules/modulefiles
     - echo $PATH
     - ls ~/.modules
-    - ls ~/.modulefiles
+    - ls ~/.modules/modulefiles
     - modulecmd bash avail
     - bash travis_setup.sh
 install:

@@ -350,9 +350,11 @@ class MMEDSNotebook():
         :nn: A python notebook object.
         """
         nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
-        module_info = self.load_info.split(';')[0]
+        module_info = self.load_info.split(';')
         jupyter_cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
-        cmd = '; '.join([module_info, 'modulecmd bash load mmeds-stable', jupyter_cmd])
+        cmd = '; '.join([module_info[0],
+                         '{} mmeds-stable'.format(' '.join(module_info[1].split(' ')[0:1])),
+                         jupyter_cmd])
         if self.execute:
             cmd += ' --execute'
             log(cmd)
