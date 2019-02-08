@@ -137,7 +137,7 @@ class Qiime1(Tool):
         if self.testing:
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
-                f.write('#!/usr/bin/env bash\n')
+                f.write('#!/bin/bash -l\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
             run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
