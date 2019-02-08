@@ -139,9 +139,14 @@ class Qiime1(Tool):
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
                 f.write('#!/bin/bash -l\n')
+                f.write('echo $USER')
+                f.write('echo $HOME')
+                f.write('echo $PATH')
+                f.write('ls ~/.modules')
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+            # run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+            run('bash {}.lsf'.format(jobfile), shell=True, check=True)
         else:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
