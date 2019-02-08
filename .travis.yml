@@ -29,10 +29,13 @@ before_install:
     - ~/miniconda.sh -b &> ~/install_log.txt
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>> ~/install_log.txt
-    - bash travis_setup.sh
     - echo $PATH
     - modulecmd bash use ~/.modules/modulefiles
     - echo $PATH
+    - ls ~/.modules
+    - ls ~/.modulefiles
+    - modulecmd bash avail
+    - bash travis_setup.sh
 install:
     - modulecmd bash use ~/.modules/modulefiles
     - modulecmd bash avail
