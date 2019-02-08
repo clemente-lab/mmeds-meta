@@ -12,7 +12,7 @@ class Qiime1(Tool):
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
         if testing:
-            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime1;')
+            self.jobtext.append('modulecmd bash use ~/.modules/modulefiles; modulecmd bash load qiime1;')
             settings = [
                 'alpha_diversity:metrics	shannon'
             ]
