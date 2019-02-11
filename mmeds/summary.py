@@ -353,7 +353,7 @@ class MMEDSNotebook():
         module_info = self.load_info.split(';')
         jupyter_cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
         cmd = '; '.join([module_info[0],
-                         '{} mmeds-stable'.format(' '.join(module_info[1].split(' ')[0:1])),
+                         'module load mmeds-stable',
                          jupyter_cmd])
         if self.execute:
             cmd += ' --execute'
@@ -361,7 +361,6 @@ class MMEDSNotebook():
             # Mute output
             cmd += ' &>/dev/null;'
             run('bash -c "{}"'.format(cmd), shell=True, check=True)
-
 
         # Convert to pdf
         cmd = 'pdflatex {name}.tex'.format(name=self.name)
