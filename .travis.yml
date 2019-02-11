@@ -37,7 +37,10 @@ install:
 script:
     - module use ~/.modules/modulefiles
     - module avail
+    - echo $PATH
     - module load qiime1
+    - echo $PATH
+    - cat ~/.modules/modulefiles/qiime1
     - validate_mapping_file.py --help
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
