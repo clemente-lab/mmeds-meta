@@ -18,7 +18,7 @@ class Qiime1(Tool):
                 'alpha_diversity:metrics	shannon'
             ]
         else:
-            self.jobtext.append('module load qiime/1.9.1;')
+            self.jobtext.append('module use $MMEDS/.modules/modulefiles; module load qiime/1.9.1;')
             settings = [
                 'pick_otus:enable_rev_strand_match	True',
                 'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species'

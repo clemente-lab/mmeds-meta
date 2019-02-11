@@ -255,7 +255,7 @@ class Tool:
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append('module purge;')
+        self.jobtext.append(self.jobtext[0].replace('load', 'unload'))
         self.jobtext.append('module load mmeds-stable;')
         cmd = [
             'summarize.py ',

@@ -17,7 +17,7 @@ class Qiime2(Tool):
             #  self.jobtext.append('modulecmd bash use ~/.modules/modulefiles; modulecmd bash load qiime2;')
             self.jobtext.append('module use ~/.modules/modulefiles; module load qiime2;')
         else:
-            self.jobtext.append('module use /hpc/packages/minerva-common/modulefiles; module load qiime2/2018.4;')
+            self.jobtext.append('module use $MMEDS/.modules/modulefiles; module use /hpc/packages/minerva-common/modulefiles; module load qiime2/2018.4;')
 
     # ======================= #
     # # # Qiime2 Commands # # #
