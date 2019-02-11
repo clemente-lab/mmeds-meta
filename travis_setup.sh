@@ -40,9 +40,9 @@ if [ ! -d ~/.modules/qiime2 ]; then
 fi
 
 if [ ! -d ~/envmodule.tar.gz ]; then
-    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/modules-4.2.1.tar.gz;
+    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/modules-4.2.1.tar.gz &>/dev/null;
     cd;
-    tar -zxf modules-4.2.1.tar.gz;
+    tar -zxf modules-4.2.1.tar.gz &>/dev/null;
     echo "Unzipped"
     cd ~/modules-4.2.1;
     echo "In dir";
@@ -55,5 +55,5 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     export PATH="$HOME/.local/bin:$PATH"
     sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
     sed -e "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
-    tail ~/.basrc;
+    tail ~/.bashrc;
 fi
