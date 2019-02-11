@@ -46,7 +46,7 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     echo "Unzipped"
     cd ~/modules-4.2.1;
     echo "In dir";
-    ./configure --prefix=~/.local --modulefilesdir=~/.modules/modulefiles;
+    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles";
     echo "configured"
     make &>/dev/null;
     echo "made"
@@ -54,7 +54,7 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     echo "installed"
     sudo make testinstall;
     export PATH="$HOME/.local/bin:$PATH"
-    sudo ln -s ~/.local/init/profile.sh /etc/profile.d/modules.sh;
+    sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
     sed -e "\$asource ~/.local/init/bash";
     source ~/.bashrc;
     sudo make testinstall;
