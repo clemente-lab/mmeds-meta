@@ -191,7 +191,7 @@ class MMEDSserver(object):
             return page
 
     @cp.expose
-    def process_data(self, reads, barcodes, public='off'):
+    def process_data(self, for_reads, rev_reads, barcodes, public='off'):
         log('In process_data')
         cp.log('In process_data')
         try:
@@ -207,7 +207,8 @@ class MMEDSserver(object):
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
                         args=(metadata,
-                              reads,
+                              for_reads,
+                              rev_reads,
                               barcodes,
                               username,
                               self.testing))

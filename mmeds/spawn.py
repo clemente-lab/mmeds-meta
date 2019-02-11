@@ -59,7 +59,7 @@ def handle_modify_data(access_code, myData, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def handle_data_upload(metadata, reads, barcodes, username, testing):
+def handle_data_upload(metadata, for_reads, rev_reads, barcodes, username, testing):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -81,11 +81,15 @@ def handle_data_upload(metadata, reads, barcodes, username, testing):
     with open(metadata, 'rb') as f:
         metadata_copy = create_local_copy(f, metadata.name, new_dir)
 
-    # Create a copy of the Data file
-    if reads.file is not None:
-        reads_copy = create_local_copy(reads.file, reads.filename, new_dir)
+    # Create a copy of the Data files
+    if for_reads.file is not None:
+        for_reads_copy = create_local_copy(for_reads.file, for_reads.filename, new_dir)
     else:
-        reads_copy = None
+        for_reads_copy = None
+    if rev_reads.file is not None:
+        rev_reads_copy = create_local_copy(rev_reads.file, rev_reads.filename, new_dir)
+    else:
+        rev_reads_copy = None
 
     # Create a copy of the Data file
     if barcodes.file is not None:
@@ -98,7 +102,8 @@ def handle_data_upload(metadata, reads, barcodes, username, testing):
     with Database(new_dir, owner=username, testing=testing) as db:
         access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                           'qiime',
-                                                          reads=reads_copy,
+                                                          for_reads=for_reads_copy,
+                                                          rev_reads=rev_reads_copy,
                                                           barcodes=barcodes_copy)
     log('Added to database')
 
