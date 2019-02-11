@@ -54,6 +54,6 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     echo "installed"
     export PATH="$HOME/.local/bin:$PATH"
     sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
-    sed -e "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
+    sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
     tail ~/.bashrc;
 fi
