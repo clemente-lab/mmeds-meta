@@ -19,17 +19,15 @@ before_install:
       -in ./mmeds/secrets.py.enc -out ./mmeds/secrets.py -d
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh --quiet
     - chmod +x ~/miniconda.sh
-    - ~/miniconda.sh -b &> ~/install_log.txt
+    - ~/miniconda.sh -b &>/dev/null
     - export PATH=~/miniconda2/bin:$PATH
-    - conda update --yes conda &>> ~/install_log.txt
+    - conda update --yes conda &>/dev/null
     - echo $PATH
     - ls ~/.modules
     - ls ~/.modules/modulefiles
     - bash travis_setup.sh
 install:
     - source ~/.bashrc
-    - $SHELL
-    - chsh $USER -s /bin/bash
     - module use ~/.modules/modulefiles
     - module avail
     - echo $PATH
