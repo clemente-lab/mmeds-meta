@@ -358,10 +358,10 @@ class MMEDSNotebook():
         if self.execute:
             cmd += ' --execute'
             log(cmd)
-            run(cmd, shell=True, check=True)
+            # Mute output
+            cmd += ' &>/dev/null;'
+            run('bash -c "{}"'.format(cmd), shell=True, check=True)
 
-        # Mute output
-        cmd += ' &>/dev/null;'
 
         # Convert to pdf
         cmd = 'pdflatex {name}.tex'.format(name=self.name)

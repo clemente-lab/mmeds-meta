@@ -12,6 +12,7 @@ git:
 services:
     - mysql
     - mongodb
+    - xvfb
 before_install:
     - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
       -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
@@ -26,6 +27,7 @@ before_install:
     - ls ~/.modules
     - ls ~/.modules/modulefiles
     - bash travis_setup.sh
+    - sudo apt-get install texlive-latex-base
 install:
     - source ~/.bashrc
     - module use ~/.modules/modulefiles
