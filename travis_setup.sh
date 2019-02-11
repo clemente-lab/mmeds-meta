@@ -46,16 +46,19 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     echo "Unzipped"
     cd ~/modules-4.2.1;
     echo "In dir";
-    ./configure --prefix=~/.local --modulefilesdir=~/.modules/modulefiles &>/dev/null;
+    ./configure --prefix=~/.local --modulefilesdir=~/.modules/modulefiles;
     echo "configured"
     make &>/dev/null;
     echo "made"
     sudo make install;
     echo "installed"
+    sudo make testinstall;
     export PATH="$HOME/.local/bin:$PATH"
-    ln -s ~/.local/init/profile.sh /etc/profile.d/modules.sh
-    sed -e "\$asource ~/.local/init/bash"
-    yes | add.modules || echo "Okay";
+    sudo ln -s ~/.local/init/profile.sh /etc/profile.d/modules.sh;
+    sed -e "\$asource ~/.local/init/bash";
+    source ~/.bashrc;
+    sudo make testinstall;
+    #yes | add.modules || echo "Okay";
     module use ~/.modules/modulefiles;
     module avail;
 fi

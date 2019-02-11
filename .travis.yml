@@ -26,8 +26,9 @@ before_install:
     - ls ~/.modules/modulefiles
     - bash travis_setup.sh
 install:
-    - modulecmd bash use ~/.modules/modulefiles
-    - modulecmd bash avail
+    - source ~/.bashrc
+    - module use ~/.modules/modulefiles
+    - module avail
     - conda create -n mmeds-stable python=3.7 --yes --quiet &>> install_log.txt
     - source activate mmeds-stable
     - pip install .
