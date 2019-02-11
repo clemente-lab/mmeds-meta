@@ -4,6 +4,8 @@
 [![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Feature-CheckConfigColumns/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 
 
+testing integration
+
 ## Instructions
 
 In order to run the mmeds server locally you will need.
