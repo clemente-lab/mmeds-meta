@@ -83,8 +83,7 @@ class Qiime1(Tool):
                                  self.config['sampling_depth'],
                                  self.path / 'params.txt')
         if not self.testing:
-
-            command = command.strip(';') + '{};'.format(','.join(self.config['metadata']))
+            command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
 
         self.jobtext.append(command)
 
