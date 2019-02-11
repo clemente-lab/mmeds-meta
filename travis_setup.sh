@@ -57,7 +57,7 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
     sed -e "\$asource ~/.local/init/bash";
     source ~/.bashrc;
-    sudo make testinstall;
+    #sudo make testinstall;
     #yes | add.modules || echo "Okay";
     module use ~/.modules/modulefiles;
     module avail;
