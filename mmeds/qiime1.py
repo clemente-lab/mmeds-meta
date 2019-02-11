@@ -145,7 +145,7 @@ class Qiime1(Tool):
                 f.write('\n'.join(self.jobtext))
             # Run the command
             # run('bash {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
-            run('bash {}.lsf'.format(jobfile), shell=True, check=True)
+            run('bash -c "bash {}.lsf"'.format(jobfile), shell=True, check=True)
         else:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:

@@ -39,7 +39,7 @@ if [ ! -d ~/.modules/qiime2 ]; then
     conda env create --file ~/qiime2.yml --quiet -p ~/.modules/qiime2;
 fi
 
-if [ ! -d ~/envmodule.tar.gz ]; then
+if [ ! -d ~/.local ]; then
     wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/modules-4.2.1.tar.gz &>/dev/null;
     cd;
     tar -zxf modules-4.2.1.tar.gz &>/dev/null;

@@ -5,6 +5,7 @@ sudo: true
 cache:
     directories:
         - ~/.modules
+        - ~/.local
     timeout: 1000
 git:
     depth: 1
