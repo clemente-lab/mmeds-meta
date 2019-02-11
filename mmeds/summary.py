@@ -359,7 +359,7 @@ class MMEDSNotebook():
             cmd += ' --execute'
             log(cmd)
             # Mute output
-            cmd += ' &>/dev/null;'
+            #  cmd += ' &>/dev/null;'
             run('bash -c "{}"'.format(cmd), shell=True, check=True)
 
         # Convert to pdf
