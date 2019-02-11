@@ -32,15 +32,15 @@ rm -rf ~/.modules/modulefiles/*;
 
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
-    printf "#%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin" > ~/.modules/modulefiles/qiime1
+    printf "#%%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin" > ~/.modules/modulefiles/qiime1
 fi
 if [ ! -f ~/.modules/modulefiles/qiime2 ]; then
     echo "Create qiime2 module";
-    printf "#%Module1.0\n## qiime2 modulefile\nset curMod [module-info name]\nmodule-info name qiime2\nmodule-info version 2019.1\nprepend-path PATH ~/.modules/qiime2/bin" > ~/.modules/modulefiles/qiime2
+    printf "#%%Module1.0\n## qiime2 modulefile\nset curMod [module-info name]\nmodule-info name qiime2\nmodule-info version 2019.1\nprepend-path PATH ~/.modules/qiime2/bin" > ~/.modules/modulefiles/qiime2
 fi
 if [ ! -f ~/.modules/modulefiles/mmeds-stable ]; then
     echo "Create mmeds-stable module";
-    printf "#%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
+    printf "#%%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
 fi
 
 if [ ! -d ~/.local/modules-4.2.1.tar.gz ]; then
@@ -48,7 +48,7 @@ if [ ! -d ~/.local/modules-4.2.1.tar.gz ]; then
     cd ~/.local;
     tar -zxf modules-4.2.1.tar.gz &>/dev/null;
     echo "Unzipped"
-    cd ~/modules-4.2.1;
+    cd modules-4.2.1;
     echo "In dir";
     ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
     echo "configured"
