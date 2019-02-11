@@ -3,6 +3,10 @@ if [ ! -f ~/.install_log.txt ]; then
     touch ~/.install_log.txt;
 fi
 
+if [ ! -d ~/.local ]; then
+    mkdir "$HOME/.local";
+fi
+
 if [ ! -d ~/.modules ]; then
     echo "Make .modules";
     mkdir ~/.modules
@@ -42,12 +46,14 @@ if [ ! -d ~/envmodule.tar.gz ]; then
     echo "Unzipped"
     cd ~/modules-4.2.1;
     echo "In dir";
-    ./configure &>/dev/null;
+    ./configure --prefix "$HOME/.local" &>/dev/null;
     echo "configured"
     make &>/dev/null;
     echo "made"
     sudo make install;
     echo "installed"
+    export PATH="$HOME/.local/bin:$PATH"
+    yes | add.modules || echo "Okay";
     module use ~/.modules/modulefiles;
     module avail;
 fi

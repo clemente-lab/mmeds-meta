@@ -25,9 +25,6 @@ before_install:
     - ls ~/.modules
     - ls ~/.modules/modulefiles
     - bash travis_setup.sh
-    - yes | add.modules || echo "Okay";
-    - module use ~/.modules/modulefiles
-    - module avail
 install:
     - modulecmd bash use ~/.modules/modulefiles
     - modulecmd bash avail

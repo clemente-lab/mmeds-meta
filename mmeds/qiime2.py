@@ -192,14 +192,14 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def core_diversity(self, p_sampling_depth=1109):
+    def core_diversity(self):
         """ Run core diversity """
         self.add_path('core_metrics_results', '')
         cmd = [
             'qiime diversity core-metrics-phylogenetic',
             '--i-phylogeny {}'.format(self.files['rooted_tree']),
             '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
-            '--p-sampling-depth {}'.format(p_sampling_depth),
+            '--p-sampling-depth {}'.format(self.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.files['mapping']),
             '--p-n-jobs {} '.format(self.num_jobs),
             '--output-dir {};'.format(self.files['core_metrics_results'])
