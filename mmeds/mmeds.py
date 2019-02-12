@@ -446,6 +446,7 @@ def check_table(table_df, name, all_headers, study_name):
     :study_name: None if no StudyName column has been seen yet,
         otherwise with have the previously seen StudyName
     """
+    log('In check_table')
     errors = []
     warnings = []
     start_col = None
@@ -484,6 +485,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     Returns a list of the errors, an empty list means there
     were no issues.
     """
+    log('In validate_mapping_file')
     errors = []
     warnings = []
     df = pd.read_csv(file_fp,
@@ -492,8 +494,6 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                      skiprows=[2, 3, 4],
                      na_filter=False)
     df.replace('NA', nan, inplace=True)
-    log('start')
-    log(df.columns)
     # Get the tables in the dataframe while maintaining order
     tables = []
     for (table, header) in df.axes[1]:
@@ -539,8 +539,6 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     if missing_headers:
         errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
 
-    log('end')
-    log(df.columns)
     return errors, warnings, study_name, df['Subjects']
 
 
@@ -584,7 +582,6 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
-        log('File opened')
         while True:
             data = fp.read(8192)
             nf.write(data)
