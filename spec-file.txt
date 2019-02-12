@@ -43,7 +43,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libpng-1.6.36-hbc83047_0.tar.bz2
 https://repo.continuum.io/pkgs/main/linux-64/libssh2-1.8.0-h1ba5d50_4.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/libtiff-4.0.10-h2733197_1001.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/libxml2-2.9.9-he19cac6_0.tar.bz2
-https://repo.continuum.io/pkgs/main/linux-64/pandoc-2.2.3.2-0.tar.bz2
+https://repo.continuum.io/pkgs/main/linux-64/pandoc-1.19.2.1-hea2e7c5_1.tar.bz2
 https://repo.continuum.io/pkgs/main/linux-64/readline-7.0-h7b6447c_5.tar.bz2
 https://repo.continuum.io/pkgs/main/linux-64/tk-8.6.8-hbc83047_0.tar.bz2
 https://repo.continuum.io/pkgs/main/linux-64/zeromq-4.2.5-hf484d3e_1.tar.bz2
@@ -67,10 +67,12 @@ https://repo.anaconda.com/pkgs/main/linux-64/certifi-2018.11.29-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/click-7.0-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/curl-7.63.0-hbc83047_1000.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/decorator-4.3.0-py37_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/linux-64/defusedxml-0.5.0-py37_1.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/entrypoints-0.3-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/ipython_genutils-0.2.0-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/kiwisolver-1.0.1-py37hf484d3e_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/lxml-4.3.0-py37hefd8a0e_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/linux-64/markupsafe-1.1.0-py37h7b6447c_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/mistune-0.8.4-py37h7b6447c_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/numpy-base-1.15.4-py37hde5b4d6_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/pandocfilters-1.4.2-py37_1.tar.bz2
@@ -102,6 +104,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/setuptools-40.6.3-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/terminado-0.8.1-py37_1.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/traitlets-4.3.2-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/bleach-3.1.0-py37_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/linux-64/jinja2-2.10-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/jsonschema-2.6.0-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/jupyter_core-4.4.0-py37_0.tar.bz2
 https://repo.continuum.io/pkgs/main/linux-64/pango-1.42.4-h049681c_0.tar.bz2
@@ -113,6 +116,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-18.1-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/prompt_toolkit-2.0.7-py37_0.tar.bz2
 https://repo.anaconda.com/pkgs/r/linux-64/r-base-3.5.0-h1e0a451_1.tar.bz2
 https://repo.anaconda.com/pkgs/main/linux-64/ipython-7.2.0-py37h39e3cac_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/linux-64/nbconvert-5.4.0-py37_1.tar.bz2
 https://repo.anaconda.com/pkgs/r/linux-64/r-assertthat-0.2.0-r350h912f1d8_0.tar.bz2
 https://repo.anaconda.com/pkgs/r/linux-64/r-bh-1.66.0_1-r350h912f1d8_0.tar.bz2
 https://repo.anaconda.com/pkgs/r/linux-64/r-bindr-0.1.1-r350h912f1d8_0.tar.bz2
