@@ -7,3 +7,4 @@ omit =
     mmeds/tests/*
     **/__init__.py
     setup.py
+    **/.modules/*
