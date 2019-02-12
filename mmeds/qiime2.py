@@ -348,7 +348,7 @@ class Qiime2(Tool):
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
         self.summary()
-        log(self.jobtext)
+        log('\n'.join(self.jobtext))
 
     def run(self):
         """ Perform some analysis. """
@@ -366,7 +366,13 @@ class Qiime2(Tool):
                         f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    run('bash -c "bash {}.lsf &> {}.err"'.format(jobfile, error_log), shell=True, check=True)
+                    output = run('bash -c "bash {}.lsf"'.format(jobfile),
+                                 stdout=PIPE,
+                                 stderr=PIPE,
+                                 shell=True,
+                                 check=True)
+                    log(output.stdout.decode('utf-8').replace('\\n', '\n'))
+                    log(output.stderr.decode('utf-8').replace('\\n', '\n'))
                 else:
                     # Get the job header text from the template
                     with open(JOB_TEMPLATE) as f1:
@@ -388,8 +394,6 @@ class Qiime2(Tool):
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
-            self.write_file_locations()
-            self.summary()
             log('Send email')
             if not self.testing:
                 send_email(doc.email,

@@ -139,7 +139,13 @@ class Qiime1(Tool):
                 f.write('#!/bin/bash -l\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            run('bash -c "bash {}.lsf"'.format(jobfile), shell=True, check=True)
+            output = run('bash -c "bash {}.lsf"'.format(jobfile),
+                         stdout=PIPE,
+                         stderr=PIPE,
+                         shell=True,
+                         check=True)
+            log(output.stdout.decode('utf-8').replace('\\n', '\n'))
+            log(output.stderr.decode('utf-8').replace('\\n', '\n'))
         else:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
@@ -165,8 +171,6 @@ class Qiime1(Tool):
                 self.run_analysis()
             self.sanity_check()
             self.move_user_files()
-            self.write_file_locations()
-            self.summary()
             doc = self.db.get_metadata(self.access_code)
             if not self.testing:
                 send_email(doc.email,
