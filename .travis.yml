@@ -27,6 +27,7 @@ before_install:
     - bash travis_setup.sh
     - source ~/.bashrc
 install:
+    - conda info --envs
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql

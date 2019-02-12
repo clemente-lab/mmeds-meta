@@ -30,12 +30,8 @@ fi
 rm -rf ~/.modules/mmeds-stable;
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds environment"
-    conda create --name mmeds-stable --file spec-file.txt -p ~/.modules/mmeds-stable --quiet;
+    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --quiet;
 fi
-# Create links
-ln -s ~/.modules/qiime1 ~/miniconda2/envs/qiime1
-ln -s ~/.modules/qiime2 ~/miniconda2/envs/qiime2
-ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
     printf "#%%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin" > ~/.modules/modulefiles/qiime1
@@ -65,4 +61,10 @@ if [ ! -d ~/.local/modules-4.2.1.tar.gz ]; then
     sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
     sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
 fi
+
+# Create links
+ln -s ~/.modules/qiime1 ~/miniconda2/envs/qiime1
+ln -s ~/.modules/qiime2 ~/miniconda2/envs/qiime2
+ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable
+
 cd $REPO_DIR
