@@ -27,9 +27,8 @@ before_install:
     - bash travis_setup.sh
 install:
     - source ~/.bashrc
-    - conda create -n mmeds-stable python=3.7 --yes --quiet &>/dev/null
     - source activate mmeds-stable
-    - pip install . &>/dev/null
+    - pip install .
     - mysql -u root < setup.sql
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
