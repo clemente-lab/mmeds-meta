@@ -287,7 +287,7 @@ class Qiime2(Tool):
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['demux_viz'],
                                                                 self.path / 'temp')
-        run(cmd, shell=True, check=True)
+        run('bash -c "{}"'.format(cmd), shell=True, check=True)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
@@ -297,11 +297,12 @@ class Qiime2(Tool):
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['table_{}'.format(self.atype)],
                                                                 self.path / 'temp')
-        run(cmd, shell=True, check=True)
+        run('bash -c "{}"'.format(cmd), shell=True, check=True)
         log(cmd)
 
-        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0], self.path / 'temp' / 'feature-table.biom')
-        result = run(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0],
+                                                     self.path / 'temp' / 'feature-table.biom')
+        result = run('bash -c "{}"'.format(cmd), stdout=PIPE, stderr=PIPE, shell=True)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
         rmtree(self.path / 'temp')
 

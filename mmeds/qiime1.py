@@ -93,8 +93,7 @@ class Qiime1(Tool):
             # Count the sequences prior to diversity analysis
             cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
                                                   self.files['split_output'] / 'seqs.fna')
-            log('Run command: {}'.format(cmd))
-            output = run(cmd, shell=True, check=True, stdout=PIPE)
+            output = run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE)
             out = output.stdout.decode('utf-8')
             log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])

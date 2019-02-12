@@ -1,7 +1,7 @@
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
-from subprocess import run
+from subprocess import run, PIPE
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
 
@@ -360,14 +360,17 @@ class MMEDSNotebook():
             log(cmd)
             # Mute output
             #  cmd += ' &>/dev/null;'
-            run('bash -c "{}"'.format(cmd), shell=True, check=True)
+            run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE, stderr=PIPE)
 
         # Convert to pdf
         cmd = 'pdflatex {name}.tex'.format(name=self.name)
         # Run the command twice because otherwise the chapter
         # headings don't show up...
-        run(cmd, shell=True, check=True)
-        run(cmd, shell=True, check=True)
+        try:
+            output = run(cmd, shell=True, check=True, stdout=PIPE, stderr=PIPE)
+            output = run(cmd, shell=True, check=True, stdout=PIPE, stderr=PIPE)
+        except RuntimeError:
+            print(output)
 
     def create_notebook(self):
         log('Start summary notebook')
