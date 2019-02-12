@@ -25,13 +25,12 @@ before_install:
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>/dev/null
     - bash travis_setup.sh
-install:
     - source ~/.bashrc
-      #- conda env create --file environment.yml --quiet;
-    - conda create --name mmeds-stable --file spec-file.txt;
+install:
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
+    - Rscript setup.R;
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py

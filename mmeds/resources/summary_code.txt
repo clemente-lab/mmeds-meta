@@ -53,10 +53,10 @@ shuffle(max_colors, lambda: 0.25)
 =====
 r_setup<source>
 %%R -i max_colors -i max_colors_con -o allRGB -o allRGBCon
-require(ggplot2)
-require(RColorBrewer)
-require(GGally)
-require(ggrepel)
+library(ggplot2)
+library(RColorBrewer)
+library(GGally)
+library(ggrepel)
 
 # Create custom color palette
 myColors <- brewer.pal(12, "Paired")

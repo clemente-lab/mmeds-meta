@@ -1,4 +1,6 @@
 #!/bin/bash -l
+export REPO_DIR=$(pwd)
+
 if [ ! -f ~/.install_log.txt ]; then
     touch ~/.install_log.txt;
 fi
@@ -24,10 +26,16 @@ if [ ! -d ~/.modules/qiime2 ]; then
     wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
     conda env create --file ~/qiime2.yml --quiet -p ~/.modules/qiime2;
 fi
+# Temp
+rm -rf ~/.modules/mmeds-stable;
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds environment"
-    conda env create --file environment.yml --quiet -p ~/.modules/mmeds-stable;
+    conda create --name mmeds-stable --file spec-file.txt -p ~/.modules/mmeds-stable --quiet;
 fi
+# Create links
+ln -s ~/.modules/qiime1 ~/miniconda2/envs/qiime1
+ln -s ~/.modules/qiime2 ~/miniconda2/envs/qiime2
+ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
     printf "#%%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin" > ~/.modules/modulefiles/qiime1
@@ -38,7 +46,7 @@ if [ ! -f ~/.modules/modulefiles/qiime2 ]; then
 fi
 if [ ! -f ~/.modules/modulefiles/mmeds-stable ]; then
     echo "Create mmeds-stable module";
-    printf "#%%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/miniconda2/envs/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
+    printf "#%%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/.modules/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
 fi
 if [ ! -d ~/.local/modules-4.2.1.tar.gz ]; then
     wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/.local/modules-4.2.1.tar.gz &>/dev/null;
@@ -57,3 +65,4 @@ if [ ! -d ~/.local/modules-4.2.1.tar.gz ]; then
     sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
     sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
 fi
+cd $REPO_DIR
