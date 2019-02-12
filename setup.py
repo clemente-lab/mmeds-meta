@@ -35,6 +35,7 @@ setup(name='mmeds',
           'pint',
           'jupyter',
           'pillow',
+          'rpy2',
           'locustio',
           'codecov',
           'pytest-cov'
