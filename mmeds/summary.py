@@ -349,28 +349,28 @@ class MMEDSNotebook():
         ==========================================
         :nn: A python notebook object.
         """
-        nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
-        module_info = self.load_info.split(';')
-        jupyter_cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
-        cmd = '; '.join([module_info[0],
-                         'module load mmeds-stable',
-                         jupyter_cmd])
-        if self.execute:
-            cmd += ' --execute'
-            log(cmd)
+        try:
+            nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
+            module_info = self.load_info.split(';')
+            jupyter_cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
+            cmd = '; '.join([module_info[0],
+                             'module load mmeds-stable',
+                             jupyter_cmd])
+            if self.execute:
+                cmd += ' --execute'
             # Mute output
             #  cmd += ' &>/dev/null;'
-            run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE, stderr=PIPE)
+            output = run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE, stderr=PIPE)
 
-        # Convert to pdf
-        cmd = 'pdflatex {name}.tex'.format(name=self.name)
-        # Run the command twice because otherwise the chapter
-        # headings don't show up...
-        try:
+            # Convert to pdf
+            cmd = 'pdflatex {name}.tex'.format(name=self.name)
+            # Run the command twice because otherwise the chapter
+            # headings don't show up...
             output = run(cmd, shell=True, check=True, stdout=PIPE, stderr=PIPE)
             output = run(cmd, shell=True, check=True, stdout=PIPE, stderr=PIPE)
         except RuntimeError:
             print(output)
+            log(output)
 
     def create_notebook(self):
         log('Start summary notebook')

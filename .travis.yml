@@ -5,7 +5,14 @@ sudo: true
 addons:
     apt:
         packages:
-            - texlive-full
+            - texlive-latex-base
+            - texlive-latex-extra
+            - texlive-latex-recommended
+            - texlive-generic-recommended
+            - texlive-pictures
+            - texlive-publishers
+            - texlive-fonts-recommended
+            - texlive-fonts-extra
 cache:
     directories:
         - ~/.modules
@@ -38,6 +45,7 @@ install:
     - mysql -u root < setup.sql
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+    - tail -n 100 ~/mmeds_server_data/mmeds_log.txt
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
 after_success:
     - bash <(curl -s https://codecov.io/bash)

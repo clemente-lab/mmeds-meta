@@ -6,8 +6,6 @@ from mmeds.summary import summarize_qiime
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
-from shutil import rmtree
-
 import mmeds.config as fig
 
 
@@ -75,10 +73,14 @@ class AnalysisTests(TestCase):
                         tool)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
-    def test_spawn_functions(self):
+    def test_a_qiime2(self):
+        self.handle_data_upload()
+        self.handle_modify_data()
+        self.spawn_analysis('qiime2-dada2', 0)
+        self.summarize(0, 'qiime2')
+
+    def test_b_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
         self.summarize(0, 'qiime1')
-        self.spawn_analysis('qiime2-dada2', 1)
-        self.summarize(1, 'qiime2')
