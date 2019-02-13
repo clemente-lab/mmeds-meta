@@ -4,8 +4,7 @@ exclude_lines =
 
 [run]
 omit =
-    mmeds/spawn.py
-    mmeds/summary.py
     mmeds/tests/*
     **/__init__.py
     setup.py
+    **/.modules/*

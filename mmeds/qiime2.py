@@ -14,9 +14,11 @@ class Qiime2(Tool):
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
         if testing:
-            self.jobtext.append('source activate qiime2;')
+            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime2;')
         else:
-            self.jobtext.append('module use /hpc/packages/minerva-common/modulefiles; module load qiime2/2018.4;')
+            self.jobtext.append('; '.join(['module use $MMEDS/.modules/modulefiles',
+                                           'module use /hpc/packages/minerva-common/modulefiles',
+                                           'module load qiime2/2018.4;']))
 
     # ======================= #
     # # # Qiime2 Commands # # #
@@ -191,14 +193,14 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def core_diversity(self, p_sampling_depth=1109):
+    def core_diversity(self):
         """ Run core diversity """
         self.add_path('core_metrics_results', '')
         cmd = [
             'qiime diversity core-metrics-phylogenetic',
             '--i-phylogeny {}'.format(self.files['rooted_tree']),
             '--i-table {}'.format(self.files['table_{}'.format(self.atype)]),
-            '--p-sampling-depth {}'.format(p_sampling_depth),
+            '--p-sampling-depth {}'.format(self.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.files['mapping']),
             '--p-n-jobs {} '.format(self.num_jobs),
             '--output-dir {};'.format(self.files['core_metrics_results'])
@@ -277,26 +279,6 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def summary(self):
-        """ Add commands for creating the summary. """
-
-        self.add_path('summary')
-        if not (self.path / 'summary').is_dir():
-            (self.path / 'summary').mkdir()
-
-        self.jobtext.append('source deactivate;')
-        self.jobtext.append('module unload qiime2/2018.4;')
-        self.jobtext.append('source activate mmeds-stable;')
-
-        cmd = [
-            'summarize.py ',
-            '--path {}'.format(self.path),
-            '--tool_type qiime2',
-            '--metadata {}'.format(','.join(self.config['metadata'])),
-            '--load_info "{}";'.format(self.jobtext[0])
-        ]
-        self.jobtext.append(' '.join(cmd))
-
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
@@ -305,7 +287,7 @@ class Qiime2(Tool):
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['demux_viz'],
                                                                 self.path / 'temp')
-        run(cmd, shell=True, check=True)
+        run('bash -c "{}"'.format(cmd), shell=True, check=True)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
@@ -315,11 +297,12 @@ class Qiime2(Tool):
         cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
                                                                 self.files['table_{}'.format(self.atype)],
                                                                 self.path / 'temp')
-        run(cmd, shell=True, check=True)
+        run('bash -c "{}"'.format(cmd), shell=True, check=True)
         log(cmd)
 
-        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0], self.path / 'temp' / 'feature-table.biom')
-        result = run(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0],
+                                                     self.path / 'temp' / 'feature-table.biom')
+        result = run('bash -c "{}"'.format(cmd), stdout=PIPE, stderr=PIPE, shell=True)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
         rmtree(self.path / 'temp')
 
@@ -365,7 +348,7 @@ class Qiime2(Tool):
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
         self.summary()
-        log(self.jobtext)
+        log('\n'.join(self.jobtext))
 
     def run(self):
         """ Perform some analysis. """
@@ -380,9 +363,16 @@ class Qiime2(Tool):
                 if self.testing:
                     # Open the jobfile to write all the commands
                     with open(str(jobfile) + '.lsf', 'w') as f:
+                        f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+                    output = run('bash -c "bash {}.lsf"'.format(jobfile),
+                                 stdout=PIPE,
+                                 stderr=PIPE,
+                                 shell=True,
+                                 check=True)
+                    log(output.stdout.decode('utf-8').replace('\\n', '\n'))
+                    log(output.stderr.decode('utf-8').replace('\\n', '\n'))
                 else:
                     # Get the job header text from the template
                     with open(JOB_TEMPLATE) as f1:
@@ -404,16 +394,15 @@ class Qiime2(Tool):
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
-            self.write_file_locations()
-            self.summary()
             log('Send email')
-            send_email(doc.email,
-                       doc.owner,
-                       'analysis',
-                       analysis_type='Qiime2 (2018.4) ' + self.atype,
-                       study_name=doc.study,
-                       summary=self.path / 'summary/analysis.pdf',
-                       testing=self.testing)
+            if not self.testing:
+                send_email(doc.email,
+                           doc.owner,
+                           'analysis',
+                           analysis_type='Qiime2 (2018.4) ' + self.atype,
+                           study_name=doc.study,
+                           summary=self.path / 'summary/analysis.pdf',
+                           testing=self.testing)
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
