@@ -148,6 +148,7 @@ class MMEDSserver(object):
             # If there are errors report them and return the error page
             if len(errors) > 0:
                 log('Errors in metadata')
+                log('\n'.join(errors))
                 cp.session['error_file'] = cp.session['working_dir'] / ('errors_' + str(myMetaData.filename))
                 # Write the errors to a file
                 with open(cp.session['error_file'], 'w') as f:
@@ -204,12 +205,26 @@ class MMEDSserver(object):
             else:
                 username = self.get_user()
 
+            if for_reads is None:
+                for_reads_upload = (None, None)
+            else:
+                for_reads_upload = (for_reads.filename, for_reads.file)
+            if rev_reads is None:
+                rev_reads_upload = (None, None)
+            else:
+                rev_reads_upload = (rev_reads.filename, rev_reads.file)
+
+            if barcodes is None:
+                barcodes_upload = (None, None)
+            else:
+                barcodes_upload = (barcodes.filename, barcodes.file)
+
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
                         args=(metadata,
-                              for_reads,
-                              rev_reads,
-                              barcodes,
+                              for_reads_upload,
+                              rev_reads_upload,
+                              barcodes_upload,
                               username,
                               self.testing))
             log('Starting upload process')
@@ -252,13 +267,10 @@ class MMEDSserver(object):
         log('In modify_upload')
         try:
             try:
-                with Database('.', owner=self.get_user(), testing=testing) as db:
-                    # Create a copy of the Data file
-                    files, path = db.get_mongo_files(access_code=access_code)
                 # Start a process to handle loading the data
                 p = Process(target=handle_modify_data,
                             args=(access_code,
-                                  myData,
+                                  (myData.filename, myData.file),
                                   self.get_user(),
                                   data_type,
                                   self.testing))
