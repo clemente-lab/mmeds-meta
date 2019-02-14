@@ -3,9 +3,6 @@ echo "In $(pwd)"
 export REPO_DIR=$(pwd)
 echo "Running setup from ${REPO_DIR}"
 
-# Temporary
-rm -rf ~/.modules;
-
 if [ ! -d ~/.modules ]; then
     echo 'Make .modules';
     mkdir .modules;
