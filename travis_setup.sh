@@ -8,10 +8,8 @@ if [ ! -f ~/.install_log.txt ]; then
 fi
 
 # Configure and install environment modules
-mkdir "$HOME/.local";
 echo "Install environment-modules";
 wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/.local/modules-4.2.1.tar.gz &>/dev/null;
-cd ~/.local;
 tar -zxf modules-4.2.1.tar.gz &>/dev/null;
 cd modules-4.2.1;
 ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;

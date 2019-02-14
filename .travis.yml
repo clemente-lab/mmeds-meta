@@ -38,11 +38,12 @@ before_install:
     - bash travis_setup.sh
     - source ~/.bashrc
 install:
-    - conda create --file spec-file.txt -name mmeds-stable --quiet &>/dev/null;
+    - conda create --file spec-file.txt -name mmeds-stable --quiet;
     - source activate mmeds-stable
     - Rscript setup.R &>/dev/null;
     - pip install .
     - mysql -u root < setup.sql
+    - module avail
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     - tail -n 200 ~/mmeds_server_data/mmeds_log.txt
