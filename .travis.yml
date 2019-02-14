@@ -17,7 +17,6 @@ cache:
     directories:
         - ~/.modules/modulefiles
         - ~/.modules/qiime1
-        - ~/.modules/qiime2
     timeout: 1000
     apt: true
 git:
