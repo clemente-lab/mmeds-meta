@@ -9,8 +9,8 @@ fi
 
 # Configure and install environment modules
 echo "Install environment-modules";
-wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O ~/.local/modules-4.2.1.tar.gz &>/dev/null;
-tar -zxf modules-4.2.1.tar.gz &>/dev/null;
+wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
+tar -zxf modules-4.2.1.tar.gz;
 cd modules-4.2.1;
 ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
 make &>/dev/null;
@@ -20,7 +20,6 @@ sudo make install &>/dev/null;
 export PATH="$HOME/.local/bin:$PATH"
 sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
 sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
-
 
 # Create the necessary conda environments
 if [ ! -d ~/.modules/qiime1 ]; then
