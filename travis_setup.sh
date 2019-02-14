@@ -37,6 +37,9 @@ fi
 ln -s ~/.modules/qiime1 ~/miniconda2/envs/qiime1;
 ln -s ~/.modules/qiime2 ~/miniconda2/envs/qiime2;
 
+if [ ! -d ~/.modules/modulefiles ]; then
+    mkdir modulefiles
+fi
 # Create module files (and install R packages)
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
