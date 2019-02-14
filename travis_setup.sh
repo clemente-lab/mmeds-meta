@@ -32,7 +32,7 @@ if [ ! -d ~/.modules/qiime1 ]; then
 fi
 if [ ! -d ~/.modules/mmeds-stable ]; then
     conda create --file spec-file.txt -p ~/.modules/mmeds-stable --quiet &>/dev/null;
-    ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
+    ln -s ~/.modules/mmeds-stable ~/.modules/mmeds-stable;
     source activate mmeds-stable;
     Rscript setup.R &>/dev/null;
     source deactivate;
