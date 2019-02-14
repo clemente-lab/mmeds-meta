@@ -8,3 +8,4 @@ omit =
     **/__init__.py
     setup.py
     **/.modules/*
+    **/mmeds_server_data/*

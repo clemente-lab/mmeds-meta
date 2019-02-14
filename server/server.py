@@ -205,28 +205,22 @@ class MMEDSserver(object):
             else:
                 username = self.get_user()
 
-            if for_reads is None:
-                for_reads_upload = (None, None)
-            else:
-                for_reads_upload = (for_reads.filename, for_reads.file)
-            if rev_reads is None:
-                rev_reads_upload = (None, None)
-            else:
-                rev_reads_upload = (rev_reads.filename, rev_reads.file)
-
-            if barcodes is None:
-                barcodes_upload = (None, None)
-            else:
-                barcodes_upload = (barcodes.filename, barcodes.file)
+            # Add the datafiles that exist as arguments
+            datafiles = []
+            if for_reads is not None:
+                datafiles.append(('for_reads', for_reads.filename, for_reads.file))
+            if rev_reads is not None:
+                datafiles.append(('rev_reads', rev_reads.filename, rev_reads.file))
+            if barcodes is not None:
+                datafiles.append(('barcodes', barcodes.filename, barcodes.file))
 
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
                         args=(metadata,
-                              for_reads_upload,
-                              rev_reads_upload,
-                              barcodes_upload,
                               username,
-                              self.testing))
+                              self.testing,
+                              # Unpack the list so the files are taken as a tuple
+                              *datafiles))
             log('Starting upload process')
             cp.log('Starting upload process')
             p.start()

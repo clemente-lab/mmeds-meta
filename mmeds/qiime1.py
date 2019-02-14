@@ -36,14 +36,22 @@ class Qiime1(Tool):
         self.add_path('split_output', '')
 
         # Run the script
-        if self.demuxed:
+        if 'demuxed' in self.data_type:
             cmd = 'multiple_split_libraries_fastq.py -o {} -i {};'
             command = cmd.format(self.files['split_output'],
-                                 self.files['reads'])
-        else:
+                                 self.files['for_reads'])
+        elif self.data_type == 'single_end':
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
             command = cmd.format(self.files['split_output'],
-                                 self.files['reads'],
+                                 self.files['for_reads'],
+                                 self.files['barcodes'],
+                                 self.files['mapping'],
+                                 12)
+        elif self.data_type == 'paired_end':
+            cmd = 'split_libraries_fastq.py -o {} -i {},{} -b {} -m {} --barcode_type {};'
+            command = cmd.format(self.files['split_output'],
+                                 self.files['for_reads'],
+                                 self.files['rev_reads'],
                                  self.files['barcodes'],
                                  self.files['mapping'],
                                  12)
@@ -118,7 +126,7 @@ class Qiime1(Tool):
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
         self.validate_mapping()
-        if self.demuxed:
+        if 'demuxed' in self.data_type:
             self.unzip()
         self.split_libraries()
         self.pick_otu()

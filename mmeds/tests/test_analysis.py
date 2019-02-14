@@ -26,17 +26,17 @@ class AnalysisTests(TestCase):
         """ Test the uploading of data """
         with open(fig.TEST_METADATA, 'rb') as reads, open(fig.TEST_BARCODES, 'rb') as barcodes:
             self.code = spawn.handle_data_upload(Path(fig.TEST_METADATA_SHORT),
-                                                 (Path(fig.TEST_METADATA).name, reads),
-                                                 (Path(fig.TEST_BARCODES).name, barcodes),
                                                  fig.TEST_USER,
-                                                 True)
+                                                 True,
+                                                 ('for_reads', Path(fig.TEST_METADATA).name, reads),
+                                                 ('barcodes', Path(fig.TEST_BARCODES).name, barcodes))
         # Get the files to check
         with Database(owner=fig.TEST_USER, testing=True) as db:
             self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
         self.assertEqual(Path(self.files['metadata']).read_bytes(), Path(fig.TEST_METADATA_SHORT).read_bytes())
-        self.assertEqual(Path(self.files['reads']).read_bytes(), Path(fig.TEST_METADATA).read_bytes())
+        self.assertEqual(Path(self.files['for_reads']).read_bytes(), Path(fig.TEST_METADATA).read_bytes())
         self.assertEqual(Path(self.files['barcodes']).read_bytes(), Path(fig.TEST_BARCODES).read_bytes())
 
     def handle_modify_data(self):
@@ -45,7 +45,7 @@ class AnalysisTests(TestCase):
             spawn.handle_modify_data(self.code,
                                      (Path(fig.TEST_READS).name, reads),
                                      fig.TEST_USER,
-                                     'reads',
+                                     'for_reads',
                                      True)
 
         # Update the files
@@ -53,7 +53,7 @@ class AnalysisTests(TestCase):
             self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
-        self.assertEqual(Path(self.files['reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
+        self.assertEqual(Path(self.files['for_reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
 
     def spawn_analysis(self, tool, count):
         p = spawn.spawn_analysis(tool,

@@ -308,9 +308,18 @@ class MMEDSNotebook():
                 self.add_markdown('To view the full otu table, execute the code cell below')
                 self.add_code(self.source['otu_py'])
 
+        # Get only files for the requested taxa levels
+        included_files = []
+        taxa_files = sorted(self.files['taxa'], reverse=True)
+        taxa_levels = sorted(self.config['taxa_levels'])
+        for taxa_level in taxa_levels:
+            taxa_file = taxa_files.pop()
+            if str(taxa_level) in taxa_file:
+                included_files.append(taxa_file)
+
         # Add the cells for the Taxa summaries
         self.add_markdown('# Taxa Summary')
-        for data_file in sorted(self.files['taxa']):
+        for data_file in included_files:
             self.taxa_plots(data_file)
             self.add_code(self.source['legend_py'].format(legend='legend.png'))
 
