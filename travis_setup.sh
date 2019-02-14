@@ -3,6 +3,9 @@ echo "In $(pwd)"
 export REPO_DIR=$(pwd)
 echo "Running setup from ${REPO_DIR}"
 
+# Temporary
+rm -rf ~/.modules;
+
 if [ ! -f ~/.install_log.txt ]; then
     touch ~/.install_log.txt;
 fi
