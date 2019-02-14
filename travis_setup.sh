@@ -47,7 +47,7 @@ fi
 # Create links
 ln -s ~/.modules/qiime1 ~/miniconda2/envs/qiime1;
 ln -s ~/.modules/qiime2 ~/miniconda2/envs/qiime2;
-ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
+#ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 
 # Create module files (and install R packages)
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
