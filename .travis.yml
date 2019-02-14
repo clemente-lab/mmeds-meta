@@ -15,7 +15,8 @@ addons:
             - texlive-fonts-extra
 cache:
     directories:
-        - ~/.modules/
+        - ~/.modules
+        - ~/.local
     timeout: 1000
     apt: true
 git:
@@ -37,9 +38,7 @@ before_install:
     - bash travis_setup.sh
     - source ~/.bashrc
 install:
-    - conda create --file spec-file.txt -p ~/miniconda2/envs/mmeds-stable --quiet;
     - source activate mmeds-stable
-    - Rscript setup.R;
     - pip install .
     - mysql -u root < setup.sql
     - module avail

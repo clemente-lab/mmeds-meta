@@ -6,18 +6,22 @@ echo "Running setup from ${REPO_DIR}"
 # Temporary
 rm -rf ~/.modules;
 
-if [ ! -f ~/.install_log.txt ]; then
-    touch ~/.install_log.txt;
+if [ ! -d ~/.modules ]; then
+    echo 'Make .modules';
+    mkdir .modules;
+    mkdir .modules/modulefiles;
 fi
 
 # Configure and install environment modules
-echo "Install environment-modules";
-wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
-tar -zxf modules-4.2.1.tar.gz;
-cd modules-4.2.1;
-./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
-make &>/dev/null;
-sudo make install &>/dev/null;
+if [ ! -d ~/.modules/qiime1 ]; then
+    echo "Install environment-modules";
+    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
+    tar -zxf modules-4.2.1.tar.gz;
+    cd modules-4.2.1;
+    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
+    make &>/dev/null;
+    sudo make install &>/dev/null;
+fi
 
 # Make sure module will work
 export PATH="$HOME/.local/bin:$PATH"
@@ -29,6 +33,13 @@ if [ ! -d ~/.modules/qiime1 ]; then
     echo "Create qiime1 environment"
     conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>/dev/null;
 fi
+if [ ! -d ~/.modules/mmeds-stable ]; then
+    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --quiet &>/dev/null;
+    ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
+    source activate mmeds-stable;
+    Rscript setup.R &>/dev/null;
+    source deactivate;
+fi
 
 #if [ ! -d ~/.modules/qiime2 ]; then
 #    echo "Create qiime2 environment"
@@ -39,10 +50,8 @@ fi
 # Create links
 ln -s ~/.modules/qiime1 ~/miniconda2/envs/qiime1;
 ln -s ~/.modules/qiime2 ~/miniconda2/envs/qiime2;
+ln -s ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 
-if [ ! -d ~/.modules/modulefiles ]; then
-    mkdir modulefiles
-fi
 # Create module files (and install R packages)
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
