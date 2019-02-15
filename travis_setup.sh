@@ -24,27 +24,13 @@ if [ ! -f ~/.modules/modulefiles/mmeds-stable ]; then
     printf "#%%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/.modules/mmeds-stable/bin" > ~/.modules/modulefiles/mmeds-stable
 fi
 
-# Make sure module will work
-export PATH="$HOME/.local/bin:$PATH"
-sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
-sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
-
 # Create the necessary conda environments
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds-stable environment";
-    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy;
-    echo "Create mmeds link"
+    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy &>/dev/null;
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
-    echo "conda info --envs";
-    conda info --envs;
-
-    echo "ls ~/miniconda2/envs";
-    ls ~/miniconda2/envs;
-    echo "ls ~/.modules/";
-    ls ~/.modules/;
-    echo "ls ~/.modules/modulefiles";
-    ls ~/.modules/modulefiles;
     source activate mmeds-stable;
+    echo "Install R libraries";
     Rscript setup.R &>/dev/null;
     source deactivate;
 fi
@@ -64,6 +50,11 @@ if [ ! -d ~/.local ]; then
     sudo make install &>/dev/null;
     cd $REPO_DIR;
 fi
+
+# Make sure module will work
+export PATH="$HOME/.local/bin:$PATH"
+sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
+sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
 
 #if [ ! -d ~/.modules/qiime2 ]; then
 #    echo "Create qiime2 environment"
