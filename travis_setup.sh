@@ -10,17 +10,6 @@ if [ ! -d ~/.modules ]; then
     sudo chown -R travis:travis ~/.modules
 fi
 
-# Configure and install environment modules
-if [ ! -d ~/.local ]; then
-    echo "Install environment-modules";
-    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
-    tar -zxf modules-4.2.1.tar.gz;
-    cd modules-4.2.1;
-    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
-    make &>/dev/null;
-    sudo make install &>/dev/null;
-fi
-
 # Create module files (and install R packages)
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
@@ -62,6 +51,18 @@ fi
 if [ ! -d ~/.modules/qiime1 ]; then
     echo "Create qiime1 environment";
     conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>/dev/null;
+fi
+
+# Configure and install environment modules
+if [ ! -d ~/.local ]; then
+    echo "Install environment-modules";
+    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
+    tar -zxf modules-4.2.1.tar.gz;
+    cd modules-4.2.1;
+    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
+    make &>/dev/null;
+    sudo make install &>/dev/null;
+    cd $REPO_DIR;
 fi
 
 #if [ ! -d ~/.modules/qiime2 ]; then
