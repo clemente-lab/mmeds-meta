@@ -5,12 +5,13 @@ echo "Running setup from ${REPO_DIR}"
 
 if [ ! -d ~/.modules ]; then
     echo 'Make .modules';
-    mkdir .modules;
-    mkdir .modules/modulefiles;
+    mkdir ~/.modules;
+    mkdir ~/.modules/modulefiles;
+    sudo chown -R travis:travis ~/.modules
 fi
 
 # Configure and install environment modules
-if [ ! -d ~/.modules/qiime1 ]; then
+if [ ! -d ~/.local ]; then
     echo "Install environment-modules";
     wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
     tar -zxf modules-4.2.1.tar.gz;
