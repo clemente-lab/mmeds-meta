@@ -81,7 +81,8 @@ def summarize_qiime1(path, files, config, load_info):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary')
+                        run_path=path / 'summary',
+                        load_info=load_info)
     mnb.create_notebook()
     log('Make archive')
     result = make_archive(path / 'summary',
