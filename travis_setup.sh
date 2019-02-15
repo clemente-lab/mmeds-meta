@@ -41,15 +41,13 @@ sudo ln -s "${HOME}/.local/init/profile.sh /etc/profile.d/modules.sh";
 sed -i "\$asource ${HOME}/.local/init/bash" ~/.bashrc;
 
 # Create the necessary conda environments
-if [ ! -d ~/.modules/qiime1 ]; then
-    echo "Create qiime1 environment";
-    conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>/dev/null;
-fi
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds-stable environment";
-    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy &>/dev/null;
+    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy;
     echo "Create mmeds link"
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
+    echo "conda info --envs";
+    conda info --envs;
 
     echo "ls ~/miniconda2/envs";
     ls ~/miniconda2/envs;
@@ -57,11 +55,13 @@ if [ ! -d ~/.modules/mmeds-stable ]; then
     ls ~/.modules/;
     echo "ls ~/.modules/modulefiles";
     ls ~/.modules/modulefiles;
-    echo "conda info --envs";
-    conda info --envs;
     source activate mmeds-stable;
     Rscript setup.R &>/dev/null;
     source deactivate;
+fi
+if [ ! -d ~/.modules/qiime1 ]; then
+    echo "Create qiime1 environment";
+    conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>/dev/null;
 fi
 
 #if [ ! -d ~/.modules/qiime2 ]; then
