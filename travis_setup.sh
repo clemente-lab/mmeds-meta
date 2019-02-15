@@ -50,10 +50,15 @@ if [ ! -d ~/.modules/mmeds-stable ]; then
     conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy &>/dev/null;
     echo "Create mmeds link"
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
+
+    echo "ls ~/miniconda2/envs";
     ls ~/miniconda2/envs;
+    echo "ls ~/.modules/";
     ls ~/.modules/;
+    echo "ls ~/.modules/modulefiles";
     ls ~/.modules/modulefiles;
-    conda info --envs
+    echo "conda info --envs";
+    conda info --envs;
     source activate mmeds-stable;
     Rscript setup.R &>/dev/null;
     source deactivate;
