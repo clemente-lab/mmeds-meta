@@ -192,7 +192,7 @@ class MMEDSserver(object):
             return page
 
     @cp.expose
-    def process_data(self, reads, barcodes, public='off'):
+    def process_data(self, for_reads, rev_reads, barcodes, public='off'):
         log('In process_data')
         cp.log('In process_data')
         try:
@@ -205,23 +205,22 @@ class MMEDSserver(object):
             else:
                 username = self.get_user()
 
-            if reads is None:
-                reads_upload = (None, None)
-            else:
-                reads_upload = (reads.filename, reads.file)
-
-            if barcodes is None:
-                barcodes_upload = (None, None)
-            else:
-                barcodes_upload = (barcodes.filename, barcodes.file)
+            # Add the datafiles that exist as arguments
+            datafiles = []
+            if for_reads is not None:
+                datafiles.append(('for_reads', for_reads.filename, for_reads.file))
+            if rev_reads is not None:
+                datafiles.append(('rev_reads', rev_reads.filename, rev_reads.file))
+            if barcodes is not None:
+                datafiles.append(('barcodes', barcodes.filename, barcodes.file))
 
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
                         args=(metadata,
-                              reads_upload,
-                              barcodes_upload,
                               username,
-                              self.testing))
+                              self.testing,
+                              # Unpack the list so the files are taken as a tuple
+                              *datafiles))
             log('Starting upload process')
             cp.log('Starting upload process')
             p.start()

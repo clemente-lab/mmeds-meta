@@ -6,7 +6,6 @@ from mmeds.database import Database
 from mmeds.mmeds import load_config
 
 from shutil import rmtree
-from subprocess import run
 import mmeds.config as fig
 
 
@@ -19,7 +18,7 @@ class ToolTests(TestCase):
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
-                                                              reads=fig.TEST_READS,
+                                                              for_reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
         self.config = load_config(None, fig.TEST_METADATA)
@@ -37,11 +36,11 @@ class ToolTests(TestCase):
             rmtree(new_dir)
 
     def test_setup_dir(self):
-        new_dir, run_id, files, demuxed = self.tool.setup_dir(fig.TEST_DIR)
+        new_dir, run_id, files, data_type = self.tool.setup_dir(fig.TEST_DIR)
         self.dirs.append(new_dir)
 
         assert str(fig.TEST_DIR / 'analysis') in str(new_dir)
-        assert not demuxed
+        assert data_type == 'single_end'
         assert 'metadata' in files.keys()
         assert files['metadata'].is_symlink()
 

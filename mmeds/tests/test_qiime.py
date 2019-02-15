@@ -16,43 +16,46 @@ class QiimeTests(TestCase):
     def setUpClass(self):
         add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
-            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
+            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
                                                               'qiime',
-                                                              reads=fig.TEST_READS,
+                                                              for_reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
-        self.config = load_config(None, fig.TEST_METADATA)
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
+                                                              'qiime',
+                                                              for_reads=fig.TEST_READS,
+                                                              rev_reads=fig.TEST_REV_READS,
+                                                              barcodes=fig.TEST_BARCODES,
+                                                              access_code=fig.TEST_CODE_PAIRED)
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
+                                                              'qiime',
+                                                              for_reads=fig.TEST_DEMUXED,
+                                                              barcodes=fig.TEST_BARCODES,
+                                                              access_code=fig.TEST_CODE_DEMUX)
+        self.config = load_config(None, fig.TEST_METADATA_SHORT)
 
     @classmethod
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=True)
 
-    def test_qiime1_setup_analysis(self):
-        qiime_open = Qiime1(fig.TEST_USER,
-                            fig.TEST_CODE,
-                            'qiime1-open',
-                            self.config, True)
-        qiime_open.setup_analysis()
-        rmtree(qiime_open.path)
+    def run_qiime(self, code, atype, data_type, Qiime):
+        qiime = Qiime(fig.TEST_USER, code, atype, self.config, True)
+        qiime.setup_analysis()
+        self.assertEqual(qiime.data_type, data_type)
+        rmtree(qiime.path)
 
-        qiime_closed = Qiime1(fig.TEST_USER,
-                              fig.TEST_CODE,
-                              'qiime1-closed',
-                              self.config, True)
-        qiime_closed.setup_analysis()
-        rmtree(qiime_closed.path)
+    def test_qiime1_setup_analysis(self):
+        for atype in ['qiime1-open', 'qiime1-closed']:
+            for code in [('single_end', fig.TEST_CODE),
+                         ('paired_end', fig.TEST_CODE_PAIRED),
+                         ('paired_demuxed', fig.TEST_CODE_DEMUX)]:
+                self.run_qiime(code[1], atype, code[0], Qiime1)
 
     def test_qiime2_setup_analysis(self):
-        qiime_open = Qiime2(fig.TEST_USER,
-                            fig.TEST_CODE,
-                            'qiime2-dada2',
-                            self.config, True)
-        qiime_open.setup_analysis()
-        rmtree(qiime_open.path)
-
-        qiime_closed = Qiime2(fig.TEST_USER,
-                              fig.TEST_CODE,
-                              'qiime2-deblur',
-                              self.config, True)
-        qiime_closed.setup_analysis()
-        rmtree(qiime_closed.path)
+        for atype in ['qiime2-dada2', 'qiime2-deblur']:
+            for code in [('single_end', fig.TEST_CODE),
+                         ('paired_end', fig.TEST_CODE_PAIRED),
+                         ('paired_demuxed', fig.TEST_CODE_DEMUX)]:
+                self.run_qiime(code[1], atype, code[0], Qiime2)

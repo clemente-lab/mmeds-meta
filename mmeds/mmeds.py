@@ -222,7 +222,7 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
         try:
             col_type(cell)
         except ValueError:
-            error.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
+            errors.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
     # Check for empty fields
     if '' == cell:
         errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
@@ -573,7 +573,7 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
         return None
 
     # Create the filename
-    file_copy = Path(path) / filename
+    file_copy = Path(path) / Path(filename).name
 
     # Ensure there is not already a file with the same name
     while file_copy.is_file():

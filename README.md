@@ -1,7 +1,7 @@
 # mmeds-meta
 
-[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Test-AnalysisPipline)](https://travis-cl.com/clemente-lab/mmeds-meta)
-[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Test-AnalysisPipline/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Enhancement-UploadReverseReads)](https://travis-cl.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Enhancement-UploadReverseReads/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 
 
 ## Instructions
@@ -53,3 +53,7 @@ jupyter_contrib_nbextensions
 latex_template: https://michaelgoerz.net/notes/custom-template-for-converting-jupyter-notebooks-to-latex.html
 
 font: https://www.1001fonts.com/code-new-roman-font.html
+
+If you encounter INVALID DISPLAY VARIABLE add the line `backend: agg` to your matplotlibrc
+(typically ~/.config/matplotlib/matploblibrc)
+or setup your environment with `export MPLBACKEND="agg"`

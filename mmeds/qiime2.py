@@ -23,22 +23,22 @@ class Qiime2(Tool):
     # ======================= #
     # # # Qiime2 Commands # # #
     # ======================= #
-    def qimport(self, itype='EMPSingleEndSequences'):
+    def qimport(self):
         """ Split the libraries and perform quality analysis. """
 
         self.files['demux_file'] = self.path / 'qiime_artifact.qza'
 
-        if self.demuxed:
+        if 'demuxed' in self.data_type:
             # If the reads are already demultiplexed import the whole directory
             cmd = [
                 'qiime tools import ',
                 '--type {} '.format('"SampleData[PairedEndSequencesWithQuality]"'),
-                '--input-path {}'.format(self.files['reads']),
+                '--input-path {}'.format(self.files['for_reads']),
                 '--source-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
                 '--output-path {};'.format(self.files['demux_file'])
             ]
-            self.jobtext.append(' '.join(cmd))
-        else:
+            command = ' '.join(cmd)
+        elif self.data_type == 'single_end':
             # Create a directory to import as a Qiime2 object
             self.files['working_file'] = self.path / 'qiime_artifact.qza'
             self.files['working_dir'] = self.path / 'import_dir'
@@ -48,12 +48,28 @@ class Qiime2(Tool):
 
             # Create links to the data in the qiime2 import directory
             (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-            (self.files['working_dir'] / 'sequences.fastq.gz').symlink_to(self.files['reads'])
+            (self.files['working_dir'] / 'sequences.fastq.gz').symlink_to(self.files['for_reads'])
 
             # Run the script
             cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            command = cmd.format(itype, self.files['working_dir'], self.files['working_file'])
-            self.jobtext.append(command)
+            command = cmd.format('EMPSingleEndSequences', self.files['working_dir'], self.files['working_file'])
+        elif self.data_type == 'paired_end':
+            # Create a directory to import as a Qiime2 object
+            self.files['working_file'] = self.path / 'qiime_artifact.qza'
+            self.files['working_dir'] = self.path / 'import_dir'
+
+            if not self.files['working_dir'].is_dir():
+                self.files['working_dir'].mkdir()
+
+            # Create links to the data in the qiime2 import directory
+            (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
+            (self.files['working_dir'] / 'forward.fastq.gz').symlink_to(self.files['for_reads'])
+            (self.files['working_dir'] / 'reverse.fastq.gz').symlink_to(self.files['rev_reads'])
+
+            # Run the script
+            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+            command = cmd.format('EMPPairedEndSequences', self.files['working_dir'], self.files['working_file'])
+        self.jobtext.append(command)
 
     def demultiplex(self):
         """ Demultiplex the reads. """
@@ -62,7 +78,8 @@ class Qiime2(Tool):
 
         # Run the script
         cmd = [
-            'qiime demux emp-single',
+            # Either emp-single or emp-paired depending on the data_type
+            'qiime demux emp-{}'.format(self.data_type.split('_')[0]),
             '--i-seqs {}'.format(self.files['working_file']),
             '--m-barcodes-file {}'.format(self.files['mapping']),
             '--m-barcodes-column {}'.format('BarcodeSequence'),
@@ -99,16 +116,30 @@ class Qiime2(Tool):
         self.add_path('table_dada2', '.qza')
         self.add_path('stats_dada2', '.qza')
 
-        cmd = [
-            'qiime dada2 denoise-single',
-            '--i-demultiplexed-seqs {}'.format(self.files['demux_file']),
-            '--p-trim-left {}'.format(p_trim_left),
-            '--p-trunc-len {}'.format(p_trunc_len),
-            '--o-representative-sequences {}'.format(self.files['rep_seqs_dada2']),
-            '--o-table {}'.format(self.files['table_dada2']),
-            '--o-denoising-stats {}'.format(self.files['stats_dada2']),
-            '--p-n-threads {};'.format(self.num_jobs)
-        ]
+        if 'single' in self.data_type:
+            cmd = [
+                'qiime dada2 denoise-single',
+                '--i-demultiplexed-seqs {}'.format(self.files['demux_file']),
+                '--p-trim-left {}'.format(p_trim_left),
+                '--p-trunc-len {}'.format(p_trunc_len),
+                '--o-representative-sequences {}'.format(self.files['rep_seqs_dada2']),
+                '--o-table {}'.format(self.files['table_dada2']),
+                '--o-denoising-stats {}'.format(self.files['stats_dada2']),
+                '--p-n-threads {};'.format(self.num_jobs)
+            ]
+        elif 'paired' in self.data_type:
+            cmd = [
+                'qiime dada2 denoise-paired',
+                '--i-demultiplexed-seqs {}'.format(self.files['demux_file']),
+                '--p-trim-left-f {}'.format(p_trim_left),
+                '--p-trim-left-r {}'.format(p_trim_left),
+                '--p-trunc-len-f {}'.format(p_trunc_len),
+                '--p-trunc-len-r {}'.format(p_trunc_len),
+                '--o-representative-sequences {}'.format(self.files['rep_seqs_dada2']),
+                '--o-table {}'.format(self.files['table_dada2']),
+                '--o-denoising-stats {}'.format(self.files['stats_dada2']),
+                '--p-n-threads {};'.format(self.num_jobs)
+            ]
         self.jobtext.append(' '.join(cmd))
 
     def deblur_filter(self):
@@ -318,10 +349,10 @@ class Qiime2(Tool):
     def setup_analysis(self):
         """ Create the job file for the analysis. """
 
-        if self.demuxed:
+        if 'demuxed' in self.data_type:
             self.unzip()
         self.qimport()
-        if not self.demuxed:
+        if 'demuxed' not in self.data_type:
             self.demultiplex()
             self.demux_visualize()
 
