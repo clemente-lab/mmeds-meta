@@ -42,6 +42,7 @@ before_install:
     - sudo rm -rf ~/.modules ~/.local
     - bash travis_setup.sh
     - source ~/.bashrc
+    - conda info --envs
 install:
     - source activate mmeds-stable
     - pip install .
