@@ -31,7 +31,7 @@ if [ ! -d ~/.modules/mmeds-stable ]; then
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
     source activate mmeds-stable;
     echo "Install R libraries";
-    Rscript setup.R &>/dev/null;
+    Rscript setup.R;
     source deactivate;
 fi
 if [ ! -d ~/.modules/qiime1 ]; then
