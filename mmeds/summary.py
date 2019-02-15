@@ -74,16 +74,6 @@ def summarize_qiime1(path, files, config, load_info):
 
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
-<<<<<<< HEAD
-
-    # Create the summary
-    create_summary_notebook(metadata=metadata,
-                            analysis_type='qiime1',
-                            files=summary_files,
-                            execute=True,
-                            name='analysis',
-                            run_path=path / 'summary')
-=======
     log('Summary path')
     log(path / 'summary')
     mnb = MMEDSNotebook(config=config,
@@ -91,11 +81,8 @@ def summarize_qiime1(path, files, config, load_info):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary',
-                        load_info=load_info)
+                        run_path=path / 'summary')
     mnb.create_notebook()
->>>>>>> master
-
     log('Make archive')
     result = make_archive(path / 'summary',
                           format='zip',
