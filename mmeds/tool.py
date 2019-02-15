@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import run, PIPE
-from shutil import copy, rmtree
+from shutil import copy
 from time import sleep
 from pandas import read_csv
 
@@ -25,7 +25,7 @@ class Tool:
         :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
         """
         log('Start analysis')
-        self.db = Database('', owner=owner, testing=testing)
+        self.db = Database(owner=owner, testing=testing)
         self.access_code = access_code
         files, path = self.db.get_mongo_files(self.access_code)
         self.testing = testing
@@ -36,14 +36,14 @@ class Tool:
         else:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
+        self.tool = atype.split('-')[0]
         self.analysis = analysis
         self.config = config
         self.columns = []
-        self.path, self.run_id, self.files, self.demuxed = self.setup_dir(Path(path))
+        self.path, self.run_id, self.files, self.data_type = self.setup_dir(Path(path))
         self.add_path('analysis{}'.format(self.run_id), '')
         self.write_config()
         self.create_qiime_mapping_file()
-
 
     def __del__(self):
         del self.db
@@ -60,65 +60,66 @@ class Tool:
         new_dir = new_dir.resolve()
         root_files, root_path = self.db.get_mongo_files(self.access_code)
 
-        if self.analysis:
-            log('File type {}'.format(Path(root_files['reads']).suffixes))
+        log('Root files')
+        for (key, item) in root_files.items():
+            log('{}: {}'.format(key, item))
 
-            new_dir.mkdir()
-            if '.fastq' in Path(root_files['reads']).suffixes:
-                # Create links to the files
-                (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
-                (new_dir / 'sequences.fastq.gz').symlink_to(root_files['reads'])
+        new_dir.mkdir()
 
-                # Add the links to the files dict for this analysis
-                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-                files['reads'] = new_dir / 'sequences.fastq.gz'
-                demuxed = False
-                log('Create links, not demuxed')
-            elif Path(root_files['reads']).suffix in ['.zip', '.tar']:
-                (new_dir / 'data.zip').symlink_to(root_files['reads'])
-                files['data'] = new_dir / 'data.zip'
-                demuxed = True
+        # Handle paired end sequences
+        if root_files.get('rev_reads') is not None:
+            # Create links to the files
+            (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
+            (new_dir / 'forward.fastq.gz').symlink_to(root_files['for_reads'])
+            (new_dir / 'reverse.fastq.gz').symlink_to(root_files['rev_reads'])
 
-            (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
-            files['metadata'] = new_dir / 'metadata.tsv'
-            log('Run analysis')
-        else:
-            # If creating a summary from a previous analysis
-            run_id -= 1
-            new_dir = path / 'analysis{}'.format(run_id)
+            # Add the links to the files dict for this analysis
+            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+            files['for_reads'] = new_dir / 'forward.fastq.gz'
+            files['rev_reads'] = new_dir / 'reverse.fastq.gz'
 
-            # Clear any previous summary files
-            if (new_dir / 'summary').is_dir():
-                rmtree(new_dir / 'summary')
+            data_type = 'paired_end'
+        # Handle single end sequences
+        elif '.fastq' in Path(root_files['for_reads']).suffixes:
+            # Create links to the files
+            (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
+            (new_dir / 'sequences.fastq.gz').symlink_to(root_files['for_reads'])
 
-            # Get the file locations from the MetaData document
-            string_files = root_files['analysis{}'.format(run_id)]
-            files = {key: Path(string_files[key]) for key in string_files.keys()}
-            log("Loaded files")
-            log(files.keys())
-            log("Skip analysis")
+            # Add the links to the files dict for this analysis
+            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+            files['for_reads'] = new_dir / 'sequences.fastq.gz'
 
-            # Check if the files were demultiplexed
-            demuxed = ('.zip' == Path(root_files['reads']).suffix)
+            data_type = 'single_end'
+        # Handle demuxed sequences
+        elif Path(root_files['for_reads']).suffix in ['.zip', '.tar']:
+            (new_dir / 'data.zip').symlink_to(root_files['for_reads'])
+            files['data'] = new_dir / 'data.zip'
+            data_type = 'paired_demuxed'
 
-        log("Analysis directory is {}".format(new_dir))
-        return new_dir, str(run_id), files, demuxed
+        (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
+        files['metadata'] = new_dir / 'metadata.tsv'
+        log("Analysis directory is {}. Run.".format(new_dir))
+        return new_dir, str(run_id), files, data_type
 
     def write_config(self):
         """ Write out the config file being used to the working directory. """
         config_text = []
         for (key, value) in self.config.items():
+            # Write lists as comma seperated strings
             if isinstance(value, list):
-                config_text.append('{}\t{}'.format(key, ','.join(value)))
+                config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
+            # Don't write the metadata continuous dict
+            elif key == 'metadata_continuous':
+                continue
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
-        self.add_path('reads', '')
+        self.add_path('for_reads', '')
         command = 'unzip {} -d {}'.format(self.files['data'],
-                                          self.files['reads'])
+                                          self.files['for_reads'])
         self.jobtext.append(command)
 
     def validate_mapping(self):
@@ -249,3 +250,17 @@ class Tool:
 
         # Add the mapping file to the MetaData object
         self.files['mapping'] = mapping_file
+
+    def summary(self):
+        """ Setup script to create summary. """
+        self.add_path('summary')
+        self.jobtext.append(self.jobtext[0].replace('load', 'unload'))
+        self.jobtext.append('module load mmeds-stable;')
+        cmd = [
+            'summarize.py ',
+            '--path {}'.format(self.path),
+            '--tool_type {}'.format(self.tool),
+            '--config_file {}'.format(self.path / 'config_file.txt'),
+            '--load_info "{}";'.format(self.jobtext[0])
+        ]
+        self.jobtext.append(' '.join(cmd))

@@ -7,6 +7,7 @@ import shutil
 import pickle
 import warnings
 
+from numpy import nan
 from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
@@ -65,6 +66,7 @@ class Database:
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.user = user
+        self.testing = testing
 
         # If testing connect to test server
         if testing:
@@ -417,7 +419,7 @@ class Database:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def read_in_sheet(self, metadata, study_type, delimiter='\t', **kwargs):
+    def read_in_sheet(self, metadata, study_type, **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -427,7 +429,7 @@ class Database:
         if not self.path.is_dir():
             self.path.mkdir()
         # Read in the metadata file to import
-        df = pd.read_csv(metadata, sep=delimiter, header=[0, 1], skiprows=[2, 3, 4])
+        df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
         sql = 'SET FOREIGN_KEY_CHECKS=0'
@@ -567,14 +569,20 @@ class Database:
             ob.delete()
 
     def modify_data(self, new_data, access_code, data_type):
+        """
+        :new_data: A string or pathlike pointing to the location of the new data file.
+        :access_code: The code for identifying this dataset.
+        :data_type: A string. Either 'reads' or 'barcodes' depending on which is being modified.
+        """
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
 
-        # Remove the old data file
+        # Remove the old data file if it exits
         if mdata.files.get(data_type) is not None:
             Path(mdata.files[data_type]).unlink()
 
         mdata.files[data_type] = str(new_data)
+        mdata.save()
 
     def reset_access_code(self, study_name, email):
         """
@@ -637,6 +645,8 @@ class Database:
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df):
                 value = df[column][j]
+                if pd.isnull(value):  # Use NULL for NA values
+                    value = 'NULL'
                 if i == 0:
                     sql += ' '
                 else:

@@ -148,6 +148,7 @@ class MMEDSserver(object):
             # If there are errors report them and return the error page
             if len(errors) > 0:
                 log('Errors in metadata')
+                log('\n'.join(errors))
                 cp.session['error_file'] = cp.session['working_dir'] / ('errors_' + str(myMetaData.filename))
                 # Write the errors to a file
                 with open(cp.session['error_file'], 'w') as f:
@@ -191,7 +192,7 @@ class MMEDSserver(object):
             return page
 
     @cp.expose
-    def process_data(self, reads, barcodes, public='off'):
+    def process_data(self, for_reads, rev_reads, barcodes, public='off'):
         log('In process_data')
         cp.log('In process_data')
         try:
@@ -204,13 +205,22 @@ class MMEDSserver(object):
             else:
                 username = self.get_user()
 
+            # Add the datafiles that exist as arguments
+            datafiles = []
+            if for_reads is not None:
+                datafiles.append(('for_reads', for_reads.filename, for_reads.file))
+            if rev_reads is not None:
+                datafiles.append(('rev_reads', rev_reads.filename, rev_reads.file))
+            if barcodes is not None:
+                datafiles.append(('barcodes', barcodes.filename, barcodes.file))
+
             # Start a process to handle loading the data
             p = Process(target=handle_data_upload,
                         args=(metadata,
-                              reads,
-                              barcodes,
                               username,
-                              self.testing))
+                              self.testing,
+                              # Unpack the list so the files are taken as a tuple
+                              *datafiles))
             log('Starting upload process')
             cp.log('Starting upload process')
             p.start()
@@ -251,13 +261,10 @@ class MMEDSserver(object):
         log('In modify_upload')
         try:
             try:
-                with Database('.', owner=self.get_user(), testing=testing) as db:
-                    # Create a copy of the Data file
-                    files, path = db.get_mongo_files(access_code=access_code)
                 # Start a process to handle loading the data
                 p = Process(target=handle_modify_data,
                             args=(access_code,
-                                  myData,
+                                  (myData.filename, myData.file),
                                   self.get_user(),
                                   data_type,
                                   self.testing))

@@ -12,14 +12,17 @@ class Qiime1(Tool):
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
         if testing:
-            self.jobtext.append('source activate qiime1;')
+            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime1;')
+            settings = [
+                'alpha_diversity:metrics	shannon'
+            ]
         else:
-            self.jobtext.append('module load qiime/1.9.1;')
+            self.jobtext.append('module use $MMEDS/.modules/modulefiles; module load qiime1;')
+            settings = [
+                'pick_otus:enable_rev_strand_match	True',
+                'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species'
+            ]
 
-        settings = [
-            'pick_otus:enable_rev_strand_match True',
-            'alpha_diversity:metrics shannon,PD_whole_tree,chao1,observed_species'
-        ]
         with open(self.path / 'params.txt', 'w') as f:
             f.write('\n'.join(settings))
 
@@ -33,16 +36,25 @@ class Qiime1(Tool):
         self.add_path('split_output', '')
 
         # Run the script
-        if self.demuxed:
+        if 'demuxed' in self.data_type:
             cmd = 'multiple_split_libraries_fastq.py -o {} -i {};'
             command = cmd.format(self.files['split_output'],
-                                 self.files['reads'])
-        else:
-            cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {};'
+                                 self.files['for_reads'])
+        elif self.data_type == 'single_end':
+            cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
             command = cmd.format(self.files['split_output'],
-                                 self.files['reads'],
+                                 self.files['for_reads'],
                                  self.files['barcodes'],
-                                 self.files['mapping'])
+                                 self.files['mapping'],
+                                 12)
+        elif self.data_type == 'paired_end':
+            cmd = 'split_libraries_fastq.py -o {} -i {},{} -b {} -m {} --barcode_type {};'
+            command = cmd.format(self.files['split_output'],
+                                 self.files['for_reads'],
+                                 self.files['rev_reads'],
+                                 self.files['barcodes'],
+                                 self.files['mapping'],
+                                 12)
         self.jobtext.append(command)
 
     def pick_otu(self):
@@ -63,14 +75,13 @@ class Qiime1(Tool):
         self.add_path('diversity_output', '')
 
         # Run the script
-        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -c {} -p {};'
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {};'
         if self.atype == 'open':
             command = cmd.format(self.files['diversity_output'],
                                  self.files['otu_output'] / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  self.files['mapping'],
                                  self.files['otu_output'] / 'rep_set.tre',
                                  self.config['sampling_depth'],
-                                 ','.join(self.config['metadata']),
                                  self.path / 'params.txt')
         else:
             command = cmd.format(self.files['diversity_output'],
@@ -78,8 +89,9 @@ class Qiime1(Tool):
                                  self.files['mapping'],
                                  self.files['otu_output'] / '97_otus.tree',
                                  self.config['sampling_depth'],
-                                 ','.join(self.config['metadata']),
                                  self.path / 'params.txt')
+        if not self.testing:
+            command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
 
         self.jobtext.append(command)
 
@@ -89,8 +101,7 @@ class Qiime1(Tool):
             # Count the sequences prior to diversity analysis
             cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
                                                   self.files['split_output'] / 'seqs.fna')
-            log('Run command: {}'.format(cmd))
-            output = run(cmd, shell=True, check=True, stdout=PIPE)
+            output = run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE)
             out = output.stdout.decode('utf-8')
             log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
@@ -112,25 +123,10 @@ class Qiime1(Tool):
             log(str(e))
             raise AnalysisError(e.args[0])
 
-    def summary(self):
-        """ Setup script to create summary. """
-        self.add_path('summary')
-        self.jobtext.append('source deactivate;')
-        self.jobtext.append('source activate mmeds-stable;')
-        cmd = [
-            'summarize.py ',
-            '--path {}'.format(self.path),
-            '--tool_type qiime1',
-            '--metadata {}'.format(','.join(self.config['metadata'])),
-            '--sampling_depth {}'.format(self.config['sampling_depth']),
-            '--load_info "{}";'.format(self.jobtext[0])
-        ]
-        self.jobtext.append(' '.join(cmd))
-
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
         self.validate_mapping()
-        if self.demuxed:
+        if 'demuxed' in self.data_type:
             self.unzip()
         self.split_libraries()
         self.pick_otu()
@@ -148,9 +144,16 @@ class Qiime1(Tool):
         if self.testing:
             # Open the jobfile to write all the commands
             with open(str(jobfile) + '.lsf', 'w') as f:
+                f.write('#!/bin/bash -l\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            run('sh {}.lsf &> {}.err'.format(jobfile, error_log), shell=True, check=True)
+            output = run('bash -c "bash {}.lsf"'.format(jobfile),
+                         stdout=PIPE,
+                         stderr=PIPE,
+                         shell=True,
+                         check=True)
+            log(output.stdout.decode('utf-8').replace('\\n', '\n'))
+            log(output.stderr.decode('utf-8').replace('\\n', '\n'))
         else:
             # Get the job header text from the template
             with open(JOB_TEMPLATE) as f1:
@@ -173,20 +176,18 @@ class Qiime1(Tool):
         """ Execute all the necessary actions. """
         try:
             if self.analysis:
-                self.setup_analysis()
                 self.run_analysis()
             self.sanity_check()
             self.move_user_files()
-            self.write_file_locations()
-            self.summary()
             doc = self.db.get_metadata(self.access_code)
-            send_email(doc.email,
-                       doc.owner,
-                       'analysis',
-                       analysis_type='Qiime1',
-                       study_name=doc.study,
-                       testing=self.testing,
-                       summary=self.path / 'summary/analysis.pdf')
+            if not self.testing:
+                send_email(doc.email,
+                           doc.owner,
+                           'analysis',
+                           analysis_type='Qiime1',
+                           study_name=doc.study,
+                           testing=self.testing,
+                           summary=self.path / 'summary/analysis.pdf')
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()

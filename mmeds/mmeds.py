@@ -1,12 +1,10 @@
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number
-from os.path import join, exists
-from email.message import EmailMessage
-from smtplib import SMTP
+from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
 from mmeds.error import MetaDataError, InvalidConfigError
 from subprocess import run
 from datetime import datetime
+from pathlib import Path
 import mmeds.config as fig
 import pandas as pd
 
@@ -219,14 +217,14 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
                       (cell, row_index, col_index))
 
     # Check for consistent types in the column
-    if not issubdtype(col_type, datetime64):
+    if not (issubdtype(col_type, datetime64) or issubdtype(col_type, object)):
         # If the cast fails for this cell the data must be the wrong type
         try:
             col_type(cell)
         except ValueError:
             errors.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
     # Check for empty fields
-    if '' == cell or pd.isnull(cell):
+    if '' == cell:
         errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
     if isinstance(cell, str):
@@ -316,7 +314,7 @@ def check_column(raw_column, col_index):
         errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
     # Check that values fall within standard deviation
-    if issubdtype(col_type, number):
+    if issubdtype(col_type, number) and not isinstance(raw_column.dtype, object):
         try:
             filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
             stddev = std(filtered)
@@ -326,7 +324,7 @@ def check_column(raw_column, col_index):
                     text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
                     warnings.append(text % (i + 1, col_index, cell, col_index))
         except ValueError:
-            errors.append("-1\t-1\tMixed Type Error: Cannot get average of column with mixed types")
+            warnings.append("-1\t-1\tMixed Type Warning: Cannot get average of column {}. Mixed types".format(column))
     # Check for categorical data
     elif issubdtype(col_type, str):
         counts = column.value_counts()
@@ -429,7 +427,7 @@ def check_table_column(table_df, name, header, col_index, row_index, study_name)
             errors += check_duplicates(col, col_index)
             errors += check_lengths(col, col_index)
             errors += check_barcode_chars(col, col_index)
-        elif header == 'SampleID':
+        elif header == 'RawDataID':
             errors += check_duplicates(col, col_index)
         elif header == 'LinkerPrimerSequence':
             errors += check_lengths(col, col_index)
@@ -448,6 +446,7 @@ def check_table(table_df, name, all_headers, study_name):
     :study_name: None if no StudyName column has been seen yet,
         otherwise with have the previously seen StudyName
     """
+    log('In check_table')
     errors = []
     warnings = []
     start_col = None
@@ -486,6 +485,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
     Returns a list of the errors, an empty list means there
     were no issues.
     """
+    log('In validate_mapping_file')
     errors = []
     warnings = []
     df = pd.read_csv(file_fp,
@@ -493,10 +493,16 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                      header=[0, 1],
                      skiprows=[2, 3, 4],
                      na_filter=False)
+    df.replace('NA', nan, inplace=True)
     # Get the tables in the dataframe while maintaining order
     tables = []
     for (table, header) in df.axes[1]:
         tables.append(table)
+        for column in df[table]:
+            try:
+                df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
+            except KeyError:
+                df[table].assign(column=df[table][column].astype('object'))
     tables = list(dict.fromkeys(tables))
 
     all_headers = []
@@ -562,27 +568,27 @@ def is_numeric(s):
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
     log("In create_local_copy.")
+    # If the fp is None return None
+    if fp is None:
+        return None
+
     # Create the filename
-    file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+    file_copy = Path(path) / Path(filename).name
 
     # Ensure there is not already a file with the same name
-    while exists(file_copy):
-        file_copy = join(path, '_'.join(['copy', fig.get_salt(5), filename]))
+    while file_copy.is_file():
+        file_copy = Path(path) / '_'.join([fig.get_salt(5), filename])
     log('Created filepath {}'.format(file_copy))
 
-    count = 0
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
-        log('File opened')
         while True:
-            log('Write data round {}'.format(count))
             data = fp.read(8192)
             nf.write(data)
             if not data:
                 break
-            count += 1
     log('Copy finished')
-    return file_copy
+    return str(file_copy)
 
 
 def generate_error_html(file_fp, errors, warnings):
@@ -642,7 +648,7 @@ def generate_error_html(file_fp, errors, warnings):
                 try_col = col
             # Add the error/warning if there is one
             try:
-                color, issue = markup[row + 2][try_col]
+                color, issue = markup[row + 4][try_col]
                 html += '<td style="color:black" bgcolor={}>\
                     {}<div style="font-weight:bold">\
                     <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
@@ -813,6 +819,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :kwargs: Any information that is specific to a paricular message type
     """
     log('Send email to: {} on behalf of {}'.format(toaddr, user))
+    if testing:
+        return
     for key in kwargs.keys():
         log('{}: {}'.format(key, kwargs[key]))
 
@@ -854,32 +862,9 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         code=kwargs.get('code'),
         password=kwargs.get('password')
     )
-    if testing:
-        # Setup the email to be sent
-        msg = EmailMessage()
-        msg['From'] = fig.MMEDS_EMAIL
-        msg['To'] = toaddr
-        msg['Subject'] = subject
-        # Add in any necessary text fields
-        msg.set_content(email_body)
-        if 'summary' in kwargs.keys():
-            with open(kwargs['summary'], 'rb') as f:
-                msg.add_attachment(f.read(),
-                                   maintype='application',
-                                   subtype='pdf',
-                                   filename=kwargs['summary'].name)
-
-                msg.add_attachment
-        # Connect to the server and send the mail
-        server = SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(fig.MMEDS_EMAIL, 'mmeds_server')
-        server.send_message(msg)
-        server.quit()
-    else:
-        script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
-        if 'summary' in kwargs.keys():
-            script += ' -A {summary}'.format(kwargs['summary'])
-        cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
-        log(cmd)
-        run(cmd, shell=True, check=True)
+    script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
+    if 'summary' in kwargs.keys():
+        script += ' -A {summary}'.format(kwargs['summary'])
+    cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
+    log(cmd)
+    run(cmd, shell=True, check=True)
