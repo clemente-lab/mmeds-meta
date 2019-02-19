@@ -91,7 +91,7 @@ def get_valid_columns(metadata_file, option):
     # Filter out any categories containing only NaN
     # Or containing only a single metadata value
     # Or where every sample contains a different value
-    df = pd.read_csv(metadata_file, header=1, sep='\t')
+    df = pd.read_csv(metadata_file, header=0, skiprows=[0, 2, 3, 4], sep='\t')
     if option == 'all':
         cols = df.columns
     else:
@@ -100,10 +100,11 @@ def get_valid_columns(metadata_file, option):
     try:
         for col in cols:
             # If 'all' only select columns that don't have all the same or all unique values
-            if option == 'all' and (df[col].isnull().all() or
-                                    df[col].nunique() == 1 or
-                                    df[col].nunique() == len(df[col])):
-                continue
+            if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
+                if option == 'all':
+                    continue
+                else:
+                    raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
             # If the columns is explicitly specified only check that it exists in the metadata
             else:
                 df[col]
@@ -446,7 +447,6 @@ def check_table(table_df, name, all_headers, study_name):
     :study_name: None if no StudyName column has been seen yet,
         otherwise with have the previously seen StudyName
     """
-    log('In check_table')
     errors = []
     warnings = []
     start_col = None
@@ -715,9 +715,11 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
     df.dropna(how='all', axis='columns', inplace=True)
     # Replace np.nans with "NA"s
     df.fillna('"NA"', inplace=True)
+
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
     all_cols.update(fig.TABLE_COLS)
+
     # Find all columns that don't have a mapping and add them to AdditionalMetaData
     unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
     for item in unmapped_items:
@@ -726,16 +728,17 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
             first = df[item][0].split(' ')
             # If the value is numeric grab the units in the data cell
             if is_numeric(first[0]):
-                unit_col = item + ' ({})'.format(' '.join(first[1:]))
+                unit_col = item  # + ' ({})'.format(' '.join(first[1:]))
                 df[item] = df[item].map(lambda x: x.split(' ')[0])
             else:
                 unit_col = item
         # Add the units to the header if available
         else:
-            unit_col = item + ' ({})'.format(units[item])
+            unit_col = item  # + ' ({})'.format(units[item])
         fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
         fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
         all_cols['AdditionalMetaData'].append(str(unit_col))
+    log(fig.MMEDS_MAP)
 
     # Build the data for the new format
     meta = {}
@@ -766,15 +769,33 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
 
     # Build the first two rows of the mmeds metadata file
     table_row, column_row = [], []
-    for table in all_cols.keys():
-        for column in all_cols[table]:
+    for table in sorted(all_cols.keys()):
+        for column in sorted(all_cols[table]):
             table_row.append(table)
-            column_row.append(column)
+            column_row.append(column.strip(' ()'))
+
+    # Get the additional header rows from one of the example metadata files
+    md_template = pd.read_csv(fig.TEST_METADATA, sep='\t', header=[0, 1], nrows=5, na_filter=False)
+    column_type = []
+    column_unit = []
+    column_required = []
+    for (table, column) in zip(table_row, column_row):
+        try:
+            column_type.append(str(md_template[table][column].iloc[0]))
+            column_unit.append(str(md_template[table][column].iloc[1]))
+            column_required.append(str(md_template[table][column].iloc[2]))
+        except KeyError:
+            column_type.append('')
+            column_unit.append('')
+            column_required.append('')
 
     # Write out each line of the file
     with open(out_file, 'w') as f:
         f.write('\t'.join(table_row) + '\n')
         f.write('\t'.join(column_row) + '\n')
+        f.write('\t'.join(column_type) + '\n')
+        f.write('\t'.join(column_unit) + '\n')
+        f.write('\t'.join(column_required) + '\n')
         for i in range(num_rows):
             row = []
             for table, column in zip(table_row, column_row):
@@ -794,6 +815,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
     # Read in the data file
     df = pd.read_csv(file_fp, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
     with open(out_file, 'w') as f:
+        f.write('\t'.join(['column_header'] + list(map(str, df['RawData']['RawDataID'].tolist()))) + '\n')
         for (col1, col2) in df.columns:
             if df[col1][col2].notnull().any():
                 try:

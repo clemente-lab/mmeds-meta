@@ -2,6 +2,7 @@ from mmeds import mmeds
 from mmeds.error import InvalidConfigError
 from pathlib import Path
 from pytest import raises
+from tempfile import gettempdir
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -170,12 +171,29 @@ def test_get_valid_columns():
     for key in col_types.keys():
         assert key in columns
 
-    columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA, 'Ethnicity,BarcodeSequence,Nationality,StudyName')
-    assert columns == 'Ethnicity,BarcodeSequence,Nationality,StudyName'.split(',')
+    # Test that only columns meeting the criteria get included
+    columns, col_types = mmeds.get_valid_columns(fig.TEST_CONFIG_METADATA, 'all')
+    assert 'GoodColumnDiscrete' in columns
+    assert 'GoodColumnContinuous' in columns
+    assert 'BadColumnUniform' not in columns
+    assert 'BadColumnDisparate' not in columns
+    assert 'BadColumnEmpty' not in columns
+
+    # Check that columns are correctly identified as continuous (True) or discrete (False)
+    assert not col_types['GoodColumnDiscrete']
+    assert col_types['GoodColumnContinuous']
+
+    columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA, 'Ethnicity,Nationality')
+    assert columns == 'Ethnicity,Nationality'.split(',')
 
     with raises(InvalidConfigError) as e_info:
         columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA, 'Ethnicity,BarSequence,Nationality,StudyName')
     assert 'Invalid metadata column' in e_info.value.message
+
+    with raises(InvalidConfigError) as e_info:
+        columns, col_types = mmeds.get_valid_columns(fig.TEST_METADATA,
+                                                     'Ethnicity,BarcodeSequence,Nationality,StudyName')
+    assert 'selected for analysis' in e_info.value.message
 
 
 def test_load_config_file():
@@ -183,8 +201,8 @@ def test_load_config_file():
     config = mmeds.load_config(None, fig.TEST_METADATA)
     assert len(config.keys()) == 6
 
-    config = mmeds.load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-    assert len(config.keys()) == 6
+    config = mmeds.load_config(Path(fig.TEST_CONFIG_ALL).read_text(), fig.TEST_METADATA)
+    assert len(config['taxa_levels']) == 7
 
     # Check the config file fail states
     with raises(InvalidConfigError) as e_info:
@@ -198,3 +216,11 @@ def test_load_config_file():
     with raises(InvalidConfigError) as e_info:
         config = mmeds.load_config(Path(fig.TEST_CONFIG_3).read_text(), fig.TEST_METADATA)
     assert 'Invalid parameter' in e_info.value.message
+
+
+def test_mmeds_to_MIxS():
+    tempdir = Path(gettempdir())
+    mmeds.log(tempdir)
+    mmeds.mmeds_to_MIxS(fig.TEST_METADATA, tempdir / 'MIxS.tsv')
+    mmeds.MIxS_to_mmeds(tempdir / 'MIxS.tsv', tempdir / 'mmeds.tsv')
+    assert (tempdir / 'mmeds.tsv').read_bytes() == Path(fig.TEST_METADATA).read_bytes()

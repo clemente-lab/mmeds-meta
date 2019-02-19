@@ -70,6 +70,7 @@ def summarize_qiime1(path, files, config, load_info):
 
     # Get the mapping file
     copy(files['mapping'], path / 'summary/.')
+    copy(files['metadata'], files['summary'] / 'metadata.csv')
 
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
@@ -83,7 +84,6 @@ def summarize_qiime1(path, files, config, load_info):
                         run_path=path / 'summary',
                         load_info=load_info)
     mnb.create_notebook()
-
     log('Make archive')
     result = make_archive(path / 'summary',
                           format='zip',
@@ -139,6 +139,8 @@ def summarize_qiime2(path, files, config, load_info):
 
     # Get the mapping file
     copy(files['mapping'], files['summary'])
+    copy(files['metadata'], files['summary'] / 'metadata.csv')
+
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
