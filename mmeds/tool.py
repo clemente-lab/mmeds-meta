@@ -94,7 +94,7 @@ class Tool:
         elif Path(root_files['for_reads']).suffix in ['.zip', '.tar']:
             (new_dir / 'data.zip').symlink_to(root_files['for_reads'])
             files['data'] = new_dir / 'data.zip'
-            data_type = 'paired_demuxed'
+            data_type = 'single_demuxed'
 
         (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
         files['metadata'] = new_dir / 'metadata.tsv'

@@ -50,12 +50,12 @@ class QiimeTests(TestCase):
         for atype in ['qiime1-open', 'qiime1-closed']:
             for code in [('single_end', fig.TEST_CODE),
                          ('paired_end', fig.TEST_CODE_PAIRED),
-                         ('paired_demuxed', fig.TEST_CODE_DEMUX)]:
+                         ('single_demuxed', fig.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime1)
 
     def test_qiime2_setup_analysis(self):
         for atype in ['qiime2-dada2', 'qiime2-deblur']:
             for code in [('single_end', fig.TEST_CODE),
                          ('paired_end', fig.TEST_CODE_PAIRED),
-                         ('paired_demuxed', fig.TEST_CODE_DEMUX)]:
+                         ('single_demuxed', fig.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime2)
