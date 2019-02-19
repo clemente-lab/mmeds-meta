@@ -94,12 +94,16 @@ TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'singlereads'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
+TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
+TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_CONFIG = str(TEST_PATH / 'test_config_file.txt')
 TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
 TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
 TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
+TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
@@ -249,6 +253,7 @@ for table in TABLE_COLS:
 del db
 
 
+# Map known columns from MIxS
 MMEDS_MAP = {
     'investigation_type': ('Study', 'StudyType'),
     'project_name': ('Study', 'StudyName'),
@@ -271,8 +276,12 @@ MMEDS_MAP = {
     'assembly_name': ('ResultsProtocols', 'Name:Version'),
     'isol_growth_condt': ('SampleProtocols', 'Conditions')
 }
+# Map all mmeds columns
+for table in TABLE_COLS:
+    for column in TABLE_COLS[table]:
+        MMEDS_MAP[column] = (table, column)
 
-MIXS_MAP = {v: k for k, v in MMEDS_MAP.items()}
+MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 
 
 def get_salt(length=10):
