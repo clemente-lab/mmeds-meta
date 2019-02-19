@@ -39,6 +39,13 @@ class Qiime1(Tool):
                                        self.files['rev_reads'],
                                        self.files['joined_dir']))
 
+    def zip_joined_reads(self):
+        """ Zip the output fastq created by joining the reads. """
+        self.add_path('joined_reads', '.fastq.gz')
+        cmd = 'gzip {} {}'.format(self.files['joined_dir'] / 'fastqjoin.join.fastq',
+                                  self.path / 'joined_reads.fastq.gz')
+        self.jobtext.append(cmd)
+
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
         self.add_path('split_output', '')
@@ -58,7 +65,7 @@ class Qiime1(Tool):
         elif self.data_type == 'paired_end':
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
             command = cmd.format(self.files['split_output'],
-                                 self.files['joined_dir'],
+                                 self.files['joined_dir'] / 'fastqjoin.join.fastq',
                                  self.files['barcodes'],
                                  self.files['mapping'],
                                  12)
