@@ -85,6 +85,9 @@ class Qiime2(Tool):
             '--m-barcodes-column {}'.format('BarcodeSequence'),
             '--o-per-sample-sequences {};'.format(self.files['demux_file'])
         ]
+        # Reverse compliment the barcodes in the mapping file if using paired reads
+        if 'paired' in self.data_type:
+            cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         self.jobtext.append(' '.join(cmd))
 
     def demux_visualize(self):
