@@ -43,7 +43,7 @@ for group_name in metadata_columns:
         # Get the category with the most colors to use for palette creation
         if uni > len(max_colors):
             max_colors = group_ids[-1]
-        color_maps[group_name] = {{x:'color' + str(list(set(grouping)).index(x)) for x in set(grouping)}}
+        color_maps[group_name] = {{str(x):'color{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
 
 # Shuffle the non-continuous colors so values near each other won't be similar shades
 max_colors_con = deepcopy(max_colors)
@@ -294,9 +294,9 @@ for group_name in metadata_columns:
         sub_offset += 20
         # Get the color
         if config['metadata_continuous'][group_name]:
-            RGB = tuple(allRGB[color_maps[group_name][sample]])
+            RGB = tuple(allRGB[color_maps[group_name][str(sample)]])
         else:
-            RGB = tuple(allRGB[color_maps[group_name][sample]])
+            RGB = tuple(allRGB[color_maps[group_name][str(sample)]])
         # Draw the color
         draw.rectangle([10, 10 + v_offset,
                         30, 30 + v_offset],
@@ -359,7 +359,7 @@ for group_name in metadata_columns:
         group = group.assign(Error=error['value'])
 
         # Assign information for the colors
-        colors = [color_maps[group_name][x] for x in group[group_name]]
+        colors = [color_maps[group_name][str(x)] for x in group[group_name]]
         group = group.assign(GroupID=colors)
 
         # Assign information for groups
@@ -409,7 +409,7 @@ for group_name in metadata_columns:
     group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
 
     # Assign information for the colors
-    colors = [color_maps[group_name][x] for x in group[group_name]]
+    colors = [color_maps[group_name][str(x)] for x in group[group_name]]
     group = group.assign(GroupID=colors)
 
     # Assign information for grouping, drop specific catagories
@@ -470,7 +470,7 @@ df = df.rename(index=str, columns=cols)
 
 # Assign GroupIDs based on metadata
 samples = mdf['{group}'][df.axes[0]]
-df = df.assign(GroupID=[color_maps['{group}'][x] for x in samples])
+df = df.assign(GroupID=[color_maps['{group}'][str(x)] for x in samples])
 =====
 beta_r<source>
 %%R -i df
