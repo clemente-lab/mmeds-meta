@@ -112,7 +112,7 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def dada2(self, p_trim_left=0, p_trunc_len=120):
+    def dada2(self, p_trim_left=0, p_trunc_len=0):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
         self.add_path('rep_seqs_dada2', '.qza')
@@ -390,9 +390,9 @@ class Qiime2(Tool):
             if self.analysis:
                 self.setup_analysis()
                 jobfile = self.path / (self.run_id + '_job')
-                self.add_path(jobfile, 'lsf')
+                self.add_path(jobfile, '.lsf')
                 error_log = self.path / self.run_id
-                self.add_path(error_log, 'err')
+                self.add_path(error_log, '.err')
                 self.write_file_locations()
                 if self.testing:
                     # Open the jobfile to write all the commands

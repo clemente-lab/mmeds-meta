@@ -182,6 +182,8 @@ class Tool:
         create a file_index in the analysis directoy.
         """
         string_files = {str(key): str(self.files[key]) for key in self.files.keys()}
+        log("String files")
+        log(string_files)
         self.db.update_metadata(self.access_code,
                                 'analysis{}'.format(self.run_id),
                                 string_files)

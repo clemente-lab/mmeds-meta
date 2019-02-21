@@ -631,6 +631,7 @@ class Database:
         :value: Either a path to a file or a dictionary containing
                 file locations in a subdirectory
         """
+        log('Update metadata with {}: {}'.format(filekey, value))
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
