@@ -66,8 +66,8 @@ def load_config(config_file, metadata):
                     config[option] = config[option].split(',')
             # Otherwise just ensure the parameter exists.
             else:
-                config[option]
-    except KeyError:
+                assert config[option]
+    except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
 
     return config
@@ -107,7 +107,7 @@ def get_valid_columns(metadata_file, option):
                     raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
             # If the columns is explicitly specified only check that it exists in the metadata
             else:
-                df[col]
+                assert df[col].any()
                 summary_cols.append(col)
                 col_types[col] = pd.api.types.is_numeric_dtype(df[col])
     except KeyError:
@@ -523,7 +523,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
 
     # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)
-    if len(dups) > 0:
+    if dups:
         for dup in dups:
             locs = [i for i, header in enumerate(all_headers) if header == 'dup']
             for loc in locs:
@@ -889,4 +889,4 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         script += ' -A {summary}'.format(kwargs['summary'])
     cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
     log(cmd)
-    run(cmd, shell=True, check=True)
+    run(cmd.split(' '), check=True)

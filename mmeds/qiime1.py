@@ -99,9 +99,9 @@ class Qiime1(Tool):
         """ Check that counts match after split_libraries and pick_otu. """
         try:
             # Count the sequences prior to diversity analysis
-            cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
-                                                  self.files['split_output'] / 'seqs.fna')
-            output = run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE)
+            cmd = ['conda', 'run', '-n', self.jobtext.split(' ')[-1],
+                   'count_seqs.py', '-i', self.files['split_output'] / 'seqs.fna']
+            output = run(cmd, check=True, stdout=PIPE)
             out = output.stdout.decode('utf-8')
             log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
@@ -147,10 +147,9 @@ class Qiime1(Tool):
                 f.write('#!/bin/bash -l\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            output = run('bash -c "bash {}.lsf"'.format(jobfile),
+            output = run(['bash', '{}.lsf'.format(jobfile)],
                          stdout=PIPE,
                          stderr=PIPE,
-                         shell=True,
                          check=True)
             log(output.stdout.decode('utf-8').replace('\\n', '\n'))
             log(output.stderr.decode('utf-8').replace('\\n', '\n'))
@@ -168,7 +167,7 @@ class Qiime1(Tool):
             #  Temporary for testing on Minerva
             #  FIXME
             #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            run(['bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             #  self.wait_on_job(job_id)
 

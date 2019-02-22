@@ -146,7 +146,7 @@ class MMEDSserver(object):
                     errors.append('-1\t-1\t' + e.message)
 
             # If there are errors report them and return the error page
-            if len(errors) > 0:
+            if errors:
                 log('Errors in metadata')
                 log('\n'.join(errors))
                 cp.session['error_file'] = cp.session['working_dir'] / ('errors_' + str(myMetaData.filename))
@@ -162,11 +162,9 @@ class MMEDSserver(object):
                 for i, error in enumerate(errors):
                     uploaded_output = insert_error(uploaded_output, 22 + i, error)
 
-                html = generate_error_html(metadata_copy, errors, warnings)
+                page = generate_error_html(metadata_copy, errors, warnings)
                 cp.log('Created error html')
-
-                return html
-            elif len(warnings) > 0:
+            elif warnings:
                 log('Some warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 # Write the errors to a file
@@ -174,18 +172,16 @@ class MMEDSserver(object):
                     f.write('\n'.join(warnings))
 
                 # Get the html for the upload page
-                uploaded_output = mmeds.load_html('warning', title='Warnings')
+                page = mmeds.load_html('warning', title='Warnings')
 
                 for i, warning in enumerate(warnings):
-                    uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-
-                return uploaded_output
+                    page = insert_warning(page, 22 + i, warning)
             else:
                 # If there are no errors or warnings proceed to upload the data files
                 log('No errors or warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
-                return page
+            return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -430,11 +426,10 @@ class MMEDSserver(object):
 
             file_path = str(Path(path) / files[download])
             if 'dir' in download:
-                run('tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                   Path(file_path).parent,
-                                                   Path(file_path).name),
-                    shell=True,
-                    check=True)
+                cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
+                                                     Path(file_path).parent,
+                                                     Path(file_path).name)
+                run(cmd.split(' '), check=True)
                 file_path += '.tar.gz'
             cp.log('Fetching {}'.format(file_path))
 
@@ -480,9 +475,9 @@ class MMEDSserver(object):
             page = insert_html(
                 page, 10, '<h4> No account exists with the providied username and email. </h4>')
             return page
-        exit = reset_password(username, email)
+        reset = reset_password(username, email)
 
-        if exit:
+        if reset:
             page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
         else:
             page = insert_html(
@@ -597,16 +592,16 @@ class MMEDSserver(object):
         if pass_err:
             with open(HTML_DIR / 'sign_up_page.html') as f:
                 page = f.read()
-            return insert_error(page, 25, pass_err)
+            page = insert_error(page, 25, pass_err)
         elif user_err:
             with open(HTML_DIR / 'sign_up_page.html') as f:
                 page = f.read()
-            return insert_error(page, 25, user_err)
+            page = insert_error(page, 25, user_err)
         else:
             add_user(username, password1, email, testing=self.testing)
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
-            return page
+        return page
 
     @cp.expose
     def login(self, username, password):
@@ -620,7 +615,7 @@ class MMEDSserver(object):
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             cp.log('Login Error: Invalid username or password')
-            return insert_error(page, 23, 'Error: Invalid username or password.')
+            page = insert_error(page, 23, 'Error: Invalid username or password.')
         else:
             cp.session['user'] = username
             cp.session['temp_dir'] = tempfile.TemporaryDirectory()
@@ -630,7 +625,8 @@ class MMEDSserver(object):
                                    title='Welcome to Mmeds',
                                    user=self.get_user())
             cp.log('Login Successful')
-            return page.format(user=username)
+            page = page.format(user=username)
+        return page
 
     @cp.expose
     def home(self):
@@ -677,7 +673,7 @@ class MMEDSserver(object):
             if validate_password(self.get_user(), password0):
                 # Check the two copies of the new password match
                 errors = check_password(password1, password2)
-                if len(errors) == 0:
+                if not errors:
                     change_password(self.get_user(), password1)
                     page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
                 else:

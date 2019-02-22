@@ -4,10 +4,8 @@ import cherrypy as cp
 import pandas as pd
 import os
 import shutil
-import pickle
 import warnings
 
-from numpy import nan
 from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
@@ -74,13 +72,13 @@ class Database:
             if user == sec.SQL_USER_NAME:
                 self.db = pms.connect(host='localhost',
                                       user=sec.SQL_USER_NAME,
-                                      password='password',
+                                      password=fig.TEST_USER_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             else:
                 self.db = pms.connect(host='localhost',
                                       user='root',
-                                      password='',
+                                      password=fig.TEST_ROOT_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             # Connect to the mongo server
@@ -128,19 +126,6 @@ class Database:
             self.email = result[1]
 
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
-
-        if False:
-            # Do housekeeping for removing old files
-            if os.path.isfile(self.check_file):
-                with open(self.check_file, 'rb') as f:
-                    last_check = pickle.load(f)
-                if (datetime.utcnow() - last_check).days > DAYS:
-                    self.clean()
-                    with open(self.check_file, 'wb') as f:
-                        pickle.dump(datetime.utcnow(), f)
-            else:
-                with open(self.check_file, 'wb+') as f:
-                    pickle.dump(datetime.utcnow(), f)
 
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
@@ -233,7 +218,7 @@ class Database:
                     self.db.commit()
                 except pms.err.IntegrityError:
                     r_tables.append(table)
-            if len(r_tables) == 0:
+            if not r_tables:
                 break
             else:
                 tables = r_tables
@@ -255,7 +240,6 @@ class Database:
             columns = list(map(lambda x: x[0].split('_')[0],
                                self.cursor.fetchall()))
         """
-        pass
 
     def create_import_data(self, table, df, verbose=True):
         """
@@ -286,7 +270,7 @@ class Database:
                 else:
                     sql += ' AND '
                 # Add quotes around string values
-                if type(value) == str:
+                if isinstance(value, str):
                     sql += column + ' = "' + value + '"'
                 # Otherwise check the absolute value of the difference is small
                 # so that SQL won't fail to match floats
@@ -604,7 +588,7 @@ class Database:
         self.cursor.execute(sql)
         result = self.cursor.fetchone()
         # Ensure the user exists
-        if len(result) == 0:
+        if not result:
             return False
 
         # Delete the old entry for the user
@@ -651,7 +635,7 @@ class Database:
                     sql += ' '
                 else:
                     sql += ' AND '
-                if type(value) == str:
+                if isinstance(value, str):
                     sql += column + ' = "' + value + '"'
                 else:
                     sql += ' ABS(Subjects.' + column + ' - ' + str(value) + ') <= 0.01'

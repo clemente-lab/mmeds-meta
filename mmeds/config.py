@@ -38,7 +38,7 @@ CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
 PORT = 52953
-HOST = '0.0.0.0'
+HOST = 'localhost'
 
 
 # Configuration for the CherryPy server
@@ -87,6 +87,8 @@ if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 
 TEST_PASS = 'testpass'
+TEST_USER_PASS = 'password'
+TEST_ROOT_PASS = ''
 TEST_USER = 'testuser'
 TEST_USER_0 = 'testuser0'
 TEST_EMAIL = 'mmeds.tester@gmail.com'
@@ -122,7 +124,7 @@ TEST_FILES = {
 }
 TEST_CHECKS = {}
 for key in TEST_FILES.keys():
-    hash1 = hashlib.md5()
+    hash1 = hashlib.sha256()
     with open(TEST_FILES[key], 'rb') as f:
         contents = f.read()
     hash1.update(contents)
