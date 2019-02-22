@@ -382,17 +382,17 @@ class Qiime2(Tool):
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
         self.summary()
-        log('\n'.join(self.jobtext))
+        # Define the job and error files
+        jobfile = self.path / (self.run_id + '_job')
+        self.add_path(jobfile, '.lsf')
+        error_log = self.path / self.run_id
+        self.add_path(error_log, '.err')
 
     def run(self):
         """ Perform some analysis. """
         try:
             if self.analysis:
                 self.setup_analysis()
-                jobfile = self.path / (self.run_id + '_job')
-                self.add_path(jobfile, '.lsf')
-                error_log = self.path / self.run_id
-                self.add_path(error_log, '.err')
                 self.write_file_locations()
                 if self.testing:
                     # Open the jobfile to write all the commands
@@ -400,7 +400,8 @@ class Qiime2(Tool):
                         f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    output = run('bash -c "bash {}.lsf"'.format(jobfile),
+                    output = run('bash -c "bash {}.lsf&>{}.err"'.format(self.files['jobfile'],
+                                                                        self.files['error_log']),
                                  stdout=PIPE,
                                  stderr=PIPE,
                                  shell=True,
