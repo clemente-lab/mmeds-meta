@@ -45,12 +45,11 @@ def summarize_qiime1(path, files, config, load_info):
 
     # Convert and store the otu table
     # Set the environment
-    cmd = '{} biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
-    cmd = cmd.format(load_info,
-                     files['otu_output'] / 'otu_table.biom',
+    cmd = 'conda run -n qiime1 biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
+    cmd = cmd.format(files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
     log(cmd)
-    run('bash -c "{}"'.format(cmd), shell=True, check=True)
+    run(['/usr/bin/bash'] + cmd.split(' '), check=True)
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])
@@ -102,40 +101,37 @@ def summarize_qiime2(path, files, config, load_info):
     summary_files = defaultdict(list)
 
     # Get Taxa
-    cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
-                                                            files['taxa_bar_plot'],
-                                                            path / 'temp')
-    run('bash -c "{}"'.format(cmd), shell=True, check=True)
+    cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['taxa_bar_plot'],
+                                                                             path / 'temp')
+    run(['/usr/bin/bash'] + cmd.split(' '), check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
         summary_files['taxa'].append(taxa_file.name)
-    rmtree(path / 'temp')
+        rmtree(path / 'temp')
 
     # Get Beta
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
-        cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
-                                                                beta_file,
-                                                                path / 'temp')
-        run('bash -c "{}"'.format(cmd), shell=True, check=True)
+        cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(beta_file,
+                                                                                 path / 'temp')
+        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
         summary_files['beta'].append(dest_file.name)
-    rmtree(path / 'temp')
+        rmtree(path / 'temp')
 
     # Get Alpha
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
-        cmd = '{} qiime tools export {} --output-dir {}'.format(load_info,
-                                                                files['alpha_rarefaction'],
-                                                                path / 'temp')
-        run('bash -c "{}"'.format(cmd), shell=True, check=True)
+        cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['alpha_rarefaction'],
+                                                                                 path / 'temp')
+        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
         summary_files['alpha'].append(metric_file.name)
-    rmtree(path / 'temp')
+        rmtree(path / 'temp')
 
     # Get the mapping file
     copy(files['mapping'], files['summary'])
@@ -223,16 +219,16 @@ class MMEDSNotebook():
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=level))
                 self.add_code(self.source['taxa_color_py'].format(level=level))
-            self.add_code(self.source['taxa_group_color_py'].format(level=level,
-                                                                    group=column))
-            self.add_code(self.source['taxa_r'].format(plot=filename,
-                                                       level=level,
-                                                       group=column))
-            self.add_code('Image("{plot}")'.format(plot=filename))
-            self.add_markdown(self.source['taxa_caption'])
-            self.add_code('Image("taxa_legend_{level}.png")'.format(level=level))
-            self.add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level, group=column))
-            self.add_markdown(self.source['page_break'])
+                self.add_code(self.source['taxa_group_color_py'].format(level=level,
+                                                                        group=column))
+                self.add_code(self.source['taxa_r'].format(plot=filename,
+                                                           level=level,
+                                                           group=column))
+                self.add_code('Image("{plot}")'.format(plot=filename))
+                self.add_markdown(self.source['taxa_caption'])
+                self.add_code('Image("taxa_legend_{level}.png")'.format(level=level))
+                self.add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level, group=column))
+                self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
         """
@@ -271,12 +267,12 @@ class MMEDSNotebook():
                 continuous = 'TRUE'
             else:
                 continuous = 'FALSE'
-            self.add_code(self.source['beta_r'].format(plot=plot,
-                                                       subplot=subplot,
-                                                       cat=column,
-                                                       continuous=continuous))
-            self.add_code('Image("{plot}")'.format(plot=plot))
-            self.add_markdown(self.source['beta_caption'])
+                self.add_code(self.source['beta_r'].format(plot=plot,
+                                                           subplot=subplot,
+                                                           cat=column,
+                                                           continuous=continuous))
+                self.add_code('Image("{plot}")'.format(plot=plot))
+                self.add_markdown(self.source['beta_caption'])
 
             self.add_code('Image("{group}-legend.png")'.format(group=column))
             self.add_markdown(self.source['page_break'])
@@ -351,8 +347,8 @@ class MMEDSNotebook():
         for cell in self.cells:
             if cell.cell_type == 'code':
                 cell.metadata['hide_input'] = True
-        nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
-        return nn
+                nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
+                return nn
 
     def write_notebook(self, nn):
         """
@@ -363,15 +359,13 @@ class MMEDSNotebook():
         try:
             nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
             module_info = self.load_info.split(';')
-            jupyter_cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex {}.ipynb'.format(self.name)
-            cmd = '; '.join([module_info[0],
-                             'module load mmeds-stable',
-                             jupyter_cmd])
+            cmd = 'conda run -n mmeds-stable jupyter nbconvert --template=revtex.tplx --to=latex'
+            cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 cmd += ' --execute'
-            # Mute output
-            #  cmd += ' &>/dev/null;'
-            output = run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE, stderr=PIPE)
+                # Mute output
+                #  cmd += ' &>/dev/null;'
+                output = run(['/usr/bin/bash'] + cmd.split(' '), check=True, stdout=PIPE, stderr=PIPE)
 
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)

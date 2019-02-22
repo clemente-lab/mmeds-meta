@@ -147,7 +147,7 @@ class Qiime1(Tool):
                 f.write('#!/bin/bash -l\n')
                 f.write('\n'.join(self.jobtext))
             # Run the command
-            output = run(['bash', '{}.lsf'.format(jobfile)],
+            output = run(['/usr/bin/bash', '{}.lsf'.format(jobfile)],
                          stdout=PIPE,
                          stderr=PIPE,
                          check=True)
@@ -167,7 +167,7 @@ class Qiime1(Tool):
             #  Temporary for testing on Minerva
             #  FIXME
             #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            run(['bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
+            run(['/usr/bin/bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             #  self.wait_on_job(job_id)
 

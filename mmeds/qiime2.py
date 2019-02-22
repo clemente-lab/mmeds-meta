@@ -318,22 +318,22 @@ class Qiime2(Tool):
         cmd = 'conda run -n {} qiime tools export {} --output-dir {}'.format(self.jobtext[0].split(' ')[-1],
                                                                              self.files['demux_viz'],
                                                                              self.path / 'temp')
-        run(['bash'] + cmd.split(' '), shell=True, check=True)
+        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
         rmtree(self.path / 'temp')
 
         # Check the counts after DADA2/DeBlur
-        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                self.files['table_{}'.format(self.atype)],
-                                                                self.path / 'temp')
-        run('bash -c "{}"'.format(cmd), check=True)
+        cmd = 'conda run -n {} qiime tools export {} --output-dir {}'.format(self.jobtext[0].split(' ')[-1],
+                                                                             self.files['table_{}'.format(self.atype)],
+                                                                             self.path / 'temp')
+        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
         log(cmd)
 
         cmd = 'conda run -n {} biom summarize-table -i {}'.format(self.jobtext[0].split(' ')[-1],
                                                                   self.path / 'temp' / 'feature-table.biom')
-        result = run(['bash'] + cmd.split(' '), stdout=PIPE, stderr=PIPE)
+        result = run(['/usr/bin/bash'] + cmd.split(' '), stdout=PIPE, stderr=PIPE)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
         rmtree(self.path / 'temp')
 
@@ -397,10 +397,9 @@ class Qiime2(Tool):
                         f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    output = run(['bash', '{}.lsf'.format(jobfile)],
+                    output = run(['/usr/bin/bash', '{}.lsf'.format(jobfile)],
                                  stdout=PIPE,
                                  stderr=PIPE,
-                                 shell=True,
                                  check=True)
                     log(output.stdout.decode('utf-8').replace('\\n', '\n'))
                     log(output.stderr.decode('utf-8').replace('\\n', '\n'))
@@ -416,11 +415,11 @@ class Qiime2(Tool):
                         f.write(temp.format(**options))
                         f.write('\n'.join(self.jobtext))
                     # Submit the job
-                    # output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-                    output = run(['bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
+                    # output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, check=True)
+                    output = run(['/usr/bin/bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
                     log(output)
-                    #job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
-                    #self.wait_on_job(job_id)
+                    # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+                    # self.wait_on_job(job_id)
 
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)

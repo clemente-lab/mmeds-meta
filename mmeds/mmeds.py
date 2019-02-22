@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 import mmeds.config as fig
 import pandas as pd
+import numpy as np
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
@@ -827,8 +828,12 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
 
 def log(text):
     """ Write provided text to the log file. """
+    if isinstance(text, dict):
+        log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
+    else:
+        log_text = str(text)
     with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write('{}: {}\n'.format(datetime.now(), text))
+        f.write('{}: {}\n'.format(datetime.now(), log_text))
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
@@ -890,3 +895,14 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
     log(cmd)
     run(cmd.split(' '), check=True)
+
+
+def pyformat_translate(value):
+    """ Convert from numpy to standard python datatypes. """
+    if isinstance(value, np.int64):
+        result = int(value)
+    elif isinstance(value, np.float64):
+        result = float(value)
+    else:
+        result = value
+    return result
