@@ -1,7 +1,7 @@
 # mmeds-meta
 
-[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Enhancement-ICD10Catagories)](https://travis-cl.com/clemente-lab/mmeds-meta)
-[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Enhancement-ICD10Catagories/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Enhancement-ICD10Categories)](https://travis-cl.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Enhancement-ICD10Categories/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 
 
 ## Instructions
