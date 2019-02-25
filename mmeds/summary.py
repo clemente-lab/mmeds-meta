@@ -1,14 +1,14 @@
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
-from subprocess import run, PIPE
+from subprocess import run
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
 
 import nbformat as nbf
 import os
 from mmeds.config import STORAGE_DIR
-from mmeds.mmeds import log, load_config
+from mmeds.mmeds import log, load_config, setup_environment
 
 
 def summarize_qiime(summary_path, load_info, config_file, tool):
@@ -39,28 +39,31 @@ def summarize_qiime1(path, files, config, load_info):
     """
     Create summary of analysis results
     """
-    log('Run summarize')
+
+    def move_files(path, category):
+        """ Collect the contents of all files match the regex in path """
+        log('Move files {}'.format(category))
+        data_files = diversity.glob(path.format(depth=config['sampling_depth']))
+        for data in data_files:
+            copy(data, files['summary'])
+            summary_files[category].append(data.name)
+
+    log('Run summarize_qiime1')
     diversity = files['diversity_output']
     summary_files = defaultdict(list)
+    # Get the environment
+    new_env = setup_environment('qiime1')
 
     # Convert and store the otu table
-    # Set the environment
     cmd = 'conda run -n qiime1 biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
     cmd = cmd.format(files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
-    log(cmd)
-    run(['/usr/bin/bash'] + cmd.split(' '), check=True)
+    run(['/usr/bin/bash', '-c', cmd], env=new_env, check=True)
+    log('biom convert complete')
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])
     summary_files['otu'].append('otu_table.tsv')
-
-    def move_files(path, catagory):
-        """ Collect the contents of all files match the regex in path """
-        data_files = diversity.glob(path.format(depth=config['sampling_depth']))
-        for data in data_files:
-            copy(data, files['summary'])
-            summary_files[catagory].append(data.name)
 
     move_files('biom_table_summary.txt', 'otu')                       # Biom summary
     move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
@@ -97,13 +100,16 @@ def summarize_qiime2(path, files, config, load_info):
     """ Create summary of the files produced by the qiime2 analysis. """
     log('Start Qiime2 summary')
 
+    # Get the environment
+    new_env = setup_environment('qiime1')
+
     # Setup the summary directory
     summary_files = defaultdict(list)
 
     # Get Taxa
     cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['taxa_bar_plot'],
                                                                              path / 'temp')
-    run(['/usr/bin/bash'] + cmd.split(' '), check=True)
+    run(['/usr/bin/bash'] + cmd.split(' '), env=new_env, check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -115,7 +121,7 @@ def summarize_qiime2(path, files, config, load_info):
     for beta_file in beta_files:
         cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(beta_file,
                                                                                  path / 'temp')
-        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
+        run(['/usr/bin/bash', '-c', cmd], env=new_env, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
@@ -126,7 +132,7 @@ def summarize_qiime2(path, files, config, load_info):
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
         cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['alpha_rarefaction'],
                                                                                  path / 'temp')
-        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
+        run(['/usr/bin/bash', '-c', cmd], env=new_env, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
@@ -166,7 +172,6 @@ class MMEDSNotebook():
     """ A class for handling the creation and execution of the summary notebooks. """
 
     def __init__(self, config, analysis_type, files, execute, name, run_path, load_info):
-
         """
         Create the summary PDF for qiime1 analysis
         ==========================================
@@ -184,6 +189,7 @@ class MMEDSNotebook():
         self.run_path = run_path
         self.config = config
         self.load_info = load_info
+        self.env = setup_environment('mmeds-stable')
 
         # Load the code templates
         with open(STORAGE_DIR / 'summary_code.txt') as f:
@@ -265,6 +271,10 @@ class MMEDSNotebook():
                                                         group=column))
             if self.config['metadata_continuous']:
                 continuous = 'TRUE'
+                self.add_code(self.source['beta_r'].format(plot=plot,
+                                                           subplot=subplot,
+                                                           cat=column,
+                                                           continuous=continuous))
             else:
                 continuous = 'FALSE'
                 self.add_code(self.source['beta_r'].format(plot=plot,
@@ -358,21 +368,20 @@ class MMEDSNotebook():
         """
         try:
             nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
-            module_info = self.load_info.split(';')
-            cmd = 'conda run -n mmeds-stable jupyter nbconvert --template=revtex.tplx --to=latex'
+            cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 cmd += ' --execute'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-                output = run(['/usr/bin/bash'] + cmd.split(' '), check=True, stdout=PIPE, stderr=PIPE)
+                output = run(['/usr/bin/bash', '-c', cmd], check=True, env=self.env)
 
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
-            output = run(cmd, shell=True, check=True, stdout=PIPE, stderr=PIPE)
-            output = run(cmd, shell=True, check=True, stdout=PIPE, stderr=PIPE)
+            output = run(cmd.split(' '), check=True, env=self.env)
+            output = run(cmd.split(' '), check=True, env=self.env)
         except RuntimeError:
             print(output)
             log(output)

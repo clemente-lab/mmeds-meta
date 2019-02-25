@@ -2,9 +2,10 @@ from collections import defaultdict
 from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
 from mmeds.error import MetaDataError, InvalidConfigError
-from subprocess import run
+from subprocess import run, PIPE
 from datetime import datetime
 from pathlib import Path
+from os import environ
 import mmeds.config as fig
 import pandas as pd
 import numpy as np
@@ -906,3 +907,19 @@ def pyformat_translate(value):
     else:
         result = value
     return result
+
+
+def setup_environment(module):
+    """
+    Returns a dictionary with the environment variables loaded for a particular module.
+    ===================================================================================
+    :module: A string. The name of the module to load.
+    """
+    log('Setup environment for {}'.format(module))
+    run(['/usr/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
+    new_env = environ.copy()
+    output = run(['/usr/bin/bash', '-c', 'module load {}'.format(module)],
+                 stdout=PIPE, stderr=PIPE, env=new_env, check=True)
+    new_env['PATH'] = '{}:{}'.format(output.stderr.strip(), new_env['PATH'])
+    log(new_env['PATH'])
+    return new_env
