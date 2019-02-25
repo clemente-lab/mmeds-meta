@@ -2,10 +2,9 @@ from pathlib import Path
 from subprocess import run, PIPE
 from shutil import copy
 from time import sleep
-from pandas import read_csv
 
 from mmeds.database import Database
-from mmeds.mmeds import log
+from mmeds.mmeds import log, create_qiime_from_mmeds
 from mmeds.error import AnalysisError
 
 
@@ -94,7 +93,7 @@ class Tool:
         elif Path(root_files['for_reads']).suffix in ['.zip', '.tar']:
             (new_dir / 'data.zip').symlink_to(root_files['for_reads'])
             files['data'] = new_dir / 'data.zip'
-            data_type = 'paired_demuxed'
+            data_type = 'single_demuxed'
 
         (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
         files['metadata'] = new_dir / 'metadata.tsv'
@@ -201,55 +200,15 @@ class Tool:
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
         # Open the metadata file for the study
-        fp = self.files['metadata']
-        mdata = read_csv(fp, header=1, skiprows=[2, 3, 4], sep='\t')
-        self.columns = list(mdata.columns)
+        mmeds_file = self.files['metadata']
 
         # Create the Qiime mapping file
-        mapping_file = self.path / 'qiime_mapping_file.tsv'
+        qiime_file = self.path / 'qiime_mapping_file.tsv'
 
-        headers = list(mdata.columns)
-
-        di = headers.index('RawDataID')
-        hold = headers[0]
-        headers[0] = '#SampleID'
-        headers[di] = hold
-
-        di = headers.index('SampleID')
-        hold = headers[3]
-        headers[3] = 'MmedsSampleID'
-        headers[di] = hold
-
-        hold = headers[1]
-        di = headers.index('BarcodeSequence')
-        headers[1] = 'BarcodeSequence'
-        headers[di] = hold
-
-        hold = headers[2]
-        di = headers.index('LinkerPrimerSequence')
-        headers[2] = 'LinkerPrimerSequence'
-        headers[di] = hold
-
-        hold = headers[-1]
-        di = headers.index('Description')
-        headers[-1] = 'Description'
-        headers[di] = hold
-
-        with open(mapping_file, 'w') as f:
-            f.write('\t'.join(headers) + '\n')
-            for row_index in range(len(mdata)):
-                row = []
-                for header in headers:
-                    if header == '#SampleID':
-                        row.append(str(mdata['RawDataID'][row_index]))
-                    elif header == 'MmedsSampleID':
-                        row.append(str(mdata['SampleID'][row_index]))
-                    else:
-                        row.append(str(mdata[header][row_index]))
-                f.write('\t'.join(row) + '\n')
+        self.columns = create_qiime_from_mmeds(mmeds_file, qiime_file)
 
         # Add the mapping file to the MetaData object
-        self.files['mapping'] = mapping_file
+        self.files['mapping'] = qiime_file
 
     def summary(self):
         """ Setup script to create summary. """
