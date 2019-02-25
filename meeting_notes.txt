@@ -61,11 +61,6 @@ in time Add source tracker, american gut, earth microbiome
 
 Set max number of columns for taxa summary legends so they aren't cutoff
 
-Add code to create taxa summaries for qiime 2
-
-Add plots for every cataqory mentioned.
-
--- 
 Add legend for groups to every plot where it would be relevant
 
 Have a template for the text 'Alpha diversity using metric (chao1) , also text for 
@@ -84,3 +79,30 @@ Should be able to read plot text from a print out
 ggrepel - Add sample labels to each dot in a separate plot
 
 Have an option for using continuous colors for particular variables
+
+
+++++++++++++++++++++ Analysis Notes ++++++++++++++++++++++
+
+Reached end of index-reads file before iterating through joined paired-end-reads file! Except for missing paired-end reads that did not survive assembly, your index and paired-end reads files must be in the same order! Also, check that the index-reads and paired-end reads have identical headers.
+The last joined paired-end ID processed was: 'MISEQ02:463:000000000-BY5Y5:1:1101:15318:1516 1:N:0:'
+qiime.org: Use search on that page.
+Issue likely with last part '1:N:0:' on reverse is '2:N:0'
+
+metabolite data, where?
+Store as a seperate data file
+metabolomics, RNAseq, and high throughput assay
+
+make the way datafiles are stored and accessed more
+generic to allow running analysis on different files.
+
+How do we monitor who uploads what? What if fake data is uploaded to gain access
+to the public metadata/data?
+
+In kevin's data, many samples with not enough sequencing depth to pass rarefaction
+filter.
+
+why truncating with dada2? is the endo f the read of lower quality?
+check lengthof the data before dada2. COmpare moving pictures / enrica
+
+Can be automated for our lab's data
+Create default parameters for other setups

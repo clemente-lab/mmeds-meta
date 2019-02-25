@@ -85,6 +85,9 @@ class Qiime2(Tool):
             '--m-barcodes-column {}'.format('BarcodeSequence'),
             '--o-per-sample-sequences {};'.format(self.files['demux_file'])
         ]
+        # Reverse compliment the barcodes in the mapping file if using paired reads
+        if 'paired' in self.data_type:
+            cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         self.jobtext.append(' '.join(cmd))
 
     def demux_visualize(self):
@@ -109,7 +112,7 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def dada2(self, p_trim_left=0, p_trunc_len=120):
+    def dada2(self, p_trim_left=0, p_trunc_len=0):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
         self.add_path('rep_seqs_dada2', '.qza')
@@ -379,25 +382,25 @@ class Qiime2(Tool):
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
         self.summary()
-        log('\n'.join(self.jobtext))
+        # Define the job and error files
+        jobfile = self.path / (self.run_id + '_job')
+        self.add_path(jobfile, '.lsf')
+        error_log = self.path / self.run_id
+        self.add_path(error_log, '.err')
 
     def run(self):
         """ Perform some analysis. """
         try:
             if self.analysis:
                 self.setup_analysis()
-                jobfile = self.path / (self.run_id + '_job')
-                self.add_path(jobfile, 'lsf')
-                error_log = self.path / self.run_id
-                self.add_path(error_log, 'err')
                 self.write_file_locations()
                 if self.testing:
                     # Open the jobfile to write all the commands
-                    with open(str(jobfile) + '.lsf', 'w') as f:
+                    with open(self.files['jobfile'], 'w') as f:
                         f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    output = run(['/usr/bin/bash', '{}.lsf'.format(jobfile)],
+                    output = run(['/usr/bin/bash', '{}.lsf'.format(self.files['jobfile'])],
                                  stdout=PIPE,
                                  stderr=PIPE,
                                  check=True)
@@ -409,14 +412,14 @@ class Qiime2(Tool):
                         temp = f1.read()
 
                     # Open the jobfile to write all the commands
-                    with open(str(jobfile) + '.lsf', 'w') as f:
+                    with open(self.files['jobfile'], 'w') as f:
                         options = self.get_job_params()
                         # Add the appropriate values
                         f.write(temp.format(**options))
                         f.write('\n'.join(self.jobtext))
                     # Submit the job
                     # output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, check=True)
-                    output = run(['/usr/bin/bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
+                    output = run(['/usr/bin/bash', self.files['jobfile']], stdout=PIPE, check=True)
                     log(output)
                     # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
                     # self.wait_on_job(job_id)

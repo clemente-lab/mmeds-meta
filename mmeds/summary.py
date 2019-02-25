@@ -318,12 +318,10 @@ class MMEDSNotebook():
 
         # Get only files for the requested taxa levels
         included_files = []
-        taxa_files = sorted(self.files['taxa'], reverse=True)
-        taxa_levels = sorted(self.config['taxa_levels'])
-        for taxa_level in taxa_levels:
-            taxa_file = taxa_files.pop()
-            if str(taxa_level) in taxa_file:
-                included_files.append(taxa_file)
+        for taxa_level in self.config['taxa_levels']:
+            for taxa_file in self.files['taxa']:
+                if str(taxa_level) in taxa_file:
+                    included_files.append(taxa_file)
 
         # Add the cells for the Taxa summaries
         self.add_markdown('# Taxa Summary')

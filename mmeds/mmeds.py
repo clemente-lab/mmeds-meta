@@ -895,7 +895,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         script += ' -A {summary}'.format(kwargs['summary'])
     cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
     log(cmd)
-    run(cmd.split(' '), check=True)
+    run(['/usr/bin/bash', '-c', cmd], check=True)
 
 
 def pyformat_translate(value):
@@ -923,3 +923,54 @@ def setup_environment(module):
     new_env['PATH'] = '{}:{}'.format(output.stderr.strip(), new_env['PATH'])
     log(new_env['PATH'])
     return new_env
+
+
+def create_qiime_from_mmeds(mmeds_file, qiime_file):
+    """
+    Create a qiime mapping file from the mmeds metadata
+    ===================================================
+    :mmeds_file: The path to the mmeds metadata.
+    :qiime_file: The path where the qiime mapping file should be written.
+    """
+    mdata = pd.read_csv(mmeds_file, header=1, skiprows=[2, 3, 4], sep='\t')
+
+    headers = list(mdata.columns)
+
+    di = headers.index('RawDataID')
+    hold = headers[0]
+    headers[0] = '#SampleID'
+    headers[di] = hold
+
+    di = headers.index('SampleID')
+    hold = headers[3]
+    headers[3] = 'MmedsSampleID'
+    headers[di] = hold
+
+    hold = headers[1]
+    di = headers.index('BarcodeSequence')
+    headers[1] = 'BarcodeSequence'
+    headers[di] = hold
+
+    hold = headers[2]
+    di = headers.index('LinkerPrimerSequence')
+    headers[2] = 'LinkerPrimerSequence'
+    headers[di] = hold
+
+    hold = headers[-1]
+    di = headers.index('Description')
+    headers[-1] = 'Description'
+    headers[di] = hold
+
+    with open(qiime_file, 'w') as f:
+        f.write('\t'.join(headers) + '\n')
+        for row_index in range(len(mdata)):
+            row = []
+            for header in headers:
+                if header == '#SampleID':
+                    row.append(str(mdata['RawDataID'][row_index]))
+                elif header == 'MmedsSampleID':
+                    row.append(str(mdata['SampleID'][row_index]))
+                else:
+                    row.append(str(mdata[header][row_index]))
+            f.write('\t'.join(row) + '\n')
+    return list(mdata.columns)
