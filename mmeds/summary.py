@@ -109,7 +109,7 @@ def summarize_qiime2(path, files, config, load_info):
     # Get Taxa
     cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['taxa_bar_plot'],
                                                                              path / 'temp')
-    run(['/usr/bin/bash'] + cmd.split(' '), env=new_env, check=True)
+    run(['/bin/bash'] + cmd.split(' '), env=new_env, check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -121,7 +121,7 @@ def summarize_qiime2(path, files, config, load_info):
     for beta_file in beta_files:
         cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(beta_file,
                                                                                  path / 'temp')
-        run(['/usr/bin/bash', '-c', cmd], env=new_env, check=True)
+        run(['/bin/bash', '-c', cmd], env=new_env, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
@@ -132,7 +132,7 @@ def summarize_qiime2(path, files, config, load_info):
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
         cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['alpha_rarefaction'],
                                                                                  path / 'temp')
-        run(['/usr/bin/bash', '-c', cmd], env=new_env, check=True)
+        run(['/bin/bash', '-c', cmd], env=new_env, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
@@ -364,7 +364,7 @@ class MMEDSNotebook():
                 cmd += ' --execute'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-            output = run(['/usr/bin/bash', '-c', cmd], check=True, env=self.env)
+            output = run(['/bin/bash', '-c', cmd], check=True, env=self.env)
 
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)

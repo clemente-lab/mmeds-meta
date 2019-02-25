@@ -895,7 +895,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         script += ' -A {summary}'.format(kwargs['summary'])
     cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
     log(cmd)
-    run(['/usr/bin/bash', '-c', cmd], check=True)
+    run(['/bin/bash', '-c', cmd], check=True)
 
 
 def pyformat_translate(value):
