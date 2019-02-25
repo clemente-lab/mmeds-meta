@@ -158,7 +158,9 @@ class Qiime1(Tool):
         self.add_path(self.run_id + '_job', '.lsf', 'jobfile')
         self.add_path('err' + self.run_id, '.err', 'errorlog')
         jobfile = self.files['jobfile']
+        log(jobfile)
         error_log = self.files['errorlog']
+        log(error_log)
         if self.testing:
             # Open the jobfile to write all the commands
             jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
@@ -169,8 +171,19 @@ class Qiime1(Tool):
                          stdout=PIPE,
                          stderr=PIPE,
                          check=True)
-            log(output.stdout.decode('utf-8').replace('\\n', '\n'))
-            log(output.stderr.decode('utf-8').replace('\\n', '\n'))
+            out = output.stdout
+            log(out)
+            print(out)
+            out = out.decode('utf-8').replace('\\n', '\n')
+            log(out)
+            print(out)
+            err = output.stderr
+            log(err)
+            print(err)
+            err = err.decode('utf-8').replace('\\n', '\n')
+            log(err)
+            print(err)
+            error_log.write_text('\n'.join([out, err]))
         else:
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
