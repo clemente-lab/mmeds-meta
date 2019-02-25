@@ -193,9 +193,12 @@ class Tool:
                 f.write('{}\t{}\n'.format(key, self.files[key]))
         log(self.files.keys())
 
-    def add_path(self, name, extension=''):
+    def add_path(self, name, extension='', key=None):
         """ Add a file or directory with the full path to self.files. """
-        self.files[name] = Path('{}{}'.format(self.path / name, extension))
+        if key:
+            self.files[key] = Path('{}{}'.format(self.path / name, extension))
+        else:
+            self.files[name] = Path('{}{}'.format(self.path / name, extension))
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """

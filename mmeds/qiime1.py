@@ -155,17 +155,17 @@ class Qiime1(Tool):
     def run_analysis(self):
         """ Perform some analysis. """
         self.setup_analysis()
-        jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, '.lsf')
-        error_log = self.path / self.run_id
-        self.add_path(error_log, '.err')
+        self.add_path(self.run_id + '_job', '.lsf', 'jobfile')
+        self.add_path('err' + self.run_id, '.err', 'errorlog')
+        jobfile = self.files['jobfile']
+        error_log = self.files['errorlog']
         if self.testing:
             # Open the jobfile to write all the commands
-            with open(str(jobfile) + '.lsf', 'w') as f:
-                f.write('#!/bin/bash -l\n')
-                f.write('\n'.join(self.jobtext))
+            jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
+            # Set execute permissions
+            jobfile.chmod(0o770)
             # Run the command
-            output = run(['/bin/bash', '{}.lsf'.format(jobfile)],
+            output = run([jobfile],
                          stdout=PIPE,
                          stderr=PIPE,
                          check=True)
@@ -173,19 +173,15 @@ class Qiime1(Tool):
             log(output.stderr.decode('utf-8').replace('\\n', '\n'))
         else:
             # Get the job header text from the template
-            with open(JOB_TEMPLATE) as f1:
-                temp = f1.read()
-            # Open the jobfile to write all the commands
-            with open(str(jobfile) + '.lsf', 'w') as f:
-                # Add the appropriate values
-                params = self.get_job_params()
-                f.write(temp.format(**params))
-                f.write('\n'.join(self.jobtext))
+            temp = JOB_TEMPLATE.read_text()
+            # Write all the commands
+            jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
             # Submit the job
+
             #  Temporary for testing on Minerva
             #  FIXME
             #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            run(['/bin/bash', '{}.lsf'.format(jobfile)], stdout=PIPE, check=True)
+            run([jobfile], stdout=PIPE, check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             #  self.wait_on_job(job_id)
 
