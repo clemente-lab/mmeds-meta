@@ -916,9 +916,9 @@ def setup_environment(module):
     :module: A string. The name of the module to load.
     """
     log('Setup environment for {}'.format(module))
-    run(['/usr/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
+    run(['/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
     new_env = environ.copy()
-    output = run(['/usr/bin/bash', '-c', 'module load {}'.format(module)],
+    output = run(['/bin/bash', '-c', 'module load {}'.format(module)],
                  stdout=PIPE, stderr=PIPE, env=new_env, check=True)
     new_env['PATH'] = '{}:{}'.format(output.stderr.strip(), new_env['PATH'])
     log(new_env['PATH'])
