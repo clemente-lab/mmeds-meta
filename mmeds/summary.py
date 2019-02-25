@@ -269,20 +269,12 @@ class MMEDSNotebook():
                                                                  group=column))
             self.add_code(self.source['beta_py'].format(file1=data_file,
                                                         group=column))
-            if self.config['metadata_continuous']:
-                continuous = 'TRUE'
-                self.add_code(self.source['beta_r'].format(plot=plot,
-                                                           subplot=subplot,
-                                                           cat=column,
-                                                           continuous=continuous))
-            else:
-                continuous = 'FALSE'
-                self.add_code(self.source['beta_r'].format(plot=plot,
-                                                           subplot=subplot,
-                                                           cat=column,
-                                                           continuous=continuous))
-                self.add_code('Image("{plot}")'.format(plot=plot))
-                self.add_markdown(self.source['beta_caption'])
+            self.add_code(self.source['beta_r'].format(plot=plot,
+                                                       subplot=subplot,
+                                                       cat=column,
+                                                       continuous='FALSE'))
+            self.add_code('Image("{plot}")'.format(plot=plot))
+            self.add_markdown(self.source['beta_caption'])
 
             self.add_code('Image("{group}-legend.png")'.format(group=column))
             self.add_markdown(self.source['page_break'])
@@ -355,8 +347,8 @@ class MMEDSNotebook():
         for cell in self.cells:
             if cell.cell_type == 'code':
                 cell.metadata['hide_input'] = True
-                nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
-                return nn
+        nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
+        return nn
 
     def write_notebook(self, nn):
         """
@@ -372,14 +364,14 @@ class MMEDSNotebook():
                 cmd += ' --execute'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-                output = run(['/usr/bin/bash', '-c', cmd], check=True, env=self.env)
+            output = run(['/usr/bin/bash', '-c', cmd], check=True, env=self.env)
 
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
-            output = run(cmd.split(' '), check=True, env=self.env)
-            output = run(cmd.split(' '), check=True, env=self.env)
+            output = run(cmd.split(' '), check=True)
+            output = run(cmd.split(' '), check=True)
         except RuntimeError:
             print(output)
             log(output)
