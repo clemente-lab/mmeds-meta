@@ -419,11 +419,53 @@ class Database:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
+    def load_ICD_codes(self, df):
+        """
+        Parse the ICD codes and load them into the appropriate tables
+        """
+        # Parse the ICD codes into seperate columns
+        codes = df['ICDCode']['ICDCode'].tolist()
+        IBC, IC, ID, IDe = [], [], [], []
+        for code in codes:
+            parts = code.split('.')
+            # Gets the first character
+            IBC.append(parts[0][0])
+            # Gets the next two numbers
+            IC.append(int(parts[0][1:3]))
+            # Gets the next three characters
+            ID.append(parts[1][:-1])
+            # Gets the final character
+            IDe.append(parts[1][-1])
+
+        # Add the parsed values to the dataframe
+        df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
+        df['IllnessCategory', 'ICDCategory'] = IC
+        df['IllnessDetails', 'ICDDetails'] = ID
+        df['IllnessDetails', 'ICDExtension'] = IDe
+
+        # Load the parsed values into the appropriate tables
+        for table in ['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails']:
+            self.create_import_data(table, df)
+            filename = self.create_import_file(table, df)
+
+            if isinstance(filename, WindowsPath):
+                filename = str(filename).replace('\\', '\\\\')
+            # Load the newly created file into the database
+            sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
+                  table + ' FIELDS TERMINATED BY "\\t"' +\
+                  ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+            self.cursor.execute(sql)
+            # Commit the inserted data
+            self.db.commit()
+
+        return df
+
     def read_in_sheet(self, metadata, study_type, **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
+        log('In read_in_sheet')
         access_code = None
 
         if not self.path.is_dir():
@@ -436,8 +478,10 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
+        log('pre table sort')
         tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
+        log('post table sort')
 
         # Create file and import data for each regular table
         for table in tables:
@@ -445,6 +489,8 @@ class Database:
             if table == 'AdditionalMetaData':
                 kwargs['metadata'] = metadata
                 access_code = self.mongo_import(study_name, study_type, **kwargs)
+            elif table == 'ICDCode':
+                df = self.load_ICD_codes(df)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)

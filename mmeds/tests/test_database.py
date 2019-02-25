@@ -181,17 +181,20 @@ class DatabaseTests(TestCase):
     #   Test SQL   #
     ################
     def test_a_tables(self):
-        pass
         df = pd.read_csv(fig.TEST_METADATA,
                          header=[0, 1],
                          skiprows=[2, 3, 4],
                          sep='\t')
 
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+            df = db.load_ICD_codes(df)
         tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
+        del tables[tables.index('ICDCode')]
         for row in range(len(df)):
             for table in tables:
+                log('Query table {}'.format(table))
                 # Create the query
                 sql = self.build_sql(table, row)
                 found = self.c.execute(sql)
@@ -205,7 +208,6 @@ class DatabaseTests(TestCase):
                     raise e
 
     def test_b_junction_tables(self):
-        pass
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
@@ -259,7 +261,6 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
-        pass
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=True) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):

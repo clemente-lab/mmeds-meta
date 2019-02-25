@@ -138,7 +138,10 @@ TABLE_ORDER = [
     'SampleProtocols',
     'RawDataProtocols',
     'ResultsProtocols',
-    'Illnesses',
+    'ICDCode',
+    'IllnessBroadCategory',
+    'IllnessCategory',
+    'IllnessDetails',
     'Interventions',
     'BodySite',
     'Type',
@@ -200,7 +203,7 @@ USER_FILES = set([
 ])
 
 # These are the tables that users are given direct access to
-PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData']))
+PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData', 'ICDCode']))
 
 # These are the columns for each table
 TABLE_COLS = {}
@@ -223,7 +226,7 @@ except pms.err.OperationalError:
                      local_infile=True)
 c = db.cursor()
 for table in TABLE_ORDER:
-    if not table == 'AdditionalMetaData':
+    if not (table == 'AdditionalMetaData' or table == 'ICDCode'):
         c.execute('DESCRIBE ' + table)
         results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
         TABLE_COLS[table] = results
@@ -239,15 +242,19 @@ tdf = read_csv(TEST_METADATA,
                na_filter=False)
 
 for table in TABLE_COLS:
-    COLUMN_TYPES[table] = {}
-    for column in TABLE_COLS[table]:
-        col_type = tdf[table][column].iloc[0]
-        if 'Text' in col_type:
-            COLUMN_TYPES[table][column] = 'str'
-        elif 'Number' in col_type:
-            COLUMN_TYPES[table][column] = 'float'
-        elif 'Date' in col_type:
-            COLUMN_TYPES[table][column] = 'datetime64'
+    # Temporary solution
+    try:
+        COLUMN_TYPES[table] = {}
+        for column in TABLE_COLS[table]:
+            col_type = tdf[table][column].iloc[0]
+            if 'Text' in col_type:
+                COLUMN_TYPES[table][column] = 'str'
+            elif 'Number' in col_type:
+                COLUMN_TYPES[table][column] = 'float'
+            elif 'Date' in col_type:
+                COLUMN_TYPES[table][column] = 'datetime64'
+    except KeyError:
+        continue
 
 # Clean up
 del db
