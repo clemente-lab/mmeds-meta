@@ -223,3 +223,12 @@ def test_mmeds_to_MIxS():
     mmeds.mmeds_to_MIxS(fig.TEST_METADATA, tempdir / 'MIxS.tsv')
     mmeds.MIxS_to_mmeds(tempdir / 'MIxS.tsv', tempdir / 'mmeds.tsv')
     assert (tempdir / 'mmeds.tsv').read_bytes() == Path(fig.TEST_METADATA).read_bytes()
+
+
+def test_check_ICD_code():
+    valid_codes = [ 'XXX.XXXX', 'Z46.6XXX', 'Z46.81XX', 'Z46.82XX', 'Z46.89XX']
+    invalid_codes = [ 'XXX.59XX', 'Z466XXX', 'Z46.81', 'Z46.G2XX', 'Z4X.X9XX']
+    errors = mmeds.check_ICD_codes(valid_codes, 0)
+    assert not errors
+    errors = mmeds.check_ICD_codes(invalid_codes, 0)
+    assert len(errors) == 5

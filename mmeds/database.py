@@ -7,7 +7,6 @@ import shutil
 import pickle
 import warnings
 
-from numpy import nan
 from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
@@ -431,7 +430,7 @@ class Database:
             # Gets the first character
             IBC.append(parts[0][0])
             # Gets the next two numbers
-            IC.append(int(parts[0][1:3]))
+            IC.append(int(parts[0][1:]))
             # Gets the next three characters
             ID.append(parts[1][:-1])
             # Gets the final character

@@ -323,11 +323,17 @@ class DatabaseTests(TestCase):
 
     def test_e_load_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
+        for i, code in self.df['ICDCode']['ICDCode'].items():
+            # Check the first character
+            assert code.split('.')[0][0] == self.df['IllnessBroadCategory']['ICDFirstCharacter'].iloc[i]
+            assert int(code.split('.')[0][1:]) == self.df['IllnessCategory']['ICDCategory'].iloc[i]
+            assert code.split('.')[1][:-1] == self.df['IllnessDetails']['ICDDetails'].iloc[i]
+            assert code.split('.')[1][-1] == self.df['IllnessDetails']['ICDExtension'].iloc[i]
 
     ####################
     #   Test MongoDB   #
     ####################
-    def test_mongo_import(self):
+    def test_f_mongo_import(self):
         """ Test the import of files into mongo. """
         # Get a random string to use for the code
         test_code = fig.get_salt(10)

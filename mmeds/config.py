@@ -11,6 +11,11 @@ import mmeds
 import hashlib
 import os
 
+
+############################
+# CONFIGURE SERVER GLOBALS #
+############################
+
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
@@ -74,9 +79,9 @@ CONFIG = {
 }
 
 
-###########
-# Testing #
-###########
+##########################
+# CONFIGURE TEST GLOBALS #
+##########################
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
 TEST_DIR = DATABASE_DIR / 'test_dir'
@@ -128,6 +133,10 @@ for key in TEST_FILES.keys():
     hash1.update(contents)
     TEST_CHECKS[key] = hash1.digest()
 
+
+##############################
+# CONFIGURE DATABASE GLOBALS #
+##############################
 
 # The order in which data should be imported to
 # ensure the necessary primary keys are created
@@ -271,7 +280,6 @@ for table in TABLE_COLS:
 # Clean up
 del db
 
-
 # Map known columns from MIxS
 MMEDS_MAP = {
     'investigation_type': ('Study', 'StudyType'),
@@ -301,6 +309,8 @@ for table in TABLE_COLS:
         MMEDS_MAP[column] = (table, column)
 
 MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
+
+
 
 
 def get_salt(length=10):

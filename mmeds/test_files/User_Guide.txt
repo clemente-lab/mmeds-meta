@@ -98,9 +98,16 @@ Sex:
     Note: For someone to qualify as Transgender they must have undergone
         some procedure or received some medication such as hormone therapy.
         Please include this information under 'Intervention' if known.
-Illness:
-    - Illnesses should be classified by ICD code and include the ICD
-        version used for the diagnosis if known.
+ICDCode:
+    - Illnesses should be classified by ICD 10 code and recorded in this column
+    - If the subject is known to be healthy use the code XXX.XXXX
+    - If the subject's health status is unknown enter "NA"
+    - All codes must contain all seven digits + the decimal. Fill empty digits with 'X'
+        - E.G. K55.5 -> K55.5XXX
+    - If only part of the code is known fill in the rest with 'X'
+        - E.G. K45 -> K45.XXXX
+    - If the subject is an animal use the code for a human subject that most closely
+        resembles its condition
 Intervention:
     - InterventionTypes include:
         - Medication
