@@ -131,6 +131,7 @@ class DatabaseTests(TestCase):
         foreign_keys = list(filter(lambda x: '_has_' not in x,
                                    list(filter(lambda x: '_id' in x,
                                                all_cols))))
+        log('Got foreign keys')
         # Remove the table id for the row as
         # that doesn't matter for the test
         if 'user_id' in foreign_keys:
@@ -141,6 +142,7 @@ class DatabaseTests(TestCase):
         sql = 'SELECT * FROM {} WHERE '.format(table)
         # Create an sql query to match the data from this row of the input file
         for i, column in enumerate(columns):
+            log('Column: {}'.format(column))
             value = self.df[table][column].iloc[row]
             if pd.isnull(value):
                 value = 'NULL'
@@ -159,9 +161,11 @@ class DatabaseTests(TestCase):
         if table in fig.PROTECTED_TABLES:
             sql += ' AND user_id = ' + str(self.user_id)
 
+        log('COllect foreign keys')
         # Collect the matching foreign keys based on the infromation
         # in the current row of the data frame
         for fkey in foreign_keys:
+            log('fkey: {}'.format(fkey))
             ftable = fkey.split('_id')[1]
             # Recursively build the sql call
             fsql = self.build_sql(ftable, row)
@@ -181,22 +185,21 @@ class DatabaseTests(TestCase):
     #   Test SQL   #
     ################
     def test_a_tables(self):
-        df = pd.read_csv(fig.TEST_METADATA,
-                         header=[0, 1],
-                         skiprows=[2, 3, 4],
-                         sep='\t')
-
+        log(self.df.columns)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
-            df = db.load_ICD_codes(df)
-        tables = df.columns.levels[0].tolist()
+            self.df = db.load_ICD_codes(self.df)
+        log(self.df.columns)
+        tables = self.df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
         del tables[tables.index('ICDCode')]
-        for row in range(len(df)):
+        for row in range(len(self.df)):
             for table in tables:
                 log('Query table {}'.format(table))
                 # Create the query
                 sql = self.build_sql(table, row)
+                log('Built SQL')
+                log(sql)
                 found = self.c.execute(sql)
                 # Assert there exists at least one entry matching this description
                 try:
@@ -213,6 +216,7 @@ class DatabaseTests(TestCase):
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
         for row in range(len(self.df)):
             for jtable in jtables:
+                log('Check table: {}'.format(jtable))
                 sql = self.build_sql(jtable, row)
                 jresult = self.c.execute(sql)
                 # Ensure an entry exists for this value
@@ -316,6 +320,9 @@ class DatabaseTests(TestCase):
             self.c.execute(sql)
             # Check that the difference is equal to the rows belonging to the cleared user
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
+
+    def test_e_load_ICD_codes(self):
+        """ Test the parsing and loading of ICD codes. """
 
     ####################
     #   Test MongoDB   #

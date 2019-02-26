@@ -220,7 +220,6 @@ def test_load_config_file():
 
 def test_mmeds_to_MIxS():
     tempdir = Path(gettempdir())
-    mmeds.log(tempdir)
     mmeds.mmeds_to_MIxS(fig.TEST_METADATA, tempdir / 'MIxS.tsv')
     mmeds.MIxS_to_mmeds(tempdir / 'MIxS.tsv', tempdir / 'mmeds.tsv')
     assert (tempdir / 'mmeds.tsv').read_bytes() == Path(fig.TEST_METADATA).read_bytes()

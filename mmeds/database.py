@@ -478,10 +478,8 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-        log('pre table sort')
         tables = df.columns.levels[0].tolist()
         tables.sort(key=lambda x: TABLE_ORDER.index(x))
-        log('post table sort')
 
         # Create file and import data for each regular table
         for table in tables:

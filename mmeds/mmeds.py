@@ -530,7 +530,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                 errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
 
     # Check for missing tables
-    missing_tables = set(fig.TABLE_ORDER).difference(set(tables))
+    missing_tables = fig.METADATA_TABLES.difference(set(tables))
     if missing_tables:
         errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
@@ -718,7 +718,7 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
 
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
-    all_cols.update(fig.TABLE_COLS)
+    all_cols.update(fig.METADATA_COLS)
 
     # Find all columns that don't have a mapping and add them to AdditionalMetaData
     unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
@@ -738,7 +738,6 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
         fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
         fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
         all_cols['AdditionalMetaData'].append(str(unit_col))
-    log(fig.MMEDS_MAP)
 
     # Build the data for the new format
     meta = {}

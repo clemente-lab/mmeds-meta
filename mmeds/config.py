@@ -202,6 +202,9 @@ USER_FILES = set([
     'visualizations_dir'
 ])
 
+ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
+
+
 # These are the tables that users are given direct access to
 PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData', 'ICDCode']))
 
@@ -226,15 +229,24 @@ except pms.err.OperationalError:
                      local_infile=True)
 c = db.cursor()
 for table in TABLE_ORDER:
-    if not (table == 'AdditionalMetaData' or table == 'ICDCode'):
+    if table == 'ICDCode':
+        TABLE_COLS['ICDCode'] = ['ICDCode']
+        ALL_COLS += 'ICDCode'
+    elif not table == 'AdditionalMetaData':
         c.execute('DESCRIBE ' + table)
         results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
         TABLE_COLS[table] = results
         ALL_COLS += results
 TABLE_COLS['AdditionalMetaData'] = []
-COLUMN_TYPES = {
 
-}
+# For use when working with Metadata files
+METADATA_TABLES = set(TABLE_ORDER) - ICD_TABLES
+METADATA_COLS = {}
+for table in METADATA_TABLES:
+    METADATA_COLS[table] = TABLE_COLS[table]
+
+
+COLUMN_TYPES = {}
 tdf = read_csv(TEST_METADATA,
                sep='\t',
                header=[0, 1],
