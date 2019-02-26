@@ -292,6 +292,36 @@ def get_col_type(raw_column):
     return column, col_type, check_date
 
 
+def check_number_column(column, col_index, col_type):
+    """ Check for mixed types and values outside two standard deviations. """
+    warnings = []
+    try:
+        filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
+        stddev = std(filtered)
+        avg = mean(filtered)
+        for i, cell in enumerate(column):
+            if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
+                text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
+                warnings.append(text % (i + 1, col_index, cell, col_index))
+    except ValueError:
+        warnings.append("-1\t-1\tMixed Type Warning: Cannot get average of column {}. Mixed types".format(column))
+    return warnings
+
+
+def check_string_column(column, col_index):
+    """ Check for categorical data. """
+    warnings = []
+    counts = column.value_counts()
+    stddev = std(counts.values)
+    avg = mean(counts.values)
+    for val, count in counts.iteritems():
+        if count < (avg - stddev) and count < 3:
+            text = '%d\t%d\tCategorical Data Warning: Potential categorical data detected.\
+                Value %s may be in error, only %d found.'
+            warnings.append(text % (-1, col_index, val, count))
+    return warnings
+
+
 def check_column(raw_column, col_index):
     """
     Validate that there are no issues with the provided column of metadata.
@@ -318,26 +348,10 @@ def check_column(raw_column, col_index):
 
     # Check that values fall within standard deviation
     if issubdtype(col_type, number) and not isinstance(raw_column.dtype, object):
-        try:
-            filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
-            stddev = std(filtered)
-            avg = mean(filtered)
-            for i, cell in enumerate(column):
-                if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
-                    text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
-                    warnings.append(text % (i + 1, col_index, cell, col_index))
-        except ValueError:
-            warnings.append("-1\t-1\tMixed Type Warning: Cannot get average of column {}. Mixed types".format(column))
+        warnings += check_number_column(column, col_index, col_type)
     # Check for categorical data
     elif issubdtype(col_type, str):
-        counts = column.value_counts()
-        stddev = std(counts.values)
-        avg = mean(counts.values)
-        for val, count in counts.iteritems():
-            if count < (avg - stddev) and count < 3:
-                text = '%d\t%d\tCategorical Data Warning: Potential categorical data detected.\
-                    Value %s may be in error, only %d found.'
-                warnings.append(text % (-1, col_index, val, count))
+        warnings += check_string_column(column, col_index)
 
     return errors, warnings
 
@@ -978,7 +992,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
 
 def quote_sql(sql, **kwargs):
     """ Returns the sql query with the identifiers properly qouted using `"""
-    log(sql)
     quoted_args = {}
     for key, item in kwargs.items():
         # Check the entry is a string
@@ -993,7 +1006,5 @@ def quote_sql(sql, **kwargs):
                                   ' Only letters, numbers, and "_" are permitted'.format(item))
 
         quoted_args[key] = '`{}`'.format(item)
-    log(quoted_args)
     formatted = sql.format(**quoted_args)
-    log(formatted)
     return formatted

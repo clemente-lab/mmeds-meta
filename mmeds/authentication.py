@@ -3,7 +3,7 @@ from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
 from mmeds.mmeds import send_email
-import mmeds.secrets as sec
+from mmeds.error import NoResultError
 
 
 def add_user(username, password, email, testing=False):
@@ -15,13 +15,13 @@ def add_user(username, password, email, testing=False):
     sha256 = hashlib.sha256()
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
-    with Database(STORAGE_DIR, testing=testing) as db:
+    with Database(testing=testing) as db:
         db.add_user(username, password_hash, salt, email)
 
 
 def remove_user(username, testing=False):
     """ Removes a user from the user sql table. """
-    with Database(STORAGE_DIR, testing=testing) as db:
+    with Database(testing=testing) as db:
         db.clear_user_data(username)
         db.remove_user(username)
 
@@ -29,13 +29,12 @@ def remove_user(username, testing=False):
 def validate_password(username, password, testing=False):
     """ Validate the user and their password """
 
-    with Database(STORAGE_DIR, testing=testing) as db:
+    with Database(testing=testing) as db:
         # Get the values from the user table
         try:
-            query = '{}.user where username = "{}"'.format(sec.SQL_DATABASE, username)
-            hashed_password, salt = db.get_col_values_from_table('password, salt', query)[0]
+            hashed_password, salt = db.get_hash_and_salt(username)
         # An index error means that the username did not exist
-        except IndexError:
+        except NoResultError:
             print('Username did not exist')
             return False
 
@@ -81,8 +80,7 @@ def check_username(username, testing=False):
     # Check the username has not already been used
     with Database(STORAGE_DIR, testing=testing) as db:
         # Get all existing usernames
-        results = db.get_col_values_from_table('username', 'user')
-    used_names = [x[0] for x in results]
+        used_names = db.get_all_usernames()
     if username in used_names:
         return 'Error: Username is already taken.'
     return
@@ -129,11 +127,9 @@ def get_email(username, testing=False):
     with Database(STORAGE_DIR, testing=testing) as db:
         # Get the values from the user table
         try:
-            email = db.get_col_values_from_table('email',
-                                                 '{}.user where username = "{}"'.format(sec.SQL_DATABASE,
-                                                                                        username))[0][0]
+            email = db.get_email(username)
             return email
         # An index error means that the username did not exist
-        except IndexError:
+        except NoResultError:
             print('Username did not exist')
             return False

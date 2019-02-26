@@ -50,3 +50,10 @@ class InvalidSQLError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class NoResultError(MmedsError):
+    """ Exception for errors caused by a query returning no result """
+
+    def __init__(self, message):
+        self.message = message

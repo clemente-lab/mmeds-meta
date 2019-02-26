@@ -11,7 +11,7 @@ from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
-from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
+from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.mmeds import send_email, log, pyformat_translate, quote_sql
 import mmeds.secrets as sec
 import mmeds.config as fig
@@ -151,9 +151,32 @@ class Database:
         """ Check the provided email matches this user. """
         return email == self.email
 
-    def get_email(self):
-        """ Check the provided email matches this user. """
-        return self.email
+    def get_email(self, username):
+        """ Get the email that matches this user. """
+        sql = 'SELECT `email` FROM `user` WHERE `username` = %(username)s'
+        self.cursor.execute(sql, {'username': username})
+        result = self.cursor.fetchone()
+        if result is None:
+            raise NoResultError('There is no entry for user {}'.format(username))
+        return result[0]
+
+    def get_hash_and_salt(self, username):
+        """ Get the hash and salt values for the specified user. """
+        sql = 'SELECT `password`, `salt` FROM `user` WHERE `username` = %(username)s'
+        self.cursor.execute(sql, {'username': username})
+        result = self.cursor.fetchone()
+        if result is None:
+            raise NoResultError('There is no entry for user {}'.format(username))
+        return result
+
+    def get_all_usernames(self):
+        """ Return all usernames currently in the database. """
+        sql = 'SELECT `username` FROM `user`'
+        self.cursor.execute(sql)
+        result = self.cursor.fetchall()
+        if result is None:
+            raise NoResultError('There are no users in the database')
+        return [name[0] for name in result]
 
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
@@ -424,8 +447,7 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-        tables = df.columns.levels[0].tolist()
-        tables.sort(key=lambda x: TABLE_ORDER.index(x))
+        tables = [x for _, x in sorted(zip(TABLE_ORDER, df.columns.levels[0].tolist()))]
 
         # Create file and import data for each regular table
         for table in tables:
@@ -660,10 +682,9 @@ class Database:
 
         sql = 'SELECT * FROM Study WHERE user_id = %(id)s and Study.StudyName = %(study)s'
         found = self.cursor.execute(sql, {'id': self.user_id, 'study': study_name})
-        # TEMPORARY #
-        return []
-        #############
-        if found >= 1:
+
+        # Ensure multiple studies aren't uploaded with the same name
+        if found >= 1 and not self.testing:
             return ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
             return []
