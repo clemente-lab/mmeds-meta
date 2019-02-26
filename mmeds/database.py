@@ -12,7 +12,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
-from mmeds.mmeds import send_email, log, pyformat_translate
+from mmeds.mmeds import send_email, log, pyformat_translate, quote_sql
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -188,7 +188,7 @@ class Database:
                 parsed = sql.split(' ')
                 index = list(map(lambda x: x.casefold(), parsed)).index('from')
                 table = parsed[index + 1]
-                self.cursor.execute('DESCRIBE {}'.format(table))
+                self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
             return data, header
         except pms.err.OperationalError as e:
@@ -214,7 +214,7 @@ class Database:
         while True:
             for table in tables:
                 try:
-                    self.cursor.execute('DELETE FROM {}'.format(table))
+                    self.cursor.execute(quote_sql('DELETE FROM {table}', table=table))
                     self.db.commit()
                 except pms.err.IntegrityError:
                     r_tables.append(table)
@@ -249,7 +249,7 @@ class Database:
         :df: The dataframe containing all the metadata
         """
         log('In create_import_data')
-        sql = 'SELECT MAX(id{table}) FROM {table}'.format(table=table)
+        sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable='id' + table, table=table)
         self.cursor.execute(sql)
         vals = self.cursor.fetchone()
         log('got vals')
@@ -262,7 +262,7 @@ class Database:
         seen = {}
         # Go through each column
         for j in range(len(df.index)):
-            sql = 'SELECT * FROM {} WHERE '.format(table)
+            sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
             args = {}
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
@@ -275,8 +275,8 @@ class Database:
                 else:
                     sql += ' AND '
                 # Add quotes around string values
-                sql += ('{column} = %(' + column + ')s').format(column=column)
-                args[column] = pyformat_translate(value)
+                sql += quote_sql(('{column} = %({column})s'), column=column)
+                args['`' + column + '`'] = pyformat_translate(value)
             # Add the user check for protected tables
             if table in fig.PROTECTED_TABLES:
                 sql += ' AND user_id = %(id)s'
@@ -366,7 +366,7 @@ class Database:
         """
         # Import data for each junction table
         for table in fig.JUNCTION_TABLES:
-            sql = 'DESCRIBE {table};'.format(table=table)
+            sql = quote_sql('DESCRIBE {table};', table=table)
             self.cursor.execute(sql)
             result = self.cursor.fetchall()
             columns = list(map(lambda x: x[0].split('_')[0], result))
@@ -397,7 +397,8 @@ class Database:
                     filename = str(filename).replace('\\', '\\\\')
 
                 # Load the datafile in to the junction table
-                sql = 'LOAD DATA LOCAL INFILE %(file)s INTO TABLE {} FIELDS TERMINATED BY "\\t"'.format(table)
+                sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
+                                table=table)
                 sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql, {'file': str(filename), 'table': table})
                 # Commit the inserted data
@@ -439,7 +440,8 @@ class Database:
                 if isinstance(filename, WindowsPath):
                     filename = str(filename).replace('\\', '\\\\')
                 # Load the newly created file into the database
-                sql = 'LOAD DATA LOCAL INFILE %(file)s INTO TABLE {} FIELDS TERMINATED BY "\\t"'.format(table)
+                sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
+                                table=table)
                 sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
                 self.cursor.execute(sql, {'file': str(filename), 'table': table})
                 # Commit the inserted data
@@ -455,7 +457,7 @@ class Database:
         return access_code, study_name, self.email
 
     def get_col_values_from_table(self, column, table):
-        sql = 'SELECT {} FROM {}'.format(column, table)
+        sql = quote_sql('SELECT {column} FROM {table}', column=column, table=table)
         self.cursor.execute(sql, {'column': column, 'table': table})
         data = self.cursor.fetchall()
         return data
@@ -465,7 +467,7 @@ class Database:
         self.cursor.execute('SELECT MAX(user_id) FROM user')
         user_id = int(self.cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO {db}.user (user_id, username, password, salt, email)'.format(db=sec.SQL_DATABASE)
+        sql = 'INSERT INTO `user` (user_id, username, password, salt, email)'
         sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
 
         self.cursor.execute(sql, {'id': user_id,
@@ -477,7 +479,7 @@ class Database:
 
     def remove_user(self, username):
         """ Remove a user from the database. """
-        sql = 'DELETE FROM {db}.user WHERE username=%(uname)s'.format(db=sec.SQL_DATABASE)
+        sql = 'DELETE FROM `user` WHERE username=%(uname)s'
         self.cursor.execute(sql, {'uname': username})
         self.db.commit()
 
@@ -488,7 +490,7 @@ class Database:
         :username: The name of the user to remove files for
         """
         # Get the user_id for the provided username
-        sql = 'SELECT user_id FROM {db}.user where username=%(uname)s'.format(db=sec.SQL_DATABASE)
+        sql = 'SELECT user_id FROM `user` where username=%(uname)s'
         self.cursor.execute(sql, {'uname': username})
         user_id = int(self.cursor.fetchone()[0])
 
@@ -500,7 +502,7 @@ class Database:
         for table in tables:
             try:
                 # Remove all values from the table belonging to that user
-                sql = 'DELETE FROM {table} WHERE user_id=%(id)s'.format(table=table)
+                sql = quote_sql('DELETE FROM {table} WHERE user_id=%(id)s', table=table)
                 self.cursor.execute(sql, {'id': user_id})
             except pms.err.IntegrityError as e:
                 # If there is a dependency remaining
@@ -638,8 +640,9 @@ class Database:
                     sql += ' '
                 else:
                     sql += ' AND '
-                sql += ' {column} = %(value{i})s '.format(i=i, column=column)
-                args['value{}'.format(i)] = value
+                # Add quotes around string values
+                sql += quote_sql(('{column} = %({column})s'), column=column)
+                args['`' + column + '`'] = pyformat_translate(value)
             sql += ' AND user_id = %(id)s'
             args['id'] = self.user_id
             try:

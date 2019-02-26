@@ -43,3 +43,10 @@ class InvalidConfigError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class InvalidSQLError(MmedsError):
+    """ Exception for errors caused by invalid characters in a SQL query"""
+
+    def __init__(self, message):
+        self.message = message

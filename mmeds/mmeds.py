@@ -1,7 +1,7 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
-from mmeds.error import MetaDataError, InvalidConfigError
+from mmeds.error import MetaDataError, InvalidConfigError, InvalidSQLError
 from subprocess import run, PIPE
 from datetime import datetime
 from pathlib import Path
@@ -974,3 +974,26 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
                     row.append(str(mdata[header][row_index]))
             f.write('\t'.join(row) + '\n')
     return list(mdata.columns)
+
+
+def quote_sql(sql, **kwargs):
+    """ Returns the sql query with the identifiers properly qouted using `"""
+    log(sql)
+    quoted_args = {}
+    for key, item in kwargs.items():
+        # Check the entry is a string
+        if not isinstance(item, str):
+            raise InvalidSQLError('SQL Identifier {} is not a string'.format(item))
+        # Check the entry isn't too long
+        elif len(item) > 66:
+            raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
+        # Check that there are only allowed characters: Letters, Numbers, and '_'
+        elif not item.replace('_', '').isalnum():
+            raise InvalidSQLError('Illegal characters in identifier {}.' +
+                                  ' Only letters, numbers, and "_" are permitted'.format(item))
+
+        quoted_args[key] = '`{}`'.format(item)
+    log(quoted_args)
+    formatted = sql.format(**quoted_args)
+    log(formatted)
+    return formatted
