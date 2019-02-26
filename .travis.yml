@@ -48,6 +48,8 @@ install:
     - pip install .
     - mysql -u root < setup.sql
     - module avail
+    - module load qiime1
+    - module unload qiime1
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     - cat ~/mmeds_server_data/testuser_0/analysis0/err0.err
