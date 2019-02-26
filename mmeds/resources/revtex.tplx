@@ -64,6 +64,10 @@
 \usepackage{braket}
 
 \usepackage{titlesec}
+\usepackage{alphalph}
+\renewcommand*{\thesubsection}{
+    \alphalph{\value{subsection}}
+}
 ((* endblock packages *))
 
 %===============================================================================

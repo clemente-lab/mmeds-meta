@@ -85,6 +85,9 @@ class Qiime2(Tool):
             '--m-barcodes-column {}'.format('BarcodeSequence'),
             '--o-per-sample-sequences {};'.format(self.files['demux_file'])
         ]
+        # Reverse compliment the barcodes in the mapping file if using paired reads
+        if 'paired' in self.data_type:
+            cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         self.jobtext.append(' '.join(cmd))
 
     def demux_visualize(self):
@@ -109,7 +112,7 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def dada2(self, p_trim_left=0, p_trunc_len=120):
+    def dada2(self, p_trim_left=0, p_trunc_len=0):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
         self.add_path('rep_seqs_dada2', '.qza')
@@ -379,17 +382,17 @@ class Qiime2(Tool):
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
         self.summary()
-        log('\n'.join(self.jobtext))
+        # Define the job and error files
+        jobfile = self.path / (self.run_id + '_job')
+        self.add_path(jobfile, '.lsf')
+        error_log = self.path / self.run_id
+        self.add_path(error_log, '.err')
 
     def run(self):
         """ Perform some analysis. """
         try:
             if self.analysis:
                 self.setup_analysis()
-                jobfile = self.path / (self.run_id + '_job')
-                self.add_path(jobfile, 'lsf')
-                error_log = self.path / self.run_id
-                self.add_path(error_log, 'err')
                 self.write_file_locations()
                 if self.testing:
                     # Open the jobfile to write all the commands
@@ -397,7 +400,8 @@ class Qiime2(Tool):
                         f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    output = run('bash -c "bash {}.lsf"'.format(jobfile),
+                    output = run('bash -c "bash {}.lsf&>{}.err"'.format(self.files['jobfile'],
+                                                                        self.files['error_log']),
                                  stdout=PIPE,
                                  stderr=PIPE,
                                  shell=True,

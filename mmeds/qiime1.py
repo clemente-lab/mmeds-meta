@@ -31,6 +31,23 @@ class Qiime1(Tool):
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.files['mapping'], self.path)
         self.jobtext.append(cmd)
 
+    def join_paired_ends(self):
+        """ Join forward and reverse reads into a single file. """
+        self.add_path('joined_dir', '')
+        cmd = 'join_paired_ends.py -f {} -r {} --output_dir {}'
+        self.jobtext.append(cmd.format(self.files['for_reads'],
+                                       self.files['rev_reads'],
+                                       self.files['joined_dir']))
+
+    def zip_joined_reads(self):
+        """ Zip the output fastq created by joining the reads. """
+        self.add_path('joined_reads', '.fastq.gz')
+        cmd = 'gzip {}'.format(self.files['joined_dir'] / 'fastqjoin.join.fastq')
+        self.jobtext.append(cmd)
+        cmd = 'ln -s {} {}'.format(self.files['joined_dir'] / 'fastqjoin.join.fastq.gz',
+                                   self.path / 'joined_reads.fastq.gz')
+        self.jobtext.append(cmd)
+
     def split_libraries(self):
         """ Split the libraries and perform quality analysis. """
         self.add_path('split_output', '')
@@ -48,10 +65,9 @@ class Qiime1(Tool):
                                  self.files['mapping'],
                                  12)
         elif self.data_type == 'paired_end':
-            cmd = 'split_libraries_fastq.py -o {} -i {},{} -b {} -m {} --barcode_type {};'
+            cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {} --rev_comp_mapping_barcodes;'
             command = cmd.format(self.files['split_output'],
-                                 self.files['for_reads'],
-                                 self.files['rev_reads'],
+                                 self.files['joined_dir'] / 'fastqjoin.join.fastq',
                                  self.files['barcodes'],
                                  self.files['mapping'],
                                  12)
@@ -128,6 +144,8 @@ class Qiime1(Tool):
         self.validate_mapping()
         if 'demuxed' in self.data_type:
             self.unzip()
+        if 'paired' in self.data_type:
+            self.join_paired_ends()
         self.split_libraries()
         self.pick_otu()
         self.core_diversity()
