@@ -447,7 +447,9 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-        tables = [x for _, x in sorted(zip(TABLE_ORDER, df.columns.levels[0].tolist()))]
+        columns = df.columns.levels[0].tolist()
+        column_order = [TABLE_ORDER.index(col) for col in columns]
+        tables = [x for _, x in sorted(zip(column_order, columns))]
 
         # Create file and import data for each regular table
         for table in tables:
