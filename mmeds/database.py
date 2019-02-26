@@ -685,9 +685,10 @@ class Database:
 
         # Ensure multiple studies aren't uploaded with the same name
         if found >= 1 and not self.testing:
-            return ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
+            result = ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
-            return []
+            result = []
+        return result
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """

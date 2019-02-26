@@ -99,11 +99,11 @@ def reset_password(username, email, testing=False):
     with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
         # Check the email matches the one on file
         if db.check_email(email):
-            exit = db.change_password(password_hash, salt)
+            result = db.change_password(password_hash, salt)
             send_email(email, username, password, 'reset')
         else:
-            exit = False
-    return exit
+            result = False
+    return result
 
 
 def change_password(username, password, testing=False):

@@ -192,7 +192,6 @@ class Qiime1(Tool):
             # Submit the job
 
             #  Temporary for testing on Minerva
-            #  FIXME
             #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
             run([jobfile], stdout=PIPE, check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))

@@ -15,7 +15,7 @@ sudo rm -rf ~/.modules/modulefiles/*;
 # Create module files (and install R packages)
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";
-    printf "#%%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin\nif [ module-info mode load ]; {\n puts stderr \"~/.modules/qiime1/bin\"\n}" > ~/.modules/modulefiles/qiime1
+    printf "#%%Module1.0\n## qiime1 modulefile\nset curMod [module-info name]\nmodule-info name qiime1\nmodule-info version 1.9.1\nprepend-path PATH ~/.modules/qiime1/bin\nif [ module-info mode load ] {\nputs stderr \"~/.modules/qiime1/bin\"\n}" > ~/.modules/modulefiles/qiime1
 fi
 #if [ ! -f ~/.modules/modulefiles/qiime2 ]; then
 #    echo "Create qiime2 module";
@@ -23,7 +23,7 @@ fi
 #fi
 if [ ! -f ~/.modules/modulefiles/mmeds-stable ]; then
     echo "Create mmeds-stable module";
-    printf "#%%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/.modules/mmeds-stable/bin\nif [ module-info mode load ]; {\n puts stderr \"~/.modules/mmeds-stable/bin\"\n}" > ~/.modules/modulefiles/mmeds-stable
+    printf "#%%Module1.0\n## mmeds-stable modulefile\nset curMod [module-info name]\nmodule-info name mmeds-stable\nmodule-info version 1.5.1\nprepend-path PATH ~/.modules/mmeds-stable/bin\nif [ module-info mode load ] {\nputs stderr \"~/.modules/mmeds-stable/bin\"\n}" > ~/.modules/modulefiles/mmeds-stable
 fi
 
 # Create the necessary conda environments

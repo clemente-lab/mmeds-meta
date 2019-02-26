@@ -1,6 +1,5 @@
 class MmedsError(Exception):
     """ Base class for errors in this module. """
-    pass
 
 
 class MissingUploadError(MmedsError):
