@@ -167,23 +167,7 @@ class Qiime1(Tool):
             # Set execute permissions
             jobfile.chmod(0o770)
             # Run the command
-            output = run([jobfile],
-                         stdout=PIPE,
-                         stderr=PIPE,
-                         check=True)
-            out = output.stdout
-            log(out)
-            print(out)
-            out = out.decode('utf-8').replace('\\n', '\n')
-            log(out)
-            print(out)
-            err = output.stderr
-            log(err)
-            print(err)
-            err = err.decode('utf-8').replace('\\n', '\n')
-            log(err)
-            print(err)
-            error_log.write_text('\n'.join([out, err]))
+            output = run([jobfile], check=True)
         else:
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
