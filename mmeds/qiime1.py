@@ -1,4 +1,5 @@
 from subprocess import run, CalledProcessError, PIPE
+from pathlib import Path
 
 from mmeds.config import JOB_TEMPLATE
 from mmeds.mmeds import send_email, log, setup_environment
@@ -116,7 +117,8 @@ class Qiime1(Tool):
         try:
             # Count the sequences prior to diversity analysis
             new_env = setup_environment('qiime1')
-            cmd = ['count_seqs.py', '-i', str(self.files['split_output'] / 'seqs.fna')]
+            script_path = Path(new_env.split(':')[0])
+            cmd = ['python', str(script_path / 'count_seqs.py'), '-i', str(self.files['split_output'] / 'seqs.fna')]
             output = run(cmd, check=True, env=new_env)
 
             out = output.stdout.decode('utf-8')
@@ -187,7 +189,6 @@ class Qiime1(Tool):
         try:
             if self.analysis:
                 self.run_analysis()
-            self.sanity_check()
             self.move_user_files()
             doc = self.db.get_metadata(self.access_code)
             if not self.testing:
