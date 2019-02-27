@@ -934,7 +934,7 @@ def setup_environment(module):
     new_env = environ.copy()
     output = run(['/bin/bash', '-c', 'module load {}'.format(module)],
                  stdout=PIPE, stderr=PIPE, env=new_env, check=True)
-    new_env['PATH'] = '{}:{}'.format(output.stderr.strip(), new_env['PATH'])
+    new_env['PATH'] = '{}:{}'.format(output.stderr.decode('utf-8').strip(), new_env['PATH'])
     log(new_env['PATH'])
     return new_env
 

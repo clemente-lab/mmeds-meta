@@ -1,7 +1,7 @@
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
-from subprocess import run
+from subprocess import run, PIPE
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
 
@@ -55,11 +55,12 @@ def summarize_qiime1(path, files, config, load_info):
     new_env = setup_environment('qiime1')
 
     # Convert and store the otu table
-    cmd = 'conda run -n qiime1 biom convert -i {} -o {} --to-tsv --header-key="taxonomy"'
+    cmd = 'biom convert -i {} -o {} --to-tsv --header-key="taxonomy" '
     cmd = cmd.format(files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
-    run(['/usr/bin/bash', '-c', cmd], env=new_env, check=True)
+    results = run(cmd.split(' '), stderr=PIPE, env=new_env)
     log('biom convert complete')
+    log(results)
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])
@@ -107,9 +108,9 @@ def summarize_qiime2(path, files, config, load_info):
     summary_files = defaultdict(list)
 
     # Get Taxa
-    cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['taxa_bar_plot'],
-                                                                             path / 'temp')
-    run(['/bin/bash'] + cmd.split(' '), env=new_env, check=True)
+    cmd = 'qiime tools export {} --output-dir {} '.format(files['taxa_bar_plot'],
+                                                          path / 'temp')
+    run(cmd.split(' '), env=new_env, check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -119,9 +120,9 @@ def summarize_qiime2(path, files, config, load_info):
     # Get Beta
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
-        cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(beta_file,
-                                                                                 path / 'temp')
-        run(['/bin/bash', '-c', cmd], env=new_env, check=True)
+        cmd = 'qiime tools export {} --output-dir {} '.format(beta_file,
+                                                              path / 'temp')
+        run(cmd.split(' '), env=new_env, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
@@ -130,9 +131,9 @@ def summarize_qiime2(path, files, config, load_info):
 
     # Get Alpha
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
-        cmd = 'conda run -n qiime2 qiime tools export {} --output-dir {}'.format(files['alpha_rarefaction'],
-                                                                                 path / 'temp')
-        run(['/bin/bash', '-c', cmd], env=new_env, check=True)
+        cmd = 'qiime tools export {} --output-dir {}'.format(files['alpha_rarefaction'],
+                                                             path / 'temp')
+        run(cmd.split(' '), env=new_env, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
@@ -358,16 +359,16 @@ class MMEDSNotebook():
         """
         try:
             nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex'
+            cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex '
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
-                cmd += ' --execute'
+                cmd += ' --execute '
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-            output = run(['/bin/bash', '-c', cmd], check=True, env=self.env)
+            output = run(cmd.split(' '), check=True, env=self.env)
 
             # Convert to pdf
-            cmd = 'pdflatex {name}.tex'.format(name=self.name)
+            cmd = 'pdflatex {name}.tex '.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
             output = run(cmd.split(' '), check=True)
