@@ -69,13 +69,11 @@ def summarize_qiime1(path, files, config):
     new_env = setup_environment('qiime1')
 
     # Convert and store the otu table
-    cmd = 'biom convert --to-tsv --header-key="taxonomy" -i {} -o {}'
-    cmd = cmd.format(files['otu_output'] / 'otu_table.biom',
-                     path / 'otu_table.tsv')
-    results = run(cmd.split(' '), stderr=PIPE, env=new_env)
-    log('Ran Command')
-
-    log('biom convert complete')
+    cmd = ['biom', 'convert', '--to-tsv', '--header-key="taxonomy"',
+           '-i', str(files['otu_output'] / 'otu_table.biom'),
+           '-o', str(path / 'otu_table.tsv')]
+    results = run(cmd, stderr=PIPE, env=new_env)
+    log('biom convert Finished')
     log(results)
 
     # Add the text OTU table to the summary
