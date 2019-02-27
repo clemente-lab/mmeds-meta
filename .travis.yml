@@ -56,5 +56,6 @@ script:
     - ls ~/mmeds_server_data/testuser_0/analysis0/
     - ls ~/mmeds_server_data/testuser_0/analysis0/summary
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
+    - tail 50 ~/mmeds_server_data/mmeds_log.txt
 after_success:
     - bash <(curl -s https://codecov.io/bash)

@@ -11,7 +11,7 @@ from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log, load_config, setup_environment
 
 
-def summarize_qiime(summary_path, load_info, config_file, tool):
+def summarize_qiime(summary_path, config_file, tool):
     """ Handle setup and running the summary for the two qiimes """
     path = Path(summary_path)
 
@@ -30,16 +30,15 @@ def summarize_qiime(summary_path, load_info, config_file, tool):
         files['summary'].mkdir()
 
     if tool == 'qiime1':
-        summarize_qiime1(path, files, config, load_info)
+        summarize_qiime1(path, files, config)
     elif tool == 'qiime2':
-        summarize_qiime2(path, files, config, load_info)
+        summarize_qiime2(path, files, config)
 
 
-def summarize_qiime1(path, files, config, load_info):
+def summarize_qiime1(path, files, config):
     """
     Create summary of analysis results
     """
-
     def move_files(path, category):
         """ Collect the contents of all files match the regex in path """
         log('Move files {}'.format(category))
@@ -48,9 +47,24 @@ def summarize_qiime1(path, files, config, load_info):
             copy(data, files['summary'])
             summary_files[category].append(data.name)
 
-    log('Run summarize_qiime1')
+    log('In summarize_qiime1')
     diversity = files['diversity_output']
     summary_files = defaultdict(list)
+
+    # Get the mapping file
+    copy(files['mapping'], path / 'summary/.')
+    copy(files['metadata'], files['summary'] / 'metadata.csv')
+    log('Copied files')
+
+    move_files('biom_table_summary.txt', 'otu')                       # Biom summary
+    move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
+    move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
+    move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
+    log('Moved files')
+
+    # Get the template
+    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
+
     # Get the environment
     new_env = setup_environment('qiime1')
 
@@ -59,6 +73,8 @@ def summarize_qiime1(path, files, config, load_info):
     cmd = cmd.format(files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
     results = run(cmd.split(' '), stderr=PIPE, env=new_env)
+    log('Ran Command')
+
     log('biom convert complete')
     log(results)
 
@@ -66,17 +82,6 @@ def summarize_qiime1(path, files, config, load_info):
     copy(path / 'otu_table.tsv', files['summary'])
     summary_files['otu'].append('otu_table.tsv')
 
-    move_files('biom_table_summary.txt', 'otu')                       # Biom summary
-    move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
-    move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
-    move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
-
-    # Get the mapping file
-    copy(files['mapping'], path / 'summary/.')
-    copy(files['metadata'], files['summary'] / 'metadata.csv')
-
-    # Get the template
-    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
     log('Summary path')
     log(path / 'summary')
     mnb = MMEDSNotebook(config=config,
@@ -84,8 +89,8 @@ def summarize_qiime1(path, files, config, load_info):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary',
-                        load_info=load_info)
+                        run_path=path / 'summary')
+
     mnb.create_notebook()
     log('Make archive')
     result = make_archive(path / 'summary',
@@ -97,7 +102,7 @@ def summarize_qiime1(path, files, config, load_info):
     return path / 'summary/analysis.pdf'
 
 
-def summarize_qiime2(path, files, config, load_info):
+def summarize_qiime2(path, files, config):
     """ Create summary of the files produced by the qiime2 analysis. """
     log('Start Qiime2 summary')
 
@@ -153,8 +158,7 @@ def summarize_qiime2(path, files, config, load_info):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary',
-                        load_info=load_info)
+                        run_path=path / 'summary')
 
     mnb.create_notebook()
     # Create a zip of the summary
@@ -172,7 +176,7 @@ def summarize_qiime2(path, files, config, load_info):
 class MMEDSNotebook():
     """ A class for handling the creation and execution of the summary notebooks. """
 
-    def __init__(self, config, analysis_type, files, execute, name, run_path, load_info):
+    def __init__(self, config, analysis_type, files, execute, name, run_path):
         """
         Create the summary PDF for qiime1 analysis
         ==========================================
@@ -189,7 +193,6 @@ class MMEDSNotebook():
         self.name = name
         self.run_path = run_path
         self.config = config
-        self.load_info = load_info
         self.env = setup_environment('mmeds-stable')
 
         # Load the code templates
@@ -365,8 +368,10 @@ class MMEDSNotebook():
                 cmd += ' --execute '
                 # Mute output
                 #  cmd += ' &>/dev/null;'
+            log('Convert notebook to latex')
             output = run(cmd.split(' '), check=True, env=self.env)
 
+            log('Convert latex to pdf')
             # Convert to pdf
             cmd = 'pdflatex {name}.tex '.format(name=self.name)
             # Run the command twice because otherwise the chapter
