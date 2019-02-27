@@ -18,13 +18,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-p', '--path', required=False,
               type=click.Path(exists=True),
               help='Path to analysis directory')
-@click.option('-c', '--config_file', required=True,
-              default=None, type=click.Path(exists=True),
-              help='Path to configuration file for analysis.')
 @click.option('-t', '--tool_type', required=False,
               help='Type of tools to perform summary for')
-def run_summarize(path, config_file, tool_type):
-    summarize_qiime(path, config_file, tool_type)
+def run_summarize(path, tool_type):
+    summarize_qiime(path, tool_type)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log, load_config, setup_environment
 
 
-def summarize_qiime(summary_path, config_file, tool):
+def summarize_qiime(summary_path, tool):
     """ Handle setup and running the summary for the two qiimes """
     path = Path(summary_path)
 
@@ -23,7 +23,7 @@ def summarize_qiime(summary_path, config_file, tool):
         files[parts[0]] = Path(parts[1])
 
     # Load the configuration
-    config = load_config(Path(config_file).read_text(), files['metadata'])
+    config = load_config((path / 'config_file.txt').read_text(), files['metadata'])
 
     # Create the summary directory
     if not files['summary'].is_dir():

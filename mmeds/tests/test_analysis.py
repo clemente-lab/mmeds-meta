@@ -67,10 +67,7 @@ class AnalysisTests(TestCase):
 
     def summarize(self, count, tool):
         analysis_path = Path(self.path) / 'analysis{}'.format(count)
-        summarize_qiime(analysis_path,
-                        'module use ~/.modules/modulefiles; module load {};'.format(tool),
-                        analysis_path / 'config_file.txt',
-                        tool)
+        summarize_qiime(analysis_path, tool)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
     def qiime2(self):
