@@ -53,6 +53,8 @@ install:
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     - cat ~/mmeds_server_data/testuser_0/analysis0/err0.err
+    - ls ~/mmeds_server_data/testuser_0/analsysis0/
+    - ls ~/mmeds_server_data/testuser_0/analsysis0/summary
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
 after_success:
     - bash <(curl -s https://codecov.io/bash)

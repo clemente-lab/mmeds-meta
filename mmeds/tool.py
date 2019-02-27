@@ -150,8 +150,7 @@ class Tool:
         while running:
             # Set running to false
             running = False
-            output = run('/hpc/lsf/9.1/linux2.6-glibc2.3-x86_64/bin/bjobs',
-                         stdout=PIPE).stdout.decode('utf-8').split('\n')
+            output = run(['bjobs'], stdout=PIPE).stdout.decode('utf-8').split('\n')
             for job in output:
                 # If the job is found set it back to true
                 if str(job_id) in job:

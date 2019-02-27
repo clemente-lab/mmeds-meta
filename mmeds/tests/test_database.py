@@ -194,6 +194,7 @@ class DatabaseTests(TestCase):
             for table in tables:
                 # Create the query
                 sql = self.build_sql(table, row)
+                log(sql)
                 found = self.c.execute(sql)
                 # Assert there exists at least one entry matching this description
                 try:
