@@ -221,7 +221,6 @@ class Tool:
             'summarize.py ',
             '--path {}'.format(self.path),
             '--tool_type {}'.format(self.tool),
-            '--config_file {}'.format(self.path / 'config_file.txt'),
-            '--load_info "{}";'.format(self.jobtext[0])
+            '--config_file {}'.format(self.path / 'config_file.txt')
         ]
         self.jobtext.append(' '.join(cmd))
