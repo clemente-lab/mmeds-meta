@@ -117,7 +117,7 @@ class Qiime1(Tool):
         try:
             # Count the sequences prior to diversity analysis
             new_env = setup_environment('qiime1')
-            script_path = Path(new_env.split(':')[0])
+            script_path = Path(new_env['PATH'].split(':')[0])
             cmd = ['python', str(script_path / 'count_seqs.py'), '-i', str(self.files['split_output'] / 'seqs.fna')]
             output = run(cmd, check=True, env=new_env)
 
@@ -170,7 +170,7 @@ class Qiime1(Tool):
             # Set execute permissions
             jobfile.chmod(0o770)
             # Run the command
-            output = run([jobfile], check=True)
+            run([jobfile], check=True)
         else:
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
@@ -189,6 +189,7 @@ class Qiime1(Tool):
         try:
             if self.analysis:
                 self.run_analysis()
+            self.sanity_check()
             self.move_user_files()
             doc = self.db.get_metadata(self.access_code)
             if not self.testing:
