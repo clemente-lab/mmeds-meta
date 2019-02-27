@@ -69,7 +69,7 @@ def summarize_qiime1(path, files, config):
     new_env = setup_environment('qiime1')
 
     # Convert and store the otu table
-    cmd = 'biom convert -i {} -o {} --to-tsv --header-key="taxonomy" '
+    cmd = 'biom convert --to-tsv --header-key="taxonomy" -i {} -o {}'
     cmd = cmd.format(files['otu_output'] / 'otu_table.biom',
                      path / 'otu_table.tsv')
     results = run(cmd.split(' '), stderr=PIPE, env=new_env)
@@ -362,10 +362,10 @@ class MMEDSNotebook():
         """
         try:
             nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex '
+            cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
-                cmd += ' --execute '
+                cmd += ' --execute'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             log('Convert notebook to latex')
@@ -373,7 +373,7 @@ class MMEDSNotebook():
 
             log('Convert latex to pdf')
             # Convert to pdf
-            cmd = 'pdflatex {name}.tex '.format(name=self.name)
+            cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
             output = run(cmd.split(' '), check=True)
