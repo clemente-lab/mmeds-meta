@@ -1,7 +1,7 @@
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
-from subprocess import run, PIPE
+from subprocess import run, PIPE, CalledProcessError
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
 
@@ -69,12 +69,16 @@ def summarize_qiime1(path, files, config):
     new_env = setup_environment('qiime1')
 
     # Convert and store the otu table
-    cmd = ['biom', 'convert', '--to-tsv', '--header-key="taxonomy"',
+    cmd = ['biom', 'convert', '--to-tsv', '--header-key=taxonomy',
            '-i', str(files['otu_output'] / 'otu_table.biom'),
            '-o', str(path / 'otu_table.tsv')]
-    results = run(cmd, stderr=PIPE, env=new_env)
+    try:
+        results = run(cmd, stderr=PIPE, env=new_env, check=True)
+    except CalledProcessError as e:
+        log(e)
+        log(results)
+        raise e
     log('biom convert Finished')
-    log(results)
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])
