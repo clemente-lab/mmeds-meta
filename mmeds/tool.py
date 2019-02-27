@@ -220,7 +220,6 @@ class Tool:
         cmd = [
             'summarize.py ',
             '--path {}'.format(self.path),
-            '--tool_type {}'.format(self.tool),
-            '--config_file {}'.format(self.path / 'config_file.txt')
+            '--tool_type {}'.format(self.tool)
         ]
         self.jobtext.append(' '.join(cmd))
