@@ -3,7 +3,7 @@ from shutil import rmtree
 from pandas import read_csv
 
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
-from mmeds.mmeds import send_email, log
+from mmeds.mmeds import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -317,26 +317,23 @@ class Qiime2(Tool):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
         log(self.files.keys())
+        new_env = setup_environment('qiime2')
         # Check the counts at the beginning of the analysis
-        cmd = 'conda run -n {} qiime tools export {} --output-dir {}'.format(self.jobtext[0].split(' ')[-1],
-                                                                             self.files['demux_viz'],
-                                                                             self.path / 'temp')
-        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
+        cmd = ['qiime', 'tools', 'export', str(self.files['demux_viz']), '--output-dir', str(self.path / 'temp')]
+        run(cmd, check=True, env=new_env)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
         rmtree(self.path / 'temp')
 
         # Check the counts after DADA2/DeBlur
-        cmd = 'conda run -n {} qiime tools export {} --output-dir {}'.format(self.jobtext[0].split(' ')[-1],
-                                                                             self.files['table_{}'.format(self.atype)],
-                                                                             self.path / 'temp')
-        run(['/usr/bin/bash'] + cmd.split(' '), check=True)
+        cmd = ['qiime', 'tools', 'export', str(self.files['table_{}'.format(self.atype)]),
+               '--output-dir', str(self.path / 'temp')]
+        run(cmd, check=True, env=new_env)
         log(cmd)
 
-        cmd = 'conda run -n {} biom summarize-table -i {}'.format(self.jobtext[0].split(' ')[-1],
-                                                                  self.path / 'temp' / 'feature-table.biom')
-        result = run(['/usr/bin/bash'] + cmd.split(' '), stdout=PIPE, stderr=PIPE)
+        cmd = ['biom', 'summarize-table', '-i', str(self.path / 'temp' / 'feature-table.biom')]
+        result = run(cmd, check=True, env=new_env)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
         rmtree(self.path / 'temp')
 

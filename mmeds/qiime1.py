@@ -1,7 +1,7 @@
 from subprocess import run, CalledProcessError, PIPE
 
 from mmeds.config import JOB_TEMPLATE
-from mmeds.mmeds import send_email, log
+from mmeds.mmeds import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -115,9 +115,10 @@ class Qiime1(Tool):
         """ Check that counts match after split_libraries and pick_otu. """
         try:
             # Count the sequences prior to diversity analysis
-            cmd = ['conda', 'run', '-n', self.jobtext.split(' ')[-1],
-                   'count_seqs.py', '-i', self.files['split_output'] / 'seqs.fna']
-            output = run(cmd, check=True, stdout=PIPE)
+            new_env = setup_environment('qiime1')
+            cmd = ['count_seqs.py', '-i', str(self.files['split_output'] / 'seqs.fna')]
+            output = run(cmd, check=True, env=new_env)
+
             out = output.stdout.decode('utf-8')
             log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
