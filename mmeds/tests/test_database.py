@@ -129,6 +129,7 @@ class DatabaseTests(TestCase):
         foreign_keys = list(filter(lambda x: '_has_' not in x,
                                    list(filter(lambda x: '_id' in x,
                                                all_cols))))
+        log('Got foreign keys')
         # Remove the table id for the row as
         # that doesn't matter for the test
         if 'user_id' in foreign_keys:
@@ -139,6 +140,7 @@ class DatabaseTests(TestCase):
         sql = 'SELECT * FROM {} WHERE '.format(table)
         # Create an sql query to match the data from this row of the input file
         for i, column in enumerate(columns):
+            log('Column: {}'.format(column))
             value = self.df[table][column].iloc[row]
             if pd.isnull(value):
                 value = 'NULL'
@@ -157,9 +159,11 @@ class DatabaseTests(TestCase):
         if table in fig.PROTECTED_TABLES:
             sql += ' AND user_id = ' + str(self.user_id)
 
+        log('COllect foreign keys')
         # Collect the matching foreign keys based on the infromation
         # in the current row of the data frame
         for fkey in foreign_keys:
+            log('fkey: {}'.format(fkey))
             ftable = fkey.split('_id')[1]
             # Recursively build the sql call
             fsql = self.build_sql(ftable, row)
@@ -179,15 +183,17 @@ class DatabaseTests(TestCase):
     #   Test SQL   #
     ################
     def test_a_tables(self):
-        pass
-        df = pd.read_csv(fig.TEST_METADATA, header=[0, 1],
-                         skiprows=[2, 3, 4], sep='\t')
-
-        tables = df.columns.levels[0].tolist()
+        log(self.df.columns)
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+            self.df = db.load_ICD_codes(self.df)
+        log(self.df.columns)
+        tables = self.df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
-        for row in range(len(df)):
+        del tables[tables.index('ICDCode')]
+        for row in range(len(self.df)):
             for table in tables:
+                log('Query table {}'.format(table))
                 # Create the query
                 sql = self.build_sql(table, row)
                 log(sql)
@@ -202,12 +208,12 @@ class DatabaseTests(TestCase):
                     raise e
 
     def test_b_junction_tables(self):
-        pass
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
         for row in range(len(self.df)):
             for jtable in jtables:
+                log('Check table: {}'.format(jtable))
                 sql = self.build_sql(jtable, row)
                 jresult = self.c.execute(sql)
                 # Ensure an entry exists for this value
@@ -256,7 +262,6 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
-        pass
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=True) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
@@ -288,7 +293,6 @@ class DatabaseTests(TestCase):
             errors = db.check_user_study_name('Unique_Studay')
         assert not warnings
         assert not errors
-
 
     def test_e_clear_user_data(self):
         """
@@ -325,6 +329,15 @@ class DatabaseTests(TestCase):
             self.c.execute(sql)
             # Check that the difference is equal to the rows belonging to the cleared user
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
+
+    def test_e_load_ICD_codes(self):
+        """ Test the parsing and loading of ICD codes. """
+        for i, code in self.df['ICDCode']['ICDCode'].items():
+            # Check the first character
+            assert code.split('.')[0][0] == self.df['IllnessBroadCategory']['ICDFirstCharacter'].iloc[i]
+            assert int(code.split('.')[0][1:]) == self.df['IllnessCategory']['ICDCategory'].iloc[i]
+            assert code.split('.')[1][:-1] == self.df['IllnessDetails']['ICDDetails'].iloc[i]
+            assert code.split('.')[1][-1] == self.df['IllnessDetails']['ICDExtension'].iloc[i]
 
     ####################
     #   Test MongoDB   #

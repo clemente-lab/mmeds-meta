@@ -116,6 +116,25 @@ def get_valid_columns(metadata_file, option):
     return summary_cols, col_types
 
 
+def load_ICD_codes():
+    """ Load all known ICD codes and return them as a dictionary """
+    ICD_codes = {'XXX.XXXX': 'Subject is healthy to the best of our knowledge'}
+    with open(fig.STORAGE_DIR / 'icd10cm_codes_2018.txt') as f:
+        # Parse each line
+        for line in f:
+            parts = line.split(' ')
+            # Code is first part
+            code = parts[0]
+            # Description is second
+            description = ' '.join(parts[1:]).strip()
+            # Fill in codes with 'X'
+            while len(code) < 7:
+                code += 'X'
+            code = code[:3] + '.' + code[3:]
+            ICD_codes[code] = description
+    return ICD_codes
+
+
 def insert_error(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
@@ -349,7 +368,7 @@ def check_column(raw_column, col_index):
     if issubdtype(col_type, number) and not isinstance(raw_column.dtype, object):
         warnings += check_number_column(column, col_index, col_type)
     # Check for categorical data
-    elif issubdtype(col_type, str):
+    elif issubdtype(col_type, str) and not header == 'ICDCode':
         warnings += check_string_column(column, col_index)
 
     return errors, warnings
@@ -377,22 +396,22 @@ def check_duplicates(column, col_index):
 def check_lengths(column, col_index):
     """ Checks that all entries have the same length in the provided column """
     errors = []
-    length = len(column[1])
-    for i, cell in enumerate(column[2:]):
+    length = len(column[0])
+    for i, cell in enumerate(column[1:]):
         if not len(cell) == length:
             errors.append('%d\t%d\tLength Error: Value %s has a different length from other values in column %d' %
-                          (i + 2, col_index, cell, col_index))
+                          (i + 1, col_index, cell, col_index))
     return errors
 
 
 def check_barcode_chars(column, col_index):
     """ Check that BarcodeSequence only contains valid DNA characters. """
     errors = []
-    for i, cell in enumerate(column[1:]):
+    for i, cell in enumerate(column):
         diff = set(cell).difference(DNA)
         if diff:
             errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' %
-                          (i + 1, col_index, ', '.join(diff), i + 1))
+                          (i, col_index, ', '.join(diff), i))
     return errors
 
 
@@ -427,6 +446,17 @@ def check_dates(df):
     return errors
 
 
+def check_ICD_codes(column, col_index):
+    """ Ensures all ICD codes in the column are valid. """
+    # Load the ICD codes
+    ICD_codes = load_ICD_codes()
+    errors = []
+    for i, cell in enumerate(column):
+        if ICD_codes.get(cell) is None:
+            errors.append('{}\t{}\tICD Code Error: Invalid ICD code {} in row {}'.format(i, col_index, cell, i))
+    return errors
+
+
 def check_table_column(table_df, name, header, col_index, row_index, study_name):
     errors = []
     warnings = []
@@ -447,6 +477,8 @@ def check_table_column(table_df, name, header, col_index, row_index, study_name)
             errors += check_duplicates(col, col_index)
         elif header == 'LinkerPrimerSequence':
             errors += check_lengths(col, col_index)
+    elif name == 'ICDCode':
+        errors += check_ICD_codes(col, col_index)
     elif study_name is None and name == 'Study':
         study_name = table_df['StudyName'][row_index]
     return errors, warnings
@@ -553,7 +585,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
                 errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
 
     # Check for missing tables
-    missing_tables = set(fig.TABLE_ORDER).difference(set(tables))
+    missing_tables = fig.METADATA_TABLES.difference(set(tables))
     if missing_tables:
         errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
@@ -761,7 +793,7 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
 
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
-    all_cols.update(fig.TABLE_COLS)
+    all_cols.update(fig.METADATA_COLS)
 
     # Find all columns that don't have a mapping and add them to AdditionalMetaData
     unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
@@ -781,7 +813,6 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
         fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
         fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
         all_cols['AdditionalMetaData'].append(str(unit_col))
-    log(fig.MMEDS_MAP)
 
     # Build the data for the new format
     meta = {}
