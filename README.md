@@ -1,7 +1,7 @@
 # mmeds-meta
 
-[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=BugFixes-AddressCodeFactorErrors)](https://travis-cl.com/clemente-lab/mmeds-meta)
-[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/BugFixes-AddressCodeFactorErrors/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=BugFix-CatchWorkingDirError)](https://travis-cl.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/BugFix-CatchWorkingDirError/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 [![CodeFacter](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/badge/BugFixes-AddressCodeFactorErrors)](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/overview/BugFixes-AddressCodeFactorErrors)
 
 ## Instructions

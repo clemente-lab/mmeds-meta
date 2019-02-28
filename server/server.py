@@ -46,6 +46,16 @@ class MMEDSserver(object):
         except KeyError:
             raise LoggedOutError('No user logged in')
 
+    def get_dir(self):
+        """
+        Return the current user. Delete them from the
+        user list if session data is unavailable.
+        """
+        try:
+            return cp.session['working_dir']
+        except KeyError:
+            raise LoggedOutError('No user logged in')
+
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
         if self.processes.get(access_code) is None or self.processes[access_code].exitcode is not None:
@@ -97,7 +107,7 @@ class MMEDSserver(object):
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
         log('In view_corrections')
-        return open(cp.session['working_dir'] / (UPLOADED_FP + '.html'))
+        return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     def run_validate(self, myMetaData):
         """ Run validate_mapping_file and return the results """
@@ -108,7 +118,7 @@ class MMEDSserver(object):
             raise MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
 
         # Create a copy of the MetaData
-        metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
+        metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
 
         # Check the metadata file for errors
         errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
@@ -126,7 +136,7 @@ class MMEDSserver(object):
         """ Create the page to return when there are errors in the metadata """
         log('Errors in metadata')
         log('\n'.join(errors))
-        cp.session['error_file'] = cp.session['working_dir'] / ('errors_{}'.format(Path(metadata_copy).name))
+        cp.session['error_file'] = self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
         # Write the errors to a file
         with open(cp.session['error_file'], 'w') as f:
             f.write('\n'.join(errors + warnings))
@@ -147,7 +157,7 @@ class MMEDSserver(object):
         cp.session['uploaded_files'] = [metadata_copy]
 
         # Write the errors to a file
-        with open(cp.session['working_dir'] / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
+        with open(self.get_dir() / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
             f.write('\n'.join(warnings))
 
         # Get the html for the upload page
@@ -271,15 +281,15 @@ class MMEDSserver(object):
         """
         log('In convert_metadata')
         try:
-            meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
+            meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
             # Try the conversion
             try:
                 if convertTo == 'mmeds':
-                    file_path = cp.session['working_dir'] / 'mmeds_metadata.tsv'
+                    file_path = self.get_dir() / 'mmeds_metadata.tsv'
                     # If it is successful return the converted file
                     mmeds.MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
                 else:
-                    file_path = cp.session['working_dir'] / 'mixs_metadata.tsv'
+                    file_path = self.get_dir() / 'mixs_metadata.tsv'
                     mmeds.mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
                 page = static.serve_file(file_path, 'application/x-download',
                                          'attachment', os.path.basename(file_path))
