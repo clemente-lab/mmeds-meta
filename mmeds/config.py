@@ -11,6 +11,11 @@ import mmeds
 import hashlib
 import os
 
+
+############################
+# CONFIGURE SERVER GLOBALS #
+############################
+
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
@@ -74,9 +79,9 @@ CONFIG = {
 }
 
 
-###########
-# Testing #
-###########
+##########################
+# CONFIGURE TEST GLOBALS #
+##########################
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
 TEST_DIR = DATABASE_DIR / 'test_dir'
@@ -132,6 +137,10 @@ for key in TEST_FILES.keys():
     TEST_CHECKS[key] = hash1.digest()
 
 
+##############################
+# CONFIGURE DATABASE GLOBALS #
+##############################
+
 # The order in which data should be imported to
 # ensure the necessary primary keys are created
 # before they are referenced as foreign keys
@@ -141,7 +150,10 @@ TABLE_ORDER = [
     'SampleProtocols',
     'RawDataProtocols',
     'ResultsProtocols',
-    'Illnesses',
+    'ICDCode',
+    'IllnessBroadCategory',
+    'IllnessCategory',
+    'IllnessDetails',
     'Interventions',
     'BodySite',
     'Type',
@@ -202,8 +214,11 @@ USER_FILES = set([
     'visualizations_dir'
 ])
 
+ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
+
+
 # These are the tables that users are given direct access to
-PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData']))
+PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData', 'ICDCode']))
 
 # These are the columns for each table
 TABLE_COLS = {}
@@ -226,15 +241,24 @@ except pms.err.OperationalError:
                      local_infile=True)
 c = db.cursor()
 for table in TABLE_ORDER:
-    if not table == 'AdditionalMetaData':
+    if table == 'ICDCode':
+        TABLE_COLS['ICDCode'] = ['ICDCode']
+        ALL_COLS += 'ICDCode'
+    elif not table == 'AdditionalMetaData':
         c.execute('DESCRIBE ' + table)
         results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
         TABLE_COLS[table] = results
         ALL_COLS += results
 TABLE_COLS['AdditionalMetaData'] = []
-COLUMN_TYPES = {
 
-}
+# For use when working with Metadata files
+METADATA_TABLES = set(TABLE_ORDER) - ICD_TABLES
+METADATA_COLS = {}
+for table in METADATA_TABLES:
+    METADATA_COLS[table] = TABLE_COLS[table]
+
+
+COLUMN_TYPES = {}
 tdf = read_csv(TEST_METADATA,
                sep='\t',
                header=[0, 1],
@@ -242,19 +266,22 @@ tdf = read_csv(TEST_METADATA,
                na_filter=False)
 
 for table in TABLE_COLS:
-    COLUMN_TYPES[table] = {}
-    for column in TABLE_COLS[table]:
-        col_type = tdf[table][column].iloc[0]
-        if 'Text' in col_type:
-            COLUMN_TYPES[table][column] = 'str'
-        elif 'Number' in col_type:
-            COLUMN_TYPES[table][column] = 'float'
-        elif 'Date' in col_type:
-            COLUMN_TYPES[table][column] = 'datetime64'
+    # Temporary solution
+    try:
+        COLUMN_TYPES[table] = {}
+        for column in TABLE_COLS[table]:
+            col_type = tdf[table][column].iloc[0]
+            if 'Text' in col_type:
+                COLUMN_TYPES[table][column] = 'str'
+            elif 'Number' in col_type:
+                COLUMN_TYPES[table][column] = 'float'
+            elif 'Date' in col_type:
+                COLUMN_TYPES[table][column] = 'datetime64'
+    except KeyError:
+        continue
 
 # Clean up
 del db
-
 
 # Map known columns from MIxS
 MMEDS_MAP = {
