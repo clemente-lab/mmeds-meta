@@ -4,17 +4,15 @@ import cherrypy as cp
 import pandas as pd
 import os
 import shutil
-import pickle
 import warnings
 
-from numpy import nan
 from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
-from mmeds.error import TableAccessError, MissingUploadError, MetaDataError
-from mmeds.mmeds import send_email, log
+from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
+from mmeds.mmeds import send_email, log, pyformat_translate, quote_sql
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -74,13 +72,13 @@ class Database:
             if user == sec.SQL_USER_NAME:
                 self.db = pms.connect(host='localhost',
                                       user=sec.SQL_USER_NAME,
-                                      password='password',
+                                      password=fig.TEST_USER_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             else:
                 self.db = pms.connect(host='localhost',
                                       user='root',
-                                      password='',
+                                      password=fig.TEST_ROOT_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             # Connect to the mongo server
@@ -111,8 +109,8 @@ class Database:
         self.cursor = self.db.cursor()
         # Setup RLS for regular users
         if user == sec.SQL_USER_NAME:
-            sql = 'SELECT set_connection_auth("{}", "{}")'.format(owner, sec.SECURITY_TOKEN)
-            self.cursor.execute(sql)
+            sql = 'SELECT set_connection_auth(%(owner)s, %(token)s)'
+            self.cursor.execute(sql, {'owner': owner, 'token': sec.SECURITY_TOKEN})
             self.db.commit()
 
         # If the owner is None set user_id to 0
@@ -121,32 +119,22 @@ class Database:
             self.email = MMEDS_EMAIL
         # Otherwise get the user id for the owner from the database
         else:
-            sql = 'SELECT user_id, email FROM user WHERE user.username="' + owner + '"'
-            self.cursor.execute(sql)
+            sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
+            self.cursor.execute(sql, {'uname': owner})
             result = self.cursor.fetchone()
+            # Ensure the user exists
+            if result is None:
+                raise NoResultError('No account exists with the providied username and email.')
             self.user_id = int(result[0])
             self.email = result[1]
 
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-        if False:
-            # Do housekeeping for removing old files
-            if os.path.isfile(self.check_file):
-                with open(self.check_file, 'rb') as f:
-                    last_check = pickle.load(f)
-                if (datetime.utcnow() - last_check).days > DAYS:
-                    self.clean()
-                    with open(self.check_file, 'wb') as f:
-                        pickle.dump(datetime.utcnow(), f)
-            else:
-                with open(self.check_file, 'wb+') as f:
-                    pickle.dump(datetime.utcnow(), f)
-
     def __del__(self):
         """ Clear the current user session and disconnect from the database. """
         if self.user == sec.SQL_USER_NAME:
-            sql = 'SELECT unset_connection_auth("{}")'.format(sec.SECURITY_TOKEN)
-            self.cursor.execute(sql)
+            sql = 'SELECT unset_connection_auth(%(token)s)'
+            self.cursor.execute(sql, {'token': sec.SECURITY_TOKEN})
             self.db.commit()
         self.db.close()
 
@@ -166,14 +154,37 @@ class Database:
         """ Check the provided email matches this user. """
         return email == self.email
 
-    def get_email(self):
-        """ Check the provided email matches this user. """
-        return self.email
+    def get_email(self, username):
+        """ Get the email that matches this user. """
+        sql = 'SELECT `email` FROM `user` WHERE `username` = %(username)s'
+        self.cursor.execute(sql, {'username': username})
+        result = self.cursor.fetchone()
+        if result is None:
+            raise NoResultError('There is no entry for user {}'.format(username))
+        return result[0]
+
+    def get_hash_and_salt(self, username):
+        """ Get the hash and salt values for the specified user. """
+        sql = 'SELECT `password`, `salt` FROM `user` WHERE `username` = %(username)s'
+        self.cursor.execute(sql, {'username': username})
+        result = self.cursor.fetchone()
+        if result is None:
+            raise NoResultError('There is no entry for user {}'.format(username))
+        return result
+
+    def get_all_usernames(self):
+        """ Return all usernames currently in the database. """
+        sql = 'SELECT `username` FROM `user`'
+        self.cursor.execute(sql)
+        result = self.cursor.fetchall()
+        if result is None:
+            raise NoResultError('There are no users in the database')
+        return [name[0] for name in result]
 
     def set_mmeds_user(self, user):
         """ Set the session to the current user of the webapp. """
-        sql = 'SELECT set_connection_auth("{}", "{}")'.format(user, sec.SECURITY_TOKEN)
-        self.cursor.execute(sql)
+        sql = 'SELECT set_connection_auth(%(user)s, %(token)s)'
+        self.cursor.execute(sql, {'user': user, 'token': sec.SECURITY_TOKEN})
         set_user = self.cursor.fetchall()[0][0]
         self.db.commit()
         return set_user
@@ -203,7 +214,7 @@ class Database:
                 parsed = sql.split(' ')
                 index = list(map(lambda x: x.casefold(), parsed)).index('from')
                 table = parsed[index + 1]
-                self.cursor.execute('describe ' + table)
+                self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
             return data, header
         except pms.err.OperationalError as e:
@@ -229,11 +240,11 @@ class Database:
         while True:
             for table in tables:
                 try:
-                    self.cursor.execute('DELETE FROM ' + table)
+                    self.cursor.execute(quote_sql('DELETE FROM {table}', table=table))
                     self.db.commit()
                 except pms.err.IntegrityError:
                     r_tables.append(table)
-            if len(r_tables) == 0:
+            if not r_tables:
                 break
             else:
                 tables = r_tables
@@ -255,7 +266,6 @@ class Database:
             columns = list(map(lambda x: x[0].split('_')[0],
                                self.cursor.fetchall()))
         """
-        pass
 
     def create_import_data(self, table, df, verbose=True):
         """
@@ -264,9 +274,12 @@ class Database:
         :table: The table in the database to create the import data for
         :df: The dataframe containing all the metadata
         """
-        sql = 'SELECT MAX(id{table}) FROM {table}'.format(table=table)
+        log('In create_import_data')
+        sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable='id' + table, table=table)
         self.cursor.execute(sql)
         vals = self.cursor.fetchone()
+        log('got vals')
+        log(vals)
         try:
             current_key = int(vals[0]) + 1
         except TypeError:
@@ -275,7 +288,8 @@ class Database:
         seen = {}
         # Go through each column
         for j in range(len(df.index)):
-            sql = 'SELECT * FROM ' + table + ' WHERE'
+            sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
+            args = {}
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
                 value = df[table][column][j]
@@ -286,17 +300,13 @@ class Database:
                 else:
                     sql += ' AND '
                 # Add quotes around string values
-                if type(value) == str:
-                    sql += column + ' = "' + value + '"'
-                # Otherwise check the absolute value of the difference is small
-                # so that SQL won't fail to match floats
-                else:
-                    sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
+                sql += quote_sql(('{column} = %({column})s'), column=column)
+                args['`{}`'.format(column)] = pyformat_translate(value)
             # Add the user check for protected tables
             if table in fig.PROTECTED_TABLES:
-                sql += ' AND user_id = ' + str(self.user_id)
-
-            found = self.cursor.execute(sql)
+                sql += ' AND user_id = %(id)s'
+                args['id'] = self.user_id
+            found = self.cursor.execute(sql, args)
             if found >= 1:
                 # Append the key found for that column
                 result = self.cursor.fetchone()
@@ -378,10 +388,10 @@ class Database:
         """
         # Import data for each junction table
         for table in fig.JUNCTION_TABLES:
-            sql = 'DESCRIBE ' + table
+            sql = quote_sql('DESCRIBE {table};', table=table)
             self.cursor.execute(sql)
-            columns = list(map(lambda x: x[0].split('_')[0],
-                               self.cursor.fetchall()))
+            result = self.cursor.fetchall()
+            columns = list(map(lambda x: x[0].split('_')[0], result))
             key_pairs = []
             # Only fill in tables where both foreign keys exist
             try:
@@ -409,10 +419,10 @@ class Database:
                     filename = str(filename).replace('\\', '\\\\')
 
                 # Load the datafile in to the junction table
-                sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
-                      table + ' FIELDS TERMINATED BY "\\t"' +\
-                      ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                self.cursor.execute(sql)
+                sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
+                                table=table)
+                sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                self.cursor.execute(sql, {'file': str(filename), 'table': table})
                 # Commit the inserted data
                 self.db.commit()
             except KeyError as e:
@@ -436,8 +446,9 @@ class Database:
         self.cursor.execute(sql)
         self.db.commit()
 
-        tables = df.columns.levels[0].tolist()
-        tables.sort(key=lambda x: TABLE_ORDER.index(x))
+        columns = df.columns.levels[0].tolist()
+        column_order = [TABLE_ORDER.index(col) for col in columns]
+        tables = [x for _, x in sorted(zip(column_order, columns))]
 
         # Create file and import data for each regular table
         for table in tables:
@@ -452,10 +463,10 @@ class Database:
                 if isinstance(filename, WindowsPath):
                     filename = str(filename).replace('\\', '\\\\')
                 # Load the newly created file into the database
-                sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
-                      table + ' FIELDS TERMINATED BY "\\t"' +\
-                      ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                self.cursor.execute(sql)
+                sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
+                                table=table)
+                sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                self.cursor.execute(sql, {'file': str(filename), 'table': table})
                 # Commit the inserted data
                 self.db.commit()
 
@@ -469,8 +480,8 @@ class Database:
         return access_code, study_name, self.email
 
     def get_col_values_from_table(self, column, table):
-        sql = 'SELECT {} FROM {}'.format(column, table)
-        self.cursor.execute(sql)
+        sql = quote_sql('SELECT {column} FROM {table}', column=column, table=table)
+        self.cursor.execute(sql, {'column': column, 'table': table})
         data = self.cursor.fetchall()
         return data
 
@@ -479,21 +490,20 @@ class Database:
         self.cursor.execute('SELECT MAX(user_id) FROM user')
         user_id = int(self.cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO {}.user (user_id, username, password, salt, email) VALUES\
-                ({}, "{}", "{}", "{}", "{}");'.format(sec.SQL_DATABASE,
-                                                      user_id,
-                                                      username,
-                                                      password,
-                                                      salt,
-                                                      email)
+        sql = 'INSERT INTO `user` (user_id, username, password, salt, email)'
+        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
 
-        self.cursor.execute(sql)
+        self.cursor.execute(sql, {'id': user_id,
+                                  'uname': username,
+                                  'pass': password,
+                                  'salt': salt,
+                                  'email': email})
         self.db.commit()
 
     def remove_user(self, username):
         """ Remove a user from the database. """
-        sql = 'DELETE FROM {}.user WHERE username="{}"'.format(sec.SQL_DATABASE, username)
-        self.cursor.execute(sql)
+        sql = 'DELETE FROM `user` WHERE username=%(uname)s'
+        self.cursor.execute(sql, {'uname': username})
         self.db.commit()
 
     def clear_user_data(self, username):
@@ -503,8 +513,8 @@ class Database:
         :username: The name of the user to remove files for
         """
         # Get the user_id for the provided username
-        sql = 'SELECT user_id FROM {}.user where username="{}"'.format(sec.SQL_DATABASE, username)
-        self.cursor.execute(sql)
+        sql = 'SELECT user_id FROM `user` where username=%(uname)s'
+        self.cursor.execute(sql, {'uname': username})
         user_id = int(self.cursor.fetchone()[0])
 
         # Only delete values from the tables that are protected
@@ -515,8 +525,8 @@ class Database:
         for table in tables:
             try:
                 # Remove all values from the table belonging to that user
-                sql = 'DELETE FROM {} WHERE user_id={}'.format(table, user_id)
-                self.cursor.execute(sql)
+                sql = quote_sql('DELETE FROM {table} WHERE user_id=%(id)s', table=table)
+                self.cursor.execute(sql, {'id': user_id})
             except pms.err.IntegrityError as e:
                 # If there is a dependency remaining
                 log(e)
@@ -599,26 +609,27 @@ class Database:
 
     def change_password(self, new_password, new_salt):
         """ Change the password for the current user. """
+
+        # Verify the username is okay
+        if self.owner == 'Public' or self.owner == 'public':
+            raise NoResultError('No account exists with the providied username and email.')
         # Get the user's information from the user table
-        sql = 'SELECT * FROM user WHERE username = "{}"'.format(self.owner)
-        self.cursor.execute(sql)
+        sql = 'SELECT * FROM user WHERE username = %(uname)s'
+        self.cursor.execute(sql, {'uname': self.owner})
         result = self.cursor.fetchone()
-        # Ensure the user exists
-        if len(result) == 0:
-            return False
 
         # Delete the old entry for the user
-        sql = 'DELETE FROM user WHERE user_id = {}'.format(result[0])
-        self.cursor.execute(sql)
+        sql = 'DELETE FROM user WHERE user_id = %(id)s'
+        self.cursor.execute(sql, {'id': result[0]})
 
         # Insert the user with the updated password
         sql = 'INSERT INTO user (user_id, username, password, salt, email) VALUES\
-                ({}, "{}", "{}", "{}", "{}");'.format(result[0],
-                                                      result[1],
-                                                      new_password,
-                                                      new_salt,
-                                                      result[4])
-        self.cursor.execute(sql)
+            (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
+        self.cursor.execute(sql, {'id': result[0],
+                                  'uname': result[1],
+                                  'pass': new_password,
+                                  'salt': new_salt,
+                                  'email': result[4]})
         self.db.commit()
         return True
 
@@ -642,7 +653,8 @@ class Database:
         warnings = []
         # Go through each column
         for j in range(len(df.index)):
-            sql = 'SELECT * FROM Subjects WHERE'
+            sql = """SELECT * FROM Subjects WHERE"""
+            args = {}
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df):
                 value = df[column][j]
@@ -652,13 +664,15 @@ class Database:
                     sql += ' '
                 else:
                     sql += ' AND '
-                if type(value) == str:
-                    sql += column + ' = "' + value + '"'
-                else:
-                    sql += ' ABS(Subjects.' + column + ' - ' + str(value) + ') <= 0.01'
-            sql += ' AND user_id = ' + str(self.user_id)
+                # Add quotes around string values
+                sql += quote_sql(('{column} = %({column})s'), column=column)
+                result = pyformat_translate(value)
+                log(result)
+                args['`{}`'.format(column)] = result
+            sql += ' AND user_id = %(id)s'
+            args['id'] = self.user_id
             try:
-                found = self.cursor.execute(sql)
+                found = self.cursor.execute(sql, args)
             except pms.err.InternalError as e:
                 raise MetaDataError(e.args[1])
             if found >= 1:
@@ -670,15 +684,15 @@ class Database:
     def check_user_study_name(self, study_name):
         """ Checks if the current user has uploaded a study with the same name. """
 
-        sql = 'SELECT * FROM Study WHERE user_id = {} and Study.StudyName = "{}"'
-        found = self.cursor.execute(sql.format(self.user_id, study_name))
-        # TEMPORARY #
-        return []
-        #############
-        if found >= 1:
-            return ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
+        sql = 'SELECT * FROM Study WHERE user_id = %(id)s and Study.StudyName = %(study)s'
+        found = self.cursor.execute(sql, {'id': self.user_id, 'study': study_name})
+
+        # Ensure multiple studies aren't uploaded with the same name
+        if found >= 1 and not self.testing:
+            result = ['-1\t-1\tUser {} has already uploaded a study with name {}'.format(self.owner, study_name)]
         else:
-            return []
+            result = []
+        return result
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """

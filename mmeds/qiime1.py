@@ -1,7 +1,8 @@
-from subprocess import run, CalledProcessError, PIPE
+from subprocess import run, CalledProcessError
+from pathlib import Path
 
 from mmeds.config import JOB_TEMPLATE
-from mmeds.mmeds import send_email, log
+from mmeds.mmeds import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -115,9 +116,11 @@ class Qiime1(Tool):
         """ Check that counts match after split_libraries and pick_otu. """
         try:
             # Count the sequences prior to diversity analysis
-            cmd = '{} count_seqs.py -i {}'.format(self.jobtext[0],
-                                                  self.files['split_output'] / 'seqs.fna')
-            output = run('bash -c "{}"'.format(cmd), shell=True, check=True, stdout=PIPE)
+            new_env = setup_environment('qiime1')
+            script_path = Path(new_env['PATH'].split(':')[0])
+            cmd = ['python', str(script_path / 'count_seqs.py'), '-i', str(self.files['split_output'] / 'seqs.fna')]
+            output = run(cmd, check=True, env=new_env)
+
             out = output.stdout.decode('utf-8')
             log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
@@ -155,38 +158,28 @@ class Qiime1(Tool):
     def run_analysis(self):
         """ Perform some analysis. """
         self.setup_analysis()
-        jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, '.lsf')
-        error_log = self.path / self.run_id
-        self.add_path(error_log, '.err')
+        self.add_path(self.run_id + '_job', '.lsf', 'jobfile')
+        self.add_path('err' + self.run_id, '.err', 'errorlog')
+        jobfile = self.files['jobfile']
+        log(jobfile)
+        error_log = self.files['errorlog']
+        log(error_log)
         if self.testing:
             # Open the jobfile to write all the commands
-            with open(str(jobfile) + '.lsf', 'w') as f:
-                f.write('#!/bin/bash -l\n')
-                f.write('\n'.join(self.jobtext))
+            jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
+            # Set execute permissions
+            jobfile.chmod(0o770)
             # Run the command
-            output = run('bash -c "bash {}.lsf"'.format(jobfile),
-                         stdout=PIPE,
-                         stderr=PIPE,
-                         shell=True,
-                         check=True)
-            log(output.stdout.decode('utf-8').replace('\\n', '\n'))
-            log(output.stderr.decode('utf-8').replace('\\n', '\n'))
+            run([jobfile], check=True)
         else:
             # Get the job header text from the template
-            with open(JOB_TEMPLATE) as f1:
-                temp = f1.read()
-            # Open the jobfile to write all the commands
-            with open(str(jobfile) + '.lsf', 'w') as f:
-                # Add the appropriate values
-                params = self.get_job_params()
-                f.write(temp.format(**params))
-                f.write('\n'.join(self.jobtext))
+            temp = JOB_TEMPLATE.read_text()
+            # Write all the commands
+            jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
             # Submit the job
+
             #  Temporary for testing on Minerva
-            #  FIXME
-            #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+            run([jobfile], check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             #  self.wait_on_job(job_id)
 

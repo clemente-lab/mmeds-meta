@@ -56,9 +56,7 @@ class AnalysisTests(TestCase):
         self.assertEqual(Path(self.files['for_reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
 
     def spawn_analysis(self, tool, count):
-        p = spawn.spawn_analysis(tool,
-                                 fig.TEST_USER,
-                                 self.code,
+        p = spawn.spawn_analysis(tool, fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
                                  True)
         while p.is_alive():
@@ -67,10 +65,7 @@ class AnalysisTests(TestCase):
 
     def summarize(self, count, tool):
         analysis_path = Path(self.path) / 'analysis{}'.format(count)
-        summarize_qiime(analysis_path,
-                        'module use ~/.modules/modulefiles; module load {};'.format(tool),
-                        analysis_path / 'config_file.txt',
-                        tool)
+        summarize_qiime(analysis_path, tool)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
     def qiime2(self):

@@ -1,6 +1,5 @@
 class MmedsError(Exception):
     """ Base class for errors in this module. """
-    pass
 
 
 class MissingUploadError(MmedsError):
@@ -40,6 +39,34 @@ class LoggedOutError(MmedsError):
 
 class InvalidConfigError(MmedsError):
     """ Exception for errors caused by selecting invalid columns in the config file"""
+
+    def __init__(self, message):
+        self.message = message
+
+
+class InvalidSQLError(MmedsError):
+    """ Exception for errors caused by invalid characters in a SQL query"""
+
+    def __init__(self, message):
+        self.message = message
+
+
+class InvalidModuleError(MmedsError):
+    """ Exception for errors caused by an invalid module name. """
+
+    def __init__(self, message):
+        self.message = message
+
+
+class NoResultError(MmedsError):
+    """ Exception for errors caused by a query returning no result """
+
+    def __init__(self, message):
+        self.message = message
+
+
+class UploadInUseError(MmedsError):
+    """ Exception thrown when the requested dataset is currently in use """
 
     def __init__(self, message):
         self.message = message

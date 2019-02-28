@@ -36,3 +36,6 @@ server/deblur.log
 
 # Coverage reports
 htmlcov/
+
+# What latex is doing to create this
+**/sys

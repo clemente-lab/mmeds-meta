@@ -39,6 +39,7 @@ setup(name='mmeds',
           'rpy2',
           'locustio',
           'codecov',
-          'pytest-cov'
+          'pytest-cov',
+          'pytidylib'
       ],
       zip_safe=False)
