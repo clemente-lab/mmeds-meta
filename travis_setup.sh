@@ -3,6 +3,14 @@ echo "In $(pwd)"
 export REPO_DIR=$(pwd)
 echo "Running setup from ${REPO_DIR}"
 
+# Install libtidy because package is super old
+git clone https://github.com/htacg/tidy-html5;
+cd tidy-html5/build/cmake;
+cmake ../.. -DCMAKE_BUILD_TYPE=Release;
+sudo make install;
+cd ../../..;
+
+
 if [ ! -d ~/.modules ]; then
     echo 'Make .modules';
     mkdir ~/.modules;

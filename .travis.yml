@@ -13,7 +13,8 @@ addons:
             - texlive-publishers
             - texlive-fonts-recommended
             - texlive-fonts-extra
-            - libtidy-0.99
+            - cmake
+            - xsltproc
 before_cache:
     - sudo chown -R travis:travis $HOME
     - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
