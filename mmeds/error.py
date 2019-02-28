@@ -63,3 +63,10 @@ class NoResultError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class UploadInUseError(MmedsError):
+    """ Exception thrown when the requested dataset is currently in use """
+
+    def __init__(self, message):
+        self.message = message

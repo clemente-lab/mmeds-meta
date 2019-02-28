@@ -152,8 +152,8 @@ def test_check_dates():
 def test_validate_mapping_files():
     with open(fig.TEST_METADATA) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
-    assert len(errors) == 0
-    assert len(warnings) == 0
+    assert not errors
+    assert not warnings
 
     with open(fig.TEST_METADATA_1) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
@@ -165,6 +165,7 @@ def test_validate_mapping_files():
     with open(fig.TEST_METADATA_VALID) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
     assert 'Missing required fields' in errors[-1]
+
 
 
 def test_get_valid_columns():

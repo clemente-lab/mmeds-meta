@@ -299,14 +299,11 @@ class Database:
                     sql += ' AND '
                 # Add quotes around string values
                 sql += quote_sql(('{column} = %({column})s'), column=column)
-                args['`' + column + '`'] = pyformat_translate(value)
+                args['`{}`'.format(column)] = pyformat_translate(value)
             # Add the user check for protected tables
             if table in fig.PROTECTED_TABLES:
                 sql += ' AND user_id = %(id)s'
                 args['id'] = self.user_id
-
-            log(sql)
-            log(args)
             found = self.cursor.execute(sql, args)
             if found >= 1:
                 # Append the key found for that column
@@ -654,7 +651,7 @@ class Database:
         # Go through each column
         for j in range(len(df.index)):
             sql = """SELECT * FROM Subjects WHERE"""
-            args = []
+            args = {}
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df):
                 value = df[column][j]
@@ -666,7 +663,9 @@ class Database:
                     sql += ' AND '
                 # Add quotes around string values
                 sql += quote_sql(('{column} = %({column})s'), column=column)
-                args['`' + column + '`'] = pyformat_translate(value)
+                result = pyformat_translate(value)
+                log(result)
+                args['`{}`'.format(column)] = result
             sql += ' AND user_id = %(id)s'
             args['id'] = self.user_id
             try:

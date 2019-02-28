@@ -38,7 +38,7 @@ CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
 PORT = 52953
-HOST = 'localhost'
+HOST = '127.0.0.1'
 
 
 # Configuration for the CherryPy server
@@ -105,6 +105,7 @@ TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
 TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')

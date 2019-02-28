@@ -6,7 +6,8 @@ echo "Running setup from ${REPO_DIR}"
 # Install libtidy because package is super old
 git clone https://github.com/htacg/tidy-html5;
 cd tidy-html5/build/cmake;
-cmake ../.. -DCMAKE_BUILD_TYPE=Release;
+cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr;
+make;
 sudo make install;
 cd ../../..;
 

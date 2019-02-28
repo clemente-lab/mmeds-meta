@@ -682,8 +682,7 @@ def generate_error_html(file_fp, errors, warnings):
         headers.append(header)
 
     # Create the table and header rows of the table
-    html += '<table summary= "The table uploaded to MMEDS as metadata with' +\
-        'all cells that cause errors and warnings highlighted">'
+    html += '<table>'
     html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
     html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
     # Fill out the table
