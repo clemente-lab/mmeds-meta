@@ -1,5 +1,8 @@
 import mmeds.authentication as auth
 
+from mmeds.error import NoResultError
+from pytest import raises
+
 
 test_username1 = 'username'
 test_password1 = 'Password1@Password'
@@ -15,18 +18,18 @@ bad_password3 = 'password1@password'
 bad_password4 = 'Passwor1@'
 
 
-def test_add_user():
+def test_a_add_user():
     """ Test the add_user function """
     assert auth.add_user(test_username2, test_password2, test_email2, testing=True) is None
 
 
-def test_validate_password():
+def test_b_validate_password():
     assert auth.validate_password(test_username2, test_password2, testing=True)
     assert not auth.validate_password(test_username2, test_password1, testing=True)
     assert not auth.validate_password(bad_username, test_password2, testing=True)
 
 
-def test_check_password():
+def test_c_check_password():
     results4 = auth.check_password(bad_password3, bad_password3)
     assert 'upper and lower' in results4
 
@@ -45,22 +48,26 @@ def test_check_password():
     assert '' == auth.check_password(test_password1, test_password1)
 
 
-def test_check_username():
+def test_d_check_username():
     assert auth.check_username(test_username3, testing=True) is None
     assert 'Error' in auth.check_username(bad_username, testing=True)
 
 
-def test_get_email():
+def test_e_get_email():
     assert test_email2 == auth.get_email(test_username2, testing=True)
     assert not auth.get_email(test_username3, testing=True)
 
 
-def test_change_password():
+def test_f_change_password():
     assert auth.validate_password(test_username2, test_password2, testing=True)
     assert auth.change_password(test_username2, test_password3, testing=True) is None
     assert auth.validate_password(test_username2, test_password3, testing=True)
+    with raises(NoResultError) as e_info:
+        assert auth.change_password('public', test_password3, testing=True) is None
+    with raises(NoResultError) as e_info:
+        assert auth.change_password('rando', test_password3, testing=True) is None
 
 
-def test_remove_user():
+def test_g_remove_user():
     """ Test the add_user function """
     assert not auth.remove_user(test_username2, testing=True)

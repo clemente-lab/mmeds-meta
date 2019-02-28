@@ -1,12 +1,14 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
-from mmeds.error import MetaDataError, InvalidConfigError
+from mmeds.error import MetaDataError, InvalidConfigError, InvalidSQLError, InvalidModuleError
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
+from os import environ
 import mmeds.config as fig
 import pandas as pd
+import numpy as np
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
@@ -50,7 +52,6 @@ def load_config(config_file, metadata):
             if parts[0] not in fig.CONFIG_PARAMETERS:
                 raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
             config[parts[0]] = parts[1]
-
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
@@ -66,8 +67,8 @@ def load_config(config_file, metadata):
                     config[option] = config[option].split(',')
             # Otherwise just ensure the parameter exists.
             else:
-                config[option]
-    except KeyError:
+                assert config[option]
+    except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
 
     return config
@@ -107,7 +108,7 @@ def get_valid_columns(metadata_file, option):
                     raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
             # If the columns is explicitly specified only check that it exists in the metadata
             else:
-                df[col]
+                assert df[col].any()
                 summary_cols.append(col)
                 col_types[col] = pd.api.types.is_numeric_dtype(df[col])
     except KeyError:
@@ -117,7 +118,7 @@ def get_valid_columns(metadata_file, option):
 
 def load_ICD_codes():
     """ Load all known ICD codes and return them as a dictionary """
-    ICD_codes = { 'XXX.XXXX': 'Subject is healthy to the best of our knowledge' }
+    ICD_codes = {'XXX.XXXX': 'Subject is healthy to the best of our knowledge'}
     with open(fig.STORAGE_DIR / 'icd10cm_codes_2018.txt') as f:
         # Parse each line
         for line in f:
@@ -309,6 +310,36 @@ def get_col_type(raw_column):
     return column, col_type, check_date
 
 
+def check_number_column(column, col_index, col_type):
+    """ Check for mixed types and values outside two standard deviations. """
+    warnings = []
+    try:
+        filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
+        stddev = std(filtered)
+        avg = mean(filtered)
+        for i, cell in enumerate(column):
+            if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
+                text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
+                warnings.append(text % (i + 1, col_index, cell, col_index))
+    except ValueError:
+        warnings.append("-1\t-1\tMixed Type Warning: Cannot get average of column {}. Mixed types".format(column))
+    return warnings
+
+
+def check_string_column(column, col_index):
+    """ Check for categorical data. """
+    warnings = []
+    counts = column.value_counts()
+    stddev = std(counts.values)
+    avg = mean(counts.values)
+    for val, count in counts.iteritems():
+        if count < (avg - stddev) and count < 3:
+            text = '%d\t%d\tCategorical Data Warning: Potential categorical data detected.\
+                Value %s may be in error, only %d found.'
+            warnings.append(text % (-1, col_index, val, count))
+    return warnings
+
+
 def check_column(raw_column, col_index):
     """
     Validate that there are no issues with the provided column of metadata.
@@ -335,26 +366,10 @@ def check_column(raw_column, col_index):
 
     # Check that values fall within standard deviation
     if issubdtype(col_type, number) and not isinstance(raw_column.dtype, object):
-        try:
-            filtered = [col_type(x) for x in column.tolist() if not x == 'NA']
-            stddev = std(filtered)
-            avg = mean(filtered)
-            for i, cell in enumerate(column):
-                if not cell == 'NA' and (col_type(cell) > avg + (2 * stddev) or col_type(cell) < avg - (2 * stddev)):
-                    text = '%d\t%d\tStdDev Warning: Value %s outside of two standard deviations of mean in column %d'
-                    warnings.append(text % (i + 1, col_index, cell, col_index))
-        except ValueError:
-            warnings.append("-1\t-1\tMixed Type Warning: Cannot get average of column {}. Mixed types".format(column))
+        warnings += check_number_column(column, col_index, col_type)
     # Check for categorical data
     elif issubdtype(col_type, str) and not header == 'ICDCode':
-        counts = column.value_counts()
-        stddev = std(counts.values)
-        avg = mean(counts.values)
-        for val, count in counts.iteritems():
-            if count < (avg - stddev) and count < 3:
-                text = '%d\t%d\tCategorical Data Warning: Potential categorical data detected.\
-                    Value %s may be in error, only %d found.'
-                warnings.append(text % (-1, col_index, val, count))
+        warnings += check_string_column(column, col_index)
 
     return errors, warnings
 
@@ -511,15 +526,13 @@ def check_table(table_df, name, all_headers, study_name):
     return (errors, warnings, all_headers, study_name)
 
 
-def validate_mapping_file(file_fp, delimiter='\t'):
+def load_mapping_file(file_fp, delimiter):
     """
-    Checks the mapping file at file_fp for any errors.
-    Returns a list of the errors, an empty list means there
-    were no issues.
+    Load the metadata file and assign datatypes to the columns
+    ==========================================================
+    :file_fp: The path to the mapping file
+    :delimiter: The delimiter used in the mapping file
     """
-    log('In validate_mapping_file')
-    errors = []
-    warnings = []
     df = pd.read_csv(file_fp,
                      sep=delimiter,
                      header=[0, 1],
@@ -536,6 +549,19 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             except KeyError:
                 df[table].assign(column=df[table][column].astype('object'))
     tables = list(dict.fromkeys(tables))
+    return tables, df
+
+
+def validate_mapping_file(file_fp, delimiter='\t'):
+    """
+    Checks the mapping file at file_fp for any errors.
+    Returns a list of the errors, an empty list means there
+    were no issues.
+    """
+    log('In validate_mapping_file')
+    errors = []
+    warnings = []
+    tables, df = load_mapping_file(file_fp, delimiter)
 
     all_headers = []
     study_name = None
@@ -546,16 +572,13 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
             continue
         table_df = df[table]
-        (new_errors,
-         new_warnings,
-         all_headers,
-         study_name) = check_table(table_df, table, all_headers, study_name)
+        (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
         errors += new_errors
         warnings += new_warnings
 
     # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)
-    if len(dups) > 0:
+    if dups:
         for dup in dups:
             locs = [i for i, header in enumerate(all_headers) if header == 'dup']
             for loc in locs:
@@ -623,6 +646,31 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     return str(file_copy)
 
 
+def build_error_rows(df, tables, headers, markup):
+    html = ''
+    # Build each row of the table
+    for row in range(len(df[tables[0]][headers[0]])):
+        html += '<tr>'
+        # Build each column in the row
+        for col, (table, header) in enumerate(zip(tables, headers)):
+            item = df[table][header][row]
+            if table == 'Subjects':
+                try_col = -2
+            else:
+                try_col = col
+            # Add the error/warning if there is one
+            try:
+                color, issue = markup[row + 4][try_col]
+                html += '<td style="color:black" bgcolor="{}">\
+                    {}<div style="font-weight:bold">\
+                    <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
+            # Otherwise add the table item
+            except KeyError:
+                html += '<td style="color:black">{}</td>\n'.format(item)
+        html += '</tr>\n'
+    return html
+
+
 def generate_error_html(file_fp, errors, warnings):
     """
     Generates an html page marking the errors and warnings found in
@@ -634,7 +682,9 @@ def generate_error_html(file_fp, errors, warnings):
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
     html = '<!DOCTYPE html>\n<html>\n'
-    html += '<link rel="stylesheet" href="/CSS/stylesheet.css">\n'
+    html += '<link type="text/javascript" rel="stylesheet" href="/CSS/stylesheet.css">\n'
+    html += '<title> MMEDS Metadata Errors </title>\n'
+    html += '<body>'
     markup = defaultdict(dict)
     top = []
 
@@ -667,29 +717,9 @@ def generate_error_html(file_fp, errors, warnings):
     html += '<table>'
     html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
     html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
-
-    # Build each row of the table
-    for row in range(len(df[tables[0]][headers[0]])):
-        html += '<tr>'
-        # Build each column in the row
-        for col, (table, header) in enumerate(zip(tables, headers)):
-            item = df[table][header][row]
-            if table == 'Subjects':
-                try_col = -2
-            else:
-                try_col = col
-            # Add the error/warning if there is one
-            try:
-                color, issue = markup[row + 4][try_col]
-                html += '<td style="color:black" bgcolor={}>\
-                    {}<div style="font-weight:bold">\
-                    <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
-            # Otherwise add the table item
-            except KeyError:
-                html += '<td style="color:black">{}</td>\n'.format(item)
-        html += '</tr>\n'
-    html += '</table>\n'
-    html += '</html>\n'
+    # Fill out the table
+    html += build_error_rows(df, tables, headers, markup)
+    html += '</table>\n</body>\n</html>'
     return html
 
 
@@ -715,12 +745,11 @@ def split_data(column):
     return result
 
 
-def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
+def load_MIxS_metadata(file_fp, skip_rows, unit_column):
     """
-    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
-    ------------------------------------------------------------------------------
+    A function for load and transforming the MIxS data in a pandas dataframe.
+    ========================================================================
     :file_fp: The path to the file to convert
-    :out_file: The path to write the new metadata file to
     :skip_rows: The number of rows to skip after the header
     :unit_column: A string. If None then the function checks each cell for units.
     """
@@ -747,6 +776,20 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
     df.dropna(how='all', axis='columns', inplace=True)
     # Replace np.nans with "NA"s
     df.fillna('"NA"', inplace=True)
+    return df, units
+
+
+def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
+    """
+    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
+    ------------------------------------------------------------------------------
+    :file_fp: The path to the file to convert
+    :out_file: The path to write the new metadata file to
+    :skip_rows: The number of rows to skip after the header
+    :unit_column: A string. If None then the function checks each cell for units.
+    """
+
+    df, units = load_MIxS_metadata(file_fp, skip_rows, unit_column)
 
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
@@ -858,8 +901,14 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
 
 def log(text):
     """ Write provided text to the log file. """
+    if isinstance(text, dict):
+        log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
+    elif isinstance(text, list):
+        log_text = '\n'.join(list(map(str, text)))
+    else:
+        log_text = str(text)
     with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write('{}: {}\n'.format(datetime.now(), text))
+        f.write('{}: {}\n'.format(datetime.now(), log_text))
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
@@ -920,7 +969,39 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         script += ' -A {summary}'.format(kwargs['summary'])
     cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
     log(cmd)
-    run(cmd, shell=True, check=True)
+    run(['/bin/bash', '-c', cmd], check=True)
+
+
+def pyformat_translate(value):
+    """ Convert from numpy to standard python datatypes. """
+    if isinstance(value, np.int64):
+        result = int(value)
+    elif isinstance(value, np.float64):
+        result = float(value)
+    else:
+        result = value
+    return result
+
+
+def setup_environment(module):
+    """
+    Returns a dictionary with the environment variables loaded for a particular module.
+    ===================================================================================
+    :module: A string. The name of the module to load.
+    """
+    # Check there is nothing in module that could cause problems
+    if not module.replace('_', '').replace('-', '').isalnum():
+        raise InvalidModuleError('{} is not a valid module name.' +
+                                 'Modules may only contain letters, numbers, "_", and "-"')
+
+    log('Setup environment for {}'.format(module))
+    run(['/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
+    new_env = environ.copy()
+    output = run(['/bin/bash', '-c', 'module load {}; echo $PATH;'.format(module)],
+                 capture_output=True, env=new_env, check=True)
+    new_env['PATH'] = output.stdout.decode('utf-8').strip()
+    log('New path: {}'.format(new_env['PATH']))
+    return new_env
 
 
 def create_qiime_from_mmeds(mmeds_file, qiime_file):
@@ -972,3 +1053,23 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
                     row.append(str(mdata[header][row_index]))
             f.write('\t'.join(row) + '\n')
     return list(mdata.columns)
+
+
+def quote_sql(sql, **kwargs):
+    """ Returns the sql query with the identifiers properly qouted using `"""
+    quoted_args = {}
+    for key, item in kwargs.items():
+        # Check the entry is a string
+        if not isinstance(item, str):
+            raise InvalidSQLError('SQL Identifier {} is not a string'.format(item))
+        # Check the entry isn't too long
+        elif len(item) > 66:
+            raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
+        # Check that there are only allowed characters: Letters, Numbers, and '_'
+        elif not item.replace('_', '').isalnum():
+            raise InvalidSQLError('Illegal characters in identifier {}.' +
+                                  ' Only letters, numbers, and "_" are permitted'.format(item))
+
+        quoted_args[key] = '`{}`'.format(item)
+    formatted = sql.format(**quoted_args)
+    return formatted

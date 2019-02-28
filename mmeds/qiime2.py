@@ -1,9 +1,9 @@
-from subprocess import run, CalledProcessError, PIPE
+from subprocess import run, CalledProcessError
 from shutil import rmtree
 from pandas import read_csv
 
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
-from mmeds.mmeds import send_email, log
+from mmeds.mmeds import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -317,26 +317,23 @@ class Qiime2(Tool):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
         log(self.files.keys())
+        new_env = setup_environment('qiime2')
         # Check the counts at the beginning of the analysis
-        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                self.files['demux_viz'],
-                                                                self.path / 'temp')
-        run('bash -c "{}"'.format(cmd), shell=True, check=True)
+        cmd = ['qiime', 'tools', 'export', str(self.files['demux_viz']), '--output-dir', str(self.path / 'temp')]
+        run(cmd, check=True, env=new_env)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
         rmtree(self.path / 'temp')
 
         # Check the counts after DADA2/DeBlur
-        cmd = '{} qiime tools export {} --output-dir {}'.format(self.jobtext[0],
-                                                                self.files['table_{}'.format(self.atype)],
-                                                                self.path / 'temp')
-        run('bash -c "{}"'.format(cmd), shell=True, check=True)
+        cmd = ['qiime', 'tools', 'export', str(self.files['table_{}'.format(self.atype)]),
+               '--output-dir', str(self.path / 'temp')]
+        run(cmd, check=True, env=new_env)
         log(cmd)
 
-        cmd = '{} biom summarize-table -i {}'.format(self.jobtext[0],
-                                                     self.path / 'temp' / 'feature-table.biom')
-        result = run('bash -c "{}"'.format(cmd), stdout=PIPE, stderr=PIPE, shell=True)
+        cmd = ['biom', 'summarize-table', '-i', str(self.path / 'temp' / 'feature-table.biom')]
+        result = run(cmd, check=True, env=new_env)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
         rmtree(self.path / 'temp')
 
@@ -396,16 +393,12 @@ class Qiime2(Tool):
                 self.write_file_locations()
                 if self.testing:
                     # Open the jobfile to write all the commands
-                    with open(str(jobfile) + '.lsf', 'w') as f:
+                    with open(self.files['jobfile'], 'w') as f:
                         f.write('#!/bin/bash -l\n')
                         f.write('\n'.join(self.jobtext))
                     # Run the command
-                    output = run('bash -c "bash {}.lsf&>{}.err"'.format(self.files['jobfile'],
-                                                                        self.files['error_log']),
-                                 stdout=PIPE,
-                                 stderr=PIPE,
-                                 shell=True,
-                                 check=True)
+                    output = run(['/usr/bin/bash', '{}.lsf'.format(self.files['jobfile'])],
+                                 capture_output=True, check=True)
                     log(output.stdout.decode('utf-8').replace('\\n', '\n'))
                     log(output.stderr.decode('utf-8').replace('\\n', '\n'))
                 else:
@@ -414,17 +407,16 @@ class Qiime2(Tool):
                         temp = f1.read()
 
                     # Open the jobfile to write all the commands
-                    with open(str(jobfile) + '.lsf', 'w') as f:
+                    with open(self.files['jobfile'], 'w') as f:
                         options = self.get_job_params()
                         # Add the appropriate values
                         f.write(temp.format(**options))
                         f.write('\n'.join(self.jobtext))
                     # Submit the job
-                    # output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-                    output = run('sh {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
+                    output = run(['/usr/bin/bash', self.files['jobfile']], capture_output=True, check=True)
                     log(output)
-                    #job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
-                    #self.wait_on_job(job_id)
+                    # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+                    # self.wait_on_job(job_id)
 
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)

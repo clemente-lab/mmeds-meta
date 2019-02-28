@@ -3,6 +3,7 @@ from mmeds.error import InvalidConfigError
 from pathlib import Path
 from pytest import raises
 from tempfile import gettempdir
+from tidylib import tidy_document
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -151,8 +152,8 @@ def test_check_dates():
 def test_validate_mapping_files():
     with open(fig.TEST_METADATA) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
-    assert len(errors) == 0
-    assert len(warnings) == 0
+    assert not errors
+    assert not warnings
 
     with open(fig.TEST_METADATA_1) as f:
         errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
@@ -226,9 +227,19 @@ def test_mmeds_to_MIxS():
 
 
 def test_check_ICD_code():
-    valid_codes = [ 'XXX.XXXX', 'Z46.6XXX', 'Z46.81XX', 'Z46.82XX', 'Z46.89XX']
-    invalid_codes = [ 'XXX.59XX', 'Z466XXX', 'Z46.81', 'Z46.G2XX', 'Z4X.X9XX']
+    valid_codes = ['XXX.XXXX', 'Z46.6XXX', 'Z46.81XX', 'Z46.82XX', 'Z46.89XX']
+    invalid_codes = ['XXX.59XX', 'Z466XXX', 'Z46.81', 'Z46.G2XX', 'Z4X.X9XX']
     errors = mmeds.check_ICD_codes(valid_codes, 0)
     assert not errors
     errors = mmeds.check_ICD_codes(invalid_codes, 0)
     assert len(errors) == 5
+
+
+def test_generate_error_html():
+    with open(fig.TEST_METADATA_1) as f:
+        errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
+    html = mmeds.generate_error_html(fig.TEST_METADATA_1, errors, warnings)
+    # Check that the html is valid
+    document, errors = tidy_document(html)
+    mmeds.log(errors)
+    assert not errors

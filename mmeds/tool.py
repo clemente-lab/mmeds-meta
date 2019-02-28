@@ -1,5 +1,5 @@
 from pathlib import Path
-from subprocess import run, PIPE
+from subprocess import run
 from shutil import copy
 from time import sleep
 
@@ -150,14 +150,14 @@ class Tool:
         while running:
             # Set running to false
             running = False
-            output = run('bjobs', stdout=PIPE).stdout.decode('utf-8').split('\n')
+            output = run(['/hpc/lsf/9.1/linux2.6-glibc2.3-x86_64/bin/bjobs'],
+                         capture_output=True).stdout.decode('utf-8').split('\n')
             for job in output:
                 # If the job is found set it back to true
                 if str(job_id) in job:
                     running = True
             # Wait thirty seconds to check again
             sleep(30)
-        return
 
     def move_user_files(self):
         """ Move all visualization files intended for the user to a set location. """
@@ -193,9 +193,12 @@ class Tool:
                 f.write('{}\t{}\n'.format(key, self.files[key]))
         log(self.files.keys())
 
-    def add_path(self, name, extension=''):
+    def add_path(self, name, extension='', key=None):
         """ Add a file or directory with the full path to self.files. """
-        self.files[name] = Path('{}{}'.format(self.path / name, extension))
+        if key:
+            self.files[key] = Path('{}{}'.format(self.path / name, extension))
+        else:
+            self.files[name] = Path('{}{}'.format(self.path / name, extension))
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -218,8 +221,6 @@ class Tool:
         cmd = [
             'summarize.py ',
             '--path {}'.format(self.path),
-            '--tool_type {}'.format(self.tool),
-            '--config_file {}'.format(self.path / 'config_file.txt'),
-            '--load_info "{}";'.format(self.jobtext[0])
+            '--tool_type {}'.format(self.tool)
         ]
         self.jobtext.append(' '.join(cmd))

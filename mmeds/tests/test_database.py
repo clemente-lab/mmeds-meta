@@ -35,9 +35,7 @@ class DatabaseTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        """
-        Load data that is to be used by multiple test cases
-        """
+        """ Load data that is to be used by multiple test cases """
         add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
         add_user(fig.TEST_USER_0, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
@@ -198,7 +196,6 @@ class DatabaseTests(TestCase):
                 log('Query table {}'.format(table))
                 # Create the query
                 sql = self.build_sql(table, row)
-                log('Built SQL')
                 log(sql)
                 found = self.c.execute(sql)
                 # Assert there exists at least one entry matching this description
@@ -285,7 +282,19 @@ class DatabaseTests(TestCase):
                                 else:
                                     assert result[i] in self.df0[table][col].tolist()
 
-    def test_d_clear_user_data(self):
+    def test_d_metadata_checks(self):
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+            warnings = db.check_repeated_subjects(self.df['Subjects'])
+        assert warnings
+
+        ndf = pd.read_csv(fig.UNIQUE_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
+        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+            warnings = db.check_repeated_subjects(ndf['Subjects'])
+            errors = db.check_user_study_name('Unique_Studay')
+        assert not warnings
+        assert not errors
+
+    def test_e_clear_user_data(self):
         """
         Test that Database.clear_user_data('user') will
         empty all rows belonging exclusively to user
