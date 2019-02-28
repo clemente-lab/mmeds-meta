@@ -1,4 +1,4 @@
-from subprocess import run, CalledProcessError, PIPE
+from subprocess import run, CalledProcessError
 from pathlib import Path
 
 from mmeds.config import JOB_TEMPLATE
@@ -179,8 +179,7 @@ class Qiime1(Tool):
             # Submit the job
 
             #  Temporary for testing on Minerva
-            #  output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, shell=True, check=True)
-            run([jobfile], stdout=PIPE, check=True)
+            run([jobfile], check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             #  self.wait_on_job(job_id)
 

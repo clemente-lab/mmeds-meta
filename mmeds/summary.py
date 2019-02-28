@@ -1,7 +1,7 @@
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
-from subprocess import run, PIPE, CalledProcessError
+from subprocess import run, CalledProcessError
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
 
@@ -73,7 +73,7 @@ def summarize_qiime1(path, files, config):
            '-i', str(files['otu_output'] / 'otu_table.biom'),
            '-o', str(path / 'otu_table.tsv')]
     try:
-        results = run(cmd, stderr=PIPE, env=new_env, check=True)
+        results = run(cmd, capture_output=True, env=new_env, check=True)
     except CalledProcessError as e:
         log(e)
         log(results)

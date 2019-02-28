@@ -1,4 +1,4 @@
-from subprocess import run, CalledProcessError, PIPE
+from subprocess import run, CalledProcessError
 from shutil import rmtree
 from pandas import read_csv
 
@@ -398,9 +398,7 @@ class Qiime2(Tool):
                         f.write('\n'.join(self.jobtext))
                     # Run the command
                     output = run(['/usr/bin/bash', '{}.lsf'.format(self.files['jobfile'])],
-                                 stdout=PIPE,
-                                 stderr=PIPE,
-                                 check=True)
+                                 capture_output=True, check=True)
                     log(output.stdout.decode('utf-8').replace('\\n', '\n'))
                     log(output.stderr.decode('utf-8').replace('\\n', '\n'))
                 else:
@@ -415,8 +413,7 @@ class Qiime2(Tool):
                         f.write(temp.format(**options))
                         f.write('\n'.join(self.jobtext))
                     # Submit the job
-                    # output = run('bsub < {}.lsf'.format(jobfile), stdout=PIPE, check=True)
-                    output = run(['/usr/bin/bash', self.files['jobfile']], stdout=PIPE, check=True)
+                    output = run(['/usr/bin/bash', self.files['jobfile']], capture_output=True, check=True)
                     log(output)
                     # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
                     # self.wait_on_job(job_id)

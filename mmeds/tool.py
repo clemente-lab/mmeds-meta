@@ -1,5 +1,5 @@
 from pathlib import Path
-from subprocess import run, PIPE
+from subprocess import run
 from shutil import copy
 from time import sleep
 
@@ -150,7 +150,7 @@ class Tool:
         while running:
             # Set running to false
             running = False
-            output = run(['bjobs'], stdout=PIPE).stdout.decode('utf-8').split('\n')
+            output = run(['bjobs'], capture_output=True).stdout.decode('utf-8').split('\n')
             for job in output:
                 # If the job is found set it back to true
                 if str(job_id) in job:

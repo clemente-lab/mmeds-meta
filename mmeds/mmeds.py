@@ -2,7 +2,7 @@ from collections import defaultdict
 from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
 from mmeds.error import MetaDataError, InvalidConfigError, InvalidSQLError
-from subprocess import run, PIPE
+from subprocess import run
 from datetime import datetime
 from pathlib import Path
 from os import environ
@@ -650,7 +650,7 @@ def generate_error_html(file_fp, errors, warnings):
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
     html = '<!DOCTYPE html>\n<html>\n'
-    html += '<link rel="stylesheet" href="/CSS/stylesheet.css">\n'
+    html += '<link type="text/javascript" rel="stylesheet" href="/CSS/stylesheet.css">\n'
     html += '<title> MMEDS Metadata Errors </title>\n'
     html += '<body>'
     markup = defaultdict(dict)
@@ -682,7 +682,8 @@ def generate_error_html(file_fp, errors, warnings):
         headers.append(header)
 
     # Create the table and header rows of the table
-    html += '<table>'
+    html += '<table summary= "The table uploaded to MMEDS as metadata with' +\
+        'all cells that cause errors and warnings highlighted">'
     html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
     html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
     # Fill out the table
@@ -961,9 +962,10 @@ def setup_environment(module):
     log('Setup environment for {}'.format(module))
     run(['/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
     new_env = environ.copy()
-    output = run(['/bin/bash', '-c', 'module load {}'.format(module)],
-                 stdout=PIPE, stderr=PIPE, env=new_env, check=True)
-    new_env['PATH'] = '{}:{}'.format(output.stderr.decode('utf-8').strip(), new_env['PATH'])
+    output = run(['/bin/bash', '-c', 'module load {}; echo $PATH;'.format(module)],
+                 capture_output=True, env=new_env, check=True)
+    log(output)
+    new_env['PATH'] = output.stdout.decode('utf-8').strip()
     log(new_env['PATH'])
     return new_env
 
