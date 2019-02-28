@@ -3,6 +3,7 @@ from mmeds.error import InvalidConfigError
 from pathlib import Path
 from pytest import raises
 from tempfile import gettempdir
+from tidylib import tidy_document
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -224,3 +225,13 @@ def test_mmeds_to_MIxS():
     mmeds.mmeds_to_MIxS(fig.TEST_METADATA, tempdir / 'MIxS.tsv')
     mmeds.MIxS_to_mmeds(tempdir / 'MIxS.tsv', tempdir / 'mmeds.tsv')
     assert (tempdir / 'mmeds.tsv').read_bytes() == Path(fig.TEST_METADATA).read_bytes()
+
+
+def test_generate_error_html():
+    with open(fig.TEST_METADATA_1) as f:
+        errors, warnings, study_name, subjects = mmeds.validate_mapping_file(f)
+    html = mmeds.generate_error_html(fig.TEST_METADATA_1, errors, warnings)
+    # Check that the html is valid
+    document, errors = tidy_document(html)
+    mmeds.log(errors)
+    assert not errors

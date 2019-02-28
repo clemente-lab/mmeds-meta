@@ -10,8 +10,6 @@ if [ ! -d ~/.modules ]; then
     sudo chown -R travis:travis ~/.modules
 fi
 
-# TEMPORARY
-sudo rm -rf ~/.modules/modulefiles/*;
 # Create module files (and install R packages)
 if [ ! -f ~/.modules/modulefiles/qiime1 ]; then
     echo "Create qiime1 module";

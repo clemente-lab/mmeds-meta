@@ -52,7 +52,6 @@ def load_config(config_file, metadata):
             if parts[0] not in fig.CONFIG_PARAMETERS:
                 raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
             config[parts[0]] = parts[1]
-
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
@@ -495,15 +494,13 @@ def check_table(table_df, name, all_headers, study_name):
     return (errors, warnings, all_headers, study_name)
 
 
-def validate_mapping_file(file_fp, delimiter='\t'):
+def load_mapping_file(file_fp, delimiter):
     """
-    Checks the mapping file at file_fp for any errors.
-    Returns a list of the errors, an empty list means there
-    were no issues.
+    Load the metadata file and assign datatypes to the columns
+    ==========================================================
+    :file_fp: The path to the mapping file
+    :delimiter: The delimiter used in the mapping file
     """
-    log('In validate_mapping_file')
-    errors = []
-    warnings = []
     df = pd.read_csv(file_fp,
                      sep=delimiter,
                      header=[0, 1],
@@ -520,6 +517,19 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             except KeyError:
                 df[table].assign(column=df[table][column].astype('object'))
     tables = list(dict.fromkeys(tables))
+    return tables, df
+
+
+def validate_mapping_file(file_fp, delimiter='\t'):
+    """
+    Checks the mapping file at file_fp for any errors.
+    Returns a list of the errors, an empty list means there
+    were no issues.
+    """
+    log('In validate_mapping_file')
+    errors = []
+    warnings = []
+    tables, df = load_mapping_file(file_fp, delimiter)
 
     all_headers = []
     study_name = None
@@ -530,10 +540,7 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
             continue
         table_df = df[table]
-        (new_errors,
-         new_warnings,
-         all_headers,
-         study_name) = check_table(table_df, table, all_headers, study_name)
+        (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
         errors += new_errors
         warnings += new_warnings
 
@@ -607,6 +614,31 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     return str(file_copy)
 
 
+def build_error_rows(df, tables, headers, markup):
+    html = ''
+    # Build each row of the table
+    for row in range(len(df[tables[0]][headers[0]])):
+        html += '<tr>'
+        # Build each column in the row
+        for col, (table, header) in enumerate(zip(tables, headers)):
+            item = df[table][header][row]
+            if table == 'Subjects':
+                try_col = -2
+            else:
+                try_col = col
+            # Add the error/warning if there is one
+            try:
+                color, issue = markup[row + 4][try_col]
+                html += '<td style="color:black" bgcolor="{}">\
+                    {}<div style="font-weight:bold">\
+                    <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
+            # Otherwise add the table item
+            except KeyError:
+                html += '<td style="color:black">{}</td>\n'.format(item)
+        html += '</tr>\n'
+    return html
+
+
 def generate_error_html(file_fp, errors, warnings):
     """
     Generates an html page marking the errors and warnings found in
@@ -619,6 +651,8 @@ def generate_error_html(file_fp, errors, warnings):
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
     html = '<!DOCTYPE html>\n<html>\n'
     html += '<link rel="stylesheet" href="/CSS/stylesheet.css">\n'
+    html += '<title> MMEDS Metadata Errors </title>\n'
+    html += '<body>'
     markup = defaultdict(dict)
     top = []
 
@@ -651,29 +685,9 @@ def generate_error_html(file_fp, errors, warnings):
     html += '<table>'
     html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
     html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
-
-    # Build each row of the table
-    for row in range(len(df[tables[0]][headers[0]])):
-        html += '<tr>'
-        # Build each column in the row
-        for col, (table, header) in enumerate(zip(tables, headers)):
-            item = df[table][header][row]
-            if table == 'Subjects':
-                try_col = -2
-            else:
-                try_col = col
-            # Add the error/warning if there is one
-            try:
-                color, issue = markup[row + 4][try_col]
-                html += '<td style="color:black" bgcolor={}>\
-                    {}<div style="font-weight:bold">\
-                    <br>-----------<br>{}</div></td>\n'.format(color, item, issue)
-            # Otherwise add the table item
-            except KeyError:
-                html += '<td style="color:black">{}</td>\n'.format(item)
-        html += '</tr>\n'
-    html += '</table>\n'
-    html += '</html>\n'
+    # Fill out the table
+    html += build_error_rows(df, tables, headers, markup)
+    html += '</table>\n</body>\n</html>'
     return html
 
 
@@ -699,12 +713,11 @@ def split_data(column):
     return result
 
 
-def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
+def load_MIxS_metadata(file_fp, skip_rows, unit_column):
     """
-    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
-    ------------------------------------------------------------------------------
+    A function for load and transforming the MIxS data in a pandas dataframe.
+    ========================================================================
     :file_fp: The path to the file to convert
-    :out_file: The path to write the new metadata file to
     :skip_rows: The number of rows to skip after the header
     :unit_column: A string. If None then the function checks each cell for units.
     """
@@ -731,6 +744,20 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
     df.dropna(how='all', axis='columns', inplace=True)
     # Replace np.nans with "NA"s
     df.fillna('"NA"', inplace=True)
+    return df, units
+
+
+def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
+    """
+    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
+    ------------------------------------------------------------------------------
+    :file_fp: The path to the file to convert
+    :out_file: The path to write the new metadata file to
+    :skip_rows: The number of rows to skip after the header
+    :unit_column: A string. If None then the function checks each cell for units.
+    """
+
+    df, units = load_MIxS_metadata(file_fp, skip_rows, unit_column)
 
     # Create a new dictionary for accessing the columns belonging to each table
     all_cols = defaultdict(list)
@@ -845,6 +872,8 @@ def log(text):
     """ Write provided text to the log file. """
     if isinstance(text, dict):
         log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
+    elif isinstance(text, list):
+        log_text = '\n'.join(list(map(str, text)))
     else:
         log_text = str(text)
     with open(fig.MMEDS_LOG, 'a+') as f:
