@@ -90,17 +90,11 @@ class MMEDSserver(object):
                         page = mmeds.load_html('welcome',
                                                title='Welcome to Mmeds',
                                                user=self.get_user())
-                    except InvalidConfigError as e:
+                    except (InvalidConfigError, MissingUploadError) as e:
                             page = mmeds.load_html('welcome',
                                                    title='Welcome to Mmeds',
                                                    user=self.get_user())
                             page = insert_error(page, 22, e.message)
-                    except MissingUploadError:
-                        page = mmeds.load_html('welcome',
-                                               title='Welcome to Mmeds',
-                                               user=self.get_user())
-                        err = 'No upload exists for user {} with given access_code.'.format(self.get_user())
-                        page = insert_error(page, 22, err)
                 else:
                     page = mmeds.load_html('welcome',
                                            title='Welcome to Mmeds',
@@ -119,73 +113,86 @@ class MMEDSserver(object):
         log('In view_corrections')
         return open(cp.session['working_dir'] / (UPLOADED_FP + '.html'))
 
+    def run_validate(self, myMetaData):
+        """ Run validate_mapping_file and return the results """
+        # Check the file that's uploaded
+        valid_extensions = ['txt', 'csv', 'tsv']
+        file_extension = myMetaData.filename.split('.')[-1]
+        if file_extension not in valid_extensions:
+            page = mmeds.load_html('upload', title='Upload data')
+            return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
+
+        # Create a copy of the MetaData
+        metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
+
+        # Check the metadata file for errors
+        errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
+
+        # The database for any issues with previous uploads
+        with Database('.', owner=self.get_user(), testing=self.testing) as db:
+            try:
+                warnings += db.check_repeated_subjects(subjects)
+                errors += db.check_user_study_name(study_name)
+            except MetaDataError as e:
+                errors.append('-1\t-1\t' + e.message)
+        return metadata_copy, errors, warnings
+
+    def handle_metadata_errors(self, metadata_copy, errors, warnings):
+        """ Create the page to return when there are errors in the metadata """
+        log('Errors in metadata')
+        log('\n'.join(errors))
+        cp.session['error_file'] = cp.session['working_dir'] / ('errors_{}'.format(Path(metadata_copy).name))
+        # Write the errors to a file
+        with open(cp.session['error_file'], 'w') as f:
+            f.write('\n'.join(errors + warnings))
+
+        uploaded_output = mmeds.load_html('error', title='Errors')
+        uploaded_output = insert_error(
+            uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
+        for i, warning in enumerate(warnings):
+            uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
+        for i, error in enumerate(errors):
+            uploaded_output = insert_error(uploaded_output, 22 + i, error)
+
+        return generate_error_html(metadata_copy, errors, warnings)
+
+    def handle_metadata_warnings(self, metadata_copy, errors, warnings):
+        """ Create the page to return when there are errors in the metadata """
+        log('Some warnings')
+        cp.session['uploaded_files'] = [metadata_copy]
+
+        # Write the errors to a file
+        with open(cp.session['working_dir'] / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
+            f.write('\n'.join(warnings))
+
+        # Get the html for the upload page
+        page = mmeds.load_html('warning', title='Warnings')
+
+        for i, warning in enumerate(warnings):
+            page = insert_warning(page, 22 + i, warning)
+        return page
+
     @cp.expose
     def validate_metadata(self, myMetaData):
         """ The page returned after a file is uploaded. """
         log('In validate_metadata')
         try:
-            # Check the file that's uploaded
-            valid_extensions = ['txt', 'csv', 'tsv']
-            file_extension = myMetaData.filename.split('.')[-1]
-            if file_extension not in valid_extensions:
-                page = mmeds.load_html('upload', title='Upload data')
-                return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
-
-            # Create a copy of the MetaData
-            metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
-
-            # Check the metadata file for errors
-            errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
-
-            # The database for any issues with previous uploads
-            with Database('.', owner=self.get_user(), testing=self.testing) as db:
-                try:
-                    warnings += db.check_repeated_subjects(subjects)
-                    errors += db.check_user_study_name(study_name)
-                except MetaDataError as e:
-                    errors.append('-1\t-1\t' + e.message)
+            metadata_copy, errors, warnings = self.run_validate(myMetaData)
 
             # If there are errors report them and return the error page
             if errors:
-                log('Errors in metadata')
-                log('\n'.join(errors))
-                cp.session['error_file'] = cp.session['working_dir'] / ('errors_' + str(myMetaData.filename))
-                # Write the errors to a file
-                with open(cp.session['error_file'], 'w') as f:
-                    f.write('\n'.join(errors + warnings))
-
-                uploaded_output = mmeds.load_html('error', title='Errors')
-                uploaded_output = insert_error(
-                    uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
-                for i, warning in enumerate(warnings):
-                    uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-                for i, error in enumerate(errors):
-                    uploaded_output = insert_error(uploaded_output, 22 + i, error)
-
-                page = generate_error_html(metadata_copy, errors, warnings)
-                cp.log('Created error html')
+                page = self.handle_metadata_errors(errors, )
             elif warnings:
-                log('Some warnings')
-                cp.session['uploaded_files'] = [metadata_copy]
-                # Write the errors to a file
-                with open(cp.session['working_dir'] / ('warnings_' + myMetaData.filename), 'w') as f:
-                    f.write('\n'.join(warnings))
-
-                # Get the html for the upload page
-                page = mmeds.load_html('warning', title='Warnings')
-
-                for i, warning in enumerate(warnings):
-                    page = insert_warning(page, 22 + i, warning)
+                page = self.handle_metadata_warnings()
             else:
                 # If there are no errors or warnings proceed to upload the data files
                 log('No errors or warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
-            return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
-            return page
+        return page
 
     @cp.expose
     def process_data(self, for_reads, rev_reads, barcodes, public='off'):

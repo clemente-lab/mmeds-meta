@@ -960,8 +960,9 @@ def setup_environment(module):
     :module: A string. The name of the module to load.
     """
     # Check there is nothing in module that could cause problems
-    if not module.replace('_', '').isalnum():
-        raise InvalidModuleError('{} is not a valid module name. Modules may only contain letters, numbers, and "_"')
+    if not module.replace('_', '').replace('-', '').isalnum():
+        raise InvalidModuleError('{} is not a valid module name.' +
+                                 'Modules may only contain letters, numbers, "_", and "-"')
 
     log('Setup environment for {}'.format(module))
     run(['/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
