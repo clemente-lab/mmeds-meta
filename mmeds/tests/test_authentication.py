@@ -1,5 +1,8 @@
 import mmeds.authentication as auth
 
+from mmeds.error import NoResultError
+from pytest import raises
+
 
 test_username1 = 'username'
 test_password1 = 'Password1@Password'
@@ -59,6 +62,10 @@ def test_f_change_password():
     assert auth.validate_password(test_username2, test_password2, testing=True)
     assert auth.change_password(test_username2, test_password3, testing=True) is None
     assert auth.validate_password(test_username2, test_password3, testing=True)
+    with raises(NoResultError) as e_info:
+        assert auth.change_password('public', test_password3, testing=True) is None
+    with raises(NoResultError) as e_info:
+        assert auth.change_password('rando', test_password3, testing=True) is None
 
 
 def test_g_remove_user():

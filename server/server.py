@@ -24,7 +24,8 @@ from mmeds.authentication import (validate_password,
                                   change_password)
 from mmeds.database import Database
 from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data
-from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError, InvalidConfigError, UploadInUseError
+from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError,\
+    InvalidConfigError, UploadInUseError, NoResultError
 
 absDir = Path(os.getcwd())
 
@@ -104,8 +105,7 @@ class MMEDSserver(object):
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
-            page = mmeds.load_html('upload', title='Upload data')
-            return insert_error(page, 14, 'Error: ' + file_extension + ' is not a valid filetype.')
+            raise MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, cp.session['working_dir'])
@@ -174,6 +174,9 @@ class MMEDSserver(object):
                 log('No errors or warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
                 page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
+        except MetaDataError as e:
+            page = mmeds.load_html('upload', title='Upload data')
+            page = insert_error(page, 14, e.message)
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -241,26 +244,25 @@ class MMEDSserver(object):
         """ Modify the data of an existing upload. """
         log('In modify_upload')
         try:
-            try:
-                # Start a process to handle loading the data
-                p = Process(target=handle_modify_data,
-                            args=(access_code,
-                                  (myData.filename, myData.file),
-                                  self.get_user(),
-                                  data_type,
-                                  self.testing))
-                p.start()
-            except MissingUploadError:
-                with open(HTML_DIR / 'download_error.html') as f:
-                    download_error = f.read()
-                    return download_error.format(user=self.get_user())
+            # Start a process to handle loading the data
+            p = Process(target=handle_modify_data,
+                        args=(access_code,
+                              (myData.filename, myData.file),
+                              self.get_user(),
+                              data_type,
+                              self.testing))
+            p.start()
             # Get the html for the upload page
             with open(HTML_DIR / 'success.html', 'r') as f:
                 page = f.read()
+        except MissingUploadError:
+            with open(HTML_DIR / 'download_error.html') as f:
+                download_error = f.read()
+                page = download_error.format(user=self.get_user())
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
-                return page
+        return page
 
     @cp.expose
     def convert_metadata(self, convertTo, myMetaData, unitCol, skipRows):
@@ -303,11 +305,10 @@ class MMEDSserver(object):
         try:
             # If there are no errors or warnings proceed to upload the data files
             page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
-            return page
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
-            return page
+        return page
 
     @cp.expose
     def upload_metadata(self, study_type):
@@ -394,14 +395,7 @@ class MMEDSserver(object):
         try:
             cp.log('User{} requests download {}'.format(self.get_user(), download))
             with Database('.', owner=self.get_user(), testing=testing) as db:
-                try:
-                    files, path = db.get_mongo_files(cp.session['download_access'])
-                except MissingUploadError as e:
-                    cp.log(e)
-                    return mmeds.load_html('download_error',
-                                           title='Download Error',
-                                           user=self.get_user())
-
+                files, path = db.get_mongo_files(cp.session['download_access'])
             file_path = str(Path(path) / files[download])
             if 'dir' in download:
                 cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
@@ -447,17 +441,12 @@ class MMEDSserver(object):
     @cp.expose
     def password_recovery(self, username, email):
         """ Page for reseting a user's password. """
-        with open(HTML_DIR / 'blank.html') as f:
-            page = f.read()
-        if username == 'Public' or username == 'public':
-            page = insert_html(
-                page, 10, '<h4> No account exists with the providied username and email. </h4>')
-            return page
-        reset = reset_password(username, email)
-
-        if reset:
+        try:
+            with open(HTML_DIR / 'blank.html') as f:
+                page = f.read()
+            reset_password(username, email)
             page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
-        else:
+        except NoResultError:
             page = insert_html(
                 page, 10, '<h4> No account exists with the providied username and email. </h4>')
         return page

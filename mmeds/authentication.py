@@ -97,12 +97,8 @@ def reset_password(username, email, testing=False):
     password_hash = sha256.hexdigest()
 
     with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
-        # Check the email matches the one on file
-        if db.check_email(email):
-            result = db.change_password(password_hash, salt)
-            send_email(email, username, password, 'reset')
-        else:
-            result = False
+        result = db.change_password(password_hash, salt)
+        send_email(email, username, password, 'reset')
     return result
 
 

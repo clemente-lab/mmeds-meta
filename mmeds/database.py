@@ -122,6 +122,9 @@ class Database:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
             self.cursor.execute(sql, {'uname': owner})
             result = self.cursor.fetchone()
+            # Ensure the user exists
+            if result is None:
+                raise NoResultError('No account exists with the providied username and email.')
             self.user_id = int(result[0])
             self.email = result[1]
 
@@ -289,7 +292,6 @@ class Database:
             args = {}
             # Check if there is a matching entry already in the database
             for i, column in enumerate(df[table]):
-                log('on column {}'.format(column))
                 value = df[table][column][j]
                 if pd.isnull(value):  # Use NULL for NA values
                     value = 'NULL'
@@ -607,13 +609,14 @@ class Database:
 
     def change_password(self, new_password, new_salt):
         """ Change the password for the current user. """
+
+        # Verify the username is okay
+        if self.owner == 'Public' or self.owner == 'public':
+            raise NoResultError('No account exists with the providied username and email.')
         # Get the user's information from the user table
         sql = 'SELECT * FROM user WHERE username = %(uname)s'
         self.cursor.execute(sql, {'uname': self.owner})
         result = self.cursor.fetchone()
-        # Ensure the user exists
-        if not result:
-            return False
 
         # Delete the old entry for the user
         sql = 'DELETE FROM user WHERE user_id = %(id)s'
