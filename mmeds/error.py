@@ -51,6 +51,13 @@ class InvalidSQLError(MmedsError):
         self.message = message
 
 
+class InvalidModuleError(MmedsError):
+    """ Exception for errors caused by an invalid module name. """
+
+    def __init__(self, message):
+        self.message = message
+
+
 class NoResultError(MmedsError):
     """ Exception for errors caused by a query returning no result """
 

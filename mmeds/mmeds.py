@@ -1,7 +1,7 @@
 from collections import defaultdict
 from numpy import std, mean, issubdtype, number, nan
 from numpy import datetime64
-from mmeds.error import MetaDataError, InvalidConfigError, InvalidSQLError
+from mmeds.error import MetaDataError, InvalidConfigError, InvalidSQLError, InvalidModuleError
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
@@ -959,14 +959,17 @@ def setup_environment(module):
     ===================================================================================
     :module: A string. The name of the module to load.
     """
+    # Check there is nothing in module that could cause problems
+    if not module.replace('_', '').isalnum():
+        raise InvalidModuleError('{} is not a valid module name. Modules may only contain letters, numbers, and "_"')
+
     log('Setup environment for {}'.format(module))
     run(['/bin/bash', '-c', 'module use ~/.modules/modulefiles'], check=True)
     new_env = environ.copy()
     output = run(['/bin/bash', '-c', 'module load {}; echo $PATH;'.format(module)],
                  capture_output=True, env=new_env, check=True)
-    log(output)
     new_env['PATH'] = output.stdout.decode('utf-8').strip()
-    log(new_env['PATH'])
+    log('New path: {}'.format(new_env['PATH']))
     return new_env
 
 
