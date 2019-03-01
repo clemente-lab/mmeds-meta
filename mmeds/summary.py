@@ -9,6 +9,7 @@ import nbformat as nbf
 import os
 from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log, load_config, setup_environment
+import pandas
 
 
 def summarize_qiime(summary_path, tool):
@@ -262,7 +263,7 @@ class MMEDSNotebook():
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
-        for column in self.config['metadata']:
+        for column in sorted(self.config['metadata'] + ['Together', 'Separate']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
             self.add_markdown('## {f} grouped by {group}'.format(f=data_file,
