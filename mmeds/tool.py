@@ -31,7 +31,7 @@ class Tool:
         self.jobtext = []
         self.owner = owner
         if testing:
-            self.num_jobs = 3
+            self.num_jobs = 2
         else:
             self.num_jobs = threads
         self.atype = atype.split('-')[1]
