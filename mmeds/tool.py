@@ -4,7 +4,7 @@ from shutil import copy
 from time import sleep
 
 from mmeds.database import Database
-from mmeds.mmeds import log, create_qiime_from_mmeds
+from mmeds.mmeds import log, create_qiime_from_mmeds, copy_metadata
 from mmeds.error import AnalysisError
 
 
@@ -95,7 +95,7 @@ class Tool:
             files['data'] = new_dir / 'data.zip'
             data_type = 'single_demuxed'
 
-        (new_dir / 'metadata.tsv').symlink_to(root_files['metadata'])
+        copy_metadata(root_files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
         log("Analysis directory is {}. Run.".format(new_dir))
         return new_dir, str(run_id), files, data_type
@@ -104,12 +104,12 @@ class Tool:
         """ Write out the config file being used to the working directory. """
         config_text = []
         for (key, value) in self.config.items():
-            # Write lists as comma seperated strings
-            if isinstance(value, list):
-                config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
-            # Don't write the metadata continuous dict
-            elif key == 'metadata_continuous':
+            # Don't write values that are generated on loading
+            if key in ['Together', 'Separate'] or key == 'metadata_continuous':
                 continue
+            # Write lists as comma seperated strings
+            elif isinstance(value, list):
+                config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))

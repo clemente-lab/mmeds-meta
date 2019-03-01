@@ -74,6 +74,20 @@ def load_config(config_file, metadata):
     return config
 
 
+def copy_metadata(metadata_file, metadata_copy):
+    """
+    Copy the provided metadata file with a few additional columns to be used for analysis
+    =====================================================================================
+    :metadata_file: Path to the metadata file.
+    :metadata_copy: Path to save the new metadata file.
+    """
+    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1], na_filter=False).T
+    mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
+        ['All' for x in range(mdf.shape[1] - 3)]
+    mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
+    mdf.T.to_csv(metadata_copy, sep='\t')
+
+
 def get_valid_columns(metadata_file, option):
     """
     Get the column headers for metadata columns meeting the
@@ -95,8 +109,6 @@ def get_valid_columns(metadata_file, option):
     df = pd.read_csv(metadata_file, header=0, skiprows=[0, 2, 3, 4], sep='\t')
     if option == 'all':
         cols = df.columns
-        #summary_cols += ['Separate', 'Together']
-        #col_types.update({'Separate': False, 'Together': False})
     else:
         cols = option.split(',')
     # Ensure there aren't any invalid columns specified to be included in the analysis
@@ -104,7 +116,10 @@ def get_valid_columns(metadata_file, option):
         for col in cols:
             # If 'all' only select columns that don't have all the same or all unique values
             if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
-                if option == 'all':
+                if col in ['Together', 'Separate']:
+                    summary_cols.append(col)
+                    col_types[col] = False
+                elif option == 'all':
                     continue
                 else:
                     raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
@@ -1014,8 +1029,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
     :qiime_file: The path where the qiime mapping file should be written.
     """
     mdata = pd.read_csv(mmeds_file, header=1, skiprows=[2, 3, 4], sep='\t')
-    #mdata = mdata.assign(Together=['All' for x in range(len(mdata))],
-    #                     Separate=mdata['RawDataID'])
 
     headers = list(mdata.columns)
 
