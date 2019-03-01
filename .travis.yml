@@ -53,6 +53,8 @@ script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    # Clear modified directories so travis doesn't have to update the cache
     - pip uninstall mmeds -y
+    - sudo rm -r ~/.modules/qiime2/var/cache
 after_success:
     - bash <(curl -s https://codecov.io/bash)
