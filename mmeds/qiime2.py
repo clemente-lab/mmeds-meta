@@ -321,7 +321,7 @@ class Qiime2(Tool):
         # Check the counts at the beginning of the analysis
         cmd = ['qiime', 'tools', 'export',
                '--input-path', str(self.files['demux_viz']),
-               '--output-dir', str(self.path / 'temp')]
+               '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
