@@ -136,7 +136,7 @@ names(otuAllRGB{level}) <- otu_max_colors_{level}
 =====
 taxa_color_py<source>
 # Set the height and width based on the number/size of the values to display
-height = 40 + 20 * len(otu_max_colors_{level})
+height = 60 + 20 * len(otu_max_colors_{level})
 width = 80 + 9 * len(max(otu_max_colors_{level}, key=len))
 
 # Create a new image and setup the draw object
@@ -264,7 +264,7 @@ legend_py<source>
 v_offset = 0
 height = 0
 for group_name in metadata_columns:
-    height += 30
+    height += 40
     for sample in mdf[group_name].drop_duplicates():
         height += 20
 

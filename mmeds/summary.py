@@ -267,7 +267,7 @@ class MMEDSNotebook():
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
-        for column in sorted(self.config['metadata'] + ['Together', 'Separate']):
+        for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
             self.add_markdown('## {f} grouped by {group}'.format(f=data_file,
