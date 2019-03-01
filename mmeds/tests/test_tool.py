@@ -54,7 +54,7 @@ class ToolTests(TestCase):
     def test_get_job_params(self):
         params = self.tool.get_job_params()
         assert '{}-{}'.format(fig.TEST_USER, 1) in params['jobname']
-        assert params['nodes'] == 3
+        assert params['nodes'] == 2
 
     def test_move_user_files(self):
         """ Test the method for finishing analysis and writing file locations. """

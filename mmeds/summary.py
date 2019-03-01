@@ -118,8 +118,8 @@ def summarize_qiime2(path, files, config):
     summary_files = defaultdict(list)
 
     # Get Taxa
-    cmd = 'qiime tools export {} --output-dir {}'.format(files['taxa_bar_plot'], path / 'temp')
-    run(cmd.split(' '), env=new_env, check=True)
+    cmd = ['qiime', 'tools', 'export', str(files['taxa_bar_plot']), '--output-dir', str(path / 'temp')]
+    run(cmd, env=new_env, check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -129,9 +129,8 @@ def summarize_qiime2(path, files, config):
     # Get Beta
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
-        cmd = 'qiime tools export {} --output-dir {}'.format(beta_file,
-                                                             path / 'temp')
-        run(cmd.split(' '), env=new_env, check=True)
+        cmd = ['qiime', 'tools', 'export', str(beta_file), '--output-dir', str(path / 'temp')]
+        run(cmd, env=new_env, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
@@ -140,9 +139,8 @@ def summarize_qiime2(path, files, config):
 
     # Get Alpha
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
-        cmd = 'qiime tools export {} --output-dir {}'.format(files['alpha_rarefaction'],
-                                                             path / 'temp')
-        run(cmd.split(' '), env=new_env, check=True)
+        cmd = ['qiime', 'tools', 'export', str(files['alpha_rarefaction']), '--output-dir', str(path / 'temp')]
+        run(cmd, env=new_env, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
