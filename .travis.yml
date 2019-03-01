@@ -56,5 +56,6 @@ script:
     # Clear modified directories so travis doesn't have to update the cache
     - pip uninstall mmeds -y
     - sudo rm -r ~/.modules/qiime2/var/cache
+    - sudo rm -r ~/.modules/mmeds-stable/var/cache
 after_success:
     - bash <(curl -s https://codecov.io/bash)

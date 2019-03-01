@@ -95,8 +95,8 @@ def get_valid_columns(metadata_file, option):
     df = pd.read_csv(metadata_file, header=0, skiprows=[0, 2, 3, 4], sep='\t')
     if option == 'all':
         cols = df.columns
-        summary_cols += ['Separate', 'Together']
-        col_types.update({'Separate': False, 'Together': False})
+        #summary_cols += ['Separate', 'Together']
+        #col_types.update({'Separate': False, 'Together': False})
     else:
         cols = option.split(',')
     # Ensure there aren't any invalid columns specified to be included in the analysis
@@ -1014,8 +1014,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
     :qiime_file: The path where the qiime mapping file should be written.
     """
     mdata = pd.read_csv(mmeds_file, header=1, skiprows=[2, 3, 4], sep='\t')
-    mdata = mdata.assign(Together=['All' for x in range(len(mdata))],
-                         Separate=mdata['RawDataID'])
+    #mdata = mdata.assign(Together=['All' for x in range(len(mdata))],
+    #                     Separate=mdata['RawDataID'])
 
     headers = list(mdata.columns)
 
