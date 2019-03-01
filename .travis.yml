@@ -55,4 +55,5 @@ script:
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 after_success:
     - bash <(curl -s https://codecov.io/bash)
+after_script:
     - pip uninstall mmeds -y
