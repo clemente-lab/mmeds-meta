@@ -177,11 +177,7 @@ class Qiime1(Tool):
             # Write all the commands
             jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
             # Submit the job
-
-            #  Temporary for testing on Minerva
-            run([jobfile], check=True)
-            #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-            #  self.wait_on_job(job_id)
+            run([jobfile], check=True)  # Temporary for testing on Minerva
 
     def run(self):
         """ Execute all the necessary actions. """

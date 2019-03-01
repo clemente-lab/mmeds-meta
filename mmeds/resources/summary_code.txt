@@ -263,7 +263,7 @@ ggsave("{plot}", height = 6, width = 8)
 legend_py<source>
 v_offset = 0
 height = 0
-for group_name in mdf.columns:
+for group_name in metadata_columns:
     height += 30
     for sample in mdf[group_name].drop_duplicates():
         height += 20

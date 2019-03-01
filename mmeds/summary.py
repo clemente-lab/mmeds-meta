@@ -29,6 +29,17 @@ def summarize_qiime(summary_path, tool):
     if not files['summary'].is_dir():
         files['summary'].mkdir()
 
+    # Get the font files
+    copy(STORAGE_DIR / 'code_new_roman.otf', files['summary'] / 'font_file.otf')
+    copy(STORAGE_DIR / 'code_new_roman_b.otf', files['summary'] / 'font_file_bold.otf')
+
+    # Get the mapping file
+    copy(files['mapping'], files['summary'])
+    copy(files['metadata'], files['summary'] / 'metadata.csv')
+
+    # Get the template
+    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
+
     if tool == 'qiime1':
         summarize_qiime1(path, files, config)
     elif tool == 'qiime2':
@@ -51,19 +62,10 @@ def summarize_qiime1(path, files, config):
     diversity = files['diversity_output']
     summary_files = defaultdict(list)
 
-    # Get the mapping file
-    copy(files['mapping'], path / 'summary/.')
-    copy(files['metadata'], files['summary'] / 'metadata.csv')
-    log('Copied files')
-
     move_files('biom_table_summary.txt', 'otu')                       # Biom summary
     move_files('arare_max{depth}/alpha_div_collated/*.txt', 'alpha')  # Alpha div
     move_files('bdiv_even{depth}/*.txt', 'beta')                      # Beta div
     move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
-    log('Moved files')
-
-    # Get the template
-    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Get the environment
     new_env = setup_environment('qiime1')
@@ -109,32 +111,31 @@ def summarize_qiime2(path, files, config):
     log('Start Qiime2 summary')
 
     # Get the environment
-    new_env = setup_environment('qiime1')
+    new_env = setup_environment('qiime2')
 
     # Setup the summary directory
     summary_files = defaultdict(list)
 
     # Get Taxa
-    cmd = 'qiime tools export {} --output-dir {} '.format(files['taxa_bar_plot'],
-                                                          path / 'temp')
+    cmd = 'qiime tools export {} --output-dir {}'.format(files['taxa_bar_plot'], path / 'temp')
     run(cmd.split(' '), env=new_env, check=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
         summary_files['taxa'].append(taxa_file.name)
-        rmtree(path / 'temp')
+    rmtree(path / 'temp')
 
     # Get Beta
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
-        cmd = 'qiime tools export {} --output-dir {} '.format(beta_file,
-                                                              path / 'temp')
+        cmd = 'qiime tools export {} --output-dir {}'.format(beta_file,
+                                                             path / 'temp')
         run(cmd.split(' '), env=new_env, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         log(dest_file)
         summary_files['beta'].append(dest_file.name)
-        rmtree(path / 'temp')
+    rmtree(path / 'temp')
 
     # Get Alpha
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
@@ -145,14 +146,7 @@ def summarize_qiime2(path, files, config):
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
         summary_files['alpha'].append(metric_file.name)
-        rmtree(path / 'temp')
-
-    # Get the mapping file
-    copy(files['mapping'], files['summary'])
-    copy(files['metadata'], files['summary'] / 'metadata.csv')
-
-    # Get the template
-    copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
+    rmtree(path / 'temp')
 
     # Create the summary
     mnb = MMEDSNotebook(config=config,
@@ -231,16 +225,16 @@ class MMEDSNotebook():
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=level))
                 self.add_code(self.source['taxa_color_py'].format(level=level))
-                self.add_code(self.source['taxa_group_color_py'].format(level=level,
-                                                                        group=column))
-                self.add_code(self.source['taxa_r'].format(plot=filename,
-                                                           level=level,
-                                                           group=column))
-                self.add_code('Image("{plot}")'.format(plot=filename))
-                self.add_markdown(self.source['taxa_caption'])
-                self.add_code('Image("taxa_legend_{level}.png")'.format(level=level))
-                self.add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level, group=column))
-                self.add_markdown(self.source['page_break'])
+            self.add_code(self.source['taxa_group_color_py'].format(level=level,
+                                                                    group=column))
+            self.add_code(self.source['taxa_r'].format(plot=filename,
+                                                       level=level,
+                                                       group=column))
+            self.add_code('Image("{plot}")'.format(plot=filename))
+            self.add_markdown(self.source['taxa_caption'])
+            self.add_code('Image("taxa_legend_{level}.png")'.format(level=level))
+            self.add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level, group=column))
+            self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
         """
@@ -283,11 +277,10 @@ class MMEDSNotebook():
             self.add_markdown(self.source['beta_caption'])
 
             self.add_code('Image("{group}-legend.png")'.format(group=column))
-            self.add_markdown(self.source['page_break'])
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
                 self.add_code('Image("{plot}")'.format(plot=subplot % (x, y)))
                 self.add_code('Image("{group}-legend.png")'.format(group=column))
-                self.add_markdown(self.source['page_break'])
+            self.add_markdown(self.source['page_break'])
 
     def summarize(self):
         """
@@ -298,11 +291,10 @@ class MMEDSNotebook():
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
         """
 
+        log('in notebook')
+        log(self.files)
         # Add cells for setting up the notebook
-        self.add_code(self.source['py_setup'].format(font=(STORAGE_DIR /
-                                                           'code_new_roman.otf'),
-                                                     titlefont=(STORAGE_DIR /
-                                                                'code_new_roman_b.otf')))
+        self.add_code(self.source['py_setup'].format(font='font_file.otf', titlefont='font_file_bold.otf'))
         self.add_code(self.source['r_setup'])
 
         # Add the cells for the OTU summary

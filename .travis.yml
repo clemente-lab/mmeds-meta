@@ -47,14 +47,12 @@ before_install:
     - conda info --envs
 install:
     - source activate mmeds-stable
-    - pip install .
+    - pip install . --no-cache-dir
     - mysql -u root < setup.sql
-    - module avail
-    - module load qiime1
-    - module unload qiime1
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 after_success:
     - bash <(curl -s https://codecov.io/bash)
+    - pip uninstall mmeds -y

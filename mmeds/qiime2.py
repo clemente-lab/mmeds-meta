@@ -381,42 +381,39 @@ class Qiime2(Tool):
         self.summary()
         # Define the job and error files
         jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, '.lsf')
+        self.add_path(jobfile, '.lsf', 'jobfile')
         error_log = self.path / self.run_id
-        self.add_path(error_log, '.err')
+        self.add_path(error_log, '.err', 'errorlog')
 
     def run(self):
         """ Perform some analysis. """
         try:
-            if self.analysis:
-                self.setup_analysis()
-                self.write_file_locations()
-                if self.testing:
-                    # Open the jobfile to write all the commands
-                    with open(self.files['jobfile'], 'w') as f:
-                        f.write('#!/bin/bash -l\n')
-                        f.write('\n'.join(self.jobtext))
-                    # Run the command
-                    output = run(['/usr/bin/bash', '{}.lsf'.format(self.files['jobfile'])],
-                                 capture_output=True, check=True)
-                    log(output.stdout.decode('utf-8').replace('\\n', '\n'))
-                    log(output.stderr.decode('utf-8').replace('\\n', '\n'))
-                else:
-                    # Get the job header text from the template
-                    with open(JOB_TEMPLATE) as f1:
-                        temp = f1.read()
+            self.setup_analysis()
+            jobfile = self.files['jobfile']
+            self.write_file_locations()
+            if self.testing:
+                # Open the jobfile to write all the commands
+                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
+                # Set execute permissions
+                jobfile.chmod(0o770)
+                # Run the command
+                run([jobfile], check=True)
+            else:
+                # Get the job header text from the template
+                with open(JOB_TEMPLATE) as f1:
+                    temp = f1.read()
 
-                    # Open the jobfile to write all the commands
-                    with open(self.files['jobfile'], 'w') as f:
-                        options = self.get_job_params()
-                        # Add the appropriate values
-                        f.write(temp.format(**options))
-                        f.write('\n'.join(self.jobtext))
-                    # Submit the job
-                    output = run(['/usr/bin/bash', self.files['jobfile']], capture_output=True, check=True)
-                    log(output)
-                    # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
-                    # self.wait_on_job(job_id)
+                # Open the jobfile to write all the commands
+                with open(self.files['jobfile'], 'w') as f:
+                    options = self.get_job_params()
+                    # Add the appropriate values
+                    f.write(temp.format(**options))
+                    f.write('\n'.join(self.jobtext))
+                # Submit the job
+                output = run(['/usr/bin/bash', self.files['jobfile']], capture_output=True, check=True)
+                log(output)
+                # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
+                # self.wait_on_job(job_id)
 
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
