@@ -2,7 +2,8 @@
 
 [![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Enhancement-BetterSummaryFile)](https://travis-cl.com/clemente-lab/mmeds-meta)
 [![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Enhancement-BetterSummaryFile/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
-[![CodeFacter](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/badge/BugFixes-AddressCodeFactorErrors)](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/overview/BugFixes-AddressCodeFactorErrors)
+[![CodeFactor](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/badge/Enhancement-BetterSummaryFile)](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/overview/Enhancement-BetterSummaryFile)
+
 
 ## Instructions
 
