@@ -1072,8 +1072,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
     return list(mdata.columns)
 
 
-def quote_sql(sql, **kwargs):
-    """ Returns the sql query with the identifiers properly qouted using `"""
+def quote_sql(sql, quote='`', **kwargs):
+    """ Returns the sql query with the identifiers properly qouted using QUOTE"""
     quoted_args = {}
     for key, item in kwargs.items():
         # Check the entry is a string
@@ -1087,6 +1087,6 @@ def quote_sql(sql, **kwargs):
             raise InvalidSQLError('Illegal characters in identifier {}.' +
                                   ' Only letters, numbers, and "_" are permitted'.format(item))
 
-        quoted_args[key] = '`{}`'.format(item)
+        quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
     return formatted
