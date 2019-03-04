@@ -1076,6 +1076,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
 
 def quote_sql(sql, quote='`', **kwargs):
     """ Returns the sql query with the identifiers properly qouted using QUOTE"""
+    # There are only two quote characters allowed
+    assert (quote == '`' or quote == "'")
     quoted_args = {}
     for key, item in kwargs.items():
         # Check the entry is a string
