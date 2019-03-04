@@ -42,7 +42,7 @@ class ToolTests(TestCase):
         assert str(fig.TEST_DIR / 'analysis') in str(new_dir)
         assert data_type == 'single_end'
         assert 'metadata' in files.keys()
-        assert files['metadata'].is_symlink()
+        assert files['metadata'].is_file()
 
     def test_add_path(self):
         """ Test that adding files to the tool object works properly """
