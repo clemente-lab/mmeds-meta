@@ -208,7 +208,7 @@ class Tool:
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
 
-        self.columns = create_qiime_from_mmeds(mmeds_file, qiime_file)
+        self.columns = create_qiime_from_mmeds(mmeds_file, qiime_file, self.tool)
 
         # Add the mapping file to the MetaData object
         self.files['mapping'] = qiime_file

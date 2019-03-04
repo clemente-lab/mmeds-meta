@@ -1021,7 +1021,7 @@ def setup_environment(module):
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -1059,6 +1059,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
+        if 'qiime2' in analysis_type:
+            f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         for row_index in range(len(mdata)):
             row = []
             for header in headers:
