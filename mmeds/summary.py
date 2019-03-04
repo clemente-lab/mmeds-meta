@@ -9,7 +9,6 @@ import nbformat as nbf
 import os
 from mmeds.config import STORAGE_DIR
 from mmeds.mmeds import log, load_config, setup_environment
-import pandas
 
 
 def summarize_qiime(summary_path, tool):
@@ -274,10 +273,11 @@ class MMEDSNotebook():
                                                                  group=column))
             self.add_code(self.source['beta_py'].format(file1=data_file,
                                                         group=column))
+            contin = str(self.config['metadata_continuous'][column]).capitalize()
             self.add_code(self.source['beta_r'].format(plot=plot,
                                                        subplot=subplot,
                                                        cat=column,
-                                                       continuous='FALSE'))
+                                                       continuous=contin))
             self.add_code('Image("{plot}")'.format(plot=plot))
             self.add_markdown(self.source['beta_caption'])
 
@@ -299,7 +299,9 @@ class MMEDSNotebook():
         log('in notebook')
         log(self.files)
         # Add cells for setting up the notebook
-        self.add_code(self.source['py_setup'].format(font='font_file.otf', titlefont='font_file_bold.otf'))
+        self.add_code(self.source['py_setup'].format(font='font_file.otf',
+                                                     analysis_type=self.analysis_type,
+                                                     titlefont='font_file_bold.otf'))
         self.add_code(self.source['r_setup'])
 
         # Add the cells for the OTU summary
