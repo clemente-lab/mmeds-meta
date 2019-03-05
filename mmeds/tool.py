@@ -40,12 +40,17 @@ class Tool:
         self.config = config
         self.columns = []
         self.path, self.run_id, self.files, self.data_type = self.setup_dir(Path(path))
+        self.run_dir = Path('$RUN_{}'.format(self.run_id))
         self.add_path('analysis{}'.format(self.run_id), '')
         self.write_config()
         self.create_qiime_mapping_file()
 
     def __del__(self):
         del self.db
+
+    def get_file(self, key):
+        """ Get the path to the file stored under 'key' relative to the run dir """
+        return self.run_dir / self.files[key].relative_to(self.path)
 
     def setup_dir(self, path):
         """ Setup the directory to run the analysis. """
@@ -220,7 +225,7 @@ class Tool:
         self.jobtext.append('module load mmeds-stable;')
         cmd = [
             'summarize.py ',
-            '--path {}'.format(self.path),
+            '--path "{}"'.format(self.run_dir),
             '--tool_type {}'.format(self.tool)
         ]
         self.jobtext.append(' '.join(cmd))
