@@ -58,5 +58,6 @@ script:
     - sudo rm -rf ~/.modules/qiime2/var/cache
     - sudo rm -rf ~/.modules/qiime1/var/cache
     - sudo rm -rf ~/.modules/mmeds-stable/var/cache
+    - sudo find ~/.modules/ -type f -name *.pyc -delete
 after_success:
     - bash <(curl -s https://codecov.io/bash)
