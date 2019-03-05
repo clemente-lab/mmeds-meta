@@ -74,6 +74,20 @@ def load_config(config_file, metadata):
     return config
 
 
+def copy_metadata(metadata_file, metadata_copy):
+    """
+    Copy the provided metadata file with a few additional columns to be used for analysis
+    =====================================================================================
+    :metadata_file: Path to the metadata file.
+    :metadata_copy: Path to save the new metadata file.
+    """
+    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1], na_filter=False).T
+    mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
+        ['All' for x in range(mdf.shape[1] - 3)]
+    mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
+    mdf.T.to_csv(metadata_copy, sep='\t')
+
+
 def get_valid_columns(metadata_file, option):
     """
     Get the column headers for metadata columns meeting the
@@ -102,7 +116,10 @@ def get_valid_columns(metadata_file, option):
         for col in cols:
             # If 'all' only select columns that don't have all the same or all unique values
             if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
-                if option == 'all':
+                if col in ['Together', 'Separate']:
+                    summary_cols.append(col)
+                    col_types[col] = False
+                elif option == 'all':
                     continue
                 else:
                     raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
@@ -1004,7 +1021,7 @@ def setup_environment(module):
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -1042,6 +1059,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
+        if 'qiime2' in analysis_type:
+            f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         for row_index in range(len(mdata)):
             row = []
             for header in headers:
@@ -1055,8 +1074,10 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file):
     return list(mdata.columns)
 
 
-def quote_sql(sql, **kwargs):
-    """ Returns the sql query with the identifiers properly qouted using `"""
+def quote_sql(sql, quote='`', **kwargs):
+    """ Returns the sql query with the identifiers properly qouted using QUOTE"""
+    # There are only two quote characters allowed
+    assert (quote == '`' or quote == "'")
     quoted_args = {}
     for key, item in kwargs.items():
         # Check the entry is a string
@@ -1070,6 +1091,6 @@ def quote_sql(sql, **kwargs):
             raise InvalidSQLError('Illegal characters in identifier {}.' +
                                   ' Only letters, numbers, and "_" are permitted'.format(item))
 
-        quoted_args[key] = '`{}`'.format(item)
+        quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
     return formatted

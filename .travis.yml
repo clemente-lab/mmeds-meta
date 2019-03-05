@@ -47,14 +47,17 @@ before_install:
     - conda info --envs
 install:
     - source activate mmeds-stable
-    - pip install .
+    - pip install . --no-cache-dir
     - mysql -u root < setup.sql
-    - module avail
-    - module load qiime1
-    - module unload qiime1
 script:
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    # Clear modified directories so travis doesn't have to update the cache
+    - pip uninstall mmeds -y
+    - sudo rm -rf ~/.modules/qiime2/var/cache
+    - sudo rm -rf ~/.modules/qiime1/var/cache
+    - sudo rm -rf ~/.modules/mmeds-stable/var/cache
+    - sudo find ~/.modules/ -type f -name *.pyc -delete
 after_success:
     - bash <(curl -s https://codecov.io/bash)
