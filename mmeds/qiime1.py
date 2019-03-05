@@ -23,30 +23,32 @@ class Qiime1(Tool):
                 'pick_otus:enable_rev_strand_match	True',
                 'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species'
             ]
+        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
         with open(self.path / 'params.txt', 'w') as f:
             f.write('\n'.join(settings))
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
-        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.files['mapping'], self.path)
+        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.get_file('mapping'),
+                                                                self.run_dir)
         self.jobtext.append(cmd)
 
     def join_paired_ends(self):
         """ Join forward and reverse reads into a single file. """
         self.add_path('joined_dir', '')
         cmd = 'join_paired_ends.py -f {} -r {} --output_dir {}'
-        self.jobtext.append(cmd.format(self.files['for_reads'],
-                                       self.files['rev_reads'],
-                                       self.files['joined_dir']))
+        self.jobtext.append(cmd.format(self.get_file('for_reads'),
+                                       self.get_file('rev_reads'),
+                                       self.get_file('joined_dir')))
 
     def zip_joined_reads(self):
         """ Zip the output fastq created by joining the reads. """
         self.add_path('joined_reads', '.fastq.gz')
-        cmd = 'gzip {}'.format(self.files['joined_dir'] / 'fastqjoin.join.fastq')
+        cmd = 'gzip {}'.format(self.get_file('joined_dir') / 'fastqjoin.join.fastq')
         self.jobtext.append(cmd)
-        cmd = 'ln -s {} {}'.format(self.files['joined_dir'] / 'fastqjoin.join.fastq.gz',
-                                   self.path / 'joined_reads.fastq.gz')
+        cmd = 'ln -s {} {}'.format(self.get_file('joined_dir') / 'fastqjoin.join.fastq.gz',
+                                   self.get_file('joined_reads'))
         self.jobtext.append(cmd)
 
     def split_libraries(self):
@@ -56,21 +58,21 @@ class Qiime1(Tool):
         # Run the script
         if 'demuxed' in self.data_type:
             cmd = 'multiple_split_libraries_fastq.py -o {} -i {};'
-            command = cmd.format(self.files['split_output'],
-                                 self.files['for_reads'])
+            command = cmd.format(self.get_file('split_output'),
+                                 self.get_file('for_reads'))
         elif self.data_type == 'single_end':
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
-            command = cmd.format(self.files['split_output'],
-                                 self.files['for_reads'],
-                                 self.files['barcodes'],
-                                 self.files['mapping'],
+            command = cmd.format(self.get_file('split_output'),
+                                 self.get_file('for_reads'),
+                                 self.get_file('barcodes'),
+                                 self.get_file('mapping'),
                                  12)
         elif self.data_type == 'paired_end':
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {} --rev_comp_mapping_barcodes;'
-            command = cmd.format(self.files['split_output'],
-                                 self.files['joined_dir'] / 'fastqjoin.join.fastq',
-                                 self.files['barcodes'],
-                                 self.files['mapping'],
+            command = cmd.format(self.get_file('split_output'),
+                                 self.get_file('joined_dir') / 'fastqjoin.join.fastq',
+                                 self.get_file('barcodes'),
+                                 self.get_file('mapping'),
                                  12)
         self.jobtext.append(command)
 
@@ -82,9 +84,9 @@ class Qiime1(Tool):
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
         command = cmd.format(self.atype,
                              self.num_jobs,
-                             self.files['otu_output'],
-                             self.files['split_output'] / 'seqs.fna',
-                             self.path / 'params.txt')
+                             self.get_file('otu_output'),
+                             self.get_file('split_output') / 'seqs.fna',
+                             self.run_dir / 'params.txt')
         self.jobtext.append(command)
 
     def core_diversity(self):
@@ -94,17 +96,17 @@ class Qiime1(Tool):
         # Run the script
         cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {};'
         if self.atype == 'open':
-            command = cmd.format(self.files['diversity_output'],
-                                 self.files['otu_output'] / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
-                                 self.files['mapping'],
-                                 self.files['otu_output'] / 'rep_set.tre',
+            command = cmd.format(self.get_file('diversity_output'),
+                                 self.get_file('otu_output') / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
+                                 self.get_file('mapping'),
+                                 self.get_file('otu_output') / 'rep_set.tre',
                                  self.config['sampling_depth'],
                                  self.path / 'params.txt')
         else:
-            command = cmd.format(self.files['diversity_output'],
-                                 self.files['otu_output'] / 'otu_table.biom',
-                                 self.files['mapping'],
-                                 self.files['otu_output'] / '97_otus.tree',
+            command = cmd.format(self.get_file('diversity_output'),
+                                 self.get_file('otu_output') / 'otu_table.biom',
+                                 self.get_file('mapping'),
+                                 self.get_file('otu_output') / '97_otus.tree',
                                  self.config['sampling_depth'],
                                  self.path / 'params.txt')
         command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
