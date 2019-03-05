@@ -43,13 +43,12 @@ CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
 PORT = 52953
-HOST = '127.0.0.1'
+HOST = '0.0.0.0'
 
 
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        'server.socket_host': HOST,
         'server.socket_port': PORT,
         'server.socket_timeout': 1000000000,
         'server.max_request_body_size': 10000000000,

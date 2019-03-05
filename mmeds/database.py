@@ -2,6 +2,7 @@ import pymysql as pms
 import mongoengine as men
 import cherrypy as cp
 import pandas as pd
+import numpy as np
 import os
 import shutil
 import warnings
@@ -437,15 +438,22 @@ class Database:
         codes = df['ICDCode']['ICDCode'].tolist()
         IBC, IC, ID, IDe = [], [], [], []
         for code in codes:
-            parts = code.split('.')
-            # Gets the first character
-            IBC.append(parts[0][0])
-            # Gets the next two numbers
-            IC.append(int(parts[0][1:]))
-            # Gets the next three characters
-            ID.append(parts[1][:-1])
-            # Gets the final character
-            IDe.append(parts[1][-1])
+            try:
+                parts = code.split('.')
+                # Gets the first character
+                IBC.append(parts[0][0])
+                # Gets the next two numbers
+                IC.append(int(parts[0][1:]))
+                # Gets the next three characters
+                ID.append(parts[1][:-1])
+                # Gets the final character
+                IDe.append(parts[1][-1])
+            # If the value is nan it will error
+            except AttributeError:
+                IBC.append(np.nan)
+                IC.append(np.nan)
+                ID.append(np.nan)
+                IDe.append(np.nan)
 
         # Add the parsed values to the dataframe
         df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC

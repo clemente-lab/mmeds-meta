@@ -118,7 +118,11 @@ def get_valid_columns(metadata_file, option):
 
 def load_ICD_codes():
     """ Load all known ICD codes and return them as a dictionary """
-    ICD_codes = {'XXX.XXXX': 'Subject is healthy to the best of our knowledge'}
+    ICD_codes = {
+        'XXX.XXXX': 'Subject is healthy to the best of our knowledge',
+        'NA': 'No Value',
+        np.nan: 'No Value'
+    }
     with open(fig.STORAGE_DIR / 'icd10cm_codes_2018.txt') as f:
         # Parse each line
         for line in f:

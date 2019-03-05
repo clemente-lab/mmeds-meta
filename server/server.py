@@ -176,9 +176,9 @@ class MMEDSserver(object):
 
             # If there are errors report them and return the error page
             if errors:
-                page = self.handle_metadata_errors(errors, )
+                page = self.handle_metadata_errors(metadata_copy, errors, warnings)
             elif warnings:
-                page = self.handle_metadata_warnings()
+                page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
             else:
                 # If there are no errors or warnings proceed to upload the data files
                 log('No errors or warnings')
