@@ -68,13 +68,13 @@ class AnalysisTests(TestCase):
         summarize_qiime(analysis_path, tool)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
-    def qiime2(self):
+    def test_a_qiime2(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime2-dada2', 0)
         self.summarize(0, 'qiime2')
 
-    def test_qiime1(self):
+    def test_b_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)

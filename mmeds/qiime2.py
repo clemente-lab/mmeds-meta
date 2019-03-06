@@ -324,7 +324,9 @@ class Qiime2(Tool):
         log(self.files.keys())
         new_env = setup_environment('qiime2')
         # Check the counts at the beginning of the analysis
-        cmd = ['qiime', 'tools', 'export', str(self.files['demux_viz']), '--output-dir', str(self.path / 'temp')]
+        cmd = ['qiime', 'tools', 'export',
+               '--input-path', str(self.files['demux_viz']),
+               '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
 
         df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
@@ -332,8 +334,9 @@ class Qiime2(Tool):
         rmtree(self.path / 'temp')
 
         # Check the counts after DADA2/DeBlur
-        cmd = ['qiime', 'tools', 'export', str(self.files['table_{}'.format(self.atype)]),
-               '--output-dir', str(self.path / 'temp')]
+        cmd = ['qiime', 'tools', 'export',
+               '--input-path', str(self.files['table_{}'.format(self.atype)]),
+               '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
         log(cmd)
 

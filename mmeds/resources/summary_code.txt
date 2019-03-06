@@ -23,37 +23,46 @@ fnt = ImageFont.truetype('{font}', size=font_size)
 title_fnt = ImageFont.truetype('{titlefont}', size=int(1.2 * font_size))
 
 # Load metadata file
-mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
+if '{analysis_type}' == 'qiime2':
+    mdf = pd.read_csv('qiime_mapping_file.tsv', skiprows=[1], sep='\t')
+else:
+    mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
 
 # Load the columns to use for analysis
-config = load_config(Path('../config_file.txt').read_text(), Path('../metadata.tsv'))
 metadata_columns = sorted(config['metadata'])
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 group_ids = []
 color_maps = {{}}
 max_colors = []
+max_colors_con = []
 # Create information for R color palettes
 for group_name in metadata_columns:
     if not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         uni = grouping.nunique()
-        group_ids.append(['color' + str(i) for i in range(uni)])
-        # Get the category with the most colors to use for palette creation
-        if uni > len(max_colors):
-            max_colors = group_ids[-1]
-        color_maps[group_name] = {{str(x):'color{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
+        if config['metadata_continuous'][group_name]:
+            group_ids.append(['con' + str(i) for i in range(uni)])
+            # Get the category with the most colors to use for palette creation
+            if uni > len(max_colors_con):
+                max_colors_con = group_ids[-1]
+            color_maps[group_name] = {{str(x):'con{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
+        else:
+            group_ids.append(['color' + str(i) for i in range(uni)])
+            # Get the category with the most colors to use for palette creation
+            if uni > len(max_colors):
+                max_colors = group_ids[-1]
+            color_maps[group_name] = {{str(x):'color{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
 
 # Shuffle the non-continuous colors so values near each other won't be similar shades
-max_colors_con = deepcopy(max_colors)
 shuffle(max_colors, lambda: 0.25)
 
 # Load the extention for jupyter
 %load_ext rpy2.ipython
 =====
 r_setup<source>
-%%R -i max_colors -i max_colors_con -o allRGB -o allRGBCon
+%%R -i max_colors -i max_colors_con -o allRGB
 library(ggplot2)
 library(RColorBrewer)
 library(GGally)
@@ -62,24 +71,24 @@ library(ggrepel)
 # Create custom color palette
 myColors <- brewer.pal(12, "Paired")
 colorMaker <- colorRampPalette(myColors)
-allColors <- colorMaker(length(unique(max_colors)))
+allColorsDisc <- colorMaker(length(unique(max_colors)))
 # Custom continuous(ish) color palette
 myColorsCon <- brewer.pal(9, "YlOrRd")
 colorMakerCon <- colorRampPalette(myColorsCon)
 allColorsCon <- colorMakerCon(length(unique(max_colors_con)))
+
 # Rename the colors to match with the groups
-names(allColors) <- max_colors
+names(allColorsDisc) <- max_colors
+names(allColorsCon) <- max_colors_con
+
+# Create the objects for graphing with the colors
+allColors <- append(allColorsDisc, allColorsCon)
 colScale <- scale_color_manual(name = ~GroupID, values = allColors)
 colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
 
 # Rename the colors to match with the groups
-names(allColorsCon) <- max_colors_con
-colScaleCon <- scale_color_manual(name = ~GroupID, values = allColorsCon)
-colFillCon <- scale_fill_manual(name = ~GroupID, values = allColorsCon)
 # Get the RGB values for the colors
 allRGB <- data.frame(apply(data.frame(allColors), 1, col2rgb))
-# Get the RGB values for the colors
-allRGBCon <- data.frame(apply(data.frame(allColorsCon), 1, col2rgb))
 =====
 page_break<source>
 <div style="page-break-after: always;"></div>
@@ -136,7 +145,7 @@ names(otuAllRGB{level}) <- otu_max_colors_{level}
 =====
 taxa_color_py<source>
 # Set the height and width based on the number/size of the values to display
-height = 40 + 20 * len(otu_max_colors_{level})
+height = 60 + 20 * len(otu_max_colors_{level})
 width = 80 + 9 * len(max(otu_max_colors_{level}, key=len))
 
 # Create a new image and setup the draw object
@@ -263,8 +272,8 @@ ggsave("{plot}", height = 6, width = 8)
 legend_py<source>
 v_offset = 0
 height = 0
-for group_name in mdf.columns:
-    height += 30
+for group_name in metadata_columns:
+    height += 40
     for sample in mdf[group_name].drop_duplicates():
         height += 20
 
@@ -293,10 +302,7 @@ for group_name in metadata_columns:
         v_offset += 20  # Update offset
         sub_offset += 20
         # Get the color
-        if config['metadata_continuous'][group_name]:
-            RGB = tuple(allRGB[color_maps[group_name][str(sample)]])
-        else:
-            RGB = tuple(allRGB[color_maps[group_name][str(sample)]])
+        RGB = tuple(allRGB[color_maps[group_name][str(sample)]])
         # Draw the color
         draw.rectangle([10, 10 + v_offset,
                         30, 30 + v_offset],
@@ -339,41 +345,39 @@ group_means = []
 
 for group_name in metadata_columns:
     grouping = mdf[group_name]
-    # Only create groups for values that aren't all the same or all unique
-    if grouping.nunique() > 1 and grouping.nunique() < len(grouping) and 'Date' not in group_name:
-        # Calculate the means accross iterations
-        groups = df.groupby('sequences per sample')
-        means = groups.mean()
+    # Calculate the means accross iterations
+    groups = df.groupby('sequences per sample')
+    means = groups.mean()
 
-        # Join the data and metadata (requires transposing the data)
-        joined_means = means.T.join(grouping, how='outer')
+    # Join the data and metadata (requires transposing the data)
+    joined_means = means.T.join(grouping, how='outer')
 
-        # Group by metadata value and calculate the mean
-        grouped_means = joined_means.groupby(group_name)
+    # Group by metadata value and calculate the mean
+    grouped_means = joined_means.groupby(group_name)
 
-        # Traspose the data frame again and set the indeces to be a seperate column
-        group = grouped_means.mean().T.reset_index(level=0).melt(id_vars='index')
-        error = grouped_means.sem().T.reset_index(level=0).melt(id_vars='index')
+    # Traspose the data frame again and set the indeces to be a seperate column
+    group = grouped_means.mean().T.reset_index(level=0).melt(id_vars='index')
+    error = grouped_means.sem().T.reset_index(level=0).melt(id_vars='index')
 
-        # Assign the error values
-        group = group.assign(Error=error['value'])
+    # Assign the error values
+    group = group.assign(Error=error['value'])
 
-        # Assign information for the colors
-        colors = [color_maps[group_name][str(x)] for x in group[group_name]]
-        group = group.assign(GroupID=colors)
+    # Assign information for the colors
+    colors = [color_maps[group_name][str(x)] for x in group[group_name]]
+    group = group.assign(GroupID=colors)
 
-        # Assign information for groups
-        group_names = [group_name for x in group[group_name]]
-        group = group.assign(GroupName=group_names)
+    # Assign information for groups
+    group_names = [group_name for x in group[group_name]]
+    group = group.assign(GroupName=group_names)
 
-        # Rename some columns
-        new_names = {{
-            'index':'SequencesPerSample',
-            group_name: 'Grouping',
-            'value': 'AverageValue'
-        }}
-        group = group.rename(index=str, columns=new_names)
-        group_means.append(group)
+    # Rename some columns
+    new_names = {{
+        'index':'SequencesPerSample',
+        group_name: 'Grouping',
+        'value': 'AverageValue'
+    }}
+    group = group.rename(index=str, columns=new_names)
+    group_means.append(group)
 
 # Stack all the different groups into a single dataframe
 df = pd.concat(group_means, axis=0, sort=False)
@@ -488,11 +492,7 @@ p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df))) +
 # Add the color palette to each of the plots
 for(i in 1:p$nrow) {{
     for(j in 1:p$ncol){{
-        if ({continuous}){{
-            p[i,j] <- p[i,j] + colScaleCon + colFillCon
-        }} else {{
-            p[i,j] <- p[i,j] + colScale + colFill
-        }}
+        p[i,j] <- p[i,j] + colScale + colFill
     }}
 }}
 print(p)

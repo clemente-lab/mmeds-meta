@@ -109,8 +109,7 @@ class Qiime1(Tool):
                                  self.get_file('otu_output') / '97_otus.tree',
                                  self.config['sampling_depth'],
                                  self.path / 'params.txt')
-        if not self.testing:
-            command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
+        command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
 
         self.jobtext.append(command)
 
