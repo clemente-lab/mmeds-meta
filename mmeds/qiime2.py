@@ -405,20 +405,15 @@ class Qiime2(Tool):
                 run([jobfile], check=True)
             else:
                 # Get the job header text from the template
-                with open(JOB_TEMPLATE) as f1:
-                    temp = f1.read()
-
-                # Open the jobfile to write all the commands
-                with open(self.files['jobfile'], 'w') as f:
-                    options = self.get_job_params()
-                    # Add the appropriate values
-                    f.write(temp.format(**options))
-                    f.write('\n'.join(self.jobtext))
-                # Submit the job
-                output = run(['/usr/bin/bash', self.files['jobfile']], capture_output=True, check=True)
-                log(output)
-                # job_id = int(output.stdout.decode('utf-8').split(' ')[1].strip('<>'))
-                # self.wait_on_job(job_id)
+                temp = JOB_TEMPLATE.read_text()
+                # Write all the commands
+                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
+                # Set execute permissions
+                jobfile.chmod(0o770)
+                #  Temporary for testing on Minerva
+                run([jobfile], check=True)
+                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                #  self.wait_on_job(job_id)
 
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)

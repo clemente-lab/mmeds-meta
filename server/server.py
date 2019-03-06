@@ -58,7 +58,7 @@ class MMEDSserver(object):
 
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
-        if self.processes.get(access_code) is None or self.processes[access_code].exitcode is not None:
+        if self.processes.get(access_code) is not None and self.processes[access_code].exitcode is not None:
             raise UploadInUseError('Requested study is currently unavailable')
 
     @cp.expose
@@ -88,7 +88,7 @@ class MMEDSserver(object):
         log('In run_analysis')
         try:
             self.check_upload(access_code)
-            p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing, self.processes)
+            p = spawn_analysis(tool, self.get_user(), access_code, config.file.read().decode('utf-8'), self.testing)
             cp.log('Valid config file')
             self.processes[access_code] = p
             page = mmeds.load_html('welcome',
@@ -185,8 +185,8 @@ class MMEDSserver(object):
                 cp.session['uploaded_files'] = [metadata_copy]
                 page = mmeds.load_html('upload_data', title='Upload data', user=self.get_user())
         except MetaDataError as e:
-            page = mmeds.load_html('upload', title='Upload data')
-            page = insert_error(page, 14, e.message)
+            page = mmeds.load_html('upload', title='Upload data', user=self.get_user())
+            page = insert_error(page, 22, e.message)
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -386,7 +386,6 @@ class MMEDSserver(object):
                 files, path = db.get_mongo_files(access_code)
 
             page = mmeds.load_html('select_download', title='Select Download', user=self.get_user())
-
             i = 0
             for f in files.keys():
                 if f in USER_FILES:
@@ -394,6 +393,7 @@ class MMEDSserver(object):
                     i += 1
             cp.session['download_access'] = access_code
         except (MissingUploadError, UploadInUseError) as e:
+                page = mmeds.load_html('welcome', title='Select Download', user=self.get_user())
                 page = insert_error(page, 22, e.message)
         except LoggedOutError:
             with open(HTML_DIR / 'index.html') as f:

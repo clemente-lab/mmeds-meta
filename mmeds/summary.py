@@ -73,10 +73,9 @@ def summarize_qiime1(path, files, config):
            '-i', str(files['otu_output'] / 'otu_table.biom'),
            '-o', str(path / 'otu_table.tsv')]
     try:
-        results = run(cmd, capture_output=True, env=new_env, check=True)
+        run(cmd, capture_output=True, env=new_env, check=True)
     except CalledProcessError as e:
         log(e)
-        log(results)
         raise e
     log('biom convert Finished')
 

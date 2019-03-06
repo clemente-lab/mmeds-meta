@@ -178,8 +178,8 @@ class Qiime1(Tool):
             temp = JOB_TEMPLATE.read_text()
             # Write all the commands
             jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
-            # Submit the job
-
+            # Set execute permissions
+            jobfile.chmod(0o770)
             #  Temporary for testing on Minerva
             run([jobfile], check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
