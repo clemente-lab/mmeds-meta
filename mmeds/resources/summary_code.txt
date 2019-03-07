@@ -8,7 +8,7 @@ from IPython.display import Image
 from random import shuffle
 from PIL import Image as PImage
 from PIL import ImageDraw, ImageFont
-from mmeds.mmeds import load_config
+from mmeds.util import load_config
 
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
