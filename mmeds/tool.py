@@ -4,7 +4,7 @@ from shutil import copy
 from time import sleep
 
 from mmeds.database import Database
-from mmeds.mmeds import log, create_qiime_from_mmeds, copy_metadata
+from mmeds.util import log, create_qiime_from_mmeds, copy_metadata
 from mmeds.error import AnalysisError
 
 

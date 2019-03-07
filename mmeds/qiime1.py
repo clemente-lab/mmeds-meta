@@ -2,7 +2,7 @@ from subprocess import run, CalledProcessError
 from pathlib import Path
 
 from mmeds.config import JOB_TEMPLATE, DATABASE_DIR
-from mmeds.mmeds import send_email, log, setup_environment
+from mmeds.util import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 

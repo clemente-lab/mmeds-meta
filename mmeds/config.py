@@ -27,6 +27,8 @@ if os.environ.get('MMEDS'):
     DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
 else:
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
+MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
+
 if not os.path.exists(DATABASE_DIR):
     os.mkdir(DATABASE_DIR)
 

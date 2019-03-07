@@ -8,7 +8,7 @@ from shutil import copy, rmtree, make_archive
 import nbformat as nbf
 import os
 from mmeds.config import STORAGE_DIR
-from mmeds.mmeds import log, load_config, setup_environment
+from mmeds.util import log, load_config, setup_environment
 
 
 def summarize_qiime(summary_path, tool):

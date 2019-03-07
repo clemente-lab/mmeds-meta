@@ -13,7 +13,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.mmeds import send_email, log, pyformat_translate, quote_sql
+from mmeds.util import send_email, log, pyformat_translate, quote_sql
 import mmeds.secrets as sec
 import mmeds.config as fig
 

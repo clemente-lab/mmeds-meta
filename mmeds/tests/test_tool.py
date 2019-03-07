@@ -3,7 +3,7 @@ from unittest import TestCase
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
 from mmeds.database import Database
-from mmeds.mmeds import load_config
+from mmeds.util import load_config
 
 from shutil import rmtree
 import mmeds.config as fig

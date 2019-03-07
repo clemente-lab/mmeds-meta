@@ -1012,7 +1012,7 @@ def pyformat_translate(value):
     return result
 
 
-def setup_environment(module):
+def setup_environment_old(module):
     """
     Returns a dictionary with the environment variables loaded for a particular module.
     ===================================================================================
@@ -1041,6 +1041,49 @@ def setup_environment(module):
             i += 1
 
     log('New Environment')
+    log(new_env)
+    return new_env
+
+
+def setup_environment(module):
+    """
+    Returns a dictionary with the environment variables loaded for a particular module.
+    ===================================================================================
+    :module: A string. The name of the module to load.
+    """
+    # Check there is nothing in module that could cause problems
+    if not module.replace('/', '').replace('_', '').replace('-', '').replace('.', '').isalnum():
+        raise InvalidModuleError('{} is not a valid module name. '.format(module) +
+                                 'Modules may only contain letters, numbers, "/", "_", "-", and "."')
+
+    module_file = (fig.MODULE_ROOT / module).read_text()
+    log('module_file: {}'.format(module_file))
+    new_env = environ.copy()
+    variables = {}
+
+    for line in module_file.splitlines():
+        if line.startswith('#'):
+            continue
+        # Update any values with local variables
+        if '$' in line:
+            for variable, path in variables.items():
+                line = line.replace('${}'.format(variable), path)
+        parts = line.strip().split(' ')
+        log('parsing: {}'.format(parts))
+        # Set locally used variables
+        if parts[0] == 'set':
+            variables[parts[1]] = parts[2]
+        # Add to PATH
+        elif parts[0] == 'prepend-path':
+            new_env[parts[1]] = '{}:{}'.format(parts[2], new_env[parts[1]])
+        # Remove from PATH
+        elif parts[0] == 'remove-path':
+            path_parts = new_env[parts[1]].split(':')
+            new_env[parts[1]] = ':'.join(filter(lambda x: not x == parts[1], path_parts))
+        # Set environment variables
+        elif parts[0] == 'setenv':
+            new_env[parts[1]] = parts[2]
+    log('setup module')
     log(new_env)
     return new_env
 

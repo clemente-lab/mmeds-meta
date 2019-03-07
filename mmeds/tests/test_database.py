@@ -1,7 +1,7 @@
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.mmeds import log
+from mmeds.util import log
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig

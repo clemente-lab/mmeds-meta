@@ -1,5 +1,5 @@
 from locust import TaskSet, task, HttpLocust
-from mmeds.mmeds import insert_html, insert_error
+from mmeds.util import insert_html, insert_error
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from pathlib import Path
