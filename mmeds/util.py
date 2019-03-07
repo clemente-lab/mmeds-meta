@@ -1012,39 +1012,6 @@ def pyformat_translate(value):
     return result
 
 
-def setup_environment_old(module):
-    """
-    Returns a dictionary with the environment variables loaded for a particular module.
-    ===================================================================================
-    :module: A string. The name of the module to load.
-    """
-    # Check there is nothing in module that could cause problems
-    if not module.replace('/', '').replace('_', '').replace('-', '').replace('.', '').isalnum():
-        raise InvalidModuleError('{} is not a valid module name. '.format(module) +
-                                 'Modules may only contain letters, numbers, "/", "_", "-", and "."')
-
-    log('Setup environment for {}'.format(module))
-    cmd = 'module use {}/.modules/modulefiles; module load {}; printenv;'
-    output = run(cmd.format(fig.DATABASE_DIR.parent, module),
-                 shell=True, capture_output=True, check=True)
-    new_env = environ.copy()
-    lines = output.stdout.decode('utf-8').splitlines()
-    i = 0
-    while i < len(lines):
-        if 'BASH_FUNC' in lines[i]:
-            parts = lines[i].split('=')
-            new_env[parts[0]] = '='.join(parts[1:]) + '\n' + lines[i + 1]
-            i += 2
-        else:
-            parts = lines[i].split('=')
-            new_env[parts[0]] = '='.join(parts[1:])
-            i += 1
-
-    log('New Environment')
-    log(new_env)
-    return new_env
-
-
 def setup_environment(module):
     """
     Returns a dictionary with the environment variables loaded for a particular module.
@@ -1057,7 +1024,6 @@ def setup_environment(module):
                                  'Modules may only contain letters, numbers, "/", "_", "-", and "."')
 
     module_file = (fig.MODULE_ROOT / module).read_text()
-    log('module_file: {}'.format(module_file))
     new_env = environ.copy()
     variables = {}
 
@@ -1068,8 +1034,10 @@ def setup_environment(module):
         if '$' in line:
             for variable, path in variables.items():
                 line = line.replace('${}'.format(variable), path)
+        if '~' in line:
+            for variable, path in variables.items():
+                line = line.replace('~', new_env['HOME'])
         parts = line.strip().split(' ')
-        log('parsing: {}'.format(parts))
         # Set locally used variables
         if parts[0] == 'set':
             variables[parts[1]] = parts[2]
@@ -1083,8 +1051,6 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
-    log('setup module')
-    log(new_env)
     return new_env
 
 
