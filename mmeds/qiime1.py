@@ -101,16 +101,16 @@ class Qiime1(Tool):
                                  self.get_file('mapping'),
                                  self.get_file('otu_output') / 'rep_set.tre',
                                  self.config['sampling_depth'],
-                                 self.num_jobs,
-                                 self.path / 'params.txt')
+                                 self.path / 'params.txt',
+                                 self.num_jobs)
         else:
             command = cmd.format(self.get_file('diversity_output'),
                                  self.get_file('otu_output') / 'otu_table.biom',
                                  self.get_file('mapping'),
                                  self.get_file('otu_output') / '97_otus.tree',
                                  self.config['sampling_depth'],
-                                 self.num_jobs,
-                                 self.path / 'params.txt')
+                                 self.path / 'params.txt',
+                                 self.num_jobs)
         command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
 
         self.jobtext.append(command)
