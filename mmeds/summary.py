@@ -22,9 +22,6 @@ def summarize_qiime(summary_path, tool):
         parts = line.split('\t')
         files[parts[0]] = Path(parts[1])
 
-    # Load the configuration
-    config = load_config((path / 'config_file.txt').read_text(), files['metadata'])
-
     # Create the summary directory
     if not files['summary'].is_dir():
         files['summary'].mkdir()
@@ -35,10 +32,14 @@ def summarize_qiime(summary_path, tool):
 
     # Get the mapping file
     copy(files['mapping'], files['summary'])
-    copy(files['metadata'], files['summary'] / 'metadata.csv')
+    copy(files['metadata'], files['summary'] / 'metadata.tsv')
+    copy(path / 'config_file.txt', files['summary'] / 'config_file.txt')
 
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
+
+    # Load the configuration
+    config = load_config((path / 'config_file.txt').read_text(), files['metadata'])
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config)
@@ -68,7 +69,7 @@ def summarize_qiime1(path, files, config):
     move_files('taxa_plots/*.txt', 'taxa')                            # Taxa summary
 
     # Get the environment
-    new_env = setup_environment('qiime1')
+    new_env = setup_environment('qiime/1.9.1')
 
     # Convert and store the otu table
     cmd = ['biom', 'convert', '--to-tsv', '--header-key=taxonomy',
@@ -110,7 +111,7 @@ def summarize_qiime2(path, files, config):
     log('Start Qiime2 summary')
 
     # Get the environment
-    new_env = setup_environment('qiime2')
+    new_env = setup_environment('qiime2/2019.1')
 
     # Setup the summary directory
     summary_files = defaultdict(list)
@@ -249,12 +250,12 @@ class MMEDSNotebook():
             xaxis = 'SequencesPerSample'
         elif self.analysis_type == 'qiime2':
             xaxis = 'SamplingDepth'
-            filename = data_file.split('.')[0] + '.png'
-            self.add_markdown('## {f}'.format(f=data_file))
-            self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
-            self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
-            self.add_code('Image("{plot}")'.format(plot=filename))
-            self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
+        filename = data_file.split('.')[0] + '.png'
+        self.add_markdown('## {f}'.format(f=data_file))
+        self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
+        self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
+        self.add_code('Image("{plot}")'.format(plot=filename))
+        self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
 
         self.add_code('Image("legend.png")')
         self.add_markdown(self.source['page_break'])

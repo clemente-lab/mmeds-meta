@@ -2,7 +2,7 @@
 ## qiime2 modulefile
 set curMod [module-info name]
 module-info name qiime2
-module-info version 2018
+module-info version 2019.1
 
 set condapath ~/miniconda2
 set qiimepath $condapath/envs/qiime2

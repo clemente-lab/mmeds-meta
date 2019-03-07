@@ -1019,17 +1019,29 @@ def setup_environment(module):
     :module: A string. The name of the module to load.
     """
     # Check there is nothing in module that could cause problems
-    if not module.replace('_', '').replace('-', '').isalnum():
-        raise InvalidModuleError('{} is not a valid module name.' +
-                                 'Modules may only contain letters, numbers, "_", and "-"')
+    if not module.replace('/', '').replace('_', '').replace('-', '').replace('.', '').isalnum():
+        raise InvalidModuleError('{} is not a valid module name. '.format(module) +
+                                 'Modules may only contain letters, numbers, "/", "_", "-", and "."')
 
     log('Setup environment for {}'.format(module))
-    run(['/bin/bash', '-c', 'module use $MMEDS/.modules/modulefiles'], check=True)
+    cmd = 'module use {}/.modules/modulefiles; module load {}; printenv;'
+    output = run(cmd.format(fig.DATABASE_DIR.parent, module),
+                 shell=True, capture_output=True, check=True)
     new_env = environ.copy()
-    output = run(['/bin/bash', '-c', 'module load {}; echo $PATH;'.format(module)],
-                 capture_output=True, env=new_env, check=True)
-    new_env['PATH'] = output.stdout.decode('utf-8').strip()
-    log('New path: {}'.format(new_env['PATH']))
+    lines = output.stdout.decode('utf-8').splitlines()
+    i = 0
+    while i < len(lines):
+        if 'BASH_FUNC' in lines[i]:
+            parts = lines[i].split('=')
+            new_env[parts[0]] = '='.join(parts[1:]) + '\n' + lines[i + 1]
+            i += 2
+        else:
+            parts = lines[i].split('=')
+            new_env[parts[0]] = '='.join(parts[1:])
+            i += 1
+
+    log('New Environment')
+    log(new_env)
     return new_env
 
 

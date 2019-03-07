@@ -1,7 +1,7 @@
 from subprocess import run, CalledProcessError
 from pathlib import Path
 
-from mmeds.config import JOB_TEMPLATE
+from mmeds.config import JOB_TEMPLATE, DATABASE_DIR
 from mmeds.mmeds import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
@@ -12,13 +12,13 @@ class Qiime1(Tool):
 
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
+        load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'
+        self.jobtext.append(load.format(DATABASE_DIR.parent))
         if testing:
-            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime1;')
             settings = [
                 'alpha_diversity:metrics	shannon'
             ]
         else:
-            self.jobtext.append('module use $MMEDS/.modules/modulefiles; module load qiime1;')
             settings = [
                 'pick_otus:enable_rev_strand_match	True',
                 'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species'
@@ -94,13 +94,14 @@ class Qiime1(Tool):
         self.add_path('diversity_output', '')
 
         # Run the script
-        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {};'
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {} -O {} -a;'
         if self.atype == 'open':
             command = cmd.format(self.get_file('diversity_output'),
                                  self.get_file('otu_output') / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
                                  self.get_file('mapping'),
                                  self.get_file('otu_output') / 'rep_set.tre',
                                  self.config['sampling_depth'],
+                                 self.num_jobs,
                                  self.path / 'params.txt')
         else:
             command = cmd.format(self.get_file('diversity_output'),
@@ -108,6 +109,7 @@ class Qiime1(Tool):
                                  self.get_file('mapping'),
                                  self.get_file('otu_output') / '97_otus.tree',
                                  self.config['sampling_depth'],
+                                 self.num_jobs,
                                  self.path / 'params.txt')
         command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
 
@@ -117,7 +119,7 @@ class Qiime1(Tool):
         """ Check that counts match after split_libraries and pick_otu. """
         try:
             # Count the sequences prior to diversity analysis
-            new_env = setup_environment('qiime1')
+            new_env = setup_environment('qiime/1.9.1')
             script_path = Path(new_env['PATH'].split(':')[0])
             cmd = ['python', str(script_path / 'count_seqs.py'), '-i', str(self.files['split_output'] / 'seqs.fna')]
             output = run(cmd, check=True, env=new_env)

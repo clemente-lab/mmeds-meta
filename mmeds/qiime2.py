@@ -2,7 +2,7 @@ from subprocess import run, CalledProcessError
 from shutil import rmtree
 from pandas import read_csv
 
-from mmeds.config import JOB_TEMPLATE, STORAGE_DIR
+from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
 from mmeds.mmeds import send_email, log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
@@ -13,12 +13,8 @@ class Qiime2(Tool):
 
     def __init__(self, owner, access_code, atype, config, testing):
         super().__init__(owner, access_code, atype, config, testing)
-        if testing:
-            self.jobtext.append('module use ~/.modules/modulefiles; module load qiime2;')
-        else:
-            self.jobtext.append('; '.join(['module use $MMEDS/.modules/modulefiles',
-                                           'module use /hpc/packages/minerva-common/modulefiles',
-                                           'module load qiime2/2018.4;']))
+        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
+        self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
     # ======================= #
@@ -35,7 +31,7 @@ class Qiime2(Tool):
                 'qiime tools import ',
                 '--type {} '.format('"SampleData[PairedEndSequencesWithQuality]"'),
                 '--input-path {}'.format(self.get_file('for_reads')),
-                '--source-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
+                '--input-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
                 '--output-path {};'.format(self.get_file('demux_file'))
             ]
             command = ' '.join(cmd)
@@ -322,7 +318,7 @@ class Qiime2(Tool):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
         log(self.files.keys())
-        new_env = setup_environment('qiime2')
+        new_env = setup_environment('qiime2/2019.1')
         # Check the counts at the beginning of the analysis
         cmd = ['qiime', 'tools', 'export',
                '--input-path', str(self.files['demux_viz']),
@@ -341,7 +337,7 @@ class Qiime2(Tool):
         log(cmd)
 
         cmd = ['biom', 'summarize-table', '-i', str(self.path / 'temp' / 'feature-table.biom')]
-        result = run(cmd, check=True, env=new_env)
+        result = run(cmd, capture_output=True, check=True, env=new_env)
         final_count = int(result.stdout.decode('utf-8').split('\n')[2].split(':')[1].strip().replace(',', ''))
         rmtree(self.path / 'temp')
 
