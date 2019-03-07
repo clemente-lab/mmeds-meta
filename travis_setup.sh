@@ -65,11 +65,11 @@ ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 # TEMPORARY
 rm -rf ~/.modules/modulefiles/qiime1
 rm -rf ~/.modules/modulefiles/qiime2
-mkdir ~/.modules/modulefiles/qiime1
+mkdir ~/.modules/modulefiles/qiime
 mkdir ~/.modules/modulefiles/qiime2
 ln -sf $REPO_DIR/modules/mmeds-stable ~/.modules/modulefiles/mmeds-stable
 ln -sf $REPO_DIR/modules/qiime2 ~/.modules/modulefiles/qiime2/2019.1
-ln -sf $REPO_DIR/modules/qiime1 ~/.modules/modulefiles/qiime1/1.9.1
+ln -sf $REPO_DIR/modules/qiime1 ~/.modules/modulefiles/qiime/1.9.1
 
 cd $REPO_DIR;
 echo "Finished setup. In $(pwd)"
