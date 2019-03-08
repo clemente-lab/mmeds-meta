@@ -54,9 +54,9 @@ install:
 - cat ~/.modules/modulefiles/qiime2/2019.1
 script:
 - pytest --cov=mmeds/tests/unit -W ignore::DeprecationWarning -W ignore::FutureWarning -x
-- bash <(curl -s https://codecov.io/bash) -c -F unittests
+- bash <(curl -s https://codecov.io/bash) -c -F unittests -k mmeds/tests/unit
 - pytest --cov=mmeds/tests/integration -W ignore::DeprecationWarning -W ignore::FutureWarning -x
-- bash <(curl -s https://codecov.io/bash) -c -F integration
+- bash <(curl -s https://codecov.io/bash) -c -F integration -k mmeds/tests/integration
 - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 - pip uninstall mmeds -y
 - sudo rm -rf ~/.modules/qiime2/var/cache
