@@ -182,22 +182,22 @@ TABLE_ORDER = [
 # these tables as they will contain data that
 # is private to other users
 PROTECTED_TABLES = [
-    'Lab',
-    'Study',
+    'Aliquot',
     'Experiment',
-    'Subjects',
     'Heights',
-    'Weights',
     'Illness',
     'Intervention',
-    'Specimen',
-    'Aliquot',
-    'SampleProtocol',
-    'Sample',
-    'RawDataProtocol',
+    'Lab',
     'RawData',
+    'RawDataProtocol',
+    'Results',
     'ResultsProtocol',
-    'Results'
+    'Sample',
+    'SampleProtocol',
+    'Specimen',
+    'Study',
+    'Subjects',
+    'Weights'
 ]
 
 JUNCTION_TABLES = [
