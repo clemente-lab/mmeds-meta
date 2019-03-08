@@ -55,7 +55,7 @@ install:
 script:
 - pytest --cov=mmeds -k tests/unit/ -W ignore::DeprecationWarning -W ignore::FutureWarning -x
 - bash <(curl -s https://codecov.io/bash) -c -F unittests
-- pytest --cov=mmeds -k tests/integration/ -W ignore::DeprecationWarning -W ignore::FutureWarning -x
+- travis_wait 30 pytest --cov=mmeds -k tests/integration/ -W ignore::DeprecationWarning -W ignore::FutureWarning -x
 - bash <(curl -s https://codecov.io/bash) -c -F integration
 - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 - pip uninstall mmeds -y
