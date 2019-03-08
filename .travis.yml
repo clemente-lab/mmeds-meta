@@ -53,7 +53,10 @@ install:
 - ls ~/.modules/modulefiles
 - cat ~/.modules/modulefiles/qiime2/2019.1
 script:
-- pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
+- cd mmeds/tests/unit
+- pytest --cov=. -W ignore::DeprecationWarning -W ignore::FutureWarning -x
+- cd ../integration
+- pytest --cov=. -W ignore::DeprecationWarning -W ignore::FutureWarning -x
 - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 - pip uninstall mmeds -y
 - sudo rm -rf ~/.modules/qiime2/var/cache
@@ -61,4 +64,6 @@ script:
 - sudo rm -rf ~/.modules/mmeds-stable/var/cache
 - sudo find ~/.modules/ -type f -name *.pyc -delete
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+- bash <(curl -s https://codecov.io/bash) -c -F integration
+- cd ../unit
+- bash <(curl -s https://codecov.io/bash) -c -F unittests

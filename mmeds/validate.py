@@ -2,8 +2,8 @@ import pandas as pd
 import mmeds.config as fig
 
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number, nan, datetime64
-from mmeds.util import log, load_ICD_codes, is_numeric
+from numpy import std, mean, issubdtype, number, datetime64
+from mmeds.util import log, load_ICD_codes, is_numeric, load_mapping_file, get_col_type
 
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -77,7 +77,7 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
                       (cell, row_index, col_index))
 
     # Check for consistent types in the column
-    if not (issubdtype(col_type, datetime64) or issubdtype(col_type, object)):
+    if not issubdtype(col_type, datetime64):
         # If the cast fails for this cell the data must be the wrong type
         try:
             col_type(cell)
@@ -99,54 +99,6 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
         except ValueError:
             errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
     return errors
-
-
-def get_col_type(raw_column):
-    """
-    Return the type of data the column should be checked for.
-    =========================================================
-    :raw_column: The column to check for type
-    """
-    check_date = False
-    col_type = None
-    if 'Date' in raw_column.name:
-        col_type = datetime64
-        try:
-            column = pd.to_datetime(raw_column)
-        # If there is an error converting to datetime
-        # check the individual cells
-        except ValueError:
-            column = raw_column
-            check_date = True
-    # Try to set the type based on the most common type
-    else:
-        column = raw_column
-        types = {
-            int: 0,
-            float: 0,
-            str: 0
-        }
-
-        for cell in raw_column:
-            # Don't count NA
-            if cell == 'NA':
-                continue
-            # Check if value is numeric
-            elif is_numeric(cell):
-                try:
-                    int(cell)
-                    types[int] += 1
-                except ValueError:
-                    types[float] += 1
-            # Check if it's a string
-            else:
-                try:
-                    str(cell)
-                    types[str] += 1
-                except TypeError:
-                    continue
-        col_type = max(types, key=types.get)
-    return column, col_type, check_date
 
 
 def check_number_column(column, col_index, col_type):
@@ -204,7 +156,7 @@ def check_column(raw_column, col_index):
         errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
     # Check that values fall within standard deviation
-    if issubdtype(col_type, number) and not isinstance(raw_column.dtype, object):
+    if issubdtype(col_type, number) and not isinstance(raw_column.dtype, str):
         warnings += check_number_column(column, col_index, col_type)
     # Check for categorical data
     elif issubdtype(col_type, str) and not header == 'ICDCode':
@@ -363,42 +315,6 @@ def check_table(table_df, name, all_headers, study_name):
     if start_col is not None and end_col is not None:
         errors += check_dates(table_df)
     return (errors, warnings, all_headers, study_name)
-
-
-def load_mapping_file(file_fp, delimiter):
-    """
-    Load the metadata file and assign datatypes to the columns
-    ==========================================================
-    :file_fp: The path to the mapping file
-    :delimiter: The delimiter used in the mapping file
-    """
-    df = pd.read_csv(file_fp,
-                     sep=delimiter,
-                     header=[0, 1],
-                     skiprows=[2, 3, 4],
-                     na_filter=False)
-    df.replace('NA', nan, inplace=True)
-    # Get the tables in the dataframe while maintaining order
-    tables = []
-    errors = []
-    warnings = []
-    for (table, header) in df.axes[1]:
-        tables.append(table)
-        for column in df[table]:
-            log(df[table][column])
-            if '' in df[table][column]:
-                errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
-                continue
-            try:
-                df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
-            # Additional metadata won't have an entry so will automatically be treated as a string
-            except KeyError:
-                df[table].assign(column=df[table][column].astype('object'))
-            # Error handling for column values that don't match the column type
-            except ValueError:
-                errors.append('-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'.format(column))
-    tables = list(dict.fromkeys(tables))
-    return tables, df, errors, warnings
 
 
 def validate_mapping_file(file_fp, delimiter='\t'):

@@ -4,7 +4,7 @@ from subprocess import run
 from datetime import datetime
 from pathlib import Path
 from os import environ
-from numpy import nan, issubdtype, int64, float64
+from numpy import nan, issubdtype, int64, float64, datetime64, number
 
 
 import mmeds.config as fig
@@ -133,6 +133,55 @@ def get_valid_columns(metadata_file, option):
     return summary_cols, col_types
 
 
+def get_col_type(raw_column):
+    """
+    Return the type of data the column should be checked for.
+    =========================================================
+    :raw_column: The column to check for type
+    """
+    check_date = False
+    col_type = None
+    if 'Date' in raw_column.name:
+        col_type = datetime64
+        try:
+            column = pd.to_datetime(raw_column)
+        # If there is an error converting to datetime
+        # check the individual cells
+        except ValueError:
+            column = raw_column
+            check_date = True
+    # Try to set the type based on the most common type
+    else:
+        column = raw_column
+        types = {
+            int: 0,
+            float: 0,
+            str: 0
+        }
+
+        for cell in raw_column:
+            log('cell: {}, is_num: {}'.format(cell, is_numeric(cell)))
+            # Don't count NA
+            if cell == 'NA':
+                continue
+            # Check if value is numeric
+            elif is_numeric(cell):
+                try:
+                    int(cell)
+                    types[int] += 1
+                except ValueError:
+                    types[float] += 1
+            # Check if it's a string
+            else:
+                try:
+                    str(cell)
+                    types[str] += 1
+                except TypeError:
+                    continue
+        col_type = max(types, key=types.get)
+    return column, col_type, check_date
+
+
 def load_ICD_codes():
     """ Load all known ICD codes and return them as a dictionary """
     ICD_codes = {
@@ -154,6 +203,88 @@ def load_ICD_codes():
             code = code[:3] + '.' + code[3:]
             ICD_codes[code] = description
     return ICD_codes
+
+
+def load_mapping_file(file_fp, delimiter):
+    """
+    Load the metadata file and assign datatypes to the columns
+    ==========================================================
+    :file_fp: The path to the mapping file
+    :delimiter: The delimiter used in the mapping file
+    """
+    df = pd.read_csv(file_fp,
+                     sep=delimiter,
+                     header=[0, 1],
+                     skiprows=[2, 3, 4],
+                     na_filter=False)
+    df.replace('NA', nan, inplace=True)
+    # Get the tables in the dataframe while maintaining order
+    tables = []
+    errors = []
+    warnings = []
+    for (table, header) in df.axes[1]:
+        tables.append(table)
+        for column in df[table]:
+            log(df[table][column])
+            if '' in df[table][column]:
+                errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
+                continue
+            try:
+                df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
+            # Additional metadata won't have an entry so will automatically be treated as a string
+            except KeyError:
+                df[table].assign(column=df[table][column].astype('object'))
+            # Error handling for column values that don't match the column type
+            except ValueError:
+                errors.append('-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'.format(column))
+    tables = list(dict.fromkeys(tables))
+    return tables, df, errors, warnings
+
+
+def load_html(file_path, **kwargs):
+    """
+    Load the specified html file. Inserting the head and topbar
+    """
+    # Load the html page
+    with open(fig.HTML_DIR / (file_path + '.html')) as f:
+        page = f.read().split('\n')
+
+    # Load the head information
+    with open(fig.HTML_DIR / 'header.html') as f:
+        header = f.read().split('\n')
+
+    # Load the topbar information
+    with open(fig.HTML_DIR / 'topbar.html') as f:
+        topbar = f.read().split('\n')
+
+    new_page = page[:3] + header + topbar + page[3:]
+    return '\n'.join(new_page).format(**kwargs)
+
+
+def load_MIxS_metadata(file_fp, skip_rows, unit_column):
+    """
+    A function for load and transforming the MIxS data in a pandas dataframe.
+    ========================================================================
+    :file_fp: The path to the file to convert
+    :skip_rows: The number of rows to skip after the header
+    :unit_column: A string. If None then the function checks each cell for units.
+    """
+    units = {}
+    # Read in the data file
+    df = pd.read_csv(file_fp, header=0, sep='\t')
+    # Set the index to be the 'column_header' column
+    df.set_index('column_header', inplace=True)
+    # Remove rows with null indexes
+    df = df.loc[df.index.notnull()]
+    # Transpose the dataframe across the diagonal
+    df = df.T
+    # Drop unnamed columns
+    df.drop([x for x in df.axes[0] if 'Unnamed' in x], inplace=True)
+    # Drop any columns with only np.nan values
+    df.dropna(how='all', axis='columns', inplace=True)
+    # Replace np.nans with "NA"s
+    df.fillna('"NA"', inplace=True)
+    return df, units
 
 
 def insert_error(page, line_number, error_message):
@@ -188,26 +319,6 @@ def insert_html(page, line_number, html):
     return new_page
 
 
-def load_html(file_path, **kwargs):
-    """
-    Load the specified html file. Inserting the head and topbar
-    """
-    # Load the html page
-    with open(fig.HTML_DIR / (file_path + '.html')) as f:
-        page = f.read().split('\n')
-
-    # Load the head information
-    with open(fig.HTML_DIR / 'header.html') as f:
-        header = f.read().split('\n')
-
-    # Load the topbar information
-    with open(fig.HTML_DIR / 'topbar.html') as f:
-        topbar = f.read().split('\n')
-
-    new_page = page[:2] + header + topbar + page[2:]
-    return '\n'.join(new_page).format(**kwargs)
-
-
 def is_numeric(s):
     """
     Check if the provided string is a number.
@@ -228,6 +339,8 @@ def is_numeric(s):
             return True
         except (TypeError, ValueError):
             pass
+    elif issubdtype(type(s), number):
+        return True
     return False
 
 
@@ -342,8 +455,11 @@ def split_data(column):
     """
     result = defaultdict(list)
     if column.name == 'lat_lon':
-        for value in column:
+        log("name: {}, vals: {}".format(column.name, column))
+        # Skip the header
+        for value in column[1:]:
             parsed = value.strip('+').split('-')
+            log('Parsed: {}'.format(parsed))
             result['Latitude'].append(parsed[0])
             result['Longitude'].append(parsed[1])
     elif column.name == 'assembly_name':
@@ -354,40 +470,6 @@ def split_data(column):
     else:
         raise ValueError
     return result
-
-
-def load_MIxS_metadata(file_fp, skip_rows, unit_column):
-    """
-    A function for load and transforming the MIxS data in a pandas dataframe.
-    ========================================================================
-    :file_fp: The path to the file to convert
-    :skip_rows: The number of rows to skip after the header
-    :unit_column: A string. If None then the function checks each cell for units.
-    """
-    # Read in the data file
-    df = pd.read_csv(file_fp, header=0, sep='\t')
-    # Set the index to be the 'column_header' column
-    df.set_index('column_header', inplace=True)
-    # Remove rows with null indexes
-    df = df.loc[df.index.notnull()]
-    # Retrieve the unit column if one is specified
-    if unit_column is not None:
-        try:
-            units = df[unit_column]
-            df.drop(unit_column, axis=1, inplace=True)
-        except KeyError:
-            raise MetaDataError('The provided unit column is invalid.')
-    else:
-        units = {}
-    # Transpose the dataframe across the diagonal
-    df = df.T
-    # Drop unnamed columns
-    df.drop([x for x in df.axes[0] if 'Unnamed' in x], inplace=True)
-    # Drop any columns with only np.nan values
-    df.dropna(how='all', axis='columns', inplace=True)
-    # Replace np.nans with "NA"s
-    df.fillna('"NA"', inplace=True)
-    return df, units
 
 
 def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
@@ -414,13 +496,13 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
             first = df[item][0].split(' ')
             # If the value is numeric grab the units in the data cell
             if is_numeric(first[0]):
-                unit_col = item  # + ' ({})'.format(' '.join(first[1:]))
+                unit_col = item
                 df[item] = df[item].map(lambda x: x.split(' ')[0])
             else:
                 unit_col = item
         # Add the units to the header if available
         else:
-            unit_col = item  # + ' ({})'.format(units[item])
+            unit_col = item
         fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
         fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
         all_cols['AdditionalMetaData'].append(str(unit_col))
@@ -430,6 +512,7 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
     for col in df.columns:
         (table, column) = fig.MMEDS_MAP[col]
         if ':' in column:
+            log('Table: {}, Column: {}'.format(table, column))
             cols = column.split(':')
             data = split_data(df[col])
             for new_col in cols:
@@ -469,7 +552,7 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
             column_type.append(str(md_template[table][column].iloc[0]))
             column_unit.append(str(md_template[table][column].iloc[1]))
             column_required.append(str(md_template[table][column].iloc[2]))
-        except KeyError:
+        except (KeyError, IndexError):
             column_type.append('')
             column_unit.append('')
             column_required.append('')
@@ -486,10 +569,11 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
             for table, column in zip(table_row, column_row):
                 # Add the value to the row
                 try:
-                    row.append(meta[(table, column)][i])
-                # If a value doesn't exist for this table,column insert NA
-                except KeyError:
-                    row.append('"NA"')
+                    row.append(meta[(table, column)][i].strip('"'))
+                # If a value doesn't exist for this table, column insert NA
+                except (KeyError, IndexError):
+                    log('Key error for {}, {}, {}'.format(table, column, i))
+                    row.append('NA')
             f.write('\t'.join(row) + '\n')
 
 
@@ -532,10 +616,6 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :kwargs: Any information that is specific to a paricular message type
     """
     log('Send email to: {} on behalf of {}'.format(toaddr, user))
-    if testing:
-        return
-    for key in kwargs.keys():
-        log('{}: {}'.format(key, kwargs[key]))
 
     # Templates for the different emails mmeds sends
     if message == 'upload':
@@ -580,7 +660,9 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         script += ' -A {summary}'.format(kwargs['summary'])
     cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
     log(cmd)
-    run(['/bin/bash', '-c', cmd], check=True)
+    if not testing:
+        run(['/bin/bash', '-c', cmd], check=True)
+    return cmd
 
 
 def pyformat_translate(value):
