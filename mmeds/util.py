@@ -1,33 +1,13 @@
 from collections import defaultdict
-from mmeds.error import MetaDataError, InvalidConfigError, InvalidSQLError, InvalidModuleError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
 from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
 
-
 import mmeds.config as fig
 import pandas as pd
-
-NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
-
-REQUIRED_HEADERS = set(['Description',
-                        '#SampleID'
-                        'BarcodeSequence'
-                        'LinkerPrimerSequence'
-                        'Lab'
-                        'AnalysisTool'
-                        'PrimaryInvestigator'])
-
-REQUIRED_HEADERS = set(['SpecimenID', 'BarcodeSequence', 'PrimaryInvestigator'])
-
-HIPAA_HEADERS = ['social_security', 'social_security_number', 'address', 'phone', 'phone_number']
-
-DNA = set('GATC')
-
-ILLEGAL_IN_HEADER = set('/\\ *?')  # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
-ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
 
 
 def load_config(config_file, metadata):
