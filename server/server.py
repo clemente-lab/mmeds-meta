@@ -8,13 +8,13 @@ import cherrypy as cp
 import mmeds.secrets as sec
 from cherrypy.lib import static
 from mmeds import mmeds
-from mmeds.mmeds import (generate_error_html,
-                         insert_html,
-                         insert_error,
-                         insert_warning,
-                         validate_mapping_file,
-                         log,
-                         create_local_copy)
+from mmeds.validate import validate_mapping_file
+from mmeds.util import (generate_error_html,
+                        insert_html,
+                        insert_error,
+                        insert_warning,
+                        log,
+                        create_local_copy)
 from mmeds.config import CONFIG, UPLOADED_FP, HTML_DIR, USER_FILES
 from mmeds.authentication import (validate_password,
                                   check_username,
