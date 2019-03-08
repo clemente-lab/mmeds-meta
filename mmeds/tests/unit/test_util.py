@@ -143,6 +143,5 @@ def test_send_email():
         'cemail': 'ctest@ctest.com'
     }
     for message in ['upload', 'reset', 'change', 'analysis', 'error']:
-        result = util.send_email(message, **args)
-
-
+        result = util.send_email(message, testing=True, **args)
+        assert result
