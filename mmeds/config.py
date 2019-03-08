@@ -44,15 +44,13 @@ CONFIG_PARAMETERS = [
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
-PORT = 52953
-HOST = '0.0.0.0'
 
 
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        'server.socket_host': HOST,
-        'server.socket_port': PORT,
+        'server.socket_host': sec.SERVER_HOST,
+        'server.socket_port': sec.SERVER_PORT,
         'server.socket_timeout': 1000000000,
         'server.max_request_body_size': 10000000000,
         'server.ssl_module': 'builtin',
@@ -75,7 +73,7 @@ CONFIG = {
     # This sets up the https security
     '/protected/area': {
         'tools.auth_digest': True,
-        'tools.auth_digest.realm': HOST,
+        'tools.auth_digest.realm': sec.SERVER_HOST,
         'tools.auth_digest.key': sec.DIGEST_KEY,
     }
 }

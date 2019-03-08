@@ -1047,7 +1047,7 @@ def setup_environment(module):
         # Remove from PATH
         elif parts[0] == 'remove-path':
             path_parts = new_env[parts[1]].split(':')
-            new_env[parts[1]] = ':'.join(filter(lambda x: not x == parts[1], path_parts))
+            new_env[parts[1]] = ':'.join([part for part in path_parts if not part == parts[1]])
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
