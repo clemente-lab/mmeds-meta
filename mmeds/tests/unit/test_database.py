@@ -1,7 +1,7 @@
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.util import log
+from mmeds.util import log, quote_sql
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
@@ -137,27 +137,24 @@ class DatabaseTests(TestCase):
         columns = list(filter(lambda x: '_id' not in x, all_cols))
         if 'id' + table in columns:
             del columns[columns.index('id' + table)]
-        sql = 'SELECT * FROM {} WHERE '.format(table)
-        # Create an sql query to match the data from this row of the input file
-        for i, column in enumerate(columns):
-            log('Column: {}'.format(column))
-            value = self.df[table][column].iloc[row]
-            if pd.isnull(value):
+        sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
+        args = {}
+        # Check if there is a matching entry already in the database
+        for i, column in enumerate(df[table]):
+            value = df[table][column][j]
+            if pd.isnull(value):  # Use NULL for NA values
                 value = 'NULL'
-            # Only and AND if it's not the first argument
             if i == 0:
                 sql += ' '
             else:
                 sql += ' AND '
-            # Add qoutes around string values
-            if type(value) == str:
-                sql += column + ' = "' + value + '"'
-            # Otherwise check the absolute value of the difference is small
-            # so that SQL won't fail to match floats
-            else:
-                sql += '{} = {}'.format(column, value)
+            # Add quotes around string values
+            sql += quote_sql(('{column} = %({column})s'), column=column)
+            args['`{}`'.format(column)] = pyformat_translate(value)
+        # Add the user check for protected tables
         if table in fig.PROTECTED_TABLES:
-            sql += ' AND user_id = ' + str(self.user_id)
+            sql += ' AND user_id = %(id)s'
+            args['id'] = self.user_id
 
         log('COllect foreign keys')
         # Collect the matching foreign keys based on the infromation
@@ -167,7 +164,7 @@ class DatabaseTests(TestCase):
             ftable = fkey.split('_id')[1]
             # Recursively build the sql call
             fsql = self.build_sql(ftable, row)
-            self.c.execute(fsql)
+            self.c.execute(fsql, args)
             fresults = self.c.fetchall()
             # Get the resulting foreign key
             fresult = fresults[0][0]
