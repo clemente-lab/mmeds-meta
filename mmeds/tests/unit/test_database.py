@@ -1,13 +1,12 @@
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.util import log, quote_sql
+from mmeds.util import log, quote_sql, pyformat_translate
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
 import pymysql as pms
 import pandas as pd
-import random
 import pytest
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
@@ -122,7 +121,7 @@ class DatabaseTests(TestCase):
         If it find any foreign key columns it recursively calls build_sql on the table
         that foreign key links to, returning what the value of that key should be.
         """
-        sql = 'DESCRIBE {}'.format(table)
+        sql = quote_sql('DESCRIBE {table}', table=table)
         self.c.execute(sql)
         result = self.c.fetchall()
         all_cols = [res[0] for res in result]
@@ -140,8 +139,8 @@ class DatabaseTests(TestCase):
         sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
         args = {}
         # Check if there is a matching entry already in the database
-        for i, column in enumerate(df[table]):
-            value = df[table][column][j]
+        for i, column in enumerate(columns):
+            value = self.df[table][column].iloc[row]
             if pd.isnull(value):  # Use NULL for NA values
                 value = 'NULL'
             if i == 0:
@@ -170,9 +169,10 @@ class DatabaseTests(TestCase):
             fresult = fresults[0][0]
             # Add it to the original query
             if '=' in sql:
-                sql += ' AND {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
+                sql += quote_sql(' AND {fkey}=%(fkey)s', fkey=fkey)
             else:
-                sql += ' {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
+                sql += quote_sql(' {fkey}=%(fkey)s', fkey=fkey)
+            args['`{}`'.format(fkey)] = fresult
 
         return sql
 
