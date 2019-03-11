@@ -6,6 +6,4 @@ exclude_lines =
 omit =
     **/__init__.py
     setup.py
-    **/.modules/*
-    **/mmeds_server_data/*
-    mmeds/tests/*
+    mmeds/tests/**
