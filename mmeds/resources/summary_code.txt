@@ -533,3 +533,85 @@ The above plot represents the average value of alpha diversity at each sampling 
 =====
 beta_caption<source>
 The above plot represents the first three compenents created when performing Principle Component Analysis on the Beta diversity of the samples.
+=====
+diveristy_legend_latex<source>
+((*- if cell.metadata.{meta}: -*))
+{{\raggedright{{}}
+    \texttt{{{meta}}} \\
+    \foreach \x in \meta
+    {{
+        \crule[\x]{{5mm}}{{5mm}} \texttt{{\x}}\\
+    }}
+}}
+((*- endif -*))
+=====
+otu_legend_latex<source>
+((*- if cell.metadata.{otu}: -*))
+{{\raggedright{{}}
+    \texttt{{Color Abundance OTU}} \\
+    \psforeach{{\A}}\{otu}{{%
+        \psforeach{{\B}}\{otu}Percs{{%
+            \expandafter{{%
+            \crule[\A]{{5mm}}{{5mm}} \texttt{{\B\% \A}}\\
+            }}%
+        }}
+    }}%
+}}
+((*- endif -*))
+=====
+otu_legend_py<source>
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* block packages *))' in line:
+        packages_start = i
+    elif '((* endblock packages *))' in line:
+        packages_end = i
+
+
+# Get the mean percentage of each taxon
+otu_percs = df[df.value > float(config['abundance_threshold'])].groupby('X.OTU.ID').mean()
+
+entries = []
+# Remove duplicate values
+for row in otu_percs.itertuples():
+    otu = row.Index
+
+    # Get the color
+    RGB = tuple(otuAllRGB{level}[otu])
+
+    # Align sample names
+    perc = 100 * float(otu_percs.loc[otu])
+    if perc < 1:
+        perc_text = '<0.01'
+    elif perc < 10:
+        perc_text = ' {{:.2f}}'.format(perc)
+    else:
+        perc_text = '{{:.2f}}'.format(perc)
+
+    entries.append([otu, RGB, perc_text])
+
+
+# Create the latex for the legends
+latex = []
+percs = []
+otus = []
+for key, value, perc in entries:
+    latex.append('\\definecolor{{{{{{key}}}}}}{{{{RGB}}}}{{{{{{r}},{{g}},{{b}}}}}}\n'.format(key=key.replace('_', '\_'),
+                                                                      r=value[0],
+                                                                      g=value[1],
+                                                                      b=value[2]
+                                                                     ))
+    percs.append(perc)
+    otus.append(key)
+
+
+latex.append('\\def\\{{colorset}}{{{{{{colors}}}}}}\n'.format(colorset='otu{level}',
+                                                      colors=','.join(otus).replace('_', '\_')))
+latex.append('\\def\\{{colorset}}{{{{{{colors}}}}}}\n'.format(colorset='otu{level}Percs',
+                                                      colors=','.join(percs)))
+new_lines = lines[:packages_end] + latex + lines[packages_end:]
+
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)

@@ -93,7 +93,7 @@ def summarize_qiime1(path, files, config):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary')
+                        path=path / 'summary')
 
     mnb.create_notebook()
     log('Make archive')
@@ -158,7 +158,7 @@ def summarize_qiime2(path, files, config):
                         files=summary_files,
                         execute=True,
                         name='analysis',
-                        run_path=path / 'summary')
+                        path=path / 'summary')
 
     mnb.create_notebook()
     # Create a zip of the summary
@@ -176,7 +176,7 @@ def summarize_qiime2(path, files, config):
 class MMEDSNotebook():
     """ A class for handling the creation and execution of the summary notebooks. """
 
-    def __init__(self, config, analysis_type, files, execute, name, run_path):
+    def __init__(self, config, analysis_type, files, execute, name, path):
         """
         Create the summary PDF for qiime1 analysis
         ==========================================
@@ -184,16 +184,33 @@ class MMEDSNotebook():
         :files: A dictionary of locations for the files to use when creating plots.
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
         :name: A string. The name of the notebook and PDF document.
-        :run_path: A file path. The path to the directory containing all the summary files.
+        :path: A file path. The path to the directory containing all the summary files.
         """
         self.cells = []
         self.analysis_type = analysis_type
         self.files = files
         self.execute = execute
         self.name = name
-        self.run_path = run_path
+        self.path = path
         self.config = config
         self.env = setup_environment('mmeds-stable')
+        self.words = {
+            '1': 'One',
+            '2': 'Two',
+            '3': 'Three',
+            '4': 'Four',
+            '5': 'Five',
+            '6': 'Six',
+            '7': 'Seven',
+            1: 'One',
+            2: 'Two',
+            3: 'Three',
+            4: 'Four',
+            5: 'Five',
+            6: 'Six',
+            7: 'Seven'
+        }
+        copy(self.path / 'revtex.tplx', self.path / 'mod_revtex.tplx')
 
         # Load the code templates
         with open(STORAGE_DIR / 'summary_code.txt') as f:
@@ -205,13 +222,34 @@ class MMEDSNotebook():
             parts = code.split('<source>\n')
             self.source[parts[0]] = parts[1]
 
-    def add_code(self, text):
+    def add_code(self, text, meta=None):
         """ Add a code cell to the notebook's list of cells. """
-        self.cells.append(v4.new_code_cell(source=text))
+        cell = v4.new_code_cell(source=text)
+        if meta:
+            for key, value in meta.items():
+                cell.metadata[key] = value
+        self.cells.append(cell)
 
     def add_markdown(self, text):
         """ Add a code cell to the notebook's list of cells. """
         self.cells.append(v4.new_markdown_cell(source=text))
+
+    def update_template(self, location, text):
+        """ Update the revtex template used for converting the notebook to a PDF """
+        with open(self.path / 'mod_revtex.tplx') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if '((* block output_group -*))' in line:
+                    output_start = i
+                elif '((* endblock packages *))' in line:
+                    packages_end = i
+        if location == 'packages':
+            new_lines = lines[:packages_end] + [text] + lines[packages_end:]
+        elif location == 'output':
+            new_lines = lines[:output_start] + [text] + lines[output_start:]
+        with open(self.path / 'mod_revtex.tplx', 'w') as f:
+            for line in new_lines:
+                f.write(line)
 
     def taxa_plots(self, data_file):
         """
@@ -220,24 +258,28 @@ class MMEDSNotebook():
         :data_file: The location of the file to create the plotting code for.
         """
         level = data_file.split('.')[0][-1]
-        self.add_markdown('## OTU level {level}'.format(level=level))
+        self.add_markdown('## OTU level {level}'.format(level=self.words[level]))
         for i, column in enumerate(self.config['metadata']):
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
             self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(file1=data_file,
-                                                                                      level=level,
+                                                                                      level=self.words[level],
                                                                                       group=column))
             if i == 0:
-                self.add_code(self.source['taxa_color_r'].format(level=level))
-                self.add_code(self.source['taxa_color_py'].format(level=level))
-            self.add_code(self.source['taxa_group_color_py'].format(level=level,
+                self.add_code(self.source['taxa_color_r'].format(level=self.words[level]))
+                self.add_code(self.source['taxa_color_py'].format(level=self.words[level]))
+                self.update_template('output', self.source['otu_legend_latex'].format(otu=self.words[level]))
+            self.add_code(self.source['taxa_group_color_py'].format(level=self.words[level],
                                                                     group=column))
             self.add_code(self.source['taxa_r'].format(plot=filename,
-                                                       level=level,
+                                                       level=self.words[level],
                                                        group=column))
             self.add_code('Image("{plot}")'.format(plot=filename))
+
             self.add_markdown(self.source['taxa_caption'])
-            self.add_code('Image("taxa_legend_{level}.png")'.format(level=level))
-            self.add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=level, group=column))
+            self.add_code('Image("taxa_legend_{level}.png")'.format(level=self.words[level]),
+                          meta={self.words[level]: True})
+            self.add_code('Image("taxa_{group}_legend_{level}.png")'.format(level=self.words[level],
+                                                                            group=column))
             self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
@@ -256,7 +298,6 @@ class MMEDSNotebook():
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
         self.add_code('Image("{plot}")'.format(plot=filename))
         self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
-
         self.add_code('Image("legend.png")')
         self.add_markdown(self.source['page_break'])
 
@@ -291,7 +332,6 @@ class MMEDSNotebook():
         """
         Create the python notebook containing the summary of analysis results.
         =====================================================================
-        :path: A file path. The path to the directory containing the files to plot
         :files: A dictionary of locations for the files to use when creating plots.
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
         """
@@ -306,7 +346,7 @@ class MMEDSNotebook():
 
         # Add the cells for the OTU summary
         if self.analysis_type == 'qiime1':
-            with open(self.run_path / 'biom_table_summary.txt') as f:
+            with open(self.path / 'biom_table_summary.txt') as f:
                 output = f.read().replace('\n', '  \n').replace('\r', '  \r')
                 self.add_markdown('# OTU Summary')
                 self.add_markdown(output)
@@ -362,8 +402,8 @@ class MMEDSNotebook():
         :nn: A python notebook object.
         """
         try:
-            nbf.write(nn, str(self.run_path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --template=revtex.tplx --to=latex'
+            nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
+            cmd = 'jupyter nbconvert --template=mod_revtex.tplx --to=latex'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 cmd += ' --execute'
@@ -386,7 +426,7 @@ class MMEDSNotebook():
     def create_notebook(self):
         log('Start summary notebook')
         original_path = Path.cwd()
-        os.chdir(self.run_path)
+        os.chdir(self.path)
         nn = self.summarize()
         self.write_notebook(nn)
 

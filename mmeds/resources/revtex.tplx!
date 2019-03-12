@@ -65,6 +65,8 @@
 
 \usepackage{titlesec}
 \usepackage{alphalph}
+\usepackage{pgffor}
+\usepackage{pstricks}
 \renewcommand*{\thesubsection}{
     \alphalph{\value{subsection}}
 }
@@ -128,14 +130,29 @@
 ((*- else -*))
     ((( super() )))
 ((*- endif -*))
+((*- if cell.metadata.meta: -*))
+{\raggedright{}
+    \texttt{meta} \\
+    \foreach \x in \meta
+    {
+        \crule[\x]{5mm}{5mm} \texttt{\x}\\
+    }
+}
+((*- endif -*))
+((*- if cell.metadata.otu2: -*))
+{\raggedright{}
+    \texttt{Color Abundance OTU} \\
+    \psforeach{\A}\otuTwo{%
+        \psforeach{\B}\otuTwoPercs{%
+            \expandafter{%
+            \crule[\A]{5mm}{5mm} \texttt{\B\% \A}\\
+            }%
+        }%
+    }%
+}
+((*- endif -*))
 ((*- if cell.metadata.page_break: -*))
     \clearpage
-((*- endif -*))
-((*- if cell.metadata.insert_legend: -*))
-    \foreach \x in \cell.metadata.insert_legend
-    {
-        \crule[\x]{1mm}{1mm} \\
-    }
 ((*- endif -*))
 ((* endblock output_group *))
 
