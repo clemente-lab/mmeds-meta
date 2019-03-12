@@ -4,7 +4,7 @@ from shutil import copy
 from time import sleep
 
 from mmeds.database import Database
-from mmeds.mmeds import log, create_qiime_from_mmeds, copy_metadata
+from mmeds.util import log, create_qiime_from_mmeds, copy_metadata
 from mmeds.error import AnalysisError
 
 
@@ -122,8 +122,8 @@ class Tool:
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
         self.add_path('for_reads', '')
-        command = 'unzip {} -d {}'.format(self.files['data'],
-                                          self.files['for_reads'])
+        command = 'unzip {} -d {}'.format(self.get_file('data'),
+                                          self.get_file('for_reads'))
         self.jobtext.append(command)
 
     def validate_mapping(self):

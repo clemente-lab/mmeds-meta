@@ -2,7 +2,7 @@
 ## qiime2 modulefile
 set curMod [module-info name]
 module-info name qiime2
-module-info version 2018
+module-info version 2019.1
 
 set condapath ~/miniconda2
 set qiimepath $condapath/envs/qiime2
@@ -19,18 +19,4 @@ if [ module-info mode load ] {
     setenv LC_ALL en_US.UTF-8
     setenv LANG en_US.UTF-8
     setenv MPLBACKEND Agg
-}
-
-if [ module-info mode remove ] {
-    remove-path PATH $qiimepath/bin
-    prepend-path PATH $condapath/bin
-    unsetenv CONDA_DEFAULT_ENV qiime2
-    unsetenv CONDA_PREFIX $qiimepath
-    unsetenv CONDA_PREFIX_1 /home/david/anaconda
-    unsetenv CONDA_PROMPT_MODIFIER (qiime2)\ 
-    unsetenv R_LIBS_USER $qiimepath/lib/R/library
-    unsetenv CONDA_SHLVL 2
-    unsetenv LC_ALL en_US.UTF-8
-    unsetenv LANG en_US.UTF-8
-    unsetenv MPLBACKEND Agg
 }

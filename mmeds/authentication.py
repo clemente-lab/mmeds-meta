@@ -2,7 +2,7 @@ import hashlib
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
-from mmeds.mmeds import send_email
+from mmeds.util import send_email
 from mmeds.error import NoResultError
 
 

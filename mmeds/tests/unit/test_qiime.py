@@ -5,7 +5,7 @@ from mmeds.authentication import add_user, remove_user
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.database import Database
-from mmeds.mmeds import load_config
+from mmeds.util import load_config
 import mmeds.config as fig
 
 

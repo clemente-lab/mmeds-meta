@@ -1,13 +1,12 @@
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.mmeds import log
+from mmeds.util import log
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
 import pymysql as pms
 import pandas as pd
-import random
 import pytest
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
@@ -218,40 +217,6 @@ class DatabaseTests(TestCase):
                 jresult = self.c.execute(sql)
                 # Ensure an entry exists for this value
                 assert jresult > 0
-
-    def error_test_modify_tables(self):
-        self.c.execute('SHOW TABLES')
-        tables = [x[0] for x in self.c.fetchall() if 'protected' not in x[0]]
-        del tables[tables.index('session')]
-        del tables[tables.index('security_token')]
-        del tables[tables.index('user')]
-        for table in tables:
-            sql = 'DESCRIBE {}'.format(table)
-            self.c.execute(sql)
-            result = self.c.fetchall()
-            columns = [res[0] for res in result]
-
-            sql = 'SELECT * FROM {}'.format(table)
-            self.c.execute(sql)
-            rows = self.c.fetchall()
-            # Pick a row at random
-            row = random.choice(rows)
-
-            sql = 'DELETE FROM {} WHERE '.format(table)
-            for i, column in enumerate(columns):
-                value = row[i]
-                if i == 0:
-                    sql += ' '
-                else:
-                    sql += ' AND '
-                # Add qoutes around string values
-                if type(value) == str:
-                    sql += column + ' = "' + value + '"'
-                # Otherwise check the absolute value of the difference is small
-                # so that SQL won't fail to match floats
-                else:
-                    sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-            self.c.execute(sql)
 
     def test_c_table_protection(self):
         """

@@ -27,6 +27,8 @@ if os.environ.get('MMEDS'):
     DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
 else:
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
+MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
+
 if not os.path.exists(DATABASE_DIR):
     os.mkdir(DATABASE_DIR)
 
@@ -42,15 +44,13 @@ CONFIG_PARAMETERS = [
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 SQL_DATABASE = 'mmeds_data1'
-PORT = 52953
-HOST = '127.0.0.1'
 
 
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        'server.socket_host': HOST,
-        'server.socket_port': PORT,
+        'server.socket_host': sec.SERVER_HOST,
+        'server.socket_port': sec.SERVER_PORT,
         'server.socket_timeout': 1000000000,
         'server.max_request_body_size': 10000000000,
         'server.ssl_module': 'builtin',
@@ -73,7 +73,7 @@ CONFIG = {
     # This sets up the https security
     '/protected/area': {
         'tools.auth_digest': True,
-        'tools.auth_digest.realm': HOST,
+        'tools.auth_digest.realm': sec.SERVER_HOST,
         'tools.auth_digest.key': sec.DIGEST_KEY,
     }
 }
@@ -182,22 +182,22 @@ TABLE_ORDER = [
 # these tables as they will contain data that
 # is private to other users
 PROTECTED_TABLES = [
-    'Lab',
-    'Study',
+    'Aliquot',
     'Experiment',
-    'Subjects',
     'Heights',
-    'Weights',
     'Illness',
     'Intervention',
-    'Specimen',
-    'Aliquot',
-    'SampleProtocol',
-    'Sample',
-    'RawDataProtocol',
+    'Lab',
     'RawData',
+    'RawDataProtocol',
+    'Results',
     'ResultsProtocol',
-    'Results'
+    'Sample',
+    'SampleProtocol',
+    'Specimen',
+    'Study',
+    'Subjects',
+    'Weights'
 ]
 
 JUNCTION_TABLES = [

@@ -1,11 +1,9 @@
 [report]
 exclude_lines =
-    if __name__ == .__main__.:
+    if __name__ == "__main__":
 
 [run]
 omit =
-    mmeds/tests/*
     **/__init__.py
     setup.py
-    **/.modules/*
-    **/mmeds_server_data/*
+    mmeds/tests/**
