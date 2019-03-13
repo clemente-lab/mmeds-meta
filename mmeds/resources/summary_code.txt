@@ -269,6 +269,45 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
 
 ggsave("{plot}", height = 6, width = 8)
 =====
+latex_legend_py<source>
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* endblock packages *))' in line:
+        packages_end = i
+
+for key, value in allRGB.items():
+    latex.append('\\definecolor{{{key}}}{{RGB}}{{{r},{g},{b}}}\n'.format(key=key,
+                                                                         r=value[1],
+                                                                         g=value[2],
+                                                                         b=value[3]))
+
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)
+=====
+group_legends_py<source>
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* endblock packages *))' in line:
+        packages_end = i
+
+for group_name, group in df.groupby('GroupName'):
+
+    latex.append('\\def\\name{group}{{{colors}}}\n'.format(group=group_name,
+                                                           colors=','.join(group.Grouping.unique())))
+    latex.append('\\def\\color{group}{{{colors}}}\n'.format(group=group_name,
+                                                            colors=','.join(group.GroupID.unique())))
+
+# Remove duplicate values
+for row in df:
+    new_lines = lines[:packages_end] + latex + lines[packages_end:]
+
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)
+=====
 legend_py<source>
 v_offset = 0
 height = 0
@@ -534,25 +573,28 @@ The above plot represents the average value of alpha diversity at each sampling 
 beta_caption<source>
 The above plot represents the first three compenents created when performing Principle Component Analysis on the Beta diversity of the samples.
 =====
-diveristy_legend_latex<source>
-((*- if cell.metadata.{meta}: -*))
+otu_legend_latex<source>
+((*- if cell.metadata.{level}: -*))
 {{\raggedright{{}}
-    \texttt{{{meta}}} \\
-    \foreach \x in \meta
-    {{
-        \crule[\x]{{5mm}}{{5mm}} \texttt{{\x}}\\
-    }}
+    \texttt{{Color Abundance OTU}} \\
+    \psforeach{{\A}}\otu{level}{{%
+        \psforeach{{\B}}\otu{level}Percs{{%
+            \expandafter{{%
+            \crule[\A]{{5mm}}{{5mm}} \texttt{{\B\% \A}}\\
+            }}%
+        }}
+    }}%
 }}
 ((*- endif -*))
 =====
-otu_legend_latex<source>
-((*- if cell.metadata.{otu}: -*))
+diversity_legend_latex<source>
+((*- if cell.metadata.{meta}: -*))
 {{\raggedright{{}}
-    \texttt{{Color Abundance OTU}} \\
-    \psforeach{{\A}}\{otu}{{%
-        \psforeach{{\B}}\{otu}Percs{{%
+    \texttt{{Color Metadata Value}} \\
+    \psforeach{{\A}}\color{meta}{{%
+        \psforeach{{\B}}\name{meta}{{%
             \expandafter{{%
-            \crule[\A]{{5mm}}{{5mm}} \texttt{{\B\% \A}}\\
+            \crule[\A]{{5mm}}{{5mm}} \texttt{{\B}}\\
             }}%
         }}
     }}%
