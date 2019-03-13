@@ -294,11 +294,9 @@ for i, line in enumerate(lines):
         packages_end = i
 
 for group_name, group in df.groupby('GroupName'):
-
-    latex.append('\\def\\name{group}{{{colors}}}\n'.format(group=group_name,
-                                                           colors=','.join(group.Grouping.unique())))
-    latex.append('\\def\\color{group}{{{colors}}}\n'.format(group=group_name,
-                                                            colors=','.join(group.GroupID.unique())))
+    zipped = zip(group.GroupID.unique(), group.Grouping.unique())
+    lists = ['{}/{}'.format(x, y) for x, y in zipped]
+    latex.append('\\def\\{group}{{{colors}}}\n'.format(group=group_name, colors=','.join(lists)))
 
 # Remove duplicate values
 for row in df:
@@ -575,30 +573,23 @@ The above plot represents the first three compenents created when performing Pri
 =====
 otu_legend_latex<source>
 ((*- if cell.metadata.{level}: -*))
-{{\raggedright{{}}
-    \texttt{{Color Abundance OTU}} \\
-    \psforeach{{\A}}\otu{level}{{%
-        \psforeach{{\B}}\otu{level}Percs{{%
-            \expandafter{{%
-            \crule[\A]{{5mm}}{{5mm}} \texttt{{\B\% \A}}\\
-            }}%
-        }}
-    }}%
-}}
+{{\raggedright{{}}%
+    \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
+    \foreach \A / \B in \otu{level} {{
+        \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
+    }}
+}}%
 ((*- endif -*))
 =====
 diversity_legend_latex<source>
 ((*- if cell.metadata.{meta}: -*))
-{{\raggedright{{}}
-    \texttt{{Color Metadata Value}} \\
-    \psforeach{{\A}}\color{meta}{{%
-        \psforeach{{\B}}\name{meta}{{%
-            \expandafter{{%
-            \crule[\A]{{5mm}}{{5mm}} \texttt{{\B}}\\
-            }}%
-        }}
-    }}%
-}}
+{{\raggedright{{}}%
+    \texttt{{Legend for {meta}}}\\
+    \texttt{{Color\hspace{{3mm}}Metadata}}\\
+    \foreach \A / \B in \{meta} {{
+        \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{7mm}}\texttt{{\B}}\\%
+    }}
+}}%
 ((*- endif -*))
 =====
 otu_legend_py<source>
@@ -636,22 +627,18 @@ for row in otu_percs.itertuples():
 
 # Create the latex for the legends
 latex = []
-percs = []
-otus = []
+colors = []
 for key, value, perc in entries:
     latex.append('\\definecolor{{{{{{key}}}}}}{{{{RGB}}}}{{{{{{r}},{{g}},{{b}}}}}}\n'.format(key=key.replace('_', '\_'),
                                                                       r=value[0],
                                                                       g=value[1],
                                                                       b=value[2]
                                                                      ))
-    percs.append(perc)
-    otus.append(key)
+    colors.append('{{}}/{{}}'.format(key.replace('_', '\_'), perc))
 
 
 latex.append('\\def\\{{colorset}}{{{{{{colors}}}}}}\n'.format(colorset='otu{level}',
-                                                      colors=','.join(otus).replace('_', '\_')))
-latex.append('\\def\\{{colorset}}{{{{{{colors}}}}}}\n'.format(colorset='otu{level}Percs',
-                                                      colors=','.join(percs)))
+                                                      colors=','.join(colors)))
 new_lines = lines[:packages_end] + latex + lines[packages_end:]
 
 with open('mod_revtex.tplx', 'w') as f:
