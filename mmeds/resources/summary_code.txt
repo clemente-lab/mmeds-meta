@@ -403,16 +403,19 @@ The above plot represents the first three compenents created when performing Pri
 =====
 otu_legend_latex<source>
 ((*- if cell.metadata.{level}: -*))
+\\
 {{\raggedright{{}}%
     \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
     \foreach \A / \B in \otu{level} {{
         \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
     }}
 }}%
+\\
 ((*- endif -*))
 =====
 otu_group_legend_latex<source>
 ((*- if cell.metadata.{level}{meta}: -*))
+\\
 {{\raggedright{{}}%
     \texttt{{Legend grouped by {meta}}}\\
     \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
@@ -420,10 +423,12 @@ otu_group_legend_latex<source>
         \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
     }}
 }}%
+\\
 ((*- endif -*))
 =====
 diversity_legend_latex<source>
 ((*- if cell.metadata.{meta}: -*))
+\\
 {{\raggedright{{}}%
     \texttt{{Legend for {meta}}}\\
     \texttt{{Color\hspace{{3mm}}Metadata}}\\
@@ -431,6 +436,7 @@ diversity_legend_latex<source>
         \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{7mm}}\texttt{{\B}}\\%
     }}
 }}%
+\\
 ((*- endif -*))
 =====
 otu_group_legend_py<source>
