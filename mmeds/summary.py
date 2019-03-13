@@ -245,6 +245,8 @@ class MMEDSNotebook():
             for i, line in enumerate(lines):
                 if '((* block output_group -*))' in line:
                     output_start = i + 1
+                elif '((* block input scoped *))' in line:
+                    input_start = i + 1
                 elif '((* endblock packages *))' in line:
                     packages_end = i
         if location == 'packages':
@@ -252,6 +254,9 @@ class MMEDSNotebook():
         elif location == 'output':
             log('Update output')
             new_lines = lines[:output_start] + [text + '\n'] + lines[output_start:]
+        elif location == 'input':
+            log('Update output')
+            new_lines = lines[:input_start] + [text + '\n'] + lines[input_start:]
         with open(self.path / 'mod_revtex.tplx', 'w') as f:
             for line in new_lines:
                 f.write(line)
@@ -272,17 +277,19 @@ class MMEDSNotebook():
                                                                                       group=column))
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=self.words[level]))
-                self.add_code(self.source['taxa_color_py'].format(level=self.words[level]))
-                self.update_template('output', self.source['otu_legend_latex'].format(level=self.words[level]))
-            self.add_code(self.source['taxa_group_color_py'].format(level=self.words[level],
-                                                                    group=column))
+                self.update_template('input', self.source['otu_legend_latex'].format(level=self.words[level]))
+                self.update_template('input', self.source['otu_group_legend_latex'].format(level=self.words[level],
+                                                                                           meta=column))
+                self.add_code('', meta={self.words[level]: True})
+            self.add_code(self.source['otu_group_legend_py'].format(level=self.words[level],
+                                                                    meta=column))
             self.add_code(self.source['taxa_r'].format(plot=filename,
                                                        level=self.words[level],
                                                        group=column))
-            self.add_code('Image("{plot}")'.format(plot=filename),
-                          meta={self.words[level]: True})
-            self.add_code(self.source['otu_legend_py'].format(plot=filename, level=self.words[level]))
-            self.add_markdown(self.source['taxa_caption'], meta={self.words[level]: True})
+            self.add_code('Image("{plot}")'.format(plot=filename))
+            self.add_code(self.source['otu_legend_py'].format(level=self.words[level]))
+            self.add_code('', meta={'{}{}'.format(self.words[level], column): True})
+            self.add_markdown(self.source['taxa_caption'])
             self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
@@ -300,8 +307,8 @@ class MMEDSNotebook():
         self.add_markdown('## {f}'.format(f=data_file))
         self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
-        self.add_code('Image("{plot}")'.format(plot=filename),
-                      meta={column: True for column in self.config['metadata']})
+        self.add_code('Image("{plot}")'.format(plot=filename))
+        self.add_code('', meta={column: True for column in self.config['metadata']})
         self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
         log('Added markdown')
         self.add_markdown(self.source['page_break'])
@@ -325,11 +332,13 @@ class MMEDSNotebook():
                                                        subplot=subplot,
                                                        cat=column,
                                                        continuous=contin))
-            self.add_code('Image("{plot}")'.format(plot=plot), meta={column: True})
+            self.add_code('Image("{plot}")'.format(plot=plot))
+            self.add_code('', meta={column: True})
             self.add_markdown(self.source['beta_caption'])
 
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
                 self.add_code('Image("{plot}")'.format(plot=subplot % (x, y)))
+                self.add_code('', meta={column: True})
             self.add_markdown(self.source['page_break'])
 
     def summarize(self):
@@ -363,7 +372,7 @@ class MMEDSNotebook():
 
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
-            self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
+            self.update_template('input', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
         self.add_markdown('# Alpha Diversity Summary')
