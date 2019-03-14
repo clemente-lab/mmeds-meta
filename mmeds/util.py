@@ -6,7 +6,7 @@ from pathlib import Path
 from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
 from functools import wraps
-from inspect import ismethod
+from inspect import isfunction
 
 import mmeds.config as fig
 import pandas as pd
@@ -28,7 +28,7 @@ def catch_logged_out(page_method):
 def decorate_all_methods(decorator):
     def apply_decorator(cls):
         for k, m in cls.__dict__.items():
-            if ismethod(m):
+            if isfunction(m):
                 setattr(cls, k, decorator(m))
         return cls
     return apply_decorator

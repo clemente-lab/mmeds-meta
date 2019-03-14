@@ -224,7 +224,7 @@ class MMEDSDownload(MMEDSBase):
     @cp.expose
     def download_log(self):
         """ Allows the user to download a log file """
-        path = cp.session['dir'] / (UPLOADED_FP + '.log')
+        path = self.get_dir() / (UPLOADED_FP + '.log')
         page = static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
         return page
@@ -232,7 +232,7 @@ class MMEDSDownload(MMEDSBase):
     @cp.expose
     def download_corrected(self):
         """ Allows the user to download the correct metadata file. """
-        path = cp.session['dir'] / (UPLOADED_FP + '_corrected.txt')
+        path = self.get_dir() / (UPLOADED_FP + '_corrected.txt')
         page = static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
         return page
@@ -240,7 +240,7 @@ class MMEDSDownload(MMEDSBase):
     @cp.expose
     def download_query(self):
         """ Download the results of the most recent query as a csv. """
-        path = cp.session['dir'] / cp.session['query']
+        path = self.get_dir() / cp.session['query']
         page = static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
         return page
@@ -248,7 +248,7 @@ class MMEDSDownload(MMEDSBase):
     @cp.expose
     def get_data(self):
         """ Return the data file uploaded by the user. """
-        path = cp.session['dir'] / cp.session['data_file']
+        path = self.get_dir() / cp.session['data_file']
         return static.serve_file(path, 'application/x-download',
                                  'attachment', os.path.basename(path))
 
@@ -442,7 +442,7 @@ class MMEDSAuthentication(MMEDSBase):
     def reset_code(self, study_name, study_email):
         """ Skip uploading a file. """
         # Get the open file handler
-        with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
+        with Database(self.get_dir(), owner=self.get_user(), testing=self.testing) as db:
             try:
                 db.reset_access_code(study_name, study_email)
                 page = load_html('success', title='Success', user=self.get_user())
@@ -554,7 +554,7 @@ class MMEDSAnalysis(MMEDSBase):
     def query(self, query):
         # Set the session to use the current user
         username = self.get_user()
-        with Database(cp.session['dir'], user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
+        with Database(self.get_dir(), user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
             data, header = db.execute(query)
             html_data = db.format(data, header)
             page = load_html('success', title='Run Query', user=self.get_user())
@@ -567,7 +567,7 @@ class MMEDSAnalysis(MMEDSBase):
         page = insert_error(page, 10, html_data)
         if header is not None:
             data = [header] + list(data)
-        with open(cp.session['dir'] / cp.session['query'], 'w') as f:
+        with open(self.get_dir() / cp.session['query'], 'w') as f:
             f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
         return page
 
