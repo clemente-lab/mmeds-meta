@@ -24,7 +24,7 @@ setup(name='mmeds',
       license=__license__,
       packages=['mmeds'],
       include_package_data=True,
-      scripts=glob('scripts/*.py') + ['server/server.py'],
+      scripts=glob('scripts/*.py'),
       install_requires=[
           'numpy',
           'cherrypy',

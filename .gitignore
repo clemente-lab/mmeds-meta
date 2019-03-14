@@ -23,10 +23,7 @@
 .DS_Store
 
 # Server logs
-server/data/*
-server/site.log
-server/session
-server/deblur.log
+host/*
 
 # All backup files
 .*
