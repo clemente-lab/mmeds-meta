@@ -40,6 +40,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         config = load_config(config_file, files['metadata'])
     elif config_file is None or config_file.file is None:
         config = load_config(None, files['metadata'])
+    else:
+        config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
 
     if 'qiime1' in atype:
         qiime = Qiime1(user, access_code, atype, config, testing)

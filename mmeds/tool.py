@@ -229,3 +229,6 @@ class Tool:
             '--tool_type {}'.format(self.tool)
         ]
         self.jobtext.append(' '.join(cmd))
+
+    def update_metadata(self):
+        """ Add the finished analysis file to available downloads """

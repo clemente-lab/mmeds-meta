@@ -185,6 +185,9 @@ class Qiime1(Tool):
             run([jobfile], check=True)
             #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
             #  self.wait_on_job(job_id)
+        self.db.update_metadata(self.access_code,
+                                'analysis{}'.format(self.run_id),
+                                'analysis{}/summary/analysis.pdf'.format(self.run_id))
 
     def run(self):
         """ Execute all the necessary actions. """
