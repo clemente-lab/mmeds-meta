@@ -1,11 +1,12 @@
 import os
 import tempfile
+import cherrypy as cp
+import mmeds.secrets as sec
+
+from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
 from multiprocessing import Process
-import cherrypy as cp
-import mmeds.secrets as sec
-from cherrypy.lib import static
 
 
 from mmeds.validate import validate_mapping_file
@@ -17,6 +18,8 @@ from mmeds.util import (generate_error_html,
                         log,
                         MIxS_to_mmeds,
                         mmeds_to_MIxS,
+                        decorate_all_methods,
+                        catch_logged_out,
                         create_local_copy)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES
 from mmeds.authentication import (validate_password,
@@ -32,8 +35,6 @@ from mmeds.error import MissingUploadError, MetaDataError, LoggedOutError,\
 
 absDir = Path(os.getcwd())
 
-def catchLoggedOut(func):
-    pass
 
 class MMEDSBase:
     """
@@ -137,6 +138,7 @@ class MMEDSBase:
         return files
 
 
+@decorate_all_methods(catch_logged_out)
 class MMEDSDownload(MMEDSBase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -164,44 +166,31 @@ class MMEDSDownload(MMEDSBase):
         except (MissingUploadError, UploadInUseError) as e:
                 page = load_html('welcome', title='Select Download', user=self.get_user())
                 page = insert_error(page, 22, e.message)
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
         return page
 
     @cp.expose
     def select_download(self, download):
-        try:
-            cp.log('User{} requests download {}'.format(self.get_user(), download))
-            with Database('.', owner=self.get_user(), testing=self.testing) as db:
-                files, path = db.get_mongo_files(cp.session['download_access'])
-            file_path = str(Path(path) / files[download])
-            if 'dir' in download:
-                cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                     Path(file_path).parent,
-                                                     Path(file_path).name)
-                run(cmd.split(' '), check=True)
-                file_path += '.tar.gz'
-            cp.log('Fetching {}'.format(file_path))
+        cp.log('User{} requests download {}'.format(self.get_user(), download))
+        with Database('.', owner=self.get_user(), testing=self.testing) as db:
+            files, path = db.get_mongo_files(cp.session['download_access'])
+        file_path = str(Path(path) / files[download])
+        if 'dir' in download:
+            cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
+                                                 Path(file_path).parent,
+                                                 Path(file_path).name)
+            run(cmd.split(' '), check=True)
+            file_path += '.tar.gz'
+        cp.log('Fetching {}'.format(file_path))
 
-            page = static.serve_file(file_path, 'application/x-download',
-                                     'attachment', os.path.basename(file_path))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
+        return static.serve_file(file_path, 'application/x-download',
+                                 'attachment', os.path.basename(file_path))
 
     @cp.expose
     def download_metadata(self):
         """ Download data and metadata files. """
-        try:
-            # Return that file
-            page = static.serve_file(cp.session['metadata_path'], 'application/x-download',
-                                     'attachment', os.path.basename(cp.session['metadata_path']))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
+        # Return that file
+        return static.serve_file(cp.session['metadata_path'], 'application/x-download',
+                                 'attachment', os.path.basename(cp.session['metadata_path']))
 
     @cp.expose
     def download_data(self):
@@ -212,9 +201,6 @@ class MMEDSDownload(MMEDSBase):
                                      'attachment', os.path.basename(cp.session['data_path']))
         except KeyError:
             page = load_html('download_error', title='Download Error', user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
         return page
 
     @cp.expose
@@ -232,48 +218,31 @@ class MMEDSDownload(MMEDSBase):
 
     @cp.expose
     def download_error_log(self):
-        try:
-            page = static.serve_file(cp.session['error_file'], 'application/x-download',
-                                     'attachment', os.path.basename(cp.session['error_file']))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        return page
+        return static.serve_file(cp.session['error_file'], 'application/x-download',
+                                 'attachment', os.path.basename(cp.session['error_file']))
 
     @cp.expose
     def download_log(self):
         """ Allows the user to download a log file """
-        try:
-            path = cp.session['dir'] / (UPLOADED_FP + '.log')
-            page = static.serve_file(path, 'application/x-download',
-                                     'attachment', os.path.basename(path))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        path = cp.session['dir'] / (UPLOADED_FP + '.log')
+        page = static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
         return page
 
     @cp.expose
     def download_corrected(self):
         """ Allows the user to download the correct metadata file. """
-        try:
-            path = cp.session['dir'] / (UPLOADED_FP + '_corrected.txt')
-            page = static.serve_file(path, 'application/x-download',
-                                     'attachment', os.path.basename(path))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        path = cp.session['dir'] / (UPLOADED_FP + '_corrected.txt')
+        page = static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
         return page
 
     @cp.expose
     def download_query(self):
         """ Download the results of the most recent query as a csv. """
-        try:
-            path = cp.session['dir'] / cp.session['query']
-            page = static.serve_file(path, 'application/x-download',
-                                     'attachment', os.path.basename(path))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        path = cp.session['dir'] / cp.session['query']
+        page = static.serve_file(path, 'application/x-download',
+                                 'attachment', os.path.basename(path))
         return page
 
     @cp.expose
@@ -284,6 +253,7 @@ class MMEDSDownload(MMEDSBase):
                                  'attachment', os.path.basename(path))
 
 
+@decorate_all_methods(catch_logged_out)
 class MMEDSUpload(MMEDSBase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -296,13 +266,9 @@ class MMEDSUpload(MMEDSBase):
     def retry_upload(self):
         """ Retry the upload of data files. """
         log('In retry_upload')
-        try:
-            with open(HTML_DIR / 'upload.html') as f:
-                page = f.read()
-            page = page.format(user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        with open(HTML_DIR / 'upload.html') as f:
+            page = f.read()
+        page = page.format(user=self.get_user())
         return page
 
     @cp.expose
@@ -325,9 +291,6 @@ class MMEDSUpload(MMEDSBase):
             with open(HTML_DIR / 'download_error.html') as f:
                 download_error = f.read()
                 page = download_error.format(user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
         return page
 
     @cp.expose
@@ -336,66 +299,49 @@ class MMEDSUpload(MMEDSBase):
         Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
         """
         log('In convert_metadata')
+        meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+        # Try the conversion
         try:
-            meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-            # Try the conversion
-            try:
-                if convertTo == 'mmeds':
-                    file_path = self.get_dir() / 'mmeds_metadata.tsv'
-                    # If it is successful return the converted file
-                    MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
-                else:
-                    file_path = self.get_dir() / 'mixs_metadata.tsv'
-                    mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
-                page = static.serve_file(file_path, 'application/x-download',
-                                         'attachment', os.path.basename(file_path))
-            # If there is an issue with the provided unit column display an error
-            except MetaDataError as e:
-                page = load_html('welcome', title='Welcome to Mmeds', user=self.get_user())
-                page = insert_error(page, 31, e.message)
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+            if convertTo == 'mmeds':
+                file_path = self.get_dir() / 'mmeds_metadata.tsv'
+                # If it is successful return the converted file
+                MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
+            else:
+                file_path = self.get_dir() / 'mixs_metadata.tsv'
+                mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
+            page = static.serve_file(file_path, 'application/x-download',
+                                     'attachment', os.path.basename(file_path))
+        # If there is an issue with the provided unit column display an error
+        except MetaDataError as e:
+            page = load_html('welcome', title='Welcome to Mmeds', user=self.get_user())
+            page = insert_error(page, 31, e.message)
         return page
 
     @cp.expose
     def upload_data(self):
         log('In upload_data')
         cp.log('In upload_data')
-        try:
-            # If there are no errors or warnings proceed to upload the data files
-            page = load_html('upload_data', title='Upload data', user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        # If there are no errors or warnings proceed to upload the data files
+        page = load_html('upload_data', title='Upload data', user=self.get_user())
         return page
 
     @cp.expose
     def upload_page(self):
         """ Page for selecting upload type or modifying upload. """
-        try:
-            page = load_html('upload', title='Upload Data', user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        page = load_html('upload', title='Upload Data', user=self.get_user())
         return page
 
     @cp.expose
     def upload_metadata(self, study_type):
         """ Page for uploading Qiime data """
-        log('In upload_metadata')
-        try:
-            page = load_html('upload_metadata',
-                             title='Upload Qiime',
-                             user=self.get_user(),
-                             version=study_type)
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
-        log('Exit upload')
+        page = load_html('upload_metadata',
+                         title='Upload Qiime',
+                         user=self.get_user(),
+                         version=study_type)
         return page
 
 
+@decorate_all_methods(catch_logged_out)
 class MMEDSAuthentication(MMEDSBase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -465,11 +411,7 @@ class MMEDSAuthentication(MMEDSBase):
     @cp.expose
     def input_password(self):
         """ Load page for changing the user's password """
-        try:
-            page = load_html('change_password', title='Change Password')
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        page = load_html('change_password', title='Change Password')
         return page
 
     @cp.expose
@@ -481,42 +423,35 @@ class MMEDSAuthentication(MMEDSBase):
         :password1: The new password
         :password2: A second entry of the new password
         """
-        try:
-            page = load_html('change_password', title='Change Password')
+        page = load_html('change_password', title='Change Password')
 
-            # Check the old password matches
-            if validate_password(self.get_user(), password0):
-                # Check the two copies of the new password match
-                errors = check_password(password1, password2)
-                if not errors:
-                    change_password(self.get_user(), password1)
-                    page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
-                else:
-                    page = insert_html(page, 9, errors)
+        # Check the old password matches
+        if validate_password(self.get_user(), password0):
+            # Check the two copies of the new password match
+            errors = check_password(password1, password2)
+            if not errors:
+                change_password(self.get_user(), password1)
+                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
             else:
-                page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+                page = insert_html(page, 9, errors)
+        else:
+            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
         return page
 
     @cp.expose
     def reset_code(self, study_name, study_email):
         """ Skip uploading a file. """
-        try:
-            # Get the open file handler
-            with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
-                try:
-                    db.reset_access_code(study_name, study_email)
-                    page = load_html('success', title='Success', user=self.get_user())
-                except MissingUploadError:
-                    page = load_html('download_error', title='Download Error', user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        # Get the open file handler
+        with Database(cp.session['dir'], owner=self.get_user(), testing=self.testing) as db:
+            try:
+                db.reset_access_code(study_name, study_email)
+                page = load_html('success', title='Success', user=self.get_user())
+            except MissingUploadError:
+                page = load_html('download_error', title='Download Error', user=self.get_user())
         return page
 
 
+@decorate_all_methods(catch_logged_out)
 class MMEDSAnalysis(MMEDSBase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -545,9 +480,6 @@ class MMEDSAnalysis(MMEDSBase):
         except (InvalidConfigError, MissingUploadError, UploadInUseError) as e:
             page = load_html('welcome', title='Welcome to Mmeds', user=self.get_user())
             page = insert_error(page, 22, e.message)
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
         return page
 
     @cp.expose
@@ -576,91 +508,71 @@ class MMEDSAnalysis(MMEDSBase):
         except MetaDataError as e:
             page = load_html('upload', title='Upload data', user=self.get_user())
             page = insert_error(page, 22, e.message)
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
         return page
 
     @cp.expose
     def process_data(self, for_reads, rev_reads, barcodes, public='off'):
-        try:
-            # Create a unique dir for handling files uploaded by this user
-            metadata = Path(cp.session['uploaded_files'].pop())
+        # Create a unique dir for handling files uploaded by this user
+        metadata = Path(cp.session['uploaded_files'].pop())
 
-            # Set the User
-            if public == 'on':
-                username = 'public'
-            else:
-                username = self.get_user()
+        # Set the User
+        if public == 'on':
+            username = 'public'
+        else:
+            username = self.get_user()
 
-            # Add the datafiles that exist as arguments
-            datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
+        # Add the datafiles that exist as arguments
+        datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
 
-            # Start a process to handle loading the data
-            p = Process(target=handle_data_upload,
-                        args=(metadata, username, self.testing,
-                              # Unpack the list so the files are taken as a tuple
-                              *datafiles))
-            cp.log('Starting upload process')
-            p.start()
+        # Start a process to handle loading the data
+        p = Process(target=handle_data_upload,
+                    args=(metadata, username, self.testing,
+                          # Unpack the list so the files are taken as a tuple
+                          *datafiles))
+        cp.log('Starting upload process')
+        p.start()
 
-            # Get the html for the upload page
-            page = load_html('welcome', title='Welcome to Mmeds', user=self.get_user())
-            html = '<h1> Your data is being uploaded, you will recieve an email when this finishes </h1>'
-            page = insert_error(page, 22, html)
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        # Get the html for the upload page
+        page = load_html('welcome', title='Welcome to Mmeds', user=self.get_user())
+        html = '<h1> Your data is being uploaded, you will recieve an email when this finishes </h1>'
+        page = insert_error(page, 22, html)
         return page
 
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
-        try:
-            page = load_html('analysis', title='Select Analysis', user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        page = load_html('analysis', title='Select Analysis', user=self.get_user())
         return page
 
     @cp.expose
     def query_page(self):
         """ Skip uploading a file. """
-        log('In query_page')
-        try:
-            # Get the html for the upload page
-            page = load_html('success', title='Skipped Upload')
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        page = load_html('success', title='Skipped Upload')
         return page
 
     @cp.expose
     def query(self, query):
-        try:
-            # Set the session to use the current user
-            username = self.get_user()
-            with Database(cp.session['dir'], user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
-                data, header = db.execute(query)
-                html_data = db.format(data, header)
-                page = load_html('success', title='Run Query', user=self.get_user())
+        # Set the session to use the current user
+        username = self.get_user()
+        with Database(cp.session['dir'], user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
+            data, header = db.execute(query)
+            html_data = db.format(data, header)
+            page = load_html('success', title='Run Query', user=self.get_user())
 
-            cp.session['query'] = 'query.tsv'
-            html = '<form action="download_query" method="post">\n\
-                    <button type="submit">Download Results</button>\n\
-                    </form>'
-            page = insert_html(page, 10, html)
-            page = insert_error(page, 10, html_data)
-            if header is not None:
-                data = [header] + list(data)
-            with open(cp.session['dir'] / cp.session['query'], 'w') as f:
-                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        cp.session['query'] = 'query.tsv'
+        html = '<form action="download_query" method="post">\n\
+                <button type="submit">Download Results</button>\n\
+                </form>'
+        page = insert_html(page, 10, html)
+        page = insert_error(page, 10, html_data)
+        if header is not None:
+            data = [header] + list(data)
+        with open(cp.session['dir'] / cp.session['query'], 'w') as f:
+            f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
         return page
 
 
+@decorate_all_methods(catch_logged_out)
 class MMEDSserver(MMEDSBase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -685,11 +597,7 @@ class MMEDSserver(MMEDSBase):
     @cp.expose
     def home(self):
         """ Return the home page of the server for a user already logged in. """
-        try:
-            page = load_html('welcome',
-                             title='Welcome to Mmeds',
-                             user=self.get_user())
-        except LoggedOutError:
-            with open(HTML_DIR / 'index.html') as f:
-                page = f.read()
+        page = load_html('welcome',
+                         title='Welcome to Mmeds',
+                         user=self.get_user())
         return page

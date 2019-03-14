@@ -1,13 +1,37 @@
 from collections import defaultdict
-from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
 from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
+from functools import wraps
+from inspect import ismethod
 
 import mmeds.config as fig
 import pandas as pd
+
+
+def catch_logged_out(page_method):
+    """ Handles LoggedOutError for all mmeds pages. """
+    @wraps(page_method)
+    def wrapper(*a, **kwargs):
+        try:
+            return page_method(*a, **kwargs)
+        except LoggedOutError:
+            with open(fig.HTML_DIR / 'index.html') as f:
+                page = f.read()
+            return page
+    return wrapper
+
+
+def decorate_all_methods(decorator):
+    def apply_decorator(cls):
+        for k, m in cls.__dict__.items():
+            if ismethod(m):
+                setattr(cls, k, decorator(m))
+        return cls
+    return apply_decorator
 
 
 def load_config(config_file, metadata):
