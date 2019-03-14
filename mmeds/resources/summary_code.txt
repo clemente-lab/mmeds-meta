@@ -283,9 +283,9 @@ for group_name in metadata_columns:
     colors = [color_maps[group_name][str(x)] for x in group[group_name]]
     group = group.assign(GroupID=colors)
 
-    # Assign information for grouping, drop specific catagories
+    # Assign information for grouping
     group_names = [group_name for x in group[group_name]]
-    group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
+    group = group.assign(GroupName=group_names)
 
     # Rename columns and append to the list of dataframes
     new_names = {{
@@ -403,40 +403,43 @@ The above plot represents the first three compenents created when performing Pri
 =====
 otu_legend_latex<source>
 ((*- if cell.metadata.{level}: -*))
-\\
+\vspace{{5mm}}%
 {{\raggedright{{}}%
     \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
+    \vspace{{3mm}}%
     \foreach \A / \B in \otu{level} {{
         \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
     }}
 }}%
-\\
+\vspace{{5mm}}%
 ((*- endif -*))
 =====
 otu_group_legend_latex<source>
 ((*- if cell.metadata.{level}{meta}: -*))
-\\
+\vspace{{5mm}}%
 {{\raggedright{{}}%
     \texttt{{Legend grouped by {meta}}}\\
     \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
+    \vspace{{3mm}}%
     \foreach \A / \B in \otu{level}{meta} {{
         \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
     }}
 }}%
-\\
+\vspace{{5mm}}%
 ((*- endif -*))
 =====
 diversity_legend_latex<source>
 ((*- if cell.metadata.{meta}: -*))
-\\
+\vspace{{5mm}}%
 {{\raggedright{{}}%
     \texttt{{Legend for {meta}}}\\
     \texttt{{Color\hspace{{3mm}}Metadata}}\\
+    \vspace{{3mm}}%
     \foreach \A / \B in \{meta} {{
         \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{7mm}}\texttt{{\B}}\\%
     }}
 }}%
-\\
+\vspace{{5mm}}%
 ((*- endif -*))
 =====
 otu_group_legend_py<source>
