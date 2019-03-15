@@ -122,7 +122,7 @@ def test_copy_metadata():
 
 
 def test_load_html():
-    page = util.load_html('welcome', title='Welcome', user='David')
+    page = util.load_html(fig.HTML_DIR / 'welcome.html', title='Welcome', user='David')
     page = util.insert_error(page, 22, 'There was a problem')
     page = util.insert_html(page, 22, 'There was a problem')
     page = util.insert_warning(page, 22, 'There was a problem')

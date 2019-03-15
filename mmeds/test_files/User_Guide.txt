@@ -3,13 +3,16 @@
 The format for the metadata file is as follows.
 See example_metadata.tsv
 The first row of the metadata file specifies the entity the metadata pertains
-to. The second row specifies the specific property. The third row specifies
-if this column is required for every sample. The fourth row specifies the
-data-type and the fifth row specifies the unit/format of the data.
+to (i.e. the table in the database the information will be stored in).The
+second row specifies the specific property (This is akin to a tradional metadata
+header column). The third row specifies if this column is required for every sample.
+The fourth row specifies the data-type and the fifth row specifies the unit/format of the data.
 These rows are the header of the metadata file, the following rows should
 each contain all the information relating to a particular sample.
 
 For Example:
+The column
+============
 1:	Subjects
 2:	Height
 3:	Optional
@@ -19,13 +22,17 @@ For Example:
 This column should contain the height in meters of the subject the
 sample described in this row was taken from.
 
-If the metadata doesn't exist for an optional column it should be filled in
-with 'NA'. If metadata exists that does not fit into any of the default columns
+Not every metadata column will be relevant to every study. If the metadata
+doesn't exist for an optional column it should be filled in with 'NA' not
+'na', 'n.a.', 'N/A' or any other Not Available indicator. DO NOT delete
+the columns from the metadata template.
+
+If metadata exists that does not fit into any of the default columns
 additional columns may be added. Their format should be as follows
 
 For Example:
 1:	AdditionalMetaData
-2:	(Name of the metadata)
+2:	(Name of the metadata column)
 3:	Optional
 4:	(Type of the metadata: Text, Number, Date, Time, etc)
 5:	(Unit of the metadata: If applicable)

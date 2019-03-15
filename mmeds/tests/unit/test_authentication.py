@@ -1,6 +1,6 @@
 import mmeds.authentication as auth
 
-from mmeds.error import NoResultError
+from mmeds.error import NoResultError, InvalidLoginError
 from pytest import raises
 
 
@@ -24,9 +24,13 @@ def test_a_add_user():
 
 
 def test_b_validate_password():
-    assert auth.validate_password(test_username2, test_password2, testing=True)
-    assert not auth.validate_password(test_username2, test_password1, testing=True)
-    assert not auth.validate_password(bad_username, test_password2, testing=True)
+    # Shouldn't raise an error
+    auth.validate_password(test_username2, test_password2, testing=True) is None
+
+    with raises(InvalidLoginError):
+        auth.validate_password(test_username2, test_password1, testing=True)
+    with raises(InvalidLoginError):
+        auth.validate_password(bad_username, test_password2, testing=True)
 
 
 def test_c_check_password():
@@ -59,12 +63,12 @@ def test_e_get_email():
 
 
 def test_f_change_password():
-    assert auth.validate_password(test_username2, test_password2, testing=True)
+    auth.validate_password(test_username2, test_password2, testing=True)
     assert auth.change_password(test_username2, test_password3, testing=True) is None
-    assert auth.validate_password(test_username2, test_password3, testing=True)
-    with raises(NoResultError) as e_info:
+    auth.validate_password(test_username2, test_password3, testing=True)
+    with raises(NoResultError):
         assert auth.change_password('public', test_password3, testing=True) is None
-    with raises(NoResultError) as e_info:
+    with raises(NoResultError):
         assert auth.change_password('rando', test_password3, testing=True) is None
 
 
