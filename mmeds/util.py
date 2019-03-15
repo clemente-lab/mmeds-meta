@@ -7,17 +7,23 @@ from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
 from functools import wraps
 from inspect import isfunction
+from cherrypy import HTTPError
+import cherrypy
 
 import mmeds.config as fig
 import pandas as pd
 
 
-def catch_logged_out(page_method):
-    """ Handles LoggedOutError for all mmeds pages. """
+def catch_server_errors(page_method):
+    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
     @wraps(page_method)
     def wrapper(*a, **kwargs):
         try:
             return page_method(*a, **kwargs)
+        except HTTPError:
+            with open(fig.HTML_DIR / 'server_error.html') as f:
+                page = f.read()
+            return page
         except LoggedOutError:
             with open(fig.HTML_DIR / 'index.html') as f:
                 page = f.read()

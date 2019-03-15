@@ -12,7 +12,7 @@ from multiprocessing import Process
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (generate_error_html, load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
-                        mmeds_to_MIxS, decorate_all_methods, catch_logged_out, create_local_copy)
+                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES
 from mmeds.authentication import (validate_password,
                                   check_username,
@@ -154,7 +154,7 @@ class MMEDSbase:
         return return_page
 
 
-@decorate_all_methods(catch_logged_out)
+@decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -263,7 +263,7 @@ class MMEDSdownload(MMEDSbase):
                                  'attachment', os.path.basename(path))
 
 
-@decorate_all_methods(catch_logged_out)
+@decorate_all_methods(catch_server_errors)
 class MMEDSupload(MMEDSbase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -344,7 +344,7 @@ class MMEDSupload(MMEDSbase):
         return page
 
 
-@decorate_all_methods(catch_logged_out)
+@decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -450,7 +450,7 @@ class MMEDSauthentication(MMEDSbase):
         return page
 
 
-@decorate_all_methods(catch_logged_out)
+@decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -569,7 +569,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
 
-@decorate_all_methods(catch_logged_out)
+@decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
     def __init__(self, testing=False):
         super().__init__(testing)
@@ -586,10 +586,4 @@ class MMEDSserver(MMEDSbase):
             page = self.format_html('welcome', title='Welcome to MMEDS')
         else:
             page = self.format_html('index')
-        return page
-
-    @cp.expose
-    def home(self):
-        """ Return the home page of the server for a user already logged in. """
-        page = self.format_html('welcome', title='Welcome to MMEDS')
         return page
