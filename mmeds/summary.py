@@ -370,7 +370,7 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             log('Convert notebook to latex')
-            output = run(cmd.split(' '), check=True, env=self.env)
+            output = run(cmd.split(' '), check=True, env=self.env, capture_output=True)
 
             log('Convert latex to pdf')
             # Convert to pdf
