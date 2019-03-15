@@ -250,7 +250,7 @@ def load_html(file_path, **kwargs):
     Load the specified html file. Inserting the head and topbar
     """
     # Load the html page
-    with open(fig.HTML_DIR / (file_path + '.html')) as f:
+    with open(file_path) as f:
         page = f.read().split('\n')
 
     # Load the head information

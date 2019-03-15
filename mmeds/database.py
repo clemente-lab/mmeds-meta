@@ -275,12 +275,9 @@ class Database:
         :table: The table in the database to create the import data for
         :df: The dataframe containing all the metadata
         """
-        log('In create_import_data')
         sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable='id' + table, table=table)
         self.cursor.execute(sql)
         vals = self.cursor.fetchone()
-        log('got vals')
-        log(vals)
         try:
             current_key = int(vals[0]) + 1
         except TypeError:
@@ -719,7 +716,6 @@ class Database:
                 # Add quotes around string values
                 sql += quote_sql(('{column} = %({column})s'), column=column)
                 result = pyformat_translate(value)
-                log(result)
                 args['`{}`'.format(column)] = result
             sql += ' AND user_id = %(id)s'
             args['id'] = self.user_id
@@ -748,15 +744,17 @@ class Database:
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """
+        log('Get mongo files')
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
-            raise MissingUploadError('No data exist for this access code')
+            log('Missing upload error')
+            raise MissingUploadError()
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
-
+        log('return from mongo')
         return mdata.files, mdata.path
 
     def get_metadata(self, access_code):

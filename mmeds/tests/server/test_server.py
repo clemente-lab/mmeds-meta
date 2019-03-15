@@ -3,6 +3,7 @@ from time import sleep
 from collections import defaultdict
 
 import mmeds.config as fig
+import mmeds.error as err
 from mmeds.authentication import add_user
 from mmeds.util import insert_error, insert_html, load_html
 from mmeds.database import Database
@@ -49,7 +50,7 @@ class TestServer(helper.CPWebCase):
     def test_login(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.TEST_USER, fig.TEST_PASS))
         self.assertStatus('200 OK')
-        page = load_html('welcome',
+        page = load_html(fig.HTML_DIR / 'welcome.html',
                          title='Welcome to Mmeds',
                          user=fig.TEST_USER)
         self.assertBody(page)
@@ -62,12 +63,20 @@ class TestServer(helper.CPWebCase):
             page = f.read()
         self.assertBody(page)
 
-    def test_login_fail(self):
+    def test_login_fail_password(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.TEST_USER, fig.TEST_PASS + 'garbage'))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
-        page = insert_error(page, 23, 'Error: Invalid username or password.')
+        page = insert_error(page, 14, err.InvalidLoginError().message)
+        self.assertBody(page)
+
+    def test_login_fail_username(self):
+        self.getPage('/auth/login?username={}&password={}'.format(fig.TEST_USER + 'garbage', fig.TEST_PASS))
+        self.assertStatus('200 OK')
+        with open(fig.HTML_DIR / 'index.html') as f:
+            page = f.read()
+        page = insert_error(page, 14, err.InvalidLoginError.message)
         self.assertBody(page)
 
     ############
@@ -75,27 +84,25 @@ class TestServer(helper.CPWebCase):
     ############
 
     def test_download_page_fail(self):
-        return
         self.getPage("/auth/login?username={}&password={}".format(fig.TEST_USER, fig.TEST_PASS))
         self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE + 'garbage'), headers=self.cookies)
         self.assertStatus('200 OK')
-        with open(fig.HTML_DIR / 'download_error.html') as f:
-            page = f.read().format(fig.TEST_USER)
+        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=fig.TEST_USER)
+        page = insert_error(page, 22, err.MissingUploadError.message)
         self.assertBody(page)
         self.getPage('/auth/logout', headers=self.cookies)
 
+    """
     def test_download_block(self):
-        return
         # Login
         self.getPage("/auth/login?username={}&password={}".format(fig.TEST_USER, fig.TEST_PASS))
         # Start test analysis
-        self.getPage('/analysis/run_analysis?access_code={}&tool={}'.format(fig.TEST_CODE,
-                                                                            fig.TEST_TOOL),
+        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(fig.TEST_CODE,
+                                                                                    fig.TEST_TOOL),
                      headers=self.cookies)
         # Try to access
         self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
-        with open(fig.HTML_DIR / 'welcome.html') as f:
-            page = f.read().format(user=fig.TEST_USER)
+        page = load_html(fig.HTML_DIR / 'welcome.html', user=fig.TEST_USER, title='Welcome to MMEDS')
         page = insert_error(page, 31, 'Requested study is currently unavailable')
         self.assertBody(page)
 
@@ -106,8 +113,7 @@ class TestServer(helper.CPWebCase):
         # Try to access again
         self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
 
-        with open(fig.HTML_DIR / 'select_download.html') as f:
-            page = f.read().format(fig.TEST_USER)
+        page = load_html(fig.HTML_DIR / 'download_select_file.html', user=fig.TEST_USER, title='MMEDS Analysis Server')
         for i, f in enumerate(fig.TEST_FILES):
             page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
 
@@ -141,3 +147,5 @@ class TestServer(helper.CPWebCase):
 
     def test_query(self):
         return
+
+    """

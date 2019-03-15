@@ -24,24 +24,31 @@ def run_analysis(qiime):
                    testing=qiime.testing)
 
 
-def test(time, atype):
+def test(time):
     """ Simple function for analysis called during testing """
+    log('test tool sleep for {}'.format(time))
     sleep(time)
+    log('test tool wake up')
 
 
 def spawn_analysis(atype, user, access_code, config_file, testing):
     """ Start running the analysis in a new process """
+    log('In spawn_analysis')
 
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
 
+    log(config_file)
     if isinstance(config_file, str):
+        log('load default config')
         config = load_config(config_file, files['metadata'])
     elif config_file is None or config_file.file is None:
         config = load_config(None, files['metadata'])
     else:
         config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
+
+    log(atype)
 
     if 'qiime1' in atype:
         qiime = Qiime1(user, access_code, atype, config, testing)
@@ -51,7 +58,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         p = Process(target=run_analysis, args=(qiime,))
     elif 'test' in atype:
         time = float(atype.split('-')[-1])
-        p = Process(target=test, args=(time, atype))
+        p = Process(target=test, args=(time,))
+    log('Started {} tool on process {}'.format(atype, p))
     p.start()
     return p
 

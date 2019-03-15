@@ -60,8 +60,8 @@ CONFIG = {
         'log.error_file': str(DATABASE_DIR / 'site.log'),
         'request.scheme': 'https',
         'secureheaders.on': True,
-        'tools.sessions.on': True,
         'tools.sessions.secure': True,
+        'tools.sessions.on': True,
         'tools.sessions.httponly': True,
         'tools.sessions.timeout': 15
     },
@@ -123,7 +123,7 @@ TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
-TEST_TOOL = 'tester-1'
+TEST_TOOL = 'tester-5'
 TEST_FILES = {
     'reads': TEST_READS,
     'barcodes': TEST_BARCODES,
@@ -322,3 +322,26 @@ MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 def get_salt(length=10):
     listy = 'abcdefghijklmnopqrzsuvwxyz'
     return ''.join(choice(listy) for i in range(length))
+
+
+############################
+# CONFIGURE SERVER GLOBALS #
+############################
+
+
+# Each page returns a tuple
+# (<Path to the page>, <Should the header and topbar be loaded>)
+HTML_PAGES = {
+    'index': (HTML_DIR / 'index.html', False),
+    'welcome': (HTML_DIR / 'welcome.html', True),
+    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
+    'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
+    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
+    'download_study_files': (HTML_DIR / 'download_study_files.html', True),
+    'download_select_file': (HTML_DIR / 'download_select_file.html', True),
+    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
+    'upload_metadata_files': (HTML_DIR / 'upload_metadata_files.html', True),
+    'upload_files_page': (HTML_DIR / 'upload_files_page.html', True),
+    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
+}

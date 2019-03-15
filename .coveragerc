@@ -7,5 +7,6 @@ omit =
     **/__init__.py
     setup.py
     mmeds/tests/**
-    **.modules/**
+    ~/.modules/**
     **/modules/**
+    **/bad**

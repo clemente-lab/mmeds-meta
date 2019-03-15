@@ -4,9 +4,7 @@ class MmedsError(Exception):
 
 class MissingUploadError(MmedsError):
     """ Exception for missing uploads. """
-
-    def __init__(self, message):
-        self.message = message
+    message = 'No data exist for this access code'
 
 
 class TableAccessError(MmedsError):
@@ -67,6 +65,9 @@ class NoResultError(MmedsError):
 
 class UploadInUseError(MmedsError):
     """ Exception thrown when the requested dataset is currently in use """
+    message = 'Requested study is currently unavailable'
 
-    def __init__(self, message):
-        self.message = message
+
+class InvalidLoginError(MmedsError):
+    """ Exception thrown when the provided login credentials don't match a known user """
+    message = 'No user exists with the provided username and password'

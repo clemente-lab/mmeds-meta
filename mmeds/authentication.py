@@ -2,8 +2,8 @@ import hashlib
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
-from mmeds.util import send_email
-from mmeds.error import NoResultError
+from mmeds.util import send_email, log
+from mmeds.error import NoResultError, InvalidLoginError
 
 
 def add_user(username, password, email, testing=False):
@@ -35,8 +35,8 @@ def validate_password(username, password, testing=False):
             hashed_password, salt = db.get_hash_and_salt(username)
         # An index error means that the username did not exist
         except NoResultError:
-            print('Username did not exist')
-            return False
+            log('No user with name: {}'.format(username))
+            raise InvalidLoginError()
 
     # Hash the password
     salted = password + salt
@@ -45,7 +45,9 @@ def validate_password(username, password, testing=False):
     password_hash = sha256.hexdigest()
 
     # Check that it matches the stored hash of the password
-    return hashed_password == password_hash
+    if not hashed_password == password_hash:
+        log('No user with name: {} and password_hash: {}'.format(username, password_hash))
+        raise InvalidLoginError()
 
 
 def check_password(password1, password2):

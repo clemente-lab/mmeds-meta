@@ -141,11 +141,11 @@ def summarize_qiime2(path, files, config):
     rmtree(path / 'temp')
 
     # Get Alpha
+    cmd = ['qiime', 'tools', 'export',
+           '--input-path', str(files['alpha_rarefaction']),
+           '--output-path', str(path / 'temp')]
+    run(cmd, env=new_env, check=True)
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
-        cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(files['alpha_rarefaction']),
-               '--output-path', str(path / 'temp')]
-        run(cmd, env=new_env, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
