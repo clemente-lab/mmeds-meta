@@ -230,5 +230,11 @@ class Tool:
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def update_metadata(self):
-        """ Add the finished analysis file to available downloads """
+    def add_summary_files(self):
+        """ Add the analysis summary and associated directory to the metadata files """
+        self.db.update_metadata(self.access_code,
+                                'analysis{}_summary'.format(self.run_id),
+                                self.path / 'summary/analysis.pdf')
+        self.db.update_metadata(self.access_code,
+                                'analysis{}_summary_dir'.format(self.run_id),
+                                self.path / 'summary')

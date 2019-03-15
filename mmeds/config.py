@@ -10,6 +10,7 @@ import mmeds.CSS as css
 import mmeds
 import hashlib
 import os
+import re
 
 
 ############################
@@ -206,13 +207,17 @@ JUNCTION_TABLES = [
     'Subjects_has_Genotypes'
 ]
 
-USER_FILES = set([
-    'reads',
-    'barcodes',
-    'metadata',
-    'mapping',
-    'visualizations_dir'
-])
+USER_FILES = set(map(
+    re.compile,
+    [
+        'reads',
+        'barcodes',
+        'metadata',
+        'mapping',
+        'visualizations_dir',
+        'analysis*_summary',
+        'analysis*_summary_dir'
+    ]))
 
 ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
 

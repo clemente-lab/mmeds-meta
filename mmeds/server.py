@@ -157,11 +157,9 @@ class MMEDSDownload(MMEDSBase):
                 files, path = db.get_mongo_files(access_code)
 
             page = load_html('select_download', title='Select Download', user=self.get_user())
-            i = 0
             for f in files.keys():
-                if f in USER_FILES:
-                    page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
-                    i += 1
+                if any(regex.match(f) for regex in USER_FILES):
+                    page = insert_html(page, 24, '<option value="{}">{}</option>'.format(f, f))
             cp.session['download_access'] = access_code
         except (MissingUploadError, UploadInUseError) as e:
                 page = load_html('welcome', title='Select Download', user=self.get_user())
@@ -207,13 +205,13 @@ class MMEDSDownload(MMEDSBase):
     def password_recovery(self, username, email):
         """ Page for reseting a user's password. """
         try:
-            with open(HTML_DIR / 'blank.html') as f:
+            with open(HTML_DIR / 'index.html') as f:
                 page = f.read()
             reset_password(username, email)
-            page = insert_html(page, 10, '<h4> A new password has been sent to your email. </h4>')
+            page = insert_html(page, 14, '<h4> A new password has been sent to your email. </h4>')
         except NoResultError:
             page = insert_html(
-                page, 10, '<h4> No account exists with the providied username and email. </h4>')
+                page, 14, '<h4> No account exists with the providied username and email. </h4>')
         return page
 
     @cp.expose

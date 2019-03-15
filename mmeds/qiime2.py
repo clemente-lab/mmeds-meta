@@ -417,9 +417,7 @@ class Qiime2(Tool):
             self.sanity_check()
             doc = self.db.get_metadata(self.access_code)
             self.move_user_files()
-            self.db.update_metadata(self.access_code,
-                                    'analysis{}'.format(self.run_id),
-                                    'analysis{}/summary/analysis.pdf'.format(self.run_id))
+            self.add_summary_files()
             log('Send email')
             if not self.testing:
                 send_email(doc.email,
