@@ -20,10 +20,6 @@ def catch_server_errors(page_method):
     def wrapper(*a, **kwargs):
         try:
             return page_method(*a, **kwargs)
-        except HTTPError:
-            with open(fig.HTML_DIR / 'server_error.html') as f:
-                page = f.read()
-            return page
         except LoggedOutError:
             with open(fig.HTML_DIR / 'index.html') as f:
                 page = f.read()
@@ -44,7 +40,7 @@ def load_config(config_file, metadata):
     """ Read the provided config file to determine settings for the analysis. """
     config = {}
     # If no config was provided load the default
-    if config_file is None:
+    if config_file is None or config_file == '':
         log('Using default config')
         with open(fig.STORAGE_DIR / 'config_file.txt', 'r') as f:
             page = f.read()

@@ -1,11 +1,14 @@
 from mmeds.server import MMEDSserver
 from time import sleep
 from collections import defaultdict
+from pathlib import Path
 
 import mmeds.config as fig
 import mmeds.error as err
+import mmeds.secrets as sec
+import requests
 from mmeds.authentication import add_user
-from mmeds.util import insert_error, insert_html, load_html
+from mmeds.util import insert_error, insert_html, load_html, log
 from mmeds.database import Database
 
 import cherrypy as cp
@@ -13,6 +16,8 @@ from cherrypy.test import helper
 
 
 class TestServer(helper.CPWebCase):
+
+    server_code = 'server_code_' + fig.get_salt(10)
 
     def setup_server():
         cp.tree.mount(MMEDSserver(True))
@@ -23,13 +28,15 @@ class TestServer(helper.CPWebCase):
 
     setup_server = staticmethod(setup_server)
     add_user(fig.SERVER_USER, fig.TEST_PASS, fig.TEST_EMAIL, True)
+    """
     with Database(fig.TEST_DIR, user='root', owner=fig.SERVER_USER, testing=True) as db:
         access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                           'qiime',
                                                           reads=fig.TEST_READS,
                                                           barcodes=fig.TEST_BARCODES,
-                                                          access_code=fig.TEST_CODE,
+                                                          access_code=server_code,
                                                           testing=True)
+                                                          """
 
     ############
     #  Stress  #
@@ -47,7 +54,7 @@ class TestServer(helper.CPWebCase):
     #  Authentication  #
     ####################
 
-    def test_login(self):
+    def login(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'welcome.html',
@@ -55,7 +62,7 @@ class TestServer(helper.CPWebCase):
                          user=fig.SERVER_USER)
         self.assertBody(page)
 
-    def test_logout(self):
+    def logout(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
         self.getPage('/auth/logout', headers=self.cookies)
         self.assertStatus('200 OK')
@@ -63,7 +70,7 @@ class TestServer(helper.CPWebCase):
             page = f.read()
         self.assertBody(page)
 
-    def test_login_fail_password(self):
+    def login_fail_password(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS + 'garbage'))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
@@ -71,7 +78,7 @@ class TestServer(helper.CPWebCase):
         page = insert_error(page, 14, err.InvalidLoginError().message)
         self.assertBody(page)
 
-    def test_login_fail_username(self):
+    def login_fail_username(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER + 'garbage', fig.TEST_PASS))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
@@ -79,29 +86,101 @@ class TestServer(helper.CPWebCase):
         page = insert_error(page, 14, err.InvalidLoginError.message)
         self.assertBody(page)
 
+    def test_a_auth(self):
+        return
+        self.login()
+        self.logout()
+        self.login_fail_password()
+        self.login_fail_username()
+
     ############
     #  Access  #
     ############
 
-    def test_download_page_fail(self):
+    def test_b_access(self):
+        # self.download_page()
+        # self.download_block()
+        self.upload_metadata()
+
+    def upload_r_metadata(self):
+        self.setup_tutorial('tut09_files', 'FileDemo')
+
+        # Test upload
+        filesize = 5
+        h = [('Content-type', 'multipart/form-data; boundary=x'),
+             ('Content-Length', str(105 + filesize))]
+        b = ('--x\n'
+             'Content-Disposition: form-data; name="myFile"; '
+             'filename="hello.txt"\r\n'
+             'Content-Type: text/plain\r\n'
+             '\r\n')
+        b += 'a' * filesize + '\n' + '--x--\n'
+        self.getPage('/upload', h, 'POST', b)
+        self.assertBody('''<html>
+        <body>
+            myFile length: %d<br />
+            myFile filename: hello.txt<br />
+            myFile mime-type: text/plain
+        </body>
+        </html>''' % filesize)
+
+        # Test download
+        self.getPage('/download')
+        self.assertStatus('200 OK')
+        self.assertHeader('Content-Type', 'application/x-download')
+        self.assertHeader('Content-Disposition',
+                          # Make sure the filename is quoted.
+                          'attachment; filename="pdf_file.pdf"')
+        self.assertEqual(len(self.body), 85698)
+
+    def upload_file(self, file_handle, file_path):
+
+        # Test upload
+        boundry = fig.get_salt(10)
+        b = ('--{}\n'.format(boundry) +
+             'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
+             'filename="{}"\r\n'.format(Path(file_path).name) +
+             'Content-Type: text/tab-seperated-values\r\n' +
+             '\r\n')
+        for x in Path(file_path).read_text().split('\n'):
+            b += x + '\r\n'
+        b += '\n' + '--{}--\n'.format(boundry)
+        filesize = len(''.join(b))
+        h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
+             ('Content-Length', str(filesize)),
+             ('Connection', 'keep-alive')]
+        return h, b
+
+    def upload_metadata(self):
+
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
+        headers, body = self.upload_file('myMetaData', fig.TEST_METADATA_SHORT)
+        log(headers)
+        headers += self.cookies
+        log(headers)
+        log(body)
+        self.getPage('/analysis/validate_metadata', headers, 'POST', body)
+        self.assertStatus('200 OK')
+
+    def download_page_fail(self):
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
-        self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE + 'garbage'), headers=self.cookies)
+        self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
+                     headers=self.cookies)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=fig.SERVER_USER)
         page = insert_error(page, 22, err.MissingUploadError.message)
         self.assertBody(page)
         self.getPage('/auth/logout', headers=self.cookies)
 
-    """
-    def test_download_block(self):
+    def download_block(self):
         # Login
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
         # Start test analysis
-        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(fig.TEST_CODE,
+        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.server_code,
                                                                                     fig.TEST_TOOL),
                      headers=self.cookies)
         # Try to access
-        self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
+        self.getPage("/download/download_page?access_code={}".format(self.server_code), headers=self.cookies)
         page = load_html(fig.HTML_DIR / 'welcome.html', user=fig.SERVER_USER, title='Welcome to MMEDS')
         page = insert_error(page, 31, 'Requested study is currently unavailable')
         self.assertBody(page)
@@ -110,21 +189,32 @@ class TestServer(helper.CPWebCase):
         sleep(int(fig.TEST_TOOL.split('-')[-1]))
         del page
 
+        """
         # Try to access again
-        self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
+        self.getPage("/download/download_page?access_code={}".format(self.server_code), headers=self.cookies)
 
         page = load_html(fig.HTML_DIR / 'download_select_file.html',
-        user=fig.SERVER_USER, title='MMEDS Analysis Server')
+                         user=fig.SERVER_USER, title='MMEDS Analysis Server')
         for i, f in enumerate(fig.TEST_FILES):
             page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
 
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
+        """
 
-    def test_download_page(self):
+    def download_page(self):
         return
+
+        # Test download
+        self.getPage('/download')
+        self.assertStatus('200 OK')
+        self.assertHeader('Content-Type', 'application/x-download')
+        self.assertHeader('Content-Disposition',
+                          # Make sure the filename is quoted.
+                          'attachment; filename="pdf_file.pdf"')
+        self.assertEqual(len(self.body), 85698)
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
-        self.getPage("/download/download_page?access_code={}".format(fig.TEST_CODE), headers=self.cookies)
+        self.getPage("/download/download_page?access_code={}".format(self.server_code), headers=self.cookies)
         with open(fig.HTML_DIR / 'select_download.html') as f:
             page = f.read().format(fig.SERVER_USER)
 
@@ -134,7 +224,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
 
-    def test_download(self):
+    def download(self):
         return
         downloads = [
             'barcodes',
@@ -146,7 +236,5 @@ class TestServer(helper.CPWebCase):
             self.getPage(address)
             print(self.body)
 
-    def test_query(self):
+    def query(self):
         return
-
-    """

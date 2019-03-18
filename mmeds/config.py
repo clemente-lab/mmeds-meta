@@ -342,7 +342,7 @@ HTML_PAGES = {
     'download_select_file': (HTML_DIR / 'download_select_file.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
-    'upload_metadata_files': (HTML_DIR / 'upload_metadata_files.html', True),
-    'upload_files_page': (HTML_DIR / 'upload_files_page.html', True),
+    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
+    'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
 }

@@ -31,9 +31,10 @@ class MMEDSbase:
     The base class inherited by all mmeds server classes.
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
+    processes = {}
+
     def __init__(self, testing=False):
         self.db = None
-        self.processes = {}
         self.testing = bool(int(testing))
 
     def get_user(self):
@@ -58,6 +59,9 @@ class MMEDSbase:
 
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
+        log('check upload {}'.format(access_code))
+        log(self.processes)
+        log(self.processes.get(access_code).is_alive())
         if self.processes.get(access_code) is not None and self.processes[access_code].exitcode is not None:
             log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
@@ -66,6 +70,7 @@ class MMEDSbase:
         """ Run validate_mapping_file and return the results """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
+        log(myMetaData)
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
             raise err.MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
@@ -334,7 +339,8 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def upload_page(self):
         """ Page for selecting upload type or modifying upload. """
-        page = self.format_html('upload_files_page', title='Upload Type')
+        cp.log('Access upload page')
+        page = self.format_html('upload_select_page', title='Upload Type')
         return page
 
     @cp.expose
