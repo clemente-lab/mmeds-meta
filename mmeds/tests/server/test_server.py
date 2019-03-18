@@ -5,8 +5,6 @@ from pathlib import Path
 
 import mmeds.config as fig
 import mmeds.error as err
-import mmeds.secrets as sec
-import requests
 from mmeds.authentication import add_user
 from mmeds.util import insert_error, insert_html, load_html, log
 from mmeds.database import Database
@@ -101,6 +99,7 @@ class TestServer(helper.CPWebCase):
         # self.download_page()
         # self.download_block()
         self.upload_metadata()
+        self.upload_data()
 
     def upload_r_metadata(self):
         self.setup_tutorial('tut09_files', 'FileDemo')
@@ -133,26 +132,27 @@ class TestServer(helper.CPWebCase):
                           'attachment; filename="pdf_file.pdf"')
         self.assertEqual(len(self.body), 85698)
 
-    def upload_file(self, file_handle, file_path):
+    def upload_file(self, file_handle, file_path, file_type='text/tab-seperated-values'):
 
         # Test upload
         boundry = fig.get_salt(10)
-        b = ('--{}\n'.format(boundry) +
-             'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
-             'filename="{}"\r\n'.format(Path(file_path).name) +
-             'Content-Type: text/tab-seperated-values\r\n' +
-             '\r\n')
-        for x in Path(file_path).read_text().split('\n'):
-            b += x + '\r\n'
-        b += '\n' + '--{}--\n'.format(boundry)
-        filesize = len(''.join(b))
+        b = str.encode('--{}\n'.format(boundry) +
+                       'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
+                       'filename="{}"\r\n'.format(Path(file_path).name) +
+                       'Content-Type: {}\r\n'.format(file_type) +
+                       '\r\n')
+        if file_path == '':
+            b += b''
+        else:
+            b += Path(file_path).read_bytes()
+        b += str.encode('\n--{}--\n'.format(boundry))
+        filesize = len(b)
         h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
              ('Content-Length', str(filesize)),
              ('Connection', 'keep-alive')]
         return h, b
 
     def upload_metadata(self):
-
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
         headers, body = self.upload_file('myMetaData', fig.TEST_METADATA_SHORT)
         log(headers)
@@ -160,6 +160,17 @@ class TestServer(helper.CPWebCase):
         log(headers)
         log(body)
         self.getPage('/analysis/validate_metadata', headers, 'POST', body)
+        self.assertStatus('200 OK')
+
+    def upload_data(self):
+        f_headers, f_body = self.upload_file('for_reads', fig.TEST_READS, 'application/gzip')
+        r_headers, r_body = self.upload_file('rev_reads', fig.TEST_READS, 'application/octet-stream')
+        b_headers, b_body = self.upload_file('barcodes', fig.TEST_BARCODES, 'application/gzip')
+        headers = f_headers + r_headers + b_headers + self.cookies
+        body = f_body + r_body + b_body
+        log(headers)
+        log(body)
+        self.getPage('/analysis/process_data', headers, 'POST', body)
         self.assertStatus('200 OK')
 
     def download_page_fail(self):
