@@ -132,20 +132,23 @@ class TestServer(helper.CPWebCase):
                           'attachment; filename="pdf_file.pdf"')
         self.assertEqual(len(self.body), 85698)
 
-    def upload_file(self, file_handle, file_path, file_type='text/tab-seperated-values'):
+    def upload_files(self, file_handles, file_paths, file_types):
         """ Helper method to setup headers and body for uploading a file """
         boundry = fig.get_salt(10)
-        # Byte strings
-        b = str.encode('--{}\n'.format(boundry) +
-                       'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
-                       'filename="{}"\r\n'.format(Path(file_path).name) +
-                       'Content-Type: {}\r\n'.format(file_type) +
-                       '\r\n')
-        if file_path == '':
-            b += b''
-        else:
-            b += Path(file_path).read_bytes()
-        b += str.encode('\n--{}--\n'.format(boundry))
+        zipped = zip(file_handles, file_paths, file_types)
+        b = b''
+        for file_handle, file_path, file_type in zipped:
+            # Byte strings
+            b += str.encode('--{}\n'.format(boundry) +
+                            'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
+                            'filename="{}"\r\n'.format(Path(file_path).name) +
+                            'Content-Type: {}\r\n'.format(file_type) +
+                            '\r\n')
+            if not file_path == '':
+                b += Path(file_path).read_bytes() + str.encode('\n')
+            b + str.encode('\n')
+        b += str.encode('--{}--\n'.format(boundry))
+
         filesize = len(b)
         h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
              ('Content-Length', str(filesize)),
@@ -154,23 +157,19 @@ class TestServer(helper.CPWebCase):
 
     def upload_metadata(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
-        headers, body = self.upload_file('myMetaData', fig.TEST_METADATA_SHORT)
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
         log(headers)
         headers += self.cookies
-        log(headers)
-        log(body)
         self.getPage('/analysis/validate_metadata', headers, 'POST', body)
         self.assertStatus('200 OK')
 
     def upload_data(self):
-        f_headers, f_body = self.upload_file('for_reads', fig.TEST_GZ, 'application/gzip')
-        r_headers, r_body = self.upload_file('rev_reads', fig.TEST_GZ, 'application/octet-stream')
-        b_headers, b_body = self.upload_file('barcodes', fig.TEST_BARCODES, 'application/gzip')
-        headers = f_headers + r_headers + b_headers + self.cookies
-        body = f_body + r_body + b_body
+        headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
+                                          [fig.TEST_GZ, '', fig.TEST_GZ],
+                                          ['application/gzip', 'application/octet-stream', 'application/gzip'])
         log(headers)
         log(body)
-        self.getPage('/analysis/process_data', headers, 'POST', body)
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
     def download_page_fail(self):

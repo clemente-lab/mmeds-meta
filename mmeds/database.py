@@ -447,7 +447,7 @@ class Database:
                 # adds NA if 'XX'
                 IC.append(int(parts[0][1:]))
             except ValueError as e:
-                if 'invalid literal' in e.args[0] and ": 'XX'" in e.arg[0]:
+                if 'invalid literal' in e.args[0] and ": 'XX'" in e.args[0]:
                     IC.append(np.nan)
                 else:
                     raise e
