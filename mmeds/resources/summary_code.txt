@@ -15,13 +15,6 @@ filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 # Load the configuration
 config = load_config(Path('config_file.txt').read_text(), Path('metadata.tsv'))
 
-# Set parameters used when making the legend
-font_size = int(config['font_size'])
-offset = float(font_size) / 2
-v_offset = 0
-fnt = ImageFont.truetype('{font}', size=font_size)
-title_fnt = ImageFont.truetype('{titlefont}', size=int(1.2 * font_size))
-
 # Load metadata file
 if '{analysis_type}' == 'qiime2':
     mdf = pd.read_csv('qiime_mapping_file.tsv', skiprows=[1], sep='\t')
@@ -143,109 +136,6 @@ otuColFill{level} <- scale_fill_manual(name = ~X.OTU.ID, values = otuAllColors{l
 otuAllRGB{level} <- data.frame(apply(data.frame(otuAllColors{level}), 1, col2rgb))
 names(otuAllRGB{level}) <- otu_max_colors_{level}
 =====
-taxa_color_py<source>
-# Set the height and width based on the number/size of the values to display
-height = 60 + 20 * len(otu_max_colors_{level})
-width = 80 + 9 * len(max(otu_max_colors_{level}, key=len))
-
-# Create a new image and setup the draw object
-im = PImage.new('RGB', (width, height), color='white')
-draw = ImageDraw.Draw(im)
-
-# Get the mean percentage of each taxon
-otu_percs = df[df.value > float(config['abundance_threshold'])].groupby('X.OTU.ID').mean()
-
-# Add headers
-draw.text((0, 0),
-          'Color AverageRelativeAbundence OTU',
-          fill=(0, 0, 0, 0),
-          font=title_fnt)
-
-v_offset += 30
-# Remove duplicate values
-for row in otu_percs.itertuples():
-    otu = row.Index
-    # Get the color
-    RGB = tuple(otuAllRGB{level}[otu])
-    # Draw the color
-    draw.rectangle([10, v_offset,
-                    30, 20 + v_offset],
-                   outline=(0, 0, 0),
-                   fill=RGB)
-
-    # Align sample names
-    perc = 100 * float(otu_percs.loc[otu])
-    if perc < 1:
-        line_text = '<0.01% {{}}'.format(otu)
-    elif perc < 10:
-        line_text = ' {{:.2f}}% {{}}'.format(perc, otu)
-    else:
-        line_text = '{{:.2f}}% {{}}'.format(perc, otu)
-    # Add the metadata value
-    draw.text((40, 12 - offset + v_offset),
-              line_text,
-              fill=(0, 0, 0, 0),
-              font=fnt)
-    v_offset += 20  # Update offset
-del draw
-
-# write to stdout
-im.save('taxa_legend_{level}.png', 'PNG')
-=====
-taxa_group_color_py<source>
-# Set parameters used when making the legend
-v_offset = 0
-
-# Filter by abundance
-filtered_df = df[df.value > float(config['abundance_threshold'])]
-
-# Set the height and width based on the number/size of the values to display
-height = ((20 * (filtered_df['{group}'].nunique() - 1)) +
-          (20 * filtered_df['X.OTU.ID'].nunique() *
-           filtered_df['{group}'].nunique()))
-width = 80 + 9 * len(max(filtered_df['X.OTU.ID'], key=len))
-
-# Create a new image and setup the draw object
-im = PImage.new('RGB', (width, height), color='white')
-draw = ImageDraw.Draw(im)
-
-groups = filtered_df.groupby('{group}')
-for name, group in groups:
-    # Add the metadata value
-    draw.text((40, 12 - offset + v_offset),
-              name,
-              fill=(0, 0, 0, 0),
-              font=title_fnt)
-    v_offset += 25  # Update offset
-    # Get the means for each group
-    means = group.groupby('X.OTU.ID').mean()
-    for row in means.itertuples():
-        perc = 100 * float(row.value)
-        # Align sample names
-        if perc < 10:
-            line_text = ' {{:.2f}}% {{}}'.format(perc, row.Index)
-        else:
-            line_text = '{{:.2f}}% {{}}'.format(perc, row.Index)
-
-        # Add the metadata value
-        draw.text((40, 10 - offset + v_offset),
-                  line_text,
-                  fill=(0, 0, 0, 0),
-                  font=fnt)
-        # Get the color
-        RGB = tuple(otuAllRGB{level}[str(row.Index)])
-        # Draw the color
-        draw.rectangle([10, v_offset,
-                        30, 20 + v_offset],
-                       outline=(0, 0, 0),
-                       fill=RGB)
-        v_offset += 20
-    v_offset += 5  # Update offset
-del draw
-
-# write to stdout
-im.save('taxa_{group}_legend_{level}.png', 'PNG')
-=====
 taxa_r<source>
 %%R -i df
 p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
@@ -269,65 +159,42 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
 
 ggsave("{plot}", height = 6, width = 8)
 =====
-legend_py<source>
-v_offset = 0
-height = 0
-for group_name in metadata_columns:
-    height += 40
-    for sample in mdf[group_name].drop_duplicates():
-        height += 20
+latex_legend_py<source>
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* endblock packages *))' in line:
+        packages_end = i
 
-# Create a new image and setup the draw object
-im = PImage.new('RGB', (300, height), color='white')
-draw = ImageDraw.Draw(im)
+for key, value in allRGB.items():
+    latex.append('\\definecolor{{{key}}}{{RGB}}{{{r},{g},{b}}}\n'.format(key=key,
+                                                                         r=value[1],
+                                                                         g=value[2],
+                                                                         b=value[3]))
 
-for group_name in metadata_columns:
-    group = mdf[group_name]
-    sub_im = PImage.new('RGB',
-                        (300, 40 + (20 * len(group.drop_duplicates()))),
-                        color='white')
-    sub_draw = ImageDraw.Draw(sub_im)
-    # Add the metadata catagory
-    draw.text((20, 20 - offset + v_offset),
-              str(group_name),
-              fill=(0, 0, 0),
-              font=fnt)
-    sub_draw.text((20, 20 - offset),
-                  str(group_name),
-                  fill=(0, 0, 0),
-                  font=title_fnt)
-    sub_offset = 0
-    # Remove duplicate values
-    for sample in group.sort_values().drop_duplicates():
-        v_offset += 20  # Update offset
-        sub_offset += 20
-        # Get the color
-        RGB = tuple(allRGB[color_maps[group_name][str(sample)]])
-        # Draw the color
-        draw.rectangle([10, 10 + v_offset,
-                        30, 30 + v_offset],
-                       outline=(0, 0, 0),
-                       fill=RGB)
-        sub_draw.rectangle([10, 10 + sub_offset,
-                            30, 30 + sub_offset],
-                           outline=(0, 0, 0),
-                           fill=RGB)
-        # Add the metadata value
-        draw.text((40, 20 - offset + v_offset),
-                  str(sample),
-                  fill=(0, 0, 0, 0),
-                  font=fnt)
-        sub_draw.text((40, 20 - offset + sub_offset),
-                      str(sample),
-                      fill=(0, 0, 0, 0),
-                      font=fnt)
-    sub_im.save(group_name + '-{legend}', 'PNG')
-    v_offset += 30
-    del sub_draw
-del draw
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)
+=====
+group_legends_py<source>
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* endblock packages *))' in line:
+        packages_end = i
 
-# write to stdout
-im.save('{legend}', 'PNG')
+for group_name, group in df.groupby('GroupName'):
+    zipped = zip(group.GroupID.unique(), group.Grouping.unique())
+    lists = ['{}/{}'.format(x, y) for x, y in zipped]
+    latex.append('\\def\\{group}{{{colors}}}\n'.format(group=group_name, colors=','.join(lists)))
+
+# Remove duplicate values
+for row in df:
+    new_lines = lines[:packages_end] + latex + lines[packages_end:]
+
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)
 =====
 alpha_py_qiime1<source>
 # Read in the data
@@ -416,9 +283,9 @@ for group_name in metadata_columns:
     colors = [color_maps[group_name][str(x)] for x in group[group_name]]
     group = group.assign(GroupID=colors)
 
-    # Assign information for grouping, drop specific catagories
+    # Assign information for grouping
     group_names = [group_name for x in group[group_name]]
-    group = group.assign(GroupName=group_names).drop(group_name, axis='columns')
+    group = group.assign(GroupName=group_names)
 
     # Rename columns and append to the list of dataframes
     new_names = {{
@@ -533,3 +400,132 @@ The above plot represents the average value of alpha diversity at each sampling 
 =====
 beta_caption<source>
 The above plot represents the first three compenents created when performing Principle Component Analysis on the Beta diversity of the samples.
+=====
+otu_legend_latex<source>
+((*- if cell.metadata.{level}: -*))
+\vspace{{5mm}}%
+{{\raggedright{{}}%
+    \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
+    \vspace{{3mm}}%
+    \foreach \A / \B in \otu{level} {{
+        \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
+    }}
+}}%
+\vspace{{5mm}}%
+((*- endif -*))
+=====
+otu_group_legend_latex<source>
+((*- if cell.metadata.{level}{meta}: -*))
+\vspace{{5mm}}%
+{{\raggedright{{}}%
+    \texttt{{Legend grouped by {meta}}}\\
+    \texttt{{Color\hspace{{3mm}}Abundance\hspace{{3mm}}OTU}} \\
+    \vspace{{3mm}}%
+    \foreach \A / \B in \otu{level}{meta} {{
+        \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{5mm}} \texttt{{\B\%\hspace{{8mm}}\A}}\\
+    }}
+}}%
+\vspace{{5mm}}%
+((*- endif -*))
+=====
+diversity_legend_latex<source>
+((*- if cell.metadata.{meta}: -*))
+\vspace{{5mm}}%
+{{\raggedright{{}}%
+    \texttt{{Legend for {meta}}}\\
+    \texttt{{Color\hspace{{3mm}}Metadata}}\\
+    \vspace{{3mm}}%
+    \foreach \A / \B in \{meta} {{
+        \hspace{{1mm}}\crule[\A]{{5mm}}{{5mm}}\hspace{{7mm}}\texttt{{\B}}\\%
+    }}
+}}%
+\vspace{{5mm}}%
+((*- endif -*))
+=====
+otu_group_legend_py<source>
+
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* block packages *))' in line:
+        packages_start = i
+    elif '((* endblock packages *))' in line:
+        packages_end = i
+# Filter by abundance
+filtered_df = df[df.value > float(config['abundance_threshold'])]
+
+groups = filtered_df.groupby('{meta}')
+latex = []
+for name, group in groups:
+    # Get the means for each group
+    means = group.groupby('X.OTU.ID').mean()
+    line_latex = []
+    for row in means.itertuples():
+        perc = 100 * float(row.value)
+        # Align sample names
+        if perc < 10:
+            line_text = '{{}}/ {{:.2f}}'.format(row.Index.replace('_', '\_'), perc)
+        else:
+            line_text = '{{}}/{{:.2f}}'.format(row.Index.replace('_', '\_'), perc)
+        line_latex.append(line_text)
+    latex.append('\\def\\{{colorset}}{{{{{{colors}}}}}}\n'.format(colorset='otu{level}{meta}',
+                                                          colors=','.join(line_latex)))
+
+new_lines = lines[:packages_end] + latex + lines[packages_end:]
+
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)
+=====
+otu_legend_py<source>
+with open('mod_revtex.tplx', 'r') as f:
+    lines = f.readlines()
+for i, line in enumerate(lines):
+    if '((* block packages *))' in line:
+        packages_start = i
+    elif '((* endblock packages *))' in line:
+        packages_end = i
+
+
+# Get the mean percentage of each taxon
+otu_percs = df[df.value > float(config['abundance_threshold'])].groupby('X.OTU.ID').mean()
+
+entries = []
+# Remove duplicate values
+for row in otu_percs.itertuples():
+    otu = row.Index
+
+    # Get the color
+    RGB = tuple(otuAllRGB{level}[otu])
+
+    # Align sample names
+    perc = 100 * float(otu_percs.loc[otu])
+    if perc < 1:
+        perc_text = '<0.01'
+    elif perc < 10:
+        perc_text = ' {{:.2f}}'.format(perc)
+    else:
+        perc_text = '{{:.2f}}'.format(perc)
+
+    entries.append([otu, RGB, perc_text])
+
+
+# Create the latex for the legends
+latex = []
+colors = []
+for key, value, perc in entries:
+    latex.append('\\definecolor{{{{{{key}}}}}}{{{{RGB}}}}{{{{{{r}},{{g}},{{b}}}}}}\n'.format(key=key.replace('_', '\_'),
+                                                                      r=value[0],
+                                                                      g=value[1],
+                                                                      b=value[2]
+                                                                     ))
+    colors.append('{{}}/{{}}'.format(key.replace('_', '\_'), perc))
+
+
+latex.append('\\def\\{{colorset}}{{{{{{colors}}}}}}\n'.format(colorset='otu{level}',
+                                                      colors=','.join(colors)))
+new_lines = lines[:packages_end] + latex + lines[packages_end:]
+
+with open('mod_revtex.tplx', 'w') as f:
+    for line in new_lines:
+        f.write(line)
