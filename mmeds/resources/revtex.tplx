@@ -65,9 +65,11 @@
 
 \usepackage{titlesec}
 \usepackage{alphalph}
+\usepackage{pgffor}
 \renewcommand*{\thesubsection}{
     \alphalph{\value{subsection}}
 }
+\newcommand\crule[3][black]{\textcolor{#1}{\rule{#2}{#3}}}
 ((* endblock packages *))
 
 %===============================================================================
@@ -123,6 +125,13 @@
 % Output
 %===============================================================================
 
+% Display stream output with coloring
+((* block stream *))
+    \begin{Verbatim}[commandchars=\\\{\}]
+((( output.text | wrap_text(86) | escape_latex | ansi2latex )))
+    \end{Verbatim}
+((* endblock stream *))
+
 ((* block output_group -*))
 ((*- if cell.metadata.hide_output: -*))
 ((*- else -*))
@@ -132,13 +141,6 @@
     \clearpage
 ((*- endif -*))
 ((* endblock output_group *))
-
-% Display stream ouput with coloring
-((* block stream *))
-    \begin{Verbatim}[commandchars=\\\{\}]
-((( output.text | wrap_text(86) | escape_latex | ansi2latex )))
-    \end{Verbatim}
-((* endblock stream *))
 
 %==============================================================================
 % Define macro custom_add_prompt() (derived from add_prompt() macro in style_ipython.tplx)
