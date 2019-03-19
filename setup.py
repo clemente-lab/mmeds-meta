@@ -40,6 +40,7 @@ setup(name='mmeds',
           'locustio',
           'codecov',
           'pytest-cov',
-          'pytidylib'
+          'pytidylib',
+          'imapclient'
       ],
       zip_safe=False)

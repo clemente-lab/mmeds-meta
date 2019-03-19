@@ -126,9 +126,6 @@ class TestServer(helper.CPWebCase):
         headers += self.cookies
         self.getPage('/analysis/validate_metadata', headers, 'POST', body)
         self.assertStatus('200 OK')
-        sleep(10)
-        mail = recieve_email(1)
-        log(mail[1])
 
     def upload_data(self):
         headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
@@ -136,6 +133,12 @@ class TestServer(helper.CPWebCase):
                                           ['application/gzip', 'application/octet-stream', 'application/gzip'])
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
+        sleep(5)
+        mail = recieve_email(1)
+        code = mail[0].get_payload()
+        log(code)
+        a_code = code.split('access code:')[1].splitlines()[1]
+        log('Access Code: {}'.format(a_code))
 
     def test_c_analysis(self):
         pass

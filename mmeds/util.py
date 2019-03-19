@@ -8,8 +8,9 @@ from numpy import nan, issubdtype, int64, float64, datetime64, number
 from functools import wraps
 from inspect import isfunction
 from smtplib import SMTP
-from imaplib import IMAP4_SSL
+from imapclient import IMAPClient
 from email.message import EmailMessage
+from email import message_from_bytes
 
 import mmeds.config as fig
 import pandas as pd
@@ -424,18 +425,24 @@ def generate_error_html(file_fp, errors, warnings):
     for error in errors:
         row, col, item = error.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['red', item])
-        markup[int(row)][int(col)] = ['red', item]
+            top.append(('red', item))
+        elif row == '0':
+            markup[int(row) + 3][int(col)] = ['red', item]
+        else:
+            markup[int(row) + 4][int(col)] = ['red', item]
 
     # Add warnings to markup table
     for warning in warnings:
         row, col, item = warning.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['orange', item])
-        markup[int(row)][int(col)] = ['orange', item]
+            top.append(('orange', item))
+        elif row == '0':
+            markup[int(row) + 3][int(col)] = ['orange', item]
+        else:
+            markup[int(row) + 4][int(col)] = ['orange', item]
 
     # Add general warnings and errors
-    for color, er in top:
+    for color, er in set(top):
         html += '<h3 style="color:{}">'.format(color) + '\n' + er + '</h3>\n'
 
     # Get all the table and header names
@@ -696,26 +703,23 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
             script += ' -A {summary}'.format(kwargs['summary'])
         cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
         run(['/bin/bash', '-c', cmd], check=True)
-    return cmd
 
 
-def recieve_email(num_messages=1, search='FROM "{}"'.format(fig.MMEDS_EMAIL)):
+def recieve_email(num_messages=1, search=['FROM', fig.MMEDS_EMAIL]):
     """
     Fetch email from the test account
     :num_messages: An int. How many emails to return, starting with the most recent
     :search: A string. Any specific search criteria, default is emails from mmeds
     """
-    mail = IMAP4_SSL('imap.gmail.com')
-    mail.login(fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
-    log(mail.list())
-    mail.select('inbox')
-    result, data = mail.search(None, search)
-    messages = []
-    all_mail = data[0].split(b' ')
-    for message in all_mail[len(all_mail) - num_messages:]:
-        typ, m = mail.fetch(message, 'ALL')
-        messages.append((typ, m))
-    mail.logout()
+    with IMAPClient('imap.gmail.com') as client:
+        client.login(fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
+        client.select_folder('inbox')
+        all_mail = client.search(search)
+        messages = []
+        response = client.fetch(all_mail[-1 * num_messages:], ['RFC822'])
+        for message_id, data in response.items():
+            emessage = message_from_bytes(data[b'RFC822'])
+            messages.append(emessage)
     return messages
 
 

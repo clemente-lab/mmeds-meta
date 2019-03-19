@@ -43,8 +43,9 @@ def check_header(header, col_index):
     # Check for illegal characters
     if ILLEGAL_IN_HEADER.intersection(set(header)):
         illegal_chars = ILLEGAL_IN_HEADER.intersection(set(header))
-        errors.append(row_col + 'Illegal Header Error: Illegal character(s) %s. Replace header %s of column %d' %
-                      (' '.join(illegal_chars), header, col_index))
+        err = 'Illegal Header Error: Illegal character(s) {}. Replace header {} of column {}'
+        illegal = '({})'.format(','.join(illegal_chars).replace(' ', '<space>').replace('\t', '<tab>'))
+        errors.append(row_col + err.format(illegal, header, col_index))
     # Check for HIPAA non-compliant headers
     if header.lower() in HIPAA_HEADERS:
         errors.append(row_col + 'PHI Header Error: Potentially identifying information in %s of column\t%d' %
