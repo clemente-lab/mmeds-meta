@@ -184,7 +184,7 @@ class DatabaseTests(TestCase):
     def test_a_tables(self):
         log(self.df.columns)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
-            self.df = db.load_ICD_codes(self.df)
+            self.df = db.import_ICD_codes(self.df)
         log(self.df.columns)
         tables = self.df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
@@ -295,7 +295,7 @@ class DatabaseTests(TestCase):
             # Check that the difference is equal to the rows belonging to the cleared user
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
 
-    def test_e_load_ICD_codes(self):
+    def test_e_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():
             # Check the first character

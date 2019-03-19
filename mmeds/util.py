@@ -7,6 +7,9 @@ from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
 from functools import wraps
 from inspect import isfunction
+from smtplib import SMTP
+from imaplib import IMAP4_SSL
+from email.message import EmailMessage
 
 import mmeds.config as fig
 import pandas as pd
@@ -228,10 +231,8 @@ def load_mapping_file(file_fp, delimiter):
     for (table, header) in df.axes[1]:
         tables.append(table)
         for column in df[table]:
-            log(df[table][column])
             if '' in df[table][column]:
                 errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
-                continue
             try:
                 df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
             # Additional metadata won't have an entry so will automatically be treated as a string
@@ -408,6 +409,8 @@ def generate_error_html(file_fp, errors, warnings):
     :warnings: A list of the warnings the metadata file produced
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1], skiprows=[2, 3, 4], na_filter=False)
+    df.replace('NA', nan, inplace=True)
+
     html = '<!DOCTYPE html>\n<html>\n'
     html += '<link type="text/javascript" rel="stylesheet" href="/CSS/stylesheet.css">\n'
     html += '<title> MMEDS Metadata Errors </title>\n'
@@ -415,6 +418,8 @@ def generate_error_html(file_fp, errors, warnings):
     markup = defaultdict(dict)
     top = []
 
+    log('generate errors')
+    log(errors)
     # Add Errors to markup table
     for error in errors:
         row, col, item = error.split('\t')
@@ -426,26 +431,39 @@ def generate_error_html(file_fp, errors, warnings):
     for warning in warnings:
         row, col, item = warning.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['yellow', item])
-        markup[int(row)][int(col)] = ['yellow', item]
+            top.append(['orange', item])
+        markup[int(row)][int(col)] = ['orange', item]
 
     # Add general warnings and errors
     for color, er in top:
-        html += '<h3 style="color:{}">'.format(color) + er + '</h3>\n'
+        html += '<h3 style="color:{}">'.format(color) + '\n' + er + '</h3>\n'
 
     # Get all the table and header names
     tables = []
-    headers = []
+    columns = []
+    count = 0
+    table_html = ''
+    column_html = ''
     for (table, header) in df.axes[1]:
-        tables.append(table)
-        headers.append(header)
+        for column in df[table]:
+            try:
+                color, er = markup[-1][count]
+                table_html += '<th style="color:{}">'.format(color) + table + '\n' + er + '</th>\n'
+                column_html += '<th style="color:{}">'.format(color) + column + '\n' + er + '</th>\n'
+            except KeyError:
+                table_html += '<th>' + table + '</th>\n'
+                column_html += '<th>' + column + '</th>\n'
 
-    # Create the table and header rows of the table
+            tables.append(table)
+            columns.append(column)
+            count += 1
+
+    # Create the table and column rows of the table
     html += '<table>'
-    html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
-    html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
+    html += '<tr>' + table_html + '\n</tr>'
+    html += '<tr>' + column_html + '\n</tr>'
     # Fill out the table
-    html += build_error_rows(df, tables, headers, markup)
+    html += build_error_rows(df, tables, columns, markup)
     html += '</table>\n</body>\n</html>'
     return html
 
@@ -658,14 +676,47 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         code=kwargs.get('code'),
         password=kwargs.get('password')
     )
-    script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
-    if 'summary' in kwargs.keys():
-        script += ' -A {summary}'.format(kwargs['summary'])
-    cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
-    log(cmd)
-    if not testing:
+    if testing:
+        # Setup the email to be sent
+        msg = EmailMessage()
+        msg['From'] = fig.MMEDS_EMAIL
+        msg['To'] = toaddr
+        # Add in any necessary text fields
+        msg.set_content(email_body)
+
+        # Connect to the server and send the mail
+        server = SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(fig.MMEDS_EMAIL, 'mmeds_server')
+        server.send_message(msg)
+        server.quit()
+    else:
+        script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
+        if 'summary' in kwargs.keys():
+            script += ' -A {summary}'.format(kwargs['summary'])
+        cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
         run(['/bin/bash', '-c', cmd], check=True)
     return cmd
+
+
+def recieve_email(num_messages=1, search='FROM "{}"'.format(fig.MMEDS_EMAIL)):
+    """
+    Fetch email from the test account
+    :num_messages: An int. How many emails to return, starting with the most recent
+    :search: A string. Any specific search criteria, default is emails from mmeds
+    """
+    mail = IMAP4_SSL('imap.gmail.com')
+    mail.login(fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
+    log(mail.list())
+    mail.select('inbox')
+    result, data = mail.search(None, search)
+    messages = []
+    all_mail = data[0].split(b' ')
+    for message in all_mail[len(all_mail) - num_messages:]:
+        typ, m = mail.fetch(message, 'ALL')
+        messages.append((typ, m))
+    mail.logout()
+    return messages
 
 
 def pyformat_translate(value):

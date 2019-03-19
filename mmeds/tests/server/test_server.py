@@ -6,8 +6,7 @@ from pathlib import Path
 import mmeds.config as fig
 import mmeds.error as err
 from mmeds.authentication import add_user
-from mmeds.util import insert_error, insert_html, load_html, log
-from mmeds.database import Database
+from mmeds.util import insert_error, insert_html, load_html, log, recieve_email
 
 import cherrypy as cp
 from cherrypy.test import helper
@@ -94,9 +93,7 @@ class TestServer(helper.CPWebCase):
     #  Access  #
     ############
 
-    def test_b_access(self):
-        self.download_page()
-        #self.download_block()
+    def test_b_upload(self):
         self.upload_metadata()
         self.upload_data()
 
@@ -126,19 +123,25 @@ class TestServer(helper.CPWebCase):
     def upload_metadata(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
-        log(headers)
         headers += self.cookies
         self.getPage('/analysis/validate_metadata', headers, 'POST', body)
         self.assertStatus('200 OK')
+        sleep(10)
+        mail = recieve_email(1)
+        log(mail[1])
 
     def upload_data(self):
         headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
-                                          [fig.TEST_GZ, '', fig.TEST_GZ],
+                                          [fig.TEST_READS, '', fig.TEST_BARCODES],
                                           ['application/gzip', 'application/octet-stream', 'application/gzip'])
-        log(headers)
-        log(body)
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
+
+    def test_c_analysis(self):
+        pass
+
+    def test_d_download(self):
+        self.download_page()
 
     def download_page_fail(self):
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
