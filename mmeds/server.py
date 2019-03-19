@@ -60,9 +60,14 @@ class MMEDSbase:
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
         log('check upload {}'.format(access_code))
-        log(self.processes)
-        log(self.processes.get(access_code).is_alive())
-        if self.processes.get(access_code) is not None and self.processes[access_code].exitcode is not None:
+        log(cp.session['processes'])
+        log(cp.session['processes'].get(access_code))
+        try:
+            log(cp.session['processes'].get(access_code).exitcode)
+        except AttributeError:
+            pass
+        if cp.session['processes'].get(access_code) is not None and\
+                cp.session['processes'][access_code].exitcode is None:
             log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
 
@@ -376,7 +381,7 @@ class MMEDSauthentication(MMEDSbase):
             cp.session['user'] = username
             cp.session['temp_dir'] = tempfile.TemporaryDirectory()
             cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
-            self.processes = {}
+            cp.session['processes'] = {}
             page = self.format_html('welcome', title='Welcome to Mmeds', user=self.get_user())
             log('Login Successful')
         except err.InvalidLoginError as e:
@@ -478,7 +483,7 @@ class MMEDSanalysis(MMEDSbase):
             self.check_upload(access_code)
             p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
             cp.log('Valid config file')
-            self.processes[access_code] = p
+            cp.session['processes'][access_code] = p
             page = self.format_html('welcome', title='Welcome to MMEDS')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('welcome', title='Welcome to MMEDS')

@@ -15,6 +15,7 @@ from cherrypy.test import helper
 class TestServer(helper.CPWebCase):
 
     server_code = 'server_code_' + fig.get_salt(10)
+    access_code = None
 
     def setup_server():
         cp.tree.mount(MMEDSserver(True))
@@ -94,8 +95,11 @@ class TestServer(helper.CPWebCase):
     ############
 
     def test_b_upload(self):
+        self.login()
         self.upload_metadata()
         self.upload_data()
+        self.download_page()
+        self.download_block()
 
     def upload_files(self, file_handles, file_paths, file_types):
         """ Helper method to setup headers and body for uploading a file """
@@ -121,10 +125,8 @@ class TestServer(helper.CPWebCase):
         return h, b
 
     def upload_metadata(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
-        headers += self.cookies
-        self.getPage('/analysis/validate_metadata', headers, 'POST', body)
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
     def upload_data(self):
@@ -137,8 +139,7 @@ class TestServer(helper.CPWebCase):
         mail = recieve_email(1)
         code = mail[0].get_payload()
         log(code)
-        a_code = code.split('access code:')[1].splitlines()[1]
-        log('Access Code: {}'.format(a_code))
+        self.access_code = code.split('access code:')[1].splitlines()[1]
 
     def test_c_analysis(self):
         pass
@@ -160,13 +161,14 @@ class TestServer(helper.CPWebCase):
         # Login
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
         # Start test analysis
-        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.server_code,
+        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
                                                                                     fig.TEST_TOOL),
                      headers=self.cookies)
+        sleep(1)
         # Try to access
-        self.getPage("/download/download_page?access_code={}".format(self.server_code), headers=self.cookies)
+        self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
         page = load_html(fig.HTML_DIR / 'welcome.html', user=fig.SERVER_USER, title='Welcome to MMEDS')
-        page = insert_error(page, 31, 'Requested study is currently unavailable')
+        page = insert_error(page, 22, 'Requested study is currently unavailable')
         self.assertBody(page)
 
         # Wait for analysis to finish
