@@ -85,7 +85,6 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def test_a_auth(self):
-        return
         self.login()
         self.logout()
         self.login_fail_password()
@@ -96,41 +95,10 @@ class TestServer(helper.CPWebCase):
     ############
 
     def test_b_access(self):
-        # self.download_page()
-        # self.download_block()
+        self.download_page()
+        #self.download_block()
         self.upload_metadata()
         self.upload_data()
-
-    def upload_r_metadata(self):
-        self.setup_tutorial('tut09_files', 'FileDemo')
-
-        # Test upload
-        filesize = 5
-        h = [('Content-type', 'multipart/form-data; boundary=x'),
-             ('Content-Length', str(105 + filesize))]
-        b = ('--x\n'
-             'Content-Disposition: form-data; name="myFile"; '
-             'filename="hello.txt"\r\n'
-             'Content-Type: text/plain\r\n'
-             '\r\n')
-        b += 'a' * filesize + '\n' + '--x--\n'
-        self.getPage('/upload', h, 'POST', b)
-        self.assertBody('''<html>
-        <body>
-            myFile length: %d<br />
-            myFile filename: hello.txt<br />
-            myFile mime-type: text/plain
-        </body>
-        </html>''' % filesize)
-
-        # Test download
-        self.getPage('/download')
-        self.assertStatus('200 OK')
-        self.assertHeader('Content-Type', 'application/x-download')
-        self.assertHeader('Content-Disposition',
-                          # Make sure the filename is quoted.
-                          'attachment; filename="pdf_file.pdf"')
-        self.assertEqual(len(self.body), 85698)
 
     def upload_files(self, file_handles, file_paths, file_types):
         """ Helper method to setup headers and body for uploading a file """
