@@ -427,7 +427,7 @@ class Database:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def load_ICD_codes(self, df):
+    def import_ICD_codes(self, df):
         """
         Parse the ICD codes and load them into the appropriate tables
         """
@@ -439,12 +439,18 @@ class Database:
                 parts = code.split('.')
                 # Gets the first character
                 IBC.append(parts[0][0])
-                # Gets the next two numbers
-                IC.append(int(parts[0][1:]))
-                # Gets the next three characters
+                # Gets the next 4th, 5th, and 6th characters
                 ID.append(parts[1][:-1])
                 # Gets the final character
                 IDe.append(parts[1][-1])
+                # Tries to add the 2nd and 3rd numbers
+                # adds NA if 'XX'
+                IC.append(int(parts[0][1:]))
+            except ValueError as e:
+                if 'invalid literal' in e.args[0] and ": 'XX'" in e.arg[0]:
+                    IC.append(np.nan)
+                else:
+                    raise e
             # If the value is nan it will error
             except AttributeError:
                 IBC.append(np.nan)
@@ -504,7 +510,7 @@ class Database:
                 kwargs['metadata'] = metadata
                 access_code = self.mongo_import(study_name, study_type, **kwargs)
             elif table == 'ICDCode':
-                df = self.load_ICD_codes(df)
+                df = self.import_ICD_codes(df)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
