@@ -133,9 +133,9 @@ class TestServer(helper.CPWebCase):
         self.assertEqual(len(self.body), 85698)
 
     def upload_file(self, file_handle, file_path, file_type='text/tab-seperated-values'):
-
-        # Test upload
+        """ Helper method to setup headers and body for uploading a file """
         boundry = fig.get_salt(10)
+        # Byte strings
         b = str.encode('--{}\n'.format(boundry) +
                        'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
                        'filename="{}"\r\n'.format(Path(file_path).name) +
@@ -163,8 +163,8 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
     def upload_data(self):
-        f_headers, f_body = self.upload_file('for_reads', fig.TEST_READS, 'application/gzip')
-        r_headers, r_body = self.upload_file('rev_reads', fig.TEST_READS, 'application/octet-stream')
+        f_headers, f_body = self.upload_file('for_reads', fig.TEST_GZ, 'application/gzip')
+        r_headers, r_body = self.upload_file('rev_reads', fig.TEST_GZ, 'application/octet-stream')
         b_headers, b_body = self.upload_file('barcodes', fig.TEST_BARCODES, 'application/gzip')
         headers = f_headers + r_headers + b_headers + self.cookies
         body = f_body + r_body + b_body

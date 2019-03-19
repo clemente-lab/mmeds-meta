@@ -124,6 +124,7 @@ TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
+TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
 TEST_FILES = {
     'reads': TEST_READS,

@@ -7,8 +7,6 @@ from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
 from functools import wraps
 from inspect import isfunction
-from cherrypy import HTTPError
-import cherrypy
 
 import mmeds.config as fig
 import pandas as pd
@@ -166,7 +164,6 @@ def get_col_type(raw_column):
         }
 
         for cell in raw_column:
-            log('cell: {}, is_num: {}'.format(cell, is_numeric(cell)))
             # Don't count NA
             if cell == 'NA':
                 continue
