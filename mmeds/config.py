@@ -56,7 +56,7 @@ CONFIG = {
         'server.socket_port': sec.SERVER_PORT,
         'server.socket_timeout': 1000000000,
         'server.max_request_body_size': 10000000000,
-        'server.ssl_module': 'pyopenssl',
+        'server.ssl_module': 'builtin',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
         'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'log.error_file': str(DATABASE_DIR / 'site.log'),
