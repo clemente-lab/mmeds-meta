@@ -132,16 +132,3 @@ def test_load_html():
     # Assert no errors, warnings are okay
     for warn in errors:
         assert not ('error' in warn or 'Error' in warn)
-
-
-def test_send_email():
-    args = {
-        'email': 'test@test.com',
-        'user': 'Dan',
-        'analysis': 'qiime2-DeBlur',
-        'study': 'SomeStudy',
-        'cemail': 'ctest@ctest.com'
-    }
-    for message in ['upload', 'reset', 'change', 'analysis', 'error']:
-        result = util.send_email(message, testing=True, **args)
-        assert result

@@ -68,43 +68,42 @@ def check_cell(row_index, col_index, cell, col_type, check_date, is_additional):
     :check_date: If True check the cell for a valid date
     :is_additional: If true the column is additional metadata and there are fewer checks
     """
-    # An NA cell will not generate any errors
-    if cell == 'NA':
-        return []
     errors = []
     warnings = []
-    row_col = str(row_index) + '\t' + str(col_index) + '\t'
-    # Check for non-standard NAs
-    if cell in NAs:
-        errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
-                      (cell, row_index, col_index))
+    # An NA cell will not generate any errors
+    if not cell == 'NA':
+        row_col = str(row_index) + '\t' + str(col_index) + '\t'
+        # Check for non-standard NAs
+        if cell in NAs:
+            errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
+                          (cell, row_index, col_index))
 
-    # Check for consistent types in the column
-    if not issubdtype(col_type, datetime64):
-        # If the cast fails for this cell the data must be the wrong type
-        try:
-            col_type(cell)
-        except ValueError:
-            message = 'Mixed Type {}: Value {} does not match column type {}'
-            if is_additional:
-                warnings.append(row_col + message.format('Warning', cell, col_type))
-            else:
-                errors.append(row_col + message.format('Error', cell, col_type))
-    # Check for empty fields
-    if '' == cell:
-        errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
+        # Check for consistent types in the column
+        if not issubdtype(col_type, datetime64):
+            # If the cast fails for this cell the data must be the wrong type
+            try:
+                col_type(cell)
+            except ValueError:
+                message = 'Mixed Type {}: Value {} does not match column type {}'
+                if is_additional:
+                    warnings.append(row_col + message.format('Warning', cell, col_type))
+                else:
+                    errors.append(row_col + message.format('Error', cell, col_type))
+        # Check for empty fields
+        if '' == cell:
+            errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
-    if isinstance(cell, str):
-        # Check for trailing or preceding whitespace
-        if not cell == cell.strip():
-            errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
-                          (cell, row_index))
-    # Check if this is the cell with the invalid date
-    if check_date:
-        try:
-            pd.to_datetime(cell)
-        except ValueError:
-            errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
+        if isinstance(cell, str):
+            # Check for trailing or preceding whitespace
+            if not cell == cell.strip():
+                errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
+                              (cell, row_index))
+        # Check if this is the cell with the invalid date
+        if check_date:
+            try:
+                pd.to_datetime(cell)
+            except ValueError:
+                errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
     return errors, warnings
 
 
@@ -138,7 +137,7 @@ def check_string_column(column, col_index):
     return warnings
 
 
-def check_column(raw_column, col_index, is_additional):
+def check_column(raw_column, col_index, is_additional=False):
     """
     Validate that there are no issues with the provided column of metadata.
     =======================================================================
@@ -305,7 +304,7 @@ def check_table(table_df, name, all_headers, study_name):
     start_col = None
     end_col = None
     if not name == 'AdditionalMetaData':
-        missing_cols = set(fig.TABLE_COLS[name]).difference(table_df.columns)
+        missing_cols = set(fig.TABLE_COLS[name]).difference(set(table_df.columns))
         if missing_cols:
             text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
             errors.append(text.format(', '.join(missing_cols), name))
@@ -348,11 +347,12 @@ def validate_mapping_file(file_fp, delimiter='\t'):
         # If the table shouldn't exist add and error and skip checking it
         if table not in fig.TABLE_ORDER:
             errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
-        table_df = df[table]
-        (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
-        errors += new_errors
-        warnings += new_warnings
-        log('table: {}, all_headers: {}'.format(table, all_headers))
+        else:
+            table_df = df[table]
+            (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
+            errors += new_errors
+            warnings += new_warnings
+            log('table: {}, all_headers: {}'.format(table, all_headers))
 
     # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)

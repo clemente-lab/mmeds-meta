@@ -31,8 +31,8 @@ services:
 - mongodb
 - xvfb
 before_install:
-- openssl aes-256-cbc -K $encrypted_0fabcfc21ca1_key -iv $encrypted_0fabcfc21ca1_iv
-  -in ./mmeds/secrets.py.enc -out ./mmeds/secrets.py -d
+- openssl aes-256-cbc -K $encrypted_a7e0fbcaffa3_key -iv $encrypted_a7e0fbcaffa3_iv
+  -in ./mmeds/secrets.py.enc -out mmeds/secrets.py -d
 - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
   -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
 - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh
@@ -53,7 +53,8 @@ install:
 - ls ~/.modules/modulefiles
 - cat ~/.modules/modulefiles/qiime2/2019.1
 script:
-- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s
+- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+  -s
 - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 - pip uninstall mmeds -y
 - sudo rm -rf ~/.modules/qiime2/var/cache
