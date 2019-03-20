@@ -43,7 +43,9 @@ CONFIG_PARAMETERS = [
     'font_size'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
-MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+# MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
+TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 
 
@@ -54,7 +56,7 @@ CONFIG = {
         'server.socket_port': sec.SERVER_PORT,
         'server.socket_timeout': 1000000000,
         'server.max_request_body_size': 10000000000,
-        'server.ssl_module': 'builtin',
+        'server.ssl_module': 'pyopenssl',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
         'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'log.error_file': str(DATABASE_DIR / 'site.log'),
@@ -98,8 +100,6 @@ TEST_ROOT_PASS = ''
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
 TEST_USER_0 = 'testuser0'
-TEST_EMAIL = 'mmeds.tester@gmail.com'
-TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'singlereads'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'

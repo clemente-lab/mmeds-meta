@@ -13,6 +13,7 @@ from email.message import EmailMessage
 from email import message_from_bytes
 
 import mmeds.config as fig
+import mmeds.secrets as sec
 import pandas as pd
 
 
@@ -692,9 +693,10 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         msg.set_content(email_body)
 
         # Connect to the server and send the mail
-        server = SMTP('smtp.gmail.com', 587)
+        # server = SMTP('smtp.gmail.com', 587)
+        server = SMTP('smtp.office365.com', 587)
         server.starttls()
-        server.login(fig.MMEDS_EMAIL, 'mmeds_server')
+        server.login(fig.MMEDS_EMAIL, sec.EMAIL_PASS)
         server.send_message(msg)
         server.quit()
     else:
@@ -711,8 +713,8 @@ def recieve_email(num_messages=1, search=['FROM', fig.MMEDS_EMAIL]):
     :num_messages: An int. How many emails to return, starting with the most recent
     :search: A string. Any specific search criteria, default is emails from mmeds
     """
-    with IMAPClient('imap.gmail.com') as client:
-        client.login(fig.TEST_EMAIL, fig.TEST_EMAIL_PASS)
+    with IMAPClient('outlook.office365.com') as client:
+        client.login(fig.TEST_EMAIL, sec.TEST_EMAIL_PASS)
         client.select_folder('inbox')
         all_mail = client.search(search)
         messages = []

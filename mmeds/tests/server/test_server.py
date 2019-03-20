@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mmeds.config as fig
 import mmeds.error as err
-from mmeds.authentication import add_user
+from mmeds.authentication import add_user, remove_user
 from mmeds.util import insert_error, insert_html, load_html, log, recieve_email
 
 import cherrypy as cp
@@ -25,7 +25,6 @@ class TestServer(helper.CPWebCase):
         cp.config.update(test_config)
 
     setup_server = staticmethod(setup_server)
-    add_user(fig.SERVER_USER, fig.TEST_PASS, fig.TEST_EMAIL, True)
     """
     with Database(fig.TEST_DIR, user='root', owner=fig.SERVER_USER, testing=True) as db:
         access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
@@ -35,6 +34,12 @@ class TestServer(helper.CPWebCase):
                                                           access_code=server_code,
                                                           testing=True)
                                                           """
+
+    def test_a_setup(self):
+        add_user(fig.SERVER_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+
+    def test_z_cleanup(self):
+        remove_user(fig.SERVER_USER, testing=True)
 
     ############
     #  Stress  #
@@ -84,7 +89,7 @@ class TestServer(helper.CPWebCase):
         page = insert_error(page, 14, err.InvalidLoginError.message)
         self.assertBody(page)
 
-    def test_a_auth(self):
+    def test_b_auth(self):
         self.login()
         self.logout()
         self.login_fail_password()
@@ -94,7 +99,7 @@ class TestServer(helper.CPWebCase):
     #  Access  #
     ############
 
-    def test_b_upload(self):
+    def test_c_upload(self):
         self.login()
         self.upload_metadata()
         self.upload_data()
@@ -135,16 +140,16 @@ class TestServer(helper.CPWebCase):
                                           ['application/gzip', 'application/octet-stream', 'application/gzip'])
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        sleep(5)
+        sleep(10)
         mail = recieve_email(1)
-        code = mail[0].get_payload()
+        code = mail[0].get_payload(decode=True).decode('utf-8')
         log(code)
         self.access_code = code.split('access code:')[1].splitlines()[1]
 
-    def test_c_analysis(self):
+    def test_d_analysis(self):
         pass
 
-    def test_d_download(self):
+    def test_e_download(self):
         self.download_page()
 
     def download_page_fail(self):
