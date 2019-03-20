@@ -1,8 +1,8 @@
 # mmeds-meta
 
-[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=master)](https://travis-cl.com/clemente-lab/mmeds-meta)
-[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
-[![CodeFactor](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/badge/master)](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/overview/master)
+[![Build Status](https://travis-ci.com/clemente-lab/mmeds-meta.png?branch=Enhancement-ServerRestructure)](https://travis-cl.com/clemente-lab/mmeds-meta)
+[![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/Enhancement-ServerRestructure/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
+[![CodeFactor](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/badge/Enhancement-ServerRestructure)](https://codefactor.io/repository/github/clemente-lab/mmeds-meta/overview/Enhancement-ServerRestructure)
 
 
 
