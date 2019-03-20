@@ -426,8 +426,8 @@ class MMEDSNotebook():
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
-            output = run(cmd.split(' '), check=True)
-            output = run(cmd.split(' '), check=True)
+            output = run(cmd.split(' '), check=True, capture_output=True)
+            output = run(cmd.split(' '), check=True, capture_output=True)
         except RuntimeError:
             print(output)
             log(output)
