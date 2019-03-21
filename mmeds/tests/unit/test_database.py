@@ -212,7 +212,6 @@ class DatabaseTests(TestCase):
                     raise e
 
     def test_b_junction_tables(self):
-        return
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
@@ -225,7 +224,6 @@ class DatabaseTests(TestCase):
                 assert jresult > 0
 
     def test_c_table_protection(self):
-        return
         """
         The purpose of this test is to ensure that a user can only access data
         that they uploaded or that is made public. It does this by querying
@@ -255,7 +253,6 @@ class DatabaseTests(TestCase):
                                     assert result[i] in self.df0[table][col].tolist()
 
     def test_d_metadata_checks(self):
-        return
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             warnings = db.check_repeated_subjects(self.df['Subjects'])
         assert warnings
@@ -268,7 +265,6 @@ class DatabaseTests(TestCase):
         assert not errors
 
     def test_e_clear_user_data(self):
-        return
         """
         Test that Database.clear_user_data('user') will
         empty all rows belonging exclusively to user
@@ -305,7 +301,6 @@ class DatabaseTests(TestCase):
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
 
     def test_e_import_ICD_codes(self):
-        return
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():
             # Check the first character
