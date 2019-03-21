@@ -127,8 +127,8 @@ TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
 TEST_FILES = {
-    'reads': TEST_READS,
     'barcodes': TEST_BARCODES,
+    'for_reads': TEST_READS,
     'metadata': TEST_METADATA
 }
 TEST_CHECKS = {}
@@ -212,13 +212,13 @@ JUNCTION_TABLES = [
 USER_FILES = set(map(
     re.compile,
     [
-        'reads',
+        '\w*_reads',
         'barcodes',
         'metadata',
         'mapping',
         'visualizations_dir',
-        'analysis*_summary',
-        'analysis*_summary_dir'
+        'analysis\w*_summary',
+        'analysis\w*_summary_dir'
     ]))
 
 ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])

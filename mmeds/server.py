@@ -183,9 +183,9 @@ class MMEDSdownload(MMEDSbase):
                 files, path = db.get_mongo_files(access_code)
 
             page = self.format_html('download_select_file', title='Select Download')
-            for f in files.keys():
-                if any(regex.match(f) for regex in USER_FILES):
-                    page = insert_html(page, 24, '<option value="{}">{}</option>'.format(f, f))
+            for k, f in sorted(files.items(), reverse=True):
+                if f is not None and any(regex.match(k) for regex in USER_FILES):
+                    page = insert_html(page, 24, '<option value="{}">{}</option>'.format(k, k))
             cp.session['download_access'] = access_code
         except (err.MissingUploadError, err.UploadInUseError) as e:
                 page = self.format_html('welcome')

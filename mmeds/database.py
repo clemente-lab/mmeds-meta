@@ -38,13 +38,16 @@ class MetaData(men.DynamicDocument):
         with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
             f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
             f.write('Key\tPath\n')
-            for key in self.files:
+            for key, file_path in self.files.items():
+                # Skip non existent files
+                if file_path is None:
+                    continue
                 # If it's a key for an analysis point to the file index for that analysis
-                if isinstance(self.files[key], dict):
+                elif isinstance(file_path, dict):
                     f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
                 # Otherwise just write the value
                 else:
-                    f.write('{}\t{}\n'.format(key, self.files[key]))
+                    f.write('{}\t{}\n'.format(key, file_path))
         super(MetaData, self).save()
 
 

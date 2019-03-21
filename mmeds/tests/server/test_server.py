@@ -25,15 +25,6 @@ class TestServer(helper.CPWebCase):
         cp.config.update(test_config)
 
     setup_server = staticmethod(setup_server)
-    """
-    with Database(fig.TEST_DIR, user='root', owner=fig.SERVER_USER, testing=True) as db:
-        access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
-                                                          'qiime',
-                                                          reads=fig.TEST_READS,
-                                                          barcodes=fig.TEST_BARCODES,
-                                                          access_code=server_code,
-                                                          testing=True)
-                                                          """
 
     def test_a_setup(self):
         log('===== Test Server Start =====')
@@ -90,22 +81,9 @@ class TestServer(helper.CPWebCase):
         page = insert_error(page, 14, err.InvalidLoginError.message)
         self.assertBody(page)
 
-    def test_b_auth(self):
-        self.login()
-        self.logout()
-        self.login_fail_password()
-        self.login_fail_username()
-
     ############
     #  Access  #
     ############
-
-    def test_c_upload(self):
-        self.login()
-        self.upload_metadata()
-        self.upload_data()
-        self.download_page()
-        self.download_block()
 
     def upload_files(self, file_handles, file_paths, file_types):
         """ Helper method to setup headers and body for uploading a file """
@@ -147,12 +125,6 @@ class TestServer(helper.CPWebCase):
         log(code)
         self.access_code = code.split('access code:')[1].splitlines()[1]
 
-    def test_d_analysis(self):
-        pass
-
-    def test_e_download(self):
-        self.download_page()
-
     def download_page_fail(self):
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
         self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
@@ -170,7 +142,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
                                                                                     fig.TEST_TOOL),
                      headers=self.cookies)
-        sleep(1)
+        sleep(2)
         # Try to access
         self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
         page = load_html(fig.HTML_DIR / 'welcome.html', user=fig.SERVER_USER, title='Welcome to MMEDS')
@@ -179,39 +151,14 @@ class TestServer(helper.CPWebCase):
 
         # Wait for analysis to finish
         sleep(int(fig.TEST_TOOL.split('-')[-1]))
-        del page
 
-        """
         # Try to access again
-        self.getPage("/download/download_page?access_code={}".format(self.server_code), headers=self.cookies)
+        self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
 
         page = load_html(fig.HTML_DIR / 'download_select_file.html',
-                         user=fig.SERVER_USER, title='MMEDS Analysis Server')
-        for i, f in enumerate(fig.TEST_FILES):
-            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
-
-        self.assertBody(page)
-        self.getPage('/logout', headers=self.cookies)
-        """
-
-    def download_page(self):
-        return
-
-        # Test download
-        self.getPage('/download')
-        self.assertStatus('200 OK')
-        self.assertHeader('Content-Type', 'application/x-download')
-        self.assertHeader('Content-Disposition',
-                          # Make sure the filename is quoted.
-                          'attachment; filename="pdf_file.pdf"')
-        self.assertEqual(len(self.body), 85698)
-        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
-        self.getPage("/download/download_page?access_code={}".format(self.server_code), headers=self.cookies)
-        with open(fig.HTML_DIR / 'select_download.html') as f:
-            page = f.read().format(fig.SERVER_USER)
-
-        for i, f in enumerate(fig.TEST_FILES):
-            page = insert_html(page, 10 + i, '<option value="{}">{}</option>'.format(f, f))
+                         user=fig.SERVER_USER, title='Select Download')
+        for i, f in enumerate(sorted(fig.TEST_FILES)):
+            page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
 
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
@@ -230,3 +177,22 @@ class TestServer(helper.CPWebCase):
 
     def query(self):
         return
+
+    def test_b_auth(self):
+        self.login()
+        self.logout()
+        self.login_fail_password()
+        self.login_fail_username()
+
+    def test_c_upload(self):
+        self.login()
+        self.upload_metadata()
+        self.upload_data()
+        self.download_block()
+        self.download_page_fail()
+
+    def test_d_analysis(self):
+        pass
+
+    def test_e_download(self):
+        pass
