@@ -587,7 +587,6 @@ class MMEDSserver(MMEDSbase):
         self.download = MMEDSdownload(testing)
         self.analysis = MMEDSanalysis(testing)
         self.upload = MMEDSupload(testing)
-        self.download = MMEDSdownload(testing)
         self.auth = MMEDSauthentication(testing)
 
     @cp.expose

@@ -37,6 +37,7 @@ before_install:
   -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
 - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh
   --quiet
+- mysql --version
 - chmod +x ~/miniconda.sh
 - "~/miniconda.sh -b &>/dev/null"
 - export PATH=~/miniconda2/bin:$PATH
