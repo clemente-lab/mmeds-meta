@@ -36,6 +36,7 @@ class TestServer(helper.CPWebCase):
                                                           """
 
     def test_a_setup(self):
+        log('===== Test Server Start =====')
         add_user(fig.SERVER_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
 
     def test_z_cleanup(self):

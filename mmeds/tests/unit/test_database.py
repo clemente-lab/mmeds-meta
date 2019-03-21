@@ -182,6 +182,7 @@ class DatabaseTests(TestCase):
     #   Test SQL   #
     ################
     def test_a_tables(self):
+        log('====== Test Database Start ======')
         log(self.df.columns)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             self.df = db.import_ICD_codes(self.df)

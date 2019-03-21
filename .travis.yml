@@ -53,13 +53,17 @@ install:
 - ls ~/.modules/modulefiles
 - cat ~/.modules/modulefiles/qiime2/2019.1
 script:
-- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-  -s
+- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server
+- bash <(curl -s https://codecov.io/bash) -F server
+- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit
+- bash <(curl -s https://codecov.io/bash) -F unit
+- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/integration
+- bash <(curl -s https://codecov.io/bash) -F integration
 - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
 - pip uninstall mmeds -y
 - sudo rm -rf ~/.modules/qiime2/var/cache
 - sudo rm -rf ~/.modules/qiime1/var/cache
 - sudo rm -rf ~/.modules/mmeds-stable/var/cache
 - sudo find ~/.modules/ -type f -name *.pyc -delete
-after_success:
-- bash <(curl -s https://codecov.io/bash)
