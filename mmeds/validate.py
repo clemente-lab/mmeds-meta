@@ -352,7 +352,6 @@ def validate_mapping_file(file_fp, delimiter='\t'):
             (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
             errors += new_errors
             warnings += new_warnings
-            log('table: {}, all_headers: {}'.format(table, all_headers))
 
     # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)
