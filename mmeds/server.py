@@ -344,17 +344,16 @@ class MMEDSauthentication(MMEDSbase):
         """
         Perform the actions necessary to sign up a new user.
         """
-        pass_err = check_password(password1, password2)
-        user_err = check_username(username, testing=self.testing)
-        if pass_err:
-            page = self.format_html('auth_sign_up_page')
-            page = insert_error(page, 25, pass_err)
-        elif user_err:
-            page = self.format_html('auth_sign_up_page')
-            page = insert_error(page, 25, user_err)
-        else:
+
+        try:
+            check_password(password1, password2)
+            check_username(username, testing=self.testing)
             add_user(username, password1, email, testing=self.testing)
             page = self.format_html('index')
+        except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
+            page = self.format_html('auth_sign_up_page')
+            for message in e.message.split(','):
+                page = insert_error(page, 25, message)
         return page
 
     @cp.expose
@@ -375,16 +374,15 @@ class MMEDSauthentication(MMEDSbase):
         page = self.format_html('auth_change_password', title='Change Password')
 
         # Check the old password matches
-        if validate_password(self.get_user(), password0, testing=self.testing):
+        try:
+            validate_password(self.get_user(), password0, testing=self.testing)
             # Check the two copies of the new password match
-            errors = check_password(password1, password2)
-            if not errors:
-                change_password(self.get_user(), password1, testing=self.testing)
-                page = insert_html(page, 9, '<h4> Your password was successfully changed. </h4>')
-            else:
-                page = insert_html(page, 9, errors)
-        else:
-            page = insert_html(page, 9, '<h4> The given current password is incorrect. </h4>')
+            check_password(password1, password2)
+            change_password(self.get_user(), password1, testing=self.testing)
+            page = insert_html(page, 9, 'Your password was successfully changed.')
+        except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
+            for message in e.messages.split(','):
+                page = insert_error(page, 9, message)
         return page
 
     @cp.expose
@@ -406,11 +404,11 @@ class MMEDSauthentication(MMEDSbase):
         """ Page for reseting a user's password. """
         try:
             page = self.format_html('index')
-            reset_password(username, email)
-            page = insert_html(page, 14, '<h4> A new password has been sent to your email. </h4>')
+            reset_password(username, email, testing=self.testing)
+            page = insert_html(page, 14, 'A new password has been sent to your email.')
         except err.NoResultError:
-            page = insert_html(
-                page, 14, '<h4> No account exists with the providied username and email. </h4>')
+            page = insert_error(
+                page, 14, 'No account exists with the provided username and email.')
         return page
 
 

@@ -682,7 +682,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         analysis=kwargs.get('analysis_type'),
         study=kwargs.get('study_name'),
         code=kwargs.get('code'),
-        password=kwargs.get('password')
+        password=kwargs.get('password'),
+        contact= fig.CONTACT_EMAIL
     )
     if testing:
         # Setup the email to be sent

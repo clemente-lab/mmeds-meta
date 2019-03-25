@@ -3,7 +3,7 @@ from string import ascii_uppercase, ascii_lowercase
 from mmeds.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
 from mmeds.util import send_email, log
-from mmeds.error import NoResultError, InvalidLoginError
+from mmeds.error import NoResultError, InvalidLoginError, InvalidPasswordErrors, InvalidUsernameError
 
 
 def add_user(username, password, email, testing=False):
@@ -68,24 +68,28 @@ def check_password(password1, password2):
     if len(password1) <= 10:
         errors.append('Error: Passwords must be longer than 10 characters.')
 
-    return '<br />'.join(errors)
+    if errors:
+        raise InvalidPasswordErrors(errors)
 
 
 def check_username(username, testing=False):
     """ Perform checks to ensure the username is valid. """
 
+    # Don't allow public as a username
+    if username.lower() == 'public':
+        raise InvalidUsernameError('Error: Username is invalid.')
+
     # Check the username does not contain invalid characters
     invalid_chars = set('\'\"\\/ ;,!@#$%^&*()|[{}]`~')
     if set(username).intersection(invalid_chars):
-        return 'Error: Username contains invalid characters.'
+        raise InvalidUsernameError('Error: Username contains invalid characters.')
 
     # Check the username has not already been used
     with Database(STORAGE_DIR, testing=testing) as db:
         # Get all existing usernames
         used_names = db.get_all_usernames()
     if username in used_names:
-        return 'Error: Username is already taken.'
-    return
+        raise InvalidUsernameError('Error: Username is already taken.')
 
 
 def reset_password(username, email, testing=False):
@@ -99,8 +103,10 @@ def reset_password(username, email, testing=False):
     password_hash = sha256.hexdigest()
 
     with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
+        if not db.email == email:
+            raise NoResultError('No account exists with the provided username and email.')
         result = db.change_password(password_hash, salt)
-        send_email(email, username, password, 'reset')
+    send_email(email, username, password=password, message='reset', testing=testing)
     return result
 
 
@@ -116,8 +122,7 @@ def change_password(username, password, testing=False):
     with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
         # Check the email matches the one on file
         db.change_password(password_hash, salt)
-        if not testing:
-            send_email(db.get_email(), username, password, 'change', testing=testing)
+        send_email(db.get_email(), username, password=password, message='change', testing=testing)
 
 
 def get_email(username, testing=False):

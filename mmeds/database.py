@@ -128,7 +128,7 @@ class Database:
             result = self.cursor.fetchone()
             # Ensure the user exists
             if result is None:
-                raise NoResultError('No account exists with the providied username and email.')
+                raise NoResultError('No account exists with the provided username and email.')
             self.user_id = int(result[0])
             self.email = result[1]
 

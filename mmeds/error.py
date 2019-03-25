@@ -62,6 +62,17 @@ class NoResultError(MmedsError):
     def __init__(self, message):
         self.message = message
 
+class InvalidUsernameError(MmedsError):
+    """ Exception for errors caused by a query returning no result """
+
+    def __init__(self, message):
+        self.message = message
+
+class InvalidPasswordErrors(MmedsError):
+    """ Exception for errors caused by a query returning no result """
+
+    def __init__(self, message):
+        self.message = ','.join(message)
 
 class UploadInUseError(MmedsError):
     """ Exception thrown when the requested dataset is currently in use """
