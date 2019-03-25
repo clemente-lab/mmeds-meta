@@ -759,7 +759,6 @@ class Database:
 
         # Raise an error if the upload does not exist
         if mdata is None:
-            log('Missing upload error')
             raise MissingUploadError()
 
         mdata.last_accessed = datetime.utcnow()

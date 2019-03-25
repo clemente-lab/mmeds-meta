@@ -4,7 +4,7 @@ class MmedsError(Exception):
 
 class MissingUploadError(MmedsError):
     """ Exception for missing uploads. """
-    message = 'No data exist for this access code'
+    message = 'No data belonging to the user exists for the given access code'
 
 
 class TableAccessError(MmedsError):

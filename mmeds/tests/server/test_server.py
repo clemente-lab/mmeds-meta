@@ -6,7 +6,7 @@ from tidylib import tidy_document
 
 import mmeds.config as fig
 import mmeds.error as err
-from mmeds.authentication import add_user, remove_user
+from mmeds.authentication import remove_user
 from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
 
 import cherrypy as cp
@@ -33,10 +33,6 @@ class TestServer(helper.CPWebCase):
     def test_z_cleanup(self):
         remove_user(fig.SERVER_USER, testing=True)
 
-    ############
-    #  Stress  #
-    ############
-
     def test_b_index(self):
         self.getPage('/index')
         self.assertStatus('200 OK')
@@ -54,29 +50,26 @@ class TestServer(helper.CPWebCase):
         self.getPage('/index')
         self.assertStatus('200 OK')
         home_page = self.body
-        self.getPage('/download/download_log')
+        self.getPage('/analysis/query_page')
         self.assertBody(home_page)
         self.getPage('/upload/upload_page')
         self.assertBody(home_page)
 
     def sign_up(self):
+        # Check the sign up input page
+        self.getPage('/auth/sign_up_page')
+        self.assertStatus('200 OK')
+
         addr = '/auth/sign_up?username={}&email={}&password1={}&password2={}'
         # Test signup with an invalid username
         self.getPage(addr.format('public', fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS))
         self.assertStatus('200 OK')
-        log('========================================')
-        log(self.body)
         # Test signup with an invalid password
         self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS + 'xx'))
         self.assertStatus('200 OK')
-        log('========================================')
-        log(self.body)
         # Test successful signup
         self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS))
         self.assertStatus('200 OK')
-        log('========================================')
-        log(self.body)
-        log('========================================')
 
     def login(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
@@ -110,6 +103,24 @@ class TestServer(helper.CPWebCase):
         page = insert_error(page, 14, err.InvalidLoginError.message)
         self.assertBody(page)
 
+    def change_password(self):
+        self.getPage('/auth/input_password', self.cookies)
+        log(self.body)
+        self.assertStatus('200 OK')
+        temp_pass = 'thisIsTemp1234@'
+        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=fig.TEST_PASS,
+                                                                                                    new=temp_pass),
+                     self.cookies)
+        log(self.body)
+        self.assertStatus('200 OK')
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, temp_pass))
+        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(new=fig.TEST_PASS,
+                                                                                                    old=temp_pass),
+                     self.cookies)
+        log(self.body)
+        self.assertStatus('200 OK')
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
+
     ############
     #  Access  #
     ############
@@ -138,6 +149,11 @@ class TestServer(helper.CPWebCase):
         return h, b
 
     def upload_metadata(self):
+        # Check the page for uploading metadata
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/upload/upload_metadata?study_type=qiime', self.cookies)
+        self.assertStatus('200 OK')
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
@@ -174,6 +190,8 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def upload_data(self):
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
         headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
                                           [fig.TEST_READS, '', fig.TEST_BARCODES],
                                           ['application/gzip', 'application/octet-stream', 'application/gzip'])
@@ -184,6 +202,21 @@ class TestServer(helper.CPWebCase):
         code = mail[0].get_payload(decode=True).decode('utf-8')
         log(code)
         self.access_code = code.split('access code:')[1].splitlines()[1]
+
+    def modify_upload(self):
+        headers, body = self.upload_files(['myData'], [fig.TEST_READS], ['application/gzip'])
+        self.getPage('/upload/modify_upload?data_type=for_reads&access_code=badcode',
+                     headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        orig_page = load_html(fig.HTML_DIR / 'upload_select_page.html', title='Upload Type', user=fig.SERVER_USER)
+        err_page = insert_error(orig_page, 22, err.MissingUploadError().message)
+        self.assertBody(err_page)
+        self.getPage('/upload/modify_upload?data_type=for_reads&access_code={}'.format(self.access_code),
+                     headers + self.cookies, 'POST', body)
+        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=fig.SERVER_USER)
+        page = insert_html(page, 22, 'Upload modification successful')
+        self.assertStatus('200 OK')
+        self.assertBody(page)
 
     def download_page_fail(self):
         self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
@@ -230,10 +263,17 @@ class TestServer(helper.CPWebCase):
             self.getPage(address, headers=self.cookies)
             self.assertStatus('200 OK')
 
+    def convert(self):
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
+        addr = '/upload/convert_metadata?convertTo=mixs&unitCol=&skipRows='
+        self.getPage(addr, headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
     def test_c_auth(self):
         self.not_logged_in()
         self.sign_up()
         self.login()
+        self.change_password()
         self.logout()
         self.login_fail_password()
         self.login_fail_username()
@@ -242,6 +282,8 @@ class TestServer(helper.CPWebCase):
         self.login()
         self.upload_metadata()
         self.upload_data()
+        self.modify_upload()
         self.download_page_fail()
         self.download_block()
         self.download()
+        self.convert()
