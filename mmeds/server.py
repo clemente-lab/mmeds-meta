@@ -351,7 +351,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def upload_metadata(self, study_type):
         """ Page for uploading Qiime data """
-        page = self.format_html('upload_metadata_file', title='Upload Qiime', version=study_type)
+        page = self.format_html('upload_metadata_file', title='Upload Metadata', version=study_type)
         return page
 
 
@@ -367,7 +367,7 @@ class MMEDSauthentication(MMEDSbase):
     @cp.expose
     def sign_up_page(self):
         """ Return the page for signing up. """
-        return open(HTML_DIR / 'sign_up_page.html')
+        return self.format_html('auth_sign_up_page')
 
     @cp.expose
     def login(self, username, password):
@@ -394,7 +394,7 @@ class MMEDSauthentication(MMEDSbase):
     @cp.expose
     def logout(self):
         """ Expires the session and returns to login page """
-        cp.log('Logout user {}'.format(cp.session['user']))
+        cp.log('Logout user {}'.format(self.get_user()))
         cp.lib.sessions.expire()
         return open(HTML_DIR / 'index.html')
 
@@ -404,7 +404,7 @@ class MMEDSauthentication(MMEDSbase):
         Perform the actions necessary to sign up a new user.
         """
         pass_err = check_password(password1, password2)
-        user_err = check_username(username)
+        user_err = check_username(username, testing=self.testing)
         if pass_err:
             page = self.format_html('auth_sign_up_page')
             page = insert_error(page, 25, pass_err)
@@ -512,9 +512,9 @@ class MMEDSanalysis(MMEDSbase):
                 # If there are no errors or warnings proceed to upload the data files
                 log('No errors or warnings')
                 cp.session['uploaded_files'] = [metadata_copy]
-                page = self.format_html('upload_data_files', title='Upload data')
+                page = self.format_html('upload_data_files', title='Upload Data')
         except err.MetaDataError as e:
-            page = self.format_html('upload_files_page', title='Upload data')
+            page = self.format_html('upload_metadata_file', title='Upload Metadata')
             page = insert_error(page, 22, e.message)
         return page
 

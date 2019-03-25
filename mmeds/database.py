@@ -709,11 +709,11 @@ class Database:
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
-        # Go through each column
+        # Go through each row
         for j in range(len(df.index)):
             sql = """SELECT * FROM Subjects WHERE"""
             args = {}
-            # Check if there is a matching entry already in the database
+            # Check if there is an entry already in the database that matches every column
             for i, column in enumerate(df):
                 value = df[column][j]
                 if pd.isnull(value):  # Use NULL for NA values
@@ -733,9 +733,10 @@ class Database:
             except pms.err.InternalError as e:
                 raise MetaDataError(e.args[1])
             if found >= 1:
-                warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2,
-                                                                                                  subject_col,
-                                                                                                  j + 2))
+                log(sql)
+                log(args)
+                warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
+                warnings.append(warning.format(row=j, col=subject_col))
         return warnings
 
     def check_user_study_name(self, study_name):

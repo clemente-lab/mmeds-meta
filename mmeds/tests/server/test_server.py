@@ -2,11 +2,12 @@ from mmeds.server import MMEDSserver
 from time import sleep
 from collections import defaultdict
 from pathlib import Path
+from tidylib import tidy_document
 
 import mmeds.config as fig
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import insert_error, insert_html, load_html, log, recieve_email
+from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
 
 import cherrypy as cp
 from cherrypy.test import helper
@@ -28,7 +29,6 @@ class TestServer(helper.CPWebCase):
 
     def test_a_setup(self):
         log('===== Test Server Start =====')
-        add_user(fig.SERVER_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
 
     def test_z_cleanup(self):
         remove_user(fig.SERVER_USER, testing=True)
@@ -37,7 +37,7 @@ class TestServer(helper.CPWebCase):
     #  Stress  #
     ############
 
-    def test_index(self):
+    def test_b_index(self):
         self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
@@ -48,6 +48,35 @@ class TestServer(helper.CPWebCase):
     ####################
     #  Authentication  #
     ####################
+
+    def not_logged_in(self):
+        """ Check that trying to upload while not logged in takes you to the homepage """
+        self.getPage('/index')
+        self.assertStatus('200 OK')
+        home_page = self.body
+        self.getPage('/download/download_log')
+        self.assertBody(home_page)
+        self.getPage('/upload/upload_page')
+        self.assertBody(home_page)
+
+    def sign_up(self):
+        addr = '/auth/sign_up?username={}&email={}&password1={}&password2={}'
+        # Test signup with an invalid username
+        self.getPage(addr.format('public', fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS))
+        self.assertStatus('200 OK')
+        log('========================================')
+        log(self.body)
+        # Test signup with an invalid password
+        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS + 'xx'))
+        self.assertStatus('200 OK')
+        log('========================================')
+        log(self.body)
+        # Test successful signup
+        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS))
+        self.assertStatus('200 OK')
+        log('========================================')
+        log(self.body)
+        log('========================================')
 
     def login(self):
         self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
@@ -109,9 +138,40 @@ class TestServer(helper.CPWebCase):
         return h, b
 
     def upload_metadata(self):
+        # Check an invalid metadata filetype
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_metadata_file.html', title='Upload Metadata', user=fig.SERVER_USER)
+        err = 'Error: gz is not a valid filetype.'
+        page = insert_error(page, 22, err)
+        self.assertBody(page)
+
+        # Check a metadata file that errors
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_FAIL], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        # Check a metadata file that produces warnings
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_WARN], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html', title='Warnings', user=fig.SERVER_USER)
+        warning = '34\t3\tStdDev Warning: Value 25.025 outside of two standard deviations of mean in column 3'
+        page = insert_warning(page, 22, warning)
+        self.assertBody(page)
+
+        # Check a metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=fig.SERVER_USER)
+        self.assertBody(page)
 
     def upload_data(self):
         headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
@@ -160,39 +220,28 @@ class TestServer(helper.CPWebCase):
         for i, f in enumerate(sorted(fig.TEST_FILES)):
             page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
 
+        self.assertStatus('200 OK')
         self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
 
     def download(self):
-        return
-        downloads = [
-            'barcodes',
-            'reads',
-            'metadata'
-        ]
-        for download in downloads:
+        for download in fig.TEST_FILES:
             address = '/download/select_download?download={}'.format(download)
-            self.getPage(address)
-            print(self.body)
+            self.getPage(address, headers=self.cookies)
+            self.assertStatus('200 OK')
 
-    def query(self):
-        return
-
-    def test_b_auth(self):
+    def test_c_auth(self):
+        self.not_logged_in()
+        self.sign_up()
         self.login()
         self.logout()
         self.login_fail_password()
         self.login_fail_username()
 
-    def test_c_upload(self):
+    def test_d_upload(self):
         self.login()
         self.upload_metadata()
         self.upload_data()
-        self.download_block()
         self.download_page_fail()
-
-    def test_d_analysis(self):
-        pass
-
-    def test_e_download(self):
-        pass
+        self.download_block()
+        self.download()

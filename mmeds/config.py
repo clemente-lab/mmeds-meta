@@ -94,7 +94,7 @@ TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
 if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 
-TEST_PASS = 'testpass'
+TEST_PASS = 'testpassL33TG@m3r'
 TEST_USER_PASS = 'password'
 TEST_ROOT_PASS = ''
 TEST_USER = 'testuser'
@@ -117,6 +117,7 @@ TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
+TEST_METADATA_WARN = str(TEST_PATH / 'test_metadata_warn.tsv')
 
 TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test_metadata_fail_0.tsv')
 TEST_METADATA_VALID = str(TEST_PATH / 'test_metadata_valid.tsv')
