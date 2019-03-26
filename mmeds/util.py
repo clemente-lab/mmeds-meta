@@ -192,11 +192,11 @@ def get_col_type(raw_column):
 
 def load_ICD_codes():
     """ Load all known ICD codes and return them as a dictionary """
-    ICD_codes = {
-        'XXX.XXXX': 'Subject is healthy to the best of our knowledge',
-        'NA': 'No Value',
-        nan: 'No Value'
-    }
+    # The dictionary is defined this way so every new entry gets 'XXXX' added automatically
+    ICD_codes = defaultdict(lambda: {'XXXX': 'Unknown details'})
+    ICD_codes['XXX'] = {'XXXX': 'Subject is healthy to the best of our knowledge'}
+    ICD_codes['NA'] = {'NA': 'No Value'}
+    ICD_codes[nan] = {nan: 'No Value'}
     with open(fig.STORAGE_DIR / 'icd10cm_codes_2018.txt') as f:
         # Parse each line
         for line in f:
@@ -208,8 +208,10 @@ def load_ICD_codes():
             # Fill in codes with 'X'
             while len(code) < 7:
                 code += 'X'
-            code = code[:3] + '.' + code[3:]
-            ICD_codes[code] = description
+            ICD_codes[code[:3]][code[3:]] = description
+    log(ICD_codes)
+    log(type(ICD_codes))
+    log(type(ICD_codes['XXX']))
     return ICD_codes
 
 

@@ -252,7 +252,10 @@ def check_ICD_codes(column, col_index):
     ICD_codes = load_ICD_codes()
     errors = []
     for i, cell in enumerate(column):
-        if not pd.isnull(cell) and ICD_codes.get(cell) is None:
+        parts = cell.split('.')
+        if not pd.isnull(cell) and\
+                (ICD_codes.get(parts[0]) is None or
+                 ICD_codes.get(parts[0]).get(parts[1]) is None):
             errors.append('{}\t{}\tICD Code Error: Invalid ICD code {} in row {}'.format(i, col_index, cell, i))
     return errors
 
