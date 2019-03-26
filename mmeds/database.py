@@ -218,7 +218,19 @@ class Database:
             del columns[columns.index('id' + table)]
 
         sql, args = self.create_query_from_row(df, table, row, columns)
+        if 'Illness' in table:
+            log('========== Before Foreign =================')
+            log(table)
+            log(foreign_keys)
+            log(sql)
+            log(args)
         sql, args = self.add_foreign_keys(df, sql, args, foreign_keys, row)
+        if 'Illness' in table:
+            log('========== After Foreign =================')
+            log(table)
+            log(sql)
+            log(args)
+
         return sql, args
 
     def add_foreign_keys(self, df, sql, args, foreign_keys, row):
@@ -231,9 +243,14 @@ class Database:
             fsql, fargs = self.build_sql(df, ftable, row)
 
             self.cursor.execute(fsql, fargs)
-            fresults = self.cursor.fetchall()
-            # Get the resulting foreign key
-            fresult = fresults[0][0]
+            try:
+                # Get the resulting foreign key
+                fresult = self.cursor.fetchone()[0]
+            except TypeError as e:
+                log(fsql)
+                log(fargs)
+                raise e
+
             # Add it to the original query
             if '=' in sql:
                 sql += ' AND '
@@ -256,12 +273,10 @@ class Database:
                 sql += ' AND '
             sql += quote_sql(('{column} = %({column})s'), column=column)
             args['`{}`'.format(column)] = pyformat_translate(value)
-            # Add the user check for protected tables
-            if table in fig.PROTECTED_TABLES:
-                sql += ' AND user_id = %(id)s'
-                args['id'] = self.user_id
+        # Add the user check for protected tables
         if table in fig.PROTECTED_TABLES:
-            sql += ' AND user_id = ' + str(self.user_id)
+            sql += ' AND user_id = %(id)s'
+            args['id'] = self.user_id
         return sql, args
 
     def check_email(self, email):
@@ -330,17 +345,16 @@ class Database:
                 table = parsed[index + 1]
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
-            return data, header
         except pms.err.OperationalError as e:
             # If it's a select command denied error
             if e.args[0] == 1142:
                 raise TableAccessError(e.args[1])
-            else:
-                raise e
+            raise e
         except pms.err.ProgrammingError as e:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
-            return str(e), header
+            data = str(e)
+        return data, header
 
     def purge(self):
         """
@@ -383,20 +397,26 @@ class Database:
 
         # Go through each row
         for row in range(len(df.index)):
+            log('ROW {}'.format(row))
             sql, args = self.build_sql(df, table, row)
-            found = self.cursor.execute(sql, args)
-            if found >= 1:
-                # Append the key found for that column
-                result = self.cursor.fetchone()
-                self.IDs[table][row] = int(result[0])
-            else:
-                # Create the entry
-                this_row = ''.join(list(map(str, df[table].loc[row])))
-                try:
-                    # See if this table entry already exists in the current input file
-                    key = seen[this_row]
-                    self.IDs[table][row] = key
-                except KeyError:
+            # Get any foreign keys which can also make this row unique
+            fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
+            # Create the entry
+            this_row = ''.join(list(map(str, df[table].iloc[row])) + fkeys)
+            try:
+                # See if this table entry already exists in the current input file
+                key = seen[this_row]
+                self.IDs[table][row] = key
+            except KeyError:
+                found = self.cursor.execute(sql, args)
+                if table == 'IllnessDetails':
+                    log("found: {}".format(found))
+                if found >= 1:
+                    # Append the key found for that column
+                    result = self.cursor.fetchone()
+                    self.IDs[table][row] = int(result[0])
+                    seen[this_row] = int(result[0])
+                else:
                     # If not add it and give it a unique key
                     seen[this_row] = current_key
                     self.IDs[table][row] = current_key
@@ -452,11 +472,9 @@ class Database:
             f.write('\t'.join(columns) + '\n')
             # For each row in the input file
             for i in range(len(df.index)):
-                line = self.create_import_line(df,
-                                               table,
-                                               structure,
-                                               columns,
-                                               i)
+                line = self.create_import_line(df, table, structure, columns, i)
+                if table == 'IllnessDetails' and i > 3:
+                    log(line)
                 f.write('\t'.join(list(map(str, line))) + '\n')
         return filename
 
@@ -507,29 +525,6 @@ class Database:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def import_ICD_codes(self, df):
-        """
-        Parse the ICD codes and load them into the appropriate tables
-        """
-        df = parse_ICD_codes(df)
-
-        # Load the parsed values into the appropriate tables
-        for table in ['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails']:
-            self.create_import_data(table, df)
-            filename = self.create_import_file(table, df)
-
-            if isinstance(filename, WindowsPath):
-                filename = str(filename).replace('\\', '\\\\')
-            # Load the newly created file into the database
-            sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
-                  table + ' FIELDS TERMINATED BY "\\t"' +\
-                  ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-            self.cursor.execute(sql)
-            # Commit the inserted data
-            self.db.commit()
-
-        return df
-
     def read_in_sheet(self, metadata, study_type, **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
@@ -541,7 +536,7 @@ class Database:
         if not self.path.is_dir():
             self.path.mkdir()
         # Read in the metadata file to import
-        df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+        df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
         sql = 'SET FOREIGN_KEY_CHECKS=0'
@@ -550,16 +545,15 @@ class Database:
 
         columns = df.columns.levels[0].tolist()
         column_order = [TABLE_ORDER.index(col) for col in columns]
-        tables = [x for _, x in sorted(zip(column_order, columns))]
+        tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
 
         # Create file and import data for each regular table
         for table in tables:
+            log('Import table {}'.format(table))
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 kwargs['metadata'] = metadata
                 access_code = self.mongo_import(study_name, study_type, **kwargs)
-            elif table == 'ICDCode':
-                df = self.import_ICD_codes(df)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)

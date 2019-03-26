@@ -209,9 +209,6 @@ def load_ICD_codes():
             while len(code) < 7:
                 code += 'X'
             ICD_codes[code[:3]][code[3:]] = description
-    log(ICD_codes)
-    log(type(ICD_codes))
-    log(type(ICD_codes['XXX']))
     return ICD_codes
 
 
