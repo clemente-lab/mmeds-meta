@@ -381,7 +381,7 @@ class MMEDSauthentication(MMEDSbase):
             change_password(self.get_user(), password1, testing=self.testing)
             page = insert_html(page, 9, 'Your password was successfully changed.')
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
-            for message in e.messages.split(','):
+            for message in e.message.split(','):
                 page = insert_error(page, 9, message)
         return page
 

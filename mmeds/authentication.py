@@ -122,12 +122,12 @@ def change_password(username, password, testing=False):
     with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
         # Check the email matches the one on file
         db.change_password(password_hash, salt)
-        send_email(db.get_email(), username, password=password, message='change', testing=testing)
+        send_email(db.get_email(username), username, password=password, message='change', testing=testing)
 
 
 def get_email(username, testing=False):
     """ Retrieve the email for the specified user account. """
-    with Database(STORAGE_DIR, testing=testing) as db:
+    with Database(testing=testing) as db:
         # Get the values from the user table
         try:
             email = db.get_email(username)
