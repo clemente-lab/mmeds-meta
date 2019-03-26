@@ -129,10 +129,4 @@ def get_email(username, testing=False):
     """ Retrieve the email for the specified user account. """
     with Database(testing=testing) as db:
         # Get the values from the user table
-        try:
-            email = db.get_email(username)
-            return email
-        # An index error means that the username did not exist
-        except NoResultError:
-            print('Username did not exist')
-            return False
+        return db.get_email(username)

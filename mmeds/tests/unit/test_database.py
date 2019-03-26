@@ -207,7 +207,7 @@ class DatabaseTests(TestCase):
                     assert found > 0
                 except AssertionError as e:
                     log(sql)
-                    log("{}:{}".format(table, row))
+                    log("Didn't find entry {}:{}".format(table, row))
                     log(self.c.fetchall())
                     raise e
 

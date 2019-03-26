@@ -601,7 +601,6 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
                     row.append(meta[(table, column)][i].strip('"'))
                 # If a value doesn't exist for this table, column insert NA
                 except (KeyError, IndexError):
-                    log('Key error for {}, {}, {}'.format(table, column, i))
                     row.append('NA')
             f.write('\t'.join(row) + '\n')
 

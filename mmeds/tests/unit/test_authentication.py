@@ -1,6 +1,6 @@
 import mmeds.authentication as auth
 
-from mmeds.error import NoResultError, InvalidLoginError
+from mmeds.error import NoResultError, InvalidLoginError, InvalidPasswordErrors, InvalidUsernameError
 from pytest import raises
 
 
@@ -34,32 +34,40 @@ def test_b_validate_password():
 
 
 def test_c_check_password():
-    results4 = auth.check_password(bad_password3, bad_password3)
-    assert 'upper and lower' in results4
+    with raises(InvalidPasswordErrors) as e:
+        auth.check_password(bad_password3, bad_password3)
+        assert 'upper and lower' in e.message[0]
 
-    results1 = auth.check_password(bad_password1, bad_password2)
-    assert 'do not match' in results1
+    with raises(InvalidPasswordErrors) as e:
+        auth.check_password(bad_password1, bad_password2)
+        assert 'do not match' in e.message[0]
 
-    results2 = auth.check_password(bad_password1, bad_password1)
-    assert 'at least one number' in results2
+    with raises(InvalidPasswordErrors) as e:
+        auth.check_password(bad_password1, bad_password1)
+        assert 'at least one number' in e.message[0]
 
-    results3 = auth.check_password(bad_password2, bad_password2)
-    assert 'following symbols' in results3
+    with raises(InvalidPasswordErrors) as e:
+        auth.check_password(bad_password2, bad_password2)
+        assert 'following symbols' in e.message[0]
 
-    results5 = auth.check_password(bad_password4, bad_password4)
-    assert 'longer than 10' in results5
+    with raises(InvalidPasswordErrors) as e:
+        auth.check_password(bad_password4, bad_password4)
+        assert 'longer than 10' in e.message[0]
 
-    assert '' == auth.check_password(test_password1, test_password1)
+    auth.check_password(test_password1, test_password1)
 
 
 def test_d_check_username():
-    assert auth.check_username(test_username3, testing=True) is None
-    assert 'Error' in auth.check_username(bad_username, testing=True)
+    auth.check_username(test_username3, testing=True)
+    with raises(InvalidUsernameError) as e:
+        auth.check_username(bad_username, testing=True)
+        assert 'Error' in e.message
 
 
 def test_e_get_email():
     assert test_email2 == auth.get_email(test_username2, testing=True)
-    assert not auth.get_email(test_username3, testing=True)
+    with raises(NoResultError):
+        auth.get_email(test_username3, testing=True)
 
 
 def test_f_change_password():
