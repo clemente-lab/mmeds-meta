@@ -213,6 +213,42 @@ def load_ICD_codes():
     return ICD_codes
 
 
+def parse_ICD_codes(df):
+    """ Parse the ICD codes into seperate columns """
+    codes = df['ICDCode']['ICDCode'].tolist()
+    IBC, IC, ID, IDe = [], [], [], []
+    for code in codes:
+        try:
+            parts = code.split('.')
+            # Gets the first character
+            IBC.append(parts[0][0])
+            # Gets the next 4th, 5th, and 6th characters
+            ID.append(parts[1][:-1])
+            # Gets the final character
+            IDe.append(parts[1][-1])
+            # Tries to add the 2nd and 3rd numbers
+            # adds NA if 'XX'
+            IC.append(int(parts[0][1:]))
+        except ValueError as e:
+            if 'invalid literal' in e.args[0] and ": 'XX'" in e.args[0]:
+                IC.append(nan)
+            else:
+                raise e
+        # If the value is nan it will error
+        except AttributeError:
+            IBC.append(nan)
+            IC.append(nan)
+            ID.append(nan)
+            IDe.append(nan)
+
+    # Add the parsed values to the dataframe
+    df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
+    df['IllnessCategory', 'ICDCategory'] = IC
+    df['IllnessDetails', 'ICDDetails'] = ID
+    df['IllnessDetails', 'ICDExtension'] = IDe
+    return df
+
+
 def load_mapping_file(file_fp, delimiter):
     """
     Load the metadata file and assign datatypes to the columns
@@ -682,7 +718,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         study=kwargs.get('study_name'),
         code=kwargs.get('code'),
         password=kwargs.get('password'),
-        contact= fig.CONTACT_EMAIL
+        contact=fig.CONTACT_EMAIL
     )
     if testing:
         # Setup the email to be sent

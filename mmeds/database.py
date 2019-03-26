@@ -2,7 +2,6 @@ import pymysql as pms
 import mongoengine as men
 import cherrypy as cp
 import pandas as pd
-import numpy as np
 import os
 import shutil
 import warnings
@@ -13,7 +12,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.util import send_email, log, pyformat_translate, quote_sql
+from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -154,6 +153,117 @@ class Database:
     #                MySQL                 #
     ########################################
 
+    def build_sql(self, df, table, row):
+        """
+        This function does the hard work of determining what a paticular table's
+        entry should look like for a given row of the metadata file.
+        ========================================================================
+        :df: Dataframe to check against
+        :table: The name of the table for which to build the query
+        :row: The row of the metadata file to check againt :table:
+        ========================================================================
+        The basic idea is that for each row of the input metadata file there exists
+        a matching row in each table. The row in each table only contains part of
+        the information from the row of the metadata, the part that relates to that
+        table. However the table row is linked to rows in other tables that contain
+        the rest of the information. This connection is stored as a foreign key in
+        the table row.
+
+        For example:
+        A metadata row
+        Table1	Table1	Table2	Table2
+        ColA	ColB	ColC	ColD
+        DataA	DataB	DataC	DataD
+
+        Would be stored as follows:
+
+        Table1
+        ------------------------------
+        Table1_key	ColA	ColB
+        0		DataA	Datab
+
+        Table2
+        ------------------------------
+        Table2_key	Table1_fkey	ColC	ColD
+        2		0		DataC	DataD
+
+        Checking Table1 is straight forward, just check that there is a row of Table1
+        where ColA == DataA and ColB == DataB. The primary key (Table1_key) doesn't
+        need to be checked against anything as it is simply a unique identifier within
+        the table and doesn't exist in the original metadata file.
+
+        Checking Table2 is more difficult as we need to verify that the table row
+        matching ColC and ColD in the metadata is linked to a row in Table1 with the
+        matching ColA and ColB. To do this we must find the primary key in Table1 where
+        ColA == DataA and ColB == DataB. We can do this using the same method we used to
+        originally check the row of Table1 except this time we record the primary key.
+
+        This is essentially how build_sql works. For a given table it matches any regular
+        columns using data from the metadata file (imported as a pandas dataframe).
+        If it find any foreign key columns it recursively calls build_sql on the table
+        that foreign key links to, returning what the value of that key should be.
+        """
+        sql = 'DESCRIBE {}'.format(table)
+        self.cursor.execute(sql)
+        result = self.cursor.fetchall()
+        all_cols = [res[0] for res in result]
+        foreign_keys = list(filter(lambda x: '_has_' not in x,
+                                   list(filter(lambda x: '_id' in x,
+                                               all_cols))))
+        # Remove the table id for the row as that doesn't matter for the test
+        if 'user_id' in foreign_keys:
+            del foreign_keys[foreign_keys.index('user_id')]
+        columns = list(filter(lambda x: '_id' not in x, all_cols))
+        if 'id' + table in columns:
+            del columns[columns.index('id' + table)]
+
+        sql, args = self.create_query_from_row(df, table, row, columns)
+        sql, args = self.add_foreign_keys(df, sql, args, foreign_keys, row)
+        return sql, args
+
+    def add_foreign_keys(self, df, sql, args, foreign_keys, row):
+        """ Add necessary foreign keys to the provided query """
+        # Collect the matching foreign keys based on the information
+        # in the current row of the data frame
+        for fkey in foreign_keys:
+            ftable = fkey.split('_id')[1]
+            # Recursively build the sql call
+            fsql, fargs = self.build_sql(df, ftable, row)
+
+            self.cursor.execute(fsql, fargs)
+            fresults = self.cursor.fetchall()
+            # Get the resulting foreign key
+            fresult = fresults[0][0]
+            # Add it to the original query
+            if '=' in sql:
+                sql += ' AND '
+            sql += quote_sql(('{fkey} = %({fkey})s'), fkey=fkey)
+            args['`{}`'.format(fkey)] = pyformat_translate(fresult)
+        return sql, args
+
+    def create_query_from_row(self, df, table, row, columns):
+        """ Creates an SQL query for the specified table from the provided dataframe """
+        # Create an sql query to match the data from this row of the input file
+        sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
+        args = {}
+        for i, column in enumerate(columns):
+            value = df[table][column].iloc[row]
+            if pd.isnull(value):  # Use NULL for NA values
+                value = 'NULL'
+            if i == 0:
+                sql += ' '
+            else:
+                sql += ' AND '
+            sql += quote_sql(('{column} = %({column})s'), column=column)
+            args['`{}`'.format(column)] = pyformat_translate(value)
+            # Add the user check for protected tables
+            if table in fig.PROTECTED_TABLES:
+                sql += ' AND user_id = %(id)s'
+                args['id'] = self.user_id
+        if table in fig.PROTECTED_TABLES:
+            sql += ' AND user_id = ' + str(self.user_id)
+        return sql, args
+
     def check_email(self, email):
         """ Check the provided email matches this user. """
         return email == self.email
@@ -254,23 +364,6 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def check_file_header(self, fp, delimiter='\t'):
-        """
-        UNFINISHED
-        Checks that the metadata input file doesn't contain any
-        tables or columns that don't exist in the database.
-        df = pd.read_csv(fp, sep=delimiter, header=[0, 1], nrows=2)
-        self.cursor.execute('SHOW TABLES')
-        tables = list(filter(lambda x: '_' not in x,
-                             [l[0] for l in self.cursor.fetchall()]))
-
-        # Import data for each junction table
-        for table in tables:
-            self.cursor.execute('DESCRIBE ' + table)
-            columns = list(map(lambda x: x[0].split('_')[0],
-                               self.cursor.fetchall()))
-        """
-
     def create_import_data(self, table, df, verbose=True):
         """
         Fill out the dictionaries used to create the input files
@@ -287,42 +380,26 @@ class Database:
             current_key = 1
         # Track keys for repeated values in this file
         seen = {}
-        # Go through each column
-        for j in range(len(df.index)):
-            sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
-            args = {}
-            # Check if there is a matching entry already in the database
-            for i, column in enumerate(df[table]):
-                value = df[table][column][j]
-                if pd.isnull(value):  # Use NULL for NA values
-                    value = 'NULL'
-                if i == 0:
-                    sql += ' '
-                else:
-                    sql += ' AND '
-                # Add quotes around string values
-                sql += quote_sql(('{column} = %({column})s'), column=column)
-                args['`{}`'.format(column)] = pyformat_translate(value)
-            # Add the user check for protected tables
-            if table in fig.PROTECTED_TABLES:
-                sql += ' AND user_id = %(id)s'
-                args['id'] = self.user_id
+
+        # Go through each row
+        for row in range(len(df.index)):
+            sql, args = self.build_sql(df, table, row)
             found = self.cursor.execute(sql, args)
             if found >= 1:
                 # Append the key found for that column
                 result = self.cursor.fetchone()
-                self.IDs[table][j] = int(result[0])
+                self.IDs[table][row] = int(result[0])
             else:
                 # Create the entry
-                this_row = ''.join(list(map(str, df[table].loc[j])))
+                this_row = ''.join(list(map(str, df[table].loc[row])))
                 try:
                     # See if this table entry already exists in the current input file
                     key = seen[this_row]
-                    self.IDs[table][j] = key
+                    self.IDs[table][row] = key
                 except KeyError:
                     # If not add it and give it a unique key
                     seen[this_row] = current_key
-                    self.IDs[table][j] = current_key
+                    self.IDs[table][row] = current_key
                     current_key += 1
 
     def create_import_line(self, df, table, structure, columns, row_index):
@@ -434,38 +511,7 @@ class Database:
         """
         Parse the ICD codes and load them into the appropriate tables
         """
-        # Parse the ICD codes into seperate columns
-        codes = df['ICDCode']['ICDCode'].tolist()
-        IBC, IC, ID, IDe = [], [], [], []
-        for code in codes:
-            try:
-                parts = code.split('.')
-                # Gets the first character
-                IBC.append(parts[0][0])
-                # Gets the next 4th, 5th, and 6th characters
-                ID.append(parts[1][:-1])
-                # Gets the final character
-                IDe.append(parts[1][-1])
-                # Tries to add the 2nd and 3rd numbers
-                # adds NA if 'XX'
-                IC.append(int(parts[0][1:]))
-            except ValueError as e:
-                if 'invalid literal' in e.args[0] and ": 'XX'" in e.args[0]:
-                    IC.append(np.nan)
-                else:
-                    raise e
-            # If the value is nan it will error
-            except AttributeError:
-                IBC.append(np.nan)
-                IC.append(np.nan)
-                ID.append(np.nan)
-                IDe.append(np.nan)
-
-        # Add the parsed values to the dataframe
-        df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
-        df['IllnessCategory', 'ICDCategory'] = IC
-        df['IllnessDetails', 'ICDDetails'] = ID
-        df['IllnessDetails', 'ICDExtension'] = IDe
+        df = parse_ICD_codes(df)
 
         # Load the parsed values into the appropriate tables
         for table in ['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails']:
