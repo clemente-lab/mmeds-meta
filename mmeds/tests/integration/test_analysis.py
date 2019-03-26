@@ -7,13 +7,14 @@ from unittest import TestCase
 from pathlib import Path
 from time import sleep
 import mmeds.config as fig
+import mmeds.secrets as sec
 
 
 class AnalysisTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
         self.code = None
         self.files = None
         self.path = None

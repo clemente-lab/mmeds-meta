@@ -879,10 +879,10 @@ def quote_sql(sql, quote='`', **kwargs):
         if not isinstance(item, str):
             raise InvalidSQLError('SQL Identifier {} is not a string'.format(item))
         # Check the entry isn't too long
-        elif len(item) > 66:
+        if len(item) > 66:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, and '_'
-        elif not item.replace('_', '').isalnum():
+        if not item.replace('_', '').isalnum():
             raise InvalidSQLError('Illegal characters in identifier {}.' +
                                   ' Only letters, numbers, and "_" are permitted'.format(item))
 

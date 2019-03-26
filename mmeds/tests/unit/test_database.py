@@ -5,6 +5,7 @@ from mmeds.util import log, parse_ICD_codes
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
+import mmeds.secrets as sec
 import pymysql as pms
 import pandas as pd
 import pytest
@@ -35,8 +36,8 @@ class DatabaseTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Load data that is to be used by multiple test cases """
-        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        add_user(fig.TEST_USER_0, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
         log('about to read in')
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,

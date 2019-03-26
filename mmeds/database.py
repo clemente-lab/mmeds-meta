@@ -75,13 +75,13 @@ class Database:
             if user == sec.SQL_USER_NAME:
                 self.db = pms.connect(host='localhost',
                                       user=sec.SQL_USER_NAME,
-                                      password=fig.TEST_USER_PASS,
+                                      password=sec.TEST_USER_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             else:
                 self.db = pms.connect(host='localhost',
                                       user='root',
-                                      password=fig.TEST_ROOT_PASS,
+                                      password=sec.TEST_ROOT_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             # Connect to the mongo server

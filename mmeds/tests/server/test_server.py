@@ -5,6 +5,7 @@ from pathlib import Path
 from tidylib import tidy_document
 
 import mmeds.config as fig
+import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import remove_user
 from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
@@ -88,7 +89,7 @@ class TestServer(helper.CPWebCase):
 
         # Test signup with an invalid username
         log('signup page')
-        faddr = addr.format('public', fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS)
+        faddr = addr.format('public', fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS)
         log(faddr)
         self.getPage(faddr)
         log('got page')
@@ -99,26 +100,26 @@ class TestServer(helper.CPWebCase):
 
         log('Bad sign up')
         # Test signup with an invalid password
-        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS + 'xx'))
+        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS + 'xx'))
         self.assertStatus('200 OK')
         bad_page = insert_error(page, 25, 'Error: Passwords do not match')
         self.assertBody(bad_page)
         log('Bad sign up pass')
 
         # Test successful signup
-        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, fig.TEST_PASS, fig.TEST_PASS))
+        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS))
         self.assertStatus('200 OK')
         self.assertBody((fig.HTML_DIR / 'index.html').read_text())
         log('Good sign up')
 
     def login(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS))
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to Mmeds', user=fig.SERVER_USER)
         self.assertBody(page)
 
     def logout(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS))
         self.getPage('/auth/logout', headers=self.cookies)
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
@@ -126,7 +127,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def login_fail_password(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS + 'garbage'))
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS + 'garbage'))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
@@ -134,7 +135,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def login_fail_username(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER + 'garbage', fig.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER + 'garbage', sec.TEST_PASS))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
@@ -156,14 +157,14 @@ class TestServer(helper.CPWebCase):
         fail_page = insert_error(page, 9, 'Error: Passwords must be longer than 10 characters.')
         self.assertBody(fail_page)
         self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=new_pass,
-                                                                                                    new=fig.TEST_PASS),
+                                                                                                    new=sec.TEST_PASS),
                      self.cookies)
         self.assertStatus('200 OK')
         pass_page = insert_html(page, 9, 'Your password was successfully changed.')
         log(self.body)
         self.assertBody(pass_page)
 
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, fig.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS))
         self.assertStatus('200 OK')
         log(self.body)
 
@@ -296,7 +297,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def download_page_fail(self):
-        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
+        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, sec.TEST_PASS))
         self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
                      headers=self.cookies)
         self.assertStatus('200 OK')
@@ -307,7 +308,7 @@ class TestServer(helper.CPWebCase):
 
     def download_block(self):
         # Login
-        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, fig.TEST_PASS))
+        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, sec.TEST_PASS))
         # Start test analysis
         self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
                                                                                     fig.TEST_TOOL),

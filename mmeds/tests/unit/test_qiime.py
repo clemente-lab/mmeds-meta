@@ -7,6 +7,7 @@ from mmeds.qiime2 import Qiime2
 from mmeds.database import Database
 from mmeds.util import load_config
 import mmeds.config as fig
+import mmeds.secrets as sec
 
 
 class QiimeTests(TestCase):
@@ -14,7 +15,7 @@ class QiimeTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
                                                               'qiime',

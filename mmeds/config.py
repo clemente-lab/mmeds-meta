@@ -94,9 +94,6 @@ TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
 if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 
-TEST_PASS = 'testpassL33TG@m3r'
-TEST_USER_PASS = 'password'
-TEST_ROOT_PASS = ''
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
 TEST_USER_0 = 'testuser0'
