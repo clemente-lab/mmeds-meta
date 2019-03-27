@@ -10,6 +10,7 @@ import mmeds.CSS as css
 import mmeds
 import hashlib
 import os
+import re
 
 
 ############################
@@ -42,7 +43,9 @@ CONFIG_PARAMETERS = [
     'font_size'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
-MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+# MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
+MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
+TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 
 
@@ -59,8 +62,8 @@ CONFIG = {
         'log.error_file': str(DATABASE_DIR / 'site.log'),
         'request.scheme': 'https',
         'secureheaders.on': True,
-        'tools.sessions.on': True,
         'tools.sessions.secure': True,
+        'tools.sessions.on': True,
         'tools.sessions.httponly': True,
         'tools.sessions.timeout': 15
     },
@@ -91,13 +94,9 @@ TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
 if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 
-TEST_PASS = 'testpass'
-TEST_USER_PASS = 'password'
-TEST_ROOT_PASS = ''
 TEST_USER = 'testuser'
+SERVER_USER = 'serveruser'
 TEST_USER_0 = 'testuser0'
-TEST_EMAIL = 'mmeds.tester@gmail.com'
-TEST_EMAIL_PASS = 'testmmeds1234'
 TEST_CODE = 'singlereads'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
@@ -110,22 +109,23 @@ TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
-UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
-TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
+TEST_METADATA_0 = str(TEST_PATH / 'test_metadata_0.tsv')
 TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
+UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
+TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
-
-TEST_METADATA_FAIL_0 = str(TEST_PATH / 'test_metadata_fail_0.tsv')
+TEST_METADATA_WARN = str(TEST_PATH / 'test_metadata_warn.tsv')
 TEST_METADATA_VALID = str(TEST_PATH / 'test_metadata_valid.tsv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
-TEST_TOOL = 'tester-1'
+TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
+TEST_TOOL = 'tester-5'
 TEST_FILES = {
-    'reads': TEST_READS,
     'barcodes': TEST_BARCODES,
+    'for_reads': TEST_READS,
     'metadata': TEST_METADATA
 }
 TEST_CHECKS = {}
@@ -206,13 +206,17 @@ JUNCTION_TABLES = [
     'Subjects_has_Genotypes'
 ]
 
-USER_FILES = set([
-    'reads',
-    'barcodes',
-    'metadata',
-    'mapping',
-    'visualizations_dir'
-])
+USER_FILES = set(map(
+    re.compile,
+    [
+        '\w*_reads',
+        'barcodes',
+        'metadata',
+        'mapping',
+        'visualizations_dir',
+        'analysis\w*_summary',
+        'analysis\w*_summary_dir'
+    ]))
 
 ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
 
@@ -317,3 +321,26 @@ MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 def get_salt(length=10):
     listy = 'abcdefghijklmnopqrzsuvwxyz'
     return ''.join(choice(listy) for i in range(length))
+
+
+############################
+# CONFIGURE SERVER GLOBALS #
+############################
+
+
+# Each page returns a tuple
+# (<Path to the page>, <Should the header and topbar be loaded>)
+HTML_PAGES = {
+    'index': (HTML_DIR / 'index.html', False),
+    'welcome': (HTML_DIR / 'welcome.html', True),
+    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
+    'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
+    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
+    'download_study_files': (HTML_DIR / 'download_study_files.html', True),
+    'download_select_file': (HTML_DIR / 'download_select_file.html', True),
+    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
+    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
+    'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
+    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
+}

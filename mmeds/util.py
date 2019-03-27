@@ -1,20 +1,49 @@
 from collections import defaultdict
-from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
 from os import environ
 from numpy import nan, issubdtype, int64, float64, datetime64, number
+from functools import wraps
+from inspect import isfunction
+from smtplib import SMTP
+from imapclient import IMAPClient
+from email.message import EmailMessage
+from email import message_from_bytes
 
 import mmeds.config as fig
+import mmeds.secrets as sec
 import pandas as pd
+
+
+def catch_server_errors(page_method):
+    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
+    @wraps(page_method)
+    def wrapper(*a, **kwargs):
+        try:
+            return page_method(*a, **kwargs)
+        except LoggedOutError:
+            with open(fig.HTML_DIR / 'index.html') as f:
+                page = f.read()
+            return page
+    return wrapper
+
+
+def decorate_all_methods(decorator):
+    def apply_decorator(cls):
+        for k, m in cls.__dict__.items():
+            if isfunction(m):
+                setattr(cls, k, decorator(m))
+        return cls
+    return apply_decorator
 
 
 def load_config(config_file, metadata):
     """ Read the provided config file to determine settings for the analysis. """
     config = {}
     # If no config was provided load the default
-    if config_file is None:
+    if config_file is None or config_file == '':
         log('Using default config')
         with open(fig.STORAGE_DIR / 'config_file.txt', 'r') as f:
             page = f.read()
@@ -140,7 +169,6 @@ def get_col_type(raw_column):
         }
 
         for cell in raw_column:
-            log('cell: {}, is_num: {}'.format(cell, is_numeric(cell)))
             # Don't count NA
             if cell == 'NA':
                 continue
@@ -164,11 +192,11 @@ def get_col_type(raw_column):
 
 def load_ICD_codes():
     """ Load all known ICD codes and return them as a dictionary """
-    ICD_codes = {
-        'XXX.XXXX': 'Subject is healthy to the best of our knowledge',
-        'NA': 'No Value',
-        nan: 'No Value'
-    }
+    # The dictionary is defined this way so every new entry gets 'XXXX' added automatically
+    ICD_codes = defaultdict(lambda: {'XXXX': 'Unknown details'})
+    ICD_codes['XXX'] = {'XXXX': 'Subject is healthy to the best of our knowledge'}
+    ICD_codes['NA'] = {'NA': 'No Value'}
+    ICD_codes[nan] = {nan: 'No Value'}
     with open(fig.STORAGE_DIR / 'icd10cm_codes_2018.txt') as f:
         # Parse each line
         for line in f:
@@ -180,9 +208,44 @@ def load_ICD_codes():
             # Fill in codes with 'X'
             while len(code) < 7:
                 code += 'X'
-            code = code[:3] + '.' + code[3:]
-            ICD_codes[code] = description
+            ICD_codes[code[:3]][code[3:]] = description
     return ICD_codes
+
+
+def parse_ICD_codes(df):
+    """ Parse the ICD codes into seperate columns """
+    codes = df['ICDCode']['ICDCode'].tolist()
+    IBC, IC, ID, IDe = [], [], [], []
+    for code in codes:
+        try:
+            parts = code.split('.')
+            # Gets the first character
+            IBC.append(parts[0][0])
+            # Gets the next 4th, 5th, and 6th characters
+            ID.append(parts[1][:-1])
+            # Gets the final character
+            IDe.append(parts[1][-1])
+            # Tries to add the 2nd and 3rd numbers
+            # adds NA if 'XX'
+            IC.append(int(parts[0][1:]))
+        except ValueError as e:
+            if 'invalid literal' in e.args[0] and ": 'XX'" in e.args[0]:
+                IC.append(nan)
+            else:
+                raise e
+        # If the value is nan it will error
+        except AttributeError:
+            IBC.append(nan)
+            IC.append(nan)
+            ID.append(nan)
+            IDe.append(nan)
+
+    # Add the parsed values to the dataframe
+    df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
+    df['IllnessCategory', 'ICDCategory'] = IC
+    df['IllnessDetails', 'ICDDetails'] = ID
+    df['IllnessDetails', 'ICDExtension'] = IDe
+    return df
 
 
 def load_mapping_file(file_fp, delimiter):
@@ -205,10 +268,8 @@ def load_mapping_file(file_fp, delimiter):
     for (table, header) in df.axes[1]:
         tables.append(table)
         for column in df[table]:
-            log(df[table][column])
             if '' in df[table][column]:
                 errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
-                continue
             try:
                 df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
             # Additional metadata won't have an entry so will automatically be treated as a string
@@ -226,7 +287,7 @@ def load_html(file_path, **kwargs):
     Load the specified html file. Inserting the head and topbar
     """
     # Load the html page
-    with open(fig.HTML_DIR / (file_path + '.html')) as f:
+    with open(file_path) as f:
         page = f.read().split('\n')
 
     # Load the head information
@@ -385,6 +446,8 @@ def generate_error_html(file_fp, errors, warnings):
     :warnings: A list of the warnings the metadata file produced
     """
     df = pd.read_csv(file_fp, sep='\t', header=[0, 1], skiprows=[2, 3, 4], na_filter=False)
+    df.replace('NA', nan, inplace=True)
+
     html = '<!DOCTYPE html>\n<html>\n'
     html += '<link type="text/javascript" rel="stylesheet" href="/CSS/stylesheet.css">\n'
     html += '<title> MMEDS Metadata Errors </title>\n'
@@ -392,37 +455,58 @@ def generate_error_html(file_fp, errors, warnings):
     markup = defaultdict(dict)
     top = []
 
+    log('generate errors')
+    log(errors)
     # Add Errors to markup table
     for error in errors:
         row, col, item = error.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['red', item])
-        markup[int(row)][int(col)] = ['red', item]
+            top.append(('red', item))
+        elif row == '0':
+            markup[int(row) + 3][int(col)] = ['red', item]
+        else:
+            markup[int(row) + 4][int(col)] = ['red', item]
 
     # Add warnings to markup table
     for warning in warnings:
         row, col, item = warning.split('\t')
         if row == '-1' and col == '-1':
-            top.append(['yellow', item])
-        markup[int(row)][int(col)] = ['yellow', item]
+            top.append(('orange', item))
+        elif row == '0':
+            markup[int(row) + 3][int(col)] = ['orange', item]
+        else:
+            markup[int(row) + 4][int(col)] = ['orange', item]
 
     # Add general warnings and errors
-    for color, er in top:
-        html += '<h3 style="color:{}">'.format(color) + er + '</h3>\n'
+    for color, er in set(top):
+        html += '<h3 style="color:{}">'.format(color) + '\n' + er + '</h3>\n'
 
     # Get all the table and header names
     tables = []
-    headers = []
+    columns = []
+    count = 0
+    table_html = ''
+    column_html = ''
     for (table, header) in df.axes[1]:
-        tables.append(table)
-        headers.append(header)
+        for column in df[table]:
+            try:
+                color, er = markup[-1][count]
+                table_html += '<th style="color:{}">'.format(color) + table + '\n' + er + '</th>\n'
+                column_html += '<th style="color:{}">'.format(color) + column + '\n' + er + '</th>\n'
+            except KeyError:
+                table_html += '<th>' + table + '</th>\n'
+                column_html += '<th>' + column + '</th>\n'
 
-    # Create the table and header rows of the table
+            tables.append(table)
+            columns.append(column)
+            count += 1
+
+    # Create the table and column rows of the table
     html += '<table>'
-    html += '<tr><th>' + '</th>\n<th>'.join(tables) + '</th>\n</tr>'
-    html += '<tr><th>' + '</th>\n<th>'.join(headers) + '</th>\n</tr>'
+    html += '<tr>' + table_html + '\n</tr>'
+    html += '<tr>' + column_html + '\n</tr>'
     # Fill out the table
-    html += build_error_rows(df, tables, headers, markup)
+    html += build_error_rows(df, tables, columns, markup)
     html += '</table>\n</body>\n</html>'
     return html
 
@@ -552,7 +636,6 @@ def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
                     row.append(meta[(table, column)][i].strip('"'))
                 # If a value doesn't exist for this table, column insert NA
                 except (KeyError, IndexError):
-                    log('Key error for {}, {}, {}'.format(table, column, i))
                     row.append('NA')
             f.write('\t'.join(row) + '\n')
 
@@ -633,16 +716,48 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         analysis=kwargs.get('analysis_type'),
         study=kwargs.get('study_name'),
         code=kwargs.get('code'),
-        password=kwargs.get('password')
+        password=kwargs.get('password'),
+        contact=fig.CONTACT_EMAIL
     )
-    script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
-    if 'summary' in kwargs.keys():
-        script += ' -A {summary}'.format(kwargs['summary'])
-    cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
-    log(cmd)
-    if not testing:
+    if testing:
+        # Setup the email to be sent
+        msg = EmailMessage()
+        msg['From'] = fig.MMEDS_EMAIL
+        msg['To'] = toaddr
+        # Add in any necessary text fields
+        msg.set_content(email_body)
+
+        # Connect to the server and send the mail
+        # server = SMTP('smtp.gmail.com', 587)
+        server = SMTP('smtp.office365.com', 587)
+        server.starttls()
+        server.login(fig.MMEDS_EMAIL, sec.EMAIL_PASS)
+        server.send_message(msg)
+        server.quit()
+    else:
+        script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
+        if 'summary' in kwargs.keys():
+            script += ' -A {summary}'.format(kwargs['summary'])
+        cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
         run(['/bin/bash', '-c', cmd], check=True)
-    return cmd
+
+
+def recieve_email(num_messages=1, search=['FROM', fig.MMEDS_EMAIL]):
+    """
+    Fetch email from the test account
+    :num_messages: An int. How many emails to return, starting with the most recent
+    :search: A string. Any specific search criteria, default is emails from mmeds
+    """
+    with IMAPClient('outlook.office365.com') as client:
+        client.login(fig.TEST_EMAIL, sec.TEST_EMAIL_PASS)
+        client.select_folder('inbox')
+        all_mail = client.search(search)
+        messages = []
+        response = client.fetch(all_mail[-1 * num_messages:], ['RFC822'])
+        for message_id, data in response.items():
+            emessage = message_from_bytes(data[b'RFC822'])
+            messages.append(emessage)
+    return messages
 
 
 def pyformat_translate(value):
@@ -761,10 +876,10 @@ def quote_sql(sql, quote='`', **kwargs):
         if not isinstance(item, str):
             raise InvalidSQLError('SQL Identifier {} is not a string'.format(item))
         # Check the entry isn't too long
-        elif len(item) > 66:
+        if len(item) > 66:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, and '_'
-        elif not item.replace('_', '').isalnum():
+        if not item.replace('_', '').isalnum():
             raise InvalidSQLError('Illegal characters in identifier {}.' +
                                   ' Only letters, numbers, and "_" are permitted'.format(item))
 

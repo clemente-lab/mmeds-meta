@@ -4,7 +4,7 @@
     <div class='inner'>
       <p>
       <h3>Access Previous Uploads</h3>
-        <form action='download_page' method='post'>
+        <form action='../download/download_page' method='post'>
           <p>
             <input type="text" placeholder="Access Code" name="access_code" required/>
           <button type="submit">Execute</button>
@@ -13,7 +13,7 @@
       </p>
       <p>
       <h3>Convert Metadata File</h3>
-        <form action='convert_metadata' id='convert_form' formmethod='post' enctype='multipart/form-data'>
+        <form action='../upload/convert_metadata' id='convert_form' formmethod='post' enctype='multipart/form-data'>
           <p>
             <h4> Convert file to </h4>
             <select name='convertTo' placeholder='Convert file to' form='convert_form'>
@@ -29,7 +29,7 @@
       </p>
       <p>
       <h3>Forgot Access Code</h3>
-        <form action='reset_code' formmethod='post'>
+        <form action='../auth/reset_code' formmethod='post'>
           <p>
             <input type="text" placeholder="Study Name" name="study_name" required/>
             <input type="email" placeholder="Email" name="study_email" required/>

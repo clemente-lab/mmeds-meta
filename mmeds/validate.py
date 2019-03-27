@@ -43,8 +43,9 @@ def check_header(header, col_index):
     # Check for illegal characters
     if ILLEGAL_IN_HEADER.intersection(set(header)):
         illegal_chars = ILLEGAL_IN_HEADER.intersection(set(header))
-        errors.append(row_col + 'Illegal Header Error: Illegal character(s) %s. Replace header %s of column\t%d' %
-                      (' '.join(illegal_chars), header, col_index))
+        err = 'Illegal Header Error: Illegal character(s) {}. Replace header {} of column {}'
+        illegal = '({})'.format(','.join(illegal_chars).replace(' ', '<space>').replace('\t', '<tab>'))
+        errors.append(row_col + err.format(illegal, header, col_index))
     # Check for HIPAA non-compliant headers
     if header.lower() in HIPAA_HEADERS:
         errors.append(row_col + 'PHI Header Error: Potentially identifying information in %s of column\t%d' %
@@ -56,7 +57,7 @@ def check_header(header, col_index):
     return errors
 
 
-def check_cell(row_index, col_index, cell, col_type, check_date):
+def check_cell(row_index, col_index, cell, col_type, check_date, is_additional):
     """
     Check the data in the specified cell.
     ====================================
@@ -65,40 +66,45 @@ def check_cell(row_index, col_index, cell, col_type, check_date):
     :cell: The value of the cell
     :col_type: The known type of the column as a whole
     :check_date: If True check the cell for a valid date
+    :is_additional: If true the column is additional metadata and there are fewer checks
     """
-    # An NA cell will not generate any errors
-    if cell == 'NA':
-        return []
     errors = []
-    row_col = str(row_index) + '\t' + str(col_index) + '\t'
-    # Check for non-standard NAs
-    if cell in NAs:
-        errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
-                      (cell, row_index, col_index))
+    warnings = []
+    # An NA cell will not generate any errors
+    if not cell == 'NA':
+        row_col = str(row_index) + '\t' + str(col_index) + '\t'
+        # Check for non-standard NAs
+        if cell in NAs:
+            errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
+                          (cell, row_index, col_index))
 
-    # Check for consistent types in the column
-    if not issubdtype(col_type, datetime64):
-        # If the cast fails for this cell the data must be the wrong type
-        try:
-            col_type(cell)
-        except ValueError:
-            errors.append(row_col + 'Mixed Type Error: Value {} does not match column type {}'.format(cell, col_type))
-    # Check for empty fields
-    if '' == cell:
-        errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
+        # Check for consistent types in the column
+        if not issubdtype(col_type, datetime64):
+            # If the cast fails for this cell the data must be the wrong type
+            try:
+                col_type(cell)
+            except ValueError:
+                message = 'Mixed Type {}: Value {} does not match column type {}'
+                if is_additional:
+                    warnings.append(row_col + message.format('Warning', cell, col_type))
+                else:
+                    errors.append(row_col + message.format('Error', cell, col_type))
+        # Check for empty fields
+        if '' == cell:
+            errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
 
-    if isinstance(cell, str):
-        # Check for trailing or preceding whitespace
-        if not cell == cell.strip():
-            errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
-                          (cell, row_index))
-    # Check if this is the cell with the invalid date
-    if check_date:
-        try:
-            pd.to_datetime(cell)
-        except ValueError:
-            errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
-    return errors
+        if isinstance(cell, str):
+            # Check for trailing or preceding whitespace
+            if not cell == cell.strip():
+                errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
+                              (cell, row_index))
+        # Check if this is the cell with the invalid date
+        if check_date:
+            try:
+                pd.to_datetime(cell)
+            except ValueError:
+                errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
+    return errors, warnings
 
 
 def check_number_column(column, col_index, col_type):
@@ -131,12 +137,13 @@ def check_string_column(column, col_index):
     return warnings
 
 
-def check_column(raw_column, col_index):
+def check_column(raw_column, col_index, is_additional=False):
     """
     Validate that there are no issues with the provided column of metadata.
     =======================================================================
     :raw_column: The unmodified column from the metadata dataframe
     :col_index: The index of the column in the original dataframe
+    :is_additional: If true the column is additional metadata and there are fewer checks
     """
     column, col_type, check_date = get_col_type(raw_column)
 
@@ -149,7 +156,9 @@ def check_column(raw_column, col_index):
 
     # Check the remaining columns
     for i, cell in enumerate(column):
-        errors += check_cell(i, col_index, cell, col_type, check_date)
+        cell_errors, cell_warnings = check_cell(i, col_index, cell, col_type, check_date, is_additional)
+        errors += cell_errors
+        warnings += cell_warnings
 
     # Ensure there is only one study being uploaded
     if header == 'StudyName' and len(set(column.tolist())) > 1:
@@ -243,7 +252,10 @@ def check_ICD_codes(column, col_index):
     ICD_codes = load_ICD_codes()
     errors = []
     for i, cell in enumerate(column):
-        if not pd.isnull(cell) and ICD_codes.get(cell) is None:
+        parts = cell.split('.')
+        if not pd.isnull(cell) and\
+                (ICD_codes.get(parts[0]) is None or
+                 ICD_codes.get(parts[0]).get(parts[1]) is None):
             errors.append('{}\t{}\tICD Code Error: Invalid ICD code {} in row {}'.format(i, col_index, cell, i))
     return errors
 
@@ -252,9 +264,14 @@ def check_table_column(table_df, name, header, col_index, row_index, study_name)
     errors = []
     warnings = []
     if not name == 'AdditionalMetaData' and header not in fig.TABLE_COLS[name]:
-        errors.append('-1\t{}\tColumn Table Error: Column {} should not be in table {}'.format(col_index, header, name))
+        if '.1' in header:
+            err_message = '-1\t{}\tDuplicate Column Error: Duplicate of column {} in table {}'
+            errors.append(err_message.format(col_index, header.replace('.1', ''), name))
+        else:
+            err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
+            errors.append(err_message.format(col_index, header, name))
     col = table_df[header]
-    new_errors, new_warnings = check_column(col, col_index)
+    new_errors, new_warnings = check_column(col, col_index, name == 'AdditionalMetaData')
     errors += new_errors
     warnings += new_warnings
 
@@ -290,7 +307,7 @@ def check_table(table_df, name, all_headers, study_name):
     start_col = None
     end_col = None
     if not name == 'AdditionalMetaData':
-        missing_cols = set(fig.TABLE_COLS[name]).difference(table_df.columns)
+        missing_cols = set(fig.TABLE_COLS[name]).difference(set(table_df.columns))
         if missing_cols:
             text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
             errors.append(text.format(', '.join(missing_cols), name))
@@ -333,11 +350,11 @@ def validate_mapping_file(file_fp, delimiter='\t'):
         # If the table shouldn't exist add and error and skip checking it
         if table not in fig.TABLE_ORDER:
             errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
-            continue
-        table_df = df[table]
-        (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
-        errors += new_errors
-        warnings += new_warnings
+        else:
+            table_df = df[table]
+            (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
+            errors += new_errors
+            warnings += new_warnings
 
     # Check for duplicate columns
     dups = check_duplicate_cols(all_headers)

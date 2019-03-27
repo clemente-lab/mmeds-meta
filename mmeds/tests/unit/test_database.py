@@ -1,10 +1,11 @@
 from mmeds.database import Database
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.util import log
+from mmeds.util import log, parse_ICD_codes
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
+import mmeds.secrets as sec
 import pymysql as pms
 import pandas as pd
 import pytest
@@ -35,8 +36,9 @@ class DatabaseTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Load data that is to be used by multiple test cases """
-        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        add_user(fig.TEST_USER_0, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        log('about to read in')
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
@@ -45,13 +47,13 @@ class DatabaseTests(TestCase):
                                                               access_code=fig.TEST_CODE)
 
         with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0, testing=True) as db:
-            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_FAIL_0,
+            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_0,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE + '0')
-        self.df0 = pd.read_csv(fig.TEST_METADATA_FAIL_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
-        self.df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
+        self.df0 = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
+        self.df = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         # Connect to the database
         self.db = pms.connect('localhost',
                               'root',
@@ -61,6 +63,13 @@ class DatabaseTests(TestCase):
                               local_infile=True)
         self.db.autocommit(True)
         self.c = self.db.cursor()
+        log('after read in')
+        self.c.execute('SELECT * FROM Subjects')
+        log(self.c.fetchall())
+        self.mmeds_db = Database(user='root', owner=fig.TEST_USER, testing=True)
+        log('after connect')
+        self.c.execute('SELECT * FROM Subjects')
+        log(self.c.fetchall())
 
         # Get the user id
         self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
@@ -71,121 +80,13 @@ class DatabaseTests(TestCase):
         remove_user(fig.TEST_USER, testing=True)
         remove_user(fig.TEST_USER_0, testing=True)
         self.db.close()
-
-    def build_sql(self, table, row):
-        """
-        This function does the hard work of determining what a paticular table's
-        entry should look like for a given row of the metadata file.
-        ========================================================================
-        :table: The name of the table for which to build the query
-        :row: The row of the metadata file to check againt :table:
-        ========================================================================
-        The basic idea is that for each row of the input metadata file there exists
-        a matching row in each table. The row in each table only contains part of
-        the information from the row of the metadata, the part that relates to that
-        table. However the table row is linked to rows in other tables that contain
-        the rest of the information. This connection is stored as a foreign key in
-        the table row.
-
-        For example:
-        A metadata row
-        Table1	Table1	Table2	Table2
-        ColA	ColB	ColC	ColD
-        DataA	DataB	DataC	DataD
-
-        Would be stored as follows:
-
-        Table1
-        ------------------------------
-        Table1_key	ColA	ColB
-        0		DataA	Datab
-
-        Table2
-        ------------------------------
-        Table2_key	Table1_fkey	ColC	ColD
-        2		0		DataC	DataD
-
-        Checking Table1 is straight forward, just check that there is a row of Table1
-        where ColA == DataA and ColB == DataB. The primary key (Table1_key) doesn't
-        need to be checked against anything as it is simply a unique identifier within
-        the table and doesn't exist in the original metadata file.
-
-        Checking Table2 is more difficult as we need to verify that the table row
-        matching ColC and ColD in the metadata is linked to a row in Table1 with the
-        matching ColA and ColB. To do this we must find the primary key in Table1 where
-        ColA == DataA and ColB == DataB. We can do this using the same method we used to
-        originally check the row of Table1 except this time we record the primary key.
-
-        This is essentially how build_sql works. For a given table it matches any regular
-        columns using data from the metadata file (imported as a pandas dataframe).
-        If it find any foreign key columns it recursively calls build_sql on the table
-        that foreign key links to, returning what the value of that key should be.
-        """
-        sql = 'DESCRIBE {}'.format(table)
-        self.c.execute(sql)
-        result = self.c.fetchall()
-        all_cols = [res[0] for res in result]
-        foreign_keys = list(filter(lambda x: '_has_' not in x,
-                                   list(filter(lambda x: '_id' in x,
-                                               all_cols))))
-        log('Got foreign keys')
-        # Remove the table id for the row as
-        # that doesn't matter for the test
-        if 'user_id' in foreign_keys:
-            del foreign_keys[foreign_keys.index('user_id')]
-        columns = list(filter(lambda x: '_id' not in x, all_cols))
-        if 'id' + table in columns:
-            del columns[columns.index('id' + table)]
-        sql = 'SELECT * FROM {} WHERE '.format(table)
-        # Create an sql query to match the data from this row of the input file
-        for i, column in enumerate(columns):
-            log('Column: {}'.format(column))
-            value = self.df[table][column].iloc[row]
-            if pd.isnull(value):
-                value = 'NULL'
-            # Only and AND if it's not the first argument
-            if i == 0:
-                sql += ' '
-            else:
-                sql += ' AND '
-            # Add qoutes around string values
-            if type(value) == str:
-                sql += column + ' = "' + value + '"'
-            # Otherwise check the absolute value of the difference is small
-            # so that SQL won't fail to match floats
-            else:
-                sql += ' ABS(' + table + '.' + column + ' - ' + str(value) + ') <= 0.01'
-        if table in fig.PROTECTED_TABLES:
-            sql += ' AND user_id = ' + str(self.user_id)
-
-        log('COllect foreign keys')
-        # Collect the matching foreign keys based on the infromation
-        # in the current row of the data frame
-        for fkey in foreign_keys:
-            log('fkey: {}'.format(fkey))
-            ftable = fkey.split('_id')[1]
-            # Recursively build the sql call
-            fsql = self.build_sql(ftable, row)
-            self.c.execute(fsql)
-            fresults = self.c.fetchall()
-            # Get the resulting foreign key
-            fresult = fresults[0][0]
-            # Add it to the original query
-            if '=' in sql:
-                sql += ' AND {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
-            else:
-                sql += ' {fkey}={fresult}'.format(fkey=fkey, fresult=fresult)
-
-        return sql
+        del self.mmeds_db
 
     ################
     #   Test SQL   #
     ################
     def test_a_tables(self):
-        log(self.df.columns)
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
-            self.df = db.load_ICD_codes(self.df)
-        log(self.df.columns)
+        log('====== Test Database Start ======')
         tables = self.df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
@@ -194,15 +95,22 @@ class DatabaseTests(TestCase):
             for table in tables:
                 log('Query table {}'.format(table))
                 # Create the query
-                sql = self.build_sql(table, row)
+                sql, args = self.mmeds_db.build_sql(self.df, table, row)
                 log(sql)
-                found = self.c.execute(sql)
+                log(args)
+                found = self.c.execute(sql, args)
+                log(found)
+                if table == 'IllnessDetails':
+                    log(sql)
+                    log("{}:{}".format(table, row))
+                    log(self.c.fetchall())
                 # Assert there exists at least one entry matching this description
                 try:
                     assert found > 0
                 except AssertionError as e:
+                    log(self.df.iloc[row])
                     log(sql)
-                    log("{}:{}".format(table, row))
+                    log("Didn't find entry {}:{}".format(table, row))
                     log(self.c.fetchall())
                     raise e
 
@@ -213,8 +121,8 @@ class DatabaseTests(TestCase):
         for row in range(len(self.df)):
             for jtable in jtables:
                 log('Check table: {}'.format(jtable))
-                sql = self.build_sql(jtable, row)
-                jresult = self.c.execute(sql)
+                sql, args = self.mmeds_db.build_sql(self.df, jtable, row)
+                jresult = self.c.execute(sql, args)
                 # Ensure an entry exists for this value
                 assert jresult > 0
 
@@ -295,7 +203,7 @@ class DatabaseTests(TestCase):
             # Check that the difference is equal to the rows belonging to the cleared user
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
 
-    def test_e_load_ICD_codes(self):
+    def test_e_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():
             # Check the first character
@@ -308,6 +216,7 @@ class DatabaseTests(TestCase):
     #   Test MongoDB   #
     ####################
     def test_f_mongo_import(self):
+        return
         """ Test the import of files into mongo. """
         # Get a random string to use for the code
         test_code = fig.get_salt(10)

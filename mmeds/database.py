@@ -2,7 +2,6 @@ import pymysql as pms
 import mongoengine as men
 import cherrypy as cp
 import pandas as pd
-import numpy as np
 import os
 import shutil
 import warnings
@@ -13,7 +12,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.util import send_email, log, pyformat_translate, quote_sql
+from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -38,13 +37,16 @@ class MetaData(men.DynamicDocument):
         with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
             f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
             f.write('Key\tPath\n')
-            for key in self.files:
+            for key, file_path in self.files.items():
+                # Skip non existent files
+                if file_path is None:
+                    continue
                 # If it's a key for an analysis point to the file index for that analysis
-                if isinstance(self.files[key], dict):
+                elif isinstance(file_path, dict):
                     f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
                 # Otherwise just write the value
                 else:
-                    f.write('{}\t{}\n'.format(key, self.files[key]))
+                    f.write('{}\t{}\n'.format(key, file_path))
         super(MetaData, self).save()
 
 
@@ -73,13 +75,13 @@ class Database:
             if user == sec.SQL_USER_NAME:
                 self.db = pms.connect(host='localhost',
                                       user=sec.SQL_USER_NAME,
-                                      password=fig.TEST_USER_PASS,
+                                      password=sec.TEST_USER_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             else:
                 self.db = pms.connect(host='localhost',
                                       user='root',
-                                      password=fig.TEST_ROOT_PASS,
+                                      password=sec.TEST_ROOT_PASS,
                                       database=SQL_DATABASE,
                                       local_infile=True)
             # Connect to the mongo server
@@ -125,7 +127,7 @@ class Database:
             result = self.cursor.fetchone()
             # Ensure the user exists
             if result is None:
-                raise NoResultError('No account exists with the providied username and email.')
+                raise NoResultError('No account exists with the provided username and email.')
             self.user_id = int(result[0])
             self.email = result[1]
 
@@ -150,6 +152,132 @@ class Database:
     ########################################
     #                MySQL                 #
     ########################################
+
+    def build_sql(self, df, table, row):
+        """
+        This function does the hard work of determining what a paticular table's
+        entry should look like for a given row of the metadata file.
+        ========================================================================
+        :df: Dataframe to check against
+        :table: The name of the table for which to build the query
+        :row: The row of the metadata file to check againt :table:
+        ========================================================================
+        The basic idea is that for each row of the input metadata file there exists
+        a matching row in each table. The row in each table only contains part of
+        the information from the row of the metadata, the part that relates to that
+        table. However the table row is linked to rows in other tables that contain
+        the rest of the information. This connection is stored as a foreign key in
+        the table row.
+
+        For example:
+        A metadata row
+        Table1	Table1	Table2	Table2
+        ColA	ColB	ColC	ColD
+        DataA	DataB	DataC	DataD
+
+        Would be stored as follows:
+
+        Table1
+        ------------------------------
+        Table1_key	ColA	ColB
+        0		DataA	Datab
+
+        Table2
+        ------------------------------
+        Table2_key	Table1_fkey	ColC	ColD
+        2		0		DataC	DataD
+
+        Checking Table1 is straight forward, just check that there is a row of Table1
+        where ColA == DataA and ColB == DataB. The primary key (Table1_key) doesn't
+        need to be checked against anything as it is simply a unique identifier within
+        the table and doesn't exist in the original metadata file.
+
+        Checking Table2 is more difficult as we need to verify that the table row
+        matching ColC and ColD in the metadata is linked to a row in Table1 with the
+        matching ColA and ColB. To do this we must find the primary key in Table1 where
+        ColA == DataA and ColB == DataB. We can do this using the same method we used to
+        originally check the row of Table1 except this time we record the primary key.
+
+        This is essentially how build_sql works. For a given table it matches any regular
+        columns using data from the metadata file (imported as a pandas dataframe).
+        If it find any foreign key columns it recursively calls build_sql on the table
+        that foreign key links to, returning what the value of that key should be.
+        """
+        sql = 'DESCRIBE {}'.format(table)
+        self.cursor.execute(sql)
+        result = self.cursor.fetchall()
+        all_cols = [res[0] for res in result]
+        foreign_keys = list(filter(lambda x: '_has_' not in x,
+                                   list(filter(lambda x: '_id' in x,
+                                               all_cols))))
+        # Remove the table id for the row as that doesn't matter for the test
+        if 'user_id' in foreign_keys:
+            del foreign_keys[foreign_keys.index('user_id')]
+        columns = list(filter(lambda x: '_id' not in x, all_cols))
+        if 'id' + table in columns:
+            del columns[columns.index('id' + table)]
+
+        sql, args = self.create_query_from_row(df, table, row, columns)
+        if 'Illness' in table:
+            log('========== Before Foreign =================')
+            log(table)
+            log(foreign_keys)
+            log(sql)
+            log(args)
+        sql, args = self.add_foreign_keys(df, sql, args, foreign_keys, row)
+        if 'Illness' in table:
+            log('========== After Foreign =================')
+            log(table)
+            log(sql)
+            log(args)
+
+        return sql, args
+
+    def add_foreign_keys(self, df, sql, args, foreign_keys, row):
+        """ Add necessary foreign keys to the provided query """
+        # Collect the matching foreign keys based on the information
+        # in the current row of the data frame
+        for fkey in foreign_keys:
+            ftable = fkey.split('_id')[1]
+            # Recursively build the sql call
+            fsql, fargs = self.build_sql(df, ftable, row)
+
+            self.cursor.execute(fsql, fargs)
+            try:
+                # Get the resulting foreign key
+                fresult = self.cursor.fetchone()[0]
+            except TypeError as e:
+                log(fsql)
+                log(fargs)
+                raise e
+
+            # Add it to the original query
+            if '=' in sql:
+                sql += ' AND '
+            sql += quote_sql(('{fkey} = %({fkey})s'), fkey=fkey)
+            args['`{}`'.format(fkey)] = pyformat_translate(fresult)
+        return sql, args
+
+    def create_query_from_row(self, df, table, row, columns):
+        """ Creates an SQL query for the specified table from the provided dataframe """
+        # Create an sql query to match the data from this row of the input file
+        sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
+        args = {}
+        for i, column in enumerate(columns):
+            value = df[table][column].iloc[row]
+            if pd.isnull(value):  # Use NULL for NA values
+                value = 'NULL'
+            if i == 0:
+                sql += ' '
+            else:
+                sql += ' AND '
+            sql += quote_sql(('{column} = %({column})s'), column=column)
+            args['`{}`'.format(column)] = pyformat_translate(value)
+        # Add the user check for protected tables
+        if table in fig.PROTECTED_TABLES:
+            sql += ' AND user_id = %(id)s'
+            args['id'] = self.user_id
+        return sql, args
 
     def check_email(self, email):
         """ Check the provided email matches this user. """
@@ -217,17 +345,16 @@ class Database:
                 table = parsed[index + 1]
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
-            return data, header
         except pms.err.OperationalError as e:
             # If it's a select command denied error
             if e.args[0] == 1142:
                 raise TableAccessError(e.args[1])
-            else:
-                raise e
+            raise e
         except pms.err.ProgrammingError as e:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
-            return str(e), header
+            data = str(e)
+        return data, header
 
     def purge(self):
         """
@@ -251,23 +378,6 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def check_file_header(self, fp, delimiter='\t'):
-        """
-        UNFINISHED
-        Checks that the metadata input file doesn't contain any
-        tables or columns that don't exist in the database.
-        df = pd.read_csv(fp, sep=delimiter, header=[0, 1], nrows=2)
-        self.cursor.execute('SHOW TABLES')
-        tables = list(filter(lambda x: '_' not in x,
-                             [l[0] for l in self.cursor.fetchall()]))
-
-        # Import data for each junction table
-        for table in tables:
-            self.cursor.execute('DESCRIBE ' + table)
-            columns = list(map(lambda x: x[0].split('_')[0],
-                               self.cursor.fetchall()))
-        """
-
     def create_import_data(self, table, df, verbose=True):
         """
         Fill out the dictionaries used to create the input files
@@ -275,54 +385,41 @@ class Database:
         :table: The table in the database to create the import data for
         :df: The dataframe containing all the metadata
         """
-        log('In create_import_data')
         sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable='id' + table, table=table)
         self.cursor.execute(sql)
         vals = self.cursor.fetchone()
-        log('got vals')
-        log(vals)
         try:
             current_key = int(vals[0]) + 1
         except TypeError:
             current_key = 1
         # Track keys for repeated values in this file
         seen = {}
-        # Go through each column
-        for j in range(len(df.index)):
-            sql = quote_sql('SELECT * FROM {table} WHERE ', table=table)
-            args = {}
-            # Check if there is a matching entry already in the database
-            for i, column in enumerate(df[table]):
-                value = df[table][column][j]
-                if pd.isnull(value):  # Use NULL for NA values
-                    value = 'NULL'
-                if i == 0:
-                    sql += ' '
+
+        # Go through each row
+        for row in range(len(df.index)):
+            log('ROW {}'.format(row))
+            sql, args = self.build_sql(df, table, row)
+            # Get any foreign keys which can also make this row unique
+            fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
+            # Create the entry
+            this_row = ''.join(list(map(str, df[table].iloc[row])) + fkeys)
+            try:
+                # See if this table entry already exists in the current input file
+                key = seen[this_row]
+                self.IDs[table][row] = key
+            except KeyError:
+                found = self.cursor.execute(sql, args)
+                if table == 'IllnessDetails':
+                    log("found: {}".format(found))
+                if found >= 1:
+                    # Append the key found for that column
+                    result = self.cursor.fetchone()
+                    self.IDs[table][row] = int(result[0])
+                    seen[this_row] = int(result[0])
                 else:
-                    sql += ' AND '
-                # Add quotes around string values
-                sql += quote_sql(('{column} = %({column})s'), column=column)
-                args['`{}`'.format(column)] = pyformat_translate(value)
-            # Add the user check for protected tables
-            if table in fig.PROTECTED_TABLES:
-                sql += ' AND user_id = %(id)s'
-                args['id'] = self.user_id
-            found = self.cursor.execute(sql, args)
-            if found >= 1:
-                # Append the key found for that column
-                result = self.cursor.fetchone()
-                self.IDs[table][j] = int(result[0])
-            else:
-                # Create the entry
-                this_row = ''.join(list(map(str, df[table].loc[j])))
-                try:
-                    # See if this table entry already exists in the current input file
-                    key = seen[this_row]
-                    self.IDs[table][j] = key
-                except KeyError:
                     # If not add it and give it a unique key
                     seen[this_row] = current_key
-                    self.IDs[table][j] = current_key
+                    self.IDs[table][row] = current_key
                     current_key += 1
 
     def create_import_line(self, df, table, structure, columns, row_index):
@@ -375,11 +472,9 @@ class Database:
             f.write('\t'.join(columns) + '\n')
             # For each row in the input file
             for i in range(len(df.index)):
-                line = self.create_import_line(df,
-                                               table,
-                                               structure,
-                                               columns,
-                                               i)
+                line = self.create_import_line(df, table, structure, columns, i)
+                if table == 'IllnessDetails' and i > 3:
+                    log(line)
                 f.write('\t'.join(list(map(str, line))) + '\n')
         return filename
 
@@ -430,54 +525,6 @@ class Database:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def load_ICD_codes(self, df):
-        """
-        Parse the ICD codes and load them into the appropriate tables
-        """
-        # Parse the ICD codes into seperate columns
-        codes = df['ICDCode']['ICDCode'].tolist()
-        IBC, IC, ID, IDe = [], [], [], []
-        for code in codes:
-            try:
-                parts = code.split('.')
-                # Gets the first character
-                IBC.append(parts[0][0])
-                # Gets the next two numbers
-                IC.append(int(parts[0][1:]))
-                # Gets the next three characters
-                ID.append(parts[1][:-1])
-                # Gets the final character
-                IDe.append(parts[1][-1])
-            # If the value is nan it will error
-            except AttributeError:
-                IBC.append(np.nan)
-                IC.append(np.nan)
-                ID.append(np.nan)
-                IDe.append(np.nan)
-
-        # Add the parsed values to the dataframe
-        df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
-        df['IllnessCategory', 'ICDCategory'] = IC
-        df['IllnessDetails', 'ICDDetails'] = ID
-        df['IllnessDetails', 'ICDExtension'] = IDe
-
-        # Load the parsed values into the appropriate tables
-        for table in ['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails']:
-            self.create_import_data(table, df)
-            filename = self.create_import_file(table, df)
-
-            if isinstance(filename, WindowsPath):
-                filename = str(filename).replace('\\', '\\\\')
-            # Load the newly created file into the database
-            sql = 'LOAD DATA LOCAL INFILE "' + str(filename) + '" INTO TABLE ' +\
-                  table + ' FIELDS TERMINATED BY "\\t"' +\
-                  ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-            self.cursor.execute(sql)
-            # Commit the inserted data
-            self.db.commit()
-
-        return df
-
     def read_in_sheet(self, metadata, study_type, **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
@@ -489,7 +536,7 @@ class Database:
         if not self.path.is_dir():
             self.path.mkdir()
         # Read in the metadata file to import
-        df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+        df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
         df = df.reindex_axis(df.columns, axis=1)
         study_name = df['Study']['StudyName'][0]
         sql = 'SET FOREIGN_KEY_CHECKS=0'
@@ -498,16 +545,15 @@ class Database:
 
         columns = df.columns.levels[0].tolist()
         column_order = [TABLE_ORDER.index(col) for col in columns]
-        tables = [x for _, x in sorted(zip(column_order, columns))]
+        tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
 
         # Create file and import data for each regular table
         for table in tables:
+            log('Import table {}'.format(table))
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 kwargs['metadata'] = metadata
                 access_code = self.mongo_import(study_name, study_type, **kwargs)
-            elif table == 'ICDCode':
-                df = self.load_ICD_codes(df)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -703,11 +749,11 @@ class Database:
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
-        # Go through each column
+        # Go through each row
         for j in range(len(df.index)):
             sql = """SELECT * FROM Subjects WHERE"""
             args = {}
-            # Check if there is a matching entry already in the database
+            # Check if there is an entry already in the database that matches every column
             for i, column in enumerate(df):
                 value = df[column][j]
                 if pd.isnull(value):  # Use NULL for NA values
@@ -719,7 +765,6 @@ class Database:
                 # Add quotes around string values
                 sql += quote_sql(('{column} = %({column})s'), column=column)
                 result = pyformat_translate(value)
-                log(result)
                 args['`{}`'.format(column)] = result
             sql += ' AND user_id = %(id)s'
             args['id'] = self.user_id
@@ -728,9 +773,10 @@ class Database:
             except pms.err.InternalError as e:
                 raise MetaDataError(e.args[1])
             if found >= 1:
-                warnings.append('{}\t{}\tSubect in row {} already exists in the database.'.format(j + 2,
-                                                                                                  subject_col,
-                                                                                                  j + 2))
+                log(sql)
+                log(args)
+                warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
+                warnings.append(warning.format(row=j, col=subject_col))
         return warnings
 
     def check_user_study_name(self, study_name):
@@ -748,15 +794,16 @@ class Database:
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """
+        log('Get mongo files')
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
-            raise MissingUploadError('No data exist for this access code')
+            raise MissingUploadError()
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
-
+        log('return from mongo')
         return mdata.files, mdata.path
 
     def get_metadata(self, access_code):

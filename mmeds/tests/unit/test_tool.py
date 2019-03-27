@@ -7,6 +7,7 @@ from mmeds.util import load_config
 
 from shutil import rmtree
 import mmeds.config as fig
+import mmeds.secrets as sec
 
 
 class ToolTests(TestCase):
@@ -14,7 +15,7 @@ class ToolTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        add_user(fig.TEST_USER, fig.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',

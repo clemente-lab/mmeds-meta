@@ -141,11 +141,11 @@ def summarize_qiime2(path, files, config):
     rmtree(path / 'temp')
 
     # Get Alpha
+    cmd = ['qiime', 'tools', 'export',
+           '--input-path', str(files['alpha_rarefaction']),
+           '--output-path', str(path / 'temp')]
+    run(cmd, env=new_env, check=True)
     for metric in ['shannon', 'faith_pd', 'observed_otus']:
-        cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(files['alpha_rarefaction']),
-               '--output-path', str(path / 'temp')]
-        run(cmd, env=new_env, check=True)
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
@@ -419,15 +419,15 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             log('Convert notebook to latex')
-            output = run(cmd.split(' '), check=True, env=self.env)
+            output = run(cmd.split(' '), check=True, env=self.env, capture_output=True)
 
             log('Convert latex to pdf')
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
-            output = run(cmd.split(' '), check=True)
-            output = run(cmd.split(' '), check=True)
+            output = run(cmd.split(' '), check=True, capture_output=True)
+            output = run(cmd.split(' '), check=True, capture_output=True)
         except RuntimeError:
             print(output)
             log(output)
