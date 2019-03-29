@@ -13,6 +13,7 @@ from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes
+from numpy import nan
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -231,6 +232,9 @@ class Database:
             log(sql)
             log(args)
 
+        for key, item in args.items():
+            if item is None or item == nan or item == 'NA' or item == 'NULL':
+                args[key] = 0
         return sql, args
 
     def add_foreign_keys(self, df, sql, args, foreign_keys, row):
@@ -449,7 +453,7 @@ class Database:
                 # Otherwise see if the entry already exists
                 try:
                     if pd.isnull(df[table].loc[row_index][col]):
-                        line.append('NULL')
+                        line.append('0')
                     else:
                         line.append(df[table].loc[row_index][col])
                 except KeyError:

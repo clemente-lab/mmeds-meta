@@ -216,6 +216,7 @@ def parse_ICD_codes(df):
     """ Parse the ICD codes into seperate columns """
     codes = df['ICDCode']['ICDCode'].tolist()
     IBC, IC, ID, IDe = [], [], [], []
+    null = nan
     for code in codes:
         try:
             parts = code.split('.')
@@ -230,15 +231,15 @@ def parse_ICD_codes(df):
             IC.append(int(parts[0][1:]))
         except ValueError as e:
             if 'invalid literal' in e.args[0] and ": 'XX'" in e.args[0]:
-                IC.append(nan)
+                IC.append(null)
             else:
                 raise e
-        # If the value is nan it will error
+        # If the value is null it will error
         except AttributeError:
-            IBC.append(nan)
-            IC.append(nan)
-            ID.append(nan)
-            IDe.append(nan)
+            IBC.append(null)
+            IC.append(null)
+            ID.append(null)
+            IDe.append(null)
 
     # Add the parsed values to the dataframe
     df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
@@ -460,9 +461,8 @@ def generate_error_html(file_fp, errors, warnings):
     # Add Errors to markup table
     for error in errors:
         row, col, item = error.split('\t')
-        if row == '-1' and col == '-1':
-            top.append(('red', item))
-        elif row == '0':
+        top.append(('red', item))
+        if row == '0':
             markup[int(row) + 3][int(col)] = ['red', item]
         else:
             markup[int(row) + 4][int(col)] = ['red', item]
