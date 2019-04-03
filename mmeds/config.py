@@ -269,6 +269,8 @@ tdf = read_csv(TEST_METADATA,
                skiprows=[2, 4],
                na_filter=False)
 
+COL_TO_TABLE = {}
+
 for table in TABLE_COLS:
     # Temporary solution
     try:
@@ -281,6 +283,7 @@ for table in TABLE_COLS:
                 COLUMN_TYPES[table][column] = 'float'
             elif 'Date' in col_type:
                 COLUMN_TYPES[table][column] = 'datetime64'
+            COL_TO_TABLE[column] = table
     except KeyError:
         continue
 
