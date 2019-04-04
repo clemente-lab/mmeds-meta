@@ -356,6 +356,7 @@ class MMEDSNotebook():
                                                      analysis_type=self.analysis_type,
                                                      titlefont='font_file_bold.otf'))
         self.add_code(self.source['r_setup'])
+        self.add_code(self.source['py_setup_2'])
 
         # Get only files for the requested taxa levels
         included_files = []

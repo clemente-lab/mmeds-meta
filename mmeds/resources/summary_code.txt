@@ -3,6 +3,7 @@ from pathlib import Path
 from copy import deepcopy
 import pandas as pd
 import rpy2.rinterface
+from math import floor
 from warnings import filterwarnings
 from IPython.display import Image
 from random import shuffle
@@ -26,53 +27,62 @@ mdf.set_index('#SampleID', inplace=True)
 metadata_columns = sorted(config['metadata'])
 
 # Stores a list of values shared accross groups but unique within (for graphing)
-group_ids = []
-color_maps = {{}}
-max_colors = []
-max_colors_con = []
+max_colors = 0
+max_colors_con = 0
 # Create information for R color palettes
 for group_name in metadata_columns:
     if not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         uni = grouping.nunique()
         if config['metadata_continuous'][group_name]:
-            group_ids.append(['con' + str(i) for i in range(uni)])
             # Get the category with the most colors to use for palette creation
-            if uni > len(max_colors_con):
-                max_colors_con = group_ids[-1]
-            color_maps[group_name] = {{str(x):'con{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
+            if uni > max_colors_con:
+                max_colors_con = uni
         else:
-            group_ids.append(['color' + str(i) for i in range(uni)])
             # Get the category with the most colors to use for palette creation
-            if uni > len(max_colors):
-                max_colors = group_ids[-1]
-            color_maps[group_name] = {{str(x):'color{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
+            if uni > max_colors:
+                max_colors = uni
 
-# Shuffle the non-continuous colors so values near each other won't be similar shades
-shuffle(max_colors, lambda: 0.25)
+all_colors_con = ['con{{}}'.format(i) for i in range(max_colors_con)]
+all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
 # Load the extention for jupyter
 %load_ext rpy2.ipython
 =====
+py_setup_2<source>
+color_maps = {}
+for group_name in metadata_columns:
+    if not mdf[group_name].isnull().all():
+        grouping = mdf[group_name]
+        uni = grouping.nunique() # Unique values in the column
+        if config['metadata_continuous'][group_name]:
+            inc = floor(max_colors_con / uni) # Increment to advance the color assignments
+            color_maps[group_name] = {str(x):'con{}'.format(i * inc)
+                                      for i,x in enumerate(grouping.drop_duplicates())}
+        else:
+            inc = floor(max_colors / uni) # Increment to advance the color assignments
+            color_maps[group_name] = {str(x):'color{}'.format(i * inc)
+                                      for i, x in enumerate(grouping.drop_duplicates())}
+=====
 r_setup<source>
-%%R -i max_colors -i max_colors_con -o allRGB
+%%R -i all_colors -i all_colors_con -o allRGB
 library(ggplot2)
 library(RColorBrewer)
 library(GGally)
 library(ggrepel)
 
 # Create custom color palette
-myColors <- brewer.pal(12, "Paired")
+myColors <- brewer.pal(11, "Paired")
 colorMaker <- colorRampPalette(myColors)
-allColorsDisc <- colorMaker(length(unique(max_colors)))
+allColorsDisc <- colorMaker(length(unique(all_colors)))
 # Custom continuous(ish) color palette
-myColorsCon <- brewer.pal(9, "YlOrRd")
+myColorsCon <- brewer.pal(11, "Spectral")
 colorMakerCon <- colorRampPalette(myColorsCon)
-allColorsCon <- colorMakerCon(length(unique(max_colors_con)))
+allColorsCon <- colorMakerCon(length(unique(all_colors_con)))
 
 # Rename the colors to match with the groups
-names(allColorsDisc) <- max_colors
-names(allColorsCon) <- max_colors_con
+names(allColorsDisc) <- all_colors
+names(allColorsCon) <- all_colors_con
 
 # Create the objects for graphing with the colors
 allColors <- append(allColorsDisc, allColorsCon)
@@ -348,7 +358,7 @@ beta_r<source>
 
 # Create the plots for the first three PCs
 png('{plot}', width = 6, height = 6, unit='in', res=200)
-p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df))) +
+p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df), alpha=0.2)) +
          theme_bw() +
          theme(legend.position = 'none',
                plot.title = element_text(hjust = 0.5),
