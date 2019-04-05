@@ -2,8 +2,8 @@ import pandas as pd
 import mmeds.config as fig
 
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number, datetime64
-from mmeds.util import log, load_ICD_codes, is_numeric, load_mapping_file, get_col_type
+from numpy import std, mean, issubdtype, number, datetime64, nan
+from mmeds.util import log, load_ICD_codes, is_numeric, get_col_type
 
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -22,8 +22,8 @@ HIPAA_HEADERS = ['social_security', 'social_security_number', 'address', 'phone'
 
 DNA = set('GATC')
 
-ILLEGAL_IN_HEADER = set('/\\ *?')  # Limit to alpha numeric, underscore, dot, hyphen, has to start with alpha
-ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER) + '_')
+ILLEGAL_IN_HEADER = set('/\\ *?_')  # Limit to alpha numeric, dot, hyphen, has to start with alpha
+ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
 def check_header(header, col_index):
@@ -137,43 +137,6 @@ def check_string_column(column, col_index):
     return warnings
 
 
-def check_column(raw_column, col_index, is_additional=False):
-    """
-    Validate that there are no issues with the provided column of metadata.
-    =======================================================================
-    :raw_column: The unmodified column from the metadata dataframe
-    :col_index: The index of the column in the original dataframe
-    :is_additional: If true the column is additional metadata and there are fewer checks
-    """
-    column, col_type, check_date = get_col_type(raw_column)
-
-    # Get the header
-    header = column.name
-
-    # Check the header
-    errors = check_header(header, col_index)
-    warnings = []
-
-    # Check the remaining columns
-    for i, cell in enumerate(column):
-        cell_errors, cell_warnings = check_cell(i, col_index, cell, col_type, check_date, is_additional)
-        errors += cell_errors
-        warnings += cell_warnings
-
-    # Ensure there is only one study being uploaded
-    if header == 'StudyName' and len(set(column.tolist())) > 1:
-        errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
-
-    # Check that values fall within standard deviation
-    if issubdtype(col_type, number) and not isinstance(raw_column.dtype, str):
-        warnings += check_number_column(column, col_index, col_type)
-    # Check for categorical data
-    elif issubdtype(col_type, str) and not header == 'ICDCode':
-        warnings += check_string_column(column, col_index)
-
-    return errors, warnings
-
-
 def check_duplicates(column, col_index):
     """ Checks for any duplicate entries in the provided column """
 
@@ -228,24 +191,6 @@ def check_duplicate_cols(headers):
     return dups
 
 
-def check_dates(df):
-    """
-    Check that no dates in the end col are earlier than
-    the matching date in the start col
-    ===================================================
-    :df: The data frame of the table containing the columns
-    :table_col: The column of the offending start date:w
-
-    """
-    errors = []
-    start_col = 0
-    for i in range(len(df)):
-        if df['StartDate'][i] > df['EndDate'][i]:
-            err = '{}\t{}\tData Range Error: End date {} is earlier than start date {} in row {}'
-            errors.append(err.format(i + 1, start_col, df['EndDate'][i], df['StartDate'][i], i))
-    return errors
-
-
 def check_ICD_codes(column, col_index):
     """ Ensures all ICD codes in the column are valid. """
     # Load the ICD codes
@@ -259,118 +204,201 @@ def check_ICD_codes(column, col_index):
     return errors
 
 
-def check_table_column(table_df, name, header, col_index, row_index, study_name):
-    errors = []
-    warnings = []
-    if not name == 'AdditionalMetaData' and header not in fig.TABLE_COLS[name]:
-        if '.1' in header:
-            err_message = '-1\t{}\tDuplicate Column Error: Duplicate of column {} in table {}'
-            errors.append(err_message.format(col_index, header.replace('.1', ''), name))
-        else:
-            err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
-            errors.append(err_message.format(col_index, header, name))
-    col = table_df[header]
-    new_errors, new_warnings = check_column(col, col_index, name == 'AdditionalMetaData')
-    errors += new_errors
-    warnings += new_warnings
-
-    # Perform column specific checks
-    if name == 'Specimen':
-        if header == 'BarcodeSequence':
-            errors += check_duplicates(col, col_index)
-            errors += check_lengths(col, col_index)
-            errors += check_barcode_chars(col, col_index)
-        elif header == 'RawDataID':
-            errors += check_duplicates(col, col_index)
-        elif header == 'LinkerPrimerSequence':
-            errors += check_lengths(col, col_index)
-    elif name == 'ICDCode':
-        errors += check_ICD_codes(col, col_index)
-    elif study_name is None and name == 'Study':
-        study_name = table_df['StudyName'][row_index]
-    return errors, warnings
-
-
-def check_table(table_df, name, all_headers, study_name):
-    """
-    Check the data within a particular table
-    ========================================
-    :table_df: A pandas dataframe containing the data for the specified table
-    :name: The name of the table
-    :all_headers: The headers that have been encountered so far
-    :study_name: None if no StudyName column has been seen yet,
-        otherwise with have the previously seen StudyName
-    """
-    errors = []
-    warnings = []
-    start_col = None
-    end_col = None
-    if not name == 'AdditionalMetaData':
-        missing_cols = set(fig.TABLE_COLS[name]).difference(set(table_df.columns))
-        if missing_cols:
-            text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
-            errors.append(text.format(', '.join(missing_cols), name))
-    # For each table column
-    for i, header in enumerate(table_df.columns):
-        # Check that end dates are after start dates
-        if header == 'StartDate':
-            start_col = i
-        elif header == 'EndDate':
-            end_col = i
-        col_index = len(all_headers)
-        new_errors, new_warnings = check_table_column(table_df,
-                                                      name,
-                                                      header,
-                                                      col_index,
-                                                      i,
-                                                      study_name)
-        all_headers.append(header)
-        errors += new_errors
-        warnings += new_warnings
-    # Compare the start and end dates
-    if start_col is not None and end_col is not None:
-        errors += check_dates(table_df)
-    return (errors, warnings, all_headers, study_name)
-
-
 def validate_mapping_file(file_fp, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors, an empty list means there
     were no issues.
     """
-    log('In validate_mapping_file')
-    tables, df, errors, warnings = load_mapping_file(file_fp, delimiter)
+    valid = Validator(file_fp, sep=delimiter)
+    return valid.run()
 
-    all_headers = []
-    study_name = None
-    # For each table
-    for table in tables:
-        # If the table shouldn't exist add and error and skip checking it
-        if table not in fig.TABLE_ORDER:
-            errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
-        else:
-            table_df = df[table]
-            (new_errors, new_warnings, all_headers, study_name) = check_table(table_df, table, all_headers, study_name)
-            errors += new_errors
-            warnings += new_warnings
 
-    # Check for duplicate columns
-    dups = check_duplicate_cols(all_headers)
-    if dups:
-        for dup in dups:
-            locs = [i for i, header in enumerate(all_headers) if header == 'dup']
-            for loc in locs:
-                errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
+class Validator:
 
-    # Check for missing tables
-    missing_tables = fig.METADATA_TABLES.difference(set(tables))
-    if missing_tables:
-        errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
+    def __init__(self, file_fp, sep):
+        log('init validator')
+        self.errors = []
+        self.warnings = []
+        self.study_name = 'NA'
+        self.subjects = []
+        self.tables = []
+        self.all_headers = []
+        self.file_fp = file_fp
+        self.sep = sep
+        self.df = pd.read_csv(file_fp,
+                              sep=sep,
+                              header=[0, 1],
+                              skiprows=[2, 3, 4],
+                              na_filter=False)
+        self.df.replace('NA', nan, inplace=True)
+        self.table_df = None
 
-    # Check for missing headers
-    missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
-    if missing_headers:
-        errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
+    def load_mapping_file(self, file_fp, delimiter):
+        """
+        Load the metadata file and assign datatypes to the columns
+        ==========================================================
+        :file_fp: The path to the mapping file
+        :delimiter: The delimiter used in the mapping file
+        """
+        log('load_mapping_file')
+        # Get the tables in the dataframe while maintaining order
+        for (table, header) in self.df.axes[1]:
+            log('checking types {}: {}'.format(table, header))
+            self.tables.append(table)
+            # Skip type checking for additional metadata
+            if not table == 'AdditionalMetadata':
+                for column in self.df[table]:
+                    if '' in self.df[table][column]:
+                        self.errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
+                    try:
+                        self.df[table].assign(column=self.df[table][column].astype(fig.COLUMN_TYPES[table][column]))
+                    # Additional metadata won't have an entry so will automatically be treated as a string
+                    except KeyError:
+                        self.df[table].assign(column=self.df[table][column].astype('object'))
+                    # Error handling for column values that don't match the column type
+                    except ValueError:
+                        err = '-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'
+                        self.errors.append(err.format(column))
+        self.tables = list(dict.fromkeys(self.tables))
 
-    return errors, warnings, study_name, df['Subjects']
+    def check_column(self, raw_column, col_index, is_additional=False):
+        """
+        Validate that there are no issues with the provided column of metadata.
+        =======================================================================
+        :raw_column: The unmodified column from the metadata dataframe
+        :col_index: The index of the column in the original dataframe
+        :is_additional: If true the column is additional metadata and there are fewer checks
+        """
+        column, col_type, check_date = get_col_type(raw_column)
+
+        # Get the header
+        header = column.name
+
+        # Check the header
+        self.errors += check_header(header, col_index)
+
+        # Check the remaining columns
+        for i, cell in enumerate(column):
+            cell_errors, cell_warnings = check_cell(i, col_index, cell, col_type, check_date, is_additional)
+            self.errors += cell_errors
+            self.warnings += cell_warnings
+
+        # Ensure there is only one study being uploaded
+        if header == 'StudyName' and len(set(column.tolist())) > 1:
+            self.errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
+
+        # Check that values fall within standard deviation
+        if issubdtype(col_type, number) and not isinstance(raw_column.dtype, str):
+            self.warnings += check_number_column(column, col_index, col_type)
+        # Check for categorical data
+        elif issubdtype(col_type, str) and not header == 'ICDCode':
+            self.warnings += check_string_column(column, col_index)
+
+    def check_table_column(self, name, header, col_index, row_index, study_name):
+        log('Check table column: {}'.format(header))
+        if not name == 'AdditionalMetaData' and header not in fig.TABLE_COLS[name]:
+            if '.1' in header:
+                err_message = '-1\t{}\tDuplicate Column Error: Duplicate of column {} in table {}'
+                self.errors.append(err_message.format(col_index, header.replace('.1', ''), name))
+            else:
+                err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
+                self.errors.append(err_message.format(col_index, header, name))
+        col = self.table_df[header]
+        self.check_column(col, col_index, name == 'AdditionalMetaData')
+
+        # Perform column specific checks
+        if name == 'Specimen':
+            if header == 'BarcodeSequence':
+                self.errors += check_duplicates(col, col_index)
+                self.errors += check_lengths(col, col_index)
+                self.errors += check_barcode_chars(col, col_index)
+            elif header == 'RawDataID':
+                self.errors += check_duplicates(col, col_index)
+            elif header == 'LinkerPrimerSequence':
+                self.errors += check_lengths(col, col_index)
+        elif name == 'ICDCode':
+            self.errors += check_ICD_codes(col, col_index)
+        elif study_name is None and name == 'Study':
+            study_name = self.table_df['StudyName'][row_index]
+
+    def check_table(self, name):
+        """
+        Check the data within a particular table
+        ========================================
+        :table_df: A pandas dataframe containing the data for the specified table
+        :name: The name of the table
+        :all_headers: The headers that have been encountered so far
+        :study_name: None if no StudyName column has been seen yet,
+            otherwise with have the previously seen StudyName
+        """
+        log('Check table: {}'.format(name))
+        start_col = None
+        end_col = None
+        self.table_df = self.df[name]
+        if not name == 'AdditionalMetaData':
+            missing_cols = set(fig.TABLE_COLS[name]).difference(set(self.table_df.columns))
+            if missing_cols:
+                text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
+                self.errors.append(text.format(', '.join(missing_cols), name))
+        # For each table column
+        for i, header in enumerate(self.table_df.columns):
+            # Check that end dates are after start dates
+            if header == 'StartDate':
+                start_col = i
+            elif header == 'EndDate':
+                end_col = i
+            col_index = len(self.all_headers)
+            self.check_table_column(name, header, col_index, i, self.study_name)
+            self.all_headers.append(header)
+
+        # Compare the start and end dates
+        if start_col is not None and end_col is not None:
+            self.check_dates()
+
+    def check_dates(self):
+        """
+        Check that no dates in the end col are earlier than
+        the matching date in the start col
+        ===================================================
+        :df: The data frame of the table containing the columns
+        :table_col: The column of the offending start date:w
+        """
+        start_col = 0
+        for i in range(len(self.df)):
+            if self.df['StartDate'][i] > self.df['EndDate'][i]:
+                err = '{}\t{}\tData Range Error: End date {} is earlier than start date {} in row {}'
+                self.errors.append(err.format(i + 1, start_col, self.df['EndDate'][i], self.df['StartDate'][i], i))
+
+    def run(self):
+        log('In validate_mapping_file')
+        self.load_mapping_file(self.file_fp, self.sep)
+
+        all_headers = []
+        # For each table
+        for table in self.tables:
+            # If the table shouldn't exist add and error and skip checking it
+            if table not in fig.TABLE_ORDER:
+                self.errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
+            else:
+                self.check_table(table)
+
+        # Check for duplicate columns
+        dups = check_duplicate_cols(all_headers)
+        if dups:
+            for dup in dups:
+                locs = [i for i, header in enumerate(all_headers) if header == 'dup']
+                for loc in locs:
+                    self.errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
+
+        # Check for missing tables
+        missing_tables = fig.METADATA_TABLES.difference(set(self.tables))
+        if missing_tables:
+            self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
+
+        # Check for missing headers
+        missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
+        if missing_headers:
+            self.errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
+
+        return self.errors, self.warnings, self.study_name, self.df['Subjects']

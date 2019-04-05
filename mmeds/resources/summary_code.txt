@@ -358,7 +358,7 @@ beta_r<source>
 
 # Create the plots for the first three PCs
 png('{plot}', width = 6, height = 6, unit='in', res=200)
-p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df), alpha=0.2)) +
+p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df), alpha=0.5)) +
          theme_bw() +
          theme(legend.position = 'none',
                plot.title = element_text(hjust = 0.5),

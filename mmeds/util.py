@@ -253,40 +253,6 @@ def parse_ICD_codes(df):
     return df
 
 
-def load_mapping_file(file_fp, delimiter):
-    """
-    Load the metadata file and assign datatypes to the columns
-    ==========================================================
-    :file_fp: The path to the mapping file
-    :delimiter: The delimiter used in the mapping file
-    """
-    df = pd.read_csv(file_fp,
-                     sep=delimiter,
-                     header=[0, 1],
-                     skiprows=[2, 3, 4],
-                     na_filter=False)
-    df.replace('NA', nan, inplace=True)
-    # Get the tables in the dataframe while maintaining order
-    tables = []
-    errors = []
-    warnings = []
-    for (table, header) in df.axes[1]:
-        tables.append(table)
-        for column in df[table]:
-            if '' in df[table][column]:
-                errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
-            try:
-                df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
-            # Additional metadata won't have an entry so will automatically be treated as a string
-            except KeyError:
-                df[table].assign(column=df[table][column].astype('object'))
-            # Error handling for column values that don't match the column type
-            except ValueError:
-                errors.append('-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'.format(column))
-    tables = list(dict.fromkeys(tables))
-    return tables, df, errors, warnings
-
-
 def load_html(file_path, **kwargs):
     """
     Load the specified html file. Inserting the head and topbar
