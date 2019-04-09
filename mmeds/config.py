@@ -1,6 +1,7 @@
 from pathlib import Path
 from random import choice
 from pandas import read_csv
+from numpy import datetime64
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -271,18 +272,25 @@ tdf = read_csv(TEST_METADATA,
 
 COL_TO_TABLE = {}
 
+TYPE_MAP = {
+    'Text': str,
+    'Text: Must be unique': str,
+    'Web Address': str,
+    'Email': str,
+    'Decimal': float,
+    'Integer': int,
+    'Number': float,
+    'Date': datetime64,
+    'Time': datetime64
+}
+
 for table in TABLE_COLS:
     # Temporary solution
     try:
         COLUMN_TYPES[table] = {}
         for column in TABLE_COLS[table]:
             col_type = tdf[table][column].iloc[0]
-            if 'Text' in col_type:
-                COLUMN_TYPES[table][column] = 'str'
-            elif 'Number' in col_type:
-                COLUMN_TYPES[table][column] = 'float'
-            elif 'Date' in col_type:
-                COLUMN_TYPES[table][column] = 'datetime64'
+            COLUMN_TYPES[table][column] = TYPE_MAP[col_type]
             COL_TO_TABLE[column] = table
     except KeyError:
         continue

@@ -20,6 +20,14 @@ import pandas as pd
 def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
 
+def load_metadata(file_name):
+    return pd.read_csv(file_name,
+                       sep='\t',
+                       header=[0, 1],
+                       skiprows=[2, 3, 4],
+                       na_values='NA',
+                       keep_default_na=False)
+
 
 def catch_server_errors(page_method):
     """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """

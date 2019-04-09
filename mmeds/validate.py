@@ -1,9 +1,10 @@
 import pandas as pd
 import mmeds.config as fig
+import re
 
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number, datetime64, nan
-from mmeds.util import log, load_ICD_codes, is_numeric, get_col_type
+from numpy import std, mean, issubdtype, number, datetime64, nan, isnan
+from mmeds.util import log, load_ICD_codes, is_numeric, load_metadata
 
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -55,56 +56,6 @@ def check_header(header, col_index):
         errors.append(row_col + 'Whitespace Header Error: Preceding or trailing whitespace %s in column %d' %
                       (header, col_index))
     return errors
-
-
-def check_cell(row_index, col_index, cell, col_type, check_date, is_additional):
-    """
-    Check the data in the specified cell.
-    ====================================
-    :row_index: The index of the row of the cell
-    :col_index: The index of the column of the cell
-    :cell: The value of the cell
-    :col_type: The known type of the column as a whole
-    :check_date: If True check the cell for a valid date
-    :is_additional: If true the column is additional metadata and there are fewer checks
-    """
-    errors = []
-    warnings = []
-    # An NA cell will not generate any errors
-    if not cell == 'NA':
-        row_col = str(row_index) + '\t' + str(col_index) + '\t'
-        # Check for non-standard NAs
-        if cell in NAs:
-            errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
-                          (cell, row_index, col_index))
-
-        # Check for consistent types in the column
-        if not issubdtype(col_type, datetime64):
-            # If the cast fails for this cell the data must be the wrong type
-            try:
-                col_type(cell)
-            except ValueError:
-                message = 'Mixed Type {}: Value {} does not match column type {}'
-                if is_additional:
-                    warnings.append(row_col + message.format('Warning', cell, col_type))
-                else:
-                    errors.append(row_col + message.format('Error', cell, col_type))
-        # Check for empty fields
-        if '' == cell:
-            errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
-
-        if isinstance(cell, str):
-            # Check for trailing or preceding whitespace
-            if not cell == cell.strip():
-                errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
-                              (cell, row_index))
-        # Check if this is the cell with the invalid date
-        if check_date:
-            try:
-                pd.to_datetime(cell)
-            except ValueError:
-                errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
-    return errors, warnings
 
 
 def check_number_column(column, col_index, col_type):
@@ -207,8 +158,8 @@ def check_ICD_codes(column, col_index):
 def validate_mapping_file(file_fp, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
-    Returns a list of the errors, an empty list means there
-    were no issues.
+    Returns a list of the errors and warnings,
+    an empty list means there were no issues.
     """
     valid = Validator(file_fp, sep=delimiter)
     return valid.run()
@@ -217,22 +168,38 @@ def validate_mapping_file(file_fp, delimiter='\t'):
 class Validator:
 
     def __init__(self, file_fp, sep):
+        """ Initialize the validator object. """
+
         log('init validator')
         self.errors = []
         self.warnings = []
         self.study_name = 'NA'
         self.subjects = []
-        self.tables = []
-        self.all_headers = []
         self.file_fp = file_fp
         self.sep = sep
-        self.df = pd.read_csv(file_fp,
-                              sep=sep,
-                              header=[0, 1],
-                              skiprows=[2, 3, 4],
-                              na_filter=False)
-        self.df.replace('NA', nan, inplace=True)
+        log(file_fp)
+        self.header_df = pd.read_csv(self.file_fp,
+                                     sep=sep,
+                                     header=[0, 1],
+                                     nrows=3)
+        log(self.header_df)
+        self.df = load_metadata(self.file_fp)
+        self.tables = []
+        self.columns = []
+        for table, column in self.df.columns:
+            if table not in self.tables:
+                self.tables.append(table)
+            if column not in self.columns:
+                self.columns.append(column)
+
+        self.col_types = {}
         self.table_df = None
+        self.cur_col = None    # Current column being checked
+        self.cur_row = 0       # Current row being checked
+        self.cur_table = None  # Current table being checked
+
+        self.seen_tables = []
+        self.seen_cols = []
 
     def load_mapping_file(self, file_fp, delimiter):
         """
@@ -242,35 +209,95 @@ class Validator:
         :delimiter: The delimiter used in the mapping file
         """
         log('load_mapping_file')
+        # Update column types
+        for table in fig.COLUMN_TYPES.keys():
+            for column, col_type in fig.COLUMN_TYPES[table].items():
+                self.col_types[column] = col_type
+
         # Get the tables in the dataframe while maintaining order
-        for (table, header) in self.df.axes[1]:
-            log('checking types {}: {}'.format(table, header))
-            self.tables.append(table)
-            # Skip type checking for additional metadata
-            if not table == 'AdditionalMetadata':
-                for column in self.df[table]:
-                    if '' in self.df[table][column]:
-                        self.errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
-                    try:
-                        self.df[table].assign(column=self.df[table][column].astype(fig.COLUMN_TYPES[table][column]))
-                    # Additional metadata won't have an entry so will automatically be treated as a string
-                    except KeyError:
-                        self.df[table].assign(column=self.df[table][column].astype('object'))
-                    # Error handling for column values that don't match the column type
-                    except ValueError:
-                        err = '-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'
+        for (table, column) in self.df.axes[1]:
+            log('checking types {}: {}'.format(table, column))
+
+            # Get the specified types for additional metadata fields
+            if table == 'AdditionalMetaData':
+                if column in self.col_types.keys():
+                    err = '-1\t-1\tColumn Name Error: Column name {} is part of the default template'
+                    self.errors.append(err.format(column))
+                    continue
+                else:
+                    ctype = self.header_df[table][column].iloc[1]
+                    log('Additional column {} type {}'.format(column, ctype))
+                    if pd.isna(ctype):
+                        err = '-1\t-1\tAdditionalMetaData Column Error: Missing type information for column {}'
                         self.errors.append(err.format(column))
+                        ctype = 'Text'
+                    self.col_types[column] = fig.TYPE_MAP[ctype]
+            # TODO This should be in check cell
+            if '' in self.df[table][column]:
+                self.errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
+            try:
+                self.df[table].assign(column=self.df[table][column].astype(self.col_types[column]))
+            # Additional metadata won't have an entry so will automatically be treated as a string
+            except KeyError:
+                self.df[table].assign(column=self.df[table][column].astype('object'))
+            # Error handling for column values that don't match the column type
+            except ValueError:
+                err = '-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'
+                self.errors.append(err.format(column))
         self.tables = list(dict.fromkeys(self.tables))
 
-    def check_column(self, raw_column, col_index, is_additional=False):
+    def check_cell(self, row_index, cell, check_date=False):
+        """
+        Check the data in the specified cell.
+        ====================================
+        :row_index: The index of the row of the cell
+        :col_index: The index of the column of the cell
+        :cell: The value of the cell
+        :col_type: The known type of the column as a whole
+        :check_date: If True check the cell for a valid date
+        :is_additional: If true the column is additional metadata and there are fewer checks
+        """
+        row_col = str(row_index) + '\t' + str(self.seen_cols.index(self.cur_col)) + '\t'
+        # Check for non-standard NAs
+        if cell in NAs:
+            self.errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
+                               (cell, row_index, self.seen_cols.index(self.cur_col)))
+
+        # Check for consistent types in the column
+        if not issubdtype(self.col_types[self.cur_col], datetime64):
+            # If the cast fails for this cell the data must be the wrong type
+            try:
+                self.col_types[self.cur_col](cell)
+            except ValueError:
+                message = 'Mixed Type {}: Value {} does not match column type {}'
+                if self.cur_table == 'AdditionalMetaData':
+                    self.warnings.append(row_col + message.format('Warning', cell, self.col_types[self.cur_col]))
+                else:
+                    self.errors.append(row_col + message.format('Error', cell, self.col_types[self.cur_col]))
+        # Check for empty fields
+        if '' == cell:
+            self.errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
+
+        if isinstance(cell, str):
+            # Check for trailing or preceding whitespace
+            if not cell == cell.strip():
+                self.errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
+                                   (cell, row_index))
+        # Check if this is the cell with the invalid date
+        if check_date:
+            try:
+                pd.to_datetime(cell)
+            except ValueError:
+                self.errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
+
+    def check_column(self, column, col_index, is_additional=False):
         """
         Validate that there are no issues with the provided column of metadata.
         =======================================================================
-        :raw_column: The unmodified column from the metadata dataframe
         :col_index: The index of the column in the original dataframe
         :is_additional: If true the column is additional metadata and there are fewer checks
         """
-        column, col_type, check_date = get_col_type(raw_column)
+        col_type = self.col_types[self.cur_col]
 
         # Get the header
         header = column.name
@@ -278,116 +305,115 @@ class Validator:
         # Check the header
         self.errors += check_header(header, col_index)
 
-        # Check the remaining columns
+        # Check each cell in the column
         for i, cell in enumerate(column):
-            cell_errors, cell_warnings = check_cell(i, col_index, cell, col_type, check_date, is_additional)
-            self.errors += cell_errors
-            self.warnings += cell_warnings
+            if not pd.isna(cell):
+                self.check_cell(i, col_index, cell)
 
         # Ensure there is only one study being uploaded
         if header == 'StudyName' and len(set(column.tolist())) > 1:
             self.errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
         # Check that values fall within standard deviation
-        if issubdtype(col_type, number) and not isinstance(raw_column.dtype, str):
+        if issubdtype(col_type, number):
             self.warnings += check_number_column(column, col_index, col_type)
         # Check for categorical data
         elif issubdtype(col_type, str) and not header == 'ICDCode':
             self.warnings += check_string_column(column, col_index)
 
-    def check_table_column(self, name, header, col_index, row_index, study_name):
-        log('Check table column: {}'.format(header))
-        if not name == 'AdditionalMetaData' and header not in fig.TABLE_COLS[name]:
-            if '.1' in header:
-                err_message = '-1\t{}\tDuplicate Column Error: Duplicate of column {} in table {}'
-                self.errors.append(err_message.format(col_index, header.replace('.1', ''), name))
-            else:
-                err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
-                self.errors.append(err_message.format(col_index, header, name))
-        col = self.table_df[header]
-        self.check_column(col, col_index, name == 'AdditionalMetaData')
-
-        # Perform column specific checks
-        if name == 'Specimen':
-            if header == 'BarcodeSequence':
-                self.errors += check_duplicates(col, col_index)
-                self.errors += check_lengths(col, col_index)
-                self.errors += check_barcode_chars(col, col_index)
-            elif header == 'RawDataID':
-                self.errors += check_duplicates(col, col_index)
-            elif header == 'LinkerPrimerSequence':
-                self.errors += check_lengths(col, col_index)
-        elif name == 'ICDCode':
-            self.errors += check_ICD_codes(col, col_index)
-        elif study_name is None and name == 'Study':
-            study_name = self.table_df['StudyName'][row_index]
-
-    def check_table(self, name):
-        """
-        Check the data within a particular table
-        ========================================
-        :table_df: A pandas dataframe containing the data for the specified table
-        :name: The name of the table
-        :all_headers: The headers that have been encountered so far
-        :study_name: None if no StudyName column has been seen yet,
-            otherwise with have the previously seen StudyName
-        """
-        log('Check table: {}'.format(name))
-        start_col = None
-        end_col = None
-        self.table_df = self.df[name]
-        if not name == 'AdditionalMetaData':
-            missing_cols = set(fig.TABLE_COLS[name]).difference(set(self.table_df.columns))
-            if missing_cols:
-                text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
-                self.errors.append(text.format(', '.join(missing_cols), name))
-        # For each table column
-        for i, header in enumerate(self.table_df.columns):
-            # Check that end dates are after start dates
-            if header == 'StartDate':
-                start_col = i
-            elif header == 'EndDate':
-                end_col = i
-            col_index = len(self.all_headers)
-            self.check_table_column(name, header, col_index, i, self.study_name)
-            self.all_headers.append(header)
-
-        # Compare the start and end dates
-        if start_col is not None and end_col is not None:
-            self.check_dates()
-
-    def check_dates(self):
+    def check_dates(self, start, end):
         """
         Check that no dates in the end col are earlier than
         the matching date in the start col
         ===================================================
         :df: The data frame of the table containing the columns
-        :table_col: The column of the offending start date:w
+        :table_col: The column of the offending start date
         """
         start_col = 0
-        for i in range(len(self.df)):
-            if self.df['StartDate'][i] > self.df['EndDate'][i]:
+        for i, row in self.df[self.cur_table].iterrows():
+            if row[start] > row[end]:
                 err = '{}\t{}\tData Range Error: End date {} is earlier than start date {} in row {}'
-                self.errors.append(err.format(i + 1, start_col, self.df['EndDate'][i], self.df['StartDate'][i], i))
+                self.errors.append(err.format(i + 1, start_col, row[start], row[end], i))
+
+    def check_table_column(self):
+        """ Check the columns of a particular table """
+        log('Check table column: {}'.format(self.cur_col))
+        col_index = self.columns.index(self.cur_col)
+        if not self.cur_table == 'AdditionalMetaData' and self.cur_col not in fig.TABLE_COLS[self.cur_table]:
+            if '.1' in self.cur_col:
+                err_message = '-1\t{}\tDuplicate Column Error: Duplicate of column {} in table {}'
+                self.errors.append(err_message.format(col_index, self.cur_col.replace('.1', ''), self.cur_table))
+            else:
+                err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
+                self.errors.append(err_message.format(col_index, self.cur_col, self.cur_table))
+        col = self.table_df[self.cur_col]
+        self.check_column(col, col_index, self.cur_table == 'AdditionalMetaData')
+
+        # Perform column specific checks
+        if self.cur_table == 'Specimen':
+            if self.cur_col == 'BarcodeSequence':
+                self.errors += check_duplicates(col, col_index)
+                self.errors += check_lengths(col, col_index)
+                self.errors += check_barcode_chars(col, col_index)
+            elif self.cur_col == 'RawDataID':
+                self.errors += check_duplicates(col, col_index)
+            elif self.cur_col == 'LinkerPrimerSequence':
+                self.errors += check_lengths(col, col_index)
+        elif self.cur_table == 'ICDCode':
+            self.errors += check_ICD_codes(col, col_index)
+        elif self.study_name is None and self.cur_table == 'Study':
+            self.study_name.cur_table = self.table_df['StudyName'][0]
+
+    def check_table(self):
+        """
+        Check the data within a particular table
+        ========================================
+        :table_df: A pandas dataframe containing the data for the specified table
+        """
+        log('Check table: {}'.format(self.cur_table))
+        start_col = None
+        end_col = None
+        self.table_df = self.df[self.cur_table]
+        if not self.cur_table == 'AdditionalMetaData':
+            missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
+            if missing_cols:
+                text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
+                self.errors.append(text.format(', '.join(missing_cols), self.cur_table))
+
+        # For each table column
+        for i, column in enumerate(self.table_df.columns):
+            self.seen_cols.append(column)
+            self.cur_col = column
+            # Check that end dates are after start dates
+            if re.match(r'\w*StartDate\w*', column):
+                start_col = column
+            elif re.match(r'\w*EndDate\w*', column):
+                end_col = column
+            self.check_table_column()
+
+        # Compare the start and end dates
+        if start_col is not None and end_col is not None:
+            self.check_dates(start_col, end_col)
 
     def run(self):
         log('In validate_mapping_file')
         self.load_mapping_file(self.file_fp, self.sep)
 
-        all_headers = []
         # For each table
         for table in self.tables:
             # If the table shouldn't exist add and error and skip checking it
             if table not in fig.TABLE_ORDER:
                 self.errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
             else:
-                self.check_table(table)
+                self.cur_table = table
+                self.seen_tables.append(table)
+                self.check_table()
 
         # Check for duplicate columns
-        dups = check_duplicate_cols(all_headers)
+        dups = check_duplicate_cols(self.seen_cols)
         if dups:
             for dup in dups:
-                locs = [i for i, header in enumerate(all_headers) if header == 'dup']
+                locs = [i for i, header in enumerate(self.seen_cols) if header == 'dup']
                 for loc in locs:
                     self.errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
 
@@ -397,7 +423,7 @@ class Validator:
             self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
         # Check for missing headers
-        missing_headers = REQUIRED_HEADERS.difference(set(all_headers))
+        missing_headers = REQUIRED_HEADERS.difference(set(self.seen_cols))
         if missing_headers:
             self.errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
 
