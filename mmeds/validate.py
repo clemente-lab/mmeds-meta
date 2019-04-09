@@ -3,7 +3,7 @@ import mmeds.config as fig
 import re
 
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number, datetime64, nan, isnan
+from numpy import std, mean, issubdtype, number, datetime64, isnan
 from mmeds.util import log, load_ICD_codes, is_numeric, load_metadata
 
 
@@ -220,13 +220,16 @@ class Validator:
 
             # Get the specified types for additional metadata fields
             if table == 'AdditionalMetaData':
+                # Add an error if the column name is one of the columns in the default template
                 if column in self.col_types.keys():
                     err = '-1\t-1\tColumn Name Error: Column name {} is part of the default template'
                     self.errors.append(err.format(column))
                     continue
+                # Otherwise attempt to get the type information
                 else:
                     ctype = self.header_df[table][column].iloc[1]
                     log('Additional column {} type {}'.format(column, ctype))
+                    # If no type is specified, add and error and default to str
                     if pd.isna(ctype):
                         err = '-1\t-1\tAdditionalMetaData Column Error: Missing type information for column {}'
                         self.errors.append(err.format(column))
@@ -255,7 +258,6 @@ class Validator:
         :cell: The value of the cell
         :col_type: The known type of the column as a whole
         :check_date: If True check the cell for a valid date
-        :is_additional: If true the column is additional metadata and there are fewer checks
         """
         row_col = str(row_index) + '\t' + str(self.seen_cols.index(self.cur_col)) + '\t'
         # Check for non-standard NAs
@@ -290,12 +292,11 @@ class Validator:
             except ValueError:
                 self.errors.append(row_col + 'Date Error: Invalid date {} in row {}'.format(cell, row_index))
 
-    def check_column(self, column, col_index, is_additional=False):
+    def check_column(self, column, col_index):
         """
         Validate that there are no issues with the provided column of metadata.
         =======================================================================
         :col_index: The index of the column in the original dataframe
-        :is_additional: If true the column is additional metadata and there are fewer checks
         """
         col_type = self.col_types[self.cur_col]
 
@@ -341,13 +342,16 @@ class Validator:
         col_index = self.columns.index(self.cur_col)
         if not self.cur_table == 'AdditionalMetaData' and self.cur_col not in fig.TABLE_COLS[self.cur_table]:
             if '.1' in self.cur_col:
+                # Add an error if the column is a duplicate
                 err_message = '-1\t{}\tDuplicate Column Error: Duplicate of column {} in table {}'
                 self.errors.append(err_message.format(col_index, self.cur_col.replace('.1', ''), self.cur_table))
             else:
+                # If the column shouldn't be in the table stop checking it
                 err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
                 self.errors.append(err_message.format(col_index, self.cur_col, self.cur_table))
+                return
         col = self.table_df[self.cur_col]
-        self.check_column(col, col_index, self.cur_table == 'AdditionalMetaData')
+        self.check_column(col, col_index)
 
         # Perform column specific checks
         if self.cur_table == 'Specimen':

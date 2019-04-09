@@ -169,7 +169,7 @@ class TestServer(helper.CPWebCase):
         pass_page = insert_html(orig_page, 14, 'A new password has been sent to your email.')
         self.assertBody(pass_page)
 
-        sleep(10)
+        sleep(20)
         mail = recieve_email(1)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         new_pass = code.split('password is:')[1].splitlines()[1].strip()
@@ -223,6 +223,7 @@ class TestServer(helper.CPWebCase):
         err = 'Error: gz is not a valid filetype.'
         page = insert_error(page, 22, err)
         self.assertBody(page)
+        log('Checked invalid filetype')
 
         # Check a metadata file that errors
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_FAIL], ['text/tab-seperated-values'])
@@ -234,14 +235,17 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
+        log('Checked metadata that errors')
+
         # Check a metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_WARN], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html', title='Warnings', user=fig.SERVER_USER)
-        warning = '34\t3\tStdDev Warning: Value 25.025 outside of two standard deviations of mean in column 3'
+        warning = '32\t3\tStdDev Warning: Value 25.0 outside of two standard deviations of mean in column 3'
         page = insert_warning(page, 22, warning)
         self.assertBody(page)
+        log('Checked metadata that warns')
 
         # Check a metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
@@ -249,6 +253,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=fig.SERVER_USER)
         self.assertBody(page)
+        log('Checked a metadata file with no problems')
 
     def upload_data(self):
         self.getPage('/upload/upload_data', self.cookies)
@@ -258,7 +263,8 @@ class TestServer(helper.CPWebCase):
                                           ['application/gzip', 'application/octet-stream', 'application/gzip'])
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        sleep(10)
+
+        sleep(20)
         mail = recieve_email(1)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         self.access_code = code.split('access code:')[1].splitlines()[1]
