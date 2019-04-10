@@ -3,21 +3,12 @@ import mmeds.config as fig
 import re
 
 from collections import defaultdict
-from numpy import std, mean, issubdtype, number, datetime64, isnan
+from numpy import std, mean, issubdtype, number, datetime64
 from mmeds.util import log, load_ICD_codes, is_numeric, load_metadata
+from mmeds.error import InvalidMetaDataFileError
 
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
-
-REQUIRED_HEADERS = set(['Description',
-                        '#SampleID'
-                        'BarcodeSequence'
-                        'LinkerPrimerSequence'
-                        'Lab'
-                        'AnalysisTool'
-                        'PrimaryInvestigator'])
-
-REQUIRED_HEADERS = set(['SpecimenID', 'BarcodeSequence', 'PrimaryInvestigator'])
 
 HIPAA_HEADERS = ['social_security', 'social_security_number', 'address', 'phone', 'phone_number']
 
@@ -178,19 +169,11 @@ class Validator:
         self.file_fp = file_fp
         self.sep = sep
         log(file_fp)
-        self.header_df = pd.read_csv(self.file_fp,
-                                     sep=sep,
-                                     header=[0, 1],
-                                     nrows=3)
+        self.header_df = None
         log(self.header_df)
-        self.df = load_metadata(self.file_fp)
+        self.df = None
         self.tables = []
         self.columns = []
-        for table, column in self.df.columns:
-            if table not in self.tables:
-                self.tables.append(table)
-            if column not in self.columns:
-                self.columns.append(column)
 
         self.col_types = {}
         self.table_df = None
@@ -209,6 +192,23 @@ class Validator:
         :delimiter: The delimiter used in the mapping file
         """
         log('load_mapping_file')
+        try:
+            self.df = load_metadata(self.file_fp)
+            self.header_df = pd.read_csv(self.file_fp,
+                                         sep=self.sep,
+                                         header=[0, 1],
+                                         nrows=3)
+        except pd.errors.ParserError:
+            raise InvalidMetaDataFileError('There is an issue parsing your metadata. Please check that it is in' +
+                                           ' tab delimited format with no tab or newline characters in any of the' +
+                                           'cells')
+        # Setup the tables and columns
+        for table, column in self.df.columns:
+            if table not in self.tables:
+                self.tables.append(table)
+            if column not in self.columns:
+                self.columns.append(column)
+
         # Update column types
         for table in fig.COLUMN_TYPES.keys():
             for column, col_type in fig.COLUMN_TYPES[table].items():
@@ -216,7 +216,6 @@ class Validator:
 
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
-            log('checking types {}: {}'.format(table, column))
 
             # Get the specified types for additional metadata fields
             if table == 'AdditionalMetaData':
@@ -228,16 +227,21 @@ class Validator:
                 # Otherwise attempt to get the type information
                 else:
                     ctype = self.header_df[table][column].iloc[1]
-                    log('Additional column {} type {}'.format(column, ctype))
+                    if self.cur_col == 'HostSubjectId':
+                        log('Host column type')
+                        log(ctype)
                     # If no type is specified, add and error and default to str
-                    if pd.isna(ctype):
+                    if pd.isna(ctype) or ctype == '':
                         err = '-1\t-1\tAdditionalMetaData Column Error: Missing type information for column {}'
                         self.errors.append(err.format(column))
                         ctype = 'Text'
-                    self.col_types[column] = fig.TYPE_MAP[ctype]
-            # TODO This should be in check cell
-            if '' in self.df[table][column]:
-                self.errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
+                    try:
+                        self.col_types[column] = fig.TYPE_MAP[ctype]
+                    except KeyError:
+                        self.col_types[column] = fig.TYPE_MAP['Text']
+                        err = '-1\t-1\tAdditionalMetaData Column Error: Invalid type information for column {}'
+                        self.errors.append(err.format(column))
+            # Make sure all values in the column will cast to the specified column type
             try:
                 self.df[table].assign(column=self.df[table][column].astype(self.col_types[column]))
             # Additional metadata won't have an entry so will automatically be treated as a string
@@ -260,10 +264,6 @@ class Validator:
         :check_date: If True check the cell for a valid date
         """
         row_col = str(row_index) + '\t' + str(self.seen_cols.index(self.cur_col)) + '\t'
-        # Check for non-standard NAs
-        if cell in NAs:
-            self.errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
-                               (cell, row_index, self.seen_cols.index(self.cur_col)))
 
         # Check for consistent types in the column
         if not issubdtype(self.col_types[self.cur_col], datetime64):
@@ -276,15 +276,21 @@ class Validator:
                     self.warnings.append(row_col + message.format('Warning', cell, self.col_types[self.cur_col]))
                 else:
                     self.errors.append(row_col + message.format('Error', cell, self.col_types[self.cur_col]))
+
         # Check for empty fields
         if '' == cell:
-            self.errors.append(row_col + 'Empty Cell Error: Empty cell value %s' % cell)
+            self.errors.append(row_col + 'Empty Cell Error: Empty cell value {}'.format(cell))
 
+        # Checks if the cell is a string
         if isinstance(cell, str):
             # Check for trailing or preceding whitespace
             if not cell == cell.strip():
                 self.errors.append(row_col + 'Whitespace Error: Preceding or trailing whitespace %s in row %d' %
                                    (cell, row_index))
+            # Check for non-standard NAs
+            if cell in NAs:
+                self.errors.append(row_col + 'NA Error: Non standard NA format %s\t%d,%d' %
+                                   (cell, row_index, self.seen_cols.index(self.cur_col)))
         # Check if this is the cell with the invalid date
         if check_date:
             try:
@@ -309,7 +315,7 @@ class Validator:
         # Check each cell in the column
         for i, cell in enumerate(column):
             if not pd.isna(cell):
-                self.check_cell(i, col_index, cell)
+                self.check_cell(i, cell)
 
         # Ensure there is only one study being uploaded
         if header == 'StudyName' and len(set(column.tolist())) > 1:
@@ -338,7 +344,6 @@ class Validator:
 
     def check_table_column(self):
         """ Check the columns of a particular table """
-        log('Check table column: {}'.format(self.cur_col))
         col_index = self.columns.index(self.cur_col)
         if not self.cur_table == 'AdditionalMetaData' and self.cur_col not in fig.TABLE_COLS[self.cur_table]:
             if '.1' in self.cur_col:
@@ -347,7 +352,7 @@ class Validator:
                 self.errors.append(err_message.format(col_index, self.cur_col.replace('.1', ''), self.cur_table))
             else:
                 # If the column shouldn't be in the table stop checking it
-                err_message = '-1\t{}\tColumn Table Error: Column {} should not be in table {}'
+                err_message = '-1\t{}\tIllegal Column Error: Column {} should not be in table {}'
                 self.errors.append(err_message.format(col_index, self.cur_col, self.cur_table))
                 return
         col = self.table_df[self.cur_col]
@@ -374,7 +379,6 @@ class Validator:
         ========================================
         :table_df: A pandas dataframe containing the data for the specified table
         """
-        log('Check table: {}'.format(self.cur_table))
         start_col = None
         end_col = None
         self.table_df = self.df[self.cur_table]
@@ -401,34 +405,41 @@ class Validator:
 
     def run(self):
         log('In validate_mapping_file')
-        self.load_mapping_file(self.file_fp, self.sep)
+        try:
+            self.load_mapping_file(self.file_fp, self.sep)
 
-        # For each table
-        for table in self.tables:
-            # If the table shouldn't exist add and error and skip checking it
-            if table not in fig.TABLE_ORDER:
-                self.errors.append('-1\t-1\tTable Error: Table {} should not be the metadata'.format(table))
-            else:
-                self.cur_table = table
-                self.seen_tables.append(table)
-                self.check_table()
+            # For each table
+            for table in self.tables:
+                # If the table shouldn't exist add and error and skip checking it
+                if table not in fig.TABLE_ORDER:
+                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
+                else:
+                    self.cur_table = table
+                    self.seen_tables.append(table)
+                    self.check_table()
 
-        # Check for duplicate columns
-        dups = check_duplicate_cols(self.seen_cols)
-        if dups:
-            for dup in dups:
-                locs = [i for i, header in enumerate(self.seen_cols) if header == 'dup']
-                for loc in locs:
-                    self.errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
+            # Check for duplicate columns
+            dups = check_duplicate_cols(self.seen_cols)
+            if dups:
+                for dup in dups:
+                    locs = [i for i, header in enumerate(self.seen_cols) if header == 'dup']
+                    for loc in locs:
+                        self.errors.append('1\t{}\tDuplicate Header Error: Duplicate header {}'.format(loc, dup))
 
-        # Check for missing tables
-        missing_tables = fig.METADATA_TABLES.difference(set(self.tables))
-        if missing_tables:
-            self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
+            # Check for missing tables
+            missing_tables = fig.METADATA_TABLES.difference(set(self.tables))
+            if missing_tables:
+                self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
-        # Check for missing headers
-        missing_headers = REQUIRED_HEADERS.difference(set(self.seen_cols))
-        if missing_headers:
-            self.errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' + ', '.join(missing_headers))
-
-        return self.errors, self.warnings, self.study_name, self.df['Subjects']
+            # Check for missing headers
+            missing_columns = set(fig.COL_TO_TABLE.keys()).difference(set(self.seen_cols))
+            if missing_columns:
+                self.errors.append('-1\t-1\tMissing Column Error: Missing required fields: ' +
+                                   ', '.join(missing_columns))
+            try:
+                self.subjects = self.df['Subjects']
+            except KeyError:
+                self.errors.append('Missing Table Error: Metadata must include the subjects table')
+        except InvalidMetaDataFileError as e:
+                self.errors.append(e.message)
+        return self.errors, self.warnings, self.study_name, self.subjects

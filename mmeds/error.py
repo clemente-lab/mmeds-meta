@@ -84,4 +84,11 @@ class UploadInUseError(MmedsError):
 
 class InvalidLoginError(MmedsError):
     """ Exception thrown when the provided login credentials don't match a known user """
-    message = 'No user exists with the provided username and password'
+    InvalidMetaDataFileErroressage = 'No user exists with the provided username and password'
+
+
+class InvalidMetaDataFileError(MmedsError):
+    """ Exception for errors parsing the metadata file """
+
+    def __init__(self, message):
+        self.message = message

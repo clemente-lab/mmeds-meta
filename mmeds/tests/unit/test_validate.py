@@ -1,18 +1,27 @@
 import mmeds.validate as valid
 import pandas as pd
 import mmeds.config as fig
+from glob import glob
+from pathlib import Path
+from mmeds.util import log
 
+test_files = glob(str(fig.TEST_PATH / 'test_validate*'))
 
 def test_validate_mapping_files():
     errors, warnings, study_name, subjects = valid.validate_mapping_file(fig.TEST_METADATA)
     assert not errors
     assert not warnings
 
-    errors, warnings, study_name, subjects = valid.validate_mapping_file(fig.TEST_METADATA_1)
-    assert len(errors) == 1
-    assert 'AdditionalMetaData Column Error' in errors[-1]
-    assert len(warnings) == 1
-    assert 'Categorical Data Warning' in warnings[-1]
+
+def test_error_files():
+    for test_file in test_files:
+        name = Path(test_file).name
+        error = ' '.join(name.split('.')[0].split('_')[2:])
+        log('Testing Error file {}'.format(name))
+        errors, warnings, study_name, subjects = valid.validate_mapping_file(test_file)
+        log(errors)
+        assert error in errors[0].lower()
+
 
 """
 

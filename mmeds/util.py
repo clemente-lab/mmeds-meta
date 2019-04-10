@@ -17,8 +17,21 @@ import mmeds.secrets as sec
 import pandas as pd
 
 
+def write_df_as_mmeds(df, output_path):
+    mmeds_meta = df.to_dict('list')
+
+    # Write the constructed metadata to a file
+    lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
+             '\t'.join([key[1] for key in mmeds_meta.keys()])] +\
+        ['\t'.join([item[row] for key, item in mmeds_meta.items()])
+         for row in range(len(df) - 2)]
+    fp = Path(output_path)
+    fp.write_text('\n'.join(lines))
+
+
 def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
+
 
 def load_metadata(file_name):
     return pd.read_csv(file_name,
