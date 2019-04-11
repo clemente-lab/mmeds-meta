@@ -31,6 +31,13 @@ for i in range(10):
     wrong_type.loc[val]['RawDataProtocol']['RawDataDatePerformed'] = 'Not A Date'
 write_df_as_mmeds(wrong_type, '{}/test_validate_wrong_type.tsv'.format(file_path))
 
+# Illegal Column Header
+illegal_header = df.copy(deep=True)
+col = illegal_header[('Subjects', 'HostSubjectId')]
+col.rename(('AdditionalMetaData', 'IllegalColumn_'), inplace=True)
+illegal_header = illegal_header.join(col, how='outer')
+write_df_as_mmeds(illegal_header, '{}/test_validate_illegal_header.tsv'.format(file_path))
+
 # Illegal Column
 illegal_column = df.copy(deep=True)
 col = illegal_column[('Subjects', 'HostSubjectId')]

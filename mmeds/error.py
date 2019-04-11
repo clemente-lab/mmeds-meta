@@ -84,7 +84,7 @@ class UploadInUseError(MmedsError):
 
 class InvalidLoginError(MmedsError):
     """ Exception thrown when the provided login credentials don't match a known user """
-    InvalidMetaDataFileErroressage = 'No user exists with the provided username and password'
+    message = 'No user exists with the provided username and password'
 
 
 class InvalidMetaDataFileError(MmedsError):

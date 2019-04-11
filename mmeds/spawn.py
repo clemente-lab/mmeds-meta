@@ -110,7 +110,7 @@ def handle_data_upload(metadata, username, testing, *datafiles):
     for (key, value) in datafile_copies.items():
         log('{}: {}'.format(key, value))
 
-    # Otherwise upload the metadata to the database
+    # Upload the metadata to the database
     with Database(new_dir, owner=username, testing=testing) as db:
         access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                           'qiime',
