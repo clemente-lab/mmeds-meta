@@ -316,7 +316,12 @@ class Validator:
 
         # Check each cell in the column
         for i, cell in enumerate(column):
-            if not pd.isna(cell):
+            if pd.isna(cell):
+                # Check for missing required fields
+                if self.header_df[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                    err = '{}\t{}\tMissing Required Value Error'
+                    self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
+            else:
                 self.check_cell(i, cell)
 
         # Ensure there is only one study being uploaded

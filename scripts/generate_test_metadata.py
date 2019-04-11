@@ -77,3 +77,17 @@ for val in range(0, 3):
     col.loc[val] = ''
 missing_type = missing_type.join(col, how='outer')
 write_df_as_mmeds(missing_type, '{}/test_validate_missing_type.tsv'.format(file_path))
+
+# Missing Required Value
+missing_required_value = df.copy(deep=True)
+for i in range(10):
+    val = randrange(3, len(missing_required_value))
+    missing_required_value.loc[val]['RawData']['RawDataID'] = 'NA'
+write_df_as_mmeds(missing_required_value, '{}/test_validate_missing_required_value.tsv'.format(file_path))
+
+# Non Standard NA
+non_standard_na = df.copy(deep=True)
+for i in range(10):
+    val = randrange(3, len(non_standard_na))
+    non_standard_na.loc[val]['RawData']['RawDataID'] = 'n.a.'
+write_df_as_mmeds(non_standard_na, '{}/test_validate_non_standard_na.tsv'.format(file_path))

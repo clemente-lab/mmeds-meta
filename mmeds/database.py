@@ -401,7 +401,6 @@ class Database:
 
         # Go through each row
         for row in range(len(df.index)):
-            log('ROW {}'.format(row))
             sql, args = self.build_sql(df, table, row)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
@@ -553,7 +552,6 @@ class Database:
 
         # Create file and import data for each regular table
         for table in tables:
-            log('Import table {}'.format(table))
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 kwargs['metadata'] = metadata
