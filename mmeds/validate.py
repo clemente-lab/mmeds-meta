@@ -213,7 +213,10 @@ class Validator:
         for table in fig.COLUMN_TYPES.keys():
             for column, col_type in fig.COLUMN_TYPES[table].items():
                 self.col_types[column] = col_type
+        self.tables = list(dict.fromkeys(self.tables))
 
+    def check_column_types(self):
+        """ Ensure each column will cast to its specified type """
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
 
@@ -251,7 +254,6 @@ class Validator:
             except ValueError:
                 err = '-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'
                 self.errors.append(err.format(column))
-        self.tables = list(dict.fromkeys(self.tables))
 
     def check_cell(self, row_index, cell, check_date=False):
         """
@@ -407,7 +409,7 @@ class Validator:
         log('In validate_mapping_file')
         try:
             self.load_mapping_file(self.file_fp, self.sep)
-
+            self.check_column_types()
             # For each table
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it

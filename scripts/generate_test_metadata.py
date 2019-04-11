@@ -77,25 +77,3 @@ for val in range(0, 3):
     col.loc[val] = ''
 missing_type = missing_type.join(col, how='outer')
 write_df_as_mmeds(missing_type, '{}/test_validate_missing_type.tsv'.format(file_path))
-
-if False:
-    # Illegal Characters
-    illegal_characters = df.copy(deep=True)
-    for i in [';', '%', '#',  '&', '|']:
-        val = randrange(3, len(illegal_characters))
-        illegal_characters.loc[val]['Subjects']['HostSubjectId'] = i
-    write_df_as_mmeds(illegal_characters, '{}/test_validate_illegal_characters.tsv'.format(file_path))
-
-    # Missing columns
-    missing_columns = df.copy(deep=True)
-    new_cols = {col: col if not col == ('Subjects', 'HostSubjectId') else ('Subjects', '')
-                for col in missing_columns.columns}
-    missing_columns = missing_columns.rename(index=str, columns=new_cols)
-    write_df_as_mmeds(missing_columns, '{}/test_validate_missing_columns.tsv'.format(file_path))
-
-    # Missing tables
-    missing_tables = df.copy(deep=True)
-    new_cols = {col: col if not col == ('Subjects', 'HostSubjectId') else ('', 'HostSubjectId')
-                for col in missing_tables.columns}
-    missing_tables = missing_tables.rename(index=str, columns=new_cols)
-    write_df_as_mmeds(missing_tables, '{}/test_validate_missing_tables.tsv'.format(file_path))
