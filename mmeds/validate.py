@@ -75,9 +75,9 @@ class Validator:
         avg = mean(counts.values)
         for val, count in counts.iteritems():
             if count < (avg - stddev) and count < 3:
-                text = '%d\t%d\tCategorical Data Warning: Potential categorical data detected.\
-                    Value %s may be in error, only %d found.'
-                self.warnings.append(text % (-1, self.col_index, val, count))
+                text = '{}\t{}\tCategorical Data Warning: Potential categorical data detected.' +\
+                    ' Value {} may be in error, only {} found.'
+                self.warnings.append(text.format(-1, self.col_index, val, count))
 
     def check_lengths(self, column):
         """ Checks that all entries have the same length in the provided column """
@@ -168,9 +168,6 @@ class Validator:
         # Get the header
         header = column.name
 
-        # Check the header
-        self.check_header()
-
         # Check each cell in the column
         for i, cell in enumerate(column):
             if pd.isna(cell):
@@ -216,7 +213,11 @@ class Validator:
             self.errors.append(err_message.format(self.col_index, self.cur_col, self.cur_table))
             return
 
+        # Check the header
+        self.check_header()
+
         col = self.table_df[self.cur_col]
+        # Check the column itself
         self.check_column(col)
 
         # Perform column specific checks
@@ -272,12 +273,12 @@ class Validator:
 
     def check_header(self):
         """ Check the header field to ensure it complies with MMEDS requirements. """
-        row_col = '0\t' + str() + '\t'
+        row_col = '1\t{}\t'.format(self.col_index)
 
         # Check if it's numeric
         if is_numeric(self.cur_col):
-            text = 'Number Header Error: Column names cannot be numbers. Replace self.cur_col %s of column\t%d '
-            self.errors.append(row_col + text % (self.cur_col, self.col_index))
+            text = 'Number Header Error: Column names cannot be numbers. Replace header {}'
+            self.errors.append(row_col + text.format(self.cur_col))
         # Check if it's NA
         if self.cur_col in NAs + ['NA']:
             err = 'NA Header Error: Column names cannot be NA. Replace  self.cur_col {} of column {}'
@@ -299,8 +300,8 @@ class Validator:
                 self.errors.append(row_col + err.format(illegal, self.cur_col, self.col_index))
         # Check for HIPAA non-compliant self.cur_cols
         if self.cur_col.lower() in HIPAA_HEADERS:
-            self.errors.append(row_col + 'PHI Header Error: Potentially identifying information in %s of column\t%d' %
-                               (self.cur_col, self.col_index))
+            err = 'PHI Header Error: Potentially identifying information in {}'
+            self.errors.append(row_col + err.format(self.cur_col))
 
     def load_mapping_file(self, file_fp, delimiter):
         """
@@ -317,9 +318,9 @@ class Validator:
                                          header=[0, 1],
                                          nrows=3)
         except pd.errors.ParserError:
-            raise InvalidMetaDataFileError('There is an issue parsing your metadata. Please check that it is in' +
-                                           ' tab delimited format with no tab or newline characters in any of the' +
-                                           'cells')
+            raise InvalidMetaDataFileError('-1\t-1\tThere is an issue parsing your metadata. Please check that it is' +
+                                           ' in tab delimited format with no tab or newline characters in any of the' +
+                                           ' cells')
         # Setup the tables and columns
         for table, column in self.df.columns:
             if table not in self.tables:
@@ -351,14 +352,14 @@ class Validator:
                     # If no type is specified, add and error and default to str
                     if pd.isna(ctype) or ctype == '':
                         err = '-1\t{}\tColumn Missing Type Error: Missing type information for column {}'
-                        self.errors.append(err.format(column, self.col_index))
+                        self.errors.append(err.format(self.col_index, column))
                         ctype = 'Text'
                     try:
                         self.col_types[column] = fig.TYPE_MAP[ctype]
                     except KeyError:
                         self.col_types[column] = fig.TYPE_MAP['Text']
                         err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
-                        self.errors.append(err.format(column, self.col_index))
+                        self.errors.append(err.format(self.col_index, column))
 
     def run(self):
         log('In validate_mapping_file')

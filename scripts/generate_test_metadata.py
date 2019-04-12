@@ -11,9 +11,8 @@ from pathlib import Path
 def write_error_files():
     # Parser issue
     issue_parsing = df.copy(deep=True)
-    for i in ['\t', '\n', '\r']:
-        val = randrange(3, len(issue_parsing))
-        issue_parsing.loc[val]['RawDataProtocol']['RawDataDatePerformed'] = i
+    for i, val in enumerate(['\t', '\n', '\r']):
+        issue_parsing.loc[5 + i]['RawDataProtocol']['RawDataDatePerformed'] = val
     write_df_as_mmeds(issue_parsing, '{}/validate_error_issue_parsing.tsv'.format(file_path))
 
     # Wrong types
