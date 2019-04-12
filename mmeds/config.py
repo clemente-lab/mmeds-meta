@@ -1,7 +1,6 @@
 from pathlib import Path
 from random import choice
-from pandas import read_csv
-from numpy import datetime64
+from pandas import read_csv, Timestamp
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -280,8 +279,8 @@ TYPE_MAP = {
     'Decimal': float,
     'Integer': int,
     'Number': float,
-    'Date': datetime64,
-    'Time': datetime64
+    'Date': Timestamp,
+    'Time': Timestamp
 }
 
 for table in TABLE_COLS:

@@ -358,23 +358,12 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    if issubdtype(type(s), str):
-        if ('.e' in s or '.E' in s):
-            return False
-        try:
-            float(s)
-            return True
-        except (TypeError, ValueError):
-            pass
-        try:
-            import unicodedata
-            unicodedata.numeric(s)
-            return True
-        except (TypeError, ValueError):
-            pass
-    elif issubdtype(type(s), number):
-        return True
-    return False
+    try:
+        float(s)
+        result = True
+    except ValueError:
+        result = False
+    return result
 
 
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
