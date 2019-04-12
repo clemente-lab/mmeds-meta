@@ -242,7 +242,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html', title='Warnings', user=fig.SERVER_USER)
-        warning = '32\t3\tStdDev Warning: Value 25.0 outside of two standard deviations of mean in column 3'
+        warning = '31\t3\tStdDev Warning: Value 25.0 outside of two standard deviations of mean in column 3'
         page = insert_warning(page, 22, warning)
         self.assertBody(page)
         log('Checked metadata that warns')
