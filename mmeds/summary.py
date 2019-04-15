@@ -356,6 +356,7 @@ class MMEDSNotebook():
                                                      analysis_type=self.analysis_type,
                                                      titlefont='font_file_bold.otf'))
         self.add_code(self.source['r_setup'])
+        self.add_code(self.source['py_setup_2'])
 
         # Get only files for the requested taxa levels
         included_files = []
@@ -415,11 +416,13 @@ class MMEDSNotebook():
             cmd = 'jupyter nbconvert --template=mod_revtex.tplx --to=latex'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
-                cmd += ' --execute'
+                # Don't let the cells timeout, some will take a long time to process
+                cmd += ' --execute --ExecutePreprocessor.timeout=0'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             log('Convert notebook to latex')
             output = run(cmd.split(' '), check=True, env=self.env, capture_output=True)
+            log(output)
 
             log('Convert latex to pdf')
             # Convert to pdf
@@ -428,6 +431,7 @@ class MMEDSNotebook():
             # headings don't show up...
             output = run(cmd.split(' '), check=True, capture_output=True)
             output = run(cmd.split(' '), check=True, capture_output=True)
+
         except RuntimeError:
             print(output)
             log(output)

@@ -30,23 +30,27 @@ def format(text, header=None):
     return new_text.get_html_string()
 
 
+testing = True
+user = 'root'
+
+
 class DatabaseTests(TestCase):
     """ Tests of top-level functions """
 
     @classmethod
     def setUpClass(self):
         """ Load data that is to be used by multiple test cases """
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
+        add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         log('about to read in')
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
 
-        with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0, testing=True) as db:
+        with Database(fig.TEST_DIR_0, user=user, owner=fig.TEST_USER_0, testing=testing) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_0,
                                                               'qiime',
                                                               reads=fig.TEST_READS,
@@ -56,7 +60,7 @@ class DatabaseTests(TestCase):
         self.df = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         # Connect to the database
         self.db = pms.connect('localhost',
-                              'root',
+                              user,
                               '',
                               fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
@@ -66,7 +70,7 @@ class DatabaseTests(TestCase):
         log('after read in')
         self.c.execute('SELECT * FROM Subjects')
         log(self.c.fetchall())
-        self.mmeds_db = Database(user='root', owner=fig.TEST_USER, testing=True)
+        self.mmeds_db = Database(user=user, owner=fig.TEST_USER, testing=testing)
         log('after connect')
         self.c.execute('SELECT * FROM Subjects')
         log(self.c.fetchall())
@@ -77,8 +81,8 @@ class DatabaseTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
-        remove_user(fig.TEST_USER_0, testing=True)
+        remove_user(fig.TEST_USER, testing=testing)
+        remove_user(fig.TEST_USER_0, testing=testing)
         self.db.close()
         del self.mmeds_db
 
@@ -135,7 +139,7 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
-        with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=True) as db0:
+        with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
             protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
             for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
                 # Confirm that trying to access the unprotected table
@@ -156,12 +160,12 @@ class DatabaseTests(TestCase):
                                     assert result[i] in self.df0[table][col].tolist()
 
     def test_d_metadata_checks(self):
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             warnings = db.check_repeated_subjects(self.df['Subjects'])
         assert warnings
 
         ndf = pd.read_csv(fig.UNIQUE_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             warnings = db.check_repeated_subjects(ndf['Subjects'])
             errors = db.check_user_study_name('Unique_Studay')
         assert not warnings
@@ -192,7 +196,7 @@ class DatabaseTests(TestCase):
             user_counts[table] = int(self.c.fetchone()[0])
 
         # Clear the tables
-        with Database(fig.TEST_DIR_0, user='root', owner=fig.TEST_USER_0, testing=True) as db:
+        with Database(fig.TEST_DIR_0, user=user, owner=fig.TEST_USER_0, testing=testing) as db:
             db.clear_user_data(fig.TEST_USER_0)
 
         # Get the new table counts
@@ -223,5 +227,5 @@ class DatabaseTests(TestCase):
         args = {}
         for i in range(5):
             args[fig.get_salt(5)] = fig.get_salt(10)
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)

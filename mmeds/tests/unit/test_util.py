@@ -104,8 +104,7 @@ def test_mmeds_to_MIxS():
 
 
 def test_generate_error_html():
-    with open(fig.TEST_METADATA_1) as f:
-        errors, warnings, study_name, subjects = validate_mapping_file(f)
+    errors, warnings, study_name, subjects = validate_mapping_file(fig.TEST_METADATA_1)
     html = util.generate_error_html(fig.TEST_METADATA_1, errors, warnings)
     # Check that the html is valid
     document, errors = tidy_document(html)

@@ -13,6 +13,7 @@ from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes
+from numpy import nan
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -231,6 +232,9 @@ class Database:
             log(sql)
             log(args)
 
+        for key, item in args.items():
+            if item is None or item == nan or item == 'NA' or item == 'NULL':
+                args[key] = 0
         return sql, args
 
     def add_foreign_keys(self, df, sql, args, foreign_keys, row):
@@ -397,7 +401,6 @@ class Database:
 
         # Go through each row
         for row in range(len(df.index)):
-            log('ROW {}'.format(row))
             sql, args = self.build_sql(df, table, row)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
@@ -449,7 +452,7 @@ class Database:
                 # Otherwise see if the entry already exists
                 try:
                     if pd.isnull(df[table].loc[row_index][col]):
-                        line.append('NULL')
+                        line.append('0')
                     else:
                         line.append(df[table].loc[row_index][col])
                 except KeyError:
@@ -549,7 +552,6 @@ class Database:
 
         # Create file and import data for each regular table
         for table in tables:
-            log('Import table {}'.format(table))
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 kwargs['metadata'] = metadata

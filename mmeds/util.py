@@ -17,6 +17,31 @@ import mmeds.secrets as sec
 import pandas as pd
 
 
+def write_df_as_mmeds(df, output_path):
+    mmeds_meta = df.to_dict('list')
+
+    # Write the constructed metadata to a file
+    lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
+             '\t'.join([key[1] for key in mmeds_meta.keys()])] +\
+        ['\t'.join([item[row] for key, item in mmeds_meta.items()])
+         for row in range(len(df) - 2)]
+    fp = Path(output_path)
+    fp.write_text('\n'.join(lines))
+
+
+def load_metadata_template():
+    return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
+
+
+def load_metadata(file_name):
+    return pd.read_csv(file_name,
+                       sep='\t',
+                       header=[0, 1],
+                       skiprows=[2, 3, 4],
+                       na_values='NA',
+                       keep_default_na=False)
+
+
 def catch_server_errors(page_method):
     """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
     @wraps(page_method)
@@ -216,6 +241,7 @@ def parse_ICD_codes(df):
     """ Parse the ICD codes into seperate columns """
     codes = df['ICDCode']['ICDCode'].tolist()
     IBC, IC, ID, IDe = [], [], [], []
+    null = nan
     for code in codes:
         try:
             parts = code.split('.')
@@ -230,15 +256,15 @@ def parse_ICD_codes(df):
             IC.append(int(parts[0][1:]))
         except ValueError as e:
             if 'invalid literal' in e.args[0] and ": 'XX'" in e.args[0]:
-                IC.append(nan)
+                IC.append(null)
             else:
                 raise e
-        # If the value is nan it will error
+        # If the value is null it will error
         except AttributeError:
-            IBC.append(nan)
-            IC.append(nan)
-            ID.append(nan)
-            IDe.append(nan)
+            IBC.append(null)
+            IC.append(null)
+            ID.append(null)
+            IDe.append(null)
 
     # Add the parsed values to the dataframe
     df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
@@ -246,40 +272,6 @@ def parse_ICD_codes(df):
     df['IllnessDetails', 'ICDDetails'] = ID
     df['IllnessDetails', 'ICDExtension'] = IDe
     return df
-
-
-def load_mapping_file(file_fp, delimiter):
-    """
-    Load the metadata file and assign datatypes to the columns
-    ==========================================================
-    :file_fp: The path to the mapping file
-    :delimiter: The delimiter used in the mapping file
-    """
-    df = pd.read_csv(file_fp,
-                     sep=delimiter,
-                     header=[0, 1],
-                     skiprows=[2, 3, 4],
-                     na_filter=False)
-    df.replace('NA', nan, inplace=True)
-    # Get the tables in the dataframe while maintaining order
-    tables = []
-    errors = []
-    warnings = []
-    for (table, header) in df.axes[1]:
-        tables.append(table)
-        for column in df[table]:
-            if '' in df[table][column]:
-                errors.append('-1\t-1\tColumn Value Error: Column {} is missing entries'.format(column))
-            try:
-                df[table].assign(column=df[table][column].astype(fig.COLUMN_TYPES[table][column]))
-            # Additional metadata won't have an entry so will automatically be treated as a string
-            except KeyError:
-                df[table].assign(column=df[table][column].astype('object'))
-            # Error handling for column values that don't match the column type
-            except ValueError:
-                errors.append('-1\t-1\tColumn Value Error: Column {} contains the wrong type of values'.format(column))
-    tables = list(dict.fromkeys(tables))
-    return tables, df, errors, warnings
 
 
 def load_html(file_path, **kwargs):
@@ -366,23 +358,12 @@ def is_numeric(s):
     =========================================
     :s: The string to check
     """
-    if issubdtype(type(s), str):
-        if ('.e' in s or '.E' in s):
-            return False
-        try:
-            float(s)
-            return True
-        except (TypeError, ValueError):
-            pass
-        try:
-            import unicodedata
-            unicodedata.numeric(s)
-            return True
-        except (TypeError, ValueError):
-            pass
-    elif issubdtype(type(s), number):
-        return True
-    return False
+    try:
+        float(s)
+        result = True
+    except ValueError:
+        result = False
+    return result
 
 
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
@@ -460,9 +441,8 @@ def generate_error_html(file_fp, errors, warnings):
     # Add Errors to markup table
     for error in errors:
         row, col, item = error.split('\t')
-        if row == '-1' and col == '-1':
-            top.append(('red', item))
-        elif row == '0':
+        top.append(('red', item))
+        if row == '0':
             markup[int(row) + 3][int(col)] = ['red', item]
         else:
             markup[int(row) + 4][int(col)] = ['red', item]

@@ -112,7 +112,7 @@ class MMEDSbase:
         for i, error in enumerate(errors):
             uploaded_output = insert_error(uploaded_output, 22 + i, error)
 
-        return generate_error_html(metadata_copy, errors, warnings)
+        return uploaded_output  # generate_error_html(metadata_copy, errors, warnings)
 
     def handle_metadata_warnings(self, metadata_copy, errors, warnings):
         """ Create the page to return when there are errors in the metadata """
