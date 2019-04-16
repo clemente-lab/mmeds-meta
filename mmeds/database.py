@@ -24,6 +24,7 @@ class MetaData(men.DynamicDocument):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
     study_type = men.StringField(max_length=45, required=True)
+    reads_type = men.StringField(max_length=45, required=True)
     study = men.StringField(max_length=45, required=True)
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
@@ -528,7 +529,7 @@ class Database:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def read_in_sheet(self, metadata, study_type, **kwargs):
+    def read_in_sheet(self, metadata, study_type, reads_type, **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
@@ -555,7 +556,7 @@ class Database:
             # Upload the additional meta data to the NoSQL database
             if table == 'AdditionalMetaData':
                 kwargs['metadata'] = metadata
-                access_code = self.mongo_import(study_name, study_type, **kwargs)
+                access_code = self.mongo_import(study_name, study_type, reads_type, **kwargs)
             else:
                 self.create_import_data(table, df)
                 filename = self.create_import_file(table, df)
@@ -643,7 +644,7 @@ class Database:
     #               MongoDB                #
     ########################################
 
-    def mongo_import(self, study_name, study_type, **kwargs):
+    def mongo_import(self, study_name, study_type, reads_type, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
         # For testing purposes
@@ -651,10 +652,12 @@ class Database:
             access_code = kwargs.get('access_code')
         else:
             access_code = get_salt(50)
+
         # Create the document
         mdata = MetaData(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
                          study_type=study_type,
+                         reads_type=reads_type,
                          study=study_name,
                          access_code=access_code,
                          owner=self.owner,

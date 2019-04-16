@@ -19,12 +19,14 @@ class QiimeTests(TestCase):
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
                                                               'qiime',
+                                                              'single_end',
                                                               for_reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
                                                               'qiime',
+                                                              'paired_end',
                                                               for_reads=fig.TEST_READS,
                                                               rev_reads=fig.TEST_REV_READS,
                                                               barcodes=fig.TEST_BARCODES,
@@ -32,6 +34,7 @@ class QiimeTests(TestCase):
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_SHORT,
                                                               'qiime',
+                                                              'single_end',
                                                               for_reads=fig.TEST_DEMUXED,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE_DEMUX)
@@ -51,12 +54,12 @@ class QiimeTests(TestCase):
         for atype in ['qiime1-open', 'qiime1-closed']:
             for code in [('single_end', fig.TEST_CODE),
                          ('paired_end', fig.TEST_CODE_PAIRED),
-                         ('single_demuxed', fig.TEST_CODE_DEMUX)]:
+                         ('single_end_demuxed', fig.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime1)
 
     def test_qiime2_setup_analysis(self):
         for atype in ['qiime2-dada2', 'qiime2-deblur']:
             for code in [('single_end', fig.TEST_CODE),
                          ('paired_end', fig.TEST_CODE_PAIRED),
-                         ('single_demuxed', fig.TEST_CODE_DEMUX)]:
+                         ('single_end_demuxed', fig.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime2)

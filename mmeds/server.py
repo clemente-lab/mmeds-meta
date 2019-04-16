@@ -470,7 +470,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def process_data(self, for_reads, rev_reads, barcodes, public='off'):
+    def process_data(self, for_reads, rev_reads, barcodes, reads_type, public='off'):
         # Create a unique dir for handling files uploaded by this user
         metadata = Path(cp.session['uploaded_files'].pop())
 
@@ -485,7 +485,7 @@ class MMEDSanalysis(MMEDSbase):
 
         # Start a process to handle loading the data
         p = Process(target=handle_data_upload,
-                    args=(metadata, username, self.testing,
+                    args=(metadata, username, reads_type, self.testing,
                           # Unpack the list so the files are taken as a tuple
                           *datafiles))
         cp.log('Starting upload process')

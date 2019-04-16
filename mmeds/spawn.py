@@ -81,7 +81,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def handle_data_upload(metadata, username, testing, *datafiles):
+def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -114,6 +114,7 @@ def handle_data_upload(metadata, username, testing, *datafiles):
     with Database(new_dir, owner=username, testing=testing) as db:
         access_code, study_name, email = db.read_in_sheet(metadata_copy,
                                                           'qiime',
+                                                          reads_type,
                                                           **datafile_copies)
     log('Added to database')
 

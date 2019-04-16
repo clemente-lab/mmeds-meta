@@ -46,6 +46,7 @@ class DatabaseTests(TestCase):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
+                                                              'single_end',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)
@@ -53,6 +54,7 @@ class DatabaseTests(TestCase):
         with Database(fig.TEST_DIR_0, user=user, owner=fig.TEST_USER_0, testing=testing) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_0,
                                                               'qiime',
+                                                              'single_end',
                                                               reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE + '0')
