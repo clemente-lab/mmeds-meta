@@ -1,4 +1,4 @@
-from mmeds.database import Database
+from mmeds.database import Database, MetaDataUploader
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
 from mmeds.util import log, parse_ICD_codes
@@ -43,21 +43,25 @@ class DatabaseTests(TestCase):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         log('about to read in')
-        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
-                                                              'qiime',
-                                                              'single_end',
-                                                              reads=fig.TEST_READS,
-                                                              barcodes=fig.TEST_BARCODES,
-                                                              access_code=fig.TEST_CODE)
+        with MetaDataUploader(metadata=fig.TEST_METADATA,
+                              path=fig.TEST_DIR,
+                              study_type='qiime',
+                              reads_type='single_end',
+                              owner=fig.TEST_USER,
+                              testing=testing) as up:
+            access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
+                                                                barcodes=fig.TEST_BARCODES,
+                                                                access_code=fig.TEST_CODE)
 
-        with Database(fig.TEST_DIR_0, user=user, owner=fig.TEST_USER_0, testing=testing) as db:
-            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA_0,
-                                                              'qiime',
-                                                              'single_end',
-                                                              reads=fig.TEST_READS,
-                                                              barcodes=fig.TEST_BARCODES,
-                                                              access_code=fig.TEST_CODE + '0')
+        with MetaDataUploader(metadata=fig.TEST_METADATA_0,
+                              path=fig.TEST_DIR_0,
+                              study_type='qiime',
+                              reads_type='single_end',
+                              owner=fig.TEST_USER,
+                              testing=testing) as up:
+            access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
+                                                                barcodes=fig.TEST_BARCODES,
+                                                                access_code=fig.TEST_CODE + '0')
         self.df0 = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         self.df = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         # Connect to the database
@@ -121,6 +125,7 @@ class DatabaseTests(TestCase):
                     raise e
 
     def test_b_junction_tables(self):
+        log('TEST_B_JUNCTION_TABLES')
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
@@ -128,6 +133,7 @@ class DatabaseTests(TestCase):
             for jtable in jtables:
                 log('Check table: {}'.format(jtable))
                 sql, args = self.mmeds_db.build_sql(self.df, jtable, row)
+                log(sql)
                 jresult = self.c.execute(sql, args)
                 # Ensure an entry exists for this value
                 assert jresult > 0
