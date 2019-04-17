@@ -1,4 +1,4 @@
-from mmeds.database import Database, MetaDataUploader
+from mmeds.database import Database, MetaDataUploader, SQLBuilder
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
 from mmeds.util import log, parse_ICD_codes
@@ -34,6 +34,18 @@ testing = True
 user = 'root'
 
 
+def upload_metadata(metadata, path, owner, access_code):
+        with MetaDataUploader(metadata=metadata,
+                              path=path,
+                              study_type='qiime',
+                              reads_type='single_end',
+                              owner=fig.TEST_USER,
+                              testing=testing) as up:
+            access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
+                                                                barcodes=fig.TEST_BARCODES,
+                                                                access_code=access_code)
+
+
 class DatabaseTests(TestCase):
     """ Tests of top-level functions """
 
@@ -43,6 +55,13 @@ class DatabaseTests(TestCase):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         log('about to read in')
+        test_setups=[(fig.TEST_METADATA,
+                      fig.TEST_DIR,
+                      fig.TEST_CODE),
+                     (fig.TEST_METADATA_0,
+                      fig.TEST_DIR_0,
+                      fig.TEST_CODE + '0')]
+
         with MetaDataUploader(metadata=fig.TEST_METADATA,
                               path=fig.TEST_DIR,
                               study_type='qiime',
@@ -73,6 +92,7 @@ class DatabaseTests(TestCase):
                               local_infile=True)
         self.db.autocommit(True)
         self.c = self.db.cursor()
+        self.builder = SQLBuilder(self.c, fig.TEST_USER)
         log('after read in')
         self.c.execute('SELECT * FROM Subjects')
         log(self.c.fetchall())
@@ -105,7 +125,7 @@ class DatabaseTests(TestCase):
             for table in tables:
                 log('Query table {}'.format(table))
                 # Create the query
-                sql, args = self.mmeds_db.build_sql(self.df, table, row)
+                sql, args = self.builder.build_sql(self.df, table, row)
                 log(sql)
                 log(args)
                 found = self.c.execute(sql, args)
