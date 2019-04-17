@@ -122,9 +122,9 @@ class Database:
             self.cursor.execute(sql, {'owner': owner, 'token': sec.SECURITY_TOKEN})
             self.db.commit()
 
-        # If the owner is None set user_id to 0
+        # If the owner is None set user_id to 1
         if owner is None:
-            self.user_id = 0
+            self.user_id = 1
             self.email = MMEDS_EMAIL
         # Otherwise get the user id for the owner from the database
         else:
@@ -192,7 +192,7 @@ class Database:
         for i, column in enumerate(columns):
             value = df[table][column].iloc[row]
             if pd.isnull(value):  # Use NULL for NA values
-                value = 'NULL'
+                value = '\\N'
             if i == 0:
                 sql += ' '
             else:
@@ -201,7 +201,7 @@ class Database:
             args['`{}`'.format(column)] = pyformat_translate(value)
         # Add the user check for protected tables
         if table in fig.PROTECTED_TABLES:
-            sql += ' AND user_id = %(id)s'
+            sql += ' AND (user_id = %(id)s OR user_id = 1)'
             args['id'] = self.user_id
         return sql, args
 
@@ -270,10 +270,6 @@ class Database:
 
         sql, args = self.create_query_from_row(df, table, row, columns)
         sql, args = self.add_foreign_keys(df, sql, args, foreign_keys, row)
-
-        for key, item in args.items():
-            if item is None or item == nan or item == 'NA' or item == 'NULL':
-                args[key] = 0
         return sql, args
 
     def check_email(self, email):
@@ -530,7 +526,7 @@ class Database:
             for i, column in enumerate(df):
                 value = df[column][j]
                 if pd.isnull(value):  # Use NULL for NA values
-                    value = 'NULL'
+                    value = '\\N'
                 if i == 0:
                     sql += ' '
                 else:
@@ -619,7 +615,7 @@ class Database:
 
 
 class SQLBuilder:
-    def __init__(self, cursor, owner):
+    def __init__(self, df, db, owner):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -633,8 +629,9 @@ class SQLBuilder:
         warnings.simplefilter('ignore')
 
         self.owner = owner
-        self.df = None
+        self.df = df
         self.row = None
+        self.db = db
 
         """
         # If testing connect to test server
@@ -652,7 +649,7 @@ class SQLBuilder:
                                   database=sec.SQL_DATABASE,
                                   local_infile=True)
         """
-        self.cursor = cursor
+        self.cursor = self.db.cursor()
 
         # If the owner is None set user_id to 0
         if owner is None:
@@ -669,7 +666,7 @@ class SQLBuilder:
 
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-    def build_sql(self, df, table, row):
+    def build_sql(self, table, row):
         """
             This function does the hard work of determining what a paticular table's
             entry should look like for a given row of the metadata file.
@@ -721,8 +718,10 @@ class SQLBuilder:
         """
         # Initialize the builder properties
         self.row = row
-        self.df = df
         return self.build_table_sql(table)
+
+    def change_df(self, new_df):
+        self.df = new_df
 
     def build_table_sql(self, table):
         """ Get the sql for a particular table. """
@@ -751,11 +750,6 @@ class SQLBuilder:
         # Build the SQL for the Row and get the necessary foreign keys
         sql, args = self.create_query_from_row(table, columns)
         sql, args = self.add_foreign_keys(sql, args, foreign_keys)
-
-        # TODO Fix this terrible hack
-        for key, item in args.items():
-            if item is None or item == nan or item == 'NA' or item == 'NULL':
-                args[key] = 0
         return sql, args
 
     def add_foreign_keys(self, sql, args, foreign_keys):
@@ -777,7 +771,7 @@ class SQLBuilder:
                 raise e
 
             # Add it to the original query
-            if '=' in sql:
+            if '=' in sql or 'ISNULL' in sql:
                 sql += ' AND '
             sql += quote_sql(('{fkey} = %({fkey})s'), fkey=fkey)
             args['`{}`'.format(fkey)] = pyformat_translate(fresult)
@@ -790,17 +784,19 @@ class SQLBuilder:
         args = {}
         for i, column in enumerate(columns):
             value = self.df[table][column].iloc[self.row]
-            if pd.isnull(value):  # Use NULL for NA values
-                value = 'NULL'
             if i == 0:
                 sql += ' '
             else:
                 sql += ' AND '
-            sql += quote_sql(('{column} = %({column})s'), column=column)
-            args['`{}`'.format(column)] = pyformat_translate(value)
+            if pd.isnull(value):  # Use NULL for NA values
+                sql += quote_sql(('ISNULL({column})'), column=column)
+            else:
+                sql += quote_sql(('{column} = %({column})s'), column=column)
+                args['`{}`'.format(column)] = pyformat_translate(value)
         # Add the user check for protected tables
         if table in fig.PROTECTED_TABLES:
-            sql += ' AND user_id = %(id)s'
+            # user_id = 1 is the public user
+            sql += ' AND (user_id = %(id)s OR user_id = 1)'
             args['id'] = self.user_id
         return sql, args
 
@@ -837,6 +833,7 @@ class MetaDataUploader:
                                   user='root',
                                   password=sec.TEST_ROOT_PASS,
                                   database=SQL_DATABASE,
+                                  autocommit=True,
                                   local_infile=True)
             # Connect to the mongo server
             self.mongo = men.connect(db='test',
@@ -848,6 +845,7 @@ class MetaDataUploader:
                                   user=sec.SQL_ADMIN_NAME,
                                   password=sec.SQL_ADMIN_PASS,
                                   database=sec.SQL_DATABASE,
+                                  autocommit=True,
                                   local_infile=True)
             self.mongo = men.connect(db=sec.MONGO_DATABASE,
                                      username=sec.MONGO_ADMIN_NAME,
@@ -856,8 +854,7 @@ class MetaDataUploader:
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
 
-        self.cursor = self.db.cursor()
-        self.builder = SQLBuilder(self.cursor, owner)
+        self.builder = SQLBuilder(self.df, self.db, owner)
 
         # If the owner is None set user_id to 0
         if owner is None:
@@ -866,8 +863,10 @@ class MetaDataUploader:
         # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
-            self.cursor.execute(sql, {'uname': owner})
-            result = self.cursor.fetchone()
+            cursor = self.db.cursor()
+            cursor.execute(sql, {'uname': owner})
+            result = cursor.fetchone()
+            cursor.close()
             # Ensure the user exists
             if result is None:
                 raise NoResultError('No account exists with the provided username and email.')
@@ -902,7 +901,9 @@ class MetaDataUploader:
         # TODO see if I can remove this now that keys are non-identifying
         study_name = self.df['Study']['StudyName'][0]
         sql = 'SET FOREIGN_KEY_CHECKS=0'
-        self.cursor.execute(sql)
+        cursor = self.db.cursor()
+        cursor.execute(sql)
+        cursor.close()
         self.db.commit()
 
         columns = self.df.columns.levels[0].tolist()
@@ -924,7 +925,9 @@ class MetaDataUploader:
                 sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
                                 table=table)
                 sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                self.cursor.execute(sql, {'file': str(filename), 'table': table})
+                cursor = self.db.cursor()
+                cursor.execute(sql, {'file': str(filename), 'table': table})
+                cursor.close()
                 # Commit the inserted data
                 self.db.commit()
 
@@ -945,8 +948,11 @@ class MetaDataUploader:
         :df: The dataframe containing all the metadata
         """
         sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable='id' + table, table=table)
-        self.cursor.execute(sql)
-        vals = self.cursor.fetchone()
+
+        cursor = self.db.cursor()
+        cursor.execute(sql)
+        vals = cursor.fetchone()
+        cursor.close()
         try:
             current_key = int(vals[0]) + 1
         except TypeError:
@@ -956,7 +962,9 @@ class MetaDataUploader:
 
         # Go through each row
         for row in range(len(self.df.index)):
-            sql, args = self.builder.build_sql(self.df, table, row)
+            sql, args = self.builder.build_sql(table, row)
+            log(sql)
+            log(args)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
             # Create the entry
@@ -966,10 +974,11 @@ class MetaDataUploader:
                 key = seen[this_row]
                 self.IDs[table][row] = key
             except KeyError:
-                found = self.cursor.execute(sql, args)
+                cursor = self.db.cursor()
+                found = cursor.execute(sql, args)
                 if found >= 1:
                     # Append the key found for that column
-                    result = self.cursor.fetchone()
+                    result = cursor.fetchone()
                     self.IDs[table][row] = int(result[0])
                     seen[this_row] = int(result[0])
                 else:
@@ -977,6 +986,7 @@ class MetaDataUploader:
                     seen[this_row] = current_key
                     self.IDs[table][row] = current_key
                     current_key += 1
+                cursor.close()
 
     def create_import_line(self, table, structure, columns, row_index):
         """
@@ -1005,7 +1015,7 @@ class MetaDataUploader:
                 # Otherwise see if the entry already exists
                 try:
                     if pd.isnull(self.df[table].loc[row_index][col]):
-                        line.append('0')
+                        line.append('\\N')
                     else:
                         line.append(self.df[table].loc[row_index][col])
                 except KeyError:
@@ -1018,8 +1028,11 @@ class MetaDataUploader:
         metadata input file
         """
         # Get the structure of the table currently being filled out
-        self.cursor.execute('DESCRIBE ' + table)
-        structure = self.cursor.fetchall()
+
+        cursor = self.db.cursor()
+        cursor.execute('DESCRIBE ' + table)
+        structure = cursor.fetchall()
+        cursor.close()
         # Get the columns for the table
         columns = list(map(lambda x: x[0], structure))
         filename = self.path / (table + '_input.csv')
@@ -1039,8 +1052,11 @@ class MetaDataUploader:
         # Import data for each junction table
         for table in fig.JUNCTION_TABLES:
             sql = quote_sql('DESCRIBE {table};', table=table)
-            self.cursor.execute(sql)
-            result = self.cursor.fetchall()
+
+            cursor = self.db.cursor()
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            cursor.close()
             columns = list(map(lambda x: x[0].split('_')[0], result))
             key_pairs = []
             # Only fill in tables where both foreign keys exist
@@ -1072,7 +1088,9 @@ class MetaDataUploader:
                 sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
                                 table=table)
                 sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                self.cursor.execute(sql, {'file': str(filename), 'table': table})
+                cursor = self.db.cursor()
+                cursor.execute(sql, {'file': str(filename), 'table': table})
+                cursor.close()
                 # Commit the inserted data
                 self.db.commit()
             except KeyError as e:

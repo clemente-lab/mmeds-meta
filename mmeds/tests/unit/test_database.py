@@ -4,6 +4,7 @@ from mmeds.error import TableAccessError
 from mmeds.util import log, parse_ICD_codes
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
+from multiprocessing import Pool
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pymysql as pms
@@ -34,19 +35,21 @@ testing = True
 user = 'root'
 
 
-def upload_metadata(metadata, path, owner, access_code):
-        with MetaDataUploader(metadata=metadata,
-                              path=path,
-                              study_type='qiime',
-                              reads_type='single_end',
-                              owner=fig.TEST_USER,
-                              testing=testing) as up:
-            access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
-                                                                barcodes=fig.TEST_BARCODES,
-                                                                access_code=access_code)
+def upload_metadata(args):
+    metadata, path, owner, access_code = args
+    print(metadata, path, owner, access_code)
+    with MetaDataUploader(metadata=metadata,
+                          path=path,
+                          study_type='qiime',
+                          reads_type='single_end',
+                          owner=fig.TEST_USER,
+                          testing=testing) as up:
+        access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
+                                                            barcodes=fig.TEST_BARCODES,
+                                                            access_code=access_code)
 
 
-class DatabaseTests(TestCase):
+class MetaDataUploaderTests(TestCase):
     """ Tests of top-level functions """
 
     @classmethod
@@ -54,33 +57,27 @@ class DatabaseTests(TestCase):
         """ Load data that is to be used by multiple test cases """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
+        ag_metadata = '/home/david/Work/minerva/data/AmericanGutData/04-meta/short_mmeds_converted.tsv'
         log('about to read in')
-        test_setups=[(fig.TEST_METADATA,
-                      fig.TEST_DIR,
-                      fig.TEST_CODE),
-                     (fig.TEST_METADATA_0,
-                      fig.TEST_DIR_0,
-                      fig.TEST_CODE + '0')]
+        test_setups = [(fig.TEST_METADATA,
+                        fig.TEST_DIR,
+                        fig.TEST_USER,
+                        fig.TEST_CODE),
+                       (fig.TEST_METADATA_0,
+                        fig.TEST_DIR_0,
+                        fig.TEST_USER_0,
+                        fig.TEST_CODE + '0'),
+                       (ag_metadata,
+                        fig.TEST_DIR_0,
+                        fig.TEST_USER_0,
+                        fig.TEST_CODE + '0')]
 
-        with MetaDataUploader(metadata=fig.TEST_METADATA,
-                              path=fig.TEST_DIR,
-                              study_type='qiime',
-                              reads_type='single_end',
-                              owner=fig.TEST_USER,
-                              testing=testing) as up:
-            access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
-                                                                barcodes=fig.TEST_BARCODES,
-                                                                access_code=fig.TEST_CODE)
+        print('start pool')
+        #with Pool(processes=2) as pool:
+        #    pool.map(upload_metadata, test_setups)
+        for setup in test_setups:
+            upload_metadata(setup)
 
-        with MetaDataUploader(metadata=fig.TEST_METADATA_0,
-                              path=fig.TEST_DIR_0,
-                              study_type='qiime',
-                              reads_type='single_end',
-                              owner=fig.TEST_USER,
-                              testing=testing) as up:
-            access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
-                                                                barcodes=fig.TEST_BARCODES,
-                                                                access_code=fig.TEST_CODE + '0')
         self.df0 = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         self.df = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         # Connect to the database
@@ -89,28 +86,21 @@ class DatabaseTests(TestCase):
                               '',
                               fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
+                              autocommit=True,
                               local_infile=True)
-        self.db.autocommit(True)
+        self.builder = SQLBuilder(self.db, fig.TEST_USER)
         self.c = self.db.cursor()
-        self.builder = SQLBuilder(self.c, fig.TEST_USER)
-        log('after read in')
-        self.c.execute('SELECT * FROM Subjects')
-        log(self.c.fetchall())
-        self.mmeds_db = Database(user=user, owner=fig.TEST_USER, testing=testing)
-        log('after connect')
-        self.c.execute('SELECT * FROM Subjects')
-        log(self.c.fetchall())
 
         # Get the user id
         self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
         self.user_id = int(self.c.fetchone()[0])
+        self.c.close()
 
     @classmethod
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=testing)
         remove_user(fig.TEST_USER_0, testing=testing)
         self.db.close()
-        del self.mmeds_db
 
     ################
     #   Test SQL   #
@@ -128,33 +118,35 @@ class DatabaseTests(TestCase):
                 sql, args = self.builder.build_sql(self.df, table, row)
                 log(sql)
                 log(args)
+                self.c = self.db.cursor()
                 found = self.c.execute(sql, args)
-                log(found)
-                if table == 'IllnessDetails':
-                    log(sql)
-                    log("{}:{}".format(table, row))
-                    log(self.c.fetchall())
                 # Assert there exists at least one entry matching this description
                 try:
                     assert found > 0
+                    self.c.close()
                 except AssertionError as e:
                     log(self.df.iloc[row])
                     log(sql)
                     log("Didn't find entry {}:{}".format(table, row))
                     log(self.c.fetchall())
+                    self.c.close()
                     raise e
 
     def test_b_junction_tables(self):
         log('TEST_B_JUNCTION_TABLES')
+        self.c = self.db.cursor()
         self.c.execute('SHOW TABLES')
+        self.c.close()
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
         for row in range(len(self.df)):
             for jtable in jtables:
                 log('Check table: {}'.format(jtable))
-                sql, args = self.mmeds_db.build_sql(self.df, jtable, row)
+                sql, args = self.builder.build_sql(self.df, jtable, row)
                 log(sql)
+                self.c = self.db.cursor()
                 jresult = self.c.execute(sql, args)
+                self.c.close()
                 # Ensure an entry exists for this value
                 assert jresult > 0
 
@@ -206,14 +198,17 @@ class DatabaseTests(TestCase):
         and only those rows.
         """
         sql = 'SELECT user_id FROM {}.user WHERE username = "{}"'
+        self.c = self.db.cursor()
         self.c.execute(sql.format(fig.SQL_DATABASE, fig.TEST_USER_0))
         user_id = int(self.c.fetchone()[0])
+        self.c.close()
         log(user_id)
         table_counts = {}
         user_counts = {}
 
         # Check the tables that would be affected
         for table in fig.PROTECTED_TABLES + fig.JUNCTION_TABLES:
+            self.c = self.db.cursor()
             # Get the total number of entries
             sql = 'SELECT COUNT(*) FROM {}'.format(table)
             self.c.execute(sql)
@@ -222,6 +217,7 @@ class DatabaseTests(TestCase):
             sql = 'SELECT COUNT(*) FROM {} WHERE user_id = {}'.format(table, user_id)
             self.c.execute(sql)
             user_counts[table] = int(self.c.fetchone()[0])
+            self.c.close()
 
         # Clear the tables
         with Database(fig.TEST_DIR_0, user=user, owner=fig.TEST_USER_0, testing=testing) as db:
@@ -231,9 +227,11 @@ class DatabaseTests(TestCase):
         for table in fig.PROTECTED_TABLES + fig.JUNCTION_TABLES:
             # Get the new total number of entries
             sql = 'SELECT COUNT(*) FROM {}'.format(table)
+            self.c = self.db.cursor()
             self.c.execute(sql)
             # Check that the difference is equal to the rows belonging to the cleared user
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
+            self.c.close()
 
     def test_e_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """

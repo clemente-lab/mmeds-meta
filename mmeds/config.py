@@ -226,6 +226,7 @@ PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalM
 
 # These are the columns for each table
 TABLE_COLS = {}
+ALL_TABLE_COLS = {}
 ALL_COLS = []
 
 # Try connecting via the testing setup
@@ -250,8 +251,9 @@ for table in TABLE_ORDER:
         ALL_COLS += 'ICDCode'
     elif not table == 'AdditionalMetaData':
         c.execute('DESCRIBE ' + table)
-        results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
-        TABLE_COLS[table] = results
+        results = [x[0] for x in c.fetchall()]
+        TABLE_COLS[table] = [x for x in results if 'id' not in x[0]]
+        ALL_TABLE_COLS[table] = results
         ALL_COLS += results
 TABLE_COLS['AdditionalMetaData'] = []
 
