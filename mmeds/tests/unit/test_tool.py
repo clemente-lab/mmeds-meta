@@ -19,6 +19,7 @@ class ToolTests(TestCase):
         with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
             access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
                                                               'qiime',
+                                                              'single_end',
                                                               for_reads=fig.TEST_READS,
                                                               barcodes=fig.TEST_BARCODES,
                                                               access_code=fig.TEST_CODE)

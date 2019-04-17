@@ -57,50 +57,47 @@ class Tool:
         log('In setup_dir')
         files = {}
         run_id = 0
+        # Create a new directory to perform the analysis in
         new_dir = path / 'analysis{}'.format(run_id)
         while new_dir.is_dir():
             run_id += 1
             new_dir = path / 'analysis{}'.format(run_id)
+
         new_dir = new_dir.resolve()
-        root_files, root_path = self.db.get_mongo_files(self.access_code)
-
-        log('Root files')
-        for (key, item) in root_files.items():
-            log('{}: {}'.format(key, item))
-
+        metadata = self.db.get_metadata(self.access_code)
         new_dir.mkdir()
-
-        # Handle paired end sequences
-        if root_files.get('rev_reads') is not None:
-            # Create links to the files
-            (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
-            (new_dir / 'forward.fastq.gz').symlink_to(root_files['for_reads'])
-            (new_dir / 'reverse.fastq.gz').symlink_to(root_files['rev_reads'])
-
-            # Add the links to the files dict for this analysis
-            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-            files['for_reads'] = new_dir / 'forward.fastq.gz'
-            files['rev_reads'] = new_dir / 'reverse.fastq.gz'
-
-            data_type = 'paired_end'
-        # Handle single end sequences
-        elif '.fastq' in Path(root_files['for_reads']).suffixes:
-            # Create links to the files
-            (new_dir / 'barcodes.fastq.gz').symlink_to(root_files['barcodes'])
-            (new_dir / 'sequences.fastq.gz').symlink_to(root_files['for_reads'])
-
-            # Add the links to the files dict for this analysis
-            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-            files['for_reads'] = new_dir / 'sequences.fastq.gz'
-
-            data_type = 'single_end'
         # Handle demuxed sequences
-        elif Path(root_files['for_reads']).suffix in ['.zip', '.tar']:
-            (new_dir / 'data.zip').symlink_to(root_files['for_reads'])
+        if Path(metadata.files['for_reads']).suffix in ['.zip', '.tar']:
+            (new_dir / 'data.zip').symlink_to(metadata.files['for_reads'])
             files['data'] = new_dir / 'data.zip'
-            data_type = 'single_demuxed'
+            data_type = metadata.reads_type + '_demuxed'
+        # Handle all sequences in one file
+        else:
+            # Handle paired end sequences
+            if metadata.files.get('rev_reads') is not None:
+                # Create links to the files
+                (new_dir / 'barcodes.fastq.gz').symlink_to(metadata.files['barcodes'])
+                (new_dir / 'forward.fastq.gz').symlink_to(metadata.files['for_reads'])
+                (new_dir / 'reverse.fastq.gz').symlink_to(metadata.files['rev_reads'])
 
-        copy_metadata(root_files['metadata'], new_dir / 'metadata.tsv')
+                # Add the links to the files dict for this analysis
+                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+                files['for_reads'] = new_dir / 'forward.fastq.gz'
+                files['rev_reads'] = new_dir / 'reverse.fastq.gz'
+
+            # Handle single end sequences
+            elif '.fastq' in Path(metadata.files['for_reads']).suffixes:
+                # Create links to the files
+                (new_dir / 'barcodes.fastq.gz').symlink_to(metadata.files['barcodes'])
+                (new_dir / 'sequences.fastq.gz').symlink_to(metadata.files['for_reads'])
+
+                # Add the links to the files dict for this analysis
+                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+                files['for_reads'] = new_dir / 'sequences.fastq.gz'
+
+            data_type = metadata.reads_type
+
+        copy_metadata(metadata.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
         log("Analysis directory is {}. Run.".format(new_dir))
         return new_dir, str(run_id), files, data_type

@@ -193,15 +193,17 @@ class TestServer(helper.CPWebCase):
         b = b''
         for file_handle, file_path, file_type in zipped:
             # Byte strings
-            b += str.encode('--{}\n'.format(boundry) +
-                            'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
-                            'filename="{}"\r\n'.format(Path(file_path).name) +
-                            'Content-Type: {}\r\n'.format(file_type) +
-                            '\r\n')
-            if not file_path == '':
-                b += Path(file_path).read_bytes() + str.encode('\n')
-            b + str.encode('\n')
-        b += str.encode('--{}--\n'.format(boundry))
+            b += str.encode('--{}\r\n'.format(boundry) +
+                            'Content-Disposition: form-data; name="{}"; '.format(file_handle))
+            if not file_type == '':
+                b += str.encode('filename="{}"\r\n'.format(Path(file_path).name) +
+                                'Content-Type: {}\r\n\r\n'.format(file_type))
+                if not file_path == '':
+                    b += Path(file_path).read_bytes() + str.encode('\r\n')
+            else:
+                b += str.encode('\r\n\r\n{}\r\n'.format(file_path))
+            b + str.encode('\r\n')
+        b += str.encode('--{}--\r\n'.format(boundry))
 
         filesize = len(b)
         h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
@@ -258,9 +260,13 @@ class TestServer(helper.CPWebCase):
     def upload_data(self):
         self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
-        headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
-                                          [fig.TEST_READS, '', fig.TEST_BARCODES],
-                                          ['application/gzip', 'application/octet-stream', 'application/gzip'])
+        headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes', 'reads_type'],
+                                          [fig.TEST_READS, '', fig.TEST_BARCODES, 'single_end'],
+                                          ['application/gzip', 'application/octet-stream',
+                                           'application/gzip', ''])
+        log('TESTING INFO')
+        log(headers)
+        log(body)
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 

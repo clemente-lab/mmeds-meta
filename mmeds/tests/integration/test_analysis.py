@@ -28,6 +28,7 @@ class AnalysisTests(TestCase):
         with open(fig.TEST_METADATA, 'rb') as reads, open(fig.TEST_BARCODES, 'rb') as barcodes:
             self.code = spawn.handle_data_upload(Path(fig.TEST_METADATA_SHORT),
                                                  fig.TEST_USER,
+                                                 'single_end',
                                                  True,
                                                  ('for_reads', Path(fig.TEST_METADATA).name, reads),
                                                  ('barcodes', Path(fig.TEST_BARCODES).name, barcodes))
