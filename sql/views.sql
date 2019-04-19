@@ -182,8 +182,6 @@ INSERT INTO `IllnessCategory` VALUES (1, 1, NULL);
 
 INSERT INTO `IllnessDetails` VALUES (1, 1, NULL, NULL);
 
-INSERT INTO `Interventions` VALUES (1, NULL, NULL, NULL);
-
 INSERT INTO `BodySite` VALUES (1, NULL, NULL);
 
 INSERT INTO `Type` VALUES (1, NULL, NULL);

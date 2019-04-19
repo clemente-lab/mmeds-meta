@@ -38,9 +38,9 @@ def upload_metadata(args):
     metadata, path, owner, access_code = args
     with MetaDataUploader(metadata=metadata,
                           path=path,
+                          owner=fig.TEST_USER,
                           study_type='qiime',
                           reads_type='single_end',
-                          owner=fig.TEST_USER,
                           testing=testing) as up:
         access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
                                                             barcodes=fig.TEST_BARCODES,
@@ -78,7 +78,7 @@ class MetaDataUploaderTests(TestCase):
                               max_allowed_packet=2048000000,
                               autocommit=True,
                               local_infile=True)
-        self.builder = SQLBuilder(self.db, fig.TEST_USER)
+        self.builder = SQLBuilder(self.df, self.db, fig.TEST_USER)
         self.c = self.db.cursor()
 
         # Get the user id
@@ -105,7 +105,7 @@ class MetaDataUploaderTests(TestCase):
             for table in tables:
                 log('Query table {}'.format(table))
                 # Create the query
-                sql, args = self.builder.build_sql(self.df, table, row)
+                sql, args = self.builder.build_sql(table, row)
                 log(sql)
                 log(args)
                 self.c = self.db.cursor()
@@ -132,7 +132,7 @@ class MetaDataUploaderTests(TestCase):
         for row in range(len(self.df)):
             for jtable in jtables:
                 log('Check table: {}'.format(jtable))
-                sql, args = self.builder.build_sql(self.df, jtable, row)
+                sql, args = self.builder.build_sql(jtable, row)
                 log(sql)
                 self.c = self.db.cursor()
                 jresult = self.c.execute(sql, args)
@@ -156,12 +156,14 @@ class MetaDataUploaderTests(TestCase):
                 # raises the appropriate error
                 with pytest.raises(TableAccessError):
                     db0.execute('SELECT * FROM {}'.format(table))
+                # Get the columns from the view
                 results, header = db0.execute('SELECT * FROM {}'.format(ptable))
                 for result in results:
                     for i, col in enumerate(header):
                         if 'id' not in col:
+                            print('COl {} result {}'.format(col, result[i]))
                             # If the value is 'NULL' assert there is a NaN value in the dataframe
-                            if result[i] == 'NULL':
+                            if result[i] == 'NULL' or result[i] is None:
                                 assert self.df[table][col].isnull().values.any()
                             else:
                                 if 'Date' in col:

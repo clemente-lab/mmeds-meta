@@ -13,7 +13,6 @@ from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes
-from numpy import nan
 import mmeds.secrets as sec
 import mmeds.config as fig
 
@@ -502,7 +501,7 @@ class Database:
 
 
 class SQLBuilder:
-    def __init__(self, df, db, owner):
+    def __init__(self, df, db, owner=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -519,28 +518,11 @@ class SQLBuilder:
         self.df = df
         self.row = None
         self.db = db
-
-        """
-        # If testing connect to test server
-        if testing:
-            self.db = pms.connect(host='localhost',
-                                  user='root',
-                                  password=sec.TEST_ROOT_PASS,
-                                  database=SQL_DATABASE,
-                                  local_infile=True)
-        # Otherwise connect to the deployment server
-        else:
-            self.db = pms.connect(host=sec.SQL_HOST,
-                                  user=sec.SQL_ADMIN_NAME,
-                                  password=sec.SQL_ADMIN_PASS,
-                                  database=sec.SQL_DATABASE,
-                                  local_infile=True)
-        """
         self.cursor = self.db.cursor()
 
         # If the owner is None set user_id to 0
         if owner is None:
-            self.user_id = 0
+            self.user_id = 1
         # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'

@@ -146,7 +146,6 @@ for key in TEST_FILES.keys():
 # before they are referenced as foreign keys
 TABLE_ORDER = [
     'Lab',
-    'Interventions',
     'SampleProtocols',
     'RawDataProtocols',
     'ResultsProtocols',

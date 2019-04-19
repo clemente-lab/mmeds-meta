@@ -73,28 +73,21 @@ class Tool:
             data_type = metadata.reads_type + '_demuxed'
         # Handle all sequences in one file
         else:
+            # Create links to the files
+            (new_dir / 'barcodes.fastq.gz').symlink_to(metadata.files['barcodes'])
+            (new_dir / 'sequences.fastq.gz').symlink_to(metadata.files['for_reads'])
+
+            # Add the links to the files dict for this analysis
+            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+            files['for_reads'] = new_dir / 'forward.fastq.gz'
+
             # Handle paired end sequences
-            if metadata.files.get('rev_reads') is not None:
+            if metadata.reads_type == 'paired_end':
                 # Create links to the files
-                (new_dir / 'barcodes.fastq.gz').symlink_to(metadata.files['barcodes'])
-                (new_dir / 'forward.fastq.gz').symlink_to(metadata.files['for_reads'])
                 (new_dir / 'reverse.fastq.gz').symlink_to(metadata.files['rev_reads'])
 
                 # Add the links to the files dict for this analysis
-                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-                files['for_reads'] = new_dir / 'forward.fastq.gz'
                 files['rev_reads'] = new_dir / 'reverse.fastq.gz'
-
-            # Handle single end sequences
-            elif '.fastq' in Path(metadata.files['for_reads']).suffixes:
-                # Create links to the files
-                (new_dir / 'barcodes.fastq.gz').symlink_to(metadata.files['barcodes'])
-                (new_dir / 'sequences.fastq.gz').symlink_to(metadata.files['for_reads'])
-
-                # Add the links to the files dict for this analysis
-                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-                files['for_reads'] = new_dir / 'sequences.fastq.gz'
-
             data_type = metadata.reads_type
 
         copy_metadata(metadata.files['metadata'], new_dir / 'metadata.tsv')
