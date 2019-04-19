@@ -50,6 +50,17 @@ class MetaData(men.DynamicDocument):
                     f.write('{}\t{}\n'.format(key, file_path))
         super(MetaData, self).save()
 
+    def __str__(self):
+        self_string = 'Created: {created}\n last_accessed: {last_accessed}\n study_type: {study_type}\n' +\
+            'reads_type: {reads_type}\n study: {study}\n access_code: {access_code}\n owner: {owner}\n' +\
+            'email: {email}\n path: {path}\n'
+        self_string = self_string.format(created=self.created, last_accessed=self.last_accessed,
+                                         study_type=self.study_type, reads_type=self.reads_type,
+                                         study=self.study, access_code=self.access_code,
+                                         owner=self.owner, email=self.email, path=self.path)
+        self_string += 'files: {}\n'.format(self.files.keys())
+        return self_string
+
 
 class MongoConnection:
     pass

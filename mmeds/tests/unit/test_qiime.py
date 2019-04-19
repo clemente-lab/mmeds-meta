@@ -15,7 +15,7 @@ def upload_metadata(args):
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
-                          reads_type='single_end',
+                          reads_type=reads_type,
                           owner=fig.TEST_USER,
                           testing=True) as up:
         access_code, study_name, email = up.import_metadata(for_reads=for_reads,
@@ -29,6 +29,9 @@ class QiimeTests(TestCase):
 
     @classmethod
     def setUpClass(self):
+        self.TEST_CODE = 'qiimeTest'
+        self.TEST_CODE_PAIRED = 'qiimeTestPaired'
+        self.TEST_CODE_DEMUX = 'qiimeTestDemuxed'
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
         test_setups = [
             (fig.TEST_METADATA_SHORT,
@@ -38,7 +41,7 @@ class QiimeTests(TestCase):
              fig.TEST_READS,
              None,
              fig.TEST_BARCODES,
-             fig.TEST_CODE),
+             self.TEST_CODE),
             (fig.TEST_METADATA_SHORT,
              fig.TEST_DIR,
              fig.TEST_USER,
@@ -46,15 +49,15 @@ class QiimeTests(TestCase):
              fig.TEST_READS,
              fig.TEST_REV_READS,
              fig.TEST_BARCODES,
-             fig.TEST_CODE_PAIRED),
+             self.TEST_CODE_PAIRED),
             (fig.TEST_METADATA_SHORT,
              fig.TEST_DIR,
              fig.TEST_USER,
-             'single_end_demuxed',
+             'single_end',
              fig.TEST_DEMUXED,
              None,
              fig.TEST_BARCODES,
-             fig.TEST_CODE_DEMUX)
+             self.TEST_CODE_DEMUX)
         ]
         for test_setup in test_setups:
             upload_metadata(test_setup)
@@ -72,14 +75,14 @@ class QiimeTests(TestCase):
 
     def test_qiime1_setup_analysis(self):
         for atype in ['qiime1-open', 'qiime1-closed']:
-            for code in [('single_end', fig.TEST_CODE),
-                         ('paired_end', fig.TEST_CODE_PAIRED),
-                         ('single_end_demuxed', fig.TEST_CODE_DEMUX)]:
+            for code in [('single_end', self.TEST_CODE),
+                         ('paired_end', self.TEST_CODE_PAIRED),
+                         ('single_end_demuxed', self.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime1)
 
     def test_qiime2_setup_analysis(self):
         for atype in ['qiime2-dada2', 'qiime2-deblur']:
-            for code in [('single_end', fig.TEST_CODE),
-                         ('paired_end', fig.TEST_CODE_PAIRED),
-                         ('single_end_demuxed', fig.TEST_CODE_DEMUX)]:
+            for code in [('single_end', self.TEST_CODE),
+                         ('paired_end', self.TEST_CODE_PAIRED),
+                         ('single_end_demuxed', self.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime2)

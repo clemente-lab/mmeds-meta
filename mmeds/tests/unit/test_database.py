@@ -68,8 +68,8 @@ class MetaDataUploaderTests(TestCase):
         for setup in test_setups:
             upload_metadata(setup)
 
-        self.df0 = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         self.df = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
+        self.df0 = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA_0, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         # Connect to the database
         self.db = pms.connect('localhost',
                               user,
@@ -79,9 +79,9 @@ class MetaDataUploaderTests(TestCase):
                               autocommit=True,
                               local_infile=True)
         self.builder = SQLBuilder(self.df, self.db, fig.TEST_USER)
-        self.c = self.db.cursor()
 
         # Get the user id
+        self.c = self.db.cursor()
         self.c.execute('SELECT user_id FROM user WHERE username="{}"'.format(fig.TEST_USER))
         self.user_id = int(self.c.fetchone()[0])
         self.c.close()
@@ -126,7 +126,6 @@ class MetaDataUploaderTests(TestCase):
         log('TEST_B_JUNCTION_TABLES')
         self.c = self.db.cursor()
         self.c.execute('SHOW TABLES')
-        self.c.close()
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
         for row in range(len(self.df)):
@@ -139,6 +138,7 @@ class MetaDataUploaderTests(TestCase):
                 self.c.close()
                 # Ensure an entry exists for this value
                 assert jresult > 0
+        self.c.close()
 
     def test_c_table_protection(self):
         """
@@ -158,7 +158,7 @@ class MetaDataUploaderTests(TestCase):
                     db0.execute('SELECT * FROM {}'.format(table))
                 # Get the columns from the view
                 results, header = db0.execute('SELECT * FROM {}'.format(ptable))
-                for result in results:
+                for result in results[1:]:
                     for i, col in enumerate(header):
                         if 'id' not in col:
                             print('COl {} result {}'.format(col, result[i]))

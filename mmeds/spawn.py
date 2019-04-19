@@ -2,12 +2,16 @@ from time import sleep
 from multiprocessing import Process
 
 from mmeds.util import send_email, create_local_copy, log, load_config
-from mmeds.database import Database
+from mmeds.database import MetaDataUploader, Database
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.config import DATABASE_DIR
+
+
+def upload_metadata(params, data_files, access_code=None):
+    metadata, path, owner, reads_type = params
 
 
 def run_analysis(qiime):
@@ -110,12 +114,13 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     for (key, value) in datafile_copies.items():
         log('{}: {}'.format(key, value))
 
-    # Upload the metadata to the database
-    with Database(new_dir, owner=username, testing=testing) as db:
-        access_code, study_name, email = db.read_in_sheet(metadata_copy,
-                                                          'qiime',
-                                                          reads_type,
-                                                          **datafile_copies)
+    with MetaDataUploader(metadata=metadata_copy,
+                          path=new_dir,
+                          study_type='qiime',
+                          reads_type=reads_type,
+                          owner=username,
+                          testing=testing) as up:
+        access_code, study_name, email = up.import_metadata(**datafile_copies)
     log('Added to database')
 
     # Send the confirmation email
