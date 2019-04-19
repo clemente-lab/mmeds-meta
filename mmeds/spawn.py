@@ -10,10 +10,6 @@ from mmeds.qiime2 import Qiime2
 from mmeds.config import DATABASE_DIR
 
 
-def upload_metadata(params, data_files, access_code=None):
-    metadata, path, owner, reads_type = params
-
-
 def run_analysis(qiime):
     """ Run qiime analysis. """
     try:
