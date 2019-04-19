@@ -244,6 +244,8 @@ except pms.err.OperationalError:
                      password=sec.SQL_ADMIN_PASS,
                      database=sec.SQL_DATABASE,
                      local_infile=True)
+
+# Get the columns that exist in each table
 c = db.cursor()
 for table in TABLE_ORDER:
     if table == 'ICDCode':
@@ -252,9 +254,10 @@ for table in TABLE_ORDER:
     elif not table == 'AdditionalMetaData':
         c.execute('DESCRIBE ' + table)
         results = [x[0] for x in c.fetchall()]
-        TABLE_COLS[table] = [x for x in results if 'id' not in x[0]]
+        TABLE_COLS[table] = [x for x in results if 'id' not in x]
         ALL_TABLE_COLS[table] = results
         ALL_COLS += results
+c.close()
 TABLE_COLS['AdditionalMetaData'] = []
 
 # For use when working with Metadata files

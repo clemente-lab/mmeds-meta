@@ -4,7 +4,6 @@ from mmeds.error import TableAccessError
 from mmeds.util import log, parse_ICD_codes
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
-from multiprocessing import Pool
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pymysql as pms
@@ -37,14 +36,13 @@ user = 'root'
 
 def upload_metadata(args):
     metadata, path, owner, access_code = args
-    print(metadata, path, owner, access_code)
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
                           reads_type='single_end',
                           owner=fig.TEST_USER,
                           testing=testing) as up:
-        access_code, study_name, email = up.import_metadata(reads=fig.TEST_READS,
+        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
                                                             barcodes=fig.TEST_BARCODES,
                                                             access_code=access_code)
 
@@ -57,7 +55,6 @@ class MetaDataUploaderTests(TestCase):
         """ Load data that is to be used by multiple test cases """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
-        ag_metadata = '/home/david/Work/minerva/data/AmericanGutData/04-meta/short_mmeds_converted.tsv'
         log('about to read in')
         test_setups = [(fig.TEST_METADATA,
                         fig.TEST_DIR,
@@ -66,15 +63,8 @@ class MetaDataUploaderTests(TestCase):
                        (fig.TEST_METADATA_0,
                         fig.TEST_DIR_0,
                         fig.TEST_USER_0,
-                        fig.TEST_CODE + '0'),
-                       (ag_metadata,
-                        fig.TEST_DIR_0,
-                        fig.TEST_USER_0,
                         fig.TEST_CODE + '0')]
 
-        print('start pool')
-        #with Pool(processes=2) as pool:
-        #    pool.map(upload_metadata, test_setups)
         for setup in test_setups:
             upload_metadata(setup)
 

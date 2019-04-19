@@ -2,12 +2,25 @@ from unittest import TestCase
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
-from mmeds.database import Database
+from mmeds.database import MetaDataUploader
 from mmeds.util import load_config
 
 from shutil import rmtree
 import mmeds.config as fig
 import mmeds.secrets as sec
+
+
+def upload_metadata(args):
+    metadata, path, owner, access_code = args
+    with MetaDataUploader(metadata=metadata,
+                          path=path,
+                          study_type='qiime',
+                          reads_type='single_end',
+                          owner=fig.TEST_USER,
+                          testing=True) as up:
+        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
+                                                            barcodes=fig.TEST_BARCODES,
+                                                            access_code=access_code)
 
 
 class ToolTests(TestCase):
@@ -16,13 +29,11 @@ class ToolTests(TestCase):
     @classmethod
     def setUpClass(self):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
-            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
-                                                              'qiime',
-                                                              'single_end',
-                                                              for_reads=fig.TEST_READS,
-                                                              barcodes=fig.TEST_BARCODES,
-                                                              access_code=fig.TEST_CODE)
+        test_setup = (fig.TEST_METADATA,
+                      fig.TEST_DIR,
+                      fig.TEST_USER,
+                      fig.TEST_CODE)
+        upload_metadata(test_setup)
         self.config = load_config(None, fig.TEST_METADATA)
         self.tool = Tool(fig.TEST_USER,
                          fig.TEST_CODE,
