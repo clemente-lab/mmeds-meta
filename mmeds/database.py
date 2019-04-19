@@ -514,14 +514,11 @@ class Database:
 class SQLBuilder:
     def __init__(self, df, db, owner=None):
         """
-        Connect to the specified database.
-        Initialize variables for this session.
+        Handles creating an appropriate SQL query based on the information in df
         ---------------------------------------
-        :metadata: A string. Path the metadata file to import.
-        :path: A string. The path to the directory created for this session.
-        :user: A string. What account to login to the SQL server with (user or admin).
+        :df: A Pandas dataframe containing the parsed mmeds metadata to check against
+        :db: A pymysql connection object.
         :owner: A string. The mmeds user account uploading or retrieving files.
-        :testing: A boolean. Changes the connection parameters for testing.
         """
         warnings.simplefilter('ignore')
 
