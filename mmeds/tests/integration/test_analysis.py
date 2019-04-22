@@ -76,8 +76,10 @@ class AnalysisTests(TestCase):
         self.spawn_analysis('qiime2-dada2', 0)
         self.summarize(0, 'qiime2')
 
+    """
     def test_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
         self.summarize(0, 'qiime1')
+        """

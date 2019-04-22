@@ -91,6 +91,25 @@ class Qiime2(Tool):
             cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         self.jobtext.append(' '.join(cmd))
 
+    def filter_by_metadata(self, column=None, value=None):
+        """
+            Filter the dataset based on some metadata parameter.
+            ====================================================
+            :column: Column to filter on, if not None
+            :value: Value to have in column, if not None
+        """
+        self.add_path('filtered_table', '.qza')
+        cmd = [
+            'qiime feature-table filter-samples',
+            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--m-metadata-file {}'.format(self.get_file('mapping')),
+            '--o-filtered-table {}'.format(self.get_file('filtered_table'))
+        ]
+
+        if column is not None and value is not None:
+            cmd.append('--p-where "{column}={value}')
+        self.jobtext.append(' '.join(cmd))
+
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
@@ -234,7 +253,7 @@ class Qiime2(Tool):
         cmd = [
             'qiime diversity core-metrics-phylogenetic',
             '--i-phylogeny {}'.format(self.get_file('rooted_tree')),
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--p-sampling-depth {}'.format(self.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--p-n-jobs {} '.format(self.num_jobs),
@@ -278,7 +297,7 @@ class Qiime2(Tool):
         self.add_path('taxa_bar_plot', '.qzv')
         cmd = [
             'qiime taxa barplot',
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--i-taxonomy {}'.format(self.get_file('taxonomy')),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--o-visualization {}'.format(self.get_file('taxa_bar_plot'))
@@ -292,7 +311,7 @@ class Qiime2(Tool):
         self.add_path('alpha_rarefaction', '.qzv')
         cmd = [
             'qiime diversity alpha-rarefaction',
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--i-phylogeny {}'.format(self.get_file('rooted_tree')),
             '--p-max-depth {}'.format(max_depth),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
@@ -314,6 +333,54 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def add_pseudocount(self, category):
+        """ Add composition pseudocount """
+        new_file = 'comp-{}-table'.format(category)
+        self.add_path(new_file, '.qza')
+        cmd = [
+            'qiime composition add-pseudocount',
+            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--o-composition-table {}'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def composition_ancom(self, category, level=None):
+        """ Add composition ancom """
+        new_file = 'ancom-{}'.format(category)
+        self.add_path(new_file, '.qzv')
+
+        if level is None:
+            infile = 'comp-{}-table'.format(category)
+        else:
+            infile = 'comp-{}-table-l{}'.format(category, level)
+
+        cmd = [
+            'qiime composition ancom',
+            '--i-table {}'.format(self.get_file(infile)),
+            '--m-metadata-file {}'.format(self.get_file('mapping')),
+            '--p-transform-function log',
+            '--m-metadata-column {}'.format(category),
+            '--o-visualization {}'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def taxa_collapse(self, category, taxa_level):
+        new_file = '{}_table_l{}'.format(category, taxa_level)
+        self.add_path(new_file, '.qza')
+        cmd = [
+            'qiime taxa collapse',
+            '--i-table {}',
+            '--i-taxonomy {}'.format(self.get_file('taxonomy')),
+            '--p-level {}'.format(taxa_level),
+            '--o-collapsed-table {}'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def group_significance(self, category):
+        """ Run all the commands related to calculating group_significance """
+        self.add_pseudocount(category)
+        self.composition_ancom(category)
+
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
@@ -331,7 +398,7 @@ class Qiime2(Tool):
 
         # Check the counts after DADA2/DeBlur
         cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(self.files['table_{}'.format(self.atype)]),
+               '--input-path', str(self.files['filtered_table']),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
         log(cmd)
@@ -368,21 +435,33 @@ class Qiime2(Tool):
             self.dada2()
             self.tabulate()
 
+        # Run these commands sequentially
+        self.filter_by_metadata()
         self.alignment_mafft()
         self.alignment_mask()
         self.phylogeny_fasttree()
         self.phylogeny_midpoint_root()
         self.core_diversity()
+
         # Run these commands in parallel
         self.alpha_diversity()
         for col in self.config['metadata']:
             self.beta_diversity(col)
         self.alpha_rarefaction()
+
         # Wait for them all to finish
         self.jobtext.append('wait')
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
+
+        # Calculate group significance
+        for col in self.config['metadata']:
+            self.group_significance(col)
+        self.jobtext.append('wait')
+
+        # Create the summary of the analysis
         self.summary()
+
         # Define the job and error files
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, '.lsf', 'jobfile')
