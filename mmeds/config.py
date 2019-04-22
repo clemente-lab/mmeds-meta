@@ -227,6 +227,7 @@ PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalM
 TABLE_COLS = {}
 ALL_TABLE_COLS = {}
 ALL_COLS = []
+COL_SIZES = {}
 
 # Try connecting via the testing setup
 try:
@@ -250,9 +251,27 @@ for table in TABLE_ORDER:
     if table == 'ICDCode':
         TABLE_COLS['ICDCode'] = ['ICDCode']
         ALL_COLS += 'ICDCode'
+        COL_SIZES['ICDCode'] = ('varchar', 9)
     elif not table == 'AdditionalMetaData':
         c.execute('DESCRIBE ' + table)
-        results = [x[0] for x in c.fetchall()]
+        info = c.fetchall()
+        results = [x[0] for x in info]
+        sizes = [x[1] for x in info]
+        for col, size in zip(results, sizes):
+            if '(' in size:
+                parts = size.split('(')
+                ctype = parts[0]
+                parsing = parts[1].split(')')[0]
+                if ',' in parsing:
+                    cparts = parsing.split(',')
+                    csize = (int(cparts[0]), int(cparts[1]))
+                else:
+                    csize = int(parsing)
+            else:
+                ctype = size
+                csize = 0
+
+            COL_SIZES[col] = (ctype, csize)
         TABLE_COLS[table] = [x for x in results if 'id' not in x]
         ALL_TABLE_COLS[table] = results
         ALL_COLS += results

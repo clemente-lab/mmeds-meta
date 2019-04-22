@@ -775,13 +775,8 @@ class MetaDataUploader:
         if not self.path.is_dir():
             self.path.mkdir()
 
-        # TODO see if I can remove this now that keys are non-identifying
+        # Get the study name from the metadata
         study_name = self.df['Study']['StudyName'][0]
-        sql = 'SET FOREIGN_KEY_CHECKS=0'
-        cursor = self.db.cursor()
-        cursor.execute(sql)
-        cursor.close()
-        self.db.commit()
 
         columns = self.df.columns.levels[0].tolist()
         column_order = [TABLE_ORDER.index(col) for col in columns]
