@@ -778,6 +778,7 @@ class MetaDataUploader:
         # Get the study name from the metadata
         study_name = self.df['Study']['StudyName'][0]
 
+        # Sort the available tables based on TABLE_ORDER
         columns = self.df.columns.levels[0].tolist()
         column_order = [TABLE_ORDER.index(col) for col in columns]
         tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']

@@ -4,7 +4,7 @@ from subprocess import run
 from datetime import datetime
 from pathlib import Path
 from os import environ
-from numpy import nan, issubdtype, int64, float64, datetime64, number
+from numpy import nan, int64, float64, datetime64
 from functools import wraps
 from inspect import isfunction
 from smtplib import SMTP
@@ -847,7 +847,13 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
 
 
 def quote_sql(sql, quote='`', **kwargs):
-    """ Returns the sql query with the identifiers properly qouted using QUOTE"""
+    """
+        Returns the sql query with the identifiers properly qouted using QUOTE
+        '`' AKA backtick is generally accepted as the quote character to use
+        for table and column names. Any other characters within it will be treated
+        as part of the variable namel.
+        https://dev.mysql.com/doc/refman/8.0/en/identifiers.html
+    """
     # There are only two quote characters allowed
     assert (quote == '`' or quote == "'")
     quoted_args = {}
