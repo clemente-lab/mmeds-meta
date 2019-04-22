@@ -333,9 +333,12 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def add_pseudocount(self, category):
+    def add_pseudocount(self, category, level=None):
         """ Add composition pseudocount """
-        new_file = 'comp-{}-table'.format(category)
+        if level is None:
+            new_file = 'comp-{}-table'.format(category)
+        else:
+            new_file = 'comp-{}-table-l{}'.format(category, level)
         self.add_path(new_file, '.qza')
         cmd = [
             'qiime composition add-pseudocount',
@@ -346,14 +349,15 @@ class Qiime2(Tool):
 
     def composition_ancom(self, category, level=None):
         """ Add composition ancom """
-        new_file = 'ancom-{}'.format(category)
-        self.add_path(new_file, '.qzv')
 
         if level is None:
+            new_file = 'ancom-{}'.format(category)
             infile = 'comp-{}-table'.format(category)
         else:
+            new_file = 'ancom-{}-l{}'.format(category, level)
             infile = 'comp-{}-table-l{}'.format(category, level)
 
+        self.add_path(new_file, '.qzv')
         cmd = [
             'qiime composition ancom',
             '--i-table {}'.format(self.get_file(infile)),
@@ -365,21 +369,25 @@ class Qiime2(Tool):
         self.jobtext.append(' '.join(cmd))
 
     def taxa_collapse(self, category, taxa_level):
+        """ Collapse taxonomy to the specified level """
         new_file = '{}_table_l{}'.format(category, taxa_level)
         self.add_path(new_file, '.qza')
         cmd = [
             'qiime taxa collapse',
-            '--i-table {}',
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--i-taxonomy {}'.format(self.get_file('taxonomy')),
             '--p-level {}'.format(taxa_level),
             '--o-collapsed-table {}'.format(self.get_file(new_file))
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def group_significance(self, category):
+    def group_significance(self, category, level=None):
         """ Run all the commands related to calculating group_significance """
-        self.add_pseudocount(category)
-        self.composition_ancom(category)
+        log('Group sig: cat {} level {}'.format(category, level))
+        if level is not None:
+            self.taxa_collapse(category, level)
+        self.add_pseudocount(category, level)
+        self.composition_ancom(category, level)
 
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
@@ -457,6 +465,9 @@ class Qiime2(Tool):
         # Calculate group significance
         for col in self.config['metadata']:
             self.group_significance(col)
+            # For the requested taxanomic levels
+            for level in self.config['taxa_levels']:
+                self.group_significance(col, level)
         self.jobtext.append('wait')
 
         # Create the summary of the analysis
