@@ -148,6 +148,10 @@ class Validator:
                 elif not cast_cell == cast_cell.strip():
                     err = 'Whitespace Error: Preceding or trailing whitespace {}'
                     self.errors.append(row_col + err.format(cast_cell))
+                # Check the cell isn't too long
+                if not self.cur_table == 'AdditionalMetaData' and len(cast_cell) > fig.COL_SIZES[self.cur_col][1]:
+                    err = 'Cell Length Error: Cell value {} is too long for the column'
+                    self.errors.append(row_col + err.format(cast_cell))
             # Check if this is the cell with the invalid date
             elif self.col_type == pd.Timestamp:
                 if cast_cell.date() > datetime.now().date():

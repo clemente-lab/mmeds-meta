@@ -318,7 +318,7 @@ p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
      geom_point(stat='identity', position = pd, size = 1) +
      geom_line(stat='identity', position = pd) +
      facet_wrap(~GroupName) + colFill + colScale +
-     labs(title = 'Alpha Diveristy',
+     labs(title = 'Alpha Diversity',
           subtitle = 'Grouped by Metadata Catagory') +
      theme_bw() +
      theme(legend.position = 'none',

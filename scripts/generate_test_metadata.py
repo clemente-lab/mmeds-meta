@@ -181,6 +181,11 @@ def write_error_files():
     future_date.iloc[10]['ResultsProtocol']['ResultsDatePerformed'] = '2222-2-1'
     write_df_as_mmeds(future_date, '{}/validate_error_future_date.tsv'.format(file_path))
 
+    # Length error
+    cell_length = df.copy(deep=True)
+    cell_length.iloc[10]['ResultsProtocol']['ResultsProcessor'] = 'asdf' * 40
+    write_df_as_mmeds(cell_length, '{}/validate_error_cell_length.tsv'.format(file_path))
+
 
 def write_warning_files():
     # stddev_warning
