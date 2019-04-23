@@ -74,7 +74,7 @@ def test_get_valid_columns():
 def test_load_config_file():
     # Test when no config is given
     config = util.load_config(None, fig.TEST_METADATA)
-    assert len(config.keys()) == 6
+    assert len(config.keys()) == 8
 
     config = util.load_config(Path(fig.TEST_CONFIG_ALL).read_text(), fig.TEST_METADATA)
     assert len(config['taxa_levels']) == 7

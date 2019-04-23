@@ -52,7 +52,7 @@ class Tool:
         """ Get the path to the file stored under 'key' relative to the run dir """
         return self.run_dir / self.files[key].relative_to(self.path)
 
-    def spawn_child_tool(self, category, value, **kwargs):
+    def spawn_child_tool(self, category, value):
         """
         Create a child analysis process using only samples that have a particular value
         in a particular metadata column. Handles creating the analysis directory and such
@@ -62,21 +62,31 @@ class Tool:
         """
         child = deepcopy(self)
 
-        child.path = self.path / 'child_{}_{}'.format(category, value)
+        child.path = self.path / 'child_{}_{}'.format(category[1], value)
         child.path.mkdir()
         child.files = {
-            'for_reads': self.files.get('for_reads'),
-            'rev_reads': self.files.get('rev_reads'),
-            'barcodes': self.files.get('barcodes'),
             'metadata': child.path / 'metadata.tsv'
         }
+        for parent_file in ['for_reads', 'rev_reads', 'barcodes']:
+            if self.files.get(parent_file) is not None:
+                child_file = child.path / self.files.get(parent_file).name
+                child_file.symlink_to(self.files.get(parent_file))
+                child.files[parent_file] = child_file
+
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.files['metadata'])
-        new_mdf = mdf.loc[mdf[category[0]][category[1]] == value]
+        new_mdf = mdf.loc[mdf[category] == value]
         write_df_as_mmeds(new_mdf, child.files['metadata'])
 
-        self.add_path('analysis{}/child_{}_{}/'.format(self.run_id, category, value), '')
-        self.run_dir = Path('$RUN_{}_{}_{}'.format(self.run_id, category, value))
+        # Update child's vars
+        child.add_path('analysis{}/child_{}_{}/'.format(child.run_id, category[1], value), '')
+        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], value))
+        child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
+        child.write_config()
+        child.create_qiime_mapping_file()
+
+        # Filter the config for the metadata category selected for this sub-analysis
+        child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
 
         # Add the child to the parent
         self.children.append(child)
@@ -131,11 +141,15 @@ class Tool:
         config_text = []
         for (key, value) in self.config.items():
             # Don't write values that are generated on loading
-            if key in ['Together', 'Separate'] or key == 'metadata_continuous':
+            if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all']:
                 continue
-            # Write lists as comma seperated strings
-            elif isinstance(value, list):
-                config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
+            # If the value was initially 'all', write that
+            elif key in ['taxa_levels', 'metadata']:
+                if self.config['{}_all'.format(key)]:
+                    config_text.append('{}\t{}'.format(key, 'all'))
+                # Write lists as comma seperated strings
+                else:
+                    config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
@@ -149,7 +163,8 @@ class Tool:
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
-        files, path = self.db.get_mongo_files(self.access_code)
+        with Database(owner=self.owner, testing=self.testing) as db:
+            files, path = db.get_mongo_files(self.access_code)
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
         self.jobtext.append(cmd)
 
@@ -207,9 +222,11 @@ class Tool:
         create a file_index in the analysis directoy.
         """
         string_files = {str(key): str(self.files[key]) for key in self.files.keys()}
-        self.db.update_metadata(self.access_code,
-                                'analysis{}'.format(self.run_id),
-                                string_files)
+
+        with Database(owner=self.owner, testing=self.testing) as db:
+            db.update_metadata(self.access_code,
+                               'analysis{}'.format(self.run_id),
+                               string_files)
 
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
@@ -253,9 +270,10 @@ class Tool:
 
     def add_summary_files(self):
         """ Add the analysis summary and associated directory to the metadata files """
-        self.db.update_metadata(self.access_code,
-                                'analysis{}_summary'.format(self.run_id),
-                                str(self.path / 'summary/analysis.pdf'))
-        self.db.update_metadata(self.access_code,
-                                'analysis{}_summary_dir'.format(self.run_id),
-                                str(self.path / 'summary'))
+        with Database(owner=self.owner, testing=self.testing) as db:
+            db.update_metadata(self.access_code,
+                               'analysis{}_summary'.format(self.run_id),
+                               str(self.path / 'summary/analysis.pdf'))
+            db.update_metadata(self.access_code,
+                               'analysis{}_summary_dir'.format(self.run_id),
+                               str(self.path / 'summary'))

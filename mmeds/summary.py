@@ -39,7 +39,7 @@ def summarize_qiime(summary_path, tool):
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config((path / 'config_file.txt').read_text(), files['metadata'])
+    config = load_config((path / 'config_file.txt').read_text(), files['metadata'], True)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config)
