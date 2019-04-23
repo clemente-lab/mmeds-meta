@@ -1,5 +1,6 @@
 from subprocess import run, CalledProcessError
 
+from mmeds.database import Database
 from mmeds.config import JOB_TEMPLATE, DATABASE_DIR
 from mmeds.util import send_email, log, setup_environment
 from mmeds.error import AnalysisError
@@ -191,7 +192,8 @@ class Qiime1(Tool):
             self.sanity_check()
             self.move_user_files()
             self.add_summary_files()
-            doc = self.db.get_metadata(self.access_code)
+            with Database(owner=self.owner, testing=self.testing) as db:
+                doc = db.get_metadata(self.access_code)
             if not self.testing:
                 send_email(doc.email,
                            doc.owner,

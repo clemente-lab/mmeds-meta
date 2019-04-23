@@ -2,16 +2,17 @@ from pathlib import Path
 from subprocess import run
 from shutil import copy
 from time import sleep
+from copy import deepcopy
 
 from mmeds.database import Database
-from mmeds.util import log, create_qiime_from_mmeds, copy_metadata
+from mmeds.util import log, create_qiime_from_mmeds, copy_metadata, load_metadata, write_df_as_mmeds
 from mmeds.error import AnalysisError
 
 
 class Tool:
     """ The base class for tools used by mmeds """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True):
+    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True, child=False):
         """
         Setup the Tool class
         ====================
@@ -24,33 +25,62 @@ class Tool:
         :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
         """
         log('Start analysis')
-        self.db = Database(owner=owner, testing=testing)
         self.access_code = access_code
-        files, path = self.db.get_mongo_files(self.access_code)
         self.testing = testing
         self.jobtext = []
         self.owner = owner
-        if testing:
-            self.num_jobs = 2
-        else:
-            self.num_jobs = threads
         self.atype = atype.split('-')[1]
         self.tool = atype.split('-')[0]
         self.analysis = analysis
         self.config = config
         self.columns = []
+
+        with Database(owner=self.owner, testing=self.testing) as db:
+            files, path = db.get_mongo_files(self.access_code)
+        if testing:
+            self.num_jobs = 2
+        else:
+            self.num_jobs = threads
         self.path, self.run_id, self.files, self.data_type = self.setup_dir(Path(path))
         self.run_dir = Path('$RUN_{}'.format(self.run_id))
         self.add_path('analysis{}'.format(self.run_id), '')
         self.write_config()
         self.create_qiime_mapping_file()
-
-    def __del__(self):
-        del self.db
+        self.children = []
 
     def get_file(self, key):
         """ Get the path to the file stored under 'key' relative to the run dir """
         return self.run_dir / self.files[key].relative_to(self.path)
+
+    def spawn_child_tool(self, category, value, **kwargs):
+        """
+        Create a child analysis process using only samples that have a particular value
+        in a particular metadata column. Handles creating the analysis directory and such
+        ===============================
+        :category: The column of the metadata to filter by
+        :value: The value that :column: must match for a sample to be included
+        """
+        child = deepcopy(self)
+
+        child.path = self.path / 'child_{}_{}'.format(category, value)
+        child.path.mkdir()
+        child.files = {
+            'for_reads': self.files.get('for_reads'),
+            'rev_reads': self.files.get('rev_reads'),
+            'barcodes': self.files.get('barcodes'),
+            'metadata': child.path / 'metadata.tsv'
+        }
+        # Filter the metadata and write the new file to the childs directory
+        mdf = load_metadata(self.files['metadata'])
+        new_mdf = mdf.loc[mdf[category[0]][category[1]] == value]
+        write_df_as_mmeds(new_mdf, child.files['metadata'])
+
+        self.add_path('analysis{}/child_{}_{}/'.format(self.run_id, category, value), '')
+        self.run_dir = Path('$RUN_{}_{}_{}'.format(self.run_id, category, value))
+
+        # Add the child to the parent
+        self.children.append(child)
+        return child
 
     def setup_dir(self, path):
         """ Setup the directory to run the analysis. """
@@ -64,7 +94,8 @@ class Tool:
             new_dir = path / 'analysis{}'.format(run_id)
 
         new_dir = new_dir.resolve()
-        metadata = self.db.get_metadata(self.access_code)
+        with Database(owner=self.owner, testing=self.testing) as db:
+            metadata = db.get_metadata(self.access_code)
         new_dir.mkdir()
         # Handle demuxed sequences
         if Path(metadata.files['for_reads']).suffix in ['.zip', '.tar']:

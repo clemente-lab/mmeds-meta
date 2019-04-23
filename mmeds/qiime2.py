@@ -2,6 +2,7 @@ from subprocess import run, CalledProcessError
 from shutil import rmtree
 from pandas import read_csv
 
+from mmeds.database import Database
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
 from mmeds.util import send_email, log, setup_environment
 from mmeds.error import AnalysisError
@@ -17,9 +18,9 @@ class Qiime2(Tool):
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
-    # ======================= #
-    # # # Qiime2 Commands # # #
-    # ======================= #
+    # =============== #
+    # Qiime2 Commands #
+    # =============== #
     def qimport(self):
         """ Split the libraries and perform quality analysis. """
 
@@ -505,7 +506,8 @@ class Qiime2(Tool):
                 #  self.wait_on_job(job_id)
 
             self.sanity_check()
-            doc = self.db.get_metadata(self.access_code)
+            with Database(owner=self.owner, testing=self.testing) as db:
+                doc = db.get_metadata(self.access_code)
             self.move_user_files()
             self.add_summary_files()
             log('Send email')
