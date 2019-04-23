@@ -1,12 +1,14 @@
 from subprocess import run, CalledProcessError
 from shutil import rmtree
 from pandas import read_csv
+from multiprocessing import Process
 
 from mmeds.database import Database
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
-from mmeds.util import send_email, log, setup_environment
+from mmeds.util import send_email, log, setup_environment, load_metadata
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
+from mmeds.spawn import run_analysis
 
 
 class Qiime2(Tool):
@@ -428,6 +430,14 @@ class Qiime2(Tool):
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
+        mdf = load_metadata(self.files['metadata'])
+        # Spawn the child jobs
+        if not self.is_child:
+            for col in self.config['metadata']:
+                for val, df in mdf.groupby(col):
+                    qiime = self.spawn_child_tool(col, val)
+                    p = Process(target=run_analysis, args=(qiime,))
+                    self.children.append(p)
 
         if 'demuxed' in self.data_type:
             self.unzip()
@@ -510,6 +520,8 @@ class Qiime2(Tool):
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()
             self.add_summary_files()
+            while True:
+
             log('Send email')
             if not self.testing:
                 send_email(doc.email,

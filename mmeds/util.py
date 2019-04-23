@@ -23,7 +23,7 @@ def write_df_as_mmeds(df, output_path):
     # Write the constructed metadata to a file
     lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
              '\t'.join([key[1] for key in mmeds_meta.keys()])] +\
-        ['\t'.join([item[row] for key, item in mmeds_meta.items()])
+        ['\t'.join([str(item[row]) for key, item in mmeds_meta.items()])
          for row in range(len(df) - 2)]
     fp = Path(output_path)
     fp.write_text('\n'.join(lines))
@@ -64,7 +64,7 @@ def decorate_all_methods(decorator):
     return apply_decorator
 
 
-def load_config(config_file, metadata):
+def load_config(config_file, metadata, ignore_bad_cols=False):
     """ Read the provided config file to determine settings for the analysis. """
     config = {}
     # If no config was provided load the default
@@ -86,19 +86,25 @@ def load_config(config_file, metadata):
             if parts[0] not in fig.CONFIG_PARAMETERS:
                 raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
             config[parts[0]] = parts[1]
+    # Check if columns == 'all'
+    config['metadata_all'] = (config['metadata'] == 'all')
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata':
-                config[option], config['metadata_continuous'] = get_valid_columns(metadata, config[option])
+                config[option], config['metadata_continuous'] = get_valid_columns(metadata,
+                                                                                  config[option],
+                                                                                  ignore_bad_cols)
             # Split taxa_levels into a list or create the list if 'all'
             elif option == 'taxa_levels':
                 if config[option] == 'all':
                     config[option] = [i + 1 for i in range(7)]
+                    config['taxa_levels_all'] = True
                 else:
                     # Otherwise split the values into a list
                     config[option] = config[option].split(',')
+                    config['taxa_levels_all'] = False
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
@@ -122,7 +128,7 @@ def copy_metadata(metadata_file, metadata_copy):
     mdf.T.to_csv(metadata_copy, sep='\t')
 
 
-def get_valid_columns(metadata_file, option):
+def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
     """
     Get the column headers for metadata columns meeting the
     criteria to be used in analysis.
@@ -135,6 +141,7 @@ def get_valid_columns(metadata_file, option):
             True indicates that the column contains continuous values.
             False indicates that it contains discrete value.
     """
+    log('get valid columns with ignore = {}'.format(ignore_bad_cols))
     summary_cols = []
     col_types = {}
     # Filter out any categories containing only NaN
@@ -145,9 +152,10 @@ def get_valid_columns(metadata_file, option):
         cols = df.columns
     else:
         cols = option.split(',')
-    # Ensure there aren't any invalid columns specified to be included in the analysis
-    try:
-        for col in cols:
+
+    for col in cols:
+        # Ensure there aren't any invalid columns specified to be included in the analysis
+        try:
             # If 'all' only select columns that don't have all the same or all unique values
             if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
                 if col in ['Together', 'Separate']:
@@ -155,15 +163,16 @@ def get_valid_columns(metadata_file, option):
                     col_types[col] = False
                 elif option == 'all':
                     continue
-                else:
+                elif not ignore_bad_cols:
                     raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
             # If the columns is explicitly specified only check that it exists in the metadata
             else:
                 assert df[col].any()
                 summary_cols.append(col)
                 col_types[col] = pd.api.types.is_numeric_dtype(df[col])
-    except KeyError:
-        raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
+        except KeyError:
+            if not ignore_bad_cols:
+                raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
     return summary_cols, col_types
 
 
