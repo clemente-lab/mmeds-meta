@@ -3,7 +3,6 @@ from subprocess import run
 from shutil import copy
 from time import sleep
 from copy import deepcopy
-from multiprocessing import Process
 
 from mmeds.database import Database
 from mmeds.util import log, create_qiime_from_mmeds, copy_metadata, load_metadata, write_df_as_mmeds
@@ -48,6 +47,7 @@ class Tool:
         self.write_config()
         self.create_qiime_mapping_file()
         self.children = []
+        self.is_child = False
 
     def get_file(self, key):
         """ Get the path to the file stored under 'key' relative to the run dir """
@@ -85,6 +85,7 @@ class Tool:
         child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
         child.write_config()
         child.create_qiime_mapping_file()
+        child.is_child = True
 
         # Filter the config for the metadata category selected for this sub-analysis
         child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]

@@ -3,12 +3,12 @@ from shutil import rmtree
 from pandas import read_csv
 from multiprocessing import Process
 
-from mmeds.database import Database
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
 from mmeds.util import send_email, log, setup_environment, load_metadata
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 from mmeds.spawn import run_analysis
+from mmeds.database import Database
 
 
 class Qiime2(Tool):
@@ -520,8 +520,6 @@ class Qiime2(Tool):
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()
             self.add_summary_files()
-            while True:
-
             log('Send email')
             if not self.testing:
                 send_email(doc.email,
