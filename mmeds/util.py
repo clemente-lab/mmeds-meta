@@ -39,7 +39,6 @@ def write_metadata(df, output_path):
             else:
                 header_line.append(additional_headers[i])
         lines.append('\t'.join(header_line))
-
     lines += ['\t'.join([str(item[row]) for key, item in mmeds_meta.items()])
               for row in range(len(df))]
     Path(output_path).write_text('\n'.join(lines) + '\n')

@@ -2,7 +2,7 @@ from pathlib import Path
 from subprocess import run
 from shutil import copy
 from time import sleep
-from copy import deepcopy, copy
+from copy import copy as classcopy
 
 from mmeds.database import Database
 from mmeds.util import (log, create_qiime_from_mmeds, copy_metadata,
@@ -78,7 +78,7 @@ class Tool:
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
-        child = copy(self)
+        child = classcopy(self)
 
         child.path = self.path / 'child_{}_{}'.format(category[1], value)
         child.path.mkdir()
@@ -103,6 +103,9 @@ class Tool:
         child.write_config()
         child.create_qiime_mapping_file()
         child.is_child = True
+
+        # Filter the config for the metadata category selected for this sub-analysis
+        child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
 
         # Filter the config for the metadata category selected for this sub-analysis
         child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
