@@ -2,11 +2,28 @@ from pathlib import Path
 from subprocess import run
 from shutil import copy
 from time import sleep
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from mmeds.database import Database
-from mmeds.util import log, create_qiime_from_mmeds, copy_metadata, load_metadata, write_df_as_mmeds
+from mmeds.util import (log, create_qiime_from_mmeds, copy_metadata,
+                        load_metadata, write_metadata, send_email)
+from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
+
+
+def run_tool(tool):
+    """ Run tool analysis. """
+    try:
+        tool.run()
+        print('run {}'.format(tool.path))
+    except AnalysisError as e:
+        email = get_email(tool.owner, testing=tool.testing)
+        send_email(email,
+                   tool.owner,
+                   'error',
+                   analysis_type=tool.atype,
+                   error=e.message,
+                   testing=tool.testing)
 
 
 class Tool:
@@ -61,7 +78,7 @@ class Tool:
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
-        child = deepcopy(self)
+        child = copy(self)
 
         child.path = self.path / 'child_{}_{}'.format(category[1], value)
         child.path.mkdir()
@@ -77,7 +94,7 @@ class Tool:
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.files['metadata'])
         new_mdf = mdf.loc[mdf[category] == value]
-        write_df_as_mmeds(new_mdf, child.files['metadata'])
+        write_metadata(new_mdf, child.files['metadata'])
 
         # Update child's vars
         child.add_path('analysis{}/child_{}_{}/'.format(child.run_id, category[1], value), '')

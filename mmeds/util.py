@@ -17,29 +17,41 @@ import mmeds.secrets as sec
 import pandas as pd
 
 
-def write_df_as_mmeds(df, output_path):
-    mmeds_meta = df.to_dict('list')
-
-    # Write the constructed metadata to a file
-    lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
-             '\t'.join([key[1] for key in mmeds_meta.keys()])] +\
-        ['\t'.join([str(item[row]) for key, item in mmeds_meta.items()])
-         for row in range(len(df) - 2)]
-    fp = Path(output_path)
-    fp.write_text('\n'.join(lines))
-
-
 def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
 
 
-def load_metadata(file_name):
+def write_metadata(df, output_path):
+    mmeds_meta = df.to_dict('list')
+    template = load_metadata_template()
+
+    # Write the constructed metadata to a file
+    lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
+             '\t'.join([key[1] for key in mmeds_meta.keys()])]
+
+    additional_headers = ['Optional', 'Text', 'No Limit']
+    for i in range(len(template)):
+        header_line = []
+        # Build the header info
+        for table, column in mmeds_meta.keys():
+            if not table == 'AdditionalMetaData':
+                header_line.append(template[table][column].iloc[i])
+            else:
+                header_line.append(additional_headers[i])
+        lines.append('\t'.join(header_line))
+
+    lines += ['\t'.join([str(item[row]) for key, item in mmeds_meta.items()])
+              for row in range(len(df))]
+    Path(output_path).write_text('\n'.join(lines) + '\n')
+
+
+def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', keep_default_na=False):
     return pd.read_csv(file_name,
                        sep='\t',
-                       header=[0, 1],
-                       skiprows=[2, 3, 4],
-                       na_values='NA',
-                       keep_default_na=False)
+                       header=header,
+                       skiprows=skiprows,
+                       na_values=na_values,
+                       keep_default_na=keep_default_na)
 
 
 def catch_server_errors(page_method):
@@ -121,11 +133,11 @@ def copy_metadata(metadata_file, metadata_copy):
     :metadata_file: Path to the metadata file.
     :metadata_copy: Path to save the new metadata file.
     """
-    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1], na_filter=False).T
+    mdf = load_metadata(metadata_file).T
     mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
         ['All' for x in range(mdf.shape[1] - 3)]
     mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
-    mdf.T.to_csv(metadata_copy, sep='\t')
+    write_metadata(mdf.T, metadata_copy)
 
 
 def get_valid_columns(metadata_file, option, ignore_bad_cols=False):

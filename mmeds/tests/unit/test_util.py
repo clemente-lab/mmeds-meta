@@ -9,6 +9,7 @@ from pandas import read_csv
 import mmeds.config as fig
 import hashlib as hl
 import os
+import difflib
 
 
 def test_is_numeric():
@@ -131,3 +132,18 @@ def test_load_html():
     # Assert no errors, warnings are okay
     for warn in errors:
         assert not ('error' in warn or 'Error' in warn)
+
+
+def test_read_write_mmeds():
+    tmpdir = Path(gettempdir())
+    mdf = util.load_metadata(fig.TEST_METADATA)
+    util.write_metadata(mdf, tmpdir / 'metadata_copy.tsv')
+
+    h1 = hl.md5()
+    h2 = hl.md5()
+    h1.update(Path(fig.TEST_METADATA).read_bytes())
+    h2.update((tmpdir / 'metadata_copy.tsv').read_bytes())
+    hash1 = h1.hexdigest()
+    hash2 = h2.hexdigest()
+
+    assert hash1 == hash2

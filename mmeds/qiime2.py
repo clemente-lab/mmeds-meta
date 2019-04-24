@@ -3,11 +3,10 @@ from shutil import rmtree
 from pandas import read_csv
 from multiprocessing import Process
 
-from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
+from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR, COL_TO_TABLE
 from mmeds.util import send_email, log, setup_environment, load_metadata
 from mmeds.error import AnalysisError
-from mmeds.tool import Tool
-from mmeds.spawn import run_analysis
+from mmeds.tool import Tool, run_tool
 from mmeds.database import Database
 
 
@@ -434,11 +433,13 @@ class Qiime2(Tool):
         # Spawn the child jobs
         if not self.is_child:
             for col in self.config['metadata']:
-                for val, df in mdf.groupby(col):
-                    qiime = self.spawn_child_tool(col, val)
-                    p = Process(target=run_analysis, args=(qiime,))
+                print(col)
+                t_col = (COL_TO_TABLE[col], col)
+                for val, df in mdf.groupby(t_col):
+                    qiime = self.spawn_child_tool(t_col, val)
+                    p = Process(target=run_tool, args=(qiime,))
+                    p.start()
                     self.children.append(p)
-
         if 'demuxed' in self.data_type:
             self.unzip()
         self.qimport()
@@ -520,6 +521,14 @@ class Qiime2(Tool):
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()
             self.add_summary_files()
+
+            # Wait for all child analyses
+            while self.children:
+                for i, child in enumerate(self.children):
+                    if child.exitcode:
+                        del self.children[i]
+                        break
+
             log('Send email')
             if not self.testing:
                 send_email(doc.email,
