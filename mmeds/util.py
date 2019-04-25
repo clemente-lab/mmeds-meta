@@ -127,6 +127,8 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
+        if config['sub_analysis'] and len(config['metadata']) == 1:
+            raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config
@@ -664,7 +666,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def log(text):
+def log(text, testing=False):
     """ Write provided text to the log file. """
     if isinstance(text, dict):
         log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
@@ -672,8 +674,13 @@ def log(text):
         log_text = '\n'.join(list(map(str, text)))
     else:
         log_text = str(text)
-    with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write('{}: {}\n'.format(datetime.now(), log_text))
+
+    if testing:
+        with open('/tmp/mmeds_log.txt', 'a+') as f:
+            f.write('{}: {}\n'.format(datetime.now(), log_text))
+    else:
+        with open(fig.MMEDS_LOG, 'a+') as f:
+            f.write('{}: {}\n'.format(datetime.now(), log_text))
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

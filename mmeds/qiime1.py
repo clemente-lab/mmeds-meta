@@ -10,8 +10,8 @@ from mmeds.tool import Tool
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing):
-        super().__init__(owner, access_code, atype, config, testing)
+    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
+        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         if testing:
@@ -157,41 +157,42 @@ class Qiime1(Tool):
         self.summary()
         self.write_file_locations()
 
+        # Perform standard tool setup
+        super().setup_analysis()
+
     def run_analysis(self):
         """ Perform some analysis. """
-        self.setup_analysis()
-        self.add_path(self.run_id + '_job', '.lsf', 'jobfile')
-        self.add_path('err' + self.run_id, '.err', 'errorlog')
-        jobfile = self.files['jobfile']
-        log(jobfile)
-        error_log = self.files['errorlog']
-        log(error_log)
-        if self.testing:
-            # Open the jobfile to write all the commands
-            jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
-            # Set execute permissions
-            jobfile.chmod(0o770)
-            # Run the command
-            run([jobfile], check=True)
-        else:
-            # Get the job header text from the template
-            temp = JOB_TEMPLATE.read_text()
-            # Write all the commands
-            jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
-            # Set execute permissions
-            jobfile.chmod(0o770)
-            #  Temporary for testing on Minerva
-            run([jobfile], check=True)
-            #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-            #  self.wait_on_job(job_id)
-
-    def run(self):
-        """ Execute all the necessary actions. """
         try:
-            self.run_analysis()
+            self.setup_analysis()
+            self.start_children()
+            self.add_path(self.run_id + '_job', '.lsf', 'jobfile')
+            self.add_path('err' + self.run_id, '.err', 'errorlog')
+            jobfile = self.files['jobfile']
+            log(jobfile)
+            error_log = self.files['errorlog']
+            log(error_log)
+            if self.testing:
+                # Open the jobfile to write all the commands
+                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
+                # Set execute permissions
+                jobfile.chmod(0o770)
+                # Run the command
+                run([jobfile], check=True)
+            else:
+                # Get the job header text from the template
+                temp = JOB_TEMPLATE.read_text()
+                # Write all the commands
+                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
+                # Set execute permissions
+                jobfile.chmod(0o770)
+                #  Temporary for testing on Minerva
+                run([jobfile], check=True)
+                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                #  self.wait_on_job(job_id)
             self.sanity_check()
             self.move_user_files()
             self.add_summary_files()
+            self.wait_on_children()
             with Database(owner=self.owner, testing=self.testing) as db:
                 doc = db.get_metadata(self.access_code)
             if not self.testing:
@@ -206,3 +207,10 @@ class Qiime1(Tool):
             self.move_user_files()
             self.write_file_locations()
             raise AnalysisError(e.args[0])
+
+    def run(self):
+        """ Overrides Process.run() """
+        if self.analysis:
+            self.run_analysis()
+        else:
+            self.setup_analysis()

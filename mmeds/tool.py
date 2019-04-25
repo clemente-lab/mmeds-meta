@@ -3,18 +3,25 @@ from subprocess import run
 from shutil import copy
 from time import sleep
 from copy import copy as classcopy
+from copy import deepcopy
 
 from mmeds.database import Database
 from mmeds.util import (log, create_qiime_from_mmeds, copy_metadata,
                         load_metadata, write_metadata, send_email)
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
+from mmeds.config import COL_TO_TABLE
+
+import multiprocessing as mp
 
 
-def run_tool(tool):
+def run_tool(tool, run=True):
     """ Run tool analysis. """
     try:
-        tool.run()
+        if run:
+            tool.run()
+        else:
+            tool.setup_analysis()
         print('run {}'.format(tool.path))
     except AnalysisError as e:
         email = get_email(tool.owner, testing=tool.testing)
@@ -26,8 +33,12 @@ def run_tool(tool):
                    testing=tool.testing)
 
 
-class Tool:
-    """ The base class for tools used by mmeds """
+class Tool(mp.Process):
+    """
+    The base class for tools used by mmeds inherits the python Process class.
+    self.run is overridden by the classes that inherit from Tool so the analysis
+    will happen in seperate processes.
+    """
 
     def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True, child=False):
         """
@@ -40,8 +51,9 @@ class Tool:
         :testing: A boolean. If True run with configurations for a local server.
         :threads: An int. The number of threads to use during analysis, is overwritten if testing==True.
         :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
+        :child: A boolean. If True this Tool object is the child of another tool.
         """
-        log('Start analysis')
+        super().__init__()
         self.access_code = access_code
         self.testing = testing
         self.jobtext = []
@@ -70,50 +82,8 @@ class Tool:
         """ Get the path to the file stored under 'key' relative to the run dir """
         return self.run_dir / self.files[key].relative_to(self.path)
 
-    def spawn_child_tool(self, category, value):
-        """
-        Create a child analysis process using only samples that have a particular value
-        in a particular metadata column. Handles creating the analysis directory and such
-        ===============================
-        :category: The column of the metadata to filter by
-        :value: The value that :column: must match for a sample to be included
-        """
-        child = classcopy(self)
-
-        child.path = self.path / 'child_{}_{}'.format(category[1], value)
-        child.path.mkdir()
-        child.files = {
-            'metadata': child.path / 'metadata.tsv'
-        }
-        for parent_file in ['for_reads', 'rev_reads', 'barcodes']:
-            if self.files.get(parent_file) is not None:
-                child_file = child.path / self.files.get(parent_file).name
-                child_file.symlink_to(self.files.get(parent_file))
-                child.files[parent_file] = child_file
-
-        # Filter the metadata and write the new file to the childs directory
-        mdf = load_metadata(self.files['metadata'])
-        new_mdf = mdf.loc[mdf[category] == value]
-        write_metadata(new_mdf, child.files['metadata'])
-
-        # Update child's vars
-        child.add_path('analysis{}/child_{}_{}/'.format(child.run_id, category[1], value), '')
-        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], value))
-        child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
-        child.write_config()
-        child.create_qiime_mapping_file()
-        child.is_child = True
-
-        # Filter the config for the metadata category selected for this sub-analysis
-        child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
-
-        # Filter the config for the metadata category selected for this sub-analysis
-        child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
-        return child
-
     def setup_dir(self, path):
         """ Setup the directory to run the analysis. """
-        log('In setup_dir')
         files = {}
         run_id = 0
         # Create a new directory to perform the analysis in
@@ -172,6 +142,7 @@ class Tool:
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
+        log('{} write metadata {}'.format(self.name, self.config['metadata']), True)
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
@@ -296,3 +267,84 @@ class Tool:
             db.update_metadata(self.access_code,
                                'analysis{}_summary_dir'.format(self.run_id),
                                str(self.path / 'summary'))
+
+    def create_child(self, category, value):
+        """
+        Create a child analysis process using only samples that have a particular value
+        in a particular metadata column. Handles creating the analysis directory and such
+        ===============================
+        :category: The column of the metadata to filter by
+        :value: The value that :column: must match for a sample to be included
+        """
+        child = classcopy(self)
+        file_value = ''.join([x.capitalize() for x in
+                              value.replace('_', ' ').replace('-', ' ').split(' ')])
+
+        child.path = self.path / 'child_{}_{}'.format(category[1], file_value)
+        child.path.mkdir()
+        child.files = {
+            'metadata': child.path / 'metadata.tsv'
+        }
+        for parent_file in ['for_reads', 'rev_reads', 'barcodes']:
+            if self.files.get(parent_file) is not None:
+                child_file = child.path / self.files.get(parent_file).name
+                child_file.symlink_to(self.files.get(parent_file))
+                child.files[parent_file] = child_file
+
+        # Filter the metadata and write the new file to the childs directory
+        mdf = load_metadata(self.files['metadata'])
+        new_mdf = mdf.loc[mdf[category] == value]
+        write_metadata(new_mdf, child.files['metadata'])
+
+        # Update child's vars
+        child.add_path('analysis{}/child_{}_{}/'.format(child.run_id, category[1], file_value), '')
+        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], file_value))
+        child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
+        child.write_config()
+        child.create_qiime_mapping_file()
+        child.is_child = True
+        child.name = child.name + '-{}-{}'.format(category[1], file_value)
+
+        child.config = deepcopy(self.config)
+        # Filter the config for the metadata category selected for this sub-analysis
+        child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
+        return child
+
+    def create_children(self):
+        """ Create child analysis processes """
+        mdf = load_metadata(self.files['metadata'])
+        for col in self.config['metadata']:
+            try:
+                t_col = (COL_TO_TABLE[col], col)
+            # Additional columns won't be in this table
+            except KeyError:
+                t_col = ('AdditionalMetaData', col)
+            for val, df in mdf.groupby(t_col):
+                child = self.create_child(t_col, val)
+                self.children.append(child)
+
+    def start_children(self):
+        for child in self.children:
+            child.start()
+
+    def wait_on_children(self):
+        # Wait for all child analyses
+        while self.children:
+            for i, child in enumerate(self.children):
+                if not child.is_alive():
+                    del self.children[i]
+            sleep(5)
+
+    def setup_analysis(self):
+        # Create the summary of the analysis
+        self.summary()
+
+        # Create the child jobs
+        if not self.is_child and self.config['sub_analysis']:
+            self.create_children()
+
+        # Define the job and error files
+        jobfile = self.path / (self.run_id + '_job')
+        self.add_path(jobfile, '.lsf', 'jobfile')
+        error_log = self.path / self.run_id
+        self.add_path(error_log, '.err', 'errorlog')

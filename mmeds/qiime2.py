@@ -1,20 +1,19 @@
 from subprocess import run, CalledProcessError
 from shutil import rmtree
 from pandas import read_csv
-from multiprocessing import Process
 
-from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR, COL_TO_TABLE
-from mmeds.util import send_email, log, setup_environment, load_metadata
+from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
+from mmeds.util import send_email, log, setup_environment
 from mmeds.error import AnalysisError
-from mmeds.tool import Tool, run_tool
+from mmeds.tool import Tool
 from mmeds.database import Database
 
 
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing):
-        super().__init__(owner, access_code, atype, config, testing)
+    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
+        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
@@ -427,26 +426,8 @@ class Qiime2(Tool):
             log(message)
             raise AnalysisError(message)
 
-    def spawn_children(self):
-        """ Spawn child analysis processes """
-        mdf = load_metadata(self.files['metadata'])
-        for col in self.config['metadata']:
-            try:
-                t_col = (COL_TO_TABLE[col], col)
-            # Additional columns won't be in this table
-            except KeyError:
-                t_col = ('AdditionalMetaData', col)
-            for val, df in mdf.groupby(t_col):
-                qiime = self.spawn_child_tool(t_col, val)
-                p = Process(target=run_tool, args=(qiime,))
-                p.start()
-                self.children.append(p)
-
     def setup_analysis(self):
         """ Create the job file for the analysis. """
-        # Spawn the child jobs
-        if not self.is_child and self.config['sub_analysis']:
-            self.spawn_children()
         if 'demuxed' in self.data_type:
             self.unzip()
         self.qimport()
@@ -489,19 +470,15 @@ class Qiime2(Tool):
                 self.group_significance(col, level)
         self.jobtext.append('wait')
 
-        # Create the summary of the analysis
-        self.summary()
+        # Perform standard tool setup
+        super().setup_analysis()
 
-        # Define the job and error files
-        jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, '.lsf', 'jobfile')
-        error_log = self.path / self.run_id
-        self.add_path(error_log, '.err', 'errorlog')
-
-    def run(self):
+    def run_analysis(self):
         """ Perform some analysis. """
         try:
             self.setup_analysis()
+            if not self.is_child:
+                self.start_children()
             jobfile = self.files['jobfile']
             self.write_file_locations()
             if self.testing:
@@ -528,14 +505,7 @@ class Qiime2(Tool):
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()
             self.add_summary_files()
-
-            # Wait for all child analyses
-            while self.children:
-                for i, child in enumerate(self.children):
-                    if child.exitcode:
-                        del self.children[i]
-                        break
-
+            self.wait_on_children()
             log('Send email')
             if not self.testing and not self.is_child:
                 send_email(doc.email,
@@ -549,3 +519,10 @@ class Qiime2(Tool):
             self.move_user_files()
             self.write_file_locations()
             raise AnalysisError(e.args[0])
+
+    def run(self):
+        """ Overrides Process.run() """
+        if self.analysis:
+            self.run_analysis()
+        else:
+            self.setup_analysis()

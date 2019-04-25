@@ -10,20 +10,6 @@ from mmeds.qiime2 import Qiime2
 from mmeds.config import DATABASE_DIR
 
 
-def run_analysis(qiime):
-    """ Run qiime analysis. """
-    try:
-        qiime.run()
-    except AnalysisError as e:
-        email = get_email(qiime.owner, testing=qiime.testing)
-        send_email(email,
-                   qiime.owner,
-                   'error',
-                   analysis_type=qiime.atype,
-                   error=e.message,
-                   testing=qiime.testing)
-
-
 def test(time):
     """ Simple function for analysis called during testing """
     log('test tool sleep for {}'.format(time))
@@ -57,20 +43,17 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     log(config)
 
     if 'qiime1' in atype:
-        qiime = Qiime1(user, access_code, atype, config, testing)
-        p = Process(target=run_analysis, args=(qiime,))
+        tool = Qiime1(user, access_code, atype, config, testing)
     elif 'qiime2' in atype:
-        qiime = Qiime2(user, access_code, atype, config, testing)
-        p = Process(target=run_analysis, args=(qiime,))
+        tool = Qiime2(user, access_code, atype, config, testing)
     elif 'test' in atype:
         log('test analysis')
         time = float(atype.split('-')[-1])
-        p = Process(target=test, args=(time,))
+        tool = Process(target=test, args=(time,))
     else:
         log('atype didnt match any')
-    log('Started {} tool on process {}'.format(atype, p))
-    p.start()
-    return p
+    tool.start()
+    return tool
 
 
 def handle_modify_data(access_code, myData, user, data_type, testing):

@@ -1,5 +1,7 @@
 from unittest import TestCase
 from shutil import rmtree
+from pathlib import Path
+from time import sleep
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.qiime1 import Qiime1
@@ -68,8 +70,10 @@ class QiimeTests(TestCase):
         remove_user(fig.TEST_USER, testing=True)
 
     def run_qiime(self, code, atype, data_type, Qiime):
-        qiime = Qiime(fig.TEST_USER, code, atype, self.config, True)
-        qiime.setup_analysis()
+        qiime = Qiime(fig.TEST_USER, code, atype, self.config, True, analysis=False)
+        qiime.start()
+        while qiime.is_alive():
+            sleep(2)
         self.assertEqual(qiime.data_type, data_type)
         rmtree(qiime.path)
 
@@ -86,3 +90,14 @@ class QiimeTests(TestCase):
                          ('paired_end', self.TEST_CODE_PAIRED),
                          ('single_end_demuxed', self.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime2)
+
+    def test_qiime2_child_setup_analysis(self):
+        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2-dada2', config, True, analysis=False)
+        q2.create_children()
+        q2.start_children()
+        for child in q2.children:
+            while child.is_alive():
+                sleep(2)
+            self.assertEqual(child.exitcode, 0)
+        rmtree(q2.path)

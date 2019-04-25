@@ -117,6 +117,7 @@ def summarize_qiime2(path, files, config):
     summary_files = defaultdict(list)
 
     # Get Taxa
+    print('get taxa')
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['taxa_bar_plot']),
            '--output-path', str(path / 'temp')]
@@ -128,6 +129,7 @@ def summarize_qiime2(path, files, config):
     rmtree(path / 'temp')
 
     # Get Beta
+    print('get beta')
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
         cmd = ['qiime', 'tools', 'export',
@@ -141,6 +143,7 @@ def summarize_qiime2(path, files, config):
     rmtree(path / 'temp')
 
     # Get Alpha
+    print('get alpha')
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]

@@ -2,6 +2,8 @@ from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
 from mmeds.summary import summarize_qiime
+from mmeds.qiime2 import Qiime2
+from mmeds.util import load_config
 
 from unittest import TestCase
 from pathlib import Path
@@ -23,10 +25,10 @@ class AnalysisTests(TestCase):
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=True)
 
-    def handle_data_upload(self):
+    def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORT):
         """ Test the uploading of data """
         with open(fig.TEST_METADATA, 'rb') as reads, open(fig.TEST_BARCODES, 'rb') as barcodes:
-            self.code = spawn.handle_data_upload(Path(fig.TEST_METADATA_SHORT),
+            self.code = spawn.handle_data_upload(Path(metadata),
                                                  fig.TEST_USER,
                                                  'single_end',
                                                  True,
@@ -37,7 +39,7 @@ class AnalysisTests(TestCase):
             self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
-        self.assertEqual(Path(self.files['metadata']).read_bytes(), Path(fig.TEST_METADATA_SHORT).read_bytes())
+        self.assertEqual(Path(self.files['metadata']).read_bytes(), Path(metadata).read_bytes())
         self.assertEqual(Path(self.files['for_reads']).read_bytes(), Path(fig.TEST_METADATA).read_bytes())
         self.assertEqual(Path(self.files['barcodes']).read_bytes(), Path(fig.TEST_BARCODES).read_bytes())
 
@@ -70,6 +72,7 @@ class AnalysisTests(TestCase):
         summarize_qiime(analysis_path, tool)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
+    """
     def test_qiime2(self):
         self.handle_data_upload()
         self.handle_modify_data()
@@ -81,3 +84,16 @@ class AnalysisTests(TestCase):
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
         self.summarize(0, 'qiime1')
+        """
+
+    def test_qiime_child(self):
+        self.handle_data_upload(fig.TEST_METADATA)
+        self.handle_modify_data()
+        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        q2 = Qiime2(fig.TEST_USER, self.code, 'qiime2-dada2', config, True)
+        q2.create_children()
+        q2.start_children()
+        for child in q2.children:
+            while child.is_alive():
+                sleep(5)
+            self.assertEqual(child.exitcode, 0)
