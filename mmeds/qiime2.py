@@ -427,19 +427,26 @@ class Qiime2(Tool):
             log(message)
             raise AnalysisError(message)
 
+    def spawn_children(self):
+        """ Spawn child analysis processes """
+        mdf = load_metadata(self.files['metadata'])
+        for col in self.config['metadata']:
+            try:
+                t_col = (COL_TO_TABLE[col], col)
+            # Additional columns won't be in this table
+            except KeyError:
+                t_col = ('AdditionalMetaData', col)
+            for val, df in mdf.groupby(t_col):
+                qiime = self.spawn_child_tool(t_col, val)
+                p = Process(target=run_tool, args=(qiime,))
+                p.start()
+                self.children.append(p)
+
     def setup_analysis(self):
         """ Create the job file for the analysis. """
-        mdf = load_metadata(self.files['metadata'])
         # Spawn the child jobs
-        if not self.is_child:
-            for col in self.config['metadata']:
-                print(col)
-                t_col = (COL_TO_TABLE[col], col)
-                for val, df in mdf.groupby(t_col):
-                    qiime = self.spawn_child_tool(t_col, val)
-                    p = Process(target=run_tool, args=(qiime,))
-                    p.start()
-                    self.children.append(p)
+        if not self.is_child and self.config['sub_analysis']:
+            self.spawn_children()
         if 'demuxed' in self.data_type:
             self.unzip()
         self.qimport()
@@ -530,7 +537,7 @@ class Qiime2(Tool):
                         break
 
             log('Send email')
-            if not self.testing:
+            if not self.testing and not self.is_child:
                 send_email(doc.email,
                            doc.owner,
                            'analysis',

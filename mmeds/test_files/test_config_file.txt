@@ -12,3 +12,5 @@ taxa_levels	2
 abundance_threshold	0.1
 # The size of the font in the plot legends
 font_size	15
+# Whether or not sub-analyses should be performed
+sub_analysis	False

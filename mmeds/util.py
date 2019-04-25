@@ -99,6 +99,10 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
             config[parts[0]] = parts[1]
     # Check if columns == 'all'
     config['metadata_all'] = (config['metadata'] == 'all')
+    return parse_parameters(config, metadata, ignore_bad_cols=ignore_bad_cols)
+
+
+def parse_parameters(config, metadata, ignore_bad_cols=False):
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
@@ -116,12 +120,15 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
                     # Otherwise split the values into a list
                     config[option] = config[option].split(',')
                     config['taxa_levels_all'] = False
+            elif config[option] == 'False':
+                config[option] = False
+            elif config[option] == 'True':
+                config[option] = True
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
-
     return config
 
 

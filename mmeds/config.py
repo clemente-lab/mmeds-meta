@@ -40,7 +40,8 @@ CONFIG_PARAMETERS = [
     'metadata',
     'taxa_levels',
     'abundance_threshold',
-    'font_size'
+    'font_size',
+    'sub_analysis'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 # MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
