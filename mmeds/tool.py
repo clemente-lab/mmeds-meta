@@ -64,6 +64,9 @@ class Tool(mp.Process):
         self.config = config
         self.columns = []
 
+        if threads > mp.cpu_count():
+            threads = mp.cpu_count()
+
         with Database(owner=self.owner, testing=self.testing) as db:
             files, path = db.get_mongo_files(self.access_code)
         if testing:
@@ -280,7 +283,7 @@ class Tool(mp.Process):
         file_value = ''.join([x.capitalize() for x in
                               value.replace('_', ' ').replace('-', ' ').split(' ')])
 
-        child.path = self.path / 'child_{}_{}'.format(category[1], file_value)
+        child.path = self.path / '{}_{}'.format(category[1], file_value)
         child.path.mkdir()
         child.files = {
             'metadata': child.path / 'metadata.tsv'
@@ -297,17 +300,20 @@ class Tool(mp.Process):
         write_metadata(new_mdf, child.files['metadata'])
 
         # Update child's vars
-        child.add_path('analysis{}/child_{}_{}/'.format(child.run_id, category[1], file_value), '')
+        child.add_path('analysis{}/{}_{}/'.format(child.run_id, category[1], file_value), '')
         child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], file_value))
+        child.jobtext = deepcopy(self.jobtext)
+        del child.jobtext[-1]
         child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
-        child.write_config()
         child.create_qiime_mapping_file()
-        child.is_child = True
         child.name = child.name + '-{}-{}'.format(category[1], file_value)
+        child.children = []
 
         child.config = deepcopy(self.config)
         # Filter the config for the metadata category selected for this sub-analysis
         child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
+        child.config['sub_analysis'] = False
+        child.write_config()
         return child
 
     def create_children(self):
@@ -324,16 +330,34 @@ class Tool(mp.Process):
                 self.children.append(child)
 
     def start_children(self):
+        """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
         for child in self.children:
             child.start()
+            sleep(30)
+        return
+        running = []
+        waiting = self.children
+        while waiting:
+            log('{} children running. {} Waiting to run'.format(len(running), len(waiting)), True)
+            while len(running) < self.num_jobs:
+                child = waiting.pop()
+                child.start()
+                log('Starting {}'.format(child.name), True)
+                running.append(child)
+            index = None
+            for i, childp in enumerate(running):
+                if childp.exitcode is not None:
+                    log('Finished {}'.format(childp.name))
+                    index = i
+                    break
+            if index is not None:
+                running.pop(index)
+            sleep(5)
 
     def wait_on_children(self):
         # Wait for all child analyses
-        while self.children:
-            for i, child in enumerate(self.children):
-                if not child.is_alive():
-                    del self.children[i]
-            sleep(5)
+        for child in self.children:
+            child.join()
 
     def setup_analysis(self):
         # Create the summary of the analysis

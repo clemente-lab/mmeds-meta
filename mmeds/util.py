@@ -666,7 +666,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def log(text, testing=False):
+def log(text, testing=False, write_file=fig.MMEDS_LOG):
     """ Write provided text to the log file. """
     if isinstance(text, dict):
         log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
@@ -681,6 +681,17 @@ def log(text, testing=False):
     else:
         with open(fig.MMEDS_LOG, 'a+') as f:
             f.write('{}: {}\n'.format(datetime.now(), log_text))
+
+
+def sql_log(text):
+    """ Write provided text to the sql log file. """
+    log(text, write_file=fig.SQL_LOG)
+
+
+def test_log(text):
+    """ Write provided text to the test log file. """
+    log(text, write_file=fig.SQL_LOG)
+    log(text, write_file='/tmp/test_log.txt')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

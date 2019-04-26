@@ -35,6 +35,7 @@ if not os.path.exists(DATABASE_DIR):
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
+SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',
@@ -104,6 +105,7 @@ TEST_CODE_DEMUX = 'demuxedreads'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_CONFIG = str(TEST_PATH / 'test_config_file.txt')
+TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.txt')
 TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
 TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
 TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
@@ -113,6 +115,7 @@ TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_METADATA_0 = str(TEST_PATH / 'test_metadata_0.tsv')
 TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
+TEST_METADATA_SHORTEST = str(TEST_PATH / 'shortest_metadata.tsv')
 UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
 TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')

@@ -3,7 +3,7 @@ from shutil import rmtree
 from pandas import read_csv
 
 from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
-from mmeds.util import send_email, log, setup_environment
+from mmeds.util import send_email, log, setup_environment, test_log
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 from mmeds.database import Database
@@ -477,7 +477,7 @@ class Qiime2(Tool):
         """ Perform some analysis. """
         try:
             self.setup_analysis()
-            if not self.is_child:
+            if self.config['sub_analysis']:
                 self.start_children()
             jobfile = self.files['jobfile']
             self.write_file_locations()
@@ -486,8 +486,12 @@ class Qiime2(Tool):
                 jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
                 # Set execute permissions
                 jobfile.chmod(0o770)
-                # Run the command
-                run([jobfile], check=True)
+                test_log('{} start job'.format(self.name))
+                # Send the output to the error log
+                with open(self.files['errorlog'], 'w') as f:
+                    # Run the command
+                    run([jobfile], stdout=f, stderr=f, check=True)
+                test_log('{} finished job'.format(self.name))
             else:
                 # Get the job header text from the template
                 temp = JOB_TEMPLATE.read_text()
@@ -505,13 +509,14 @@ class Qiime2(Tool):
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()
             self.add_summary_files()
-            self.wait_on_children()
+            if self.config['sub_analysis']:
+                self.wait_on_children()
             log('Send email')
-            if not self.testing and not self.is_child:
+            if not self.testing:
                 send_email(doc.email,
                            doc.owner,
                            'analysis',
-                           analysis_type='Qiime2 (2018.4) ' + self.atype,
+                           analysis_type='Qiime2 (2019.1) ' + self.atype,
                            study_name=doc.study,
                            summary=self.path / 'summary/analysis.pdf',
                            testing=self.testing)
