@@ -518,7 +518,7 @@ class Qiime2(Tool):
                            'analysis',
                            analysis_type='Qiime2 (2019.1) ' + self.atype,
                            study_name=doc.study,
-                           summary=self.path / 'summary/analysis.pdf',
+                           # summary=self.path / 'summary/analysis.pdf',
                            testing=self.testing)
         except CalledProcessError as e:
             self.move_user_files()
