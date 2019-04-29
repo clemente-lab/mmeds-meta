@@ -13,17 +13,18 @@ import mmeds.secrets as sec
 
 
 class AnalysisTests(TestCase):
+    testing = False
 
     @classmethod
     def setUpClass(self):
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=self.testing)
         self.code = None
         self.files = None
         self.path = None
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
+        remove_user(fig.TEST_USER, testing=self.testing)
 
     def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORTEST):
         """ Test the uploading of data """
@@ -31,11 +32,11 @@ class AnalysisTests(TestCase):
             self.code = spawn.handle_data_upload(Path(metadata),
                                                  fig.TEST_USER,
                                                  'single_end',
-                                                 True,
+                                                 self.testing,
                                                  ('for_reads', Path(fig.TEST_METADATA).name, reads),
                                                  ('barcodes', Path(fig.TEST_BARCODES).name, barcodes))
         # Get the files to check
-        with Database(owner=fig.TEST_USER, testing=True) as db:
+        with Database(owner=fig.TEST_USER, testing=self.testing) as db:
             self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
@@ -50,10 +51,10 @@ class AnalysisTests(TestCase):
                                      (Path(fig.TEST_READS).name, reads),
                                      fig.TEST_USER,
                                      'for_reads',
-                                     True)
+                                     self.testing)
 
         # Update the files
-        with Database(owner=fig.TEST_USER, testing=True) as db:
+        with Database(owner=fig.TEST_USER, testing=self.testing) as db:
             self.files, self.path = db.get_mongo_files(access_code=self.code)
 
         # Check the files exist and their contents match the initial uploads
@@ -62,7 +63,7 @@ class AnalysisTests(TestCase):
     def spawn_analysis(self, tool, count):
         p = spawn.spawn_analysis(tool, fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
-                                 True)
+                                 self.testing)
         while p.is_alive():
             sleep(5)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
@@ -72,6 +73,7 @@ class AnalysisTests(TestCase):
         summarize_qiime(analysis_path, tool)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
 
+    """
     def test_qiime2(self):
         self.handle_data_upload()
         self.handle_modify_data()
@@ -83,13 +85,13 @@ class AnalysisTests(TestCase):
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
         self.summarize(0, 'qiime1')
+    """
 
     def test_qiime_child(self):
-        return
         self.handle_data_upload(fig.TEST_METADATA_SHORT)
         self.handle_modify_data()
         config = load_config(Path(fig.TEST_CONFIG_SUB).read_text(), fig.TEST_METADATA_SHORT)
-        q2 = Qiime2(fig.TEST_USER, self.code, 'qiime2-dada2', config, True)
+        q2 = Qiime2(fig.TEST_USER, self.code, 'qiime2-dada2', config, self.testing)
         q2.create_children()
         q2.start_children()
         q2.wait_on_children()
