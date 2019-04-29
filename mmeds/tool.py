@@ -280,6 +280,7 @@ class Tool(mp.Process):
         :value: The value that :column: must match for a sample to be included
         """
         child = classcopy(self)
+        # TODO Make its own function
         file_value = ''.join([x.capitalize() for x in
                               value.replace('_', ' ').replace('-', ' ').split(' ')])
 
