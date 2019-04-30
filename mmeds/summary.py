@@ -73,7 +73,7 @@ def summarize_qiime1(path, files, config):
 
     # Convert and store the otu table
     cmd = ['biom', 'convert', '--to-tsv', '--header-key=taxonomy',
-           '-i', str(files['otu_output'] / 'otu_table.biom'),
+           '-i', str(files['biom_table']),
            '-o', str(path / 'otu_table.tsv')]
     try:
         run(cmd, capture_output=True, env=new_env, check=True)

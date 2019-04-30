@@ -22,7 +22,6 @@ def run_tool(tool, run=True):
             tool.run()
         else:
             tool.setup_analysis()
-        print('run {}'.format(tool.path))
     except AnalysisError as e:
         email = get_email(tool.owner, testing=tool.testing)
         send_email(email,
@@ -283,6 +282,10 @@ class Tool(mp.Process):
         child = classcopy(self)
         file_value = camel_case(value)
 
+        # Update process name and children
+        child.name = child.name + '-{}-{}'.format(category[1], file_value)
+        child.children = []
+
         child.path = self.path / '{}_{}'.format(category[1], file_value)
         child.path.mkdir()
         child.files = {
@@ -290,12 +293,23 @@ class Tool(mp.Process):
         }
 
         # Link to the parent's OTU table(s)
-        for parent_file in ['otu_table', 'biom_table']:
+        for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
             if self.files.get(parent_file) is not None:
-                child_file = child.path / self.files.get(parent_file).name
-                child_file.symlink_to(self.files.get(parent_file))
-                child.files[parent_file] = child_file
-                child.files['parent_table'] = self.path / self.files.get(parent_file)
+                # Add qiime1 specific biom tables
+                if 'Qiime1' in self.name and parent_file == 'biom_table':
+                    child_file = child.path / 'otu_table.biom'
+                    child_file.symlink_to(self.files.get('split_otu_{}'.format(category[1])) /
+                                          'otu_table__{}_{}__.biom'.format(category[1], value))
+                    child.files['biom_table'] = child_file
+                else:
+                    child_file = child.path / self.files.get(parent_file).name
+                    child_file.symlink_to(self.files.get(parent_file))
+                    child.files[parent_file] = child_file
+        if 'Qiime1' in self.name:
+            child.files['parent_table'] = (self.files.get('split_otu_{}'.format(category[1])) /
+                                           'otu_table__{}_{}__.biom'.format(category[1], value))
+        else:
+            child.files['parent_table'] = self.path / self.files.get('otu_table')
 
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.files['metadata'])
@@ -307,16 +321,12 @@ class Tool(mp.Process):
         child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], file_value))
 
         # Update the text for the job file
-        child.jobtext = deepcopy(self.jobtext)
+        child.jobtext = deepcopy(self.jobtext)[:2]
         del child.jobtext[-1]
         child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
 
         # Create a new mapping file
         child.create_qiime_mapping_file()
-
-        # Update process name and children
-        child.name = child.name + '-{}-{}'.format(category[1], file_value)
-        child.children = []
 
         # Filter the config for the metadata category selected for this sub-analysis
         child.config = deepcopy(self.config)
@@ -324,6 +334,9 @@ class Tool(mp.Process):
         child.config['sub_analysis'] = False
         child.is_child = True
         child.write_config()
+
+        # Set the parent pid
+        child._parent_pid = self.pid
         return child
 
     def create_children(self):
@@ -339,7 +352,6 @@ class Tool(mp.Process):
                 t_col = ('AdditionalMetaData', col)
             # For each value in the column, create a sub-analysis
             for val, df in mdf.groupby(t_col):
-                print('creating {}'.format(self.name))
                 child = self.create_child(t_col, val)
                 self.children.append(child)
 
@@ -371,11 +383,7 @@ class Tool(mp.Process):
             self.write_file_locations()
             # Start the sub analyses if so configured
             if self.config['sub_analysis']:
-                print('created by {}'.format(self.name))
                 self.create_children()
-                print('start children of {}'.format(self.name))
-                print([child.name for child in self.children])
-                print('startted by {}'.format(self.name))
                 self.start_children()
             if self.testing:
                 # Open the jobfile to write all the commands
@@ -399,8 +407,6 @@ class Tool(mp.Process):
                 run([jobfile], check=True)
                 #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 #  self.wait_on_job(job_id)
-
-            self.sanity_check()
             with Database(owner=self.owner, testing=self.testing) as db:
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()
@@ -421,11 +427,9 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        print('Run {}'.format(self.name))
         if self.is_child:
             # Wait for the otu table to show up
-            while not self.files['otu_table'].exists():
-                print('{} checking {}'.format(self.name, self.files['parent_table']))
+            while not self.files['parent_table'].exists():
                 sleep(10)
 
         if self.analysis:

@@ -127,7 +127,7 @@ class Qiime2(Tool):
         self.add_path('stats_{}_visual'.format(self.atype), '.qzv')
         cmd = [
             'qiime metadata tabulate',
-            '--m-input-file {}'.format(self.get_file('stats_{}'.format(self.atype))),
+            '--m-input-file {}'.format(self.get_file('stats_table')),
             '--o-visualization {};'.format(self.get_file('stats_{}_visual'.format(self.atype)))
         ]
         self.jobtext.append(' '.join(cmd))
@@ -135,9 +135,9 @@ class Qiime2(Tool):
     def dada2(self, p_trim_left=0, p_trunc_len=0):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
-        self.add_path('rep_seqs_dada2', '.qza')
+        self.add_path('rep_seqs_dada2', '.qza', key='rep_seqs_table')
         self.add_path('table_dada2', '.qza', key='otu_table')
-        self.add_path('stats_dada2', '.qza')
+        self.add_path('stats_dada2', '.qza', key='stats_table')
 
         if 'single' in self.data_type:
             cmd = [
@@ -145,9 +145,9 @@ class Qiime2(Tool):
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
                 '--p-trim-left {}'.format(p_trim_left),
                 '--p-trunc-len {}'.format(p_trunc_len),
-                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_dada2')),
+                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
                 '--o-table {}'.format(self.get_file('otu_table')),
-                '--o-denoising-stats {}'.format(self.get_file('stats_dada2')),
+                '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
         elif 'paired' in self.data_type:
@@ -158,9 +158,9 @@ class Qiime2(Tool):
                 '--p-trim-left-r {}'.format(p_trim_left),
                 '--p-trunc-len-f {}'.format(p_trunc_len),
                 '--p-trunc-len-r {}'.format(p_trunc_len),
-                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_dada2')),
+                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
                 '--o-table {}'.format(self.get_file('otu_table')),
-                '--o-denoising-stats {}'.format(self.get_file('stats_dada2')),
+                '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
         self.jobtext.append(' '.join(cmd))
@@ -180,18 +180,18 @@ class Qiime2(Tool):
 
     def deblur_denoise(self, p_trim_length=120):
         """ Run Deblur analysis on the demultiplexed file. """
-        self.add_path('rep_seqs_deblur', '.qza')
+        self.add_path('rep_seqs_deblur', '.qza', key='rep_seqs_table')
         self.add_path('table_deblur', '.qza', key='otu_table')
-        self.add_path('stats_deblur', '.qza')
+        self.add_path('stats_deblur', '.qza', key='stats_table')
         cmd = [
             'qiime deblur denoise-16S',
             '--i-demultiplexed-seqs {}'.format(self.get_file('demux_filtered')),
             '--p-trim-length {}'.format(p_trim_length),
-            '--o-representative-sequences {}'.format(self.get_file('rep_seqs_deblur')),
+            '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
             '--o-table {}'.format(self.get_file('otu_table')),
             '--p-sample-stats',
             '--p-jobs-to-start {}'.format(self.num_jobs),
-            '--o-stats {};'.format(self.get_file('stats_deblur')),
+            '--o-stats {};'.format(self.get_file('stats_table')),
             '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
@@ -201,7 +201,7 @@ class Qiime2(Tool):
         self.add_path('stats_deblur_visual', '.qzv')
         cmd = [
             'qiime deblur visualize-stats',
-            '--i-deblur-stats {}'.format(self.get_file('stats_deblur')),
+            '--i-deblur-stats {}'.format(self.get_file('stats_table')),
             '--o-visualization {};'.format(self.get_file('stats_deblur_visual')),
             '--quiet'
         ]
@@ -212,7 +212,7 @@ class Qiime2(Tool):
         self.add_path('alignment', '.qza')
         cmd = [
             'qiime alignment mafft',
-            '--i-sequences {}'.format(self.get_file('rep_seqs_{}'.format(self.atype))),
+            '--i-sequences {}'.format(self.get_file('rep_seqs_table')),
             '--o-alignment {};'.format(self.get_file('alignment'))
         ]
         self.jobtext.append(' '.join(cmd))
@@ -327,7 +327,7 @@ class Qiime2(Tool):
         cmd = [
             'qiime feature-classifier classify-sklearn',
             '--i-classifier {}'.format(classifier),
-            '--i-reads {}'.format(self.get_file('rep_seqs_{}'.format(self.atype))),
+            '--i-reads {}'.format(self.get_file('rep_seqs_table')),
             '--o-classification {}'.format(self.get_file('taxonomy')),
             '--p-n-jobs {}'.format(self.num_jobs)
         ]

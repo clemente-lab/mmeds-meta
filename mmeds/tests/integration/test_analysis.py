@@ -10,6 +10,7 @@ from pathlib import Path
 from time import sleep
 import mmeds.config as fig
 import mmeds.secrets as sec
+import multiprocessing as mp
 
 
 class AnalysisTests(TestCase):
@@ -26,7 +27,7 @@ class AnalysisTests(TestCase):
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=self.testing)
 
-    def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORTEST):
+    def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORT):
         """ Test the uploading of data """
         with open(fig.TEST_METADATA, 'rb') as reads, open(fig.TEST_BARCODES, 'rb') as barcodes:
             self.code = spawn.handle_data_upload(Path(metadata),
@@ -62,30 +63,25 @@ class AnalysisTests(TestCase):
 
     def spawn_analysis(self, tool, count):
         p = spawn.spawn_analysis(tool, fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG).read_text(),
+                                 Path(fig.TEST_CONFIG_SUB).read_text(),
                                  self.testing)
         while p.is_alive():
             sleep(5)
         self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
-
-    def summarize(self, count, tool):
-        analysis_path = Path(self.path) / 'analysis{}'.format(count)
-        summarize_qiime(analysis_path, tool)
-        self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
+        for child in p.children:
+            self.assertEqual(child.exit_code, 0)
 
     """
     def test_qiime2(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime2-dada2', 0)
-        self.summarize(0, 'qiime2')
     """
 
     def test_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
-        self.summarize(0, 'qiime1')
 
     """
     def test_qiime_child(self):

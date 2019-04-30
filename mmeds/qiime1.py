@@ -1,5 +1,4 @@
 from subprocess import run
-from time import sleep
 
 from mmeds.config import DATABASE_DIR
 from mmeds.util import log, setup_environment
@@ -16,17 +15,20 @@ class Qiime1(Tool):
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         if testing:
             settings = [
-                'alpha_diversity:metrics	shannon'
+                'alpha_diversity:metrics	shannon',
+                'beta_diversity_through_plots:ignore_missing_samples	True'
             ]
         else:
             settings = [
                 'pick_otus:enable_rev_strand_match	True',
-                'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species'
+                'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species',
+                'beta_diversity_through_plots:ignore_missing_samples	True'
             ]
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
         with open(self.path / 'params.txt', 'w') as f:
             f.write('\n'.join(settings))
+        self.add_path('params', '.txt')
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
@@ -93,8 +95,19 @@ class Qiime1(Tool):
                              self.num_jobs,
                              self.get_file('otu_output'),
                              self.get_file('split_output') / 'seqs.fna',
-                             self.run_dir / 'params.txt')
+                             self.get_file('params'))
         self.jobtext.append(command)
+
+    def split_otu(self):
+        """ Split the otu table by column values. """
+        for column in self.config['metadata']:
+            self.add_path('split_otu_{}'.format(column))
+            cmd = 'split_otu_table.py -i {} -m {} -f {} -o {} --suppress_mapping_file_output;'
+            command = cmd.format(self.get_file('biom_table'),
+                                 self.get_file('mapping'),
+                                 column,
+                                 self.get_file('split_otu_{}'.format(column)))
+            self.jobtext.append(command)
 
     def core_diversity(self):
         """ Run the core diversity analysis script. """
@@ -151,22 +164,10 @@ class Qiime1(Tool):
                 self.join_paired_ends()
             self.split_libraries()
             self.pick_otu()
+            if self.config['sub_analysis']:
+                self.split_otu()
         self.core_diversity()
         self.write_file_locations()
 
         # Perform standard tool setup
         super().setup_analysis()
-
-    def run(self):
-        """ Overrides Process.run() """
-        print('Run {}'.format(self.name))
-        if self.is_child:
-            # Wait for the otu table to show up
-            while not self.files['otu_table'].exists():
-                print('{} checking {}'.format(self.name, self.files['parent_table']))
-                sleep(10)
-
-        if self.analysis:
-            self.run_analysis()
-        else:
-            self.setup_analysis()
