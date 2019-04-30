@@ -15,7 +15,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes
+from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
 from mmeds.documents import MetaData
 
 DAYS = 13
@@ -273,8 +273,8 @@ class Database:
                 self.cursor.execute(sql, {'id': user_id})
             except pms.err.IntegrityError as e:
                 # If there is a dependency remaining
-                log(e)
-                log('Failed on table {}'.format(table))
+                sql_log(e)
+                sql_log('Failed on table {}'.format(table))
                 raise MetaDataError(e.args[0])
 
         # Commit the changes
@@ -361,7 +361,7 @@ class Database:
         :value: Either a path to a file or a dictionary containing
                 file locations in a subdirectory
         """
-        log('Update metadata with {}: {}'.format(filekey, value))
+        sql_log('Update metadata with {}: {}'.format(filekey, value))
         mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
@@ -394,8 +394,8 @@ class Database:
             except pms.err.InternalError as e:
                 raise MetaDataError(e.args[1])
             if found >= 1:
-                log(sql)
-                log(args)
+                sql_log(sql)
+                sql_log(args)
                 warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
                 warnings.append(warning.format(row=j, col=subject_col))
         return warnings
@@ -597,9 +597,9 @@ class SQLBuilder:
                 # Get the resulting foreign key
                 fresult = self.cursor.fetchone()[0]
             except TypeError as e:
-                log('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
-                log(fsql)
-                log(fargs)
+                sql_log('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
+                sql_log(fsql)
+                sql_log(fargs)
                 raise e
 
             # Add it to the original query

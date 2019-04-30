@@ -1,16 +1,16 @@
 from pathlib import Path
-from subprocess import run
+from subprocess import run, CalledProcessError
 from shutil import copy
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
 
 from mmeds.database import Database
-from mmeds.util import (log, create_qiime_from_mmeds, copy_metadata,
-                        load_metadata, write_metadata, send_email)
+from mmeds.util import (log, create_qiime_from_mmeds, copy_metadata, test_log,
+                        load_metadata, write_metadata, camel_case, send_email)
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
-from mmeds.config import COL_TO_TABLE
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 
 import multiprocessing as mp
 
@@ -279,21 +279,23 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
+
         child = classcopy(self)
-        # TODO Make its own function
-        file_value = ''.join([x.capitalize() for x in
-                              value.replace('_', ' ').replace('-', ' ').split(' ')])
+        file_value = camel_case(value)
 
         child.path = self.path / '{}_{}'.format(category[1], file_value)
         child.path.mkdir()
         child.files = {
-            'metadata': child.path / 'metadata.tsv'
+            'metadata': child.path / 'metadata.tsv',
         }
-        for parent_file in ['for_reads', 'rev_reads', 'barcodes']:
+
+        # Link to the parent's OTU table(s)
+        for parent_file in ['otu_table', 'biom_table']:
             if self.files.get(parent_file) is not None:
                 child_file = child.path / self.files.get(parent_file).name
                 child_file.symlink_to(self.files.get(parent_file))
                 child.files[parent_file] = child_file
+                child.files['parent_table'] = self.path / self.files.get(parent_file)
 
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.files['metadata'])
@@ -303,30 +305,41 @@ class Tool(mp.Process):
         # Update child's vars
         child.add_path('analysis{}/{}_{}/'.format(child.run_id, category[1], file_value), '')
         child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], file_value))
+
+        # Update the text for the job file
         child.jobtext = deepcopy(self.jobtext)
         del child.jobtext[-1]
         child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
+
+        # Create a new mapping file
         child.create_qiime_mapping_file()
+
+        # Update process name and children
         child.name = child.name + '-{}-{}'.format(category[1], file_value)
         child.children = []
 
-        child.config = deepcopy(self.config)
         # Filter the config for the metadata category selected for this sub-analysis
+        child.config = deepcopy(self.config)
         child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
         child.config['sub_analysis'] = False
+        child.is_child = True
         child.write_config()
         return child
 
     def create_children(self):
         """ Create child analysis processes """
         mdf = load_metadata(self.files['metadata'])
+
+        # For each column selected...
         for col in self.config['metadata']:
             try:
                 t_col = (COL_TO_TABLE[col], col)
             # Additional columns won't be in this table
             except KeyError:
                 t_col = ('AdditionalMetaData', col)
+            # For each value in the column, create a sub-analysis
             for val, df in mdf.groupby(t_col):
+                print('creating {}'.format(self.name))
                 child = self.create_child(t_col, val)
                 self.children.append(child)
 
@@ -334,26 +347,6 @@ class Tool(mp.Process):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
         for child in self.children:
             child.start()
-            sleep(30)
-        return
-        running = []
-        waiting = self.children
-        while waiting:
-            log('{} children running. {} Waiting to run'.format(len(running), len(waiting)), True)
-            while len(running) < self.num_jobs:
-                child = waiting.pop()
-                child.start()
-                log('Starting {}'.format(child.name), True)
-                running.append(child)
-            index = None
-            for i, childp in enumerate(running):
-                if childp.exitcode is not None:
-                    log('Finished {}'.format(childp.name))
-                    index = i
-                    break
-            if index is not None:
-                running.pop(index)
-            sleep(5)
 
     def wait_on_children(self):
         # Wait for all child analyses
@@ -364,12 +357,78 @@ class Tool(mp.Process):
         # Create the summary of the analysis
         self.summary()
 
-        # Create the child jobs
-        if not self.is_child and self.config['sub_analysis']:
-            self.create_children()
-
         # Define the job and error files
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, '.lsf', 'jobfile')
         error_log = self.path / self.run_id
         self.add_path(error_log, '.err', 'errorlog')
+
+    def run_analysis(self):
+        """ Perform some analysis. """
+        try:
+            self.setup_analysis()
+            jobfile = self.files['jobfile']
+            self.write_file_locations()
+            # Start the sub analyses if so configured
+            if self.config['sub_analysis']:
+                print('created by {}'.format(self.name))
+                self.create_children()
+                print('start children of {}'.format(self.name))
+                print([child.name for child in self.children])
+                print('startted by {}'.format(self.name))
+                self.start_children()
+            if self.testing:
+                # Open the jobfile to write all the commands
+                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
+                # Set execute permissions
+                jobfile.chmod(0o770)
+                test_log('{} start job'.format(self.name))
+                # Send the output to the error log
+                with open(self.files['errorlog'], 'w') as f:
+                    # Run the command
+                    run([jobfile], stdout=f, stderr=f, check=True)
+                test_log('{} finished job'.format(self.name))
+            else:
+                # Get the job header text from the template
+                temp = JOB_TEMPLATE.read_text()
+                # Write all the commands
+                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
+                # Set execute permissions
+                jobfile.chmod(0o770)
+                #  Temporary for testing on Minerva
+                run([jobfile], check=True)
+                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                #  self.wait_on_job(job_id)
+
+            self.sanity_check()
+            with Database(owner=self.owner, testing=self.testing) as db:
+                doc = db.get_metadata(self.access_code)
+            self.move_user_files()
+            self.add_summary_files()
+            log('Send email')
+            if not self.testing:
+                send_email(doc.email,
+                           doc.owner,
+                           'analysis',
+                           analysis_type='Qiime2 (2019.1) ' + self.atype,
+                           study_name=doc.study,
+                           # summary=self.path / 'summary/analysis.pdf',
+                           testing=self.testing)
+        except CalledProcessError as e:
+            self.move_user_files()
+            self.write_file_locations()
+            raise AnalysisError(e.args[0])
+
+    def run(self):
+        """ Overrides Process.run() """
+        print('Run {}'.format(self.name))
+        if self.is_child:
+            # Wait for the otu table to show up
+            while not self.files['otu_table'].exists():
+                print('{} checking {}'.format(self.name, self.files['parent_table']))
+                sleep(10)
+
+        if self.analysis:
+            self.run_analysis()
+        else:
+            self.setup_analysis()

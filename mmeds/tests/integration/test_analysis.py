@@ -13,7 +13,7 @@ import mmeds.secrets as sec
 
 
 class AnalysisTests(TestCase):
-    testing = False
+    testing = True
 
     @classmethod
     def setUpClass(self):
@@ -79,14 +79,15 @@ class AnalysisTests(TestCase):
         self.handle_modify_data()
         self.spawn_analysis('qiime2-dada2', 0)
         self.summarize(0, 'qiime2')
+    """
 
     def test_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
         self.summarize(0, 'qiime1')
-    """
 
+    """
     def test_qiime_child(self):
         self.handle_data_upload(fig.TEST_METADATA_SHORT)
         self.handle_modify_data()
@@ -98,3 +99,4 @@ class AnalysisTests(TestCase):
         for child in q2.children:
             # Assert all children exited successfully
             self.assertEqual(child.exitcode, 0)
+    """

@@ -1,8 +1,8 @@
-from subprocess import run, CalledProcessError
+from subprocess import run
+from time import sleep
 
-from mmeds.database import Database
-from mmeds.config import JOB_TEMPLATE, DATABASE_DIR
-from mmeds.util import send_email, log, setup_environment
+from mmeds.config import DATABASE_DIR
+from mmeds.util import log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -79,8 +79,15 @@ class Qiime1(Tool):
     def pick_otu(self):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
+        # Link files for the otu and biom tables
+        if 'closed' in self.atype:
+            self.add_path(self.get_file('otu_output').name + '/97_otus', '.tree', key='otu_table')
+            self.add_path(self.get_file('otu_output').name + '/otu_table', '.biom', key='biom_table')
+        elif 'open' in self.atype:
+            self.add_path(self.get_file('otu_output').name + '/rep_set', '.tre', key='otu_table')
+            self.add_path(self.get_file('otu_output').name + '/otu_table_mc2_w_tax_no_pynast_failures',
+                          '.biom', key='biom_table')
 
-        # Run the script
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
         command = cmd.format(self.atype,
                              self.num_jobs,
@@ -93,26 +100,15 @@ class Qiime1(Tool):
         """ Run the core diversity analysis script. """
         self.add_path('diversity_output', '')
 
-        # Run the script
-        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {} -O {} -a;'
-        if self.atype == 'open':
-            command = cmd.format(self.get_file('diversity_output'),
-                                 self.get_file('otu_output') / 'otu_table_mc2_w_tax_no_pynast_failures.biom',
-                                 self.get_file('mapping'),
-                                 self.get_file('otu_output') / 'rep_set.tre',
-                                 self.config['sampling_depth'],
-                                 self.path / 'params.txt',
-                                 self.num_jobs)
-        else:
-            command = cmd.format(self.get_file('diversity_output'),
-                                 self.get_file('otu_output') / 'otu_table.biom',
-                                 self.get_file('mapping'),
-                                 self.get_file('otu_output') / '97_otus.tree',
-                                 self.config['sampling_depth'],
-                                 self.path / 'params.txt',
-                                 self.num_jobs)
-        command = command.strip(';') + ' -c {};'.format(','.join(self.config['metadata']))
-
+        cmd = 'core_diversity_analyses.py -o {} -i {} -m {} -t {} -e {} -p {} -c {} -O {} -a;'
+        command = cmd.format(self.get_file('diversity_output'),
+                             self.get_file('biom_table'),
+                             self.get_file('mapping'),
+                             self.get_file('otu_table'),
+                             self.config['sampling_depth'],
+                             self.path / 'params.txt',
+                             ','.join(self.config['metadata']),
+                             self.num_jobs)
         self.jobtext.append(command)
 
     def sanity_check(self):
@@ -146,70 +142,30 @@ class Qiime1(Tool):
 
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
-        self.validate_mapping()
-        if 'demuxed' in self.data_type:
-            self.unzip()
-        if 'paired' in self.data_type:
-            self.join_paired_ends()
-        self.split_libraries()
-        self.pick_otu()
+        # Only the child run this analysis
+        if not self.is_child:
+            self.validate_mapping()
+            if 'demuxed' in self.data_type:
+                self.unzip()
+            if 'paired' in self.data_type:
+                self.join_paired_ends()
+            self.split_libraries()
+            self.pick_otu()
         self.core_diversity()
-        self.summary()
         self.write_file_locations()
 
         # Perform standard tool setup
         super().setup_analysis()
 
-    def run_analysis(self):
-        """ Perform some analysis. """
-        try:
-            self.setup_analysis()
-            self.start_children()
-            self.add_path(self.run_id + '_job', '.lsf', 'jobfile')
-            self.add_path('err' + self.run_id, '.err', 'errorlog')
-            jobfile = self.files['jobfile']
-            log(jobfile)
-            error_log = self.files['errorlog']
-            log(error_log)
-            if self.testing:
-                # Open the jobfile to write all the commands
-                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
-                # Run the command
-                run([jobfile], check=True)
-            else:
-                # Get the job header text from the template
-                temp = JOB_TEMPLATE.read_text()
-                # Write all the commands
-                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
-                #  Temporary for testing on Minerva
-                run([jobfile], check=True)
-                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-                #  self.wait_on_job(job_id)
-            self.sanity_check()
-            self.move_user_files()
-            self.add_summary_files()
-            self.wait_on_children()
-            with Database(owner=self.owner, testing=self.testing) as db:
-                doc = db.get_metadata(self.access_code)
-            if not self.testing:
-                send_email(doc.email,
-                           doc.owner,
-                           'analysis',
-                           analysis_type='Qiime1',
-                           study_name=doc.study,
-                           testing=self.testing,
-                           summary=self.path / 'summary/analysis.pdf')
-        except CalledProcessError as e:
-            self.move_user_files()
-            self.write_file_locations()
-            raise AnalysisError(e.args[0])
-
     def run(self):
         """ Overrides Process.run() """
+        print('Run {}'.format(self.name))
+        if self.is_child:
+            # Wait for the otu table to show up
+            while not self.files['otu_table'].exists():
+                print('{} checking {}'.format(self.name, self.files['parent_table']))
+                sleep(10)
+
         if self.analysis:
             self.run_analysis()
         else:

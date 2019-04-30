@@ -1,12 +1,11 @@
-from subprocess import run, CalledProcessError
+from subprocess import run
 from shutil import rmtree
 from pandas import read_csv
 
-from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
-from mmeds.util import send_email, log, setup_environment, test_log
+from mmeds.config import STORAGE_DIR, DATABASE_DIR
+from mmeds.util import log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
-from mmeds.database import Database
 
 
 class Qiime2(Tool):
@@ -102,7 +101,7 @@ class Qiime2(Tool):
         self.add_path('filtered_table', '.qza')
         cmd = [
             'qiime feature-table filter-samples',
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('otu_table')),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--o-filtered-table {}'.format(self.get_file('filtered_table'))
         ]
@@ -137,7 +136,7 @@ class Qiime2(Tool):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
         self.add_path('rep_seqs_dada2', '.qza')
-        self.add_path('table_dada2', '.qza')
+        self.add_path('table_dada2', '.qza', key='otu_table')
         self.add_path('stats_dada2', '.qza')
 
         if 'single' in self.data_type:
@@ -147,7 +146,7 @@ class Qiime2(Tool):
                 '--p-trim-left {}'.format(p_trim_left),
                 '--p-trunc-len {}'.format(p_trunc_len),
                 '--o-representative-sequences {}'.format(self.get_file('rep_seqs_dada2')),
-                '--o-table {}'.format(self.get_file('table_dada2')),
+                '--o-table {}'.format(self.get_file('otu_table')),
                 '--o-denoising-stats {}'.format(self.get_file('stats_dada2')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
@@ -160,7 +159,7 @@ class Qiime2(Tool):
                 '--p-trunc-len-f {}'.format(p_trunc_len),
                 '--p-trunc-len-r {}'.format(p_trunc_len),
                 '--o-representative-sequences {}'.format(self.get_file('rep_seqs_dada2')),
-                '--o-table {}'.format(self.get_file('table_dada2')),
+                '--o-table {}'.format(self.get_file('otu_table')),
                 '--o-denoising-stats {}'.format(self.get_file('stats_dada2')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
@@ -182,14 +181,14 @@ class Qiime2(Tool):
     def deblur_denoise(self, p_trim_length=120):
         """ Run Deblur analysis on the demultiplexed file. """
         self.add_path('rep_seqs_deblur', '.qza')
-        self.add_path('table_deblur', '.qza')
+        self.add_path('table_deblur', '.qza', key='otu_table')
         self.add_path('stats_deblur', '.qza')
         cmd = [
             'qiime deblur denoise-16S',
             '--i-demultiplexed-seqs {}'.format(self.get_file('demux_filtered')),
             '--p-trim-length {}'.format(p_trim_length),
             '--o-representative-sequences {}'.format(self.get_file('rep_seqs_deblur')),
-            '--o-table {}'.format(self.get_file('table_deblur')),
+            '--o-table {}'.format(self.get_file('otu_table')),
             '--p-sample-stats',
             '--p-jobs-to-start {}'.format(self.num_jobs),
             '--o-stats {};'.format(self.get_file('stats_deblur')),
@@ -428,20 +427,22 @@ class Qiime2(Tool):
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
-        if 'demuxed' in self.data_type:
-            self.unzip()
-        self.qimport()
-        if 'demuxed' not in self.data_type:
-            self.demultiplex()
-            self.demux_visualize()
+        # Only the primary analysis runs these commands
+        if not self.is_child:
+            if 'demuxed' in self.data_type:
+                self.unzip()
+            self.qimport()
+            if 'demuxed' not in self.data_type:
+                self.demultiplex()
+                self.demux_visualize()
 
-        if self.atype == 'deblur':
-            self.deblur_filter()
-            self.deblur_denoise()
-            self.deblur_visualize()
-        elif self.atype == 'dada2':
-            self.dada2()
-            self.tabulate()
+            if self.atype == 'deblur':
+                self.deblur_filter()
+                self.deblur_denoise()
+                self.deblur_visualize()
+            elif self.atype == 'dada2':
+                self.dada2()
+                self.tabulate()
 
         # Run these commands sequentially
         self.filter_by_metadata()
@@ -472,62 +473,3 @@ class Qiime2(Tool):
 
         # Perform standard tool setup
         super().setup_analysis()
-
-    def run_analysis(self):
-        """ Perform some analysis. """
-        try:
-            self.setup_analysis()
-            if self.config['sub_analysis']:
-                self.start_children()
-            jobfile = self.files['jobfile']
-            self.write_file_locations()
-            if self.testing:
-                # Open the jobfile to write all the commands
-                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
-                test_log('{} start job'.format(self.name))
-                # Send the output to the error log
-                with open(self.files['errorlog'], 'w') as f:
-                    # Run the command
-                    run([jobfile], stdout=f, stderr=f, check=True)
-                test_log('{} finished job'.format(self.name))
-            else:
-                # Get the job header text from the template
-                temp = JOB_TEMPLATE.read_text()
-                # Write all the commands
-                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
-                #  Temporary for testing on Minerva
-                run([jobfile], check=True)
-                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-                #  self.wait_on_job(job_id)
-
-            self.sanity_check()
-            with Database(owner=self.owner, testing=self.testing) as db:
-                doc = db.get_metadata(self.access_code)
-            self.move_user_files()
-            self.add_summary_files()
-            if self.config['sub_analysis']:
-                self.wait_on_children()
-            log('Send email')
-            if not self.testing:
-                send_email(doc.email,
-                           doc.owner,
-                           'analysis',
-                           analysis_type='Qiime2 (2019.1) ' + self.atype,
-                           study_name=doc.study,
-                           # summary=self.path / 'summary/analysis.pdf',
-                           testing=self.testing)
-        except CalledProcessError as e:
-            self.move_user_files()
-            self.write_file_locations()
-            raise AnalysisError(e.args[0])
-
-    def run(self):
-        """ Overrides Process.run() """
-        if self.analysis:
-            self.run_analysis()
-        else:
-            self.setup_analysis()
