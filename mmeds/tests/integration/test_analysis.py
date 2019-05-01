@@ -1,20 +1,16 @@
 from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
-from mmeds.summary import summarize_qiime
-from mmeds.qiime2 import Qiime2
-from mmeds.util import load_config
-
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
 import mmeds.config as fig
 import mmeds.secrets as sec
-import multiprocessing as mp
 
 
 class AnalysisTests(TestCase):
     testing = True
+    count = 0
 
     @classmethod
     def setUpClass(self):
@@ -61,22 +57,26 @@ class AnalysisTests(TestCase):
         # Check the files exist and their contents match the initial uploads
         self.assertEqual(Path(self.files['for_reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
 
-    def spawn_analysis(self, tool, count):
-        p = spawn.spawn_analysis(tool, fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG_SUB).read_text(),
-                                 self.testing)
-        while p.is_alive():
-            sleep(5)
-        self.assertTrue((Path(self.path) / 'analysis{}/summary/analysis.pdf'.format(count)).is_file())
-        for child in p.children:
-            self.assertEqual(child.exit_code, 0)
-
     def test_qiime2(self):
         self.handle_data_upload()
         self.handle_modify_data()
-        self.spawn_analysis('qiime2-dada2', 0)
+        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
+                                 Path(fig.TEST_CONFIG).read_text(),
+                                 self.testing)
+        while p.is_alive():
+            sleep(5)
+        self.assertTrue((Path(self.path) / 'analysis0/summary/analysis.pdf').is_file())
+        for child in p.children:
+            self.assertEqual(child.exit_code, 0)
 
     def test_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
-        self.spawn_analysis('qiime1-closed', 0)
+        p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
+                                 Path(fig.TEST_CONFIG_SUB).read_text(),
+                                 self.testing)
+        while p.is_alive():
+            sleep(5)
+        self.assertTrue((Path(self.path) / 'analysis0/summary/analysis.pdf').is_file())
+        for child in p.children:
+            self.assertEqual(child.exit_code, 0)
