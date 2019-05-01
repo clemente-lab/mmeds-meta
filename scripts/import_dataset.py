@@ -2,9 +2,10 @@
 from mmeds.spawn import handle_data_upload
 from sys import argv
 from pathlib import Path
+import click
 
-# testing = False
-testing = True
+testing = False
+# testing = True
 username = 'tankou'
 reads_type = 'paired_end_demuxed'
 metadata = Path(argv[1])
