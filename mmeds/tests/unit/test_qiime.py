@@ -94,10 +94,9 @@ class QiimeTests(TestCase):
     def test_qiime2_child_setup_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2-dada2', config, True, analysis=False)
+        q2.setup_analysis()
         q2.create_children()
-        q2.start_children()
         for child in q2.children:
-            while child.is_alive():
-                sleep(2)
-            self.assertEqual(child.exitcode, 0)
+            self.assertEqual(child.data_type, 'single_end')
+
         rmtree(q2.path)

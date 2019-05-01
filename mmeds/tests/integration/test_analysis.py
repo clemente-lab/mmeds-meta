@@ -71,28 +71,12 @@ class AnalysisTests(TestCase):
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
 
-    """
     def test_qiime2(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime2-dada2', 0)
-    """
 
     def test_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
         self.spawn_analysis('qiime1-closed', 0)
-
-    """
-    def test_qiime_child(self):
-        self.handle_data_upload(fig.TEST_METADATA_SHORT)
-        self.handle_modify_data()
-        config = load_config(Path(fig.TEST_CONFIG_SUB).read_text(), fig.TEST_METADATA_SHORT)
-        q2 = Qiime2(fig.TEST_USER, self.code, 'qiime2-dada2', config, self.testing)
-        q2.create_children()
-        q2.start_children()
-        q2.wait_on_children()
-        for child in q2.children:
-            # Assert all children exited successfully
-            self.assertEqual(child.exitcode, 0)
-    """
