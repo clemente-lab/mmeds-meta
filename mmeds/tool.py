@@ -344,7 +344,7 @@ class Tool(mp.Process):
         mdf = load_metadata(self.files['metadata'])
 
         # For each column selected...
-        for col in self.config['metadata']:
+        for col in self.config['sub_analysis']:
             try:
                 t_col = (COL_TO_TABLE[col], col)
             # Additional columns won't be in this table

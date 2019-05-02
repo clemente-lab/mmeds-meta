@@ -112,7 +112,7 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
             # Get approriate metadata columns based on the metadata file
-            if option == 'metadata':
+            if option == 'metadata' or option == 'sub_analysis':
                 config[option], config['metadata_continuous'] = get_valid_columns(metadata,
                                                                                   config[option],
                                                                                   ignore_bad_cols)
@@ -169,35 +169,36 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
     log('get valid columns with ignore = {}'.format(ignore_bad_cols))
     summary_cols = []
     col_types = {}
-    # Filter out any categories containing only NaN
-    # Or containing only a single metadata value
-    # Or where every sample contains a different value
-    df = pd.read_csv(metadata_file, header=0, skiprows=[0, 2, 3, 4], sep='\t')
-    if option == 'all':
-        cols = df.columns
-    else:
-        cols = option.split(',')
+    if not option == 'none':
+        # Filter out any categories containing only NaN
+        # Or containing only a single metadata value
+        # Or where every sample contains a different value
+        df = load_metadata(metadata_file, header=0, skiprows=[0, 2, 3, 4])
+        if option == 'all':
+            cols = df.columns
+        else:
+            cols = option.split(',')
 
-    for col in cols:
-        # Ensure there aren't any invalid columns specified to be included in the analysis
-        try:
-            # If 'all' only select columns that don't have all the same or all unique values
-            if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
-                if col in ['Together', 'Separate']:
+        for col in cols:
+            # Ensure there aren't any invalid columns specified to be included in the analysis
+            try:
+                # If 'all' only select columns that don't have all the same or all unique values
+                if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
+                    if col in ['Together', 'Separate']:
+                        summary_cols.append(col)
+                        col_types[col] = False
+                    elif option == 'all':
+                        continue
+                    elif not ignore_bad_cols:
+                        raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
+                # If the columns is explicitly specified only check that it exists in the metadata
+                else:
+                    assert df[col].any()
                     summary_cols.append(col)
-                    col_types[col] = False
-                elif option == 'all':
-                    continue
-                elif not ignore_bad_cols:
-                    raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
-            # If the columns is explicitly specified only check that it exists in the metadata
-            else:
-                assert df[col].any()
-                summary_cols.append(col)
-                col_types[col] = pd.api.types.is_numeric_dtype(df[col])
-        except KeyError:
-            if not ignore_bad_cols:
-                raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
+                    col_types[col] = pd.api.types.is_numeric_dtype(df[col])
+            except KeyError:
+                if not ignore_bad_cols:
+                    raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
     return summary_cols, col_types
 
 

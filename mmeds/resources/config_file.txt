@@ -14,4 +14,4 @@ abundance_threshold	0.01
 # The size of the font in the plot legends
 font_size	15
 # Whether or not sub-analyses should be performed
-sub_analysis	False
+sub_analysis	none
