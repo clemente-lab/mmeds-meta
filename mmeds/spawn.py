@@ -1,7 +1,7 @@
 from time import sleep
 from multiprocessing import Process
 
-from mmeds.util import send_email, create_local_copy, log, load_config
+from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata
 from mmeds.database import MetaDataUploader, Database
 from mmeds.authentication import get_email
 from mmeds.error import AnalysisError
@@ -77,10 +77,12 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     :testing: True if the server is running locally.
     """
     log('In handle_data_upload')
+    mdf = load_metadata(metadata)
+    study_name = mdf.Study.StudyName.iloc[0]
     count = 0
-    new_dir = DATABASE_DIR / ('{}_{}'.format(username, count))
+    new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
     while new_dir.is_dir():
-        new_dir = DATABASE_DIR / ('{}_{}'.format(username, count))
+        new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
         count += 1
     new_dir.mkdir()
 
