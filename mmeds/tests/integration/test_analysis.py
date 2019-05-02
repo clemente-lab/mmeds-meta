@@ -73,7 +73,7 @@ class AnalysisTests(TestCase):
         self.handle_data_upload()
         self.handle_modify_data()
         p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG_SUB).read_text(),
+                                 Path(fig.TEST_CONFIG).read_text(),
                                  self.testing)
         while p.is_alive():
             sleep(5)
