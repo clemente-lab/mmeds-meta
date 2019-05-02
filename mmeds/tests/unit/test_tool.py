@@ -52,7 +52,7 @@ class ToolTests(TestCase):
         new_dir, run_id, files, data_type = self.tool.setup_dir(fig.TEST_DIR)
         self.dirs.append(new_dir)
 
-        assert str(fig.TEST_DIR / 'analysis') in str(new_dir)
+        assert str(fig.TEST_DIR / 'Tool-1') in str(new_dir)
         assert data_type == 'single_end'
         assert 'metadata' in files.keys()
         assert files['metadata'].is_file()
