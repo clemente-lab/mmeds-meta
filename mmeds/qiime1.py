@@ -160,7 +160,7 @@ class Qiime1(Tool):
             self.validate_mapping()
             if 'demuxed' in self.data_type:
                 self.unzip()
-            if 'paired' in self.data_type:
+            elif 'paired' in self.data_type:
                 self.join_paired_ends()
             self.split_libraries()
             self.pick_otu()
