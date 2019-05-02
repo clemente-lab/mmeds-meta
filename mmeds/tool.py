@@ -404,9 +404,9 @@ class Tool(mp.Process):
                 # Set execute permissions
                 jobfile.chmod(0o770)
                 #  Temporary for testing on Minerva
-                run([jobfile], check=True)
-                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-                #  self.wait_on_job(job_id)
+                output = run(['bsub', '<', jobfile], check=True, capture_output=True)
+                job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                self.wait_on_job(job_id)
             with Database(owner=self.owner, testing=self.testing) as db:
                 doc = db.get_metadata(self.access_code)
             self.move_user_files()

@@ -3,8 +3,6 @@ from multiprocessing import Process
 
 from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata
 from mmeds.database import MetaDataUploader, Database
-from mmeds.authentication import get_email
-from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.config import DATABASE_DIR
@@ -91,7 +89,6 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
         metadata_copy = create_local_copy(f, metadata.name, new_dir)
 
     # Create a copy of the Data file
-    print(datafiles)
     datafile_copies = {datafile[0]: create_local_copy(datafile[2], datafile[1], new_dir) for datafile in datafiles}
     for (key, value) in datafile_copies.items():
         log('{}: {}'.format(key, value))
