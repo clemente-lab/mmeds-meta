@@ -89,10 +89,10 @@ class Tool(mp.Process):
         files = {}
         run_id = 0
         # Create a new directory to perform the analysis in
-        new_dir = path / 'analysis{}'.format(run_id)
+        new_dir = path / '{}_{}'.format(self.name, run_id)
         while new_dir.is_dir():
             run_id += 1
-            new_dir = path / 'analysis{}'.format(run_id)
+            new_dir = path / '{}_{}'.format(self.name, run_id)
 
         new_dir = new_dir.resolve()
         with Database(owner=self.owner, testing=self.testing) as db:
