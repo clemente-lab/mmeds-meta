@@ -9,7 +9,6 @@ from pandas import read_csv
 import mmeds.config as fig
 import hashlib as hl
 import os
-import difflib
 
 
 def test_is_numeric():
@@ -75,7 +74,8 @@ def test_get_valid_columns():
 def test_load_config_file():
     # Test when no config is given
     config = util.load_config(None, fig.TEST_METADATA)
-    assert len(config.keys()) == 9
+    for param in fig.CONFIG_PARAMETERS:
+        assert config.get(param) is not None
 
     config = util.load_config(Path(fig.TEST_CONFIG_ALL).read_text(), fig.TEST_METADATA)
     assert len(config['taxa_levels']) == 7
