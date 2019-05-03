@@ -23,7 +23,7 @@ class AnalysisTests(TestCase):
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=self.testing)
 
-    def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORT):
+    def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORTEST):
         """ Test the uploading of data """
         with open(fig.TEST_METADATA, 'rb') as reads, open(fig.TEST_BARCODES, 'rb') as barcodes:
             self.code = spawn.handle_data_upload(Path(metadata),
@@ -65,7 +65,7 @@ class AnalysisTests(TestCase):
                                  self.testing)
         while p.is_alive():
             sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime2-1-0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) / 'Qiime2-1_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
 
@@ -77,6 +77,6 @@ class AnalysisTests(TestCase):
                                  self.testing)
         while p.is_alive():
             sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime1-1-0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) / 'Qiime1-1_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exit_code, 0)

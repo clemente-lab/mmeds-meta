@@ -103,7 +103,8 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
                 raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
             config[parts[0]] = parts[1]
     # Check if columns == 'all'
-    config['metadata_all'] = (config['metadata'] == 'all')
+    for param in ['metadata', 'taxa_levels', 'sub_analysis']:
+        config['{}_all'.format(param)] = (config[param] == 'all')
     return parse_parameters(config, metadata, ignore_bad_cols=ignore_bad_cols)
 
 
@@ -113,10 +114,10 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
         for option in fig.CONFIG_PARAMETERS:
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata' or option == 'sub_analysis':
-                config[option], config['metadata_continuous'] = get_valid_columns(metadata,
-                                                                                  config[option],
-                                                                                  ignore_bad_cols)
-            # Split taxa_levels into a list or create the list if 'all'
+                config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
+                                                                                           config[option],
+                                                                                           ignore_bad_cols)
+                # Split taxa_levels into a list or create the list if 'all'
             elif option == 'taxa_levels':
                 if config[option] == 'all':
                     config[option] = [i + 1 for i in range(7)]

@@ -132,15 +132,18 @@ class Tool(mp.Process):
         config_text = []
         for (key, value) in self.config.items():
             # Don't write values that are generated on loading
-            if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all']:
+            if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
+                       'sub_analysis_continuous', 'sub_analysis_all']:
                 continue
             # If the value was initially 'all', write that
-            elif key in ['taxa_levels', 'metadata']:
+            elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
                 if self.config['{}_all'.format(key)]:
                     config_text.append('{}\t{}'.format(key, 'all'))
                 # Write lists as comma seperated strings
-                else:
+                elif value:
                     config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
+                else:
+                    config_text.append('{}\t{}'.format(key, 'none'))
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
