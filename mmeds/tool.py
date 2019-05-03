@@ -401,10 +401,13 @@ class Tool(mp.Process):
                 temp = JOB_TEMPLATE.read_text()
                 # Write all the commands
                 jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
+                # Create a file to execute the submission
+                submitfile = jobfile.parent / 'submit_file.sh'
+                submitfile.write(['#!/bin/bash -l', 'bsub < {};'.format(jobfile)])
                 # Set execute permissions
-                jobfile.chmod(0o770)
+                submitfile.chmod(0o770)
                 #  Temporary for testing on Minerva
-                output = run(['bsub', '<', jobfile], check=True, capture_output=True)
+                output = run([submitfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
             with Database(owner=self.owner, testing=self.testing) as db:
