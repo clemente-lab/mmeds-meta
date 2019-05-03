@@ -375,6 +375,8 @@ class Tool(mp.Process):
         # Define the job and error files
         jobfile = self.path / (self.run_id + '_job')
         self.add_path(jobfile, '.lsf', 'jobfile')
+        submitfile = self.path / (self.run_id + '_submit')
+        self.add_path(submitfile, '.sh', 'submitfile')
         error_log = self.path / self.run_id
         self.add_path(error_log, '.err', 'errorlog')
 
@@ -400,13 +402,14 @@ class Tool(mp.Process):
                     run([jobfile], stdout=f, stderr=f, check=True)
                 test_log('{} finished job'.format(self.name))
             else:
+                log('In run_analysis')
                 # Get the job header text from the template
                 temp = JOB_TEMPLATE.read_text()
                 # Write all the commands
                 jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
                 # Create a file to execute the submission
-                submitfile = jobfile.parent / 'submit_file.sh'
-                submitfile.write(['#!/bin/bash -l', 'bsub < {};'.format(jobfile)])
+                submitfile = self.files['submitfile']
+                submitfile.write_text('\n'.join(['#!/bin/bash -l', 'bsub < {};'.format(jobfile)]))
                 # Set execute permissions
                 submitfile.chmod(0o770)
                 #  Temporary for testing on Minerva
@@ -422,9 +425,8 @@ class Tool(mp.Process):
                 send_email(doc.email,
                            doc.owner,
                            'analysis',
-                           analysis_type='Qiime2 (2019.1) ' + self.atype,
+                           analysis_type=self.name + self.atype,
                            study_name=doc.study,
-                           # summary=self.path / 'summary/analysis.pdf',
                            testing=self.testing)
         except CalledProcessError as e:
             self.move_user_files()
