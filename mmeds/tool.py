@@ -379,22 +379,35 @@ class Tool(mp.Process):
         self.add_path(submitfile, '.sh', 'submitfile')
         error_log = self.path / self.run_id
         self.add_path(error_log, '.err', 'errorlog')
+        jobfile = self.files['jobfile']
+        if self.testing:
+            # Open the jobfile to write all the commands
+            jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
+            # Set execute permissions
+            jobfile.chmod(0o770)
+        else:
+            log('In run_analysis')
+            # Get the job header text from the template
+            temp = JOB_TEMPLATE.read_text()
+            # Write all the commands
+            jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
 
     def run_analysis(self):
         """ Perform some analysis. """
         try:
             self.setup_analysis()
+            if self.is_child:
+                # Wait for the otu table to show up
+                while not self.files['parent_table'].exists():
+                    sleep(10)
             jobfile = self.files['jobfile']
             self.write_file_locations()
             # Start the sub analyses if so configured
             if self.config['sub_analysis']:
                 self.create_children()
                 self.start_children()
+
             if self.testing:
-                # Open the jobfile to write all the commands
-                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
                 test_log('{} start job'.format(self.name))
                 # Send the output to the error log
                 with open(self.files['errorlog'], 'w') as f:
@@ -402,18 +415,14 @@ class Tool(mp.Process):
                     run([jobfile], stdout=f, stderr=f, check=True)
                 test_log('{} finished job'.format(self.name))
             else:
-                log('In run_analysis')
-                # Get the job header text from the template
-                temp = JOB_TEMPLATE.read_text()
-                # Write all the commands
-                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
                 # Create a file to execute the submission
                 submitfile = self.files['submitfile']
                 submitfile.write_text('\n'.join(['#!/bin/bash -l', 'bsub < {};'.format(jobfile)]))
                 # Set execute permissions
                 submitfile.chmod(0o770)
+                jobfile.chmod(0o770)
                 #  Temporary for testing on Minerva
-                output = run([submitfile], check=True, capture_output=True)
+                output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
             with Database(owner=self.owner, testing=self.testing) as db:
@@ -435,10 +444,6 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        if self.is_child:
-            # Wait for the otu table to show up
-            while not self.files['parent_table'].exists():
-                sleep(10)
 
         if self.analysis:
             self.run_analysis()

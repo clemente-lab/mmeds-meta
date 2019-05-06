@@ -827,7 +827,10 @@ def setup_environment(module):
                 line = line.replace('${}'.format(variable), path)
         if '~' in line:
             for variable, path in variables.items():
-                line = line.replace('~', new_env['HOME'])
+                home = new_env.get('MMEDS')
+                if home is None:
+                    home = new_env.get('HOME')
+                line = line.replace('~', home)
         parts = line.strip().split(' ')
         # Set locally used variables
         if parts[0] == 'set':
