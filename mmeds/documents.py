@@ -1,8 +1,10 @@
 import mongoengine as men
+from datetime import datetime
 from pathlib import Path
+from mmeds.config import get_salt
 
 
-class MetaData(men.DynamicDocument):
+class StudyDoc(men.DynamicDocument):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
     study_type = men.StringField(max_length=45, required=True)
@@ -31,7 +33,7 @@ class MetaData(men.DynamicDocument):
                 # Otherwise just write the value
                 else:
                     f.write('{}\t{}\n'.format(key, file_path))
-        super(MetaData, self).save()
+        super(StudyDoc, self).save()
 
     def __str__(self):
         self_string = 'Created: {created}\n last_accessed: {last_accessed}\n study_type: {study_type}\n' +\
@@ -43,3 +45,24 @@ class MetaData(men.DynamicDocument):
                                          owner=self.owner, email=self.email, path=self.path)
         self_string += 'files: {}\n'.format(self.files.keys())
         return self_string
+
+    def generate_AnalysisDoc(self, path, access_code=get_salt(20)):
+        return AnalysisDoc(created=datetime.now(),
+                           last_accessed=datetime.now(),
+                           owner=self.owner,
+                           email=self.email,
+                           path=path,
+                           study_access_code=self.access_code,
+                           access_code=access_code,
+                           reads_type=self.reads_type)
+
+
+class AnalysisDoc(men.DynamicDocument):
+    created = men.DateTimeField()
+    last_accessed = men.DateTimeField()
+    owner = men.StringField(max_length=100, required=True)
+    email = men.StringField(max_length=100, required=True)
+    path = men.StringField(max_length=100, required=True)
+    study_access_code = men.StringField(max_length=50, required=True)
+    access_code = men.StringField(max_length=50, required=True)
+    reads_type = men.StringField(max_length=45, required=True)

@@ -16,7 +16,7 @@ from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
-from mmeds.documents import MetaData
+from mmeds.documents import StudyDoc
 
 DAYS = 13
 
@@ -293,7 +293,7 @@ class Database:
         It will not delete the files associated with those objects.
         """
 
-        obs = MetaData.objects(access_code=access_code)
+        obs = StudyDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
 
@@ -303,7 +303,7 @@ class Database:
         :access_code: The code for identifying this dataset.
         :data_type: A string. Either 'reads' or 'barcodes' depending on which is being modified.
         """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
 
         # Remove the old data file if it exits
@@ -320,7 +320,7 @@ class Database:
         # Get a new code
         new_code = get_salt(50)
         # Get the mongo document
-        mdata = MetaData.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata = StudyDoc.objects(study=study_name, owner=self.owner, email=email).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.access_code = new_code
         mdata.save()
@@ -362,7 +362,7 @@ class Database:
                 file locations in a subdirectory
         """
         sql_log('Update metadata with {}: {}'.format(filekey, value))
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
         mdata.save()
@@ -416,7 +416,7 @@ class Database:
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """
         log('Get mongo files')
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
@@ -429,15 +429,15 @@ class Database:
 
     def get_metadata(self, access_code):
         """
-        Return the MetaData object.
+        Return the StudyDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return MetaData.objects(access_code=access_code, owner=self.owner).first()
+        return StudyDoc.objects(access_code=access_code, owner=self.owner).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
         empty_files = []
         for key in mdata.files.keys():
             if not os.path.exists(mdata.files[key]):
@@ -447,13 +447,13 @@ class Database:
 
     def clear_mongo_data(self, username):
         """ Clear all metadata documents associated with the provided username. """
-        data = MetaData.objects(owner=username)
+        data = StudyDoc.objects(owner=username)
         for doc in data:
             doc.delete()
 
     def clean(self):
         """ Remove all temporary and intermediate files. """
-        docs = MetaData.objects().first()
+        docs = StudyDoc.objects().first()
         if docs is None:
             return
         for mdata in docs:
@@ -935,7 +935,7 @@ class MetaDataUploader:
             access_code = get_salt(50)
 
         # Create the document
-        mdata = MetaData(created=datetime.utcnow(),
+        mdata = StudyDoc(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
                          study_type=self.study_type,
                          reads_type=self.reads_type,
