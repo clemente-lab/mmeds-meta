@@ -11,6 +11,7 @@ from smtplib import SMTP
 from imapclient import IMAPClient
 from email.message import EmailMessage
 from email import message_from_bytes
+from tempfile import gettempdir
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -698,7 +699,7 @@ def sql_log(text):
 def test_log(text):
     """ Write provided text to the test log file. """
     log(text, write_file=fig.SQL_LOG)
-    log(text, write_file='/tmp/test_log.txt')
+    log(text, write_file=Path(gettempdir()) / 'test_log.txt')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
