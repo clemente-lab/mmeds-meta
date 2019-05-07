@@ -173,7 +173,7 @@ class Tool(mp.Process):
             'path': self.path,
             'nodes': self.num_jobs,
             'memory': 1000,
-            'queue': 'expressalloc'
+            'queue': 'premium'
         }
         return params
 
