@@ -11,35 +11,52 @@ from smtplib import SMTP
 from imapclient import IMAPClient
 from email.message import EmailMessage
 from email import message_from_bytes
+from tempfile import gettempdir
 
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
 
 
-def write_df_as_mmeds(df, output_path):
-    mmeds_meta = df.to_dict('list')
-
-    # Write the constructed metadata to a file
-    lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
-             '\t'.join([key[1] for key in mmeds_meta.keys()])] +\
-        ['\t'.join([item[row] for key, item in mmeds_meta.items()])
-         for row in range(len(df) - 2)]
-    fp = Path(output_path)
-    fp.write_text('\n'.join(lines))
-
-
 def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
 
 
-def load_metadata(file_name):
+def camel_case(value):
+    return ''.join([x.capitalize() for x in
+                    str(value).replace('_', ' ').replace('-', ' ').split(' ')])
+
+
+def write_metadata(df, output_path):
+    mmeds_meta = df.to_dict('list')
+    template = load_metadata_template()
+
+    # Write the constructed metadata to a file
+    lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
+             '\t'.join([key[1] for key in mmeds_meta.keys()])]
+
+    additional_headers = ['Optional', 'Text', 'No Limit']
+    for i in range(len(template)):
+        header_line = []
+        # Build the header info
+        for table, column in mmeds_meta.keys():
+            if not table == 'AdditionalMetaData':
+                header_line.append(template[table][column].iloc[i])
+            else:
+                header_line.append(additional_headers[i])
+        lines.append('\t'.join(header_line))
+    lines += ['\t'.join([str(item[row]) for key, item in mmeds_meta.items()])
+              for row in range(len(df))]
+    Path(output_path).write_text('\n'.join(lines) + '\n')
+
+
+def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', keep_default_na=False):
     return pd.read_csv(file_name,
                        sep='\t',
-                       header=[0, 1],
-                       skiprows=[2, 3, 4],
-                       na_values='NA',
-                       keep_default_na=False)
+                       header=header,
+                       skiprows=skiprows,
+                       na_values=na_values,
+                       keep_default_na=keep_default_na)
 
 
 def catch_server_errors(page_method):
@@ -64,7 +81,7 @@ def decorate_all_methods(decorator):
     return apply_decorator
 
 
-def load_config(config_file, metadata):
+def load_config(config_file, metadata, ignore_bad_cols=False):
     """ Read the provided config file to determine settings for the analysis. """
     config = {}
     # If no config was provided load the default
@@ -86,25 +103,41 @@ def load_config(config_file, metadata):
             if parts[0] not in fig.CONFIG_PARAMETERS:
                 raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
             config[parts[0]] = parts[1]
+    # Check if columns == 'all'
+    for param in ['metadata', 'taxa_levels', 'sub_analysis']:
+        config['{}_all'.format(param)] = (config[param] == 'all')
+    return parse_parameters(config, metadata, ignore_bad_cols=ignore_bad_cols)
+
+
+def parse_parameters(config, metadata, ignore_bad_cols=False):
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
             # Get approriate metadata columns based on the metadata file
-            if option == 'metadata':
-                config[option], config['metadata_continuous'] = get_valid_columns(metadata, config[option])
-            # Split taxa_levels into a list or create the list if 'all'
+            if option == 'metadata' or option == 'sub_analysis':
+                config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
+                                                                                           config[option],
+                                                                                           ignore_bad_cols)
+                # Split taxa_levels into a list or create the list if 'all'
             elif option == 'taxa_levels':
                 if config[option] == 'all':
                     config[option] = [i + 1 for i in range(7)]
+                    config['taxa_levels_all'] = True
                 else:
                     # Otherwise split the values into a list
                     config[option] = config[option].split(',')
+                    config['taxa_levels_all'] = False
+            elif config[option] == 'False':
+                config[option] = False
+            elif config[option] == 'True':
+                config[option] = True
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
+        if config['sub_analysis'] and len(config['metadata']) == 1:
+            raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
-
     return config
 
 
@@ -115,14 +148,14 @@ def copy_metadata(metadata_file, metadata_copy):
     :metadata_file: Path to the metadata file.
     :metadata_copy: Path to save the new metadata file.
     """
-    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1], na_filter=False).T
+    mdf = load_metadata(metadata_file).T
     mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
         ['All' for x in range(mdf.shape[1] - 3)]
     mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
-    mdf.T.to_csv(metadata_copy, sep='\t')
+    write_metadata(mdf.T, metadata_copy)
 
 
-def get_valid_columns(metadata_file, option):
+def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
     """
     Get the column headers for metadata columns meeting the
     criteria to be used in analysis.
@@ -135,35 +168,39 @@ def get_valid_columns(metadata_file, option):
             True indicates that the column contains continuous values.
             False indicates that it contains discrete value.
     """
+    log('get valid columns with ignore = {}'.format(ignore_bad_cols))
     summary_cols = []
     col_types = {}
-    # Filter out any categories containing only NaN
-    # Or containing only a single metadata value
-    # Or where every sample contains a different value
-    df = pd.read_csv(metadata_file, header=0, skiprows=[0, 2, 3, 4], sep='\t')
-    if option == 'all':
-        cols = df.columns
-    else:
-        cols = option.split(',')
-    # Ensure there aren't any invalid columns specified to be included in the analysis
-    try:
+    if not option == 'none':
+        # Filter out any categories containing only NaN
+        # Or containing only a single metadata value
+        # Or where every sample contains a different value
+        df = load_metadata(metadata_file, header=0, skiprows=[0, 2, 3, 4])
+        if option == 'all':
+            cols = df.columns
+        else:
+            cols = option.split(',')
+
         for col in cols:
-            # If 'all' only select columns that don't have all the same or all unique values
-            if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
-                if col in ['Together', 'Separate']:
-                    summary_cols.append(col)
-                    col_types[col] = False
-                elif option == 'all':
-                    continue
+            # Ensure there aren't any invalid columns specified to be included in the analysis
+            try:
+                # If 'all' only select columns that don't have all the same or all unique values
+                if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
+                    if col in ['Together', 'Separate']:
+                        summary_cols.append(col)
+                        col_types[col] = False
+                    elif option == 'all':
+                        continue
+                    elif not ignore_bad_cols:
+                        raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
+                # If the columns is explicitly specified only check that it exists in the metadata
                 else:
-                    raise InvalidConfigError('Invalid metadata column {} selected for analysis'.format(col))
-            # If the columns is explicitly specified only check that it exists in the metadata
-            else:
-                assert df[col].any()
-                summary_cols.append(col)
-                col_types[col] = pd.api.types.is_numeric_dtype(df[col])
-    except KeyError:
-        raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
+                    assert df[col].any()
+                    summary_cols.append(col)
+                    col_types[col] = pd.api.types.is_numeric_dtype(df[col])
+            except KeyError:
+                if not ignore_bad_cols:
+                    raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
     return summary_cols, col_types
 
 
@@ -637,7 +674,7 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def log(text):
+def log(text, testing=False, write_file=fig.MMEDS_LOG):
     """ Write provided text to the log file. """
     if isinstance(text, dict):
         log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
@@ -645,8 +682,24 @@ def log(text):
         log_text = '\n'.join(list(map(str, text)))
     else:
         log_text = str(text)
-    with open(fig.MMEDS_LOG, 'a+') as f:
-        f.write('{}: {}\n'.format(datetime.now(), log_text))
+
+    if testing:
+        with open('/tmp/mmeds_log.txt', 'a+') as f:
+            f.write('{}: {}\n'.format(datetime.now(), log_text))
+    else:
+        with open(fig.MMEDS_LOG, 'a+') as f:
+            f.write('{}: {}\n'.format(datetime.now(), log_text))
+
+
+def sql_log(text):
+    """ Write provided text to the sql log file. """
+    log(text, write_file=fig.SQL_LOG)
+
+
+def test_log(text):
+    """ Write provided text to the test log file. """
+    log(text, write_file=fig.SQL_LOG)
+    log(text, write_file=Path(gettempdir()) / 'test_log.txt')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
@@ -775,7 +828,10 @@ def setup_environment(module):
                 line = line.replace('${}'.format(variable), path)
         if '~' in line:
             for variable, path in variables.items():
-                line = line.replace('~', new_env['HOME'])
+                home = new_env.get('MMEDS')
+                if home is None:
+                    home = new_env.get('HOME')
+                line = line.replace('~', home)
         parts = line.strip().split(' ')
         # Set locally used variables
         if parts[0] == 'set':

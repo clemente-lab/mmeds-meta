@@ -250,7 +250,7 @@ class TestServer(helper.CPWebCase):
         log('Checked metadata that warns')
 
         # Check a metadata file that has no issues
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORTEST], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=fig.SERVER_USER)
@@ -336,7 +336,7 @@ class TestServer(helper.CPWebCase):
             self.assertStatus('200 OK')
 
     def convert(self):
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORTEST], ['text/tab-seperated-values'])
         addr = '/upload/convert_metadata?convertTo=mixs&unitCol=&skipRows='
         self.getPage(addr, headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')

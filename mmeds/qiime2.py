@@ -1,9 +1,9 @@
-from subprocess import run, CalledProcessError
+from subprocess import run
 from shutil import rmtree
 from pandas import read_csv
 
-from mmeds.config import JOB_TEMPLATE, STORAGE_DIR, DATABASE_DIR
-from mmeds.util import send_email, log, setup_environment
+from mmeds.config import STORAGE_DIR, DATABASE_DIR
+from mmeds.util import log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -11,15 +11,15 @@ from mmeds.tool import Tool
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing):
-        super().__init__(owner, access_code, atype, config, testing)
+    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
+        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
-    # ======================= #
-    # # # Qiime2 Commands # # #
-    # ======================= #
+    # =============== #
+    # Qiime2 Commands #
+    # =============== #
     def qimport(self):
         """ Split the libraries and perform quality analysis. """
 
@@ -91,6 +91,25 @@ class Qiime2(Tool):
             cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         self.jobtext.append(' '.join(cmd))
 
+    def filter_by_metadata(self, column=None, value=None):
+        """
+            Filter the dataset based on some metadata parameter.
+            ====================================================
+            :column: Column to filter on, if not None
+            :value: Value to have in column, if not None
+        """
+        self.add_path('filtered_table', '.qza')
+        cmd = [
+            'qiime feature-table filter-samples',
+            '--i-table {}'.format(self.get_file('otu_table')),
+            '--m-metadata-file {}'.format(self.get_file('mapping')),
+            '--o-filtered-table {}'.format(self.get_file('filtered_table'))
+        ]
+
+        if column is not None and value is not None:
+            cmd.append('--p-where "{column}={value}')
+        self.jobtext.append(' '.join(cmd))
+
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
@@ -108,7 +127,7 @@ class Qiime2(Tool):
         self.add_path('stats_{}_visual'.format(self.atype), '.qzv')
         cmd = [
             'qiime metadata tabulate',
-            '--m-input-file {}'.format(self.get_file('stats_{}'.format(self.atype))),
+            '--m-input-file {}'.format(self.get_file('stats_table')),
             '--o-visualization {};'.format(self.get_file('stats_{}_visual'.format(self.atype)))
         ]
         self.jobtext.append(' '.join(cmd))
@@ -116,9 +135,9 @@ class Qiime2(Tool):
     def dada2(self, p_trim_left=0, p_trunc_len=0):
         """ Run DADA2 analysis on the demultiplexed file. """
         # Index new files
-        self.add_path('rep_seqs_dada2', '.qza')
-        self.add_path('table_dada2', '.qza')
-        self.add_path('stats_dada2', '.qza')
+        self.add_path('rep_seqs_dada2', '.qza', key='rep_seqs_table')
+        self.add_path('table_dada2', '.qza', key='otu_table')
+        self.add_path('stats_dada2', '.qza', key='stats_table')
 
         if 'single' in self.data_type:
             cmd = [
@@ -126,9 +145,9 @@ class Qiime2(Tool):
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
                 '--p-trim-left {}'.format(p_trim_left),
                 '--p-trunc-len {}'.format(p_trunc_len),
-                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_dada2')),
-                '--o-table {}'.format(self.get_file('table_dada2')),
-                '--o-denoising-stats {}'.format(self.get_file('stats_dada2')),
+                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
+                '--o-table {}'.format(self.get_file('otu_table')),
+                '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
         elif 'paired' in self.data_type:
@@ -139,9 +158,9 @@ class Qiime2(Tool):
                 '--p-trim-left-r {}'.format(p_trim_left),
                 '--p-trunc-len-f {}'.format(p_trunc_len),
                 '--p-trunc-len-r {}'.format(p_trunc_len),
-                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_dada2')),
-                '--o-table {}'.format(self.get_file('table_dada2')),
-                '--o-denoising-stats {}'.format(self.get_file('stats_dada2')),
+                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
+                '--o-table {}'.format(self.get_file('otu_table')),
+                '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
         self.jobtext.append(' '.join(cmd))
@@ -161,18 +180,18 @@ class Qiime2(Tool):
 
     def deblur_denoise(self, p_trim_length=120):
         """ Run Deblur analysis on the demultiplexed file. """
-        self.add_path('rep_seqs_deblur', '.qza')
-        self.add_path('table_deblur', '.qza')
-        self.add_path('stats_deblur', '.qza')
+        self.add_path('rep_seqs_deblur', '.qza', key='rep_seqs_table')
+        self.add_path('table_deblur', '.qza', key='otu_table')
+        self.add_path('stats_deblur', '.qza', key='stats_table')
         cmd = [
             'qiime deblur denoise-16S',
             '--i-demultiplexed-seqs {}'.format(self.get_file('demux_filtered')),
             '--p-trim-length {}'.format(p_trim_length),
-            '--o-representative-sequences {}'.format(self.get_file('rep_seqs_deblur')),
-            '--o-table {}'.format(self.get_file('table_deblur')),
+            '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
+            '--o-table {}'.format(self.get_file('otu_table')),
             '--p-sample-stats',
             '--p-jobs-to-start {}'.format(self.num_jobs),
-            '--o-stats {};'.format(self.get_file('stats_deblur')),
+            '--o-stats {};'.format(self.get_file('stats_table')),
             '--quiet'
         ]
         self.jobtext.append(' '.join(cmd))
@@ -182,7 +201,7 @@ class Qiime2(Tool):
         self.add_path('stats_deblur_visual', '.qzv')
         cmd = [
             'qiime deblur visualize-stats',
-            '--i-deblur-stats {}'.format(self.get_file('stats_deblur')),
+            '--i-deblur-stats {}'.format(self.get_file('stats_table')),
             '--o-visualization {};'.format(self.get_file('stats_deblur_visual')),
             '--quiet'
         ]
@@ -193,7 +212,7 @@ class Qiime2(Tool):
         self.add_path('alignment', '.qza')
         cmd = [
             'qiime alignment mafft',
-            '--i-sequences {}'.format(self.get_file('rep_seqs_{}'.format(self.atype))),
+            '--i-sequences {}'.format(self.get_file('rep_seqs_table')),
             '--o-alignment {};'.format(self.get_file('alignment'))
         ]
         self.jobtext.append(' '.join(cmd))
@@ -234,7 +253,7 @@ class Qiime2(Tool):
         cmd = [
             'qiime diversity core-metrics-phylogenetic',
             '--i-phylogeny {}'.format(self.get_file('rooted_tree')),
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--p-sampling-depth {}'.format(self.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--p-n-jobs {} '.format(self.num_jobs),
@@ -278,7 +297,7 @@ class Qiime2(Tool):
         self.add_path('taxa_bar_plot', '.qzv')
         cmd = [
             'qiime taxa barplot',
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--i-taxonomy {}'.format(self.get_file('taxonomy')),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--o-visualization {}'.format(self.get_file('taxa_bar_plot'))
@@ -292,7 +311,7 @@ class Qiime2(Tool):
         self.add_path('alpha_rarefaction', '.qzv')
         cmd = [
             'qiime diversity alpha-rarefaction',
-            '--i-table {}'.format(self.get_file('table_{}'.format(self.atype))),
+            '--i-table {}'.format(self.get_file('filtered_table')),
             '--i-phylogeny {}'.format(self.get_file('rooted_tree')),
             '--p-max-depth {}'.format(max_depth),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
@@ -308,11 +327,67 @@ class Qiime2(Tool):
         cmd = [
             'qiime feature-classifier classify-sklearn',
             '--i-classifier {}'.format(classifier),
-            '--i-reads {}'.format(self.get_file('rep_seqs_{}'.format(self.atype))),
+            '--i-reads {}'.format(self.get_file('rep_seqs_table')),
             '--o-classification {}'.format(self.get_file('taxonomy')),
             '--p-n-jobs {}'.format(self.num_jobs)
         ]
         self.jobtext.append(' '.join(cmd))
+
+    def add_pseudocount(self, category, level=None):
+        """ Add composition pseudocount """
+        if level is None:
+            new_file = 'comp-{}-table'.format(category)
+        else:
+            new_file = 'comp-{}-table-l{}'.format(category, level)
+        self.add_path(new_file, '.qza')
+        cmd = [
+            'qiime composition add-pseudocount',
+            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--o-composition-table {}'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def composition_ancom(self, category, level=None):
+        """ Add composition ancom """
+
+        if level is None:
+            new_file = 'ancom-{}'.format(category)
+            infile = 'comp-{}-table'.format(category)
+        else:
+            new_file = 'ancom-{}-l{}'.format(category, level)
+            infile = 'comp-{}-table-l{}'.format(category, level)
+
+        self.add_path(new_file, '.qzv')
+        cmd = [
+            'qiime composition ancom',
+            '--i-table {}'.format(self.get_file(infile)),
+            '--m-metadata-file {}'.format(self.get_file('mapping')),
+            '--p-transform-function log',
+            '--m-metadata-column {}'.format(category),
+            '--o-visualization {}'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def taxa_collapse(self, category, taxa_level):
+        """ Collapse taxonomy to the specified level """
+        new_file = '{}_table_l{}'.format(category, taxa_level)
+        self.add_path(new_file, '.qza')
+        cmd = [
+            'qiime taxa collapse',
+            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--i-taxonomy {}'.format(self.get_file('taxonomy')),
+            '--p-level {}'.format(taxa_level),
+            '--o-collapsed-table {}'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def group_significance(self, category, level=None):
+        """ Run all the commands related to calculating group_significance """
+        log('Group sig: cat {} level {}'.format(category, level))
+        if level is not None:
+            self.taxa_collapse(category, level)
+        self.add_pseudocount(category, level)
+        self.composition_ancom(category, level)
 
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
@@ -331,7 +406,7 @@ class Qiime2(Tool):
 
         # Check the counts after DADA2/DeBlur
         cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(self.files['table_{}'.format(self.atype)]),
+               '--input-path', str(self.files['filtered_table']),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
         log(cmd)
@@ -352,82 +427,49 @@ class Qiime2(Tool):
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
+        # Only the primary analysis runs these commands
+        if not self.is_child:
+            if 'demuxed' in self.data_type:
+                self.unzip()
+            self.qimport()
+            if 'demuxed' not in self.data_type:
+                self.demultiplex()
+                self.demux_visualize()
 
-        if 'demuxed' in self.data_type:
-            self.unzip()
-        self.qimport()
-        if 'demuxed' not in self.data_type:
-            self.demultiplex()
-            self.demux_visualize()
+            if self.atype == 'deblur':
+                self.deblur_filter()
+                self.deblur_denoise()
+                self.deblur_visualize()
+            elif self.atype == 'dada2':
+                self.dada2()
+                self.tabulate()
 
-        if self.atype == 'deblur':
-            self.deblur_filter()
-            self.deblur_denoise()
-            self.deblur_visualize()
-        elif self.atype == 'dada2':
-            self.dada2()
-            self.tabulate()
-
+        # Run these commands sequentially
+        self.filter_by_metadata()
         self.alignment_mafft()
         self.alignment_mask()
         self.phylogeny_fasttree()
         self.phylogeny_midpoint_root()
         self.core_diversity()
+
         # Run these commands in parallel
         self.alpha_diversity()
         for col in self.config['metadata']:
             self.beta_diversity(col)
         self.alpha_rarefaction()
+
         # Wait for them all to finish
         self.jobtext.append('wait')
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
-        self.summary()
-        # Define the job and error files
-        jobfile = self.path / (self.run_id + '_job')
-        self.add_path(jobfile, '.lsf', 'jobfile')
-        error_log = self.path / self.run_id
-        self.add_path(error_log, '.err', 'errorlog')
 
-    def run(self):
-        """ Perform some analysis. """
-        try:
-            self.setup_analysis()
-            jobfile = self.files['jobfile']
-            self.write_file_locations()
-            if self.testing:
-                # Open the jobfile to write all the commands
-                jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
-                # Run the command
-                run([jobfile], check=True)
-            else:
-                # Get the job header text from the template
-                temp = JOB_TEMPLATE.read_text()
-                # Write all the commands
-                jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
-                # Set execute permissions
-                jobfile.chmod(0o770)
-                #  Temporary for testing on Minerva
-                run([jobfile], check=True)
-                #  job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-                #  self.wait_on_job(job_id)
+        # Calculate group significance
+        for col in self.config['metadata']:
+            self.group_significance(col)
+            # For the requested taxanomic levels
+            for level in self.config['taxa_levels']:
+                self.group_significance(col, level)
+        self.jobtext.append('wait')
 
-            self.sanity_check()
-            doc = self.db.get_metadata(self.access_code)
-            self.move_user_files()
-            self.add_summary_files()
-            log('Send email')
-            if not self.testing:
-                send_email(doc.email,
-                           doc.owner,
-                           'analysis',
-                           analysis_type='Qiime2 (2018.4) ' + self.atype,
-                           study_name=doc.study,
-                           summary=self.path / 'summary/analysis.pdf',
-                           testing=self.testing)
-        except CalledProcessError as e:
-            self.move_user_files()
-            self.write_file_locations()
-            raise AnalysisError(e.args[0])
+        # Perform standard tool setup
+        super().setup_analysis()

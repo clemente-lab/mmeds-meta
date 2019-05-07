@@ -39,7 +39,7 @@ def summarize_qiime(summary_path, tool):
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config((path / 'config_file.txt').read_text(), files['metadata'])
+    config = load_config((path / 'config_file.txt').read_text(), files['metadata'], True)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config)
@@ -73,7 +73,7 @@ def summarize_qiime1(path, files, config):
 
     # Convert and store the otu table
     cmd = ['biom', 'convert', '--to-tsv', '--header-key=taxonomy',
-           '-i', str(files['otu_output'] / 'otu_table.biom'),
+           '-i', str(files['biom_table']),
            '-o', str(path / 'otu_table.tsv')]
     try:
         run(cmd, capture_output=True, env=new_env, check=True)
@@ -117,6 +117,7 @@ def summarize_qiime2(path, files, config):
     summary_files = defaultdict(list)
 
     # Get Taxa
+    print('get taxa')
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['taxa_bar_plot']),
            '--output-path', str(path / 'temp')]
@@ -128,6 +129,7 @@ def summarize_qiime2(path, files, config):
     rmtree(path / 'temp')
 
     # Get Beta
+    print('get beta')
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
         cmd = ['qiime', 'tools', 'export',
@@ -141,6 +143,7 @@ def summarize_qiime2(path, files, config):
     rmtree(path / 'temp')
 
     # Get Alpha
+    print('get alpha')
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]

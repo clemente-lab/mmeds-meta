@@ -74,7 +74,8 @@ def test_get_valid_columns():
 def test_load_config_file():
     # Test when no config is given
     config = util.load_config(None, fig.TEST_METADATA)
-    assert len(config.keys()) == 6
+    for param in fig.CONFIG_PARAMETERS:
+        assert config.get(param) is not None
 
     config = util.load_config(Path(fig.TEST_CONFIG_ALL).read_text(), fig.TEST_METADATA)
     assert len(config['taxa_levels']) == 7
@@ -131,3 +132,18 @@ def test_load_html():
     # Assert no errors, warnings are okay
     for warn in errors:
         assert not ('error' in warn or 'Error' in warn)
+
+
+def test_read_write_mmeds():
+    tmpdir = Path(gettempdir())
+    mdf = util.load_metadata(fig.TEST_METADATA)
+    util.write_metadata(mdf, tmpdir / 'metadata_copy.tsv')
+
+    h1 = hl.md5()
+    h2 = hl.md5()
+    h1.update(Path(fig.TEST_METADATA).read_bytes())
+    h2.update((tmpdir / 'metadata_copy.tsv').read_bytes())
+    hash1 = h1.hexdigest()
+    hash2 = h2.hexdigest()
+
+    assert hash1 == hash2
