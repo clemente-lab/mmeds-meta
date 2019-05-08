@@ -2,6 +2,7 @@ import mongoengine as men
 from datetime import datetime
 from pathlib import Path
 from mmeds.config import get_salt
+from mmeds.util import copy_metadata
 
 
 class StudyDoc(men.DynamicDocument):
@@ -46,23 +47,74 @@ class StudyDoc(men.DynamicDocument):
         self_string += 'files: {}\n'.format(self.files.keys())
         return self_string
 
-    def generate_AnalysisDoc(self, path, access_code=get_salt(20)):
+    def generate_AnalysisDoc(self, name, access_code=get_salt(20)):
+        """ Create a new AnalysisDoc from the current StudyDoc """
+        files = {}
+        run_id = 0
+
+        # Create a new directory to perform the analysis in
+        new_dir = Path(self.path) / '{}_{}'.format(name, run_id).replace('-', '_')
+        while new_dir.is_dir():
+            run_id += 1
+            new_dir = Path(self.path) / '{}_{}'.format(name, run_id).replace('-', '_')
+
+        new_dir = new_dir.resolve()
+        new_dir.mkdir()
+
+        # Handle demuxed sequences
+        if Path(self.files['for_reads']).suffix in ['.zip', '.tar']:
+            (new_dir / 'data.zip').symlink_to(self.files['for_reads'])
+            files['data'] = new_dir / 'data.zip'
+            data_type = self.reads_type + '_demuxed'
+        # Handle all sequences in one file
+        else:
+            # Create links to the files
+            (new_dir / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
+            (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
+
+            # Add the links to the files dict for this analysis
+            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+            files['for_reads'] = new_dir / 'for_reads.fastq.gz'
+
+            # Handle paired end sequences
+            if self.reads_type == 'paired_end':
+                # Create links to the files
+                (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
+
+                # Add the links to the files dict for this analysis
+                files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
+            data_type = self.reads_type
+
+        copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
+        files['metadata'] = new_dir / 'metadata.tsv'
+        string_files = {str(key): str(value) for key, value in files.items()}
+
         return AnalysisDoc(created=datetime.now(),
                            last_accessed=datetime.now(),
+                           name=new_dir.name,
                            owner=self.owner,
                            email=self.email,
-                           path=path,
+                           path=str(new_dir),
                            study_access_code=self.access_code,
                            access_code=access_code,
-                           reads_type=self.reads_type)
+                           reads_type=self.reads_type,
+                           data_type=data_type,
+                           files=string_files)
 
 
 class AnalysisDoc(men.DynamicDocument):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
+    name = men.StringField(max_length=100, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
     path = men.StringField(max_length=100, required=True)
     study_access_code = men.StringField(max_length=50, required=True)
     access_code = men.StringField(max_length=50, required=True)
     reads_type = men.StringField(max_length=45, required=True)
+    data_type = men.StringField(max_length=45, required=True)
+    files = men.DictField()
+
+    def create_copy(self, category, value):
+        """ Creates a new AnalysisDoc for a child analysis """
+        pass

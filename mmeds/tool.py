@@ -15,23 +15,6 @@ from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 import multiprocessing as mp
 
 
-def run_tool(tool, run=True):
-    """ Run tool analysis. """
-    try:
-        if run:
-            tool.run()
-        else:
-            tool.setup_analysis()
-    except AnalysisError as e:
-        email = get_email(tool.owner, testing=tool.testing)
-        send_email(email,
-                   tool.owner,
-                   'error',
-                   analysis_type=tool.atype,
-                   error=e.message,
-                   testing=tool.testing)
-
-
 class Tool(mp.Process):
     """
     The base class for tools used by mmeds inherits the python Process class.
@@ -53,7 +36,7 @@ class Tool(mp.Process):
         :child: A boolean. If True this Tool object is the child of another tool.
         """
         super().__init__()
-        self.access_code = access_code
+        self.study_code = access_code
         self.testing = testing
         self.jobtext = []
         self.owner = owner
@@ -63,69 +46,30 @@ class Tool(mp.Process):
         self.config = config
         self.columns = []
 
-        if threads > mp.cpu_count():
-            threads = mp.cpu_count()
-
         with Database(owner=self.owner, testing=self.testing) as db:
-            files, path = db.get_mongo_files(self.access_code)
+            metadata = db.get_metadata(self.study_code)
+            self.doc = metadata.generate_AnalysisDoc(self.name)
+        log('initial doc.files')
+        self.path = Path(self.doc.path)
+        self.files = self.doc.files
+
         if testing:
             self.num_jobs = 2
         else:
-            self.num_jobs = threads
-        self.path, self.run_id, self.files, self.data_type = self.setup_dir(Path(path))
-        self.run_dir = Path('$RUN_{}'.format(self.run_id))
-        self.add_path('analysis{}'.format(self.run_id), '')
+            self.num_jobs = min([threads, mp.cpu_count()])
+
+        self.run_dir = Path('$RUN_{}'.format(self.doc.name))
+        self.add_path(self.path, key='path')
         self.write_config()
         self.create_qiime_mapping_file()
         self.children = []
         self.is_child = False
+        self.data_type = self.doc.data_type
+        self.doc.save()
 
     def get_file(self, key):
         """ Get the path to the file stored under 'key' relative to the run dir """
-        return self.run_dir / self.files[key].relative_to(self.path)
-
-    def setup_dir(self, path):
-        """ Setup the directory to run the analysis. """
-        files = {}
-        run_id = 0
-        # Create a new directory to perform the analysis in
-        new_dir = path / '{}_{}'.format(self.name, run_id)
-        while new_dir.is_dir():
-            run_id += 1
-            new_dir = path / '{}_{}'.format(self.name, run_id)
-
-        new_dir = new_dir.resolve()
-        with Database(owner=self.owner, testing=self.testing) as db:
-            metadata = db.get_metadata(self.access_code)
-        new_dir.mkdir()
-        # Handle demuxed sequences
-        if Path(metadata.files['for_reads']).suffix in ['.zip', '.tar']:
-            (new_dir / 'data.zip').symlink_to(metadata.files['for_reads'])
-            files['data'] = new_dir / 'data.zip'
-            data_type = metadata.reads_type + '_demuxed'
-        # Handle all sequences in one file
-        else:
-            # Create links to the files
-            (new_dir / 'barcodes.fastq.gz').symlink_to(metadata.files['barcodes'])
-            (new_dir / 'for_reads.fastq.gz').symlink_to(metadata.files['for_reads'])
-
-            # Add the links to the files dict for this analysis
-            files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-            files['for_reads'] = new_dir / 'for_reads.fastq.gz'
-
-            # Handle paired end sequences
-            if metadata.reads_type == 'paired_end':
-                # Create links to the files
-                (new_dir / 'rev_reads.fastq.gz').symlink_to(metadata.files['rev_reads'])
-
-                # Add the links to the files dict for this analysis
-                files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
-            data_type = metadata.reads_type
-
-        copy_metadata(metadata.files['metadata'], new_dir / 'metadata.tsv')
-        files['metadata'] = new_dir / 'metadata.tsv'
-        log("Analysis directory is {}. Run.".format(new_dir))
-        return new_dir, str(run_id), files, data_type
+        return self.run_dir / Path(self.files[key]).relative_to(self.path)
 
     def write_config(self):
         """ Write out the config file being used to the working directory. """
@@ -159,7 +103,7 @@ class Tool(mp.Process):
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         with Database(owner=self.owner, testing=self.testing) as db:
-            files, path = db.get_mongo_files(self.access_code)
+            files, path = db.get_mongo_files(self.study_code)
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
         self.jobtext.append(cmd)
 
@@ -167,9 +111,7 @@ class Tool(mp.Process):
         params = {
             'walltime': '6:00',
             'walltime2': '2:00',
-            'jobname': '{}-{}-{}'.format(self.owner,
-                                         self.atype,
-                                         self.run_id),
+            'jobname': '{}-{}'.format(self.owner, self.doc.name),
             'path': self.path,
             'nodes': self.num_jobs,
             'memory': 1000,
@@ -216,16 +158,14 @@ class Tool(mp.Process):
         Update the relevant document's metadata and
         create a file_index in the analysis directoy.
         """
-        string_files = {str(key): str(self.files[key]) for key in self.files.keys()}
+        string_files = {str(key): str(value) for key, value in self.files.items()}
 
         with Database(owner=self.owner, testing=self.testing) as db:
-            db.update_metadata(self.access_code,
-                               'analysis{}'.format(self.run_id),
-                               string_files)
+            db.update_metadata(self.study_code, self.doc.name, string_files)
 
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
-            f.write('{}\t{}\n'.format(self.owner, self.access_code))
+            f.write('{}\t{}\n'.format(self.owner, self.study_code))
             f.write('Key\tPath\n')
             for key in self.files:
                 f.write('{}\t{}\n'.format(key, self.files[key]))
@@ -237,6 +177,9 @@ class Tool(mp.Process):
             self.files[key] = Path('{}{}'.format(self.path / name, extension))
         else:
             self.files[name] = Path('{}{}'.format(self.path / name, extension))
+        string_files = {str(key): str(value) for key, value in self.files.items()}
+        self.doc.files = string_files
+        self.doc.save()
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
@@ -266,11 +209,11 @@ class Tool(mp.Process):
     def add_summary_files(self):
         """ Add the analysis summary and associated directory to the metadata files """
         with Database(owner=self.owner, testing=self.testing) as db:
-            db.update_metadata(self.access_code,
-                               'analysis{}_summary'.format(self.run_id),
+            db.update_metadata(self.study_code,
+                               '{}_summary'.format(self.doc.name),
                                str(self.path / 'summary/analysis.pdf'))
-            db.update_metadata(self.access_code,
-                               'analysis{}_summary_dir'.format(self.run_id),
+            db.update_metadata(self.study_code,
+                               '{}_summary_dir'.format(self.doc.name),
                                str(self.path / 'summary'))
 
     def create_child(self, category, value):
@@ -294,6 +237,7 @@ class Tool(mp.Process):
         child.files = {
             'metadata': child.path / 'metadata.tsv',
         }
+        child.doc = self.doc.create_copy(category, value)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
@@ -320,8 +264,8 @@ class Tool(mp.Process):
         write_metadata(new_mdf, child.files['metadata'])
 
         # Update child's vars
-        child.add_path('analysis{}/{}_{}/'.format(child.run_id, category[1], file_value), '')
-        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.run_id, category[1], file_value))
+        child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
+        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.doc.name, category[1], file_value))
 
         # Update the text for the job file
         child.jobtext = deepcopy(self.jobtext)[:2]
@@ -373,11 +317,11 @@ class Tool(mp.Process):
         self.summary()
 
         # Define the job and error files
-        jobfile = self.path / (self.run_id + '_job')
+        jobfile = self.path / 'jobfile'
         self.add_path(jobfile, '.lsf', 'jobfile')
-        submitfile = self.path / (self.run_id + '_submit')
+        submitfile = self.path / 'submitfile'
         self.add_path(submitfile, '.sh', 'submitfile')
-        error_log = self.path / self.run_id
+        error_log = self.path / 'errorlog'
         self.add_path(error_log, '.err', 'errorlog')
         jobfile = self.files['jobfile']
         if self.testing:
@@ -426,7 +370,7 @@ class Tool(mp.Process):
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
             with Database(owner=self.owner, testing=self.testing) as db:
-                doc = db.get_metadata(self.access_code)
+                doc = db.get_metadata(self.study_code)
             self.move_user_files()
             self.add_summary_files()
             log('Send email')

@@ -65,7 +65,7 @@ class AnalysisTests(TestCase):
                                  self.testing)
         while p.is_alive():
             sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime2-2_0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) / 'Qiime2_2_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
 
@@ -77,6 +77,6 @@ class AnalysisTests(TestCase):
                                  self.testing)
         while p.is_alive():
             sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime1-1_0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) / 'Qiime1_1_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
