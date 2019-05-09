@@ -84,3 +84,12 @@ class ToolTests(TestCase):
         assert (self.tool.path / 'visualizations_dir').is_dir()
         assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
         assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
+
+    def test_missing_file(self):
+        """ Test that an appropriate error will be raised if a file doesn't exist on disk """
+
+    def test_start_sub_analysis_cold(self):
+        """ Test that a sub-analysis can be successfully started from a previously run analysis. """
+
+    def test_restart_analysis(self):
+        """ Test that a analysis can be restarted from a previously failed run """

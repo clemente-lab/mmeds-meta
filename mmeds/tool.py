@@ -48,7 +48,7 @@ class Tool(mp.Process):
 
         with Database(owner=self.owner, testing=self.testing) as db:
             metadata = db.get_metadata(self.study_code)
-            self.doc = metadata.generate_AnalysisDoc(self.name)
+            self.doc = metadata.generate_AnalysisDoc(self.name, atype)
         log('initial doc.files')
         self.path = Path(self.doc.path)
         self.files = self.doc.files

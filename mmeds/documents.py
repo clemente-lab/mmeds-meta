@@ -1,6 +1,7 @@
 import mongoengine as men
 from datetime import datetime
 from pathlib import Path
+from copy import deepcopy
 from mmeds.config import get_salt
 from mmeds.util import copy_metadata
 
@@ -47,7 +48,7 @@ class StudyDoc(men.DynamicDocument):
         self_string += 'files: {}\n'.format(self.files.keys())
         return self_string
 
-    def generate_AnalysisDoc(self, name, access_code=get_salt(20)):
+    def generate_AnalysisDoc(self, name, analysis_type, access_code=get_salt(20)):
         """ Create a new AnalysisDoc from the current StudyDoc """
         files = {}
         run_id = 0
@@ -95,10 +96,11 @@ class StudyDoc(men.DynamicDocument):
                            owner=self.owner,
                            email=self.email,
                            path=str(new_dir),
-                           study_access_code=self.access_code,
-                           access_code=access_code,
+                           study_code=self.access_code,
+                           analysis_code=access_code,
                            reads_type=self.reads_type,
                            data_type=data_type,
+                           analysis_type=analysis_type,
                            files=string_files)
 
 
@@ -109,12 +111,29 @@ class AnalysisDoc(men.DynamicDocument):
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
     path = men.StringField(max_length=100, required=True)
-    study_access_code = men.StringField(max_length=50, required=True)
-    access_code = men.StringField(max_length=50, required=True)
+    study_code = men.StringField(max_length=50, required=True)
+    analysis_code = men.StringField(max_length=50, required=True)
     reads_type = men.StringField(max_length=45, required=True)
     data_type = men.StringField(max_length=45, required=True)
+    analysis_type = men.StringField(max_length=45, required=True)
     files = men.DictField()
 
     def create_copy(self, category, value):
         """ Creates a new AnalysisDoc for a child analysis """
-        pass
+        child = deepcopy(self)
+        child.files = {}
+        child.created = datetime.now()
+        child.last_accessed = datetime.now()
+        return child
+
+    def __getitem__(self, key):
+        """ Return the requested file as a path object """
+        return Path(self.files[key])
+
+
+class MMEDSProcess(men.Document):
+    status = men.StringField(max_length=100, required=True)
+    pid = men.IntField(required=True)  # -1 if it hasn't started yet, -2 if it's finished
+    queue_position = men.IntField(required=True)  # -1 if it hasn't started yet, -2 if it's finished
+    ptype = men.StringField(max_length=100, required=True)
+    associated_doc = men.StringField(max_length=100, required=True)  # Access code for associated document
