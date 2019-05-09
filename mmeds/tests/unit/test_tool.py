@@ -1,11 +1,13 @@
 from unittest import TestCase
+from shutil import rmtree
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
-from mmeds.database import MetaDataUploader
+from mmeds.database import MetaDataUploader, Database
 from mmeds.util import load_config
 
-from shutil import rmtree
+import mongoengine as men
+
 import mmeds.config as fig
 import mmeds.secrets as sec
 
@@ -25,6 +27,7 @@ def upload_metadata(args):
 
 class ToolTests(TestCase):
     """ Tests of top-level functions """
+    testing = True
 
     @classmethod
     def setUpClass(self):
@@ -40,7 +43,7 @@ class ToolTests(TestCase):
                          'test-1',
                          self.config, True,
                          8, True)
-        self.dirs = [self.tool.path]
+        self.dirs = [self.tool.doc.path]
 
     @classmethod
     def tearDownClass(self):
@@ -48,27 +51,14 @@ class ToolTests(TestCase):
         for new_dir in self.dirs:
             rmtree(new_dir)
 
-    def test_setup_dir(self):
-        return
-        new_dir, run_id, files, data_type = self.tool.setup_dir(fig.TEST_DIR)
-        self.dirs.append(new_dir)
-
-        assert str(fig.TEST_DIR / 'Tool-1') in str(new_dir)
-        assert data_type == 'single_end'
-        assert 'metadata' in files.keys()
-        assert files['metadata'].is_file()
-
     def test_add_path(self):
         """ Test that adding files to the tool object works properly """
-        assert 'testfile' not in self.tool.files.keys()
+        assert 'testfile' not in self.tool.doc.files.keys()
         self.tool.add_path('testfile', '.txt')
-        assert 'testfile' in self.tool.files.keys()
-        assert not self.tool.files['testfile'].is_file()
+        assert 'testfile' in self.tool.doc.files.keys()
 
     def test_get_job_params(self):
         params = self.tool.get_job_params()
-        # assert '{}-{}'.format(fig.TEST_USER, 1) in params['jobname']
-        print(params['jobname'])
         assert params['nodes'] == 2
 
     def test_move_user_files(self):
@@ -87,9 +77,16 @@ class ToolTests(TestCase):
 
     def test_missing_file(self):
         """ Test that an appropriate error will be raised if a file doesn't exist on disk """
+        # TODO
 
     def test_start_sub_analysis_cold(self):
         """ Test that a sub-analysis can be successfully started from a previously run analysis. """
+        # TODO
 
     def test_restart_analysis(self):
-        """ Test that a analysis can be restarted from a previously failed run """
+        """ Test restarting an analysis from a analysis doc. """
+        # TODO
+
+    def test_start_analysis(self):
+        """ Test starting an analysis from a study doc. """
+        # TODO

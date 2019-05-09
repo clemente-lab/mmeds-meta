@@ -6,7 +6,7 @@ from mmeds.config import get_salt
 from mmeds.util import copy_metadata
 
 
-class StudyDoc(men.DynamicDocument):
+class StudyDoc(men.Document):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
     study_type = men.StringField(max_length=45, required=True)
@@ -104,7 +104,7 @@ class StudyDoc(men.DynamicDocument):
                            files=string_files)
 
 
-class AnalysisDoc(men.DynamicDocument):
+class AnalysisDoc(men.Document):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
     name = men.StringField(max_length=100, required=True)
@@ -126,9 +126,11 @@ class AnalysisDoc(men.DynamicDocument):
         child.last_accessed = datetime.now()
         return child
 
-    def __getitem__(self, key):
-        """ Return the requested file as a path object """
-        return Path(self.files[key])
+    def __str__(self):
+        self_string = ''
+        for attr, value in self.__dict__.items():
+            self_string += '{}: {}\n'.format(attr, value)
+        return self_string
 
 
 class MMEDSProcess(men.Document):

@@ -68,6 +68,7 @@ class AnalysisTests(TestCase):
         self.assertTrue((Path(self.path) / 'Qiime2_2_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
+        self.summarize(0, 'qiime2')
 
     def test_qiime1(self):
         self.handle_data_upload()
@@ -80,3 +81,4 @@ class AnalysisTests(TestCase):
         self.assertTrue((Path(self.path) / 'Qiime1_1_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
+        self.summarize(0, 'qiime1')

@@ -435,6 +435,14 @@ class Database:
         """
         return StudyDoc.objects(access_code=access_code, owner=self.owner).first()
 
+    def get_analysis(self, access_code):
+        """
+        Return the StudyDoc object.
+        This object should be treated as read only.
+        Any modifications should be done through the Database class.
+        """
+        return AnalysisDoc.objects(access_code=access_code, owner=self.owner).first()
+
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
         mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()

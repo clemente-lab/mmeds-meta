@@ -23,7 +23,7 @@ class Qiime2(Tool):
     def qimport(self):
         """ Split the libraries and perform quality analysis. """
 
-        self.files['demux_file'] = self.path / 'qiime_artifact.qza'
+        self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
 
         if 'demuxed' in self.data_type:
             # If the reads are already demultiplexed import the whole directory
@@ -35,41 +35,35 @@ class Qiime2(Tool):
                 '--output-path {};'.format(self.get_file('demux_file'))
             ]
             command = ' '.join(cmd)
-        elif self.data_type == 'single_end':
+        else:
             # Create a directory to import as a Qiime2 object
-            self.files['working_file'] = self.path / 'qiime_artifact.qza'
-            self.files['working_dir'] = self.path / 'import_dir'
+            self.add_path(self.path / 'import_dir', key='working_dir')
+            self.add_path(self.path / 'qiime_artifact.qza', key='working_file')
 
-            if not self.files['working_dir'].is_dir():
-                self.files['working_dir'].mkdir()
+            if not self.get_file('working_dir', True).is_dir():
+                self.get_file('working_dir', True).mkdir()
 
-            # Create links to the data in the qiime2 import directory
-            (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-            (self.files['working_dir'] / 'sequences.fastq.gz').symlink_to(self.files['for_reads'])
+            # Link the barcodes
+            (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
+            if self.data_type == 'single_end':
+                # Create links to the data in the qiime2 import directory
+                (self.get_file('working_dir', True) / 'sequences.fastq.gz').symlink_to(self.get_file('for_reads', True))
 
-            # Run the script
-            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            command = cmd.format('EMPSingleEndSequences',
-                                 self.get_file('working_dir'),
-                                 self.get_file('working_file'))
-        elif self.data_type == 'paired_end':
-            # Create a directory to import as a Qiime2 object
-            self.files['working_file'] = self.path / 'qiime_artifact.qza'
-            self.files['working_dir'] = self.path / 'import_dir'
+                # Run the script
+                cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+                command = cmd.format('EMPSingleEndSequences',
+                                     self.get_file('working_dir'),
+                                     self.get_file('working_file'))
+            elif self.data_type == 'paired_end':
+                # Create links to the data in the qiime2 import directory
+                (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
+                (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
 
-            if not self.files['working_dir'].is_dir():
-                self.files['working_dir'].mkdir()
-
-            # Create links to the data in the qiime2 import directory
-            (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-            (self.files['working_dir'] / 'forward.fastq.gz').symlink_to(self.files['for_reads'])
-            (self.files['working_dir'] / 'reverse.fastq.gz').symlink_to(self.files['rev_reads'])
-
-            # Run the script
-            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            command = cmd.format('EMPPairedEndSequences',
-                                 self.get_file('working_dir'),
-                                 self.get_file('working_file'))
+                # Run the script
+                cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+                command = cmd.format('EMPPairedEndSequences',
+                                     self.get_file('working_dir'),
+                                     self.get_file('working_file'))
         self.jobtext.append(command)
 
     def demultiplex(self):
@@ -392,11 +386,11 @@ class Qiime2(Tool):
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
-        log(self.files.keys())
+        log(self.doc.keys())
         new_env = setup_environment('qiime2/2019.1')
         # Check the counts at the beginning of the analysis
         cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(self.files['demux_viz']),
+               '--input-path', str(self.get_file('demux_viz', True)),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
 
@@ -406,7 +400,7 @@ class Qiime2(Tool):
 
         # Check the counts after DADA2/DeBlur
         cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(self.files['filtered_table']),
+               '--input-path', str(self.get_file('filtered_table', True)),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
         log(cmd)

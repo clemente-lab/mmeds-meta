@@ -22,11 +22,6 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
-
-    log('After get mongo files')
-    log(atype)
-    log(type(config_file))
-    log(config_file)
     if isinstance(config_file, str):
         log('load path config {}'.format(config_file))
         config = load_config(config_file, files['metadata'])

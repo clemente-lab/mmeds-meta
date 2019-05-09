@@ -8,11 +8,12 @@ class DocTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        men.connect('test')
+        """ Set up tests """
 
     @classmethod
     def tearDownClass(self):
-        men.disconnect()
+        """ Clean up """
 
     def test_access(self):
         """"""
+        # TODO

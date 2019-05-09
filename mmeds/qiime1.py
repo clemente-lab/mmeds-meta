@@ -129,7 +129,7 @@ class Qiime1(Tool):
         try:
             # Count the sequences prior to diversity analysis
             new_env = setup_environment('qiime/1.9.1')
-            cmd = ['count_seqs.py', '-i', str(self.files['split_output'] / 'seqs.fna')]
+            cmd = ['count_seqs.py', '-i', str(self.get_file('split_output', True) / 'seqs.fna')]
             output = run(cmd, check=True, env=new_env)
 
             out = output.stdout.decode('utf-8')
@@ -137,7 +137,7 @@ class Qiime1(Tool):
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
             # Count the sequences in the output of the diversity analysis
-            with open(self.files['diversity_output'] / 'biom_table_summary.txt') as f:
+            with open(self.get_file('diversity_output', True) / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
                 log('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))

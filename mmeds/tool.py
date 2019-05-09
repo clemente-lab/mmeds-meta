@@ -6,9 +6,9 @@ from copy import copy as classcopy
 from copy import deepcopy
 
 from mmeds.database import Database
-from mmeds.util import (log, create_qiime_from_mmeds, copy_metadata, test_log,
-                        load_metadata, write_metadata, camel_case, send_email)
-from mmeds.authentication import get_email
+from mmeds.util import (log, create_qiime_from_mmeds, test_log,
+                        load_metadata, write_metadata, camel_case,
+                        send_email)
 from mmeds.error import AnalysisError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 
@@ -49,9 +49,9 @@ class Tool(mp.Process):
         with Database(owner=self.owner, testing=self.testing) as db:
             metadata = db.get_metadata(self.study_code)
             self.doc = metadata.generate_AnalysisDoc(self.name, atype)
+
         log('initial doc.files')
         self.path = Path(self.doc.path)
-        self.files = self.doc.files
 
         if testing:
             self.num_jobs = 2
@@ -67,9 +67,21 @@ class Tool(mp.Process):
         self.data_type = self.doc.data_type
         self.doc.save()
 
-    def get_file(self, key):
+    def add_path(self, name, extension='', key=None):
+        """ Add a file or directory with the full path to self.doc. """
+        if key:
+            self.doc.files[str(key)] = '{}{}'.format(self.path / name, extension)
+        else:
+            self.doc.files[str(name)] = '{}{}'.format(self.path / name, extension)
+        self.doc.save()
+
+    def get_file(self, key, absolute=False):
         """ Get the path to the file stored under 'key' relative to the run dir """
-        return self.run_dir / Path(self.files[key]).relative_to(self.path)
+        if absolute:
+            file_path = Path(self.doc.files[key])
+        else:
+            file_path = self.run_dir / Path(self.doc.files[key]).relative_to(self.path)
+        return file_path
 
     def write_config(self):
         """ Write out the config file being used to the working directory. """
@@ -102,9 +114,7 @@ class Tool(mp.Process):
 
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
-        with Database(owner=self.owner, testing=self.testing) as db:
-            files, path = db.get_mongo_files(self.study_code)
-        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(files['mapping'], self.path)
+        cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.get_file('mapping', True), self.path)
         self.jobtext.append(cmd)
 
     def get_job_params(self):
@@ -142,13 +152,13 @@ class Tool(mp.Process):
         try:
             log('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
-            if not self.files['visualizations_dir'].is_dir():
-                self.files['visualizations_dir'].mkdir()
-            for key in self.files.keys():
-                f = self.files[key]
-                if '.qzv' in str(self.files[key]):
+            if not self.get_file('visualizations_dir', True).is_dir():
+                self.get_file('visualizations_dir', True).mkdir()
+            for key in self.doc.files.keys():
+                f = self.get_file(key)
+                if '.qzv' in str(self.get_file(key, True)):
                     new_file = f.name
-                    copy(self.files[key], self.files['visualizations_dir'] / new_file)
+                    copy(self.get_file(key, True), self.get_file('visualizations_dir', True) / new_file)
         except FileNotFoundError as e:
             log(e)
             raise AnalysisError(e.args[1])
@@ -158,33 +168,20 @@ class Tool(mp.Process):
         Update the relevant document's metadata and
         create a file_index in the analysis directoy.
         """
-        string_files = {str(key): str(value) for key, value in self.files.items()}
-
         with Database(owner=self.owner, testing=self.testing) as db:
-            db.update_metadata(self.study_code, self.doc.name, string_files)
+            db.update_metadata(self.study_code, self.doc.name, self.doc.files)
 
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
             f.write('{}\t{}\n'.format(self.owner, self.study_code))
             f.write('Key\tPath\n')
-            for key in self.files:
-                f.write('{}\t{}\n'.format(key, self.files[key]))
-        log(self.files.keys())
-
-    def add_path(self, name, extension='', key=None):
-        """ Add a file or directory with the full path to self.files. """
-        if key:
-            self.files[key] = Path('{}{}'.format(self.path / name, extension))
-        else:
-            self.files[name] = Path('{}{}'.format(self.path / name, extension))
-        string_files = {str(key): str(value) for key, value in self.files.items()}
-        self.doc.files = string_files
-        self.doc.save()
+            for key, value in self.doc.files.items():
+                f.write('{}\t{}\n'.format(key, value))
 
     def create_qiime_mapping_file(self):
         """ Create a qiime mapping file from the metadata """
         # Open the metadata file for the study
-        mmeds_file = self.files['metadata']
+        mmeds_file = self.get_file('metadata', True)
 
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
@@ -192,7 +189,7 @@ class Tool(mp.Process):
         self.columns = create_qiime_from_mmeds(mmeds_file, qiime_file, self.tool)
 
         # Add the mapping file to the MetaData object
-        self.files['mapping'] = qiime_file
+        self.add_path(qiime_file, key='mapping')
 
     def summary(self):
         """ Setup script to create summary. """
@@ -241,27 +238,28 @@ class Tool(mp.Process):
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
-            if self.files.get(parent_file) is not None:
+            if self.doc.get(parent_file) is not None:
                 # Add qiime1 specific biom tables
                 if 'Qiime1' in self.name and parent_file == 'biom_table':
                     child_file = child.path / 'otu_table.biom'
-                    child_file.symlink_to(self.files.get('split_otu_{}'.format(category[1])) /
+                    child_file.symlink_to(self.doc.get('split_otu_{}'.format(category[1])) /
                                           'otu_table__{}_{}__.biom'.format(category[1], value))
-                    child.files['biom_table'] = child_file
+                    child.set_file(child_file, key='biom_table')
                 else:
-                    child_file = child.path / self.files.get(parent_file).name
-                    child_file.symlink_to(self.files.get(parent_file))
-                    child.files[parent_file] = child_file
-        if 'Qiime1' in self.name:
-            child.files['parent_table'] = (self.files.get('split_otu_{}'.format(category[1])) /
-                                           'otu_table__{}_{}__.biom'.format(category[1], value))
+                    child_file = child.path / self.doc.get(parent_file).name
+                    child_file.symlink_to(self.doc.get(parent_file))
+                    child.add_path(child_file, key=parent_file)
+                    if 'Qiime1' in self.name:
+                        child.add_path(self.doc.get('split_otu_{}'.format(category[1])) /
+                                       'otu_table__{}_{}__.biom'.format(category[1], value),
+                                       key='parent_table')
         else:
-            child.files['parent_table'] = self.path / self.files.get('otu_table')
+            child.add_path(self.path / self.doc.get('otu_table'), key='parent_table')
 
         # Filter the metadata and write the new file to the childs directory
-        mdf = load_metadata(self.files['metadata'])
+        mdf = load_metadata(self.get_file('metadata', True))
         new_mdf = mdf.loc[mdf[category] == value]
-        write_metadata(new_mdf, child.files['metadata'])
+        write_metadata(new_mdf, child.get_file('metadata', True))
 
         # Update child's vars
         child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
@@ -288,7 +286,7 @@ class Tool(mp.Process):
 
     def create_children(self):
         """ Create child analysis processes """
-        mdf = load_metadata(self.files['metadata'])
+        mdf = load_metadata(self.get_file('metadata', True))
 
         # For each column selected...
         for col in self.config['sub_analysis']:
@@ -308,22 +306,21 @@ class Tool(mp.Process):
             child.start()
 
     def wait_on_children(self):
-        # Wait for all child analyses
+        """ Wait for all child analyses """
         for child in self.children:
             child.join()
 
     def setup_analysis(self):
-        # Create the summary of the analysis
+        """ Create the summary of the analysis """
         self.summary()
 
         # Define the job and error files
-        jobfile = self.path / 'jobfile'
-        self.add_path(jobfile, '.lsf', 'jobfile')
+        jobfile = self.path / 'jobfile.lsf'
+        self.add_path(jobfile, key='jobfile')
         submitfile = self.path / 'submitfile'
         self.add_path(submitfile, '.sh', 'submitfile')
         error_log = self.path / 'errorlog'
         self.add_path(error_log, '.err', 'errorlog')
-        jobfile = self.files['jobfile']
         if self.testing:
             # Open the jobfile to write all the commands
             jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
@@ -342,9 +339,9 @@ class Tool(mp.Process):
             self.setup_analysis()
             if self.is_child:
                 # Wait for the otu table to show up
-                while not self.files['parent_table'].exists():
+                while not self.get_file('parent_table', True).exists():
                     sleep(10)
-            jobfile = self.files['jobfile']
+            jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
             # Start the sub analyses if so configured
             if self.config['sub_analysis']:
@@ -354,13 +351,13 @@ class Tool(mp.Process):
             if self.testing:
                 test_log('{} start job'.format(self.name))
                 # Send the output to the error log
-                with open(self.files['errorlog'], 'w') as f:
+                with open(self.get_file('errorlog', True), 'w') as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f, check=True)
                 test_log('{} finished job'.format(self.name))
             else:
                 # Create a file to execute the submission
-                submitfile = self.files['submitfile']
+                submitfile = self.get_file('submitfile', True)
                 submitfile.write_text('\n'.join(['#!/bin/bash -l', 'bsub < {};'.format(jobfile)]))
                 # Set execute permissions
                 submitfile.chmod(0o770)
