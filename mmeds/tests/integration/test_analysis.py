@@ -1,6 +1,7 @@
 from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
+from mmeds.summary import summarize_qiime
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
@@ -57,18 +58,9 @@ class AnalysisTests(TestCase):
         # Check the files exist and their contents match the initial uploads
         self.assertEqual(Path(self.files['for_reads']).read_bytes(), Path(fig.TEST_READS).read_bytes())
 
-    def test_qiime2(self):
-        self.handle_data_upload()
-        self.handle_modify_data()
-        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG).read_text(),
-                                 self.testing)
-        while p.is_alive():
-            sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime2_2_0/summary/analysis.pdf').is_file())
-        for child in p.children:
-            self.assertEqual(child.exit_code, 0)
-        self.summarize(0, 'qiime2')
+    def summarize(self, count, tool):
+        summarize_qiime(tool.path, tool)
+        self.assertTrue(tool.path / 'summary/analysis.pdf'.format(count).is_file())
 
     def test_qiime1(self):
         self.handle_data_upload()
@@ -82,3 +74,16 @@ class AnalysisTests(TestCase):
         for child in p.children:
             self.assertEqual(child.exit_code, 0)
         self.summarize(0, 'qiime1')
+
+    def test_qiime2(self):
+        self.handle_data_upload()
+        self.handle_modify_data()
+        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
+                                 Path(fig.TEST_CONFIG).read_text(),
+                                 self.testing)
+        while p.is_alive():
+            sleep(5)
+        self.assertTrue((Path(self.path) / 'Qiime2_2_0/summary/analysis.pdf').is_file())
+        for child in p.children:
+            self.assertEqual(child.exit_code, 0)
+        self.summarize(0, 'qiime2')

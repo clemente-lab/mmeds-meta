@@ -9,8 +9,8 @@ from mmeds.tool import Tool
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
-        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
+    def __init__(self, owner, access_code, atype, config, testing, analysis=True, restart=False):
+        super().__init__(owner, access_code, atype, config, testing, analysis=analysis, restart=restart)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         if testing:
@@ -100,7 +100,7 @@ class Qiime1(Tool):
 
     def split_otu(self):
         """ Split the otu table by column values. """
-        for column in self.config['metadata']:
+        for column in self.doc.config['metadata']:
             self.add_path('split_otu_{}'.format(column))
             cmd = 'split_otu_table.py -i {} -m {} -f {} -o {} --suppress_mapping_file_output;'
             command = cmd.format(self.get_file('biom_table'),
@@ -118,9 +118,9 @@ class Qiime1(Tool):
                              self.get_file('biom_table'),
                              self.get_file('mapping'),
                              self.get_file('otu_table'),
-                             self.config['sampling_depth'],
+                             self.doc.config['sampling_depth'],
                              self.path / 'params.txt',
-                             ','.join(self.config['metadata']),
+                             ','.join(self.doc.config['metadata']),
                              self.num_jobs)
         self.jobtext.append(command)
 
@@ -164,7 +164,7 @@ class Qiime1(Tool):
                 self.join_paired_ends()
             self.split_libraries()
             self.pick_otu()
-            if self.config['sub_analysis']:
+            if self.doc.config['sub_analysis']:
                 self.split_otu()
         self.core_diversity()
         self.write_file_locations()

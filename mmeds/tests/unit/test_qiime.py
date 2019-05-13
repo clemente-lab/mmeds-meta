@@ -28,13 +28,14 @@ def upload_metadata(args):
 
 class QiimeTests(TestCase):
     """ Tests of top-level functions """
+    testing = True
 
     @classmethod
     def setUpClass(self):
         self.TEST_CODE = 'qiimeTest'
         self.TEST_CODE_PAIRED = 'qiimeTestPaired'
         self.TEST_CODE_DEMUX = 'qiimeTestDemuxed'
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=self.testing)
         test_setups = [
             (fig.TEST_METADATA_SHORT,
              fig.TEST_DIR,
@@ -67,10 +68,10 @@ class QiimeTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
+        remove_user(fig.TEST_USER, testing=self.testing)
 
     def run_qiime(self, code, atype, data_type, Qiime):
-        qiime = Qiime(fig.TEST_USER, code, atype, self.config, True, analysis=False)
+        qiime = Qiime(fig.TEST_USER, code, atype, self.config, testing=self.testing, analysis=False)
         qiime.start()
         while qiime.is_alive():
             sleep(2)

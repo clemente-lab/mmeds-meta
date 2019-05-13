@@ -10,6 +10,7 @@ import mongoengine as men
 
 import mmeds.config as fig
 import mmeds.secrets as sec
+import mmeds.spawn as sp
 
 
 def upload_metadata(args):
@@ -25,7 +26,7 @@ def upload_metadata(args):
                                                             access_code=access_code)
 
 
-class ToolTests(TestCase):
+class SpawnTests(TestCase):
     """ Tests of top-level functions """
     testing = True
 
@@ -40,9 +41,10 @@ class ToolTests(TestCase):
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
         self.tool = Tool(fig.TEST_USER,
                          fig.TEST_CODE,
-                         'test-1',
+                         'qiime2-dada2',
                          self.config, True,
                          8, True)
+        self.analysis_code = self.tool.doc.analysis_code
         self.dirs = [self.tool.doc.path]
 
     @classmethod
@@ -51,30 +53,15 @@ class ToolTests(TestCase):
         for new_dir in self.dirs:
             rmtree(new_dir)
 
-    def test_add_path(self):
-        """ Test that adding files to the tool object works properly """
-        assert 'testfile' not in self.tool.doc.files.keys()
-        self.tool.add_path('testfile', '.txt')
-        assert 'testfile' in self.tool.doc.files.keys()
+    def test_start_sub_analysis_cold(self):
+        """ Test that a sub-analysis can be successfully started from a previously run analysis. """
+        # TODO
 
-    def test_get_job_params(self):
-        params = self.tool.get_job_params()
-        assert params['nodes'] == 2
+    def test_restart_analysis(self):
+        """ Test restarting an analysis from a analysis doc. """
+        tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, self.testing)
+        assert tool
 
-    def test_move_user_files(self):
-        """ Test the method for finishing analysis and writing file locations. """
-        self.tool.add_path('test1', '.qzv')
-        self.tool.add_path('test2', '.qzv')
-
-        (self.tool.path / 'test1.qzv').touch()
-        (self.tool.path / 'test2.qzv').touch()
-
-        self.tool.move_user_files()
-
-        assert (self.tool.path / 'visualizations_dir').is_dir()
-        assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
-        assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
-
-    def test_missing_file(self):
-        """ Test that an appropriate error will be raised if a file doesn't exist on disk """
+    def test_start_analysis(self):
+        """ Test starting an analysis from a study doc. """
         # TODO

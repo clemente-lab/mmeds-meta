@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from mmeds.config import get_salt
-from mmeds.util import copy_metadata
+from mmeds.util import copy_metadata, log
 
 
 class StudyDoc(men.Document):
@@ -48,7 +48,7 @@ class StudyDoc(men.Document):
         self_string += 'files: {}\n'.format(self.files.keys())
         return self_string
 
-    def generate_AnalysisDoc(self, name, analysis_type, access_code=get_salt(20)):
+    def generate_AnalysisDoc(self, name, analysis_type, config, access_code=get_salt(20)):
         """ Create a new AnalysisDoc from the current StudyDoc """
         files = {}
         run_id = 0
@@ -89,19 +89,24 @@ class StudyDoc(men.Document):
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
         string_files = {str(key): str(value) for key, value in files.items()}
+        log(config)
 
-        return AnalysisDoc(created=datetime.now(),
-                           last_accessed=datetime.now(),
-                           name=new_dir.name,
-                           owner=self.owner,
-                           email=self.email,
-                           path=str(new_dir),
-                           study_code=self.access_code,
-                           analysis_code=access_code,
-                           reads_type=self.reads_type,
-                           data_type=data_type,
-                           analysis_type=analysis_type,
-                           files=string_files)
+        doc = AnalysisDoc(created=datetime.now(),
+                          last_accessed=datetime.now(),
+                          name=new_dir.name,
+                          owner=self.owner,
+                          email=self.email,
+                          path=str(new_dir),
+                          study_code=self.access_code,
+                          analysis_code=access_code,
+                          reads_type=self.reads_type,
+                          data_type=data_type,
+                          analysis_type=analysis_type,
+                          analysis_status='created',
+                          config=config,
+                          files=string_files)
+        doc.save()
+        return doc
 
 
 class AnalysisDoc(men.Document):
@@ -116,9 +121,12 @@ class AnalysisDoc(men.Document):
     reads_type = men.StringField(max_length=45, required=True)
     data_type = men.StringField(max_length=45, required=True)
     analysis_type = men.StringField(max_length=45, required=True)
+    # Stages: created, started, <Name of last method>, finished, errored
+    analysis_status = men.StringField(max_length=45, required=True)
     files = men.DictField()
+    config = men.DictField()
 
-    def create_copy(self, category, value):
+    def create_sub_analysis(self, category, value):
         """ Creates a new AnalysisDoc for a child analysis """
         child = deepcopy(self)
         child.files = {}
@@ -126,8 +134,26 @@ class AnalysisDoc(men.Document):
         child.last_accessed = datetime.now()
         return child
 
+    # When the document is updated record the
+    # location of all files in a new file
+    def save(self):
+        with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
+            f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.analysis_code))
+            f.write('Key\tPath\n')
+            for key, file_path in self.files.items():
+                # Skip non existent files
+                if file_path is None:
+                    continue
+                # If it's a key for an analysis point to the file index for that analysis
+                elif isinstance(file_path, dict):
+                    f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
+                # Otherwise just write the value
+                else:
+                    f.write('{}\t{}\n'.format(key, file_path))
+        super(AnalysisDoc, self).save()
+
     def __str__(self):
-        self_string = ''
+        self_string = self.name + '\n'
         for attr, value in self.__dict__.items():
             self_string += '{}: {}\n'.format(attr, value)
         return self_string

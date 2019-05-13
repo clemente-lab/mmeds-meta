@@ -16,7 +16,7 @@ from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
-from mmeds.documents import StudyDoc
+from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
 
@@ -441,7 +441,7 @@ class Database:
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return AnalysisDoc.objects(access_code=access_code, owner=self.owner).first()
+        return AnalysisDoc.objects(analysis_code=access_code, owner=self.owner).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
@@ -455,8 +455,9 @@ class Database:
 
     def clear_mongo_data(self, username):
         """ Clear all metadata documents associated with the provided username. """
-        data = StudyDoc.objects(owner=username)
-        for doc in data:
+        data = list(StudyDoc.objects(owner=username))
+        data2 = list(AnalysisDoc.objects(owner=username))
+        for doc in data + data2:
             doc.delete()
 
     def clean(self):

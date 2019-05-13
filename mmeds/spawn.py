@@ -102,3 +102,17 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     log('Email sent')
 
     return access_code
+
+
+def restart_analysis(user, code, testing):
+    """ Restart the specified analysis. """
+    with Database('.', owner=user, testing=testing) as db:
+        ad = db.get_analysis(code)
+    if 'qiime1' in ad.analysis_type:
+        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
+                      testing=testing, analysis=False, restart=True)
+    elif 'qiime2' in ad.analysis_type:
+        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
+                      testing=testing, analysis=False, restart=True)
+        print('restarted qiime2 {}'.format(tool.name))
+    return tool

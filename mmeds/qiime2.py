@@ -11,8 +11,10 @@ from mmeds.tool import Tool
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
-        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
+    def __init__(self, owner, access_code, atype, config, testing, analysis=True, restart=False):
+        print('tool setup')
+        super().__init__(owner, access_code, atype, config, testing, analysis=analysis, restart=restart)
+        print('qiime2 setup')
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
@@ -248,7 +250,7 @@ class Qiime2(Tool):
             'qiime diversity core-metrics-phylogenetic',
             '--i-phylogeny {}'.format(self.get_file('rooted_tree')),
             '--i-table {}'.format(self.get_file('filtered_table')),
-            '--p-sampling-depth {}'.format(self.config['sampling_depth']),
+            '--p-sampling-depth {}'.format(self.doc.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--p-n-jobs {} '.format(self.num_jobs),
             '--output-dir {};'.format(self.get_file('core_metrics_results'))
@@ -448,7 +450,7 @@ class Qiime2(Tool):
 
         # Run these commands in parallel
         self.alpha_diversity()
-        for col in self.config['metadata']:
+        for col in self.doc.config['metadata']:
             self.beta_diversity(col)
         self.alpha_rarefaction()
 
@@ -458,10 +460,10 @@ class Qiime2(Tool):
         self.taxa_diversity()
 
         # Calculate group significance
-        for col in self.config['metadata']:
+        for col in self.doc.config['metadata']:
             self.group_significance(col)
             # For the requested taxanomic levels
-            for level in self.config['taxa_levels']:
+            for level in self.doc.config['taxa_levels']:
                 self.group_significance(col, level)
         self.jobtext.append('wait')
 

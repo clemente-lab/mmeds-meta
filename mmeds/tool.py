@@ -22,7 +22,8 @@ class Tool(mp.Process):
     will happen in seperate processes.
     """
 
-    def __init__(self, owner, access_code, atype, config, testing, threads=10, analysis=True, child=False):
+    def __init__(self, owner, access_code, atype, config, testing,
+                 threads=10, analysis=True, child=False, restart=False):
         """
         Setup the Tool class
         ====================
@@ -43,12 +44,15 @@ class Tool(mp.Process):
         self.atype = atype.split('-')[1]
         self.tool = atype.split('-')[0]
         self.analysis = analysis
-        self.config = config
         self.columns = []
 
-        with Database(owner=self.owner, testing=self.testing) as db:
-            metadata = db.get_metadata(self.study_code)
-            self.doc = metadata.generate_AnalysisDoc(self.name, atype)
+        if restart:
+            with Database(owner=self.owner, testing=self.testing) as db:
+                self.doc = db.get_analysis(self.study_code)
+        else:
+            with Database(owner=self.owner, testing=self.testing) as db:
+                metadata = db.get_metadata(self.study_code)
+                self.doc = metadata.generate_AnalysisDoc(self.name, atype, config)
 
         log('initial doc.files')
         self.path = Path(self.doc.path)
@@ -86,14 +90,14 @@ class Tool(mp.Process):
     def write_config(self):
         """ Write out the config file being used to the working directory. """
         config_text = []
-        for (key, value) in self.config.items():
+        for (key, value) in self.doc.config.items():
             # Don't write values that are generated on loading
             if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
                        'sub_analysis_continuous', 'sub_analysis_all']:
                 continue
             # If the value was initially 'all', write that
             elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
-                if self.config['{}_all'.format(key)]:
+                if self.doc.config['{}_all'.format(key)]:
                     config_text.append('{}\t{}'.format(key, 'all'))
                 # Write lists as comma seperated strings
                 elif value:
@@ -103,7 +107,7 @@ class Tool(mp.Process):
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
-        log('{} write metadata {}'.format(self.name, self.config['metadata']), True)
+        log('{} write metadata {}'.format(self.name, self.doc.config['metadata']), True)
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
@@ -274,8 +278,8 @@ class Tool(mp.Process):
         child.create_qiime_mapping_file()
 
         # Filter the config for the metadata category selected for this sub-analysis
-        child.config = deepcopy(self.config)
-        child.config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
+        child.config = deepcopy(self.doc.config)
+        child.config['metadata'] = [cat for cat in self.doc.config['metadata'] if not cat == category[1]]
         child.config['sub_analysis'] = False
         child.is_child = True
         child.write_config()
@@ -289,7 +293,7 @@ class Tool(mp.Process):
         mdf = load_metadata(self.get_file('metadata', True))
 
         # For each column selected...
-        for col in self.config['sub_analysis']:
+        for col in self.doc.config['sub_analysis']:
             try:
                 t_col = (COL_TO_TABLE[col], col)
             # Additional columns won't be in this table
@@ -344,12 +348,13 @@ class Tool(mp.Process):
             jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
             # Start the sub analyses if so configured
-            if self.config['sub_analysis']:
+            if self.doc.config['sub_analysis']:
                 self.create_children()
                 self.start_children()
 
             if self.testing:
                 test_log('{} start job'.format(self.name))
+                self.doc.analysis_status = 'started'
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w') as f:
                     # Run the command
