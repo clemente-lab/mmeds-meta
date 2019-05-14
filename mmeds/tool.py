@@ -67,7 +67,7 @@ class Tool(mp.Process):
         self.write_config()
         self.create_qiime_mapping_file()
         self.children = []
-        self.is_child = False
+        self.doc.sub_analysis = False
         self.data_type = self.doc.data_type
         self.doc.save()
 
@@ -341,7 +341,7 @@ class Tool(mp.Process):
         """ Perform some analysis. """
         try:
             self.setup_analysis()
-            if self.is_child:
+            if self.doc.sub_analysis:
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
                     sleep(10)

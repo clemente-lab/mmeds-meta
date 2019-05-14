@@ -4,6 +4,7 @@ from pathlib import Path
 from copy import deepcopy
 from mmeds.config import get_salt
 from mmeds.util import copy_metadata, log
+from ppretty import ppretty
 
 
 class StudyDoc(men.Document):
@@ -38,15 +39,8 @@ class StudyDoc(men.Document):
         super(StudyDoc, self).save()
 
     def __str__(self):
-        self_string = 'Created: {created}\n last_accessed: {last_accessed}\n study_type: {study_type}\n' +\
-            'reads_type: {reads_type}\n study: {study}\n access_code: {access_code}\n owner: {owner}\n' +\
-            'email: {email}\n path: {path}\n'
-        self_string = self_string.format(created=self.created, last_accessed=self.last_accessed,
-                                         study_type=self.study_type, reads_type=self.reads_type,
-                                         study=self.study, access_code=self.access_code,
-                                         owner=self.owner, email=self.email, path=self.path)
-        self_string += 'files: {}\n'.format(self.files.keys())
-        return self_string
+        """ Return a printable string """
+        return ppretty(self)
 
     def generate_AnalysisDoc(self, name, analysis_type, config, access_code=get_salt(20)):
         """ Create a new AnalysisDoc from the current StudyDoc """
@@ -93,6 +87,7 @@ class StudyDoc(men.Document):
 
         doc = AnalysisDoc(created=datetime.now(),
                           last_accessed=datetime.now(),
+                          sub_analysis=False,
                           name=new_dir.name,
                           owner=self.owner,
                           email=self.email,
@@ -112,6 +107,7 @@ class StudyDoc(men.Document):
 class AnalysisDoc(men.Document):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
+    sub_analysis = men.BooleanField(required=True)
     name = men.StringField(max_length=100, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
@@ -153,10 +149,8 @@ class AnalysisDoc(men.Document):
         super(AnalysisDoc, self).save()
 
     def __str__(self):
-        self_string = self.name + '\n'
-        for attr, value in self.__dict__.items():
-            self_string += '{}: {}\n'.format(attr, value)
-        return self_string
+        """ Return a printable string """
+        return ppretty(self)
 
 
 class MMEDSProcess(men.Document):
@@ -165,3 +159,14 @@ class MMEDSProcess(men.Document):
     queue_position = men.IntField(required=True)  # -1 if it hasn't started yet, -2 if it's finished
     ptype = men.StringField(max_length=100, required=True)
     associated_doc = men.StringField(max_length=100, required=True)  # Access code for associated document
+
+    def __str__(self):
+        self_string = 'Created: {created}\n last_accessed: {last_accessed}\n study_type: {study_type}\n' +\
+            'reads_type: {reads_type}\n study: {study}\n access_code: {access_code}\n owner: {owner}\n' +\
+            'email: {email}\n path: {path}\n'
+        self_string = self_string.format(created=self.created, last_accessed=self.last_accessed,
+                                         study_type=self.study_type, reads_type=self.reads_type,
+                                         study=self.study, access_code=self.access_code,
+                                         owner=self.owner, email=self.email, path=self.path)
+        self_string += 'files: {}\n'.format(self.files.keys())
+        return self_string
