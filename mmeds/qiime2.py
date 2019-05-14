@@ -12,9 +12,7 @@ class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, atype, config, testing, analysis=True, restart=False):
-        print('tool setup')
         super().__init__(owner, access_code, atype, config, testing, analysis=analysis, restart=restart)
-        print('qiime2 setup')
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))

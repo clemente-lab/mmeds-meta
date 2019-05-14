@@ -46,15 +46,15 @@ class Tool(mp.Process):
         self.analysis = analysis
         self.columns = []
 
+        # If restarting get the associated AnalysisDoc from the database
         if restart:
             with Database(owner=self.owner, testing=self.testing) as db:
                 self.doc = db.get_analysis(self.study_code)
+        # Otherwise create a new AnalysisDoc from the associated StudyDoc
         else:
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
                 self.doc = metadata.generate_AnalysisDoc(self.name, atype, config)
-
-        log('initial doc.files')
         self.path = Path(self.doc.path)
 
         if testing:

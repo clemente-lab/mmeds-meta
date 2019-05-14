@@ -128,6 +128,7 @@ class AnalysisDoc(men.Document):
         child.files = {}
         child.created = datetime.now()
         child.last_accessed = datetime.now()
+        child.sub_analysis = True
         return child
 
     # When the document is updated record the

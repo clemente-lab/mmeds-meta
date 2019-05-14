@@ -61,7 +61,4 @@ class SpawnTests(TestCase):
         """ Test restarting an analysis from a analysis doc. """
         tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, self.testing)
         assert tool
-
-    def test_start_analysis(self):
-        """ Test starting an analysis from a study doc. """
-        # TODO
+        assert tool.doc == self.tool.doc
