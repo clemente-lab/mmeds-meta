@@ -46,7 +46,6 @@ class Tool(mp.Process):
         self.tool = atype.split('-')[0]
         self.analysis = analysis
 
-        print('restart: {}'.format(restart))
         # If restarting get the associated AnalysisDoc from the database
         if restart:
             with Database(owner=self.owner, testing=self.testing) as db:
@@ -56,7 +55,6 @@ class Tool(mp.Process):
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
                 self.doc = metadata.generate_AnalysisDoc(self.name, atype, config)
-        print(self.doc)
         self.path = Path(self.doc.path)
 
         if testing:
@@ -242,7 +240,9 @@ class Tool(mp.Process):
         child.files = {
             'metadata': child.path / 'metadata.tsv',
         }
+
         child.doc = self.doc.create_sub_analysis(category, value)
+        child.doc.path = str(child.path)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
@@ -250,17 +250,17 @@ class Tool(mp.Process):
                 # Add qiime1 specific biom tables
                 if 'Qiime1' in self.name and parent_file == 'biom_table':
                     child_file = child.path / 'otu_table.biom'
-                    child_file.symlink_to(self.doc.files.get('split_otu_{}'.format(category[1])) /
+                    child_file.symlink_to(self.get_file('split_otu_{}'.format(category[1]), True) /
                                           'otu_table__{}_{}__.biom'.format(category[1], value))
                     child.set_file(child_file, key='biom_table')
                 else:
-                    child_file = child.path / self.doc.files.get(parent_file).name
-                    child_file.symlink_to(self.doc.files.get(parent_file))
+                    child_file = child.path / self.get_file(parent_file).name
+                    child_file.symlink_to(self.get_file(parent_file, True))
                     child.add_path(child_file, key=parent_file)
-                    if 'Qiime1' in self.name:
-                        child.add_path(self.doc.files.get('split_otu_{}'.format(category[1])) /
-                                       'otu_table__{}_{}__.biom'.format(category[1], value),
-                                       key='parent_table')
+        if 'Qiime1' in self.name:
+            child.add_path(self.doc.files.get('split_otu_{}'.format(category[1])) /
+                           'otu_table__{}_{}__.biom'.format(category[1], value),
+                           key='parent_table')
         else:
             child.add_path(self.path / self.doc.files.get('otu_table'), key='parent_table')
 
@@ -394,10 +394,8 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-
         if self.analysis:
-            print('run analysis')
             self.run_analysis()
         else:
-            print('setup analysis')
             self.setup_analysis()
+        self.doc.save()

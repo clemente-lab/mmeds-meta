@@ -45,6 +45,11 @@ class Qiime2(Tool):
             if not self.get_file('working_dir', True).is_dir():
                 self.get_file('working_dir', True).mkdir()
 
+            # Clean up any existing files
+            old_files = self.get_file('working_dir', True).glob('*')
+            for old_file in old_files:
+                old_file.unlink()
+
             # Link the barcodes
             (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
             if self.data_type == 'single_end':

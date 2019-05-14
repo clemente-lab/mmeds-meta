@@ -131,8 +131,9 @@ class AnalysisDoc(men.Document):
 
     def create_sub_analysis(self, category, value):
         """ Creates a new AnalysisDoc for a child analysis """
+        print('create sub analysis from {}'.format(self.name))
         child = deepcopy(self)
-        child.files = {}
+        child.files = self.files
         child.created = datetime.now()
         child.last_accessed = datetime.now()
         child.sub_analysis = True
