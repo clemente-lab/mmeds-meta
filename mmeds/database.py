@@ -296,6 +296,9 @@ class Database:
         obs = StudyDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
+        obs = AnalysisDoc.objects(access_code=access_code)
+        for ob in obs:
+            ob.delete()
 
     def modify_data(self, new_data, access_code, data_type):
         """
@@ -946,6 +949,7 @@ class MetaDataUploader:
         # Create the document
         mdata = StudyDoc(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
+                         testing=self.testing,
                          study_type=self.study_type,
                          reads_type=self.reads_type,
                          study=study_name,

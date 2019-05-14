@@ -46,6 +46,7 @@ class Tool(mp.Process):
         self.tool = atype.split('-')[0]
         self.analysis = analysis
 
+        print('restart: {}'.format(restart))
         # If restarting get the associated AnalysisDoc from the database
         if restart:
             with Database(owner=self.owner, testing=self.testing) as db:
@@ -55,6 +56,7 @@ class Tool(mp.Process):
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
                 self.doc = metadata.generate_AnalysisDoc(self.name, atype, config)
+        print(self.doc)
         self.path = Path(self.doc.path)
 
         if testing:
@@ -394,6 +396,8 @@ class Tool(mp.Process):
         """ Overrides Process.run() """
 
         if self.analysis:
+            print('run analysis')
             self.run_analysis()
         else:
+            print('setup analysis')
             self.setup_analysis()

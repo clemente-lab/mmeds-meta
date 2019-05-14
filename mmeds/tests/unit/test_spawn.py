@@ -4,6 +4,7 @@ from time import sleep
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
+from mmeds.qiime2 import Qiime2
 from mmeds.database import MetaDataUploader
 from mmeds.util import load_config
 
@@ -38,19 +39,21 @@ class SpawnTests(TestCase):
                       fig.TEST_CODE)
         upload_metadata(test_setup)
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
-        self.tool = Tool(fig.TEST_USER,
-                         fig.TEST_CODE,
-                         'qiime2-dada2',
-                         self.config, True,
-                         8, True)
+        self.tool = Qiime2(owner=fig.TEST_USER,
+                           access_code=fig.TEST_CODE,
+                           atype='qiime2-dada2',
+                           config=self.config,
+                           testing=True,
+                           analysis=True,
+                           restart=False)
         self.analysis_code = self.tool.doc.analysis_code
         self.dirs = [self.tool.doc.path]
 
     @classmethod
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=True)
-        for new_dir in self.dirs:
-            rmtree(new_dir)
+        #for new_dir in self.dirs:
+        #    rmtree(new_dir)
 
     def test_start_sub_analysis_cold(self):
         """ Test that a sub-analysis can be successfully started from a previously run analysis. """
@@ -61,9 +64,9 @@ class SpawnTests(TestCase):
         tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, self.testing)
         self.assertTrue(tool)
         self.assertEqual(tool.doc, self.tool.doc)
-        print(tool)
+        print(tool.path)
         tool.start()
-        print(tool)
         while tool.is_alive():
             sleep(5)
         self.assertEqual(tool.exitcode, 0)
+        self.assertTrue((tool.path / 'jobfile.lsf').is_file())

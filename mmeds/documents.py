@@ -10,6 +10,7 @@ from ppretty import ppretty
 class StudyDoc(men.Document):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
+    testing = men.BooleanField(required=True)
     study_type = men.StringField(max_length=45, required=True)
     reads_type = men.StringField(max_length=45, required=True)
     study = men.StringField(max_length=45, required=True)
@@ -88,6 +89,7 @@ class StudyDoc(men.Document):
         doc = AnalysisDoc(created=datetime.now(),
                           last_accessed=datetime.now(),
                           sub_analysis=False,
+                          testing=self.testing,
                           name=new_dir.name,
                           owner=self.owner,
                           email=self.email,
@@ -108,6 +110,7 @@ class AnalysisDoc(men.Document):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
     sub_analysis = men.BooleanField(required=True)
+    testing = men.BooleanField(required=True)
     name = men.StringField(max_length=100, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
@@ -162,12 +165,5 @@ class MMEDSProcess(men.Document):
     associated_doc = men.StringField(max_length=100, required=True)  # Access code for associated document
 
     def __str__(self):
-        self_string = 'Created: {created}\n last_accessed: {last_accessed}\n study_type: {study_type}\n' +\
-            'reads_type: {reads_type}\n study: {study}\n access_code: {access_code}\n owner: {owner}\n' +\
-            'email: {email}\n path: {path}\n'
-        self_string = self_string.format(created=self.created, last_accessed=self.last_accessed,
-                                         study_type=self.study_type, reads_type=self.reads_type,
-                                         study=self.study, access_code=self.access_code,
-                                         owner=self.owner, email=self.email, path=self.path)
-        self_string += 'files: {}\n'.format(self.files.keys())
-        return self_string
+        """ Return a printable string """
+        return ppretty(self)
