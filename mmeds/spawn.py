@@ -126,15 +126,7 @@ def restart_analysis(user, code, restart_stage, testing):
     return tool
 
 def spawn_sub_analysis(user, code, category, value, testing):
-    with Database('.', owner=user, testing=testing) as db:
-        ad = db.get_analysis(code)
-
-    restart_stage = 1
-    if 'qiime1' in ad.analysis_type:
-        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=False, restart=True, restart_stage=restart_stage)
-    elif 'qiime2' in ad.analysis_type:
-        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=False, restart=True, restart_stage=restart_stage)
+    """ Spawn a new sub analysis from a previous analysis. """
+    tool = restart_analysis(user, code, 1, testing)
     child = tool.create_child(category, value)
     return child

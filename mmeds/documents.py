@@ -155,7 +155,7 @@ class AnalysisDoc(men.Document):
                 # Otherwise just write the value
                 else:
                     f.write('{}\t{}\n'.format(key, file_path))
-        super(AnalysisDoc, self).save()
+        super().save()
 
 
 class MMEDSProcess(men.Document):
