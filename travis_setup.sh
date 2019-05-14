@@ -15,9 +15,14 @@ cd ../../..;
 if [ ! -d ~/.modules ]; then
     echo 'Make .modules';
     mkdir ~/.modules;
-    mkdir ~/.modules/modulefiles;
-    sudo chown -R travis:travis ~/.modules
 fi
+sudo chown -R travis:travis ~/.modules
+
+if [ ! -d ~/.modules/modulefiles ]; then
+    echo 'Make .modules/modulefiles';
+    mkdir ~/.modules/modulefiles;
+fi
+sudo chown -R travis:travis ~/.modules/modulefiles
 
 # Create the necessary conda environments
 if [ ! -d ~/.modules/mmeds-stable ]; then
