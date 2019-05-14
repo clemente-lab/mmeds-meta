@@ -235,7 +235,7 @@ class Tool(mp.Process):
         child.name = child.name + '-{}-{}'.format(category[1], file_value)
         child.children = []
 
-        child.path = self.path / '{}_{}'.format(category[1], file_value)
+        child.path = Path(self.path / '{}_{}'.format(category[1], file_value))
         child.path.mkdir()
         child.files = {
             'metadata': child.path / 'metadata.tsv',
