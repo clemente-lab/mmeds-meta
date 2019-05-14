@@ -60,7 +60,7 @@ class AnalysisTests(TestCase):
 
     def summarize(self, count, tool):
         summarize_qiime(tool.path, tool)
-        self.assertTrue(tool.path / 'summary/analysis.pdf'.format(count).is_file())
+        self.assertTrue((tool.path / 'summary/analysis.pdf').is_file())
 
     def test_qiime1(self):
         self.handle_data_upload()
