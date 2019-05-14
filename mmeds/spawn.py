@@ -1,5 +1,6 @@
 from time import sleep
 from multiprocessing import Process
+from shutil import rmtree
 
 from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata
 from mmeds.database import MetaDataUploader, Database
@@ -104,14 +105,16 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     return access_code
 
 
-def restart_analysis(user, code, testing):
+def restart_analysis(user, code, restart_stage, testing):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
         ad = db.get_analysis(code)
+    if restart_stage < 1:
+        rmtree(ad.path)
     if 'qiime1' in ad.analysis_type:
         tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=False, restart=True)
+                      testing=testing, analysis=False, restart=True, restart_stage=restart_stage)
     elif 'qiime2' in ad.analysis_type:
         tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=False, restart=True)
+                      testing=testing, analysis=False, restart=True, restart_stage=restart_stage)
     return tool

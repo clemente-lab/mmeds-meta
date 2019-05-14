@@ -11,8 +11,10 @@ from mmeds.tool import Tool
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing, analysis=True, restart=False):
-        super().__init__(owner, access_code, atype, config, testing, analysis=analysis, restart=restart)
+    def __init__(self, owner, access_code, atype, config, testing,
+                 analysis=True, restart=False, restart_stage=0):
+        super().__init__(owner, access_code, atype, config, testing,
+                         analysis=analysis, restart=restart, restart_stage=restart_stage)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))

@@ -24,7 +24,7 @@ class Tool(mp.Process):
     """
 
     def __init__(self, owner, access_code, atype, config, testing,
-                 threads=10, analysis=True, child=False, restart=False):
+                 threads=10, analysis=True, child=False, restart=False, restart_stage=0):
         """
         Setup the Tool class
         ====================
@@ -242,27 +242,27 @@ class Tool(mp.Process):
         child.files = {
             'metadata': child.path / 'metadata.tsv',
         }
-        child.doc = self.doc.create_copy(category, value)
+        child.doc = self.doc.create_sub_analysis(category, value)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
-            if self.doc.get(parent_file) is not None:
+            if self.doc.files.get(parent_file) is not None:
                 # Add qiime1 specific biom tables
                 if 'Qiime1' in self.name and parent_file == 'biom_table':
                     child_file = child.path / 'otu_table.biom'
-                    child_file.symlink_to(self.doc.get('split_otu_{}'.format(category[1])) /
+                    child_file.symlink_to(self.doc.files.get('split_otu_{}'.format(category[1])) /
                                           'otu_table__{}_{}__.biom'.format(category[1], value))
                     child.set_file(child_file, key='biom_table')
                 else:
-                    child_file = child.path / self.doc.get(parent_file).name
-                    child_file.symlink_to(self.doc.get(parent_file))
+                    child_file = child.path / self.doc.files.get(parent_file).name
+                    child_file.symlink_to(self.doc.files.get(parent_file))
                     child.add_path(child_file, key=parent_file)
                     if 'Qiime1' in self.name:
-                        child.add_path(self.doc.get('split_otu_{}'.format(category[1])) /
+                        child.add_path(self.doc.files.get('split_otu_{}'.format(category[1])) /
                                        'otu_table__{}_{}__.biom'.format(category[1], value),
                                        key='parent_table')
         else:
-            child.add_path(self.path / self.doc.get('otu_table'), key='parent_table')
+            child.add_path(self.path / self.doc.files.get('otu_table'), key='parent_table')
 
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.get_file('metadata', True))

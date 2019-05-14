@@ -125,6 +125,10 @@ class AnalysisDoc(men.Document):
     files = men.DictField()
     config = men.DictField()
 
+    def __str__(self):
+        """ Return a printable string """
+        return ppretty(self)
+
     def create_sub_analysis(self, category, value):
         """ Creates a new AnalysisDoc for a child analysis """
         child = deepcopy(self)
@@ -151,10 +155,6 @@ class AnalysisDoc(men.Document):
                 else:
                     f.write('{}\t{}\n'.format(key, file_path))
         super(AnalysisDoc, self).save()
-
-    def __str__(self):
-        """ Return a printable string """
-        return ppretty(self)
 
 
 class MMEDSProcess(men.Document):

@@ -44,10 +44,13 @@ class SpawnTests(TestCase):
                            atype='qiime2-dada2',
                            config=self.config,
                            testing=True,
-                           analysis=True,
+                           analysis=False,
                            restart=False)
         self.analysis_code = self.tool.doc.analysis_code
         self.dirs = [self.tool.doc.path]
+        self.tool.start()
+        while self.tool.is_alive():
+            sleep(5)
 
     @classmethod
     def tearDownClass(self):
@@ -55,11 +58,13 @@ class SpawnTests(TestCase):
         #for new_dir in self.dirs:
         #    rmtree(new_dir)
 
-    def test_start_sub_analysis_cold(self):
+    def test_c_start_sub_analysis_cold(self):
         """ Test that a sub-analysis can be successfully started from a previously run analysis. """
-        # TODO
+        print(self.tool.doc)
+        child = self.tool.create_child('SpecimenBodySite', 'tongue')
+        self.assertTrue(child)
 
-    def test_restart_analysis(self):
+    def test_b_restart_analysis(self):
         """ Test restarting an analysis from a analysis doc. """
         tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, self.testing)
         self.assertTrue(tool)
