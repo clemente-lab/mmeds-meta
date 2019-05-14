@@ -42,8 +42,6 @@ before_install:
 - "~/miniconda.sh -b &>/dev/null"
 - export PATH=~/miniconda2/bin:$PATH
 - conda update --yes conda &>/dev/null
-- sudo chown -R travis:travis ~/.modules/modulefiles
-- sudo chown -R travis:travis ~/.modules ~/.local
 - bash travis_setup.sh
 - source ~/.bashrc
 - conda info --envs
