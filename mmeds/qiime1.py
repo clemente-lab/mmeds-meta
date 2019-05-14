@@ -156,7 +156,7 @@ class Qiime1(Tool):
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
         # Only the child run this analysis
-        if not self.is_child:
+        if not self.doc.sub_analysis:
             self.validate_mapping()
             if 'demuxed' in self.data_type:
                 self.unzip()

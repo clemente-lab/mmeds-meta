@@ -422,7 +422,7 @@ class Qiime2(Tool):
     def setup_analysis(self):
         """ Create the job file for the analysis. """
         # Only the primary analysis runs these commands
-        if not self.is_child:
+        if not self.doc.sub_analysis:
             if 'demuxed' in self.data_type:
                 self.unzip()
             self.qimport()

@@ -4,6 +4,7 @@ from shutil import copy
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
+from ppretty import ppretty
 
 from mmeds.database import Database
 from mmeds.util import (log, create_qiime_from_mmeds, test_log,
@@ -44,7 +45,6 @@ class Tool(mp.Process):
         self.atype = atype.split('-')[1]
         self.tool = atype.split('-')[0]
         self.analysis = analysis
-        self.columns = []
 
         # If restarting get the associated AnalysisDoc from the database
         if restart:
@@ -70,6 +70,9 @@ class Tool(mp.Process):
         self.doc.sub_analysis = False
         self.data_type = self.doc.data_type
         self.doc.save()
+
+    def __str__(self):
+        return ppretty(self, seq_length=20)
 
     def add_path(self, name, extension='', key=None):
         """ Add a file or directory with the full path to self.doc. """
@@ -189,8 +192,7 @@ class Tool(mp.Process):
 
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
-
-        self.columns = create_qiime_from_mmeds(mmeds_file, qiime_file, self.tool)
+        create_qiime_from_mmeds(mmeds_file, qiime_file, self.tool)
 
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')

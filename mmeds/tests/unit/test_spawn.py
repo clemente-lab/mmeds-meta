@@ -1,12 +1,11 @@
 from unittest import TestCase
 from shutil import rmtree
+from time import sleep
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
-from mmeds.database import MetaDataUploader, Database
+from mmeds.database import MetaDataUploader
 from mmeds.util import load_config
-
-import mongoengine as men
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -60,5 +59,11 @@ class SpawnTests(TestCase):
     def test_restart_analysis(self):
         """ Test restarting an analysis from a analysis doc. """
         tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, self.testing)
-        assert tool
-        assert tool.doc == self.tool.doc
+        self.assertTrue(tool)
+        self.assertEqual(tool.doc, self.tool.doc)
+        print(tool)
+        tool.start()
+        print(tool)
+        while tool.is_alive():
+            sleep(5)
+        self.assertEqual(tool.exitcode, 0)
