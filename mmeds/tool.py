@@ -40,11 +40,12 @@ class Tool(mp.Process):
         super().__init__()
         self.study_code = access_code
         self.testing = testing
-        self.jobtext = []
+        self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail']
         self.owner = owner
         self.atype = atype.split('-')[1]
         self.tool = atype.split('-')[0]
         self.analysis = analysis
+        self.module = None
 
         # If restarting get the associated AnalysisDoc from the database
         if restart:
@@ -200,7 +201,7 @@ class Tool(mp.Process):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append(self.jobtext[0].replace('load', 'unload'))
+        self.jobtext.append(self.module.replace('load', 'unload'))
         self.jobtext.append('module load mmeds-stable;')
         cmd = [
             'summarize.py ',
@@ -321,6 +322,7 @@ class Tool(mp.Process):
     def setup_analysis(self):
         """ Create the summary of the analysis """
         self.summary()
+        self.jobtext.append('echo "MMEDS_FINISHED"')
 
         # Define the job and error files
         jobfile = self.path / 'jobfile.lsf'
@@ -362,7 +364,12 @@ class Tool(mp.Process):
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w') as f:
                     # Run the command
-                    run([jobfile], stdout=f, stderr=f, check=True)
+                    run([jobfile], stdout=f, stderr=f)  # , check=True)
+                test_log('Error output')
+                log_text = self.get_file('errorlog', True).read_text()
+                test_log(log_text)
+                if 'MMEDS_FINISHED' not in log_text:
+                    raise AnalysisError("Error occured during analysis")
                 test_log('{} finished job'.format(self.name))
             else:
                 # Create a file to execute the submission
@@ -375,17 +382,15 @@ class Tool(mp.Process):
                 output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
-            with Database(owner=self.owner, testing=self.testing) as db:
-                doc = db.get_metadata(self.study_code)
             self.move_user_files()
             self.add_summary_files()
             log('Send email')
             if not self.testing:
-                send_email(doc.email,
-                           doc.owner,
+                send_email(self.doc.email,
+                           self.doc.owner,
                            'analysis',
                            analysis_type=self.name + self.atype,
-                           study_name=doc.study,
+                           study_name=self.doc.study,
                            testing=self.testing)
         except CalledProcessError as e:
             self.move_user_files()

@@ -18,6 +18,7 @@ class Qiime2(Tool):
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
+        self.module = load
 
     # =============== #
     # Qiime2 Commands #
@@ -428,6 +429,7 @@ class Qiime2(Tool):
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
+        self.jobtext.append('echo "MMEDS_STAGE_1"')
         # Only the primary analysis runs these commands
         if not self.doc.sub_analysis:
             if 'demuxed' in self.data_type:
@@ -444,6 +446,7 @@ class Qiime2(Tool):
             elif self.atype == 'dada2':
                 self.dada2()
                 self.tabulate()
+        self.jobtext.append('echo "MMEDS_STAGE_2"')
 
         # Run these commands sequentially
         self.filter_by_metadata()
@@ -452,6 +455,7 @@ class Qiime2(Tool):
         self.phylogeny_fasttree()
         self.phylogeny_midpoint_root()
         self.core_diversity()
+        self.jobtext.append('echo "MMEDS_STAGE_3"')
 
         # Run these commands in parallel
         self.alpha_diversity()
@@ -461,6 +465,8 @@ class Qiime2(Tool):
 
         # Wait for them all to finish
         self.jobtext.append('wait')
+
+        self.jobtext.append('echo "MMEDS_STAGE_4"')
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
 
@@ -471,6 +477,7 @@ class Qiime2(Tool):
             for level in self.doc.config['taxa_levels']:
                 self.group_significance(col, level)
         self.jobtext.append('wait')
+        self.jobtext.append('echo "MMEDS_STAGE_5"')
 
         # Perform standard tool setup
         super().setup_analysis()

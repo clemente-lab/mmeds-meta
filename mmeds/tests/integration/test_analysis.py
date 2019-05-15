@@ -72,7 +72,8 @@ class AnalysisTests(TestCase):
             sleep(5)
         self.assertTrue((Path(self.path) / 'Qiime1_1_0/summary/analysis.pdf').is_file())
         for child in p.children:
-            self.assertEqual(child.exit_code, 0)
+            self.assertEqual(child.exitcode, 0)
+        self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
 
     def test_qiime2(self):
@@ -85,5 +86,15 @@ class AnalysisTests(TestCase):
             sleep(5)
         self.assertTrue((Path(self.path) / 'Qiime2_2_0/summary/analysis.pdf').is_file())
         for child in p.children:
-            self.assertEqual(child.exit_code, 0)
+            self.assertEqual(child.exitcode, 0)
+        self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
+
+    def test_error_in_data_files(self):
+        self.handle_data_upload()
+        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
+                                 Path(fig.TEST_CONFIG).read_text(),
+                                 self.testing)
+        while p.is_alive():
+            sleep(5)
+        self.assertEqual(p.exitcode, 1)

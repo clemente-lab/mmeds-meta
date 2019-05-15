@@ -15,6 +15,7 @@ class Qiime1(Tool):
                          analysis=analysis, restart=restart, restart_stage=restart_stage)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'
         self.jobtext.append(load.format(DATABASE_DIR.parent))
+        self.module = load
         if testing:
             settings = [
                 'alpha_diversity:metrics	shannon',
