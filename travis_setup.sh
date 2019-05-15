@@ -50,9 +50,9 @@ if [ ! -d ~/.local ]; then
     wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
     tar -zxf modules-4.2.1.tar.gz;
     cd modules-4.2.1;
-    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
-    make &>/dev/null;
-    sudo make install &>/dev/null;
+    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" #&>/dev/null;
+    make #&>/dev/null;
+    sudo make install # &>/dev/null;
     cd $REPO_DIR;
 fi
 

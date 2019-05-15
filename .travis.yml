@@ -42,16 +42,17 @@ before_install:
 - "~/miniconda.sh -b &>/dev/null"
 - export PATH=~/miniconda2/bin:$PATH
 - conda update --yes conda &>/dev/null
+- sudo rm -r ~/.local
 - bash travis_setup.sh
 - source ~/.bashrc
 - conda info --envs
 install:
+- module load mmeds-stable
 - source activate mmeds-stable
 - pip install . --no-cache-dir
 - mysql -u root < setup.sql
 - ls ~/.modules/modulefiles
 - cat ~/.modules/modulefiles/qiime2/2019.1
-- export PATH="$HOME/.local/bin:$PATH"
 script:
 - echo $PATH
 - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
