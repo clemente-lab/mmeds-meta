@@ -50,7 +50,6 @@ before_install:
 - echo $PATH
 install:
 - module load mmeds-stable
-- exit;
 - source activate mmeds-stable
 - pip install . --no-cache-dir
 - mysql -u root < setup.sql
