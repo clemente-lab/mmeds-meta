@@ -51,6 +51,7 @@ install:
 - mysql -u root < setup.sql
 - ls ~/.modules/modulefiles
 - cat ~/.modules/modulefiles/qiime2/2019.1
+- export PATH="$HOME/.local/bin:$PATH"
 script:
 - echo $PATH
 - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
