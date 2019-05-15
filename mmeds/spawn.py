@@ -108,10 +108,12 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
 
 def restart_analysis(user, code, restart_stage, testing):
     """ Restart the specified analysis. """
+    print('in restart_analysis, stage {}'.format(restart_stage))
     with Database('.', owner=user, testing=testing) as db:
         ad = db.get_analysis(code)
 
     if restart_stage < 1:
+        code = ad.study_code
         for path in Path(ad.path).glob('*'):
             if path.is_dir():
                 rmtree(path)
@@ -119,11 +121,12 @@ def restart_analysis(user, code, restart_stage, testing):
                 path.unlink()
     if 'qiime1' in ad.analysis_type:
         tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=False, restart=True, restart_stage=restart_stage)
+                      testing=testing, analysis=False, restart_stage=restart_stage)
     elif 'qiime2' in ad.analysis_type:
         tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=False, restart=True, restart_stage=restart_stage)
+                      testing=testing, analysis=False, restart_stage=restart_stage)
     return tool
+
 
 def spawn_sub_analysis(user, code, category, value, testing):
     """ Spawn a new sub analysis from a previous analysis. """

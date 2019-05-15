@@ -24,7 +24,7 @@ class Tool(mp.Process):
     """
 
     def __init__(self, owner, access_code, atype, config, testing,
-                 threads=10, analysis=True, child=False, restart=False, restart_stage=0):
+                 threads=10, analysis=True, child=False, restart_stage=0):
         """
         Setup the Tool class
         ====================
@@ -48,14 +48,17 @@ class Tool(mp.Process):
         self.module = None
 
         # If restarting get the associated AnalysisDoc from the database
-        if restart:
+        if restart_stage:
+            log('Restarting {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 self.doc = db.get_analysis(self.study_code)
         # Otherwise create a new AnalysisDoc from the associated StudyDoc
         else:
+            log('Creating new doc {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
                 self.doc = metadata.generate_AnalysisDoc(self.name, atype, config)
+        log('Doc creation date: {}'.format(self.doc.created))
         self.path = Path(self.doc.path)
 
         if testing:
@@ -329,7 +332,11 @@ class Tool(mp.Process):
         self.add_path(jobfile, key='jobfile')
         submitfile = self.path / 'submitfile'
         self.add_path(submitfile, '.sh', 'submitfile')
-        error_log = self.path / 'errorlog'
+        count = 0
+        error_log = self.path / 'errorlog_{}'.format(count)
+        while error_log.exists():
+            error_log = self.path / 'errorlog_{}'.format(count)
+            count += 1
         self.add_path(error_log, '.err', 'errorlog')
         if self.testing:
             # Open the jobfile to write all the commands
@@ -364,12 +371,12 @@ class Tool(mp.Process):
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w') as f:
                     # Run the command
-                    run([jobfile], stdout=f, stderr=f)  # , check=True)
+                    run([jobfile], stdout=f, stderr=f)
                 test_log('Error output')
                 log_text = self.get_file('errorlog', True).read_text()
                 test_log(log_text)
                 if 'MMEDS_FINISHED' not in log_text:
-                    raise AnalysisError("Error occured during analysis")
+                    raise AnalysisError(log_text)
                 test_log('{} finished job'.format(self.name))
             else:
                 # Create a file to execute the submission
