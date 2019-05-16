@@ -63,7 +63,6 @@ class AnalysisTests(TestCase):
         summarize_qiime(tool.path, tool)
         self.assertTrue((tool.path / 'summary/analysis.pdf').is_file())
 
-    """
     def test_qiime1(self):
         self.handle_data_upload()
         self.handle_modify_data()
@@ -91,7 +90,6 @@ class AnalysisTests(TestCase):
             self.assertEqual(child.exitcode, 0)
         self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
-    """
 
     def test_error_in_data_files(self):
         self.handle_data_upload()
