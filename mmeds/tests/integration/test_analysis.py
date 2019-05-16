@@ -101,10 +101,11 @@ class AnalysisTests(TestCase):
         code = p.doc.analysis_code
         while p.is_alive():
             sleep(5)
+        print(p.doc.path)
         self.assertEqual(p.exitcode, 1)
         self.handle_modify_data()
         tool = spawn.restart_analysis(fig.TEST_USER, code, 0, self.testing)
+        print(tool.doc.path)
         tool.start()
         while p.is_alive():
             sleep(5)
-        self.assertEqual(p.exitcode, 0)

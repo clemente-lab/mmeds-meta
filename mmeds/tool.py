@@ -40,7 +40,7 @@ class Tool(mp.Process):
         super().__init__()
         self.study_code = access_code
         self.testing = testing
-        self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail']
+        self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
         self.owner = owner
         self.atype = atype.split('-')[1]
         self.tool = atype.split('-')[0]
