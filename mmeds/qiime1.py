@@ -13,8 +13,8 @@ class Qiime1(Tool):
                  analysis=True, restart_stage=0):
         super().__init__(owner, access_code, atype, config, testing,
                          analysis=analysis, restart_stage=restart_stage)
-        load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'
-        self.jobtext.append(load.format(DATABASE_DIR.parent))
+        load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
+        self.jobtext.append(load)
         self.module = load
         if testing:
             settings = [

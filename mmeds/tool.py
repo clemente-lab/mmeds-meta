@@ -366,15 +366,18 @@ class Tool(mp.Process):
                 self.start_children()
 
             if self.testing:
-                test_log('{} start job'.format(self.name))
+                log('{} start job'.format(self.name))
                 self.doc.analysis_status = 'started'
+                log('Set status')
+                log('Error file {}'.format(self.get_file('errorlog', True)))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w') as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
-                test_log('Error output')
+                log('Error output')
                 log_text = self.get_file('errorlog', True).read_text()
-                test_log(log_text)
+                log(log_text)
+                # Raise an error if the final command doesn't run
                 if 'MMEDS_FINISHED' not in log_text:
                     raise AnalysisError(log_text)
                 test_log('{} finished job'.format(self.name))

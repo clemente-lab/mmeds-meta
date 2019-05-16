@@ -43,8 +43,7 @@ class SpawnTests(TestCase):
                            atype='qiime2-dada2',
                            config=self.config,
                            testing=True,
-                           analysis=False,
-                           restart=False)
+                           analysis=False)
         self.analysis_code = self.tool.doc.analysis_code
         self.dirs = [self.tool.doc.path]
         self.tool.start()
