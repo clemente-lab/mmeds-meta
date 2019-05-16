@@ -126,11 +126,11 @@ class Qiime2(Tool):
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.atype), '.qzv')
+        self.add_path('stats_{}_visual'.format(self.doc.analysis_type.split('-')[1], '.qzv'))
         cmd = [
             'qiime metadata tabulate',
             '--m-input-file {}'.format(self.get_file('stats_table')),
-            '--o-visualization {};'.format(self.get_file('stats_{}_visual'.format(self.atype)))
+            '--o-visualization {};'.format(self.get_file('stats_{}_visual'.format(self.doc.analysis_type.split('-')[1])))
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -429,55 +429,59 @@ class Qiime2(Tool):
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """
-        self.jobtext.append('echo "MMEDS_STAGE_1"')
-        # Only the primary analysis runs these commands
-        if not self.doc.sub_analysis:
-            if 'demuxed' in self.data_type:
-                self.unzip()
-            self.qimport()
-            if 'demuxed' not in self.data_type:
-                self.demultiplex()
-                self.demux_visualize()
+        if self.restart_stage < 2:
+            self.jobtext.append('echo "MMEDS_STAGE_1"')
+            # Only the primary analysis runs these commands
+            if not self.doc.sub_analysis:
+                if 'demuxed' in self.data_type:
+                    self.unzip()
+                self.qimport()
+                if 'demuxed' not in self.data_type:
+                    self.demultiplex()
+                    self.demux_visualize()
 
-            if self.atype == 'deblur':
-                self.deblur_filter()
-                self.deblur_denoise()
-                self.deblur_visualize()
-            elif self.atype == 'dada2':
-                self.dada2()
-                self.tabulate()
-        self.jobtext.append('echo "MMEDS_STAGE_2"')
+                if 'deblur' in self.doc.analysis_type:
+                    self.deblur_filter()
+                    self.deblur_denoise()
+                    self.deblur_visualize()
+                elif 'dada2' in self.doc.analysis_type:
+                    self.dada2()
+                    self.tabulate()
 
-        # Run these commands sequentially
-        self.filter_by_metadata()
-        self.alignment_mafft()
-        self.alignment_mask()
-        self.phylogeny_fasttree()
-        self.phylogeny_midpoint_root()
-        self.core_diversity()
-        self.jobtext.append('echo "MMEDS_STAGE_3"')
+        if self.restart_stage < 3:
+            self.jobtext.append('echo "MMEDS_STAGE_2"')
+            # Run these commands sequentially
+            self.filter_by_metadata()
+            self.alignment_mafft()
+            self.alignment_mask()
+            self.phylogeny_fasttree()
+            self.phylogeny_midpoint_root()
+            self.core_diversity()
 
-        # Run these commands in parallel
-        self.alpha_diversity()
-        for col in self.doc.config['metadata']:
-            self.beta_diversity(col)
-        self.alpha_rarefaction()
+        if self.restart_stage < 4:
+            self.jobtext.append('echo "MMEDS_STAGE_3"')
+            # Run these commands in parallel
+            self.alpha_diversity()
+            for col in self.doc.config['metadata']:
+                self.beta_diversity(col)
+            self.alpha_rarefaction()
 
-        # Wait for them all to finish
-        self.jobtext.append('wait')
+            # Wait for them all to finish
+            self.jobtext.append('wait')
 
-        self.jobtext.append('echo "MMEDS_STAGE_4"')
-        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
-        self.taxa_diversity()
+        if self.restart_stage < 5:
+            self.jobtext.append('echo "MMEDS_STAGE_4"')
+            self.classify_taxa(STORAGE_DIR / 'classifier.qza')
+            self.taxa_diversity()
+            # Calculate group significance
+            for col in self.doc.config['metadata']:
+                self.group_significance(col)
+                # For the requested taxanomic levels
+                for level in self.doc.config['taxa_levels']:
+                    self.group_significance(col, level)
+            self.jobtext.append('wait')
 
-        # Calculate group significance
-        for col in self.doc.config['metadata']:
-            self.group_significance(col)
-            # For the requested taxanomic levels
-            for level in self.doc.config['taxa_levels']:
-                self.group_significance(col, level)
-        self.jobtext.append('wait')
-        self.jobtext.append('echo "MMEDS_STAGE_5"')
-
-        # Perform standard tool setup
-        super().setup_analysis()
+        if self.restart_stage < 6:
+            self.jobtext.append('echo "MMEDS_STAGE_5"')
+            # Perform standard tool setup
+            super().setup_analysis()

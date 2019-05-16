@@ -118,6 +118,7 @@ class AnalysisDoc(men.Document):
     study_code = men.StringField(max_length=50, required=True)
     analysis_code = men.StringField(max_length=50, required=True)
     reads_type = men.StringField(max_length=45, required=True)
+    #TODO check what this is
     data_type = men.StringField(max_length=45, required=True)
     analysis_type = men.StringField(max_length=45, required=True)
     # Stages: created, started, <Name of last method>, finished, errored

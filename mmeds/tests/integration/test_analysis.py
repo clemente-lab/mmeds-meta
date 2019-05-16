@@ -101,12 +101,36 @@ class AnalysisTests(TestCase):
         code = p.doc.analysis_code
         while p.is_alive():
             sleep(5)
-        print(p.doc.path)
         self.assertEqual(p.exitcode, 1)
+
+        # Change the metadata file to a proper one
         self.handle_modify_data()
+        # Test restarting from the beginning of analysis
         tool = spawn.restart_analysis(fig.TEST_USER, code, 0, self.testing)
-        print(tool.doc.path)
         tool.start()
-        while tool.is_alive():
-            sleep(5)
+        while True:
+            try:
+                print('checking for error log')
+                errorlog = Path(tool.doc['errorlog'])
+                break
+            except KeyError:
+                sleep(1)
+        # Test restarting from each checkpoint
+        for point in range(1, 5):
+            checkpoint = 'MMEDS_STAGE_{}'.format(point)
+            log_text = errorlog.read_text()
+            while tool.is_alive():
+                # If the checkpoint has been reached kill the process
+                if checkpoint in log_text:
+                    print('Check the error log for ' + checkpoint)
+                    tool.terminate()
+                else:
+                    sleep(5)
+            # Check it terminated and has the correct restart point
+            self.assertEqual(tool.exitcode, 1)
+            self.assertEqual(tool.doc.restart_point, point)
+            # Restart
+            tool = spawn.restart_analysis(fig.TEST_USER, code, point, self.testing)
+            tool.start()
+
         self.assertEqual(tool.exitcode, 0)

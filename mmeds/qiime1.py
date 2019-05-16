@@ -85,16 +85,16 @@ class Qiime1(Tool):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
         # Link files for the otu and biom tables
-        if 'closed' in self.atype:
+        if 'closed' in self.doc.analysis_type:
             self.add_path(self.get_file('otu_output').name + '/97_otus', '.tree', key='otu_table')
             self.add_path(self.get_file('otu_output').name + '/otu_table', '.biom', key='biom_table')
-        elif 'open' in self.atype:
+        elif 'open' in self.doc.analysis_type:
             self.add_path(self.get_file('otu_output').name + '/rep_set', '.tre', key='otu_table')
             self.add_path(self.get_file('otu_output').name + '/otu_table_mc2_w_tax_no_pynast_failures',
                           '.biom', key='biom_table')
 
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
-        command = cmd.format(self.atype,
+        command = cmd.format(self.doc.analysis_type.split('-')[1],
                              self.num_jobs,
                              self.get_file('otu_output'),
                              self.get_file('split_output') / 'seqs.fna',

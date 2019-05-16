@@ -42,10 +42,9 @@ class Tool(mp.Process):
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
         self.owner = owner
-        self.atype = atype.split('-')[1]
-        self.tool = atype.split('-')[0]
         self.analysis = analysis
         self.module = None
+        self.restart_stage = restart_stage
 
         # If restarting get the associated AnalysisDoc from the database
         if restart_stage:
@@ -196,7 +195,7 @@ class Tool(mp.Process):
 
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
-        create_qiime_from_mmeds(mmeds_file, qiime_file, self.tool)
+        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.analysis_type)
 
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
@@ -209,7 +208,7 @@ class Tool(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {}'.format(self.tool)
+            '--tool_type {}'.format(self.doc.analysis_type.split('-')[0])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -349,38 +348,38 @@ class Tool(mp.Process):
             temp = JOB_TEMPLATE.read_text()
             # Write all the commands
             jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
+        self.doc.save()
 
     def run_analysis(self):
         """ Perform some analysis. """
         try:
             self.setup_analysis()
+
             if self.doc.sub_analysis:
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
                     sleep(10)
             jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
+
             # Start the sub analyses if so configured
             if self.doc.config['sub_analysis']:
                 self.create_children()
                 self.start_children()
 
             if self.testing:
-                log('{} start job'.format(self.name))
                 self.doc.analysis_status = 'started'
-                log('Set status')
-                log('Error file {}'.format(self.get_file('errorlog', True)))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w') as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
-                log('Error output')
                 log_text = self.get_file('errorlog', True).read_text()
-                log(log_text)
                 # Raise an error if the final command doesn't run
                 if 'MMEDS_FINISHED' not in log_text:
+                    # Count the check points in the output to determine where to restart from
+                    self.doc.restart_stage = log_text.count('MMEDS_STAGE')
+                    self.doc.save()
                     raise AnalysisError(log_text)
-                test_log('{} finished job'.format(self.name))
             else:
                 # Create a file to execute the submission
                 submitfile = self.get_file('submitfile', True)
@@ -394,14 +393,15 @@ class Tool(mp.Process):
                 self.wait_on_job(job_id)
             self.move_user_files()
             self.add_summary_files()
-            log('Send email')
+
             if not self.testing:
                 send_email(self.doc.email,
                            self.doc.owner,
                            'analysis',
-                           analysis_type=self.name + self.atype,
+                           analysis_type=self.name + self.doc.analysis_type,
                            study_name=self.doc.study,
                            testing=self.testing)
+
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
