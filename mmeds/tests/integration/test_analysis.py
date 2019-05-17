@@ -2,15 +2,12 @@ from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
 from mmeds.summary import summarize_qiime
-from mmeds.documents import AnalysisDoc
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
-from shutil import rmtree
 from datetime import datetime
 import mmeds.config as fig
 import mmeds.secrets as sec
-import mongoengine as men
 
 
 class AnalysisTests(TestCase):
@@ -75,7 +72,7 @@ class AnalysisTests(TestCase):
                                  self.testing)
         while p.is_alive():
             sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime1_1_0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) / 'Qiime1_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exitcode, 0)
         self.assertEqual(p.exitcode, 0)
@@ -97,7 +94,6 @@ class AnalysisTests(TestCase):
         # Test restarting from the beginning of analysis
         tool = spawn.restart_analysis(fig.TEST_USER, code, 0, self.testing, kill_stage=1)
         tool.start()
-        men.connect('test')
         sleep(10)
         # Test restarting from each checkpoint
         for i in range(1, 5):
@@ -109,15 +105,14 @@ class AnalysisTests(TestCase):
             # Have to get a fresh copy of the document from the DB
             # Because the tool object won't have been copied
             sleep(5)
-            doc = AnalysisDoc.objects(analysis_code=tool.doc.analysis_code).first()
             tool.doc.reload()
             self.assertEqual(tool.doc.restart_stage, i)
             # Restart
-            tool = spawn.restart_analysis(fig.TEST_USER, code, doc.restart_stage, self.testing, kill_stage=i + 1)
+            tool = spawn.restart_analysis(fig.TEST_USER, code, tool.doc.restart_stage, self.testing, kill_stage=i + 1)
             tool.start()
         while tool.is_alive():
             print('{}: Waiting on stage {}'.format(datetime.now(), i))
             sleep(10)
 
         self.assertEqual(tool.exitcode, 0)
-        self.assertTrue((Path(self.path) / 'Qiime2_1_0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) / 'Qiime2_0/summary/analysis.pdf').is_file())

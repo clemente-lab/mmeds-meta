@@ -219,16 +219,6 @@ class Tool(mp.Process):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def add_summary_files(self):
-        """ Add the analysis summary and associated directory to the metadata files """
-        with Database(owner=self.owner, testing=self.testing) as db:
-            db.update_metadata(self.study_code,
-                               '{}_summary'.format(self.doc.name),
-                               str(self.path / 'summary/analysis.pdf'))
-            db.update_metadata(self.study_code,
-                               '{}_summary_dir'.format(self.doc.name),
-                               str(self.path / 'summary'))
-
     def create_child(self, category, value):
         """
         Create a child analysis process using only samples that have a particular value
@@ -247,12 +237,8 @@ class Tool(mp.Process):
 
         child.path = Path(self.path / '{}_{}'.format(category[1], file_value))
         child.path.mkdir()
-        child.files = {
-            'metadata': child.path / 'metadata.tsv',
-        }
 
-        child.doc = self.doc.create_sub_analysis(category, value)
-        child.doc.path = str(child.path)
+        child.doc = self.doc.create_sub_analysis(child.path, category, value)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
@@ -402,7 +388,11 @@ class Tool(mp.Process):
             # Raise an error if the final command doesn't run
             if 'MMEDS_FINISHED' not in log_text:
                 # Count the check points in the output to determine where to restart from
-                self.doc.update(set__restart_stage=log_text.count('MMEDS_STAGE'))
+                stage = 0
+                for i in range(1, 6):
+                    if 'MMEDS_STAGE_{}'.format(i) in log_text:
+                        stage = i
+                self.doc.update(set__restart_stage=stage)
                 log('{} restart_stage {}'.format(self.name, self.doc.restart_stage))
                 self.doc.save()
                 self.doc.reload()
@@ -426,7 +416,6 @@ class Tool(mp.Process):
                 self.doc.save()
                 self.doc.reload()
             self.move_user_files()
-            self.add_summary_files()
 
             if not self.testing:
                 send_email(self.doc.email,

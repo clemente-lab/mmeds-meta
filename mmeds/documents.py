@@ -132,14 +132,18 @@ class AnalysisDoc(men.Document):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def create_sub_analysis(self, category, value):
+    def create_sub_analysis(self, path, category, value):
         """ Creates a new AnalysisDoc for a child analysis """
         print('create sub analysis from {}'.format(self.name))
         child = deepcopy(self)
-        child.files = self.files
-        child.created = datetime.now()
-        child.last_accessed = datetime.now()
-        child.sub_analysis = True
+        child_files = self.files
+        # Update the child's attributes
+        child_files['metadata'] = str(path / 'metadata.tsv')
+        child.update(path=str(path), sub_analysis=True, last_accessed=datetime.now(),
+                     created=datetime.now(), files=child_files)
+        child.save()
+        # Create a copy of the metadata
+        copy_metadata(self.files['metadata'], child_files['metadata'])
         return child
 
     # When the document is updated record the
