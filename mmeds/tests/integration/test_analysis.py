@@ -2,12 +2,15 @@ from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
 from mmeds.summary import summarize_qiime
+from mmeds.documents import AnalysisDoc
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
 from shutil import rmtree
+from datetime import datetime
 import mmeds.config as fig
 import mmeds.secrets as sec
+import mongoengine as men
 
 
 class AnalysisTests(TestCase):
@@ -77,23 +80,9 @@ class AnalysisTests(TestCase):
             self.assertEqual(child.exitcode, 0)
         self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
-
-    def test_qiime2(self):
-        self.handle_data_upload()
-        self.handle_modify_data()
-        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG).read_text(),
-                                 self.testing)
-        while p.is_alive():
-            sleep(5)
-        self.assertTrue((Path(self.path) / 'Qiime2_2_0/summary/analysis.pdf').is_file())
-        for child in p.children:
-            self.assertEqual(child.exitcode, 0)
-        self.assertEqual(p.exitcode, 0)
-        self.summarize(0, p)
     """
 
-    def test_error_in_data_files(self):
+    def test_qiime2_with_restarts(self):
         self.handle_data_upload()
         p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
@@ -106,31 +95,29 @@ class AnalysisTests(TestCase):
         # Change the metadata file to a proper one
         self.handle_modify_data()
         # Test restarting from the beginning of analysis
-        tool = spawn.restart_analysis(fig.TEST_USER, code, 0, self.testing)
+        tool = spawn.restart_analysis(fig.TEST_USER, code, 0, self.testing, kill_stage=1)
         tool.start()
-        while True:
-            try:
-                print('checking for error log')
-                errorlog = Path(tool.doc['errorlog'])
-                break
-            except KeyError:
-                sleep(1)
+        men.connect('test')
+        sleep(10)
         # Test restarting from each checkpoint
-        for point in range(1, 5):
-            checkpoint = 'MMEDS_STAGE_{}'.format(point)
-            log_text = errorlog.read_text()
+        for i in range(1, 5):
             while tool.is_alive():
-                # If the checkpoint has been reached kill the process
-                if checkpoint in log_text:
-                    print('Check the error log for ' + checkpoint)
-                    tool.terminate()
-                else:
-                    sleep(5)
+                print('{}: Waiting on stage {}'.format(datetime.now(), i))
+                sleep(10)
             # Check it terminated and has the correct restart point
-            self.assertEqual(tool.exitcode, 1)
-            self.assertEqual(tool.doc.restart_point, point)
+            self.assertNotEqual(tool.exitcode, 0)
+            # Have to get a fresh copy of the document from the DB
+            # Because the tool object won't have been copied
+            sleep(5)
+            doc = AnalysisDoc.objects(analysis_code=tool.doc.analysis_code).first()
+            tool.doc.reload()
+            self.assertEqual(tool.doc.restart_stage, i)
             # Restart
-            tool = spawn.restart_analysis(fig.TEST_USER, code, point, self.testing)
+            tool = spawn.restart_analysis(fig.TEST_USER, code, doc.restart_stage, self.testing, kill_stage=i + 1)
             tool.start()
+        while tool.is_alive():
+            print('{}: Waiting on stage {}'.format(datetime.now(), i))
+            sleep(10)
 
         self.assertEqual(tool.exitcode, 0)
+        self.assertTrue((Path(self.path) / 'Qiime2_1_0/summary/analysis.pdf').is_file())

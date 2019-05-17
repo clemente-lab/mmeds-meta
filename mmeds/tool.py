@@ -1,13 +1,14 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError
-from shutil import copy
+from shutil import copy, rmtree
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
 from ppretty import ppretty
+from collections import defaultdict
 
 from mmeds.database import Database
-from mmeds.util import (log, create_qiime_from_mmeds, test_log,
+from mmeds.util import (log, create_qiime_from_mmeds,
                         load_metadata, write_metadata, camel_case,
                         send_email)
 from mmeds.error import AnalysisError
@@ -45,6 +46,8 @@ class Tool(mp.Process):
         self.analysis = analysis
         self.module = None
         self.restart_stage = restart_stage
+        self.current_stage = 0
+        self.stage_files = defaultdict(list)
 
         # If restarting get the associated AnalysisDoc from the database
         if restart_stage:
@@ -56,7 +59,7 @@ class Tool(mp.Process):
             log('Creating new doc {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
-                self.doc = metadata.generate_AnalysisDoc(self.name, atype, config)
+                self.doc = metadata.generate_AnalysisDoc(self.name.split('-')[0], atype, config)
         log('Doc creation date: {}'.format(self.doc.created))
         self.path = Path(self.doc.path)
 
@@ -71,19 +74,26 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.children = []
         self.doc.sub_analysis = False
-        self.data_type = self.doc.data_type
         self.doc.save()
 
     def __str__(self):
         return ppretty(self, seq_length=20)
 
+    def set_stage(self, stage):
+        """ Set self.current_stage to the provided value """
+        self.current_stage = stage
+
     def add_path(self, name, extension='', key=None):
         """ Add a file or directory with the full path to self.doc. """
         if key:
-            self.doc.files[str(key)] = '{}{}'.format(self.path / name, extension)
+            file_key = key
         else:
-            self.doc.files[str(name)] = '{}{}'.format(self.path / name, extension)
+            file_key = name
+        self.doc.files[str(file_key)] = '{}{}'.format(self.path / name, extension)
+        self.doc.update(files=self.doc.files)
+        self.stage_files[self.current_stage].append(file_key)
         self.doc.save()
+        self.doc.reload()
 
     def get_file(self, key, absolute=False):
         """ Get the path to the file stored under 'key' relative to the run dir """
@@ -178,9 +188,6 @@ class Tool(mp.Process):
         Update the relevant document's metadata and
         create a file_index in the analysis directoy.
         """
-        with Database(owner=self.owner, testing=self.testing) as db:
-            db.update_metadata(self.study_code, self.doc.name, self.doc.files)
-
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
             f.write('{}\t{}\n'.format(self.owner, self.study_code))
@@ -326,17 +333,24 @@ class Tool(mp.Process):
         self.summary()
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
-        # Define the job and error files
-        jobfile = self.path / 'jobfile.lsf'
-        self.add_path(jobfile, key='jobfile')
         submitfile = self.path / 'submitfile'
         self.add_path(submitfile, '.sh', 'submitfile')
+
+        # Define the job and error files
         count = 0
-        error_log = self.path / 'errorlog_{}'.format(count)
-        while error_log.exists():
-            error_log = self.path / 'errorlog_{}'.format(count)
+        jobfile = self.path / 'jobfile_{}.lsf'.format(count)
+        while jobfile.exists():
+            jobfile = self.path / 'jobfile_{}.lsf'.format(count)
             count += 1
-        self.add_path(error_log, '.err', 'errorlog')
+        self.add_path(jobfile, key='jobfile')
+
+        count = 0
+        error_log = self.path / 'errorlog_{}.err'.format(count)
+        while error_log.exists():
+            error_log = self.path / 'errorlog_{}.err'.format(count)
+            count += 1
+        self.add_path(error_log, key='errorlog')
+
         if self.testing:
             # Open the jobfile to write all the commands
             jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
@@ -368,18 +382,11 @@ class Tool(mp.Process):
                 self.start_children()
 
             if self.testing:
-                self.doc.analysis_status = 'started'
+                self.doc.update(analysis_status='started')
                 # Send the output to the error log
-                with open(self.get_file('errorlog', True), 'w') as f:
+                with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
-                log_text = self.get_file('errorlog', True).read_text()
-                # Raise an error if the final command doesn't run
-                if 'MMEDS_FINISHED' not in log_text:
-                    # Count the check points in the output to determine where to restart from
-                    self.doc.restart_stage = log_text.count('MMEDS_STAGE')
-                    self.doc.save()
-                    raise AnalysisError(log_text)
             else:
                 # Create a file to execute the submission
                 submitfile = self.get_file('submitfile', True)
@@ -391,6 +398,33 @@ class Tool(mp.Process):
                 output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
+            log_text = self.get_file('errorlog', True).read_text()
+            # Raise an error if the final command doesn't run
+            if 'MMEDS_FINISHED' not in log_text:
+                # Count the check points in the output to determine where to restart from
+                self.doc.update(set__restart_stage=log_text.count('MMEDS_STAGE'))
+                log('{} restart_stage {}'.format(self.name, self.doc.restart_stage))
+                self.doc.save()
+                self.doc.reload()
+
+                # Go through all files in the analysis
+                for stage, files in self.stage_files.items():
+                    # If they should be created after the last checkpoint
+                    if stage >= self.doc.restart_stage:
+                        for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
+                            # Check if they exist
+                            unfinished = self.get_file(f, True)
+                            if unfinished.exists():
+                                # If so delete them
+                                if unfinished.is_dir():
+                                    rmtree(unfinished)
+                                else:
+                                    unfinished.unlink()
+                raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
+            else:
+                self.doc.update(restart_stage=-1)  # Indicates analysis finished successfully
+                self.doc.save()
+                self.doc.reload()
             self.move_user_files()
             self.add_summary_files()
 

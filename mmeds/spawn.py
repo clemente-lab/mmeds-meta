@@ -2,7 +2,6 @@ from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
-
 from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata
 from mmeds.database import MetaDataUploader, Database
 from mmeds.qiime1 import Qiime1
@@ -106,7 +105,7 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     return access_code
 
 
-def restart_analysis(user, code, restart_stage, testing):
+def restart_analysis(user, code, restart_stage, testing, kill_stage=-1):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
         ad = db.get_analysis(code)
@@ -114,7 +113,8 @@ def restart_analysis(user, code, restart_stage, testing):
     # Create an entire new directory if restarting from the beginning
     if restart_stage < 1:
         code = ad.study_code
-        rmtree(ad.path)
+        if Path(ad.path).exists():
+            rmtree(ad.path)
 
     # Create the appropriate tool
     if 'qiime1' in ad.analysis_type:
@@ -122,7 +122,7 @@ def restart_analysis(user, code, restart_stage, testing):
                       testing=testing, analysis=True, restart_stage=restart_stage)
     elif 'qiime2' in ad.analysis_type:
         tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=True, restart_stage=restart_stage)
+                      testing=testing, analysis=True, restart_stage=restart_stage, kill_stage=kill_stage)
     return tool
 
 

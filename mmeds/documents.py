@@ -17,7 +17,7 @@ class StudyDoc(men.Document):
     access_code = men.StringField(max_length=50, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
-    path = men.StringField(max_length=100, required=True)
+    path = men.StringField(max_length=256, required=True)
     metadata = men.DictField()
     files = men.DictField()
 
@@ -49,10 +49,10 @@ class StudyDoc(men.Document):
         run_id = 0
 
         # Create a new directory to perform the analysis in
-        new_dir = Path(self.path) / '{}_{}'.format(name, run_id).replace('-', '_')
+        new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
         while new_dir.is_dir():
             run_id += 1
-            new_dir = Path(self.path) / '{}_{}'.format(name, run_id).replace('-', '_')
+            new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
 
         new_dir = new_dir.resolve()
         new_dir.mkdir()
@@ -100,6 +100,7 @@ class StudyDoc(men.Document):
                           data_type=data_type,
                           analysis_type=analysis_type,
                           analysis_status='created',
+                          restart_stage=0,
                           config=config,
                           files=string_files)
         doc.save()
@@ -107,14 +108,14 @@ class StudyDoc(men.Document):
 
 
 class AnalysisDoc(men.Document):
-    created = men.DateTimeField()
-    last_accessed = men.DateTimeField()
+    created = men.DateTimeField(require=True)
+    last_accessed = men.DateTimeField(required=True)
     sub_analysis = men.BooleanField(required=True)
     testing = men.BooleanField(required=True)
     name = men.StringField(max_length=100, required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
-    path = men.StringField(max_length=100, required=True)
+    path = men.StringField(max_length=256, required=True)
     study_code = men.StringField(max_length=50, required=True)
     analysis_code = men.StringField(max_length=50, required=True)
     reads_type = men.StringField(max_length=45, required=True)
@@ -123,12 +124,13 @@ class AnalysisDoc(men.Document):
     analysis_type = men.StringField(max_length=45, required=True)
     # Stages: created, started, <Name of last method>, finished, errored
     analysis_status = men.StringField(max_length=45, required=True)
+    restart_stage = men.IntField(required=True)
     files = men.DictField()
     config = men.DictField()
 
     def __str__(self):
         """ Return a printable string """
-        return ppretty(self)
+        return ppretty(self, seq_length=20)
 
     def create_sub_analysis(self, category, value):
         """ Creates a new AnalysisDoc for a child analysis """

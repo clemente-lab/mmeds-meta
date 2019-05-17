@@ -89,10 +89,10 @@ CONFIG = {
 ##########################
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
-TEST_DIR = DATABASE_DIR / 'test_dir'
+TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
 if not os.path.exists(TEST_DIR):
     os.mkdir(TEST_DIR)
-TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
+TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
 if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 
