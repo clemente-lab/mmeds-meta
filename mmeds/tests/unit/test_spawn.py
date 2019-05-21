@@ -53,12 +53,12 @@ class SpawnTests(TestCase):
     @classmethod
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=True)
-        for new_dir in self.dirs:
-            rmtree(new_dir)
+        #for new_dir in self.dirs:
+        #    rmtree(new_dir)
 
     def test_b_restart_analysis(self):
         """ Test restarting an analysis from a analysis doc. """
-        tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, 1, self.testing)
+        tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, 1, self.testing, run_analysis=False)
         self.assertTrue(tool)
         self.assertEqual(tool.doc, self.tool.doc)
         tool.start()

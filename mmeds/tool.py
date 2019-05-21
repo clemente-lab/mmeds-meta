@@ -227,6 +227,7 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
+        log('CREATE CHILD {}:{}'.format(category, value))
 
         child = classcopy(self)
         file_value = camel_case(value)
@@ -238,10 +239,13 @@ class Tool(mp.Process):
         child.path = Path(self.path / '{}_{}'.format(category[1], file_value))
         child.path.mkdir()
 
+        log('creating sub_analysis')
         child.doc = self.doc.create_sub_analysis(child.path, category, value)
 
+        log('link tables')
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
+            print('parent_file {}'.format(parent_file))
             if self.doc.files.get(parent_file) is not None:
                 # Add qiime1 specific biom tables
                 if 'Qiime1' in self.name and parent_file == 'biom_table':
@@ -253,17 +257,22 @@ class Tool(mp.Process):
                     child_file = child.path / self.get_file(parent_file).name
                     child_file.symlink_to(self.get_file(parent_file, True))
                     child.add_path(child_file, key=parent_file)
+        log('after linking')
         if 'Qiime1' in self.name:
             child.add_path(self.doc.files.get('split_otu_{}'.format(category[1])) /
                            'otu_table__{}_{}__.biom'.format(category[1], value),
                            key='parent_table')
         else:
             child.add_path(self.path / self.doc.files.get('otu_table'), key='parent_table')
+        log('added parent table')
 
+        log('load metadata  {}'.format(self.get_file('metadata', True)))
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.get_file('metadata', True))
         new_mdf = mdf.loc[mdf[category] == value]
+        log(new_mdf)
         write_metadata(new_mdf, child.get_file('metadata', True))
+        log('write to {}'.format(child.get_file('metadata', True)))
 
         # Update child's vars
         child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')

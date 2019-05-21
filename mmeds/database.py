@@ -418,7 +418,6 @@ class Database:
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """
-        log('Get mongo files')
         mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
@@ -427,7 +426,6 @@ class Database:
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
-        log('return from mongo')
         return mdata.files, mdata.path
 
     def get_metadata(self, access_code):
@@ -736,7 +734,6 @@ class MetaDataUploader:
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
-        log('In read_in_sheet')
         access_code = None
 
         if not self.path.is_dir():
@@ -803,8 +800,8 @@ class MetaDataUploader:
         # Go through each row
         for row in range(len(self.df.index)):
             sql, args = self.builder.build_sql(table, row)
-            log(sql)
-            log(args)
+            sql_log(sql)
+            sql_log(args)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
             # Create the entry

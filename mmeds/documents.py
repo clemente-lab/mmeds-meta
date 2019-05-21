@@ -84,7 +84,6 @@ class StudyDoc(men.Document):
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
         string_files = {str(key): str(value) for key, value in files.items()}
-        log(config)
 
         doc = AnalysisDoc(created=datetime.now(),
                           last_accessed=datetime.now(),
@@ -132,18 +131,16 @@ class AnalysisDoc(men.Document):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def create_sub_analysis(self, path, category, value):
+    def create_sub_analysis(self, path, category, value, access_code=get_salt(20)):
         """ Creates a new AnalysisDoc for a child analysis """
-        print('create sub analysis from {}'.format(self.name))
         child = deepcopy(self)
-        child_files = self.files
+        child_files = deepcopy(self.files)
         # Update the child's attributes
         child_files['metadata'] = str(path / 'metadata.tsv')
         child.update(path=str(path), sub_analysis=True, last_accessed=datetime.now(),
                      created=datetime.now(), files=child_files)
+        child.analysis_code = access_code
         child.save()
-        # Create a copy of the metadata
-        copy_metadata(self.files['metadata'], child_files['metadata'])
         return child
 
     # When the document is updated record the

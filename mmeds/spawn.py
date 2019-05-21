@@ -4,6 +4,7 @@ from shutil import rmtree
 from pathlib import Path
 from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata
 from mmeds.database import MetaDataUploader, Database
+from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.config import DATABASE_DIR
@@ -11,15 +12,11 @@ from mmeds.config import DATABASE_DIR
 
 def test(time):
     """ Simple function for analysis called during testing """
-    log('test tool sleep for {}'.format(time))
     sleep(time)
-    log('test tool wake up')
 
 
 def spawn_analysis(atype, user, access_code, config_file, testing):
     """ Start running the analysis in a new process """
-    log('In spawn_analysis')
-
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
@@ -33,9 +30,6 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         log('load passed config')
         config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
 
-    log('After load config')
-    log(config)
-
     if 'qiime1' in atype:
         tool = Qiime1(user, access_code, atype, config, testing)
     elif 'qiime2' in atype:
@@ -45,7 +39,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         time = float(atype.split('-')[-1])
         tool = Process(target=test, args=(time,))
     else:
-        log('atype didnt match any')
+        raise AnalysisError('atype didnt match any')
     tool.start()
     return tool
 
@@ -70,7 +64,6 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
     :username: @Todo
     :testing: True if the server is running locally.
     """
-    log('In handle_data_upload')
     mdf = load_metadata(metadata)
     study_name = mdf.Study.StudyName.iloc[0]
     count = 0
@@ -86,8 +79,6 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
 
     # Create a copy of the Data file
     datafile_copies = {datafile[0]: create_local_copy(datafile[2], datafile[1], new_dir) for datafile in datafiles}
-    for (key, value) in datafile_copies.items():
-        log('{}: {}'.format(key, value))
 
     with MetaDataUploader(metadata=metadata_copy,
                           path=new_dir,
@@ -96,16 +87,14 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
                           owner=username,
                           testing=testing) as up:
         access_code, study_name, email = up.import_metadata(**datafile_copies)
-    log('Added to database')
 
     # Send the confirmation email
     send_email(email, username, code=access_code, testing=testing)
-    log('Email sent')
 
     return access_code
 
 
-def restart_analysis(user, code, restart_stage, testing, kill_stage=-1):
+def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
         ad = db.get_analysis(code)
@@ -119,10 +108,10 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1):
     # Create the appropriate tool
     if 'qiime1' in ad.analysis_type:
         tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=True, restart_stage=restart_stage)
+                      testing=testing, analysis=run_analysis, restart_stage=restart_stage)
     elif 'qiime2' in ad.analysis_type:
         tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
-                      testing=testing, analysis=True, restart_stage=restart_stage, kill_stage=kill_stage)
+                      testing=testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
     return tool
 
 
