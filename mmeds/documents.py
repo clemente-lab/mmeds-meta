@@ -43,10 +43,12 @@ class StudyDoc(men.Document):
         """ Return a printable string """
         return ppretty(self)
 
-    def generate_AnalysisDoc(self, name, analysis_type, config, access_code=get_salt(20)):
+    def generate_AnalysisDoc(self, name, analysis_type, config, access_code=None):
         """ Create a new AnalysisDoc from the current StudyDoc """
         files = {}
         run_id = 0
+        if access_code is None:
+            access_code = get_salt(20)
 
         # Create a new directory to perform the analysis in
         new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
@@ -131,8 +133,10 @@ class AnalysisDoc(men.Document):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def create_sub_analysis(self, path, category, value, access_code=get_salt(20)):
+    def create_sub_analysis(self, path, category, value, access_code=None):
         """ Creates a new AnalysisDoc for a child analysis """
+        if access_code is None:
+            access_code = get_salt(20)
         child = deepcopy(self)
         child_files = deepcopy(self.files)
         # Update the child's attributes
