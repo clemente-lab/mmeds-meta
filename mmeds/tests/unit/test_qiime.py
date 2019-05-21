@@ -75,7 +75,7 @@ class QiimeTests(TestCase):
         qiime.start()
         while qiime.is_alive():
             sleep(2)
-        self.assertEqual(qiime.data_type, data_type)
+        self.assertEqual(qiime.doc.data_type, data_type)
         rmtree(qiime.path)
 
     def test_qiime1_setup_analysis(self):
@@ -98,6 +98,6 @@ class QiimeTests(TestCase):
         q2.setup_analysis()
         q2.create_children()
         for child in q2.children:
-            self.assertEqual(child.data_type, 'single_end')
+            self.assertEqual(child.doc.data_type, 'single_end')
 
         rmtree(q2.path)
