@@ -58,6 +58,7 @@ class StudyDoc(men.Document):
 
         new_dir = new_dir.resolve()
         new_dir.mkdir()
+        log('Created dir {}'.format(new_dir))
 
         # Handle demuxed sequences
         if Path(self.files['for_reads']).suffix in ['.zip', '.tar']:
@@ -87,6 +88,7 @@ class StudyDoc(men.Document):
         files['metadata'] = new_dir / 'metadata.tsv'
         string_files = {str(key): str(value) for key, value in files.items()}
 
+        log('creating analysis doc')
         doc = AnalysisDoc(created=datetime.now(),
                           last_accessed=datetime.now(),
                           sub_analysis=False,
@@ -105,6 +107,7 @@ class StudyDoc(men.Document):
                           config=config,
                           files=string_files)
         doc.save()
+        log('saved analysis doc')
         return doc
 
 
