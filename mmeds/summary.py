@@ -21,9 +21,9 @@ def summarize_qiime(summary_path, tool):
     for i, line in enumerate(lines):
         parts = line.split('\t')
         if i:
-            study_name = '{}-{}-{}'.format(parts[1], parts[0], tool)
-        else:
             files[parts[0]] = Path(parts[1])
+        else:
+            study_name = '{}-{}-{}'.format(parts[1], parts[0], tool)
 
     # Create the summary directory
     if not files['summary'].is_dir():
