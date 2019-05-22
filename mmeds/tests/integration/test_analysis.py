@@ -2,6 +2,7 @@ from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import Database
 from mmeds.summary import summarize_qiime
+from mmeds.util import log
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
@@ -34,6 +35,7 @@ class AnalysisTests(TestCase):
                                                  self.testing,
                                                  ('for_reads', Path(fig.TEST_METADATA).name, reads),
                                                  ('barcodes', Path(fig.TEST_BARCODES).name, barcodes))
+        log('update datagbase files upload')
         # Get the files to check
         with Database(owner=fig.TEST_USER, testing=self.testing) as db:
             self.files, self.path = db.get_mongo_files(access_code=self.code)
@@ -52,6 +54,7 @@ class AnalysisTests(TestCase):
                                      'for_reads',
                                      self.testing)
 
+        log('update datagbase files modify')
         # Update the files
         with Database(owner=fig.TEST_USER, testing=self.testing) as db:
             self.files, self.path = db.get_mongo_files(access_code=self.code)
@@ -64,13 +67,18 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary/analysis.pdf').is_file())
 
     def test_qiime1(self):
+        log("in test_qiime1")
         self.handle_data_upload()
+        log('after data upload')
         self.handle_modify_data()
+        log('after data modification')
         p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
                                  self.testing)
+        log('after spawned analysis')
         while p.is_alive():
             sleep(5)
+        log('analysis finished')
         self.assertTrue((Path(self.path) / 'Qiime1_0/summary/analysis.pdf').is_file())
         for child in p.children:
             self.assertEqual(child.exitcode, 0)

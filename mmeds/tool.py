@@ -39,6 +39,7 @@ class Tool(mp.Process):
         :child: A boolean. If True this Tool object is the child of another tool.
         """
         super().__init__()
+        log('initilize {}'.format(self.name))
         self.study_code = access_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
@@ -75,6 +76,7 @@ class Tool(mp.Process):
         self.children = []
         self.doc.sub_analysis = False
         self.doc.save()
+        log('finished initialization: {}'.format(self.name))
 
     def __str__(self):
         return ppretty(self, seq_length=20)

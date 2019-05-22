@@ -158,6 +158,7 @@ class Qiime1(Tool):
 
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
+        log('IN setup analysis q1 {}'.format(self.name))
         # Only the child run this analysis
         if not self.doc.sub_analysis:
             self.validate_mapping()
@@ -172,5 +173,6 @@ class Qiime1(Tool):
         self.core_diversity()
         self.write_file_locations()
 
+        log('finish setup analysis q1 {}'.format(self.name))
         # Perform standard tool setup
         super().setup_analysis()

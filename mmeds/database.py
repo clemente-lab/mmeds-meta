@@ -15,7 +15,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
+from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
 from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
