@@ -9,7 +9,7 @@ from IPython.display import Image
 from random import shuffle
 from PIL import Image as PImage
 from PIL import ImageDraw, ImageFont
-from mmeds.util import load_config
+from mmeds.util import load_config, log
 
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
@@ -182,9 +182,7 @@ for key, value in allRGB.items():
                                                                          g=value[2],
                                                                          b=value[3]))
 
-with open('mod_revtex.tplx', 'w') as f:
-    for line in new_lines:
-        f.write(line)
+Path('mod_revtex.tplx').write_text('\n'.join(new_lines))
 =====
 group_legends_py<source>
 with open('mod_revtex.tplx', 'r') as f:
@@ -202,9 +200,7 @@ for group_name, group in df.groupby('GroupName'):
 for row in df:
     new_lines = lines[:packages_end] + latex + lines[packages_end:]
 
-with open('mod_revtex.tplx', 'w') as f:
-    for line in new_lines:
-        f.write(line)
+Path('mod_revtex.tplx').write_text('\n'.join(new_lines))
 =====
 alpha_py_qiime1<source>
 # Read in the data

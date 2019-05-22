@@ -98,6 +98,7 @@ class StudyDoc(men.Document):
                           email=self.email,
                           path=str(new_dir),
                           study_code=self.access_code,
+                          study_name=self.study,
                           analysis_code=access_code,
                           reads_type=self.reads_type,
                           data_type=data_type,
@@ -120,10 +121,10 @@ class AnalysisDoc(men.Document):
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
     path = men.StringField(max_length=256, required=True)
-    study_code = men.StringField(max_length=50, required=True)
+    study_code = men.StringField(max_length=100, required=True)
+    study_name = men.StringField(max_length=100, required=True)
     analysis_code = men.StringField(max_length=50, required=True)
     reads_type = men.StringField(max_length=45, required=True)
-    #TODO check what this is
     data_type = men.StringField(max_length=45, required=True)
     analysis_type = men.StringField(max_length=45, required=True)
     # Stages: created, started, <Name of last method>, finished, errored

@@ -192,7 +192,7 @@ class Tool(mp.Process):
         """
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
-            f.write('{}\t{}\n'.format(self.owner, self.study_code))
+            f.write('{}\t{}\t{}\n'.format(self.doc.owner, self.doc.study_name, self.doc.analysis_code))
             f.write('Key\tPath\n')
             for key, value in self.doc.files.items():
                 f.write('{}\t{}\n'.format(key, value))

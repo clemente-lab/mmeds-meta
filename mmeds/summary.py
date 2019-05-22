@@ -18,9 +18,12 @@ def summarize_qiime(summary_path, tool):
     # Load the files
     files = {}
     lines = (path / 'file_index.tsv').read_text().strip().split('\n')
-    for line in lines:
+    for i, line in enumerate(lines):
         parts = line.split('\t')
-        files[parts[0]] = Path(parts[1])
+        if i:
+            study_name = '{}-{}-{}'.format(parts[1], parts[0], tool)
+        else:
+            files[parts[0]] = Path(parts[1])
 
     # Create the summary directory
     if not files['summary'].is_dir():
@@ -42,12 +45,12 @@ def summarize_qiime(summary_path, tool):
     config = load_config((path / 'config_file.txt').read_text(), files['metadata'], True)
 
     if tool == 'qiime1':
-        summarize_qiime1(path, files, config)
+        summarize_qiime1(path, files, config, study_name)
     elif tool == 'qiime2':
-        summarize_qiime2(path, files, config)
+        summarize_qiime2(path, files, config, study_name)
 
 
-def summarize_qiime1(path, files, config):
+def summarize_qiime1(path, files, config, study_name):
     """
     Create summary of analysis results
     """
@@ -92,7 +95,7 @@ def summarize_qiime1(path, files, config):
                         analysis_type='qiime1',
                         files=summary_files,
                         execute=True,
-                        name='analysis',
+                        name=study_name,
                         path=path / 'summary')
 
     mnb.create_notebook()
@@ -106,7 +109,7 @@ def summarize_qiime1(path, files, config):
     return path / 'summary/analysis.pdf'
 
 
-def summarize_qiime2(path, files, config):
+def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
     log('Start Qiime2 summary')
 
@@ -160,7 +163,7 @@ def summarize_qiime2(path, files, config):
                         analysis_type='qiime2',
                         files=summary_files,
                         execute=True,
-                        name='analysis',
+                        name=study_name,
                         path=path / 'summary')
 
     mnb.create_notebook()
