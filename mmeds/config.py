@@ -45,7 +45,6 @@ CONFIG_PARAMETERS = [
     'sub_analysis'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
-# MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
