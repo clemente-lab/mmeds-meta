@@ -63,6 +63,8 @@ script:
 - echo "module avail" >> ~/testfile.sh
 - chmod +x ~/testfile.sh
 - ~/testfile.sh
+- ls -l
+- ls -l ~/mmeds_server_data
 - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
   -s ./mmeds/tests/unit -x --durations=0
 - bash <(curl -s https://codecov.io/bash) -cF unit
@@ -75,10 +77,11 @@ script:
   -s ./mmeds/tests/integration -x --durations=0
 - bash <(curl -s https://codecov.io/bash) -cF integration
 - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
-- ls /home/travis/mmeds_server_data/
-- ls /home/travis/mmeds_server_data/*
-- ls /home/travis/mmeds_server_data/testuser_Good_Study_0/*
-- ls /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/*
+- ls -l /home/travis/mmeds_server_data/
+- ls -l /home/travis/mmeds_server_data/*
+- ls -l ~/mmeds_server_data/testuser_Good_Study_0
+- ls -l /home/travis/mmeds_server_data/testuser_Good_Study_0/*
+- ls -l /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/*
 - cat /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/jobfile.lsf
 - sh /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/jobfile.lsf
 - pip uninstall mmeds -y
