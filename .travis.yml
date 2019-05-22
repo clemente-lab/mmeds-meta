@@ -53,18 +53,7 @@ install:
 - source activate mmeds-stable
 - pip install . --no-cache-dir
 - mysql -u root < setup.sql
-- ls ~/.modules/modulefiles
-- cat ~/.modules/modulefiles/qiime2/2019.1
-- ls ~/.local/
-- ls ~/.local/bin
 script:
-- module avail
-- echo "#!/bin/bash -l" > ~/testfile.sh
-- echo "module avail" >> ~/testfile.sh
-- chmod +x ~/testfile.sh
-- ~/testfile.sh
-- ls -l
-- ls -l ~/mmeds_server_data
 - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
   -s ./mmeds/tests/unit -x --durations=0
 - bash <(curl -s https://codecov.io/bash) -cF unit
