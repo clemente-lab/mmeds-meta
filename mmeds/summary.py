@@ -283,6 +283,7 @@ class MMEDSNotebook():
                                                                                       group=column))
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=self.words[level]))
+                print('WRite otu_legend and otu_group_legend')
                 self.update_template('input', self.source['otu_legend_latex'].format(level=self.words[level]))
                 self.update_template('input', self.source['otu_group_legend_latex'].format(level=self.words[level],
                                                                                            meta=column))
@@ -375,16 +376,19 @@ class MMEDSNotebook():
         self.add_markdown('# Taxa Summary')
         for data_file in included_files:
             self.taxa_plots(data_file)
+        print('write latex_legend')
         self.add_code(self.source['latex_legend_py'])
 
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
+            print('Write diversity_legend_latex for {}'.format(column))
             self.update_template('input', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
         self.add_markdown('# Alpha Diversity Summary')
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
+        print('Write group_legends_py for alpha')
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity

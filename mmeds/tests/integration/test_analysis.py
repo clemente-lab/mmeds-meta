@@ -12,7 +12,7 @@ import mmeds.secrets as sec
 
 
 class AnalysisTests(TestCase):
-    testing = True
+    testing = False
     count = 0
 
     @classmethod
