@@ -170,6 +170,8 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
 ggsave("{plot}", height = 6, width = 8)
 =====
 latex_legend_py<source>
+# Reset this variable
+latex = []
 print('Running section on latex ')
 with open('mod_revtex.tplx', 'r') as f:
     lines = f.readlines()
@@ -192,6 +194,8 @@ with open('mod_revtex.tplx', 'w') as f:
         f.write(line)
 =====
 group_legends_py<source>
+# Reset this variable
+latex = []
 print('Running section on group latex ')
 with open('mod_revtex.tplx', 'r') as f:
     lines = f.readlines()
