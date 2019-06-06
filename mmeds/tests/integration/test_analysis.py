@@ -64,7 +64,7 @@ class AnalysisTests(TestCase):
 
     def summarize(self, count, tool):
         summarize_qiime(tool.path, tool)
-        self.assertTrue((tool.path / 'summary/analysis.pdf').is_file())
+        self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1(self):
         log("in test_qiime1")
@@ -79,7 +79,8 @@ class AnalysisTests(TestCase):
         while p.is_alive():
             sleep(5)
         log('analysis finished')
-        self.assertTrue((Path(self.path) / 'Qiime1_0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) /
+                         'Qiime1_0/summary/Good_Study-{}-{}.pdf'.format(fig.TEST_USER, 'qiime1')).is_file())
         for child in p.children:
             self.assertEqual(child.exitcode, 0)
         self.assertEqual(p.exitcode, 0)
@@ -121,4 +122,5 @@ class AnalysisTests(TestCase):
             sleep(10)
 
         self.assertEqual(tool.exitcode, 0)
-        self.assertTrue((Path(self.path) / 'Qiime2_0/summary/analysis.pdf').is_file())
+        self.assertTrue((Path(self.path) /
+                         'Qiime2_0/summary/Good_Study-{}-{}.pdf'.format(fig.TEST_USER, 'qiime2')).is_file())
