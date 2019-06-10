@@ -295,6 +295,7 @@ class MMEDSNotebook():
                                                        group=column))
             self.add_code('Image("{plot}")'.format(plot=filename))
             self.add_code(self.source['otu_legend_py'].format(level=self.words[level]))
+            # Add metadata indicating that a legend should be included in the output of this cell
             self.add_code('', meta={'{}{}'.format(self.words[level], column): True})
             self.add_markdown(self.source['taxa_caption'])
             self.add_markdown(self.source['page_break'])
@@ -382,7 +383,7 @@ class MMEDSNotebook():
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
             print('Write diversity_legend_latex for {}'.format(column))
-            self.update_template('input', self.source['diversity_legend_latex'].format(meta=column))
+            self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
         self.add_markdown('# Alpha Diversity Summary')
