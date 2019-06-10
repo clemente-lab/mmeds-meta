@@ -111,7 +111,7 @@ class StudyDoc(men.Document):
                           files=string_files)
         doc.save()
         with open(STUDY_LOG, 'a') as f:
-            f.write('-\t'.join([doc.study, doc.owner, doc.analysis_type,
+            f.write('-\t'.join([doc.study_name, doc.owner, doc.analysis_type,
                                 doc.analysis_status, doc.path, doc.analysis_code]) + '\n')
         log('saved analysis doc')
         return doc
