@@ -2,7 +2,7 @@ import mongoengine as men
 from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
-from mmeds.config import get_salt
+from mmeds.config import get_salt, STUDY_LOG
 from mmeds.util import copy_metadata, log
 from ppretty import ppretty
 
@@ -37,6 +37,8 @@ class StudyDoc(men.Document):
                 # Otherwise just write the value
                 else:
                     f.write('{}\t{}\n'.format(key, file_path))
+        with open(STUDY_LOG, 'a') as f:
+            f.write('-\t'.join([self.study, self.owner, 'Upload', 'Finished', self.path, self.access_code]) + '\n')
         super(StudyDoc, self).save()
 
     def __str__(self):
@@ -108,6 +110,9 @@ class StudyDoc(men.Document):
                           config=config,
                           files=string_files)
         doc.save()
+        with open(STUDY_LOG, 'a') as f:
+            f.write('-\t'.join([doc.study, doc.owner, doc.analysis_type,
+                                doc.analysis_status, doc.path, doc.analysis_code]) + '\n')
         log('saved analysis doc')
         return doc
 

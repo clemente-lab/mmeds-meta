@@ -36,6 +36,7 @@ if not os.path.exists(DATABASE_DIR):
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
+STUDY_LOG = DATABASE_DIR / 'study_log.txt'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',
