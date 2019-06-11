@@ -73,6 +73,9 @@ script:
 - ls -l /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/*
 - cat /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/jobfile.lsf
 - sh /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_0/jobfile.lsf
+- ls -l /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_1/*
+- cat /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_1/jobfile.lsf
+- sh /home/travis/mmeds_server_data/testuser_Good_Study_0/Qiime1_1/jobfile.lsf
 - pip uninstall mmeds -y
 - sudo rm -rf ~/.modules/qiime2/var/cache
 - sudo rm -rf ~/.modules/qiime1/var/cache
