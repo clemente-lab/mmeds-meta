@@ -245,19 +245,24 @@ class MMEDSNotebook():
         self.cells.append(new_cell)
 
     def update_template(self, location, text):
-        """ Update the revtex template used for converting the notebook to a PDF """
-        output_block = '((* block output_group -*))'
-        output_block = '((*- if cell.metadata.hide_output: -*))\n((*- else -*))'
-        output_block = '((* endblock output_group *))'
+        """
+        Updates the revtex template used for converting the notebook to a PDF
+        =====================================================================
+        :location: A string. Determine what section of the template to add the
+            text to.
+        :text: A string. The text to add to the template.
+        """
         with open(self.path / 'mod_revtex.tplx') as f:
             lines = f.readlines()
+            # Find the locations of the different sections of the template
             for i, line in enumerate(lines):
-                if output_block in line:
+                if '((* endblock output_group *))' in line:
                     output_start = i
                 elif '((* block input scoped *))' in line:
                     input_start = i + 1
                 elif '((* endblock packages *))' in line:
                     packages_end = i
+        # Insert the text at the specified location
         if location == 'packages':
             new_lines = lines[:packages_end] + [text + '\n'] + lines[packages_end:]
         elif location == 'output':
@@ -266,6 +271,7 @@ class MMEDSNotebook():
         elif location == 'input':
             log('Update output')
             new_lines = lines[:input_start] + [text + '\n'] + lines[input_start:]
+
         with open(self.path / 'mod_revtex.tplx', 'w') as f:
             for line in new_lines:
                 f.write(line)
@@ -276,17 +282,22 @@ class MMEDSNotebook():
         ====================================
         :data_file: The location of the file to create the plotting code for.
         """
-
+        # Get the taxa level from the filename
         level = data_file.split('.')[0][-1]
         self.add_markdown('## OTU level {level}'.format(level=self.words[level]))
+
+        # For each selected metadata column
         for i, column in enumerate(self.config['metadata']):
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
             self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(file1=data_file,
                                                                                       level=self.words[level],
                                                                                       group=column))
+            # Add the code cells to define colors for each of the taxa
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=self.words[level]))
                 self.update_template('output', self.source['otu_legend_latex'].format(level=self.words[level]))
+
+            # Add the legend to the template
             self.update_template('output', self.source['otu_group_legend_latex'].format(level=self.words[level],
                                                                                         meta=column))
             self.add_code(self.source['otu_group_legend_py'].format(level=self.words[level],
@@ -294,10 +305,11 @@ class MMEDSNotebook():
             self.add_code(self.source['taxa_r'].format(plot=filename,
                                                        level=self.words[level],
                                                        group=column))
+
+            # Add code cell for loading the plot with metadata indicating the legend to use
             self.add_code('Image("{plot}")'.format(plot=filename),
                           meta={'{}{}'.format(self.words[level], column): True})
             self.add_code(self.source['otu_legend_py'].format(level=self.words[level]))
-            # Add metadata indicating that a legend should be included in the output of this cell
             self.add_markdown(self.source['taxa_caption'])
             self.add_markdown(self.source['page_break'])
 
