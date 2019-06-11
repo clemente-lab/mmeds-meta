@@ -172,7 +172,6 @@ ggsave("{plot}", height = 6, width = 8)
 latex_legend_py<source>
 # Reset this variable
 latex = []
-print('Running section on latex ')
 with open('mod_revtex.tplx', 'r') as f:
     lines = f.readlines()
 for i, line in enumerate(lines):
@@ -184,7 +183,6 @@ for key, value in allRGB.items():
                                                                          r=value[1],
                                                                          g=value[2],
                                                                          b=value[3]))
-print('added {} rgb keys'.format(len(latex)))
 
 new_lines = lines[:packages_end] + latex + lines[packages_end:]
 
@@ -195,7 +193,6 @@ with open('mod_revtex.tplx', 'w') as f:
 group_legends_py<source>
 # Reset this variable
 latex = []
-print('Running section on group latex ')
 with open('mod_revtex.tplx', 'r') as f:
     lines = f.readlines()
 for i, line in enumerate(lines):
@@ -207,7 +204,6 @@ for group_name, group in df.groupby('GroupName'):
     zipped = zip(group.GroupID.unique(), group.Grouping.unique())
     lists = ['{}/{}'.format(x, y) for x, y in zipped]
     latex.append('\\def\\{group}{{{colors}}}\n'.format(group=group_name, colors=','.join(lists)))
-print('added {} group rgb keys'.format(len(latex)))
 
 new_lines = lines[:packages_end] + latex + lines[packages_end:]
 
