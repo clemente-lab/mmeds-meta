@@ -112,7 +112,8 @@ class StudyDoc(men.Document):
         doc.save()
         with open(STUDY_LOG, 'a') as f:
             f.write('-\t'.join([doc.study_name, doc.owner, doc.analysis_type,
-                                doc.analysis_status, doc.path, doc.analysis_code]) + '\n')
+                                doc.analysis_status, str(datetime.now()), doc.path,
+                                doc.analysis_code]) + '\n')
         log('saved analysis doc')
         return doc
 
@@ -148,11 +149,11 @@ class AnalysisDoc(men.Document):
             access_code = get_salt(20)
         child = deepcopy(self)
         child_files = deepcopy(self.files)
+
         # Update the child's attributes
         child_files['metadata'] = str(path / 'metadata.tsv')
         child.update(path=str(path), sub_analysis=True, last_accessed=datetime.now(),
-                     created=datetime.now(), files=child_files)
-        child.analysis_code = access_code
+                     created=datetime.now(), files=child_files, analysis_code=access_code)
         child.save()
         return child
 

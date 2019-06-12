@@ -358,7 +358,7 @@ class Tool(mp.Process):
         self.doc.save()
 
     def run_analysis(self):
-        """ Perform some analysis. """
+        """ Runs the setup, and starts the analysis process """
         try:
             self.setup_analysis()
 
