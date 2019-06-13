@@ -10,13 +10,15 @@ import cherrypy as cp
 import pandas as pd
 
 from datetime import datetime
+from random import seed
+from multiprocessing import current_process
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
-from mmeds.documents import StudyDoc, AnalysisDoc
+from mmeds.documents import StudyDoc, AnalysisDoc, MMEDSProcess
 
 DAYS = 13
 
@@ -286,6 +288,21 @@ class Database:
     ########################################
     #               MongoDB                #
     ########################################
+
+    def create_access_code(self, check_code, length=20):
+        """ Creates a unique code for identifying a mongo db document """
+        code = check_code
+        count = 0
+        while True:
+            # Ensure no document exists with the given access code
+            if not (MMEDSProcess.objects(process_code=code).first() or
+                    StudyDoc.objects(access_code=code).first() or
+                    AnalysisDoc.objects(analysis_code=code).first()):
+                break
+            else:
+                code = check_code + '-' + str(count)
+                count += 1
+        return code
 
     def mongo_clean(self, access_code):
         """

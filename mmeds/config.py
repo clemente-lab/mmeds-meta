@@ -1,5 +1,5 @@
 from pathlib import Path
-from random import choice
+from random import choice, seed
 from pandas import read_csv, Timestamp
 import pymysql as pms
 import mmeds.secrets as sec

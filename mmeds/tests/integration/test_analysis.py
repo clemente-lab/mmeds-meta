@@ -66,27 +66,31 @@ class AnalysisTests(TestCase):
         summarize_qiime(tool.path, tool)
         self.assertTrue((tool.path / 'summary').is_dir())
 
-    def test_qiime1(self):
+    def test_qiime1_with_children(self):
         log("in test_qiime1")
-        self.handle_data_upload()
+        self.handle_data_upload(fig.TEST_METADATA_SHORT)
         log('after data upload')
         self.handle_modify_data()
         log('after data modification')
         p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG).read_text(),
+                                 Path(fig.TEST_CONFIG_SUB).read_text(),
                                  self.testing)
         log('after spawned analysis')
         while p.is_alive():
-            sleep(5)
+            print('{}: Waiting on process: {}'.format(datetime.now(), p.name))
+            sleep(20)
         log('analysis finished')
         self.assertTrue((Path(self.path) /
                          'Qiime1_0/summary/Good_Study-{}-{}.pdf'.format(fig.TEST_USER, 'qiime1')).is_file())
         for child in p.children:
+            while child.is_alive():
+                print('{}: Waiting on process: {}'.format(datetime.now(), child.name))
+                sleep(20)
             self.assertEqual(child.exitcode, 0)
         self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
 
-    def test_qiime2_with_restarts(self):
+    def no_test_qiime2_with_restarts(self):
         self.handle_data_upload()
         p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),

@@ -60,7 +60,8 @@ class Tool(mp.Process):
             log('Creating new doc {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
-                self.doc = metadata.generate_AnalysisDoc(self.name.split('-')[0], atype, config)
+                access_code = db.create_access_code(self.name)
+                self.doc = metadata.generate_AnalysisDoc(self.name.split('-')[0], atype, config, access_code)
         log('Doc creation date: {}'.format(self.doc.created))
         self.path = Path(self.doc.path)
 
@@ -85,13 +86,17 @@ class Tool(mp.Process):
         """ Set self.current_stage to the provided value """
         self.current_stage = stage
 
-    def add_path(self, name, extension='', key=None):
+    def add_path(self, name, extension='', key=None, full_path=False):
         """ Add a file or directory with the full path to self.doc. """
         if key:
             file_key = key
         else:
             file_key = name
-        self.doc.files[str(file_key)] = '{}{}'.format(self.path / name, extension)
+        if full_path:
+            file_path = str(name) + str(extension)
+        else:
+            file_path = '{}{}'.format(self.path / name, extension)
+        self.doc.files[str(file_key)] = file_path
         self.doc.update(files=self.doc.files)
         self.stage_files[self.current_stage].append(file_key)
         self.doc.save()
@@ -102,7 +107,12 @@ class Tool(mp.Process):
         if absolute:
             file_path = Path(self.doc.files[key])
         else:
-            file_path = self.run_dir / Path(self.doc.files[key]).relative_to(self.path)
+            try:
+                # If it's a parent file this will file
+                file_path = self.run_dir / Path(self.doc.files[key]).relative_to(self.path)
+            except ValueError:
+                # So try again with the parents path
+                file_path = self.run_dir / '..' / Path(self.doc.files[key]).relative_to(self.path.parent)
         return file_path
 
     def write_config(self):
@@ -229,6 +239,7 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
+        log('I AM {}'.format(mp.current_process()))
         log('CREATE CHILD {}:{}'.format(category, value))
 
         child = classcopy(self)
@@ -240,8 +251,13 @@ class Tool(mp.Process):
 
         child.path = Path(self.path / '{}_{}'.format(category[1], file_value))
         child.path.mkdir()
+        log('PATH {}'.format(child.path))
 
-        child.doc = self.doc.create_sub_analysis(child.path, category, value)
+        with Database(owner=self.owner, testing=self.testing) as db:
+            access_code = db.create_access_code(child.name)
+        log('CHILD ACCESS CODE {}'.format(access_code))
+
+        child.doc = self.doc.create_sub_analysis(child.path, category, value, access_code)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
@@ -251,24 +267,23 @@ class Tool(mp.Process):
                     child_file = child.path / 'otu_table.biom'
                     child_file.symlink_to(self.get_file('split_otu_{}'.format(category[1]), True) /
                                           'otu_table__{}_{}__.biom'.format(category[1], value))
-                    child.set_file(child_file, key='biom_table')
+                    child.add_path(child_file, key='biom_table')
                 else:
                     child_file = child.path / self.get_file(parent_file).name
                     child_file.symlink_to(self.get_file(parent_file, True))
                     child.add_path(child_file, key=parent_file)
+
         if 'Qiime1' in self.name:
-            child.add_path(self.doc.files.get('split_otu_{}'.format(category[1])) /
+            child.add_path(self.get_file('split_otu_{}'.format(category[1]), True) /
                            'otu_table__{}_{}__.biom'.format(category[1], value),
-                           key='parent_table')
+                           key='parent_table', full_path=True)
         else:
-            child.add_path(self.path / self.doc.files.get('otu_table'), key='parent_table')
-        log('added parent table')
+            child.add_path(self.get_file('otu_table', True), key='parent_table', full_path=True)
 
         log('load metadata  {}'.format(self.get_file('metadata', True)))
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.get_file('metadata', True))
         new_mdf = mdf.loc[mdf[category] == value]
-        log(new_mdf)
         write_metadata(new_mdf, child.get_file('metadata', True))
         log('write to {}'.format(child.get_file('metadata', True)))
 
@@ -277,17 +292,14 @@ class Tool(mp.Process):
         child.run_dir = Path('$RUN_{}_{}_{}'.format(child.doc.name, category[1], file_value))
 
         # Update the text for the job file
-        child.jobtext = deepcopy(self.jobtext)[:2]
-        del child.jobtext[-1]
+        child.jobtext = deepcopy(self.jobtext)[:6]
         child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
 
         # Create a new mapping file
         child.create_qiime_mapping_file()
 
         # Filter the config for the metadata category selected for this sub-analysis
-        child.config = deepcopy(self.doc.config)
-        child.config['metadata'] = [cat for cat in self.doc.config['metadata'] if not cat == category[1]]
-        child.config['sub_analysis'] = False
+        child.config = deepcopy(child.doc.config)
         child.is_child = True
         child.write_config()
 
@@ -301,6 +313,7 @@ class Tool(mp.Process):
 
         # For each column selected...
         for col in self.doc.config['sub_analysis']:
+            print('Create child for col {}'.format(col))
             try:
                 t_col = (COL_TO_TABLE[col], col)
             # Additional columns won't be in this table
@@ -362,17 +375,26 @@ class Tool(mp.Process):
         try:
             self.setup_analysis()
 
+            log('After setup analysis')
             if self.doc.sub_analysis:
+                log('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
-                    sleep(10)
+                    log('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))
+                    sleep(20)
+                log('I {} have awoken'.format(self.name))
             jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
 
+            log('sub_analsysi config status')
+            log(self.doc.config['sub_analysis'])
             # Start the sub analyses if so configured
-            if self.doc.config['sub_analysis']:
+            if not self.doc.config['sub_analysis'] == 'None':
+                log('I am not a sub analysis {}'.format(self.name))
                 self.create_children()
                 self.start_children()
+                log('started children')
+                log([child.name for child in self.children])
 
             if self.testing:
                 self.doc.update(analysis_status='started')

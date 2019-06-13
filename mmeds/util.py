@@ -687,7 +687,7 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
         with open('/tmp/mmeds_log.txt', 'a+') as f:
             f.write('{}: {}\n'.format(datetime.now(), log_text))
     else:
-        with open(fig.MMEDS_LOG, 'a+') as f:
+        with open(write_file, 'a+') as f:
             f.write('{}: {}\n'.format(datetime.now(), log_text))
 
 

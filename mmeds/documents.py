@@ -45,12 +45,15 @@ class StudyDoc(men.Document):
         """ Return a printable string """
         return ppretty(self)
 
-    def generate_AnalysisDoc(self, name, analysis_type, config, access_code=None):
+    def generate_AnalysisDoc(self, name, analysis_type, config, access_code):
         """ Create a new AnalysisDoc from the current StudyDoc """
+        log('IN Generate AnalysisDoc')
+        log(name)
+        log(analysis_type)
+        log(config)
+        log(access_code)
         files = {}
         run_id = 0
-        if access_code is None:
-            access_code = get_salt(20)
 
         # Create a new directory to perform the analysis in
         new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
@@ -143,18 +146,39 @@ class AnalysisDoc(men.Document):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def create_sub_analysis(self, path, category, value, access_code=None):
+    def create_sub_analysis(self, path, category, value, analysis_code):
         """ Creates a new AnalysisDoc for a child analysis """
-        if access_code is None:
-            access_code = get_salt(20)
-        child = deepcopy(self)
+        log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
         child_files = deepcopy(self.files)
+        child_files['metadata'] = str(path / 'metadata.tsv')
+
+        child_config = deepcopy(self.config)
+        child_config['sub_analysis'] = 'None'
+        child_config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
+
+        child = AnalysisDoc(created=datetime.now(),
+                            last_accessed=datetime.now(),
+                            sub_analysis=True,
+                            testing=self.testing,
+                            name=path.name,
+                            owner=self.owner,
+                            email=self.email,
+                            path=str(path),
+                            study_code=self.study_code,
+                            study_name=self.study_name,
+                            analysis_code=analysis_code,
+                            reads_type=self.reads_type,
+                            data_type=self.data_type,
+                            analysis_type=self.analysis_type,
+                            analysis_status='Pending',
+                            restart_stage='0',
+                            files=child_files,
+                            config=child_config)
 
         # Update the child's attributes
-        child_files['metadata'] = str(path / 'metadata.tsv')
-        child.update(path=str(path), sub_analysis=True, last_accessed=datetime.now(),
-                     created=datetime.now(), files=child_files, analysis_code=access_code)
         child.save()
+        log(child)
+        log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, path))
         return child
 
     # When the document is updated record the
@@ -182,6 +206,7 @@ class MMEDSProcess(men.Document):
     queue_position = men.IntField(required=True)  # -1 if it hasn't started yet, -2 if it's finished
     ptype = men.StringField(max_length=100, required=True)
     associated_doc = men.StringField(max_length=100, required=True)  # Access code for associated document
+    process_code = men.StringField(max_length=100, required=True)  # Access code for associated document
 
     def __str__(self):
         """ Return a printable string """

@@ -1,4 +1,5 @@
 from subprocess import run
+from multiprocessing import current_process
 
 from mmeds.config import DATABASE_DIR
 from mmeds.util import log, setup_environment
@@ -103,7 +104,7 @@ class Qiime1(Tool):
 
     def split_otu(self):
         """ Split the otu table by column values. """
-        for column in self.doc.config['metadata']:
+        for column in self.doc.config['sub_analysis']:
             self.add_path('split_otu_{}'.format(column))
             cmd = 'split_otu_table.py -i {} -m {} -f {} -o {} --suppress_mapping_file_output;'
             command = cmd.format(self.get_file('biom_table'),
@@ -158,7 +159,6 @@ class Qiime1(Tool):
 
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
-        log('IN setup analysis q1 {}'.format(self.name))
         # Only the child run this analysis
         if not self.doc.sub_analysis:
             self.validate_mapping()
@@ -168,11 +168,10 @@ class Qiime1(Tool):
                 self.join_paired_ends()
             self.split_libraries()
             self.pick_otu()
-            if self.doc.config['sub_analysis']:
+            if not self.doc.config['sub_analysis'] == 'None':
                 self.split_otu()
         self.core_diversity()
         self.write_file_locations()
 
-        log('finish setup analysis q1 {}'.format(self.name))
         # Perform standard tool setup
         super().setup_analysis()
