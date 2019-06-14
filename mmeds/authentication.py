@@ -22,7 +22,7 @@ def add_user(username, password, email, testing=False):
 def remove_user(username, testing=False):
     """ Removes a user from the user sql table. """
     with Database(testing=testing) as db:
-        db.clear_user_data(username)
+        #db.clear_user_data(username)
         db.remove_user(username)
 
 

@@ -90,7 +90,7 @@ class AnalysisTests(TestCase):
         self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
 
-    def no_test_qiime2_with_restarts(self):
+    def test_qiime2_with_restarts(self):
         self.handle_data_upload()
         p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
