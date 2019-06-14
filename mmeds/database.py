@@ -492,6 +492,11 @@ class Database:
                         elif os.path.exists(mdata.files[key]):
                             shutil.rmtree(mdata.files[key])
 
+    def get_mongo_docs(self, access_code):
+        """ For admin use """
+        return (StudyDoc.objects(access_code=access_code),
+                AnalysisDoc.objects(analysis_code=access_code),
+                MMEDSProcess.objects(access_code=access_code))
 
 class SQLBuilder:
     def __init__(self, df, db, owner=None):
