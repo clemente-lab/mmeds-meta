@@ -89,6 +89,7 @@ class AnalysisTests(TestCase):
             self.assertEqual(child.exitcode, 0)
         self.assertEqual(p.exitcode, 0)
         self.summarize(0, p)
+        print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2_with_restarts(self):
         self.handle_data_upload()

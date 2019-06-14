@@ -413,6 +413,7 @@ class Tool(mp.Process):
                 output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
+
             log_text = self.get_file('errorlog', True).read_text()
             # Raise an error if the final command doesn't run
             if 'MMEDS_FINISHED' not in log_text:
@@ -426,19 +427,20 @@ class Tool(mp.Process):
                 self.doc.save()
                 self.doc.reload()
 
-                # Go through all files in the analysis
-                for stage, files in self.stage_files.items():
-                    # If they should be created after the last checkpoint
-                    if stage >= self.doc.restart_stage:
-                        for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
-                            # Check if they exist
-                            unfinished = self.get_file(f, True)
-                            if unfinished.exists():
-                                # If so delete them
-                                if unfinished.is_dir():
-                                    rmtree(unfinished)
-                                else:
-                                    unfinished.unlink()
+                if not self.testing:
+                    # Go through all files in the analysis
+                    for stage, files in self.stage_files.items():
+                        # If they should be created after the last checkpoint
+                        if stage >= self.doc.restart_stage:
+                            for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
+                                # Check if they exist
+                                unfinished = self.get_file(f, True)
+                                if unfinished.exists():
+                                    # If so delete them
+                                    if unfinished.is_dir():
+                                        rmtree(unfinished)
+                                    else:
+                                        unfinished.unlink()
                 raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
             else:
                 self.doc.update(restart_stage=-1)  # Indicates analysis finished successfully
