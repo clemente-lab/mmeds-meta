@@ -438,8 +438,7 @@ class MMEDSanalysis(MMEDSbase):
         log('In run_analysis')
         try:
             self.check_upload(access_code)
-            p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
-            self.add_process('analysis', p.doc)
+            self.q.put(('analysis', access_code, tool, config))
             cp.log('Valid config file')
             page = self.format_html('welcome', title='Welcome to MMEDS')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
@@ -489,13 +488,7 @@ class MMEDSanalysis(MMEDSbase):
         # Add the datafiles that exist as arguments
         datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
 
-        # Start a process to handle loading the data
-        p = Process(target=handle_data_upload,
-                    args=(metadata, username, reads_type, self.testing,
-                          # Unpack the list so the files are taken as a tuple
-                          *datafiles))
-        cp.log('Starting upload process')
-        p.start()
+        self.q.put(('upload', metadata, username, read_type, datafiles))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')

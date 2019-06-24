@@ -142,4 +142,21 @@ class Watcher(Process):
         atexit.register(write_processes, self.processes)
 
     def run(self):
-        sleep(10)
+        while True:
+            if self.q.empty():
+                sleep(10)
+            else:
+                process = self.q.get()
+                if process[0] == 'analysis':
+                    ptype, access_code, tool, config = process
+                    p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
+                    self.add_process('analysis', p.doc)
+                elif process[0] == 'upload':
+                    ptype, metadata, username, reads_type, datafiles = process
+                    # Start a process to handle loading the data
+                    p = Process(target=handle_data_upload,
+                                args=(metadata, username, reads_type, self.testing,
+                                      # Unpack the list so the files are taken as a tuple
+                                      *datafiles))
+                    p.start()
+                    self.add_process('upload', p.doc)
