@@ -928,3 +928,23 @@ def quote_sql(sql, quote='`', **kwargs):
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
     return formatted
+
+
+def read_processes():
+    """ Function for reading process access codes back from the log file. """
+    processes = defaultdict(list)
+    if fig.PROCESS_LOG.exists():
+        all_codes = fig.PROCESS_LOG.read_text().split('\n')
+        for code in all_codes:
+            ptype, pcode = code.split('\t')
+            processes[ptype].append(pcode)
+    return processes
+
+
+def write_processes(process_codes):
+    """ Function for writing the access codes to all processes tracked by the server upon server exit. """
+    all_codes = []
+    for ptype, pcodes in process_codes.items():
+        for pcode in pcodes:
+            all_codes.append('{}\t{}'.format(ptype, pcode))
+    fig.PROCESS_LOG.write_text('\n'.join(all_codes))

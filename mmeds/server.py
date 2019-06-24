@@ -3,16 +3,19 @@ import tempfile
 import cherrypy as cp
 import mmeds.secrets as sec
 import mmeds.error as err
+import atexit
 
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
 from multiprocessing import Process
+from datetime import datetime
 
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (generate_error_html, load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
-                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
+                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy, write_processes,
+                        read_processes)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES
 from mmeds.authentication import (validate_password,
                                   check_username,
@@ -31,11 +34,11 @@ class MMEDSbase:
     The base class inherited by all mmeds server classes.
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
-    processes = {}
 
     def __init__(self, testing=False):
         self.db = None
         self.testing = bool(int(testing))
+        self.processes = read_processes()
 
     def get_user(self):
         """
@@ -162,6 +165,12 @@ class MMEDSbase:
         else:
             return_page = path.read_text()
         return return_page
+
+    def add_process(self, ptype, process):
+        """ Add an analysis process to the list of processes. """
+        self.processes[ptype].append(process)
+        atexit.unregister(write_processes)
+        atexit.register(write_processes, self.processes)
 
 
 @decorate_all_methods(catch_server_errors)
@@ -548,4 +557,5 @@ class MMEDSserver(MMEDSbase):
             page = self.format_html('welcome', title='Welcome to MMEDS')
         else:
             page = self.format_html('index')
+            self.add_process('test', 'time is {}'.format(datetime.now()))
         return page
