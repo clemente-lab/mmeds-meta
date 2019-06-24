@@ -1,8 +1,10 @@
+import atexit
+
 from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
-from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata
+from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata, read_processes, write_processes
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
@@ -123,5 +125,21 @@ def spawn_sub_analysis(user, code, category, value, testing):
 
 
 class Watcher(Process):
-    def __init__(self, testing=False):
+
+    def __init__(self, queue, testing=False):
+        self.testing = testing
+        self.q = queue
+        self.processes = read_processes()
+        for code in self.processes['analysis']:
+            with Database('.', testing=self.testing) as db:
+                print('\n'.join([str(x) for x in db.get_doc('analysis', code)]))
         super().__init__()
+
+    def add_process(self, ptype, process):
+        """ Add an analysis process to the list of processes. """
+        self.processes[ptype].append(process)
+        atexit.unregister(write_processes)
+        atexit.register(write_processes, self.processes)
+
+    def run(self):
+        sleep(10)

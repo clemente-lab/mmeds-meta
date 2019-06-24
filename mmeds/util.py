@@ -954,8 +954,10 @@ def write_processes(process_codes):
     for ptype, pcodes in process_codes.items():
         # Go through each processdoc
         for pdoc in pcodes:
+            if isinstance(pdoc, str):
+                all_codes.append('{}\t{}'.format(ptype, pdoc))
             # If the process hasn't yet finished
-            if not pdoc.status == 'Finished':
+            elif not pdoc.status == 'Finished':
                 # Add it's access code to the process log
                 all_codes.append('{}\t{}'.format(ptype, pdoc.analysis_code))
     fig.PROCESS_LOG.write_text('\n'.join(all_codes))

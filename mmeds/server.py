@@ -3,12 +3,11 @@ import tempfile
 import cherrypy as cp
 import mmeds.secrets as sec
 import mmeds.error as err
-import atexit
 
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from datetime import datetime
 
 
@@ -24,7 +23,7 @@ from mmeds.authentication import (validate_password,
                                   reset_password,
                                   change_password)
 from mmeds.database import Database
-from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data
+from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data, Watcher
 
 absDir = Path(os.getcwd())
 
@@ -38,13 +37,9 @@ class MMEDSbase:
     def __init__(self, testing=False):
         self.db = None
         self.testing = bool(int(testing))
-        self.processes = read_processes()
-        cp.log('Initializing server')
-        for code in self.processes['analysis']:
-            with Database('.', testing=self.testing) as db:
-                cp.log('\n'.join([str(x) for x in db.get_doc('analysis', code)]))
-        cp.log('Initialization finished.')
-
+        self.q = Queue()
+        self.monitor = Watcher(testing, self.q)
+        self.monitor.start()
 
     def get_user(self):
         """
@@ -84,7 +79,6 @@ class MMEDSbase:
         """ Run validate_mapping_file and return the results """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
-        log(myMetaData)
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
             raise err.MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
@@ -174,10 +168,7 @@ class MMEDSbase:
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
-        self.processes[ptype].append(process)
-        atexit.unregister(write_processes)
-        atexit.register(write_processes, self.processes)
-
+        self.monitor.add_process(ptype, process)
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
