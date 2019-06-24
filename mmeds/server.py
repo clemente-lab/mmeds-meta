@@ -39,6 +39,12 @@ class MMEDSbase:
         self.db = None
         self.testing = bool(int(testing))
         self.processes = read_processes()
+        cp.log('Initializing server')
+        for code in self.processes['analysis']:
+            with Database('.', testing=self.testing) as db:
+                cp.log('\n'.join([str(x) for x in db.get_doc('analysis', code)]))
+        cp.log('Initialization finished.')
+
 
     def get_user(self):
         """
@@ -442,8 +448,8 @@ class MMEDSanalysis(MMEDSbase):
         try:
             self.check_upload(access_code)
             p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
+            self.add_process('analysis', p.doc)
             cp.log('Valid config file')
-            cp.session['processes'][access_code] = p
             page = self.format_html('welcome', title='Welcome to MMEDS')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('welcome', title='Welcome to MMEDS')
@@ -555,6 +561,8 @@ class MMEDSserver(MMEDSbase):
         """ Home page of the application """
         if cp.session.get('user'):
             page = self.format_html('welcome', title='Welcome to MMEDS')
+            self.add_process('test', 'User {} is logged in. The time is {}'.format(cp.session.get('user'),
+                                                                                   datetime.now()))
         else:
             page = self.format_html('index')
             self.add_process('test', 'time is {}'.format(datetime.now()))

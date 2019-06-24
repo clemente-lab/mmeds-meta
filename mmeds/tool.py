@@ -463,8 +463,10 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
+        self.doc.update(pid=self.pid)
         if self.analysis:
             self.run_analysis()
         else:
             self.setup_analysis()
+        self.doc.update(pid=None, status='Finished')
         self.doc.save()

@@ -120,3 +120,8 @@ def spawn_sub_analysis(user, code, category, value, testing):
     tool = restart_analysis(user, code, 1, testing)
     child = tool.create_child(category, value)
     return child
+
+
+class Watcher(Process):
+    def __init__(self, testing=False):
+        super().__init__()

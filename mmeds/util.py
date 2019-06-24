@@ -931,7 +931,10 @@ def quote_sql(sql, quote='`', **kwargs):
 
 
 def read_processes():
-    """ Function for reading process access codes back from the log file. """
+    """
+    Function for reading process access codes back from the log file.
+    Part of the functionality for continuing unfinished analyses on server restart.
+    """
     processes = defaultdict(list)
     if fig.PROCESS_LOG.exists():
         all_codes = fig.PROCESS_LOG.read_text().split('\n')
@@ -942,9 +945,17 @@ def read_processes():
 
 
 def write_processes(process_codes):
-    """ Function for writing the access codes to all processes tracked by the server upon server exit. """
+    """
+    Function for writing the access codes to all processes tracked by the server upon server exit.
+    Part of the functionality for continuing unfinished analyses on server restart.
+    """
     all_codes = []
+    # Go through all types of processdocs
     for ptype, pcodes in process_codes.items():
-        for pcode in pcodes:
-            all_codes.append('{}\t{}'.format(ptype, pcode))
+        # Go through each processdoc
+        for pdoc in pcodes:
+            # If the process hasn't yet finished
+            if not pdoc.status == 'Finished':
+                # Add it's access code to the process log
+                all_codes.append('{}\t{}'.format(ptype, pdoc.analysis_code))
     fig.PROCESS_LOG.write_text('\n'.join(all_codes))

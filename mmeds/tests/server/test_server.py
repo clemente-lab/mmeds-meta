@@ -345,7 +345,4 @@ class TestServer(helper.CPWebCase):
     # Process Tracking #
     ####################
 
-    # def check_server_restart(self):
-
-
 

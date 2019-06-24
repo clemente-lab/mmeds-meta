@@ -2,7 +2,7 @@ import mongoengine as men
 from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
-from mmeds.config import get_salt, STUDY_LOG
+from mmeds.config import STUDY_LOG
 from mmeds.util import copy_metadata, log
 from ppretty import ppretty
 
@@ -139,6 +139,7 @@ class AnalysisDoc(men.Document):
     # Stages: created, started, <Name of last method>, finished, errored
     analysis_status = men.StringField(max_length=45, required=True)
     restart_stage = men.IntField(required=True)
+    pid = men.IntField()
     files = men.DictField()
     config = men.DictField()
 

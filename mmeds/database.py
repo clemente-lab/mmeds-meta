@@ -498,6 +498,12 @@ class Database:
                 AnalysisDoc.objects(analysis_code=access_code),
                 MMEDSProcess.objects(access_code=access_code))
 
+    def get_doc(self, doc_type, access_code):
+        """ For server use """
+        if doc_type == 'analysis':
+            return AnalysisDoc.objects(analysis_code=access_code)
+
+
 class SQLBuilder:
     def __init__(self, df, db, owner=None):
         """
