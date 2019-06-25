@@ -80,7 +80,9 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
         metadata_copy = create_local_copy(f, metadata.name, new_dir)
 
     # Create a copy of the Data file
-    datafile_copies = {datafile[0]: create_local_copy(datafile[2], datafile[1], new_dir) for datafile in datafiles}
+    datafile_copies = {datafile[0]: create_local_copy(Path(datafile[1]).read_bytes(),
+                                                      datafile[1], new_dir) for datafile in datafiles
+                       if datafile[1] is not None}
 
     with MetaDataUploader(metadata=metadata_copy,
                           path=new_dir,
@@ -127,6 +129,13 @@ def spawn_sub_analysis(user, code, category, value, testing):
 class Watcher(Process):
 
     def __init__(self, queue, testing=False):
+        """
+        Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
+        =====================================================================================
+        :queue: A multiprocessing.Queue object. When the Watcher process needs to start some other process
+            the necessary information will be added to this queue.
+        :testing: A boolean. If true run in testing configuration, otherwise run in deployment configuration.
+        """
         self.testing = testing
         self.q = queue
         self.processes = read_processes()
@@ -142,21 +151,46 @@ class Watcher(Process):
         atexit.register(write_processes, self.processes)
 
     def run(self):
+        """ The loop to run when a Watcher is started """
+        current_upload = None
+
+        # Continue until the process is killed
         while True:
+            # If there is nothing in the process queue, sleep
             if self.q.empty():
                 sleep(10)
             else:
+                # Otherwise get the queued item
                 process = self.q.get()
+                log('Got process from queue')
+                log(process)
+
+                # If it's an analysis
                 if process[0] == 'analysis':
-                    ptype, access_code, tool, config = process
-                    p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
-                    self.add_process('analysis', p.doc)
+                    # Retrieve the info
+                    ptype, user, access_code, tool, config = process
+                    # Start the analysis running
+                    p = spawn_analysis(tool, user, access_code, config, self.testing)
+                    # Add it to the list of analysis processes
+                    self.add_process('analysis', p)
+                # If it's an upload
                 elif process[0] == 'upload':
-                    ptype, metadata, username, reads_type, datafiles = process
-                    # Start a process to handle loading the data
-                    p = Process(target=handle_data_upload,
-                                args=(metadata, username, reads_type, self.testing,
-                                      # Unpack the list so the files are taken as a tuple
-                                      *datafiles))
-                    p.start()
-                    self.add_process('upload', p.doc)
+                    # Check that there isn't another process currently uploading
+                    if current_upload is not None and current_upload.is_alive():
+                        # If there is another upload return the process info to the queue
+                        self.q.put(process)
+                        sleep(10)
+                    else:
+                        current_upload = None
+
+                    # If there is nothing uploading currently start the new upload process
+                    if current_upload is None:
+                        ptype, metadata, username, reads_type, datafiles = process
+                        # Start a process to handle loading the data
+                        p = Process(target=handle_data_upload,
+                                    args=(metadata, username, reads_type, self.testing,
+                                          # Unpack the list so the files are taken as a tuple
+                                          *datafiles))
+                        p.start()
+                        self.add_process('upload', p.pid)
+                        current_upload = p

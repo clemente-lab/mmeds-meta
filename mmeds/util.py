@@ -87,8 +87,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     # If no config was provided load the default
     if config_file is None or config_file == '':
         log('Using default config')
-        with open(fig.STORAGE_DIR / 'config_file.txt', 'r') as f:
-            page = f.read()
+        page = fig.DEFAULT_CONFIG.read_text()
     else:
         # Load the file contents
         page = config_file
@@ -405,9 +404,8 @@ def is_numeric(s):
 
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
-    log("In create_local_copy.")
     # If the fp is None return None
-    if fp is None:
+    if fp is None or fp == '':
         return None
 
     # Create the filename
@@ -420,12 +418,14 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
-        while True:
-            data = fp.read(8192)
-            nf.write(data)
-            if not data:
-                break
-    log('Copy finished')
+        if isinstance(fp, bytes):
+            nf.write(fp)
+        else:
+            while True:
+                data = fp.read(8192)
+                nf.write(data)
+                if not data:
+                    break
     return str(file_copy)
 
 

@@ -15,7 +15,7 @@ from mmeds.validate import validate_mapping_file
 from mmeds.util import (generate_error_html, load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
                         mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy, write_processes,
                         read_processes)
-from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES
+from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG
 from mmeds.authentication import (validate_password,
                                   check_username,
                                   check_password,
@@ -38,7 +38,7 @@ class MMEDSbase:
         self.db = None
         self.testing = bool(int(testing))
         self.q = Queue()
-        self.monitor = Watcher(testing, self.q)
+        self.monitor = Watcher(self.q, self.testing)
         self.monitor.start()
 
     def get_user(self):
@@ -138,7 +138,8 @@ class MMEDSbase:
         files = []
         for key, value in kwargs.items():
             if value is not None:
-                files.append((key, value.filename, value.file))
+                file_copy = create_local_copy(value.file, value.filename, self.get_dir())
+                files.append((key, file_copy))
         return files
 
     def format_html(self, page, **kwargs):
@@ -169,6 +170,7 @@ class MMEDSbase:
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
         self.monitor.add_process(ptype, process)
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
@@ -438,7 +440,11 @@ class MMEDSanalysis(MMEDSbase):
         log('In run_analysis')
         try:
             self.check_upload(access_code)
-            self.q.put(('analysis', access_code, tool, config))
+            if config.file is None:
+                config_text = DEFAULT_CONFIG.read_text()
+            else:
+                config_text = config.file.read().decode('utf-8')
+            self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
             cp.log('Valid config file')
             page = self.format_html('welcome', title='Welcome to MMEDS')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
@@ -488,7 +494,7 @@ class MMEDSanalysis(MMEDSbase):
         # Add the datafiles that exist as arguments
         datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
 
-        self.q.put(('upload', metadata, username, read_type, datafiles))
+        self.q.put(('upload', metadata, username, reads_type, datafiles))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')

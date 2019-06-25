@@ -1,5 +1,5 @@
 from pathlib import Path
-from random import choice, seed
+from random import choice
 from pandas import read_csv, Timestamp
 import pymysql as pms
 import mmeds.secrets as sec
@@ -50,6 +50,7 @@ CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
+DEFAULT_CONFIG = STORAGE_DIR / 'config_file.txt'
 
 
 # Configuration for the CherryPy server
