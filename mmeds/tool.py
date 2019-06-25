@@ -468,5 +468,5 @@ class Tool(mp.Process):
             self.run_analysis()
         else:
             self.setup_analysis()
-        self.doc.update(pid=None, status='Finished')
+        self.doc.update(pid=None, analysis_status='Finished')
         self.doc.save()

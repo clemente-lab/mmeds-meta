@@ -199,16 +199,3 @@ class AnalysisDoc(men.Document):
                 else:
                     f.write('{}\t{}\n'.format(key, file_path))
         super().save()
-
-
-class MMEDSProcess(men.Document):
-    status = men.StringField(max_length=100, required=True)
-    pid = men.IntField(required=True)  # -1 if it hasn't started yet, -2 if it's finished
-    queue_position = men.IntField(required=True)  # -1 if it hasn't started yet, -2 if it's finished
-    ptype = men.StringField(max_length=100, required=True)
-    associated_doc = men.StringField(max_length=100, required=True)  # Access code for associated document
-    process_code = men.StringField(max_length=100, required=True)  # Access code for associated document
-
-    def __str__(self):
-        """ Return a printable string """
-        return ppretty(self)
