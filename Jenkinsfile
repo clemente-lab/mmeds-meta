@@ -3,10 +3,8 @@ pipeline {
         stages {
             stage('Build') {
                 agent {
-                    docker.withRegistry('localhost') {
-                        docker {
-                            image 'localhost:5000/mmeds:latest'
-                        }
+                    docker {
+                        image 'localhost:5000/mmeds:latest'
                     }
                 }
                 steps {
