@@ -4,7 +4,7 @@ pipeline {
             stage('Build') {
                 agent {
                     docker {
-                        image 'python:3.7-stretch'
+                        image 'mmeds'
                     }
                 }
                 steps {
@@ -22,7 +22,7 @@ pipeline {
                 }
                 post {
                     always {
-                        bash <(curl -s https://codecov.io/bash) -cF unit
+                        sh 'bash <(curl -s https://codecov.io/bash) -cF unit'
                     }
                 }
             }
