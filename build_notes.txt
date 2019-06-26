@@ -1,3 +1,12 @@
+
+For creating new Jenkins server
+docker run -u root -p 8080:8080 -v jenkins-data:/home/david/jenkins_home -v /home/david/docker.sock:/var/run/docker.sock -v "$HOME":/home  jenkinsci/blueocean 
+
+Add user and jenkins to docker group
+sudo gpasswd -a jenkins docker
+sudo gpasswd -a $USER docker
+
+
 Create docker registry on local machine 
 `docker run -d -p 5000:5000 --restart always --name registry registry:2`
 
