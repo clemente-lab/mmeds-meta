@@ -1,0 +1,11 @@
+Create docker registry on local machine 
+`docker run -d -p 5000:5000 --restart always --name registry registry:2`
+
+Tag the image
+`docker tag mmeds localhost:5000/mmeds:latest`
+
+Push image to local registry
+`docker push localhost:5000/mmeds:latest`
+
+Pull in Jenkins
+`docker pull localhost:5000/mmeds:latest`

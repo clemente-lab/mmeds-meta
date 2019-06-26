@@ -4,7 +4,7 @@ pipeline {
             stage('Build') {
                 agent {
                     docker {
-                        image 'mmeds'
+                        image 'localhost:5000/mmeds:latest'
                     }
                 }
                 steps {
