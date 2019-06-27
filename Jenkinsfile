@@ -1,10 +1,8 @@
 pipeline {
-    agent none
+    agent {
+        node {
         stages {
             stage('Build') {
-                steps {
-                    alwaysPull false
-                }
                 agent {
                     docker {
                         image 'localhost:5000/mmeds:latest'
@@ -30,4 +28,6 @@ pipeline {
                 }
             }
         }
+}
+}
 }
