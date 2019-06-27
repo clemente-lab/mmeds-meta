@@ -1,12 +1,11 @@
 pipeline {
-    agent none
-    stages {
-        stage('Build') {
-            agent {
+    agent {
+        stages {
+            stage('Build') {
                 docker {
                     sh 'env | grep DOCKER_HOST'
-                    image 'mmeds:latest'
-                    registryUrl 'http://localhost:2375'
+                        image 'mmeds:latest'
+                        registryUrl 'http://localhost:2375'
                 }
             }
             steps {
@@ -14,11 +13,6 @@ pipeline {
             }
         }
         stage('Test') {
-            agent {
-                docker {
-                    image 'qnib/pytest'
-                }
-            }
             steps {
                 sh 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
             }
