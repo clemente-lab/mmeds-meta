@@ -1,6 +1,11 @@
 
+
+
 # For creating new Jenkins server
 docker run -u root -p 8080:8080 -v jenkins-data:/home/david/jenkins_home -v /home/david/docker.sock:/var/run/docker.sock -v "$HOME":/home  jenkinsci/blueocean 
+
+
+# From https://docs.docker.com/install/linux/linux-postinstall/
 
 # Add user and jenkins to docker group
 sudo gpasswd -a jenkins docker

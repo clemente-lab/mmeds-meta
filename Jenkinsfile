@@ -4,6 +4,7 @@ pipeline {
         stage('Build') {
             agent {
                 docker {
+                    sh 'env | grep DOCKER_HOST'
                     image 'mmeds:latest'
                     registryUrl 'http://localhost:2375'
                 }
