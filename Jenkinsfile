@@ -2,6 +2,7 @@ pipeline {
     agent none
         stages {
             stage('Build') {
+                alwaysPull false
                 agent {
                     docker {
                         image 'localhost:5000/mmeds:latest'
