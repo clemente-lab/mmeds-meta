@@ -5,7 +5,7 @@ pipeline {
             agent {
                 docker {
                     image 'mmeds:latest'
-                    registryUrl 'http://localhost:5000'
+                    registryUrl 'http://localhost:2375'
                 }
             }
             steps {

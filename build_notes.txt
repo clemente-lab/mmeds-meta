@@ -1,20 +1,27 @@
 
-For creating new Jenkins server
+# For creating new Jenkins server
 docker run -u root -p 8080:8080 -v jenkins-data:/home/david/jenkins_home -v /home/david/docker.sock:/var/run/docker.sock -v "$HOME":/home  jenkinsci/blueocean 
 
-Add user and jenkins to docker group
+# Add user and jenkins to docker group
 sudo gpasswd -a jenkins docker
 sudo gpasswd -a $USER docker
 
+# Edit /usr/lib/systemd/system/docker.service with
+ExecStart=/usr/bin/dockerd -H unix:// -H tcp://localhost:2375 --containerd=/run/containerd/containerd.sock
 
-Create docker registry on local machine 
+# Reload and restart
+systemctl daemon-reload
+systemctl restart docker
+sudo service jenkins restart
+
+ Create docker registry on lotal machine 
 `docker run -d -p 5000:5000 --restart always --name registry registry:2`
 
-Tag the image
+# Tag the image
 `docker tag mmeds localhost:5000/mmeds:latest`
 
-Push image to local registry
+# Push image to local registry
 `docker push localhost:5000/mmeds:latest`
 
-Pull in Jenkins
+# Pull in Jenkins
 `docker pull localhost:5000/mmeds:latest`
