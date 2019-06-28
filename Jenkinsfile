@@ -1,29 +1,23 @@
 pipeline {
-    agent none
-        options {
-            skipStagesAfterUnstable()
+    agent {
+        docker {
+            image 'mmeds:latest'
+                registryUrl 'http://localhost:2375'
         }
+    }
+    options {
+        skipStagesAfterUnstable()
+    }
     stages {
         stage('Build') {
-            agent {
-                docker {
-                    image 'mmeds:latest'
-                    registryUrl 'http://localhost:2375'
-                }
-            }
             steps {
-                sh 'python setup.py install'
+                bash 'source activate mmeds-stable'
+                bash 'python setup.py install'
             }
         }
         stage('Test') {
-            agent {
-                docker {
-                    image 'mmeds:latest'
-                    registryUrl 'http://localhost:2375'
-                }
-            }
             steps {
-                sh 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
+                bash 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
             }
             post {
                 always {
