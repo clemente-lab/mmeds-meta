@@ -1,12 +1,10 @@
 pipeline {
     agent {
+                docker {
+                        image 'python3:latest'
+                }
         stages {
             stage('Build') {
-                docker {
-                    sh 'env | grep DOCKER_HOST'
-                        image 'mmeds:latest'
-                        registryUrl 'http://localhost:2375'
-                }
             }
             steps {
                 sh 'python setup.py install'
