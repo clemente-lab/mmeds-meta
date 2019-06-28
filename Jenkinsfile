@@ -8,7 +8,7 @@ pipeline {
             agent {
                 docker {
                     image 'mmeds:latest'
-                        registryUrl 'http://localhost:2375'
+                    registryUrl 'http://localhost:2375'
                 }
             }
             steps {
@@ -18,9 +18,8 @@ pipeline {
         stage('Test') {
             agent {
                 docker {
-                    sh 'env | grep DOCKER_HOST'
-                        image 'mmeds:latest'
-                        registryUrl 'http://localhost:2375'
+                    image 'mmeds:latest'
+                    registryUrl 'http://localhost:2375'
                 }
             }
             steps {
