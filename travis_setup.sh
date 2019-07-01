@@ -17,7 +17,7 @@ mkdir ~/.modules/modulefiles;
 
 # Create the necessary conda environments
 echo "Create mmeds-stable environment";
-conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy;
+conda create --file ~/mmeds-meta/spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy;
 ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 source activate mmeds-stable;
 echo "Install R libraries";
