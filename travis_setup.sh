@@ -11,6 +11,11 @@ make;
 sudo make install;
 cd ../../..;
 
+# Anaconda setup
+wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh --quiet
+~/miniconda.sh -b &>/dev/null
+export PATH=~/miniconda2/bin:$PATH
+conda update --yes conda &>/dev/null
 
 if [ ! -d ~/.modules ]; then
     echo 'Make .modules';

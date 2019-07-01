@@ -39,7 +39,7 @@ before_install:
   --quiet
 - mysql --version
 - chmod +x ~/miniconda.sh
-- "~/miniconda.sh -b &>/dev/null"
+- ~/miniconda.sh -b &>/dev/null
 - export PATH=~/miniconda2/bin:$PATH
 - conda update --yes conda &>/dev/null
 - sudo rm -r ~/.local
