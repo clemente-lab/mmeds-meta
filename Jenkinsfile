@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'mmeds:latest'
-                registryUrl 'http://localhost:2375'
+            image 'mmeds-mysql-mongo:latest'
+            registryUrl 'http://localhost:2375'
         }
     }
     options {
