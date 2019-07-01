@@ -11,13 +11,13 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                bash 'source activate mmeds-stable'
-                bash 'python setup.py install'
+                sh 'source activate mmeds-stable'
+                sh 'python setup.py install'
             }
         }
         stage('Test') {
             steps {
-                bash 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
+                sh 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
             }
             post {
                 always {
