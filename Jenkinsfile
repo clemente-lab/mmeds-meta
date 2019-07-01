@@ -12,6 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh '''#!/bin/bash
+                export PATH="$USER/miniconda2/bin:$PATH";
                 source activate mmeds-stable;
                 python setup.py install;
                 '''
