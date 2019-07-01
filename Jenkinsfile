@@ -11,17 +11,18 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'source activate mmeds-stable'
-                sh 'python setup.py install'
+                sh 'su - jenkins -s /bin/bash'
+                bash 'source activate mmeds-stable'
+                bash 'python setup.py install'
             }
         }
         stage('Test') {
             steps {
-                sh 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
+                bash 'pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/unit -x --durations=0'
             }
             post {
                 always {
-                    sh 'bash <(curl -s https://codecov.io/bash) -cF unit'
+                    bash 'bash <(curl -s https://codecov.io/bash) -cF unit'
                 }
             }
         }
