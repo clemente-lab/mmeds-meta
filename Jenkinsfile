@@ -11,7 +11,6 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'su - jenkins -s /bin/bash'
                 bash 'source activate mmeds-stable'
                 bash 'python setup.py install'
             }
