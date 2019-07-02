@@ -21,7 +21,7 @@ conda create --file ~/mmeds-meta/spec-file.txt -p ~/.modules/mmeds-stable --yes 
 ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 source activate mmeds-stable;
 echo "Install R libraries";
-Rscript setup.R;
+Rscript ~/mmeds-meta/setup.R;
 source deactivate;
 
 echo "Create qiime1 environment";

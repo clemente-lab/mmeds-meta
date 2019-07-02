@@ -8,7 +8,8 @@ ENV HOME /root
 CMD ["/sbin/my_init"]
 
 # === Some Environment Variables
-ENV    DEBIAN_FRONTEND noninteractive
+# ENV    DEBIAN_FRONTEND interactive
+# Bad
 
 # === MySQL Installation
 RUN apt-get update
@@ -68,3 +69,4 @@ RUN apt-get install -y texlive-latex-base texlive-latex-extra texlive-latex-reco
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 CMD ["/etc/mysql/mysql_setup.sh"]
+CMD ["/bin/bash"]
