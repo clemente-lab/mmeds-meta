@@ -9,7 +9,7 @@ CMD ["/sbin/my_init"]
 
 # === Some Environment Variables
 # ENV    DEBIAN_FRONTEND interactive
-# Bad
+# Bad ^
 
 # === MySQL Installation
 RUN apt-get update
