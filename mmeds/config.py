@@ -377,6 +377,8 @@ HTML_PAGES = {
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
     'download_study_files': (HTML_DIR / 'download_study_files.html', True),
     'download_select_file': (HTML_DIR / 'download_select_file.html', True),
+    'download_select_study': (HTML_DIR / 'download_select_study.html', True),
+    'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),

@@ -18,7 +18,7 @@ from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
 from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
-from mmeds.documents import StudyDoc, AnalysisDoc, MMEDSProcess
+from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
 
@@ -139,6 +139,15 @@ class Database:
             raise NoResultError('There is no entry for user {}'.format(username))
         return result[0]
 
+    def get_privileges(self, username):
+        """ Get the email that matches this user. """
+        sql = 'SELECT `privilege` FROM `user` WHERE `username` = %(username)s'
+        self.cursor.execute(sql, {'username': username})
+        result = self.cursor.fetchone()
+        if result is None:
+            raise NoResultError('There is no entry for user {}'.format(username))
+        return result[0]
+
     def get_hash_and_salt(self, username):
         """ Get the hash and salt values for the specified user. """
         sql = 'SELECT `password`, `salt` FROM `user` WHERE `username` = %(username)s'
@@ -231,19 +240,21 @@ class Database:
         data = self.cursor.fetchall()
         return data
 
-    def add_user(self, username, password, salt, email):
+    def add_user(self, username, password, salt, email, privilege_level):
         """ Add the user with the specified parameters. """
         self.cursor.execute('SELECT MAX(user_id) FROM user')
         user_id = int(self.cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO `user` (user_id, username, password, salt, email)'
-        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
+        sql = 'INSERT INTO `user` (user_id, username, password, salt, email, privilege)'
+        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(privilege)s);'
 
         self.cursor.execute(sql, {'id': user_id,
                                   'uname': username,
                                   'pass': password,
                                   'salt': salt,
-                                  'email': email})
+                                  'email': email,
+                                  'privilege': privilege_level
+                                  })
         self.db.commit()
 
     def remove_user(self, username):
@@ -295,8 +306,7 @@ class Database:
         count = 0
         while True:
             # Ensure no document exists with the given access code
-            if not (MMEDSProcess.objects(process_code=code).first() or
-                    StudyDoc.objects(access_code=code).first() or
+            if not (StudyDoc.objects(access_code=code).first() or
                     AnalysisDoc.objects(analysis_code=code).first()):
                 break
             else:
@@ -461,6 +471,14 @@ class Database:
         """
         return AnalysisDoc.objects(analysis_code=access_code, owner=self.owner).first()
 
+    def get_all_studies(self):
+        """ Return all studies currently stored in the database. """
+        return StudyDoc.objects()
+
+    def get_study(self, access_code):
+        """ Return all studies currently stored in the database. """
+        return StudyDoc.objects(access_code=access_code).first()
+
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
         mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
@@ -495,8 +513,7 @@ class Database:
     def get_mongo_docs(self, access_code):
         """ For admin use """
         return (StudyDoc.objects(access_code=access_code),
-                AnalysisDoc.objects(analysis_code=access_code),
-                MMEDSProcess.objects(access_code=access_code))
+                AnalysisDoc.objects(analysis_code=access_code))
 
     def get_doc(self, doc_type, access_code):
         """ For server use """

@@ -7,23 +7,18 @@ import mmeds.error as err
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 from datetime import datetime
 
 
 from mmeds.validate import validate_mapping_file
-from mmeds.util import (generate_error_html, load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
-                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy, write_processes,
-                        read_processes)
+from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
+                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG
-from mmeds.authentication import (validate_password,
-                                  check_username,
-                                  check_password,
-                                  add_user,
-                                  reset_password,
-                                  change_password)
+from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
+                                  add_user, reset_password, change_password)
 from mmeds.database import Database
-from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data, Watcher
+from mmeds.spawn import handle_modify_data, Watcher
 
 absDir = Path(os.getcwd())
 
@@ -180,6 +175,46 @@ class MMEDSdownload(MMEDSbase):
     ########################################
     #            Download Pages            #
     ########################################
+
+    @cp.expose
+    def select_study(self):
+        """ Allows authorized user accounts to access uploaded studies. """
+        if check_privileges(self.get_user(), self.testing):
+            page = self.format_html('download_select_study', title='Select Study')
+            with Database(path='.', testing=self.testing) as db:
+                studies = db.get_all_studies()
+            for study in studies:
+                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code, study.study))
+        else:
+            page = self.format_html('welcome', title='Welcome to MMEDS')
+            page = insert_error(page, 24, 'You do not have permissions to access uploaded studies.')
+        return page
+
+    @cp.expose
+    def download_study(self, study_code):
+        """ Display the information and files of a particular study. """
+        with Database(path='.', testing=self.testing) as db:
+            study = db.get_study(study_code)
+
+        page = self.format_html('download_selected_study',
+                                title='Study: {}'.format(study.study),
+                                study=study.study,
+                                date_created=study.created,
+                                last_accessed=study.last_accessed,
+                                study_type=study.study_type,
+                                reads_type=study.reads_type,
+                                access_code=study.access_code,
+                                owner=study.owner,
+                                email=study.email,
+                                path=study.path)
+        for filename, filepath in study.files.items():
+            page = insert_html(page, 33, '<option value="{}">{}</option>'.format(filepath, filename))
+        return page
+
+    @cp.expose
+    def download_study_file(self, file_path):
+        return static.serve_file(file_path, 'application/x-download',
+                                 'attachment', os.path.basename(file_path))
 
     @cp.expose
     def download_page(self, access_code):

@@ -6,7 +6,7 @@ from mmeds.util import send_email, log
 from mmeds.error import NoResultError, InvalidLoginError, InvalidPasswordErrors, InvalidUsernameError
 
 
-def add_user(username, password, email, testing=False):
+def add_user(username, password, email, privilege_level=0, testing=False):
     """ Adds a user to the file containing login info. """
 
     # Hash the password
@@ -16,7 +16,7 @@ def add_user(username, password, email, testing=False):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
     with Database(testing=testing) as db:
-        db.add_user(username, password_hash, salt, email)
+        db.add_user(username, password_hash, salt, email, privilege_level)
 
 
 def remove_user(username, testing=False):
@@ -130,3 +130,10 @@ def get_email(username, testing=False):
     with Database(testing=testing) as db:
         # Get the values from the user table
         return db.get_email(username)
+
+
+def check_privileges(username, testing=False):
+    """ Retrieve the email for the specified user account. """
+    with Database(testing=testing) as db:
+        # Get the values from the user table
+        return bool(db.get_privileges(username))

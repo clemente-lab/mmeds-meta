@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`user` (
     `username` varchar(100),
     `password` varchar(64),
     `salt` varchar(10),
-    `email` varchar(100)
+    `email` varchar(100),
+    `privilege` int
 );
 
 -- -----------------------------------------------------
