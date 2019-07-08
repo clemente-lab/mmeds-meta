@@ -195,6 +195,7 @@ class MMEDSdownload(MMEDSbase):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
             study = db.get_study(study_code)
+            analyses = db.get_all_analyses_from_study(study_code)
 
         page = self.format_html('download_selected_study',
                                 title='Study: {}'.format(study.study),
@@ -207,14 +208,53 @@ class MMEDSdownload(MMEDSbase):
                                 owner=study.owner,
                                 email=study.email,
                                 path=study.path)
+
         for filename, filepath in study.files.items():
             page = insert_html(page, 33, '<option value="{}">{}</option>'.format(filepath, filename))
+
+        for analysis in analyses:
+            page = insert_html(page, 38 + len(study.files.keys()),
+                               '<option value="{}">{}</option>'.format(analysis.analysis_code,
+                                                                       analysis.name))
         return page
 
     @cp.expose
-    def download_study_file(self, file_path):
+    def download_filepath(self, file_path):
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
+
+    @cp.expose
+    def select_analysis(self, analysis_code):
+        """ Display the information and files of a particular study. """
+        with Database(path='.', testing=self.testing) as db:
+            analysis = db.get_study_analysis(analysis_code)
+
+        page = self.format_html('download_selected_analysis',
+                                title='Analysis: {}'.format(analysis.name),
+                                name=analysis.name,
+                                date_created=analysis.created,
+                                last_accessed=analysis.last_accessed,
+                                analysis_type=analysis.analysis_type,
+                                reads_type=analysis.reads_type,
+                                study_code=analysis.study_code,
+                                sub_analysis=analysis.sub_analysis,
+                                analysis_code=analysis.analysis_code,
+                                analysis_status=analysis.analysis_status,
+                                owner=analysis.owner,
+                                email=analysis.email,
+                                path=analysis.path)
+
+        for filename, file_path in analysis.files.items():
+            if Path(file_path).exists():
+                if '.' not in file_path:
+                    if not Path(file_path + '.tar.gz').exists():
+                        cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
+                                                             Path(file_path).parent,
+                                                             Path(file_path).name)
+                        run(cmd.split(' '), check=True)
+                    file_path += '.tar.gz'
+                page = insert_html(page, 36, '<option value="{}">{}</option>'.format(file_path, filename))
+        return page
 
     @cp.expose
     def download_page(self, access_code):

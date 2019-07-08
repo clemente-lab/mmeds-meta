@@ -479,6 +479,14 @@ class Database:
         """ Return all studies currently stored in the database. """
         return StudyDoc.objects(access_code=access_code).first()
 
+    def get_all_analyses_from_study(self, access_code):
+        """ Return all studies currently stored in the database. """
+        return AnalysisDoc.objects(study_code=access_code)
+
+    def get_study_analysis(self, access_code):
+        """ Return all studies currently stored in the database. """
+        return AnalysisDoc.objects(analysis_code=access_code).first()
+
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
         mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()

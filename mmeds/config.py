@@ -379,6 +379,8 @@ HTML_PAGES = {
     'download_select_file': (HTML_DIR / 'download_select_file.html', True),
     'download_select_study': (HTML_DIR / 'download_select_study.html', True),
     'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
+    'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
+    'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
