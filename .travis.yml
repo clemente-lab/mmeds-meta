@@ -47,8 +47,23 @@ install:
     - mysql -u root < setup.sql
     - module avail
 script:
+    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+        -s ./mmeds/tests/unit -x --durations=0
+    - bash <(curl -s https://codecov.io/bash) -cF unit
+    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+        -s ./mmeds/tests/server -x --durations=0
+    - bash <(curl -s https://codecov.io/bash) -cF server
+    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+        -s ./mmeds/tests/integration --durations=0
+    - bash <(curl -s https://codecov.io/bash) -cF integration
+    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+after_success:
+    - pip uninstall mmeds -y
+    - sudo rm -rf ~/.modules/qiime2/var/cache
+    - sudo rm -rf ~/.modules/qiime1/var/cache
+    - sudo rm -rf ~/.modules/mmeds-stable/var/cache
+    - sudo find ~/.modules/ -type f -name *.pyc -delete
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
     - tail -n 200 ~/mmeds_server_data/mmeds_log.txt
-    # - cd server; timeout 333 python server.py 1&>/dev/null& sleep 1; locust -c 5 -r 1 -t 5m --no-web --only-summary -f ../mmeds/tests/server_stress.py
-after_success:
-    - bash <(curl -s https://codecov.io/bash)
