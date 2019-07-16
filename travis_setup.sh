@@ -12,12 +12,10 @@ sudo make install;
 cd ../../..;
 
 
-if [ ! -d ~/.modules ]; then
-    echo 'Make .modules';
-    mkdir ~/.modules;
-    mkdir ~/.modules/modulefiles;
-    sudo chown -R travis:travis ~/.modules
-fi
+echo 'Make .modules';
+mkdir ~/.modules;
+mkdir ~/.modules/modulefiles;
+sudo chown -R travis:travis ~/.modules
 
 # Create the necessary conda environments
 if [ ! -d ~/.modules/mmeds-stable ]; then
@@ -40,16 +38,15 @@ if [ ! -d ~/.modules/qiime2 ]; then
 fi
 
 # Configure and install environment modules
-if [ ! -d ~/.local ]; then
-    echo "Install environment-modules";
-    wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
-    tar -zxf modules-4.2.1.tar.gz;
-    cd modules-4.2.1;
-    ./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
-    make &>/dev/null;
-    sudo make install &>/dev/null;
-    cd $REPO_DIR;
-fi
+mkdir ~/.local
+echo "Install environment-modules";
+wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;
+tar -zxf modules-4.2.1.tar.gz;
+cd modules-4.2.1;
+./configure --prefix="${HOME}/.local" --modulefilesdir="${HOME}/.modules/modulefiles" &>/dev/null;
+make &>/dev/null;
+sudo make install &>/dev/null;
+cd $REPO_DIR;
 
 # Make sure module will work
 export PATH="$HOME/.local/bin:$PATH"
