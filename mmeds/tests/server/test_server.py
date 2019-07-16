@@ -169,7 +169,7 @@ class TestServer(helper.CPWebCase):
         pass_page = insert_html(orig_page, 14, 'A new password has been sent to your email.')
         self.assertBody(pass_page)
 
-        sleep(20)
+        sleep(220)
         mail = recieve_email(1)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         new_pass = code.split('password is:')[1].splitlines()[1].strip()
