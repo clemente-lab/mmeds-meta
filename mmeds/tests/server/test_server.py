@@ -169,7 +169,7 @@ class TestServer(helper.CPWebCase):
         pass_page = insert_html(orig_page, 14, 'A new password has been sent to your email.')
         self.assertBody(pass_page)
 
-        sleep(220)
+        sleep(20)
         mail = recieve_email(1)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         new_pass = code.split('password is:')[1].splitlines()[1].strip()
@@ -270,7 +270,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        sleep(20)
+        sleep(120)
         mail = recieve_email(1)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         self.access_code = code.split('access code:')[1].splitlines()[1]
@@ -307,7 +307,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
                                                                                     fig.TEST_TOOL),
                      headers=self.cookies)
-        sleep(2)
+        sleep(20)
         # Try to access
         self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
         page = load_html(fig.HTML_DIR / 'welcome.html', user=fig.SERVER_USER, title='Welcome to MMEDS')

@@ -51,10 +51,10 @@ script:
         -s ./mmeds/tests/unit -x --durations=0
     - bash <(curl -s https://codecov.io/bash) -cF unit
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
-    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-        -s ./mmeds/tests/server -x --durations=0
-    - bash <(curl -s https://codecov.io/bash) -cF server
-    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+      #- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+      #-s ./mmeds/tests/server -x --durations=0
+      #- bash <(curl -s https://codecov.io/bash) -cF server
+      #- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
     - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
         -s ./mmeds/tests/integration --durations=0
     - bash <(curl -s https://codecov.io/bash) -cF integration
