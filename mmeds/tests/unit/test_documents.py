@@ -1,19 +1,14 @@
 from unittest import TestCase
 import mmeds.config as fig
 
-from shutil import rmtree
-
 from mmeds.authentication import add_user, remove_user
-from mmeds.tool import Tool
-from mmeds.util import load_config
-from mmeds.database import MetaDataUploader, Database
+from mmeds.database import MetaDataUploader
 from pathlib import Path
 from tempfile import gettempdir
 
 import mmeds.secrets as sec
 import mmeds.documents as docs
 import mongoengine as men
-
 
 
 def upload_metadata(args):
@@ -28,6 +23,7 @@ def upload_metadata(args):
                                                             barcodes=fig.TEST_BARCODES,
                                                             access_code=access_code)
 
+
 class DocTests(TestCase):
     """ Tests of top-level functions """
 
@@ -35,10 +31,10 @@ class DocTests(TestCase):
     def setUpClass(self):
         """ Set up tests """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        self.connection = men.connect('test')
+        self.connection = men.connect('test', alias='test_documents.py')
         self.test_code = 'ThisIsATest'
         self.owner = fig.TEST_USER  # 'test_owner'
-        self.email = fig.TEST_EMAIL  #'test_email'
+        self.email = fig.TEST_EMAIL  # 'test_email'
         self.test_doc = docs.StudyDoc(study_type='test_study',
                                       reads_type='single_end',
                                       study='TestStudy',
