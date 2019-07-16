@@ -28,13 +28,14 @@ class AnalysisTests(TestCase):
 
     def handle_data_upload(self, metadata=fig.TEST_METADATA_SHORTEST):
         """ Test the uploading of data """
+        print(fig.TEST_METADATA)
         with open(fig.TEST_METADATA, 'rb') as reads, open(fig.TEST_BARCODES, 'rb') as barcodes:
             self.code = spawn.handle_data_upload(Path(metadata),
                                                  fig.TEST_USER,
                                                  'single_end',
                                                  self.testing,
-                                                 ('for_reads', Path(fig.TEST_METADATA).name, reads),
-                                                 ('barcodes', Path(fig.TEST_BARCODES).name, barcodes))
+                                                 ('for_reads', Path(fig.TEST_METADATA), reads),
+                                                 ('barcodes', Path(fig.TEST_BARCODES), barcodes))
         log('update datagbase files upload')
         # Get the files to check
         with Database(owner=fig.TEST_USER, testing=self.testing) as db:

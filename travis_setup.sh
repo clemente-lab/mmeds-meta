@@ -8,7 +8,7 @@ git clone https://github.com/htacg/tidy-html5;
 cd tidy-html5/build/cmake;
 cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr;
 make;
-sudo make install;
+sudo make install &> /dev/null;
 cd ../../..;
 
 
@@ -24,7 +24,7 @@ if [ ! -d ~/.modules/mmeds-stable ]; then
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
     source activate mmeds-stable;
     echo "Install R libraries";
-    Rscript setup.R;
+    Rscript setup.R &> /dev/null;
     source deactivate;
 fi
 if [ ! -d ~/.modules/qiime1 ]; then
