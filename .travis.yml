@@ -64,5 +64,3 @@ script:
     - sudo rm -rf ~/.modules/qiime1/var/cache
     - sudo rm -rf ~/.modules/mmeds-stable/var/cache
     - sudo find ~/.modules/ -type f -name *.pyc -delete
-    - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -x
-    - tail -n 200 ~/mmeds_server_data/mmeds_log.txt
