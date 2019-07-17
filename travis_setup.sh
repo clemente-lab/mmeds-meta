@@ -31,6 +31,7 @@ if [ ! -d ~/.modules/qiime1 ]; then
     echo "Create qiime1 environment";
     conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>/dev/null;
 fi
+rm -rf ~/.modules/qiime2
 if [ ! -d ~/.modules/qiime2 ]; then
     echo "Create qiime2 environment"
     wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
