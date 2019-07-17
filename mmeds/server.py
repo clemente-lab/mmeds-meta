@@ -7,8 +7,10 @@ import mmeds.error as err
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from multiprocessing import Queue
+from multiprocessing import Queue, current_process
 from datetime import datetime
+from time import sleep
+import atexit
 
 
 from mmeds.validate import validate_mapping_file
@@ -23,6 +25,16 @@ from mmeds.spawn import handle_modify_data, Watcher
 absDir = Path(os.getcwd())
 
 
+# Define a function to shutdown the Watcher instance when the server exits
+def kill_watcher(monitor):
+    monitor.kill()
+    while monitor.is_alive():
+        sleep(30)
+        log('Try to terminate')
+        log('Try to kill')
+        monitor.kill()
+
+
 class MMEDSbase:
     """
     The base class inherited by all mmeds server classes.
@@ -33,8 +45,14 @@ class MMEDSbase:
         self.db = None
         self.testing = bool(int(testing))
         self.q = Queue()
-        self.monitor = Watcher(self.q, self.testing)
+        self.monitor = Watcher(self.q, current_process(), self.testing)
         self.monitor.start()
+        # Set the server to kill the watcher process on exit
+        atexit.register(kill_watcher, self.monitor)
+
+    def exit(self):
+        kill_watcher(self.monitor)
+        cp.engine.exit()
 
     def get_user(self):
         """

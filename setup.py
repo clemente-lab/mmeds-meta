@@ -42,6 +42,7 @@ setup(name='mmeds',
           'pytest-cov',
           'pytidylib',
           'ppretty',
-          'imapclient'
+          'imapclient',
+          'psutil'
       ],
       zip_safe=False)

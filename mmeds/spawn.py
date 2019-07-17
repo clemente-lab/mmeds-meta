@@ -126,9 +126,14 @@ def spawn_sub_analysis(user, code, category, value, testing):
     return child
 
 
+def killall(processes):
+    for p in processes:
+        p.kill()
+
+
 class Watcher(Process):
 
-    def __init__(self, queue, testing=False):
+    def __init__(self, queue, parent_pid, testing=False):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
         =====================================================================================
@@ -139,9 +144,11 @@ class Watcher(Process):
         self.testing = testing
         self.q = queue
         self.processes = read_processes()
-        for code in self.processes['analysis']:
-            with Database('.', testing=self.testing) as db:
-                print('\n'.join([str(x) for x in db.get_doc('analysis', code)]))
+        self.parent_pid = parent_pid
+        self.started = []
+        #for code in self.processes['analysis']:
+        #    with Database('.', testing=self.testing) as db:
+        #        print('\n'.join([str(x) for x in db.get_doc('analysis', code)]))
         super().__init__()
 
     def add_process(self, ptype, process):
@@ -149,12 +156,14 @@ class Watcher(Process):
         self.processes[ptype].append(process)
         atexit.unregister(write_processes)
         atexit.register(write_processes, self.processes)
+        #atexit.unregister(killall)
+        #atexit.register(killall, self.started)
 
     def run(self):
         """ The loop to run when a Watcher is started """
         current_upload = None
 
-        # Continue until the process is killed
+        # Continue until it's parent process is killed
         while True:
             # If there is nothing in the process queue, sleep
             if self.q.empty():
@@ -191,6 +200,8 @@ class Watcher(Process):
                                     args=(metadata, username, reads_type, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
+                        print('Start upload Process {}'.format(p.pid))
                         p.start()
+                        self.started.append(p)
                         self.add_process('upload', p.pid)
                         current_upload = p
