@@ -88,14 +88,18 @@ class Tool(mp.Process):
 
     def add_path(self, name, extension='', key=None, full_path=False):
         """ Add a file or directory with the full path to self.doc. """
+        # The path can be indexed by the file name or an explicit key
         if key:
             file_key = key
         else:
             file_key = name
+
+        # The provided 'name' may be a full path, in which case adding the tool path is unnecessary
         if full_path:
-            file_path = str(name) + str(extension)
+            file_path = '{}{}'.format(name, extension)
         else:
             file_path = '{}{}'.format(self.path / name, extension)
+
         self.doc.files[str(file_key)] = file_path
         self.doc.update(files=self.doc.files)
         self.stage_files[self.current_stage].append(file_key)
@@ -427,20 +431,19 @@ class Tool(mp.Process):
                 self.doc.save()
                 self.doc.reload()
 
-                if not self.testing:
-                    # Go through all files in the analysis
-                    for stage, files in self.stage_files.items():
-                        # If they should be created after the last checkpoint
-                        if stage >= self.doc.restart_stage:
-                            for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
-                                # Check if they exist
-                                unfinished = self.get_file(f, True)
-                                if unfinished.exists():
-                                    # If so delete them
-                                    if unfinished.is_dir():
-                                        rmtree(unfinished)
-                                    else:
-                                        unfinished.unlink()
+                # Go through all files in the analysis
+                for stage, files in self.stage_files.items():
+                    # If they should be created after the last checkpoint
+                    if stage >= self.doc.restart_stage:
+                        for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
+                            # Check if they exist
+                            unfinished = self.get_file(f, True)
+                            if unfinished.exists():
+                                # Otherwise delete them
+                                if unfinished.is_dir():
+                                    rmtree(unfinished)
+                                else:
+                                    unfinished.unlink()
                 raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
             else:
                 self.doc.update(restart_stage=-1)  # Indicates analysis finished successfully
