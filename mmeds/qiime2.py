@@ -428,77 +428,87 @@ class Qiime2(Tool):
             log(message)
             raise AnalysisError(message)
 
+    def setup_stage_0(self):
+        self.set_stage(0)
+        # Only the primary analysis runs these commands
+        if not self.doc.sub_analysis:
+            if 'demuxed' in self.doc.data_type:
+                self.unzip()
+            self.qimport()
+
+    def setup_stage_1(self):
+        self.set_stage(1)
+        if not self.doc.sub_analysis:
+            self.jobtext.append('echo "MMEDS_STAGE_1"')
+            if 'demuxed' not in self.doc.data_type:
+                self.demultiplex()
+                self.demux_visualize()
+            if 'deblur' in self.doc.analysis_type:
+                self.deblur_filter()
+                self.deblur_denoise()
+                self.deblur_visualize()
+            elif 'dada2' in self.doc.analysis_type:
+                self.dada2()
+                if self.kill_stage == 1:
+                    self.jobtext.append('exit 1')
+                self.tabulate()
+
+    def setup_stage_2(self):
+        self.set_stage(2)
+        self.jobtext.append('echo "MMEDS_STAGE_2"')
+        # Run these commands sequentially
+        self.filter_by_metadata()
+        self.alignment_mafft()
+        self.alignment_mask()
+        self.phylogeny_fasttree()
+        self.phylogeny_midpoint_root()
+        self.core_diversity()
+        if self.kill_stage == 2:
+            self.jobtext.append('exit 2')
+
+    def setup_stage_3(self):
+        self.set_stage(3)
+        self.jobtext.append('echo "MMEDS_STAGE_3"')
+        # Run these commands in parallel
+        self.alpha_diversity()
+        for col in self.doc.config['metadata']:
+            self.beta_diversity(col)
+        self.alpha_rarefaction()
+
+        # Wait for them all to finish
+        self.jobtext.append('wait')
+        if self.kill_stage == 3:
+            self.jobtext.append('exit 3')
+
+    def setup_stage_4(self):
+        self.set_stage(4)
+        self.jobtext.append('echo "MMEDS_STAGE_4"')
+        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
+        self.taxa_diversity()
+        # Calculate group significance
+        for col in self.doc.config['metadata']:
+            self.group_significance(col)
+            # For the requested taxanomic levels
+            for level in self.doc.config['taxa_levels']:
+                self.group_significance(col, level)
+        if self.kill_stage == 4:
+            self.jobtext.append('exit 4')
+        self.jobtext.append('wait')
+
     def setup_analysis(self):
         """ Create the job file for the analysis. """
         if self.restart_stage < 1:
-            self.set_stage(0)
-            # Only the primary analysis runs these commands
-            if not self.doc.sub_analysis:
-                if 'demuxed' in self.doc.data_type:
-                    self.unzip()
-                self.qimport()
+            self.setup_stage_0()
         if self.restart_stage < 2:
-            self.set_stage(1)
-            if not self.doc.sub_analysis:
-                self.jobtext.append('echo "MMEDS_STAGE_1"')
-                if 'demuxed' not in self.doc.data_type:
-                    self.demultiplex()
-                    self.demux_visualize()
-
-                if 'deblur' in self.doc.analysis_type:
-                    self.deblur_filter()
-                    self.deblur_denoise()
-                    self.deblur_visualize()
-                elif 'dada2' in self.doc.analysis_type:
-                    self.dada2()
-                    if self.kill_stage == 1:
-                        self.jobtext.append('exit 1')
-                    self.tabulate()
-
+            self.setup_stage_1()
         if self.restart_stage < 3:
-            self.set_stage(2)
-            self.jobtext.append('echo "MMEDS_STAGE_2"')
-            # Run these commands sequentially
-            self.filter_by_metadata()
-            self.alignment_mafft()
-            self.alignment_mask()
-            self.phylogeny_fasttree()
-            self.phylogeny_midpoint_root()
-            self.core_diversity()
-            if self.kill_stage == 2:
-                self.jobtext.append('exit 2')
-
+            self.setup_stage_2()
         if self.restart_stage < 4:
-            self.set_stage(3)
-            self.jobtext.append('echo "MMEDS_STAGE_3"')
-            # Run these commands in parallel
-            self.alpha_diversity()
-            for col in self.doc.config['metadata']:
-                self.beta_diversity(col)
-            self.alpha_rarefaction()
-
-            # Wait for them all to finish
-            self.jobtext.append('wait')
-            if self.kill_stage == 3:
-                self.jobtext.append('exit 3')
-
+            self.setup_stage_3()
         if self.restart_stage < 5:
-            self.set_stage(4)
-            self.jobtext.append('echo "MMEDS_STAGE_4"')
-            self.classify_taxa(STORAGE_DIR / 'classifier.qza')
-            self.taxa_diversity()
-            # Calculate group significance
-            for col in self.doc.config['metadata']:
-                self.group_significance(col)
-                # For the requested taxanomic levels
-                for level in self.doc.config['taxa_levels']:
-                    self.group_significance(col, level)
-            if self.kill_stage == 4:
-                self.jobtext.append('exit 4')
-            self.jobtext.append('wait')
-
+            self.setup_stage_4()
         if self.restart_stage < 6:
             self.set_stage(5)
             self.jobtext.append('echo "MMEDS_STAGE_5"')
-            # Perform standard tool setup
-            super().setup_analysis()
+        # Perform standard tool setup
+        super().setup_analysis()
