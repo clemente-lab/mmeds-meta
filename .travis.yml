@@ -55,10 +55,10 @@ script:
         -s ./mmeds/tests/server -x --durations=0
     - bash <(curl -s https://codecov.io/bash) -cF server
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
-      #- travis_wait 60 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-      #    -s ./mmeds/tests/integration --durations=0
-      #- bash <(curl -s https://codecov.io/bash) -cF integration
-      #- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    - travis_wait 60 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+        -s ./mmeds/tests/integration --durations=0
+    - bash <(curl -s https://codecov.io/bash) -cF integration
+    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
     - pip uninstall mmeds -y
     - sudo rm -rf ~/.modules/qiime2/var/cache
     - sudo rm -rf ~/.modules/qiime1/var/cache
