@@ -200,7 +200,6 @@ class Watcher(Process):
                                     args=(metadata, username, reads_type, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
-                        print('Start upload Process {}'.format(p.pid))
                         p.start()
                         self.started.append(p)
                         self.add_process('upload', p.pid)
