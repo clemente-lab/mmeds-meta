@@ -156,8 +156,8 @@ class Watcher(Process):
         self.processes[ptype].append(process)
         atexit.unregister(write_processes)
         atexit.register(write_processes, self.processes)
-        #atexit.unregister(killall)
-        #atexit.register(killall, self.started)
+        atexit.unregister(killall)
+        atexit.register(killall, self.started)
 
     def run(self):
         """ The loop to run when a Watcher is started """
@@ -205,3 +205,5 @@ class Watcher(Process):
                         self.started.append(p)
                         self.add_process('upload', p.pid)
                         current_upload = p
+                        if self.testing:
+                            p.join()

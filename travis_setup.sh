@@ -40,7 +40,9 @@ fi
 rm -rf ~/.modules/qiime2;
 if [ ! -d ~/.modules/qiime2 ]; then
     echo "Create qiime2 environment"
-    wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
+    # Old Qiime2 version
+    # wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
+    wget https://data.qiime2.org/distro/core/qiime2-2019.4-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
     conda env create --file ~/qiime2.yml --quiet -p ~/.modules/qiime2;
 fi
 
@@ -68,11 +70,14 @@ ln -sf ~/.modules/qiime2 ~/miniconda2/envs/qiime2;
 ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 
 # Create links to the module files
-# TEMPORARY
-rm -rf ~/.modules/modulefiles/qiime1
+rm -rf ~/.modules/modulefiles/qiime
 rm -rf ~/.modules/modulefiles/qiime2
-mkdir ~/.modules/modulefiles/qiime
-mkdir ~/.modules/modulefiles/qiime2
+if [ ! -d ~/.modules/modulefiles/qiime ]; then
+    mkdir ~/.modules/modulefiles/qiime
+fi
+if [ ! -d ~/.modules/modulefiles/qiime2 ]; then
+    mkdir ~/.modules/modulefiles/qiime2
+fi
 ln -sf $REPO_DIR/modules/mmeds-stable ~/.modules/modulefiles/mmeds-stable
 ln -sf $REPO_DIR/modules/qiime2 ~/.modules/modulefiles/qiime2/2019.1
 ln -sf $REPO_DIR/modules/qiime1 ~/.modules/modulefiles/qiime/1.9.1

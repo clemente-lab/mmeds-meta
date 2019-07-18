@@ -25,11 +25,10 @@ from mmeds.spawn import handle_modify_data, Watcher
 absDir = Path(os.getcwd())
 
 
-# Define a function to shutdown the Watcher instance when the server exits
 def kill_watcher(monitor):
-    monitor.kill()
+    """ A function to shutdown the Watcher instance when the server exits """
+    monitor.terminate()
     while monitor.is_alive():
-        sleep(30)
         log('Try to terminate')
         log('Try to kill')
         monitor.kill()

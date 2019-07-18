@@ -40,34 +40,30 @@ class TestServer(helper.CPWebCase):
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
         self.assertBody(page)
-        pass
 
     def test_c_auth(self):
-        #self.not_logged_in()
-        #self.sign_up()
-        #self.login()
-        #self.logout()
-        #self.login_fail_password()
-        #self.login_fail_username()
-        #tp = self.reset_password()
-        #self.change_password(tp)
-        pass
+        self.not_logged_in()
+        self.sign_up()
+        self.login()
+        self.logout()
+        self.login_fail_password()
+        self.login_fail_username()
+        tp = self.reset_password()
+        self.change_password(tp)
 
     def test_d_upload(self):
-        #self.login()
-        #self.upload_metadata()
-        #self.upload_data()
-        #self.modify_upload()
-        #self.download_page_fail()
-        #self.download_block()
-        #self.download()
-        #self.convert()
-        pass
+        return
+        self.login()
+        self.upload_metadata()
+        self.upload_data()
+        self.modify_upload()
+        self.download_page_fail()
+        self.download_block()
+        self.download()
+        self.convert()
 
     def test_z_cleanup(self):
-        server.exit()
-        #remove_user(fig.SERVER_USER, testing=True)
-        pass
+        remove_user(fig.SERVER_USER, testing=True)
 
     ####################
     #  Authentication  #
