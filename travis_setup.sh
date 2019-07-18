@@ -69,8 +69,6 @@ ln -sf ~/.modules/qiime2 ~/miniconda2/envs/qiime2;
 ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 
 # Create links to the module files
-rm -rf ~/.modules/modulefiles/qiime
-rm -rf ~/.modules/modulefiles/qiime2
 if [ ! -d ~/.modules/modulefiles/qiime ]; then
     mkdir ~/.modules/modulefiles/qiime
 fi
@@ -82,4 +80,4 @@ ln -sf $REPO_DIR/modules/qiime2 ~/.modules/modulefiles/qiime2/2019.1
 ln -sf $REPO_DIR/modules/qiime1 ~/.modules/modulefiles/qiime/1.9.1
 
 cd $REPO_DIR;
-ECHo "Finished setup. In $(pwd)"
+echo "Finished setup. In $(pwd)"

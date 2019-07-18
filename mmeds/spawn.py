@@ -107,6 +107,7 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
     if restart_stage < 1:
         code = ad.study_code
         if Path(ad.path).exists():
+            log('Restart {} Removing {}'.format(ad, ad.path))
             rmtree(ad.path)
 
     # Create the appropriate tool
