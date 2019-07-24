@@ -68,7 +68,6 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1_with_children(self):
-        return
         log("in test_qiime1")
         self.handle_data_upload(fig.TEST_METADATA_SHORT)
         log('after data upload')
@@ -94,6 +93,7 @@ class AnalysisTests(TestCase):
         print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2_with_restarts(self):
+        return
         self.handle_data_upload()
         p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
