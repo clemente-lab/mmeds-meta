@@ -126,6 +126,14 @@ class Database:
     #                MySQL                 #
     ########################################
 
+    def get_table_contents(self, table):
+        """ Return all the entries from the selected table """
+        sql = 'SELECT * FROM {table};'
+        self.cursor.execute(quote_sql(sql, table=table))
+        result = self.cursor.fetchall()
+        table_text = '\n'.join(['\t'.join(['"{}"'.format(cell) for cell in row]) for row in result])
+        return table_text
+
     def check_email(self, email):
         """ Check the provided email matches this user. """
         return email == self.email
@@ -697,7 +705,7 @@ class SQLBuilder:
 
 
 class MetaDataUploader:
-    def __init__(self, metadata, path, owner, study_type, reads_type, testing=False):
+    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -717,10 +725,8 @@ class MetaDataUploader:
         self.study_type = study_type
         self.reads_type = reads_type
         self.metadata = metadata
-
-        # Read in the metadata file to import
-        df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
-        self.df = df.reindex_axis(df.columns, axis=1)
+        self.study_name = study_name
+        self.temporary = temporary
 
         # If testing connect to test server
         if testing:
@@ -749,7 +755,11 @@ class MetaDataUploader:
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
 
-        self.builder = SQLBuilder(self.df, self.db, owner)
+        if not temporary:
+            # Read in the metadata file to import
+            df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
+            self.df = df.reindex_axis(df.columns, axis=1)
+            self.builder = SQLBuilder(self.df, self.db, owner)
 
         # If the owner is None set user_id to 0
         if owner is None:
@@ -792,43 +802,43 @@ class MetaDataUploader:
         if not self.path.is_dir():
             self.path.mkdir()
 
-        # Get the study name from the metadata
-        study_name = self.df['Study']['StudyName'][0]
+        # Import the files into the mongo database
+        access_code = self.mongo_import(**kwargs)
 
-        # Sort the available tables based on TABLE_ORDER
-        columns = self.df.columns.levels[0].tolist()
-        column_order = [TABLE_ORDER.index(col) for col in columns]
-        tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
+        # If the metadata file is not temporary perform the import into the SQL database
+        if not self.temporary:
+            # Sort the available tables based on TABLE_ORDER
+            columns = self.df.columns.levels[0].tolist()
+            column_order = [TABLE_ORDER.index(col) for col in columns]
+            tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
 
-        # Create file and import data for each regular table
-        for table in tables:
-            # Upload the additional meta data to the NoSQL database
-            if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(study_name, **kwargs)
-            else:
-                self.create_import_data(table)
-                filename = self.create_import_file(table)
+            # Create file and import data for each regular table
+            for table in tables:
+                # Upload the additional meta data to the NoSQL database
+                if not table == 'AdditionalMetaData':
+                    self.create_import_data(table)
+                    filename = self.create_import_file(table)
 
-                if isinstance(filename, WindowsPath):
-                    filename = str(filename).replace('\\', '\\\\')
-                # Load the newly created file into the database
-                sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
-                                table=table)
-                sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                cursor = self.db.cursor()
-                cursor.execute(sql, {'file': str(filename), 'table': table})
-                cursor.close()
-                # Commit the inserted data
-                self.db.commit()
+                    if isinstance(filename, WindowsPath):
+                        filename = str(filename).replace('\\', '\\\\')
+                    # Load the newly created file into the database
+                    sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
+                                    table=table)
+                    sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                    cursor = self.db.cursor()
+                    cursor.execute(sql, {'file': str(filename), 'table': table})
+                    cursor.close()
+                    # Commit the inserted data
+                    self.db.commit()
 
-        # Create csv files and import them for
-        # each junction table
-        self.fill_junction_tables()
+            # Create csv files and import them for
+            # each junction table
+            self.fill_junction_tables()
 
-        # Remove all row information from the current input
-        self.IDs.clear()
+            # Remove all row information from the current input
+            self.IDs.clear()
 
-        return access_code, study_name, self.email
+        return access_code, self.email
 
     def create_import_data(self, table, verbose=True):
         """
@@ -987,7 +997,7 @@ class MetaDataUploader:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def mongo_import(self, study_name, **kwargs):
+    def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
         # For testing purposes
@@ -1002,7 +1012,7 @@ class MetaDataUploader:
                          testing=self.testing,
                          study_type=self.study_type,
                          reads_type=self.reads_type,
-                         study=study_name,
+                         study=self.study_name,
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,

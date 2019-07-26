@@ -54,7 +54,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
+def handle_data_upload(metadata, username, reads_type, study_name, temporary, testing, *datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -63,11 +63,10 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
                      the second is a file type io object
     :barcodes: A tuple. First element is the name of the barcodes file,
                         the second is a file type io object
-    :username: @Todo
+    :username: A string. Name of the user that is uploading the files.
     :testing: True if the server is running locally.
+    :datafiles: A list of datafiles to be uploaded
     """
-    mdf = load_metadata(metadata)
-    study_name = mdf.Study.StudyName.iloc[0]
     count = 0
     new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
     while new_dir.is_dir():
@@ -89,8 +88,10 @@ def handle_data_upload(metadata, username, reads_type, testing, *datafiles):
                           study_type='qiime',
                           reads_type=reads_type,
                           owner=username,
+                          study_name=study_name,
+                          temporary=temporary,
                           testing=testing) as up:
-        access_code, study_name, email = up.import_metadata(**datafile_copies)
+        access_code, email = up.import_metadata(**datafile_copies)
 
     # Send the confirmation email
     send_email(email, username, code=access_code, testing=testing)
@@ -194,10 +195,10 @@ class Watcher(Process):
 
                     # If there is nothing uploading currently start the new upload process
                     if current_upload is None:
-                        ptype, metadata, username, reads_type, datafiles = process
+                        ptype, study_name, metadata, username, reads_type, datafiles, temporary = process
                         # Start a process to handle loading the data
                         p = Process(target=handle_data_upload,
-                                    args=(metadata, username, reads_type, self.testing,
+                                    args=(metadata, username, reads_type, study_name, temporary, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
                         p.start()

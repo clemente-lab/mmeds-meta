@@ -9,7 +9,6 @@ from pathlib import Path
 from subprocess import run
 from multiprocessing import Queue, current_process
 from datetime import datetime
-from time import sleep
 import atexit
 
 
@@ -551,11 +550,19 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData):
+    def validate_metadata(self, myMetaData, studyName, temporary):
         """ The page returned after a file is uploaded. """
-        log('In validate_metadata')
         try:
-            metadata_copy, errors, warnings = self.run_validate(myMetaData)
+            # If the metadata is temporary don't perform validation
+            if temporary:
+                cp.session['metadata_temporary'] = True
+                cp.session['study_name'] = studyName
+                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+                errors, warnings = [], []
+            else:
+                cp.session['metadata_temporary'] = False
+                cp.session['study_name'] = studyName
+                metadata_copy, errors, warnings = self.run_validate(myMetaData)
 
             # If there are errors report them and return the error page
             if errors:
@@ -586,7 +593,10 @@ class MMEDSanalysis(MMEDSbase):
         # Add the datafiles that exist as arguments
         datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
 
-        self.q.put(('upload', metadata, username, reads_type, datafiles))
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload', cp.session['study_name'], metadata,
+                    username, reads_type, datafiles, cp.session['metadata_temporary']))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')
