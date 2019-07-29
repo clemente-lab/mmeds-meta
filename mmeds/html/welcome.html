@@ -3,6 +3,15 @@
   <body>
     <div class='inner'>
       <p>
+      <h3>For Internal Lab Use</h3>
+      <h4>Access uploaded studies</h4>
+        <form action='../download/select_study' formmethod='post'>
+          <p>
+            <button type="submit">Access</button>
+          </p>
+        </form>
+      </p>
+      <p>
       <h3>Access Previous Uploads</h3>
         <form action='../download/download_page' method='post'>
           <p>
@@ -33,15 +42,6 @@
           <p>
             <input type="text" placeholder="Study Name" name="study_name" required/>
             <input type="email" placeholder="Email" name="study_email" required/>
-            <button type="submit">Execute</button>
-          </p>
-        </form>
-      </p>
-      <p>
-      <h3>For Internal Lab Use</h3>
-      <h4>Access uploaded studies</h4>
-        <form action='../download/select_study' formmethod='post'>
-          <p>
             <button type="submit">Execute</button>
           </p>
         </form>
