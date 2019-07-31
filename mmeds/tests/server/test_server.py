@@ -204,13 +204,15 @@ class TestServer(helper.CPWebCase):
             # Byte strings
             b += str.encode('--{}\r\n'.format(boundry) +
                             'Content-Disposition: form-data; name="{}"; '.format(file_handle))
-            if not file_type == '':
+            # IF the file_type is '' treat it as a string param
+            if file_type == '':
+                b += str.encode('\r\n\r\n{}\r\n'.format(file_path))
+            # Otherwise load the file
+            else:
                 b += str.encode('filename="{}"\r\n'.format(Path(file_path).name) +
                                 'Content-Type: {}\r\n\r\n'.format(file_type))
                 if not file_path == '':
                     b += Path(file_path).read_bytes() + str.encode('\r\n')
-            else:
-                b += str.encode('\r\n\r\n{}\r\n'.format(file_path))
             b + str.encode('\r\n')
         b += str.encode('--{}--\r\n'.format(boundry))
 
@@ -224,7 +226,7 @@ class TestServer(helper.CPWebCase):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?study_type=qiime', self.cookies)
+        self.getPage('/upload/upload_metadata?studyType=qiime&studyName=Good_Study', self.cookies)
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])

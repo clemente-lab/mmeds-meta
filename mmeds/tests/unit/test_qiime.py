@@ -17,13 +17,15 @@ def upload_metadata(args):
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
+                          study_name='Test_Qiime',
                           reads_type=reads_type,
                           owner=fig.TEST_USER,
+                          temporary=False,
                           testing=True) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=for_reads,
-                                                            rev_reads=rev_reads,
-                                                            barcodes=barcodes,
-                                                            access_code=access_code)
+        access_code, email = up.import_metadata(for_reads=for_reads,
+                                                rev_reads=rev_reads,
+                                                barcodes=barcodes,
+                                                access_code=access_code)
 
 
 class QiimeTests(TestCase):

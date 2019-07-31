@@ -17,10 +17,6 @@ before_cache:
     - sudo chown -R travis:travis $HOME
     - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
 cache:
-    directories:
-        - ~/.modules
-        - ~/.local
-    timeout: 1000
     apt: true
 git:
     depth: 1

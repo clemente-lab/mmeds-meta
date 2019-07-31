@@ -17,12 +17,14 @@ def upload_metadata(args):
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
+                          study_name='Test_Spawn',
                           reads_type='single_end',
                           owner=fig.TEST_USER,
+                          temporary=False,
                           testing=True) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                            barcodes=fig.TEST_BARCODES,
-                                                            access_code=access_code)
+        access_code,  email = up.import_metadata(for_reads=fig.TEST_READS,
+                                                 barcodes=fig.TEST_BARCODES,
+                                                 access_code=access_code)
 
 
 class SpawnTests(TestCase):

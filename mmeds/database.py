@@ -10,8 +10,6 @@ import cherrypy as cp
 import pandas as pd
 
 from datetime import datetime
-from random import seed
-from multiprocessing import current_process
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
@@ -307,8 +305,8 @@ class Database:
     ########################################
     #               MongoDB                #
     ########################################
-
-    def create_access_code(self, check_code, length=20):
+    @classmethod
+    def create_access_code(cls, check_code, length=20):
         """ Creates a unique code for identifying a mongo db document """
         code = check_code
         count = 0
@@ -479,19 +477,23 @@ class Database:
         """
         return AnalysisDoc.objects(analysis_code=access_code, owner=self.owner).first()
 
-    def get_all_studies(self):
+    @classmethod
+    def get_all_studies(cls):
         """ Return all studies currently stored in the database. """
         return StudyDoc.objects()
 
-    def get_study(self, access_code):
+    @classmethod
+    def get_study(cls, access_code):
         """ Return all studies currently stored in the database. """
         return StudyDoc.objects(access_code=access_code).first()
 
-    def get_all_analyses_from_study(self, access_code):
+    @classmethod
+    def get_all_analyses_from_study(cls, access_code):
         """ Return all studies currently stored in the database. """
         return AnalysisDoc.objects(study_code=access_code)
 
-    def get_study_analysis(self, access_code):
+    @classmethod
+    def get_study_analysis(cls, access_code):
         """ Return all studies currently stored in the database. """
         return AnalysisDoc.objects(analysis_code=access_code).first()
 
@@ -505,7 +507,8 @@ class Database:
                 del mdata.files[key]
         return empty_files
 
-    def clear_mongo_data(self, username):
+    @classmethod
+    def clear_mongo_data(cls, username):
         """ Clear all metadata documents associated with the provided username. """
         data = list(StudyDoc.objects(owner=username))
         data2 = list(AnalysisDoc.objects(owner=username))
@@ -531,7 +534,8 @@ class Database:
         return (StudyDoc.objects(access_code=access_code),
                 AnalysisDoc.objects(analysis_code=access_code))
 
-    def get_doc(self, doc_type, access_code):
+    @classmethod
+    def get_doc(cls, doc_type, access_code):
         """ For server use """
         if doc_type == 'analysis':
             return AnalysisDoc.objects(analysis_code=access_code)

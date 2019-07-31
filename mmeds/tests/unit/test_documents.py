@@ -15,9 +15,11 @@ def upload_metadata(args):
     metadata, path, owner, access_code = args
     with MetaDataUploader(metadata=metadata,
                           path=path,
+                          study_name='Test_Documents',
                           study_type='qiime',
                           reads_type='single_end',
                           owner=fig.TEST_USER,
+                          temporary=False,
                           testing=True) as up:
         access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
                                                             barcodes=fig.TEST_BARCODES,
@@ -63,3 +65,4 @@ class DocTests(TestCase):
     def create_from_analysis(self):
         ad = docs.AnalysisDoc(analysis_code=fig.TEST_CODE_DEMUX).first()
         ad2 = ad.create_copy()
+        print(ad2)

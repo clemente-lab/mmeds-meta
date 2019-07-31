@@ -776,7 +776,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(num_messages=1, wait=False, search=['FROM', fig.MMEDS_EMAIL], max_wait=200):
+def recieve_email(num_messages=1, wait=False, search=('FROM', fig.MMEDS_EMAIL), max_wait=200):
     """
     Fetch email from the test account
     :num_messages: An int. How many emails to return, starting with the most recent

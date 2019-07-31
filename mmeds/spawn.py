@@ -4,7 +4,7 @@ from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
-from mmeds.util import send_email, create_local_copy, log, load_config, load_metadata, read_processes, write_processes
+from mmeds.util import send_email, create_local_copy, log, load_config, read_processes, write_processes
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
@@ -147,9 +147,6 @@ class Watcher(Process):
         self.processes = read_processes()
         self.parent_pid = parent_pid
         self.started = []
-        #for code in self.processes['analysis']:
-        #    with Database('.', testing=self.testing) as db:
-        #        print('\n'.join([str(x) for x in db.get_doc('analysis', code)]))
         super().__init__()
 
     def add_process(self, ptype, process):
@@ -172,17 +169,17 @@ class Watcher(Process):
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
+                # Retrieve the info
                 log('Got process from queue')
                 log(process)
 
                 # If it's an analysis
                 if process[0] == 'analysis':
-                    # Retrieve the info
                     ptype, user, access_code, tool, config = process
                     # Start the analysis running
                     p = spawn_analysis(tool, user, access_code, config, self.testing)
                     # Add it to the list of analysis processes
-                    self.add_process('analysis', p)
+                    self.add_process(ptype, p)
                 # If it's an upload
                 elif process[0] == 'upload':
                     # Check that there isn't another process currently uploading

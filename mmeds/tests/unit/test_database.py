@@ -40,11 +40,13 @@ def upload_metadata(args):
                           path=path,
                           owner=fig.TEST_USER,
                           study_type='qiime',
+                          study_name='Test_Datahase',
                           reads_type='single_end',
+                          temporary=False,
                           testing=testing) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                            barcodes=fig.TEST_BARCODES,
-                                                            access_code=access_code)
+        access_code, email = up.import_metadata(for_reads=fig.TEST_READS,
+                                                barcodes=fig.TEST_BARCODES,
+                                                access_code=access_code)
 
 
 class MetaDataUploaderTests(TestCase):

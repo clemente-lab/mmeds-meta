@@ -1,5 +1,4 @@
 from subprocess import run
-from multiprocessing import current_process
 
 from mmeds.config import DATABASE_DIR
 from mmeds.util import log, setup_environment

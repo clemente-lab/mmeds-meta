@@ -33,6 +33,9 @@ def kill_watcher(monitor):
         monitor.kill()
 
 
+# Note: In all of the following classes, if a parameter is named in camel case instead of underscore
+# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML forum
+
 class MMEDSbase:
     """
     The base class inherited by all mmeds server classes.
@@ -235,7 +238,8 @@ class MMEDSdownload(MMEDSbase):
         return page
 
     @cp.expose
-    def download_filepath(self, file_path):
+    @classmethod
+    def download_filepath(cls, file_path):
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
 
@@ -388,9 +392,10 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_metadata(self, study_type):
+    def upload_metadata(self, studyType, studyName):
         """ Page for uploading Qiime data """
-        page = self.format_html('upload_metadata_file', title='Upload Metadata', version=study_type)
+        cp.session['study_name'] = studyName
+        page = self.format_html('upload_metadata_file', title='Upload Metadata', version=studyType)
         return page
 
 
@@ -550,18 +555,16 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData, studyName, temporary):
+    def validate_metadata(self, myMetaData, temporary=False):
         """ The page returned after a file is uploaded. """
         try:
             # If the metadata is temporary don't perform validation
             if temporary:
                 cp.session['metadata_temporary'] = True
-                cp.session['study_name'] = studyName
                 metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
                 errors, warnings = [], []
             else:
                 cp.session['metadata_temporary'] = False
-                cp.session['study_name'] = studyName
                 metadata_copy, errors, warnings = self.run_validate(myMetaData)
 
             # If there are errors report them and return the error page
