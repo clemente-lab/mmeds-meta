@@ -238,8 +238,7 @@ class MMEDSdownload(MMEDSbase):
         return page
 
     @cp.expose
-    @classmethod
-    def download_filepath(cls, file_path):
+    def download_filepath(self, file_path):
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
 
@@ -536,7 +535,9 @@ class MMEDSanalysis(MMEDSbase):
         log('In run_analysis')
         try:
             self.check_upload(access_code)
-            if config.file is None:
+            if isinstance(config, str):
+                config_text = config
+            elif config.file is None:
                 config_text = DEFAULT_CONFIG.read_text()
             else:
                 config_text = config.file.read().decode('utf-8')

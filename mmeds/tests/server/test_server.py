@@ -7,7 +7,7 @@ from tidylib import tidy_document
 import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
-from mmeds.authentication import remove_user
+from mmeds.authentication import add_user, remove_user
 from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
 
 import cherrypy as cp
@@ -23,6 +23,8 @@ class TestServer(helper.CPWebCase):
     # Create a unique user id from the current time
     server_user = fig.SERVER_USER + str(int(time()))
     access_code = None
+    lab_user = 'lab_user_' + fig.get_salt(10)
+    testing = True
 
     @staticmethod
     def setup_server():
@@ -34,6 +36,7 @@ class TestServer(helper.CPWebCase):
 
     def test_a_setup(self):
         log('===== Test Server Start =====')
+        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
     def test_b_index(self):
         self.getPage('/index')
@@ -62,9 +65,11 @@ class TestServer(helper.CPWebCase):
         self.download_block()
         self.download()
         self.convert()
+        self.lab_download()
 
     def test_z_cleanup(self):
-        remove_user(self.server_user, testing=True)
+        remove_user(self.server_user, testing=self.testing)
+        remove_user(self.lab_user, testing=self.testing)
 
     ####################
     #  Authentication  #
@@ -223,10 +228,12 @@ class TestServer(helper.CPWebCase):
         return h, b
 
     def upload_metadata(self):
+
+        ### A
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?studyType=qiime&studyName=Good_Study', self.cookies)
+        self.getPage('/upload/upload_metadata?studyType=qiime&studyName=Test_Server', self.cookies)
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
@@ -323,11 +330,6 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
                                                                                     fig.TEST_TOOL),
                      headers=self.cookies)
-        # Try to access
-        #self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
-        #page = load_html(fig.HTML_DIR / 'welcome.html', user=self.server_user, title='Welcome to MMEDS')
-        #page = insert_error(page, 22, 'Requested study is currently unavailable')
-        #self.assertBody(page)
 
         # Wait for analysis to finish
         sleep(int(fig.TEST_TOOL.split('-')[-1]))
@@ -356,6 +358,18 @@ class TestServer(helper.CPWebCase):
         self.getPage(addr, headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-    ####################
-    # Process Tracking #
-    ####################
+    def lab_download(self):
+        # Login
+        self.getPage("/auth/logout", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/auth/login?username={}&password={}".format(self.lab_user, sec.TEST_PASS))
+        self.assertStatus('200 OK')
+        self.getPage("/download/select_study", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
+        self.assertStatus('200 OK')
+        metadata_path = self.body.decode('utf-8').split('\n')[33].split('"')[1]
+        print(metadata_path)
+        self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
+        self.assertStatus('200 OK')
+
