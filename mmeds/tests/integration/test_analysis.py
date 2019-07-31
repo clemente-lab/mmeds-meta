@@ -93,7 +93,6 @@ class AnalysisTests(TestCase):
         print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2_with_restarts(self):
-        return
         self.handle_data_upload()
         p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
