@@ -9,10 +9,13 @@ from mmeds.tool import Tool
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
-        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
-        load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'
-        self.jobtext.append(load.format(DATABASE_DIR.parent))
+    def __init__(self, owner, access_code, atype, config, testing,
+                 analysis=True, restart_stage=0):
+        super().__init__(owner, access_code, atype, config, testing,
+                         analysis=analysis, restart_stage=restart_stage)
+        load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
+        self.jobtext.append(load)
+        self.module = load
         if testing:
             settings = [
                 'alpha_diversity:metrics	shannon',
@@ -58,18 +61,18 @@ class Qiime1(Tool):
         self.add_path('split_output', '')
 
         # Run the script
-        if 'demuxed' in self.data_type:
+        if 'demuxed' in self.doc.data_type:
             cmd = 'multiple_split_libraries_fastq.py -o {} -i {};'
             command = cmd.format(self.get_file('split_output'),
                                  self.get_file('for_reads'))
-        elif self.data_type == 'single_end':
+        elif self.doc.data_type == 'single_end':
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
             command = cmd.format(self.get_file('split_output'),
                                  self.get_file('for_reads'),
                                  self.get_file('barcodes'),
                                  self.get_file('mapping'),
                                  12)
-        elif self.data_type == 'paired_end':
+        elif self.doc.data_type == 'paired_end':
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {} --rev_comp_mapping_barcodes;'
             command = cmd.format(self.get_file('split_output'),
                                  self.get_file('joined_dir') / 'fastqjoin.join.fastq',
@@ -82,16 +85,16 @@ class Qiime1(Tool):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
         # Link files for the otu and biom tables
-        if 'closed' in self.atype:
+        if 'closed' in self.doc.analysis_type:
             self.add_path(self.get_file('otu_output').name + '/97_otus', '.tree', key='otu_table')
             self.add_path(self.get_file('otu_output').name + '/otu_table', '.biom', key='biom_table')
-        elif 'open' in self.atype:
+        elif 'open' in self.doc.analysis_type:
             self.add_path(self.get_file('otu_output').name + '/rep_set', '.tre', key='otu_table')
             self.add_path(self.get_file('otu_output').name + '/otu_table_mc2_w_tax_no_pynast_failures',
                           '.biom', key='biom_table')
 
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
-        command = cmd.format(self.atype,
+        command = cmd.format(self.doc.analysis_type.split('-')[1],
                              self.num_jobs,
                              self.get_file('otu_output'),
                              self.get_file('split_output') / 'seqs.fna',
@@ -100,7 +103,7 @@ class Qiime1(Tool):
 
     def split_otu(self):
         """ Split the otu table by column values. """
-        for column in self.config['metadata']:
+        for column in self.doc.config['sub_analysis']:
             self.add_path('split_otu_{}'.format(column))
             cmd = 'split_otu_table.py -i {} -m {} -f {} -o {} --suppress_mapping_file_output;'
             command = cmd.format(self.get_file('biom_table'),
@@ -118,9 +121,9 @@ class Qiime1(Tool):
                              self.get_file('biom_table'),
                              self.get_file('mapping'),
                              self.get_file('otu_table'),
-                             self.config['sampling_depth'],
+                             self.doc.config['sampling_depth'],
                              self.path / 'params.txt',
-                             ','.join(self.config['metadata']),
+                             ','.join(self.doc.config['metadata']),
                              self.num_jobs)
         self.jobtext.append(command)
 
@@ -129,7 +132,7 @@ class Qiime1(Tool):
         try:
             # Count the sequences prior to diversity analysis
             new_env = setup_environment('qiime/1.9.1')
-            cmd = ['count_seqs.py', '-i', str(self.files['split_output'] / 'seqs.fna')]
+            cmd = ['count_seqs.py', '-i', str(self.get_file('split_output', True) / 'seqs.fna')]
             output = run(cmd, check=True, env=new_env)
 
             out = output.stdout.decode('utf-8')
@@ -137,7 +140,7 @@ class Qiime1(Tool):
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
             # Count the sequences in the output of the diversity analysis
-            with open(self.files['diversity_output'] / 'biom_table_summary.txt') as f:
+            with open(self.get_file('diversity_output', True) / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
                 log('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
@@ -156,15 +159,15 @@ class Qiime1(Tool):
     def setup_analysis(self):
         """ Add all the necessary commands to the jobfile """
         # Only the child run this analysis
-        if not self.is_child:
+        if not self.doc.sub_analysis:
             self.validate_mapping()
-            if 'demuxed' in self.data_type:
+            if 'demuxed' in self.doc.data_type:
                 self.unzip()
-            elif 'paired' in self.data_type:
+            elif 'paired' in self.doc.data_type:
                 self.join_paired_ends()
             self.split_libraries()
             self.pick_otu()
-            if self.config['sub_analysis']:
+            if not self.doc.config['sub_analysis'] == 'None':
                 self.split_otu()
         self.core_diversity()
         self.write_file_locations()

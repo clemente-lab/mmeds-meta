@@ -11,11 +11,15 @@ from mmeds.tool import Tool
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing, analysis=True):
-        super().__init__(owner, access_code, atype, config, testing, analysis=analysis)
-        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'
-        self.jobtext.append(load.format(DATABASE_DIR.parent))
+    def __init__(self, owner, access_code, atype, config, testing,
+                 analysis=True, restart_stage=0, kill_stage=-1):
+        super().__init__(owner, access_code, atype, config, testing,
+                         analysis=analysis, restart_stage=restart_stage)
+        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'.format(DATABASE_DIR.parent)
+        self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
+        self.module = load
+        self.kill_stage = kill_stage
 
     # =============== #
     # Qiime2 Commands #
@@ -23,9 +27,9 @@ class Qiime2(Tool):
     def qimport(self):
         """ Split the libraries and perform quality analysis. """
 
-        self.files['demux_file'] = self.path / 'qiime_artifact.qza'
+        self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
 
-        if 'demuxed' in self.data_type:
+        if 'demuxed' in self.doc.data_type:
             # If the reads are already demultiplexed import the whole directory
             cmd = [
                 'qiime tools import ',
@@ -35,41 +39,40 @@ class Qiime2(Tool):
                 '--output-path {};'.format(self.get_file('demux_file'))
             ]
             command = ' '.join(cmd)
-        elif self.data_type == 'single_end':
+        else:
             # Create a directory to import as a Qiime2 object
-            self.files['working_file'] = self.path / 'qiime_artifact.qza'
-            self.files['working_dir'] = self.path / 'import_dir'
+            self.add_path(self.path / 'import_dir', key='working_dir')
+            self.add_path(self.path / 'qiime_artifact.qza', key='working_file')
 
-            if not self.files['working_dir'].is_dir():
-                self.files['working_dir'].mkdir()
+            if not self.get_file('working_dir', True).is_dir():
+                self.get_file('working_dir', True).mkdir()
 
-            # Create links to the data in the qiime2 import directory
-            (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-            (self.files['working_dir'] / 'sequences.fastq.gz').symlink_to(self.files['for_reads'])
+            # Clean up any existing files
+            old_files = self.get_file('working_dir', True).glob('*')
+            for old_file in old_files:
+                old_file.unlink()
 
-            # Run the script
-            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            command = cmd.format('EMPSingleEndSequences',
-                                 self.get_file('working_dir'),
-                                 self.get_file('working_file'))
-        elif self.data_type == 'paired_end':
-            # Create a directory to import as a Qiime2 object
-            self.files['working_file'] = self.path / 'qiime_artifact.qza'
-            self.files['working_dir'] = self.path / 'import_dir'
+            # Link the barcodes
+            (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
+            if self.doc.data_type == 'single_end':
+                # Create links to the data in the qiime2 import directory
+                (self.get_file('working_dir', True) / 'sequences.fastq.gz').symlink_to(self.get_file('for_reads', True))
 
-            if not self.files['working_dir'].is_dir():
-                self.files['working_dir'].mkdir()
+                # Run the script
+                cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+                command = cmd.format('EMPSingleEndSequences',
+                                     self.get_file('working_dir'),
+                                     self.get_file('working_file'))
+            elif self.doc.data_type == 'paired_end':
+                # Create links to the data in the qiime2 import directory
+                (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
+                (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
 
-            # Create links to the data in the qiime2 import directory
-            (self.files['working_dir'] / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-            (self.files['working_dir'] / 'forward.fastq.gz').symlink_to(self.files['for_reads'])
-            (self.files['working_dir'] / 'reverse.fastq.gz').symlink_to(self.files['rev_reads'])
-
-            # Run the script
-            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            command = cmd.format('EMPPairedEndSequences',
-                                 self.get_file('working_dir'),
-                                 self.get_file('working_file'))
+                # Run the script
+                cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+                command = cmd.format('EMPPairedEndSequences',
+                                     self.get_file('working_dir'),
+                                     self.get_file('working_file'))
         self.jobtext.append(command)
 
     def demultiplex(self):
@@ -80,14 +83,14 @@ class Qiime2(Tool):
         # Run the script
         cmd = [
             # Either emp-single or emp-paired depending on the data_type
-            'qiime demux emp-{}'.format(self.data_type.split('_')[0]),
+            'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),
             '--i-seqs {}'.format(self.get_file('working_file')),
             '--m-barcodes-file {}'.format(self.get_file('mapping')),
             '--m-barcodes-column {}'.format('BarcodeSequence'),
             '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
         ]
         # Reverse compliment the barcodes in the mapping file if using paired reads
-        if 'paired' in self.data_type:
+        if 'paired' in self.doc.data_type:
             cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         self.jobtext.append(' '.join(cmd))
 
@@ -124,11 +127,12 @@ class Qiime2(Tool):
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.atype), '.qzv')
+        self.add_path('stats_{}_visual'.format(self.doc.analysis_type.split('-')[1]), '.qzv')
+        viz_file = 'stats_{}_visual'.format(self.doc.analysis_type.split('-')[1])
         cmd = [
             'qiime metadata tabulate',
             '--m-input-file {}'.format(self.get_file('stats_table')),
-            '--o-visualization {};'.format(self.get_file('stats_{}_visual'.format(self.atype)))
+            '--o-visualization {};'.format(self.get_file(viz_file))
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -139,7 +143,7 @@ class Qiime2(Tool):
         self.add_path('table_dada2', '.qza', key='otu_table')
         self.add_path('stats_dada2', '.qza', key='stats_table')
 
-        if 'single' in self.data_type:
+        if 'single' in self.doc.data_type:
             cmd = [
                 'qiime dada2 denoise-single',
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
@@ -150,7 +154,7 @@ class Qiime2(Tool):
                 '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
-        elif 'paired' in self.data_type:
+        elif 'paired' in self.doc.data_type:
             cmd = [
                 'qiime dada2 denoise-paired',
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
@@ -254,7 +258,7 @@ class Qiime2(Tool):
             'qiime diversity core-metrics-phylogenetic',
             '--i-phylogeny {}'.format(self.get_file('rooted_tree')),
             '--i-table {}'.format(self.get_file('filtered_table')),
-            '--p-sampling-depth {}'.format(self.config['sampling_depth']),
+            '--p-sampling-depth {}'.format(self.doc.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
             '--p-n-jobs {} '.format(self.num_jobs),
             '--output-dir {};'.format(self.get_file('core_metrics_results'))
@@ -383,7 +387,6 @@ class Qiime2(Tool):
 
     def group_significance(self, category, level=None):
         """ Run all the commands related to calculating group_significance """
-        log('Group sig: cat {} level {}'.format(category, level))
         if level is not None:
             self.taxa_collapse(category, level)
         self.add_pseudocount(category, level)
@@ -392,11 +395,11 @@ class Qiime2(Tool):
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
         log('Run sanity check on qiime2')
-        log(self.files.keys())
+        log(self.doc.keys())
         new_env = setup_environment('qiime2/2019.1')
         # Check the counts at the beginning of the analysis
         cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(self.files['demux_viz']),
+               '--input-path', str(self.get_file('demux_viz', True)),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
 
@@ -406,7 +409,7 @@ class Qiime2(Tool):
 
         # Check the counts after DADA2/DeBlur
         cmd = ['qiime', 'tools', 'export',
-               '--input-path', str(self.files['filtered_table']),
+               '--input-path', str(self.get_file('filtered_table', True)),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
         log(cmd)
@@ -425,25 +428,34 @@ class Qiime2(Tool):
             log(message)
             raise AnalysisError(message)
 
-    def setup_analysis(self):
-        """ Create the job file for the analysis. """
+    def setup_stage_0(self):
+        self.set_stage(0)
         # Only the primary analysis runs these commands
-        if not self.is_child:
-            if 'demuxed' in self.data_type:
+        if not self.doc.sub_analysis:
+            if 'demuxed' in self.doc.data_type:
                 self.unzip()
             self.qimport()
-            if 'demuxed' not in self.data_type:
+
+    def setup_stage_1(self):
+        self.set_stage(1)
+        if not self.doc.sub_analysis:
+            self.jobtext.append('echo "MMEDS_STAGE_1"')
+            if 'demuxed' not in self.doc.data_type:
                 self.demultiplex()
                 self.demux_visualize()
-
-            if self.atype == 'deblur':
+            if 'deblur' in self.doc.analysis_type:
                 self.deblur_filter()
                 self.deblur_denoise()
                 self.deblur_visualize()
-            elif self.atype == 'dada2':
+            elif 'dada2' in self.doc.analysis_type:
                 self.dada2()
+                if self.kill_stage == 1:
+                    self.jobtext.append('exit 1')
                 self.tabulate()
 
+    def setup_stage_2(self):
+        self.set_stage(2)
+        self.jobtext.append('echo "MMEDS_STAGE_2"')
         # Run these commands sequentially
         self.filter_by_metadata()
         self.alignment_mafft()
@@ -451,25 +463,52 @@ class Qiime2(Tool):
         self.phylogeny_fasttree()
         self.phylogeny_midpoint_root()
         self.core_diversity()
+        if self.kill_stage == 2:
+            self.jobtext.append('exit 2')
 
+    def setup_stage_3(self):
+        self.set_stage(3)
+        self.jobtext.append('echo "MMEDS_STAGE_3"')
         # Run these commands in parallel
         self.alpha_diversity()
-        for col in self.config['metadata']:
+        for col in self.doc.config['metadata']:
             self.beta_diversity(col)
         self.alpha_rarefaction()
 
         # Wait for them all to finish
         self.jobtext.append('wait')
+        if self.kill_stage == 3:
+            self.jobtext.append('exit 3')
+
+    def setup_stage_4(self):
+        self.set_stage(4)
+        self.jobtext.append('echo "MMEDS_STAGE_4"')
         self.classify_taxa(STORAGE_DIR / 'classifier.qza')
         self.taxa_diversity()
-
         # Calculate group significance
-        for col in self.config['metadata']:
+        for col in self.doc.config['metadata']:
             self.group_significance(col)
             # For the requested taxanomic levels
-            for level in self.config['taxa_levels']:
+            for level in self.doc.config['taxa_levels']:
                 self.group_significance(col, level)
+        if self.kill_stage == 4:
+            self.jobtext.append('exit 4')
         self.jobtext.append('wait')
 
+    def setup_analysis(self):
+        """ Create the job file for the analysis. """
+        if self.restart_stage < 1:
+            self.setup_stage_0()
+        if self.restart_stage < 2:
+            self.setup_stage_1()
+        if self.restart_stage < 3:
+            self.setup_stage_2()
+        if self.restart_stage < 4:
+            self.setup_stage_3()
+        if self.restart_stage < 5:
+            self.setup_stage_4()
+        if self.restart_stage < 6:
+            self.set_stage(5)
+            self.jobtext.append('echo "MMEDS_STAGE_5"')
         # Perform standard tool setup
         super().setup_analysis()

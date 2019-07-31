@@ -7,35 +7,53 @@ import mmeds.error as err
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from multiprocessing import Process
+from multiprocessing import Queue, current_process
+from datetime import datetime
+import atexit
 
 
 from mmeds.validate import validate_mapping_file
-from mmeds.util import (generate_error_html, load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
+from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
                         mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
-from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES
-from mmeds.authentication import (validate_password,
-                                  check_username,
-                                  check_password,
-                                  add_user,
-                                  reset_password,
-                                  change_password)
+from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG
+from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
+                                  add_user, reset_password, change_password)
 from mmeds.database import Database
-from mmeds.spawn import spawn_analysis, handle_data_upload, handle_modify_data
+from mmeds.spawn import handle_modify_data, Watcher
 
 absDir = Path(os.getcwd())
 
+
+def kill_watcher(monitor):
+    """ A function to shutdown the Watcher instance when the server exits """
+    monitor.terminate()
+    while monitor.is_alive():
+        log('Try to terminate')
+        log('Try to kill')
+        monitor.kill()
+
+
+# Note: In all of the following classes, if a parameter is named in camel case instead of underscore
+# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML forum
 
 class MMEDSbase:
     """
     The base class inherited by all mmeds server classes.
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
-    processes = {}
 
     def __init__(self, testing=False):
         self.db = None
         self.testing = bool(int(testing))
+        self.q = Queue()
+        self.monitor = Watcher(self.q, current_process(), self.testing)
+        self.monitor.start()
+        # Set the server to kill the watcher process on exit
+        atexit.register(kill_watcher, self.monitor)
+
+    def exit(self):
+        kill_watcher(self.monitor)
+        cp.engine.exit()
 
     def get_user(self):
         """
@@ -75,7 +93,6 @@ class MMEDSbase:
         """ Run validate_mapping_file and return the results """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
-        log(myMetaData)
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
             raise err.MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
@@ -135,7 +152,8 @@ class MMEDSbase:
         files = []
         for key, value in kwargs.items():
             if value is not None:
-                files.append((key, value.filename, value.file))
+                file_copy = create_local_copy(value.file, value.filename, self.get_dir())
+                files.append((key, file_copy))
         return files
 
     def format_html(self, page, **kwargs):
@@ -163,6 +181,10 @@ class MMEDSbase:
             return_page = path.read_text()
         return return_page
 
+    def add_process(self, ptype, process):
+        """ Add an analysis process to the list of processes. """
+        self.monitor.add_process(ptype, process)
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
@@ -172,6 +194,86 @@ class MMEDSdownload(MMEDSbase):
     ########################################
     #            Download Pages            #
     ########################################
+
+    @cp.expose
+    def select_study(self):
+        """ Allows authorized user accounts to access uploaded studies. """
+        if check_privileges(self.get_user(), self.testing):
+            page = self.format_html('download_select_study', title='Select Study')
+            with Database(path='.', testing=self.testing) as db:
+                studies = db.get_all_studies()
+            for study in studies:
+                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code, study.study))
+        else:
+            page = self.format_html('welcome', title='Welcome to MMEDS')
+            page = insert_error(page, 24, 'You do not have permissions to access uploaded studies.')
+        return page
+
+    @cp.expose
+    def download_study(self, study_code):
+        """ Display the information and files of a particular study. """
+        with Database(path='.', testing=self.testing) as db:
+            study = db.get_study(study_code)
+            analyses = db.get_all_analyses_from_study(study_code)
+
+        page = self.format_html('download_selected_study',
+                                title='Study: {}'.format(study.study),
+                                study=study.study,
+                                date_created=study.created,
+                                last_accessed=study.last_accessed,
+                                study_type=study.study_type,
+                                reads_type=study.reads_type,
+                                access_code=study.access_code,
+                                owner=study.owner,
+                                email=study.email,
+                                path=study.path)
+
+        for filename, filepath in study.files.items():
+            page = insert_html(page, 33, '<option value="{}">{}</option>'.format(filepath, filename))
+
+        for analysis in analyses:
+            page = insert_html(page, 38 + len(study.files.keys()),
+                               '<option value="{}">{}</option>'.format(analysis.analysis_code,
+                                                                       analysis.name))
+        return page
+
+    @cp.expose
+    def download_filepath(self, file_path):
+        return static.serve_file(file_path, 'application/x-download',
+                                 'attachment', os.path.basename(file_path))
+
+    @cp.expose
+    def select_analysis(self, analysis_code):
+        """ Display the information and files of a particular study. """
+        with Database(path='.', testing=self.testing) as db:
+            analysis = db.get_study_analysis(analysis_code)
+
+        page = self.format_html('download_selected_analysis',
+                                title='Analysis: {}'.format(analysis.name),
+                                name=analysis.name,
+                                date_created=analysis.created,
+                                last_accessed=analysis.last_accessed,
+                                analysis_type=analysis.analysis_type,
+                                reads_type=analysis.reads_type,
+                                study_code=analysis.study_code,
+                                sub_analysis=analysis.sub_analysis,
+                                analysis_code=analysis.analysis_code,
+                                analysis_status=analysis.analysis_status,
+                                owner=analysis.owner,
+                                email=analysis.email,
+                                path=analysis.path)
+
+        for filename, file_path in analysis.files.items():
+            if Path(file_path).exists():
+                if '.' not in file_path:
+                    if not Path(file_path + '.tar.gz').exists():
+                        cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
+                                                             Path(file_path).parent,
+                                                             Path(file_path).name)
+                        run(cmd.split(' '), check=True)
+                    file_path += '.tar.gz'
+                page = insert_html(page, 36, '<option value="{}">{}</option>'.format(file_path, filename))
+        return page
 
     @cp.expose
     def download_page(self, access_code):
@@ -289,9 +391,10 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_metadata(self, study_type):
+    def upload_metadata(self, studyType, studyName):
         """ Page for uploading Qiime data """
-        page = self.format_html('upload_metadata_file', title='Upload Metadata', version=study_type)
+        cp.session['study_name'] = studyName
+        page = self.format_html('upload_metadata_file', title='Upload Metadata', version=studyType)
         return page
 
 
@@ -432,9 +535,14 @@ class MMEDSanalysis(MMEDSbase):
         log('In run_analysis')
         try:
             self.check_upload(access_code)
-            p = spawn_analysis(tool, self.get_user(), access_code, config, self.testing)
+            if isinstance(config, str):
+                config_text = config
+            elif config.file is None:
+                config_text = DEFAULT_CONFIG.read_text()
+            else:
+                config_text = config.file.read().decode('utf-8')
+            self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
             cp.log('Valid config file')
-            cp.session['processes'][access_code] = p
             page = self.format_html('welcome', title='Welcome to MMEDS')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('welcome', title='Welcome to MMEDS')
@@ -448,11 +556,17 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData):
+    def validate_metadata(self, myMetaData, temporary=False):
         """ The page returned after a file is uploaded. """
-        log('In validate_metadata')
         try:
-            metadata_copy, errors, warnings = self.run_validate(myMetaData)
+            # If the metadata is temporary don't perform validation
+            if temporary:
+                cp.session['metadata_temporary'] = True
+                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+                errors, warnings = [], []
+            else:
+                cp.session['metadata_temporary'] = False
+                metadata_copy, errors, warnings = self.run_validate(myMetaData)
 
             # If there are errors report them and return the error page
             if errors:
@@ -483,13 +597,10 @@ class MMEDSanalysis(MMEDSbase):
         # Add the datafiles that exist as arguments
         datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
 
-        # Start a process to handle loading the data
-        p = Process(target=handle_data_upload,
-                    args=(metadata, username, reads_type, self.testing,
-                          # Unpack the list so the files are taken as a tuple
-                          *datafiles))
-        cp.log('Starting upload process')
-        p.start()
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload', cp.session['study_name'], metadata,
+                    username, reads_type, datafiles, cp.session['metadata_temporary']))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')
@@ -546,6 +657,9 @@ class MMEDSserver(MMEDSbase):
         """ Home page of the application """
         if cp.session.get('user'):
             page = self.format_html('welcome', title='Welcome to MMEDS')
+            self.add_process('test', 'User {} is logged in. The time is {}'.format(cp.session.get('user'),
+                                                                                   datetime.now()))
         else:
             page = self.format_html('index')
+            self.add_process('test', 'time is {}'.format(datetime.now()))
         return page

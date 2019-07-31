@@ -3,71 +3,59 @@ python: '3.7'
 dist: xenial
 sudo: true
 addons:
-  apt:
-    packages:
-    - texlive-latex-base
-    - texlive-latex-extra
-    - texlive-latex-recommended
-    - texlive-generic-recommended
-    - texlive-pictures
-    - texlive-publishers
-    - texlive-fonts-recommended
-    - texlive-fonts-extra
-    - cmake
-    - xsltproc
+    apt:
+        packages:
+            - texlive-latex-base
+            - texlive-latex-extra
+            - texlive-latex-recommended
+            - texlive-generic-recommended
+            - texlive-pictures
+            - texlive-publishers
+            - texlive-fonts-recommended
+            - texlive-fonts-extra
 before_cache:
-- sudo chown -R travis:travis $HOME
-- sudo chown -R travis:travis $TRAVIS_BUILD_DIR
+    - sudo chown -R travis:travis $HOME
+    - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
 cache:
-  directories:
-  - "~/.modules"
-  - "~/.local"
-  timeout: 1000
-  apt: true
+    directories:
+        - "~/.modules"
+        - "~/.local"
+    apt: true
 git:
-  depth: 1
+    depth: 1
 services:
-- mysql
-- mongodb
-- xvfb
+    - mysql
+    - mongodb
+    - xvfb
 before_install:
-- openssl aes-256-cbc -K $encrypted_ad273e68e13c_key -iv $encrypted_ad273e68e13c_iv
-  -in ./mmeds/secrets.py.enc -out ./mmeds/secrets.py -d
-- openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
-  -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
-- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh
-  --quiet
-- mysql --version
-- chmod +x ~/miniconda.sh
-- "~/miniconda.sh -b &>/dev/null"
-- export PATH=~/miniconda2/bin:$PATH
-- conda update --yes conda &>/dev/null
-- sudo chown -R travis:travis ~/.modules/modulefiles
-- sudo chown -R travis:travis ~/.modules ~/.local
-- bash travis_setup.sh
-- source ~/.bashrc
-- conda info --envs
+    - openssl aes-256-cbc -K $encrypted_754fbe69cba7_key -iv $encrypted_754fbe69cba7_iv
+      -in ./mmeds/resources/privkey.pem.enc -out ./mmeds/resources/privkey.pem -d
+    - openssl aes-256-cbc -K $encrypted_ad273e68e13c_key -iv $encrypted_ad273e68e13c_iv
+      -in ./mmeds/secrets.py.enc -out ./mmeds/secrets.py -d
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh --quiet
+    - chmod +x ~/miniconda.sh
+    - ~/miniconda.sh -b &>/dev/null
+    - export PATH=~/miniconda2/bin:$PATH
+    - conda update --yes conda &>/dev/null
+    - bash travis_setup.sh
+    - source ~/.bashrc
+    - conda info --envs
 install:
-- source activate mmeds-stable
-- pip install . --no-cache-dir
-- mysql -u root < setup.sql
-- ls ~/.modules/modulefiles
-- cat ~/.modules/modulefiles/qiime2/2019.1
+    - source activate mmeds-stable
+    - pip install .
+    - mysql -u root < setup.sql
+    - module avail
 script:
-- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-  -s ./mmeds/tests/unit -x --durations=0
-- bash <(curl -s https://codecov.io/bash) -cF unit
-- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
-- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-  -s ./mmeds/tests/server -x --durations=0
-- bash <(curl -s https://codecov.io/bash) -cF server
-- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
-- travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-  -s ./mmeds/tests/integration -x --durations=0
-- bash <(curl -s https://codecov.io/bash) -cF integration
-- tail -n 50 ~/mmeds_server_data/mmeds_log.txt
-- pip uninstall mmeds -y
-- sudo rm -rf ~/.modules/qiime2/var/cache
-- sudo rm -rf ~/.modules/qiime1/var/cache
-- sudo rm -rf ~/.modules/mmeds-stable/var/cache
-- sudo find ~/.modules/ -type f -name *.pyc -delete
+    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+        -s ./mmeds/tests/unit -x --durations=0
+    - bash <(curl -s https://codecov.io/bash) -cF unit
+    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
+        -s ./mmeds/tests/server -x --durations=0
+    - bash <(curl -s https://codecov.io/bash) -cF server
+    - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
+    - pip uninstall mmeds -y
+    - sudo rm -rf ~/.modules/qiime2/var/cache
+    - sudo rm -rf ~/.modules/qiime1/var/cache
+    - sudo rm -rf ~/.modules/mmeds-stable/var/cache
+    - sudo find ~/.modules/ -type f -name *.pyc -delete

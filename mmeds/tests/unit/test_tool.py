@@ -1,11 +1,11 @@
 from unittest import TestCase
+from shutil import rmtree
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
 from mmeds.database import MetaDataUploader
 from mmeds.util import load_config
 
-from shutil import rmtree
 import mmeds.config as fig
 import mmeds.secrets as sec
 
@@ -15,32 +15,35 @@ def upload_metadata(args):
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
+                          study_name='Test_Tool',
                           reads_type='single_end',
                           owner=fig.TEST_USER,
+                          temporary=False,
                           testing=True) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                            barcodes=fig.TEST_BARCODES,
-                                                            access_code=access_code)
+        access_code, email = up.import_metadata(for_reads=fig.TEST_READS,
+                                                barcodes=fig.TEST_BARCODES,
+                                                access_code=access_code)
 
 
 class ToolTests(TestCase):
     """ Tests of top-level functions """
+    testing = True
 
     @classmethod
     def setUpClass(self):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        test_setup = (fig.TEST_METADATA,
+        test_setup = (fig.TEST_METADATA_SHORTEST,
                       fig.TEST_DIR,
                       fig.TEST_USER,
                       fig.TEST_CODE)
         upload_metadata(test_setup)
-        self.config = load_config(None, fig.TEST_METADATA)
+        self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
         self.tool = Tool(fig.TEST_USER,
                          fig.TEST_CODE,
                          'test-1',
                          self.config, True,
                          8, True)
-        self.dirs = [self.tool.path]
+        self.dirs = [self.tool.doc.path]
 
     @classmethod
     def tearDownClass(self):
@@ -48,25 +51,14 @@ class ToolTests(TestCase):
         for new_dir in self.dirs:
             rmtree(new_dir)
 
-    def test_setup_dir(self):
-        new_dir, run_id, files, data_type = self.tool.setup_dir(fig.TEST_DIR)
-        self.dirs.append(new_dir)
-
-        assert str(fig.TEST_DIR / 'Tool-1') in str(new_dir)
-        assert data_type == 'single_end'
-        assert 'metadata' in files.keys()
-        assert files['metadata'].is_file()
-
     def test_add_path(self):
         """ Test that adding files to the tool object works properly """
-        assert 'testfile' not in self.tool.files.keys()
+        assert 'testfile' not in self.tool.doc.files.keys()
         self.tool.add_path('testfile', '.txt')
-        assert 'testfile' in self.tool.files.keys()
-        assert not self.tool.files['testfile'].is_file()
+        assert 'testfile' in self.tool.doc.files.keys()
 
     def test_get_job_params(self):
         params = self.tool.get_job_params()
-        assert '{}-{}'.format(fig.TEST_USER, 1) in params['jobname']
         assert params['nodes'] == 2
 
     def test_move_user_files(self):
@@ -82,3 +74,7 @@ class ToolTests(TestCase):
         assert (self.tool.path / 'visualizations_dir').is_dir()
         assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
         assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
+
+    def test_missing_file(self):
+        """ Test that an appropriate error will be raised if a file doesn't exist on disk """
+        # TODO

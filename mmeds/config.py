@@ -36,6 +36,8 @@ if not os.path.exists(DATABASE_DIR):
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
+STUDY_LOG = DATABASE_DIR / 'study_log.txt'
+PROCESS_LOG = DATABASE_DIR / 'process_log.txt'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',
@@ -45,10 +47,10 @@ CONFIG_PARAMETERS = [
     'sub_analysis'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
-# MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
+DEFAULT_CONFIG = STORAGE_DIR / 'config_file.txt'
 
 
 # Configuration for the CherryPy server
@@ -89,10 +91,10 @@ CONFIG = {
 ##########################
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
-TEST_DIR = DATABASE_DIR / 'test_dir'
+TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
 if not os.path.exists(TEST_DIR):
     os.mkdir(TEST_DIR)
-TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
+TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
 if not os.path.exists(TEST_DIR_0):
     os.mkdir(TEST_DIR_0)
 
@@ -375,6 +377,10 @@ HTML_PAGES = {
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
     'download_study_files': (HTML_DIR / 'download_study_files.html', True),
     'download_select_file': (HTML_DIR / 'download_select_file.html', True),
+    'download_select_study': (HTML_DIR / 'download_select_study.html', True),
+    'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
+    'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
+    'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div class='inner'>
+        <p> Analysis Name: {name} </p>
+        <p> Created: {date_created} </p>
+        <p> Last Accessed: {last_accessed} </p>
+        <p> Is Sub Analysis: {sub_analysis} </p>
+        <p> Reads Type: {reads_type} </p>
+        <p> Study Code: {study_code} </p>
+        <p> Analysis Code: {analysis_code}</p>
+        <p> Owner: {owner} </p>
+        <p> Email: {email}</p>
+        <p> Path: {path} </p>
+        <p> Analysis Type: {analysis_type} </p>
+        <p> Analysis Status: {analysis_status} </p>
+        <form action='../download/download_filepath' method='post' enctype='multipart/form-data' id='study_form'>
+            <select name='file_path' form='study_form'>
+            </select>
+            <button type='submit' method='post'>Select File</button>
+        </form>
+    </div>
+  </body>
+</html>

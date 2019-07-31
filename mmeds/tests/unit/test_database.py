@@ -1,7 +1,7 @@
 from mmeds.database import Database, MetaDataUploader, SQLBuilder
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.util import log, parse_ICD_codes
+from mmeds.util import sql_log, parse_ICD_codes
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
@@ -40,11 +40,13 @@ def upload_metadata(args):
                           path=path,
                           owner=fig.TEST_USER,
                           study_type='qiime',
+                          study_name='Test_Datahase',
                           reads_type='single_end',
+                          temporary=False,
                           testing=testing) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                            barcodes=fig.TEST_BARCODES,
-                                                            access_code=access_code)
+        access_code, email = up.import_metadata(for_reads=fig.TEST_READS,
+                                                barcodes=fig.TEST_BARCODES,
+                                                access_code=access_code)
 
 
 class MetaDataUploaderTests(TestCase):
@@ -55,7 +57,6 @@ class MetaDataUploaderTests(TestCase):
         """ Load data that is to be used by multiple test cases """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
-        log('about to read in')
         test_setups = [(fig.TEST_METADATA,
                         fig.TEST_DIR,
                         fig.TEST_USER,
@@ -96,18 +97,18 @@ class MetaDataUploaderTests(TestCase):
     #   Test SQL   #
     ################
     def test_a_tables(self):
-        log('====== Test Database Start ======')
+        sql_log('====== Test Database Start ======')
         tables = self.df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
         del tables[tables.index('ICDCode')]
         for row in range(len(self.df)):
             for table in tables:
-                log('Query table {}'.format(table))
+                sql_log('Query table {}'.format(table))
                 # Create the query
                 sql, args = self.builder.build_sql(table, row)
-                log(sql)
-                log(args)
+                sql_log(sql)
+                sql_log(args)
                 self.c = self.db.cursor()
                 found = self.c.execute(sql, args)
                 # Assert there exists at least one entry matching this description
@@ -115,24 +116,24 @@ class MetaDataUploaderTests(TestCase):
                     assert found > 0
                     self.c.close()
                 except AssertionError as e:
-                    log(self.df.iloc[row])
-                    log(sql)
-                    log("Didn't find entry {}:{}".format(table, row))
-                    log(self.c.fetchall())
+                    sql_log(self.df.iloc[row])
+                    sql_log(sql)
+                    sql_log("Didn't find entry {}:{}".format(table, row))
+                    sql_log(self.c.fetchall())
                     self.c.close()
                     raise e
 
     def test_b_junction_tables(self):
-        log('TEST_B_JUNCTION_TABLES')
+        sql_log('TEST_B_JUNCTION_TABLES')
         self.c = self.db.cursor()
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
         for row in range(len(self.df)):
             for jtable in jtables:
-                log('Check table: {}'.format(jtable))
+                sql_log('Check table: {}'.format(jtable))
                 sql, args = self.builder.build_sql(jtable, row)
-                log(sql)
+                sql_log(sql)
                 self.c = self.db.cursor()
                 jresult = self.c.execute(sql, args)
                 self.c.close()
@@ -194,7 +195,7 @@ class MetaDataUploaderTests(TestCase):
         self.c.execute(sql.format(fig.SQL_DATABASE, fig.TEST_USER_0))
         user_id = int(self.c.fetchone()[0])
         self.c.close()
-        log(user_id)
+        sql_log(user_id)
         table_counts = {}
         user_counts = {}
 

@@ -8,10 +8,11 @@
       <p>
         <h3>Select type of data for upload</h3>
         <form action='../upload/upload_metadata' method='post' enctype='multipart/form-data' id='upload_form'>
-          <select name='study_type' form='upload_form'>
+          <select name='studyType' form='upload_form'>
             <option value="qiime">Qiime</option>
             <option value="other">Other</option>
           </select>
+          <p> Study Name: <br> <input type='text' name='studyName' required/> </p>
           <button type='submit' method='post'>Upload Data</button>
         </form>
       </p>
@@ -20,6 +21,7 @@
         <form action='../upload/modify_upload' method='post' enctype='multipart/form-data', id='modify_form'>
           <p> Data File: <br> <input type='file' name='myData' required/> </p>
           <p><select name='data_type' form='modify_form'>
+            <option value="metadata">Metadata</option>
             <option value="for_reads">Forward Reads</option>
             <option value="rev_reads">Reverse Reads</option>
             <option value="barcodes">Barcodes</option>

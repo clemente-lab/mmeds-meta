@@ -18,9 +18,12 @@ def summarize_qiime(summary_path, tool):
     # Load the files
     files = {}
     lines = (path / 'file_index.tsv').read_text().strip().split('\n')
-    for line in lines:
+    for i, line in enumerate(lines):
         parts = line.split('\t')
-        files[parts[0]] = Path(parts[1])
+        if i:
+            files[parts[0]] = Path(parts[1])
+        else:
+            study_name = '{}-{}-{}'.format(parts[1], parts[0], tool)
 
     # Create the summary directory
     if not files['summary'].is_dir():
@@ -42,12 +45,12 @@ def summarize_qiime(summary_path, tool):
     config = load_config((path / 'config_file.txt').read_text(), files['metadata'], True)
 
     if tool == 'qiime1':
-        summarize_qiime1(path, files, config)
+        summarize_qiime1(path, files, config, study_name)
     elif tool == 'qiime2':
-        summarize_qiime2(path, files, config)
+        summarize_qiime2(path, files, config, study_name)
 
 
-def summarize_qiime1(path, files, config):
+def summarize_qiime1(path, files, config, study_name):
     """
     Create summary of analysis results
     """
@@ -92,7 +95,7 @@ def summarize_qiime1(path, files, config):
                         analysis_type='qiime1',
                         files=summary_files,
                         execute=True,
-                        name='analysis',
+                        name=study_name,
                         path=path / 'summary')
 
     mnb.create_notebook()
@@ -106,7 +109,7 @@ def summarize_qiime1(path, files, config):
     return path / 'summary/analysis.pdf'
 
 
-def summarize_qiime2(path, files, config):
+def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
     log('Start Qiime2 summary')
 
@@ -160,7 +163,7 @@ def summarize_qiime2(path, files, config):
                         analysis_type='qiime2',
                         files=summary_files,
                         execute=True,
-                        name='analysis',
+                        name=study_name,
                         path=path / 'summary')
 
     mnb.create_notebook()
@@ -242,24 +245,33 @@ class MMEDSNotebook():
         self.cells.append(new_cell)
 
     def update_template(self, location, text):
-        """ Update the revtex template used for converting the notebook to a PDF """
+        """
+        Updates the revtex template used for converting the notebook to a PDF
+        =====================================================================
+        :location: A string. Determine what section of the template to add the
+            text to.
+        :text: A string. The text to add to the template.
+        """
         with open(self.path / 'mod_revtex.tplx') as f:
             lines = f.readlines()
+            # Find the locations of the different sections of the template
             for i, line in enumerate(lines):
-                if '((* block output_group -*))' in line:
-                    output_start = i + 1
+                if '((* endblock output_group *))' in line:
+                    output_start = i
                 elif '((* block input scoped *))' in line:
                     input_start = i + 1
                 elif '((* endblock packages *))' in line:
                     packages_end = i
+        # Insert the text at the specified location
         if location == 'packages':
-            new_lines = lines[:packages_end] + [text] + lines[packages_end:]
+            new_lines = lines[:packages_end] + [text + '\n'] + lines[packages_end:]
         elif location == 'output':
             log('Update output')
             new_lines = lines[:output_start] + [text + '\n'] + lines[output_start:]
         elif location == 'input':
             log('Update output')
             new_lines = lines[:input_start] + [text + '\n'] + lines[input_start:]
+
         with open(self.path / 'mod_revtex.tplx', 'w') as f:
             for line in new_lines:
                 f.write(line)
@@ -270,28 +282,34 @@ class MMEDSNotebook():
         ====================================
         :data_file: The location of the file to create the plotting code for.
         """
-
+        # Get the taxa level from the filename
         level = data_file.split('.')[0][-1]
         self.add_markdown('## OTU level {level}'.format(level=self.words[level]))
+
+        # For each selected metadata column
         for i, column in enumerate(self.config['metadata']):
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
             self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(file1=data_file,
                                                                                       level=self.words[level],
                                                                                       group=column))
+            # Add the code cells to define colors for each of the taxa
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=self.words[level]))
-                self.update_template('input', self.source['otu_legend_latex'].format(level=self.words[level]))
-                self.update_template('input', self.source['otu_group_legend_latex'].format(level=self.words[level],
-                                                                                           meta=column))
-                self.add_code('', meta={self.words[level]: True})
+                self.update_template('output', self.source['otu_legend_latex'].format(level=self.words[level]))
+
+            # Add the legend to the template
+            self.update_template('output', self.source['otu_group_legend_latex'].format(level=self.words[level],
+                                                                                        meta=column))
             self.add_code(self.source['otu_group_legend_py'].format(level=self.words[level],
                                                                     meta=column))
             self.add_code(self.source['taxa_r'].format(plot=filename,
                                                        level=self.words[level],
                                                        group=column))
-            self.add_code('Image("{plot}")'.format(plot=filename))
+
+            # Add code cell for loading the plot with metadata indicating the legend to use
+            self.add_code('Image("{plot}")'.format(plot=filename),
+                          meta={'{}{}'.format(self.words[level], column): True})
             self.add_code(self.source['otu_legend_py'].format(level=self.words[level]))
-            self.add_code('', meta={'{}{}'.format(self.words[level], column): True})
             self.add_markdown(self.source['taxa_caption'])
             self.add_markdown(self.source['page_break'])
 
@@ -310,8 +328,8 @@ class MMEDSNotebook():
         self.add_markdown('## {f}'.format(f=data_file))
         self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
-        self.add_code('Image("{plot}")'.format(plot=filename))
-        self.add_code('', meta={column: True for column in self.config['metadata']})
+        self.add_code('Image("{plot}")'.format(plot=filename),
+                      meta={column: True for column in self.config['metadata']})
         self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
         log('Added markdown')
         self.add_markdown(self.source['page_break'])
@@ -335,13 +353,11 @@ class MMEDSNotebook():
                                                        subplot=subplot,
                                                        cat=column,
                                                        continuous=contin))
-            self.add_code('Image("{plot}")'.format(plot=plot))
-            self.add_code('', meta={column: True})
+            self.add_code('Image("{plot}")'.format(plot=plot), meta={column: True})
             self.add_markdown(self.source['beta_caption'])
 
             for x, y in combinations(['PC1', 'PC2', 'PC3'], 2):
-                self.add_code('Image("{plot}")'.format(plot=subplot % (x, y)))
-                self.add_code('', meta={column: True})
+                self.add_code('Image("{plot}")'.format(plot=subplot % (x, y)), meta={column: True})
             self.add_markdown(self.source['page_break'])
 
     def summarize(self):
@@ -372,16 +388,19 @@ class MMEDSNotebook():
         self.add_markdown('# Taxa Summary')
         for data_file in included_files:
             self.taxa_plots(data_file)
+        print('write latex_legend')
         self.add_code(self.source['latex_legend_py'])
 
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
-            self.update_template('input', self.source['diversity_legend_latex'].format(meta=column))
+            print('Write diversity_legend_latex for {}'.format(column))
+            self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
         self.add_markdown('# Alpha Diversity Summary')
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
+        print('Write group_legends_py for alpha')
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity

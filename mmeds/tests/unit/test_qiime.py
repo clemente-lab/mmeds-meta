@@ -17,24 +17,27 @@ def upload_metadata(args):
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
+                          study_name='Test_Qiime',
                           reads_type=reads_type,
                           owner=fig.TEST_USER,
+                          temporary=False,
                           testing=True) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=for_reads,
-                                                            rev_reads=rev_reads,
-                                                            barcodes=barcodes,
-                                                            access_code=access_code)
+        access_code, email = up.import_metadata(for_reads=for_reads,
+                                                rev_reads=rev_reads,
+                                                barcodes=barcodes,
+                                                access_code=access_code)
 
 
 class QiimeTests(TestCase):
     """ Tests of top-level functions """
+    testing = True
 
     @classmethod
     def setUpClass(self):
         self.TEST_CODE = 'qiimeTest'
         self.TEST_CODE_PAIRED = 'qiimeTestPaired'
         self.TEST_CODE_DEMUX = 'qiimeTestDemuxed'
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=self.testing)
         test_setups = [
             (fig.TEST_METADATA_SHORT,
              fig.TEST_DIR,
@@ -67,14 +70,14 @@ class QiimeTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
+        remove_user(fig.TEST_USER, testing=self.testing)
 
     def run_qiime(self, code, atype, data_type, Qiime):
-        qiime = Qiime(fig.TEST_USER, code, atype, self.config, True, analysis=False)
+        qiime = Qiime(fig.TEST_USER, code, atype, self.config, testing=self.testing, analysis=False)
         qiime.start()
         while qiime.is_alive():
             sleep(2)
-        self.assertEqual(qiime.data_type, data_type)
+        self.assertEqual(qiime.doc.data_type, data_type)
         rmtree(qiime.path)
 
     def test_qiime1_setup_analysis(self):
@@ -97,6 +100,6 @@ class QiimeTests(TestCase):
         q2.setup_analysis()
         q2.create_children()
         for child in q2.children:
-            self.assertEqual(child.data_type, 'single_end')
+            self.assertEqual(child.doc.data_type, 'single_end')
 
         rmtree(q2.path)

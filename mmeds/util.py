@@ -12,6 +12,7 @@ from imapclient import IMAPClient
 from email.message import EmailMessage
 from email import message_from_bytes
 from tempfile import gettempdir
+from time import sleep
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -87,8 +88,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     # If no config was provided load the default
     if config_file is None or config_file == '':
         log('Using default config')
-        with open(fig.STORAGE_DIR / 'config_file.txt', 'r') as f:
-            page = f.read()
+        page = fig.DEFAULT_CONFIG.read_text()
     else:
         # Load the file contents
         page = config_file
@@ -405,9 +405,8 @@ def is_numeric(s):
 
 def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     """ Create a local copy of the file provided. """
-    log("In create_local_copy.")
     # If the fp is None return None
-    if fp is None:
+    if fp is None or fp == '':
         return None
 
     # Create the filename
@@ -420,12 +419,14 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
-        while True:
-            data = fp.read(8192)
-            nf.write(data)
-            if not data:
-                break
-    log('Copy finished')
+        if isinstance(fp, bytes):
+            nf.write(fp)
+        else:
+            while True:
+                data = fp.read(8192)
+                nf.write(data)
+                if not data:
+                    break
     return str(file_copy)
 
 
@@ -687,7 +688,7 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
         with open('/tmp/mmeds_log.txt', 'a+') as f:
             f.write('{}: {}\n'.format(datetime.now(), log_text))
     else:
-        with open(fig.MMEDS_LOG, 'a+') as f:
+        with open(write_file, 'a+') as f:
             f.write('{}: {}\n'.format(datetime.now(), log_text))
 
 
@@ -775,7 +776,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(num_messages=1, search=['FROM', fig.MMEDS_EMAIL]):
+def recieve_email(num_messages=1, wait=False, search=('FROM', fig.MMEDS_EMAIL), max_wait=200):
     """
     Fetch email from the test account
     :num_messages: An int. How many emails to return, starting with the most recent
@@ -785,6 +786,15 @@ def recieve_email(num_messages=1, search=['FROM', fig.MMEDS_EMAIL]):
         client.login(fig.TEST_EMAIL, sec.TEST_EMAIL_PASS)
         client.select_folder('inbox')
         all_mail = client.search(search)
+        if wait:
+            waittime = 0
+            while not all_mail:
+                all_mail = client.search(search)
+                waittime += 5
+                sleep(5)
+                if waittime > max_wait:
+                    break
+
         messages = []
         response = client.fetch(all_mail[-1 * num_messages:], ['RFC822'])
         for message_id, data in response.items():
@@ -928,3 +938,36 @@ def quote_sql(sql, quote='`', **kwargs):
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
     return formatted
+
+
+def read_processes():
+    """
+    Function for reading process access codes back from the log file.
+    Part of the functionality for continuing unfinished analyses on server restart.
+    """
+    processes = defaultdict(list)
+    if fig.PROCESS_LOG.exists():
+        all_codes = fig.PROCESS_LOG.read_text().split('\n')
+        for code in all_codes:
+            ptype, pcode = code.split('\t')
+            processes[ptype].append(pcode)
+    return processes
+
+
+def write_processes(process_codes):
+    """
+    Function for writing the access codes to all processes tracked by the server upon server exit.
+    Part of the functionality for continuing unfinished analyses on server restart.
+    """
+    all_codes = []
+    # Go through all types of processdocs
+    for ptype, pcodes in process_codes.items():
+        # Go through each processdoc
+        for pdoc in pcodes:
+            if isinstance(pdoc, str):
+                all_codes.append('{}\t{}'.format(ptype, pdoc))
+            # If the process hasn't yet finished
+            elif not pdoc.status == 'Finished':
+                # Add it's access code to the process log
+                all_codes.append('{}\t{}'.format(ptype, pdoc.analysis_code))
+    fig.PROCESS_LOG.write_text('\n'.join(all_codes))

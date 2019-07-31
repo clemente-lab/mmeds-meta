@@ -15,8 +15,8 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.util import send_email, log, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
-from mmeds.documents import MetaData
+from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
+from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
 
@@ -124,6 +124,14 @@ class Database:
     #                MySQL                 #
     ########################################
 
+    def get_table_contents(self, table):
+        """ Return all the entries from the selected table """
+        sql = 'SELECT * FROM {table};'
+        self.cursor.execute(quote_sql(sql, table=table))
+        result = self.cursor.fetchall()
+        table_text = '\n'.join(['\t'.join(['"{}"'.format(cell) for cell in row]) for row in result])
+        return table_text
+
     def check_email(self, email):
         """ Check the provided email matches this user. """
         return email == self.email
@@ -131,6 +139,15 @@ class Database:
     def get_email(self, username):
         """ Get the email that matches this user. """
         sql = 'SELECT `email` FROM `user` WHERE `username` = %(username)s'
+        self.cursor.execute(sql, {'username': username})
+        result = self.cursor.fetchone()
+        if result is None:
+            raise NoResultError('There is no entry for user {}'.format(username))
+        return result[0]
+
+    def get_privileges(self, username):
+        """ Get the email that matches this user. """
+        sql = 'SELECT `privilege` FROM `user` WHERE `username` = %(username)s'
         self.cursor.execute(sql, {'username': username})
         result = self.cursor.fetchone()
         if result is None:
@@ -229,19 +246,21 @@ class Database:
         data = self.cursor.fetchall()
         return data
 
-    def add_user(self, username, password, salt, email):
+    def add_user(self, username, password, salt, email, privilege_level):
         """ Add the user with the specified parameters. """
         self.cursor.execute('SELECT MAX(user_id) FROM user')
         user_id = int(self.cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO `user` (user_id, username, password, salt, email)'
-        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
+        sql = 'INSERT INTO `user` (user_id, username, password, salt, email, privilege)'
+        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(privilege)s);'
 
         self.cursor.execute(sql, {'id': user_id,
                                   'uname': username,
                                   'pass': password,
                                   'salt': salt,
-                                  'email': email})
+                                  'email': email,
+                                  'privilege': privilege_level
+                                  })
         self.db.commit()
 
     def remove_user(self, username):
@@ -286,6 +305,20 @@ class Database:
     ########################################
     #               MongoDB                #
     ########################################
+    @classmethod
+    def create_access_code(cls, check_code, length=20):
+        """ Creates a unique code for identifying a mongo db document """
+        code = check_code
+        count = 0
+        while True:
+            # Ensure no document exists with the given access code
+            if not (StudyDoc.objects(access_code=code).first() or
+                    AnalysisDoc.objects(analysis_code=code).first()):
+                break
+            else:
+                code = check_code + '-' + str(count)
+                count += 1
+        return code
 
     def mongo_clean(self, access_code):
         """
@@ -293,7 +326,10 @@ class Database:
         It will not delete the files associated with those objects.
         """
 
-        obs = MetaData.objects(access_code=access_code)
+        obs = StudyDoc.objects(access_code=access_code)
+        for ob in obs:
+            ob.delete()
+        obs = AnalysisDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
 
@@ -303,7 +339,7 @@ class Database:
         :access_code: The code for identifying this dataset.
         :data_type: A string. Either 'reads' or 'barcodes' depending on which is being modified.
         """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
 
         # Remove the old data file if it exits
@@ -320,7 +356,7 @@ class Database:
         # Get a new code
         new_code = get_salt(50)
         # Get the mongo document
-        mdata = MetaData.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata = StudyDoc.objects(study=study_name, owner=self.owner, email=email).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.access_code = new_code
         mdata.save()
@@ -362,7 +398,7 @@ class Database:
                 file locations in a subdirectory
         """
         sql_log('Update metadata with {}: {}'.format(filekey, value))
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
         mdata.save()
@@ -415,8 +451,7 @@ class Database:
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """
-        log('Get mongo files')
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
@@ -424,20 +459,47 @@ class Database:
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
-        log('return from mongo')
         return mdata.files, mdata.path
 
     def get_metadata(self, access_code):
         """
-        Return the MetaData object.
+        Return the StudyDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return MetaData.objects(access_code=access_code, owner=self.owner).first()
+        return StudyDoc.objects(access_code=access_code, owner=self.owner).first()
+
+    def get_analysis(self, access_code):
+        """
+        Return the StudyDoc object.
+        This object should be treated as read only.
+        Any modifications should be done through the Database class.
+        """
+        return AnalysisDoc.objects(analysis_code=access_code, owner=self.owner).first()
+
+    @classmethod
+    def get_all_studies(cls):
+        """ Return all studies currently stored in the database. """
+        return StudyDoc.objects()
+
+    @classmethod
+    def get_study(cls, access_code):
+        """ Return all studies currently stored in the database. """
+        return StudyDoc.objects(access_code=access_code).first()
+
+    @classmethod
+    def get_all_analyses_from_study(cls, access_code):
+        """ Return all studies currently stored in the database. """
+        return AnalysisDoc.objects(study_code=access_code)
+
+    @classmethod
+    def get_study_analysis(cls, access_code):
+        """ Return all studies currently stored in the database. """
+        return AnalysisDoc.objects(analysis_code=access_code).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
-        mdata = MetaData.objects(access_code=access_code, owner=self.owner).first()
+        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
         empty_files = []
         for key in mdata.files.keys():
             if not os.path.exists(mdata.files[key]):
@@ -445,15 +507,17 @@ class Database:
                 del mdata.files[key]
         return empty_files
 
-    def clear_mongo_data(self, username):
+    @classmethod
+    def clear_mongo_data(cls, username):
         """ Clear all metadata documents associated with the provided username. """
-        data = MetaData.objects(owner=username)
-        for doc in data:
+        data = list(StudyDoc.objects(owner=username))
+        data2 = list(AnalysisDoc.objects(owner=username))
+        for doc in data + data2:
             doc.delete()
 
     def clean(self):
         """ Remove all temporary and intermediate files. """
-        docs = MetaData.objects().first()
+        docs = StudyDoc.objects().first()
         if docs is None:
             return
         for mdata in docs:
@@ -464,6 +528,18 @@ class Database:
                             os.remove(mdata.files[key])
                         elif os.path.exists(mdata.files[key]):
                             shutil.rmtree(mdata.files[key])
+
+    @classmethod
+    def get_mongo_docs(cls, access_code):
+        """ For admin use """
+        return (StudyDoc.objects(access_code=access_code),
+                AnalysisDoc.objects(analysis_code=access_code))
+
+    @classmethod
+    def get_doc(cls, doc_type, access_code):
+        """ For server use """
+        if doc_type == 'analysis':
+            return AnalysisDoc.objects(analysis_code=access_code)
 
 
 class SQLBuilder:
@@ -634,7 +710,7 @@ class SQLBuilder:
 
 
 class MetaDataUploader:
-    def __init__(self, metadata, path, owner, study_type, reads_type, testing=False):
+    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -654,10 +730,8 @@ class MetaDataUploader:
         self.study_type = study_type
         self.reads_type = reads_type
         self.metadata = metadata
-
-        # Read in the metadata file to import
-        df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
-        self.df = df.reindex_axis(df.columns, axis=1)
+        self.study_name = study_name
+        self.temporary = temporary
 
         # If testing connect to test server
         if testing:
@@ -686,7 +760,11 @@ class MetaDataUploader:
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
 
-        self.builder = SQLBuilder(self.df, self.db, owner)
+        if not temporary:
+            # Read in the metadata file to import
+            df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
+            self.df = df.reindex_axis(df.columns, axis=1)
+            self.builder = SQLBuilder(self.df, self.db, owner)
 
         # If the owner is None set user_id to 0
         if owner is None:
@@ -724,49 +802,48 @@ class MetaDataUploader:
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
-        log('In read_in_sheet')
         access_code = None
 
         if not self.path.is_dir():
             self.path.mkdir()
 
-        # Get the study name from the metadata
-        study_name = self.df['Study']['StudyName'][0]
+        # Import the files into the mongo database
+        access_code = self.mongo_import(**kwargs)
 
-        # Sort the available tables based on TABLE_ORDER
-        columns = self.df.columns.levels[0].tolist()
-        column_order = [TABLE_ORDER.index(col) for col in columns]
-        tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
+        # If the metadata file is not temporary perform the import into the SQL database
+        if not self.temporary:
+            # Sort the available tables based on TABLE_ORDER
+            columns = self.df.columns.levels[0].tolist()
+            column_order = [TABLE_ORDER.index(col) for col in columns]
+            tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
 
-        # Create file and import data for each regular table
-        for table in tables:
-            # Upload the additional meta data to the NoSQL database
-            if table == 'AdditionalMetaData':
-                access_code = self.mongo_import(study_name, **kwargs)
-            else:
-                self.create_import_data(table)
-                filename = self.create_import_file(table)
+            # Create file and import data for each regular table
+            for table in tables:
+                # Upload the additional meta data to the NoSQL database
+                if not table == 'AdditionalMetaData':
+                    self.create_import_data(table)
+                    filename = self.create_import_file(table)
 
-                if isinstance(filename, WindowsPath):
-                    filename = str(filename).replace('\\', '\\\\')
-                # Load the newly created file into the database
-                sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
-                                table=table)
-                sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                cursor = self.db.cursor()
-                cursor.execute(sql, {'file': str(filename), 'table': table})
-                cursor.close()
-                # Commit the inserted data
-                self.db.commit()
+                    if isinstance(filename, WindowsPath):
+                        filename = str(filename).replace('\\', '\\\\')
+                    # Load the newly created file into the database
+                    sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
+                                    table=table)
+                    sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
+                    cursor = self.db.cursor()
+                    cursor.execute(sql, {'file': str(filename), 'table': table})
+                    cursor.close()
+                    # Commit the inserted data
+                    self.db.commit()
 
-        # Create csv files and import them for
-        # each junction table
-        self.fill_junction_tables()
+            # Create csv files and import them for
+            # each junction table
+            self.fill_junction_tables()
 
-        # Remove all row information from the current input
-        self.IDs.clear()
+            # Remove all row information from the current input
+            self.IDs.clear()
 
-        return access_code, study_name, self.email
+        return access_code, self.email
 
     def create_import_data(self, table, verbose=True):
         """
@@ -791,8 +868,8 @@ class MetaDataUploader:
         # Go through each row
         for row in range(len(self.df.index)):
             sql, args = self.builder.build_sql(table, row)
-            log(sql)
-            log(args)
+            sql_log(sql)
+            sql_log(args)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
             # Create the entry
@@ -925,7 +1002,7 @@ class MetaDataUploader:
                 e.args[1] += '\t{}\n'.format(str(filename))
                 raise e
 
-    def mongo_import(self, study_name, **kwargs):
+    def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
         # For testing purposes
@@ -935,11 +1012,12 @@ class MetaDataUploader:
             access_code = get_salt(50)
 
         # Create the document
-        mdata = MetaData(created=datetime.utcnow(),
+        mdata = StudyDoc(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
+                         testing=self.testing,
                          study_type=self.study_type,
                          reads_type=self.reads_type,
-                         study=study_name,
+                         study=self.study_name,
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
