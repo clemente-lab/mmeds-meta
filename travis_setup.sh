@@ -3,6 +3,8 @@ echo "In $(pwd)"
 export REPO_DIR=$(pwd)
 echo "Running setup from ${REPO_DIR}"
 
+full_install=false
+
 # Install libtidy because package is super old
 git clone https://github.com/htacg/tidy-html5;
 cd tidy-html5/build/cmake;
@@ -16,7 +18,7 @@ echo 'Make .modules';
 if [ ! ~/.modules ]; then
     mkdir ~/.modules;
 fi
-if [ ! ~/.modules ]; then
+if [ ! ~/.modules/modulefiles ]; then
     mkdir ~/.modules/modulefiles;
 fi
 sudo chown -R travis:travis ~/.modules

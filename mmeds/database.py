@@ -529,7 +529,8 @@ class Database:
                         elif os.path.exists(mdata.files[key]):
                             shutil.rmtree(mdata.files[key])
 
-    def get_mongo_docs(self, access_code):
+    @classmethod
+    def get_mongo_docs(cls, access_code):
         """ For admin use """
         return (StudyDoc.objects(access_code=access_code),
                 AnalysisDoc.objects(analysis_code=access_code))

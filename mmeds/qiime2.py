@@ -127,7 +127,7 @@ class Qiime2(Tool):
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.doc.analysis_type.split('-')[1], '.qzv'))
+        self.add_path('stats_{}_visual'.format(self.doc.analysis_type.split('-')[1]), '.qzv')
         viz_file = 'stats_{}_visual'.format(self.doc.analysis_type.split('-')[1])
         cmd = [
             'qiime metadata tabulate',
