@@ -109,7 +109,7 @@ class Validator:
     def check_NA(self, column):
         """ Checks for any NA values in the provided column """
         err = '{row}\t{col}\tNA Value Error: No NAs allowed in column {col}'
-        for i, value in column:
+        for i, value in enumerate(column):
             if value == 'NA':
                 self.errors.append(err.format(row=i, col=self.col_index))
 
