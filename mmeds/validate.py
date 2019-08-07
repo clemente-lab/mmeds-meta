@@ -15,7 +15,7 @@ HIPAA_HEADERS = ['social_security', 'social_security_number', 'address', 'phone'
 
 DNA = set('GATC')
 
-ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, dot, hyphen, has to start with alpha
+ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to start with alpha
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
@@ -105,6 +105,13 @@ class Validator:
                 if (ICD_codes.get(parts[0]) is None or ICD_codes.get(parts[0]).get(parts[1]) is None):
                     err = '{}\t{}\tICD Code Error: Invalid ICD code {} in row {}'
                     self.errors.append(err.format(i, self.col_index, cell, i))
+
+    def check_NA(self, column):
+        """ Checks for any NA values in the provided column """
+        err = '{row}\t{col}\tNA Value Error: No NAs allowed in column {col}'
+        for i, value in enumerate(column):
+            if value == 'NA':
+                self.errors.append(err.format(row=i, col=self.col_index))
 
     def check_duplicates(self, column):
         """ Checks for any duplicate entries in the provided column """
@@ -230,14 +237,17 @@ class Validator:
                 self.check_duplicates(col)
                 self.check_lengths(col)
                 self.check_barcode_chars(col)
+                self.check_NA(col)
             elif self.cur_col == 'RawDataID':
                 self.check_duplicates(col)
+                self.check_NA(col)
             elif self.cur_col == 'LinkerPrimerSequence':
                 self.check_lengths(col)
         elif self.cur_table == 'ICDCode':
             self.check_ICD_codes(col)
         elif self.cur_col == 'HostSubjectId':
             self.check_duplicates(col)
+            self.check_NA(col)
 
     def check_table(self):
         """
