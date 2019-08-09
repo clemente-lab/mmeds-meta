@@ -33,6 +33,8 @@ class AnalysisTests(TestCase):
             self.code = spawn.handle_data_upload(Path(metadata),
                                                  fig.TEST_USER,
                                                  'single_end',
+                                                 'Qiime1-Test-Analysis',
+                                                 False,
                                                  self.testing,
                                                  ('for_reads', Path(fig.TEST_METADATA), reads),
                                                  ('barcodes', Path(fig.TEST_BARCODES), barcodes))

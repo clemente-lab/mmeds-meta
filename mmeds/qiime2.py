@@ -18,7 +18,7 @@ class Qiime2(Tool):
                  analysis=True, restart_stage=0, kill_stage=-1):
         super().__init__(owner, access_code, atype, config, testing,
                          analysis=analysis, restart_stage=restart_stage)
-        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'.format(DATABASE_DIR.parent)
+        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
         self.module = load
