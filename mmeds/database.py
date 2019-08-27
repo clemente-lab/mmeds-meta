@@ -15,7 +15,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
-from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log
+from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log, log
 from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
@@ -440,7 +440,11 @@ class Database:
         """ Checks if the current user has uploaded a study with the same name. """
 
         sql = 'SELECT * FROM Study WHERE user_id = %(id)s and Study.StudyName = %(study)s'
+        log('Checking on user study')
+        log('id: {}, studyName: {}'.format(self.user_id, study_name))
+        log(sql)
         found = self.cursor.execute(sql, {'id': self.user_id, 'study': study_name})
+        log(found)
 
         # Ensure multiple studies aren't uploaded with the same name
         if found >= 1 and not self.testing:

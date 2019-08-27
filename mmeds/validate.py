@@ -37,7 +37,6 @@ class Validator:
         log('init validator')
         self.errors = []
         self.warnings = []
-        self.study_name = 'NA'
         self.subjects = []
         self.file_fp = file_fp
         self.sep = sep
@@ -401,4 +400,4 @@ class Validator:
                 self.errors.append('Missing Table Error: Metadata must include the subjects table')
         except InvalidMetaDataFileError as e:
                 self.errors.append(e.message)
-        return self.errors, self.warnings, self.study_name, self.subjects
+        return self.errors, self.warnings, self.subjects

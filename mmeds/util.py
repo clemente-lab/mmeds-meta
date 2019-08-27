@@ -25,8 +25,10 @@ def load_metadata_template():
 
 
 def camel_case(value):
-    return ''.join([x.capitalize() for x in
+    result = ''.join([x.capitalize() for x in
                     str(value).replace('.', ' ').replace('_', ' ').replace('-', ' ').split(' ')])
+    print('Got: {}, Return: {}'.format(value, result))
+    return result
 
 
 def write_metadata(df, output_path):
@@ -37,25 +39,32 @@ def write_metadata(df, output_path):
         mmeds_meta = df
     template = load_metadata_template()
 
-    # Write the constructed metadata to a file
+    # Add NAs for columns not included in the dict/DF
+    for col in template.columns:
+        if mmeds_meta.get(col) is None:
+            mmeds_meta[col] = ['NA' for count in range(len(mmeds_meta[('RawData', 'RawDataID')]))]
+            print(len(mmeds_meta[col]))
+
+    # Create the header lines
     lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
              '\t'.join([key[1] for key in mmeds_meta.keys()])]
 
+    # Add the additional column info
     additional_headers = ['Optional', 'Text', 'No Limit']
     for i in range(len(template)):
         header_line = []
         # Build the header info
         for table, column in mmeds_meta.keys():
-            if not table == 'AdditionalMetaData':
-                header_line.append(template[table][column].iloc[i])
-            else:
+            if table == 'AdditionalMetaData':
                 header_line.append(additional_headers[i])
+            else:
+                header_line.append(template[table][column].iloc[i])
         lines.append('\t'.join(header_line))
 
     for row in range(len(df)):
         new_line = []
         for key, item in mmeds_meta.items():
-            new_line.append(str(item[row]).replace('\t', ''))
+            new_line.append(str(item[row]).replace('\t', '').strip())
         new_new = '\t'.join(new_line)
         # Remove all non-ASCII characters using regular expressions
         lines.append(sub(r'[^\x00-\x7f]', r'', new_new))

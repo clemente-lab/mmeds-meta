@@ -9,7 +9,8 @@ mapping = {
     'gender.factor': ('Subjects', 'Sex'),
     'curr_height': ('Heights', 'Height'),
     'curr_weight': ('Weights', 'Weight'),
-    'race.factor': ('Ethnicity', 'Ethnicity')
+    'race.factor': ('Ethnicity', 'Ethnicity'),
+    'Samples': ('RawData', 'RawDataID')
 
 }
 
@@ -36,12 +37,28 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               type=click.Path(exists=False),
               help='Path to write mmeds metadata file to')
 def convert(input_file, output_file):
+
+    mmeds = defaultdict(list)
+
     if 'xlsx' in input_file:
         idf = pd.read_excel(input_file)
     else:
         idf = pd.read_csv(input_file, sep='\t')
 
-    mmeds = defaultdict(list)
+    fdf = pd.read_csv('inF.TXT', sep=' ')
+    rdf = pd.read_csv('inR.TXT', sep=' ')
+
+    fdf.set_index('index', inplace=True)
+    rdf.set_index('index', inplace=True)
+
+    # Get the values for LinkerPrimer and BarcodeSequence
+    for i in range(len(idf)):
+        fcode = idf['brian.Fcode'].iloc[i]
+        rcode = idf['brian.Rcode'].iloc[i]
+        mmeds[('RawData', 'BarcodeSequence')].append(fdf.loc[fcode].barcode + rdf.loc[rcode].barcode)
+        mmeds[('RawData', 'LinkerPrimerSequence')].append(fdf.loc[fcode].Sequence + rdf.loc[rcode].Sequence)
+
+    # Add all mapped columns to the dictionary
     for col in idf.columns:
         try:
             mmeds_col = mapping[col]
@@ -62,6 +79,8 @@ def convert(input_file, output_file):
                     mmeds[mmeds_col].append(ratio * num)
         else:
             mmeds[mmeds_col] = idf[col].tolist()
+    print('KEYESSSS')
+    print(mmeds.keys())
 
     write_metadata(mmeds, output_file)
 
