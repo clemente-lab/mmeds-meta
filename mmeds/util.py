@@ -26,11 +26,15 @@ def load_metadata_template():
 
 def camel_case(value):
     return ''.join([x.capitalize() for x in
-                    str(value).replace('_', ' ').replace('-', ' ').split(' ')])
+                    str(value).replace('.', ' ').replace('_', ' ').replace('-', ' ').split(' ')])
 
 
 def write_metadata(df, output_path):
-    mmeds_meta = df.to_dict('list')
+    """ Write a dataframe or dictionary to a mmeds format metadata file. """
+    if isinstance(df, pd.DataFrame):
+        mmeds_meta = df.to_dict('list')
+    else:
+        mmeds_meta = df
     template = load_metadata_template()
 
     # Write the constructed metadata to a file
