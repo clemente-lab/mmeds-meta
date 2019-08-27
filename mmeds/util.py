@@ -13,6 +13,7 @@ from email.message import EmailMessage
 from email import message_from_bytes
 from tempfile import gettempdir
 from time import sleep
+from re import sub
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -46,8 +47,14 @@ def write_metadata(df, output_path):
             else:
                 header_line.append(additional_headers[i])
         lines.append('\t'.join(header_line))
-    lines += ['\t'.join([str(item[row]) for key, item in mmeds_meta.items()])
-              for row in range(len(df))]
+
+    for row in range(len(df)):
+        new_line = []
+        for key, item in mmeds_meta.items():
+            new_line.append(str(item[row]).replace('\t', ''))
+        new_new = '\t'.join(new_line)
+        # Remove all non-ASCII characters using regular expressions
+        lines.append(sub(r'[^\x00-\x7f]', r'', new_new))
     Path(output_path).write_text('\n'.join(lines) + '\n')
 
 
@@ -873,11 +880,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
     di = headers.index('RawDataID')
     hold = headers[0]
     headers[0] = '#SampleID'
-    headers[di] = hold
-
-    di = headers.index('SampleID')
-    hold = headers[3]
-    headers[3] = 'MmedsSampleID'
     headers[di] = hold
 
     hold = headers[1]

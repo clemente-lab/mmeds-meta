@@ -11,11 +11,14 @@ from mmeds.tool import Tool
 class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
+    # The default classifier for Q2 analysis
+    classifier = STORAGE_DIR / 'gg-13-8-99-nb-classifier.qza'
+
     def __init__(self, owner, access_code, atype, config, testing,
                  analysis=True, restart_stage=0, kill_stage=-1):
         super().__init__(owner, access_code, atype, config, testing,
                          analysis=analysis, restart_stage=restart_stage)
-        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.1;'.format(DATABASE_DIR.parent)
+        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
         self.module = load
@@ -323,14 +326,14 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def classify_taxa(self, classifier):
+    def classify_taxa(self):
         """
         Create plots for alpha rarefaction.
         """
         self.add_path('taxonomy', '.qza')
         cmd = [
             'qiime feature-classifier classify-sklearn',
-            '--i-classifier {}'.format(classifier),
+            '--i-classifier {}'.format(self.classifier),
             '--i-reads {}'.format(self.get_file('rep_seqs_table')),
             '--o-classification {}'.format(self.get_file('taxonomy')),
             '--p-n-jobs {}'.format(self.num_jobs)
@@ -483,8 +486,7 @@ class Qiime2(Tool):
     def setup_stage_4(self):
         self.set_stage(4)
         self.jobtext.append('echo "MMEDS_STAGE_4"')
-        self.classify_taxa(STORAGE_DIR / 'classifier.qza')
-        self.taxa_diversity()
+        self.classify_taxa()
         # Calculate group significance
         for col in self.doc.config['metadata']:
             self.group_significance(col)
