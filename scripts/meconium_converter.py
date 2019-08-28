@@ -10,7 +10,8 @@ mapping = {
     'curr_height': ('Heights', 'Height'),
     'curr_weight': ('Weights', 'Weight'),
     'race.factor': ('Ethnicity', 'Ethnicity'),
-    'Samples': ('RawData', 'RawDataID')
+    'Samples': ('RawData', 'RawDataID'),
+    'description': ('AdditionalMetaData', 'MeconiumDescription')
 
 }
 
