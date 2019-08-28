@@ -25,10 +25,9 @@ def load_metadata_template():
 
 
 def camel_case(value):
-    result = ''.join([x.capitalize() for x in
+    """ Converts VALUE to camel case, replacing '_', '-', '.', ' ', with the capitalization. """
+    return ''.join([x.capitalize() for x in
                     str(value).replace('.', ' ').replace('_', ' ').replace('-', ' ').split(' ')])
-    print('Got: {}, Return: {}'.format(value, result))
-    return result
 
 
 def write_metadata(df, output_path):
