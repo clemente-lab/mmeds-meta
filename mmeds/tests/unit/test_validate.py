@@ -1,11 +1,7 @@
 import mmeds.validate as valid
 import mmeds.config as fig
-from glob import glob
 from pathlib import Path
 from mmeds.util import log
-
-error_files = glob(str(fig.TEST_PATH / 'validation_files/validate_error*'))
-warning_files = glob(str(fig.TEST_PATH / 'validation_files/validate_warning*'))
 
 
 def test_validate_mapping_files():
@@ -15,10 +11,11 @@ def test_validate_mapping_files():
 
 
 def test_error_files():
+    error_files = fig.TEST_PATH.glob('validation_files/validate_error*')
     for test_file in error_files:
         name = Path(test_file).name
         error = ' '.join(name.split('.')[0].split('_')[2:])
-        log('Testing Error file {}'.format(name))
+        print('Testing Error file {}'.format(name))
         errors, warnings, subjects = valid.validate_mapping_file(test_file)
 
         log(errors[0])
@@ -33,6 +30,7 @@ def test_error_files():
 
 
 def test_warning_files():
+    warning_files = fig.TEST_PATH.glob('validation_files/validate_warning*')
     for test_file in warning_files:
         name = Path(test_file).name
         warning = ' '.join(name.split('.')[0].split('_')[2:])

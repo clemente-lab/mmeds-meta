@@ -330,7 +330,7 @@ class Validator:
                                          sep=self.sep,
                                          header=[0, 1],
                                          nrows=3)
-        except pd.errors.ParserError:
+        except (pd.errors.ParserError, UnicodeDecodeError):
             raise InvalidMetaDataFileError('-1\t-1\tThere is an issue parsing your metadata. Please check that it is' +
                                            ' in tab delimited format with no tab or newline characters in any of the' +
                                            ' cells')

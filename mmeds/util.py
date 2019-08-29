@@ -31,7 +31,12 @@ def camel_case(value):
 
 
 def write_metadata(df, output_path):
-    """ Write a dataframe or dictionary to a mmeds format metadata file. """
+    """
+    Write a dataframe or dictionary to a mmeds format metadata file.
+    ================================================================
+    :df: A pandas dataframe or python dictionary formatted like mmeds metadata
+    :output_path: The path to write the metadata to
+    """
     if isinstance(df, pd.DataFrame):
         mmeds_meta = df.to_dict('list')
     else:
@@ -58,15 +63,16 @@ def write_metadata(df, output_path):
                 header_line.append(additional_headers[i])
             else:
                 header_line.append(template[table][column].iloc[i])
+
         lines.append('\t'.join(header_line))
 
     for row in range(len(df)):
         new_line = []
         for key, item in mmeds_meta.items():
             new_line.append(str(item[row]).replace('\t', '').strip())
-        new_new = '\t'.join(new_line)
         # Remove all non-ASCII characters using regular expressions
-        lines.append(sub(r'[^\x00-\x7f]', r'', new_new))
+        cleaned_line = sub(r'[^\x00-\x7f]', r'', '\t'.join(new_line))
+        lines.append(cleaned_line)
     Path(output_path).write_text('\n'.join(lines) + '\n')
 
 
