@@ -372,4 +372,3 @@ class TestServer(helper.CPWebCase):
         print(metadata_path)
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
         self.assertStatus('200 OK')
-

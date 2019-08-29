@@ -32,6 +32,21 @@ def write_test_metadata(df, output_path):
 
 
 def write_error_files():
+    # Many Errors/Warnings
+    many_error = df.copy(deep=True)
+    for i in range(10):
+        val = randrange(5, len(many_error))
+        many_error.loc[val]['RawDataProtocol']['RawDataDatePerformed'] = 'Not A Date'
+
+    many_error = df.copy(deep=True)
+    many_error.drop(('Subjects', 'HostSubjectId'), axis=1, inplace=True)
+
+    # Missing a table
+    many_error = df.copy(deep=True)
+    many_error.drop('Subjects', axis=1, inplace=True)
+
+    write_test_metadata(many_error, '{}/test_metadata_error.tsv'.format(file_path))
+
     # Parser issue
     issue_parsing = df.copy(deep=True)
     for i, val in enumerate(['\t', '\n', '\r']):
