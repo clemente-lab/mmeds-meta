@@ -406,7 +406,7 @@ class Database:
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
-        if len(df) > 0:
+        if df:
             # Go through each row
             for j in range(len(df.index)):
                 sql = """SELECT * FROM Subjects WHERE"""
