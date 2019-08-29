@@ -895,8 +895,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
 
     headers = list(mdata.columns)
 
-    di = headers.index('RawDataID')
     hold = headers[0]
+    di = headers.index('RawDataID')
     headers[0] = '#SampleID'
     headers[di] = hold
 
@@ -911,7 +911,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
     headers[di] = hold
 
     hold = headers[-1]
-    di = headers.index('Description')
+    di = headers.index('RawDataDescription')
     headers[-1] = 'Description'
     headers[di] = hold
 
@@ -926,6 +926,8 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
                     row.append(str(mdata['RawDataID'][row_index]))
                 elif header == 'MmedsSampleID':
                     row.append(str(mdata['SampleID'][row_index]))
+                elif header == 'Description':
+                    row.append(str(mdata['RawDataDescription'][row_index]))
                 else:
                     row.append(str(mdata[header][row_index]))
             f.write('\t'.join(row) + '\n')
