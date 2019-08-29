@@ -406,34 +406,35 @@ class Database:
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
-        # Go through each row
-        for j in range(len(df.index)):
-            sql = """SELECT * FROM Subjects WHERE"""
-            args = {}
-            # Check if there is an entry already in the database that matches every column
-            for i, column in enumerate(df):
-                value = df[column][j]
-                if pd.isnull(value):  # Use NULL for NA values
-                    value = '\\N'
-                if i == 0:
-                    sql += ' '
-                else:
-                    sql += ' AND '
-                # Add quotes around string values
-                sql += quote_sql(('{column} = %({column})s'), column=column)
-                result = pyformat_translate(value)
-                args['`{}`'.format(column)] = result
-            sql += ' AND user_id = %(id)s'
-            args['id'] = self.user_id
-            try:
-                found = self.cursor.execute(sql, args)
-            except pms.err.InternalError as e:
-                raise MetaDataError(e.args[1])
-            if found >= 1:
-                sql_log(sql)
-                sql_log(args)
-                warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
-                warnings.append(warning.format(row=j, col=subject_col))
+        if len(df) > 0:
+            # Go through each row
+            for j in range(len(df.index)):
+                sql = """SELECT * FROM Subjects WHERE"""
+                args = {}
+                # Check if there is an entry already in the database that matches every column
+                for i, column in enumerate(df):
+                    value = df[column][j]
+                    if pd.isnull(value):  # Use NULL for NA values
+                        value = '\\N'
+                    if i == 0:
+                        sql += ' '
+                    else:
+                        sql += ' AND '
+                    # Add quotes around string values
+                    sql += quote_sql(('{column} = %({column})s'), column=column)
+                    result = pyformat_translate(value)
+                    args['`{}`'.format(column)] = result
+                sql += ' AND user_id = %(id)s'
+                args['id'] = self.user_id
+                try:
+                    found = self.cursor.execute(sql, args)
+                except pms.err.InternalError as e:
+                    raise MetaDataError(e.args[1])
+                if found >= 1:
+                    sql_log(sql)
+                    sql_log(args)
+                    warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
+                    warnings.append(warning.format(row=j, col=subject_col))
         return warnings
 
     def check_user_study_name(self, study_name):

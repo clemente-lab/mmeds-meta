@@ -229,6 +229,12 @@ def write_error_files():
 
 
 def write_warning_files():
+    # Multiple Warnings
+    test_warning = df.copy(deep=True)
+    test_warning.iloc[10]['Subjects']['BirthYear'] = '9'
+    test_warning.iloc[10]['ResultsProtocols']['ResultsMethod'] = 'Protocol90'
+    write_test_metadata(test_warning, '{}/test_metadata_warn.tsv'.format(file_path))
+
     # stddev_warning
     stddev_warning = df.copy(deep=True)
     stddev_warning.iloc[10]['Subjects']['BirthYear'] = '9'
@@ -238,6 +244,14 @@ def write_warning_files():
     categorical_data = df.copy(deep=True)
     categorical_data.iloc[10]['ResultsProtocols']['ResultsMethod'] = 'Protocol90'
     write_test_metadata(categorical_data, '{}/validate_warning_categorical_data.tsv'.format(file_path))
+
+
+def write_alternate_files():
+    test_alt = df.copy(deep=True)
+    for val in range(len(test_alt)):
+        test_alt.loc[val]['Subjects']['Nationality'] = test_alt.loc[val]['Subjects']['Nationality'] + '_alt'
+        test_alt.loc[val]['RawData']['RawDataID'] = test_alt.loc[val]['RawData']['RawDataID'] + '_alt'
+    write_test_metadata(test_alt, '{}/test_metadata_alt.tsv'.format(file_path))
 
 
 if __name__ == '__main__':
@@ -251,3 +265,4 @@ if __name__ == '__main__':
 
     write_error_files()
     write_warning_files()
+    write_alternate_files()
