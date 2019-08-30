@@ -156,7 +156,6 @@ class MetaDataUploaderTests(TestCase):
                 db0.execute('Select * from users;')
             # Check that the row level security works
             for table in fig.PROTECTED_TABLES:
-                print(table)
                 # Get the columns from the view
                 results, header = db0.execute('SELECT * FROM {}'.format(table))
                 for result in results[1:]:
