@@ -25,7 +25,7 @@ def write_test_metadata(df, output_path):
 
     for row in range(len(df)):
         new_line = []
-        for key, item in mmeds_meta.items():
+        for item in mmeds_meta.values():
             new_line.append(str(item[row]))
         lines.append('\t'.join(new_line))
     Path(output_path).write_text('\n'.join(lines) + '\n')
