@@ -14,7 +14,7 @@ from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
-from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
+from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError, InvalidSQLError
 from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log, log
 from mmeds.documents import StudyDoc, AnalysisDoc
 
@@ -197,6 +197,7 @@ class Database:
 
     def execute(self, sql):
         """ Execute the provided sql code """
+        header = None
         # If the user is not an admin automatically map tables in the query
         # to their protected views
         if not self.user == 'root':
@@ -205,7 +206,6 @@ class Database:
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
-            header = None
             if 'from' in sql.casefold():
                 parsed = sql.split(' ')
                 index = list(map(lambda x: x.casefold(), parsed)).index('from')
@@ -221,6 +221,7 @@ class Database:
             cp.log('Error executing SQL command: ' + sql)
             cp.log(str(e))
             data = str(e)
+            raise InvalidSQLError(e.args[1])
         return data, header
 
     def purge(self):
@@ -385,11 +386,13 @@ class Database:
         # Insert the user with the updated password
         sql = 'INSERT INTO user (user_id, username, password, salt, email) VALUES\
             (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
-        self.cursor.execute(sql, {'id': result[0],
-                                  'uname': result[1],
-                                  'pass': new_password,
-                                  'salt': new_salt,
-                                  'email': result[4]})
+        self.cursor.execute(sql, {
+            'id': result[0],
+            'uname': result[1],
+            'pass': new_password,
+            'salt': new_salt,
+            'email': result[4]
+        })
         self.db.commit()
         return True
 

@@ -623,24 +623,28 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def execute_query(self, query):
         """ Execute the provided query and format the results as an html table """
-        # Set the session to use the current user
-        with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
-            data, header = db.execute(query)
-            html_data = db.format_html(data, header)
-            page = self.format_html('blank')
+        page = self.format_html('analysis_query')
+        try:
+            # Set the session to use the current user
+            with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
+                data, header = db.execute(query)
+                html_data = db.format_html(data, header)
 
-        query_file = self.get_dir() / 'query.tsv'
-        if header is not None:
-            data = [header] + list(data)
-        with open(query_file, 'w') as f:
-            f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
-        cp.session['download_files']['query'] = query_file
+            # Create a file with the results of the query
+            query_file = self.get_dir() / 'query.tsv'
+            if header is not None:
+                data = [header] + list(data)
+            with open(query_file, 'w') as f:
+                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
+            cp.session['download_files']['query'] = query_file
 
-        html = '<form action="../download/download_file" method="post">\n\
-                <button type="submit" name="file_name" value="query">Download Results</button>\n\
-                </form>'
-        page = insert_html(page, 22, html)
-        page = insert_error(page, 22, html_data)
+            # Add the download button
+            html = '<form action="../download/download_file" method="post">\n\
+                    <button type="submit" name="file_name" value="query">Download Results</button>\n\
+                    </form>'
+            page = insert_html(page, 29, html_data + html)
+        except (err.InvalidSQLError, err.TableAccessError) as e:
+            page = insert_error(page, 29, e.message)
         return page
 
 
