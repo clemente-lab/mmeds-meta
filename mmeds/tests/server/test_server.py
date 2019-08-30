@@ -380,13 +380,19 @@ class TestServer(helper.CPWebCase):
     ###############
 
     def execute_invalid_query(self):
-        assert False
+        self.getPage("/analysis/query", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/analysis/execute_query?query={}".format('**/a\\\\sdf;laskdf;;', headers=self.cookies))
+        self.assertStatus('200 OK')
 
     def execute_protected_query(self):
-        assert False
+        self.getPage("/analysis/query", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/analysis/execute_query?query={}".format('Describe Subjects;', headers=self.cookies))
+        self.assertStatus('200 OK')
 
     def execute_query(self):
         self.getPage("/analysis/query", headers=self.cookies)
         self.assertStatus('200 OK')
-        self.getPage("/analysis/execute_query?query={}".format('Describe protected_Subjects;', headers=self.cookies))
+        self.getPage("/analysis/execute_query?query={}".format('Select * from Subjects;', headers=self.cookies))
         self.assertStatus('200 OK')
