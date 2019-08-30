@@ -21,7 +21,7 @@ conversions = {
     'curr_weight': 0.4536
 }
 __author__ = "David Wallach"
-__copyright__ = "Copyright 2018, The Clemente Lab"
+__copyright__ = "Copyright 2019, The Clemente Lab"
 __credits__ = ["David Wallach", "Jose Clemente"]
 __license__ = "GPL"
 __maintainer__ = "David Wallach"

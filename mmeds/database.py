@@ -406,7 +406,11 @@ class Database:
     def check_repeated_subjects(self, df, subject_col=-2):
         """ Checks for users that match those already in the database. """
         warnings = []
-        if df:
+        # If there is no subjects table in the metadata this
+        # dataframe will be empty. If there are no subjects there
+        # can't be any repeated subjects so it will just return the
+        # empty list
+        if not df.empty:
             # Go through each row
             for j in range(len(df.index)):
                 sql = """SELECT * FROM Subjects WHERE"""
