@@ -151,14 +151,14 @@ class MetaDataUploaderTests(TestCase):
         from previous test cases.
         """
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
-            protected_tables = ['protected_' + x for x in fig.PROTECTED_TABLES]
-            for table, ptable in zip(fig.PROTECTED_TABLES, protected_tables):
-                # Confirm that trying to access the unprotected table
-                # raises the appropriate error
-                with pytest.raises(TableAccessError):
-                    db0.execute('SELECT * FROM {}'.format(table))
+            # Confirm that trying to access admin tables raises an error
+            with pytest.raises(TableAccessError):
+                db0.execute('Select * from users;')
+            # Check that the row level security works
+            for table in fig.PROTECTED_TABLES:
+                print(table)
                 # Get the columns from the view
-                results, header = db0.execute('SELECT * FROM {}'.format(ptable))
+                results, header = db0.execute('SELECT * FROM {}'.format(table))
                 for result in results[1:]:
                     for i, col in enumerate(header):
                         if 'id' not in col:

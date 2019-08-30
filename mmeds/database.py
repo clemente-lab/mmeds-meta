@@ -202,7 +202,7 @@ class Database:
         # to their protected views
         if not self.user == 'root':
             for table in fig.PROTECTED_TABLES:
-                sql = sql.replace(table, 'protected_' + table)
+                sql = sql.replace(' ' + table + ' ', ' protected_' + table + ' ')
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
@@ -213,12 +213,14 @@ class Database:
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
         except pms.err.OperationalError as e:
+            cp.log('OperationalError')
+            cp.log(str(e))
             # If it's a select command denied error
             if e.args[0] == 1142:
                 raise TableAccessError(e.args[1])
             raise e
         except pms.err.ProgrammingError as e:
-            cp.log('Error executing SQL command: ' + sql)
+            cp.log('ProgrammingError')
             cp.log(str(e))
             data = str(e)
             raise InvalidSQLError(e.args[1])
