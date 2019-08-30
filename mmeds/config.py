@@ -370,7 +370,9 @@ def get_salt(length=10):
 HTML_PAGES = {
     'index': (HTML_DIR / 'index.html', False),
     'welcome': (HTML_DIR / 'welcome.html', True),
+    'blank': (HTML_DIR / 'blank.html', True),
     'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
+    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
     'download_study_files': (HTML_DIR / 'download_study_files.html', True),

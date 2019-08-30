@@ -617,28 +617,27 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def query_page(self):
         """ Skip uploading a file. """
-        page = self.format_html('welcome')
+        page = self.format_html('analysis_query', title='Execute Query')
         return page
 
     @cp.expose
-    def query(self, query):
+    def execute_query(self, query):
         # Set the session to use the current user
-        username = self.get_user()
-        with Database(self.get_dir(), user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
+        with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
             data, header = db.execute(query)
-            html_data = db.format(data, header)
-            page = self.format_html('welcome')
+            html_data = db.format_html(data, header)
+            page = self.format_html('blank')
 
         cp.session['download_files']['query'] = self.get_dir() / 'query.tsv'
 
         html = '<form action="download_query" method="post">\n\
                 <button type="submit">Download Results</button>\n\
                 </form>'
-        page = insert_html(page, 10, html)
-        page = insert_error(page, 10, html_data)
+        page = insert_html(page, 22, html)
+        page = insert_error(page, 22, html_data)
         if header is not None:
             data = [header] + list(data)
-        with open(self.get_dir() / cp.session['query'], 'w') as f:
+        with open(self.get_dir() / query.replace(' ', '_'), 'w') as f:
             f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
         return page
 

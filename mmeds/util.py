@@ -352,7 +352,7 @@ def load_html(file_path, **kwargs):
     with open(fig.HTML_DIR / 'topbar.html') as f:
         topbar = f.read().split('\n')
 
-    new_page = page[:3] + header + topbar + page[3:]
+    new_page = page[:2] + header + topbar + page[2:]
     return '\n'.join(new_page).format(**kwargs)
 
 

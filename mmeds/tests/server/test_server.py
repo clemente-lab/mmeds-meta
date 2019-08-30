@@ -372,6 +372,21 @@ class TestServer(helper.CPWebCase):
         self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
         self.assertStatus('200 OK')
         metadata_path = self.body.decode('utf-8').split('\n')[33].split('"')[1]
-        print(metadata_path)
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    ###############
+    # SQL queries #
+    ###############
+
+    def execute_invalid_query(self):
+        assert False
+
+    def execute_protected_query(self):
+        assert False
+
+    def execute_query(self):
+        self.getPage("/analysis/query", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/analysis/execute_query?query={}".format('Describe protected_Subjects;', headers=self.cookies))
         self.assertStatus('200 OK')

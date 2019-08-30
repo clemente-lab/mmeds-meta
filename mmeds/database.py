@@ -180,7 +180,7 @@ class Database:
         self.db.commit()
         return set_user
 
-    def format(self, text, header=None):
+    def format_html(self, text, header=None):
         """
         Applies PrettyTable HTML formatting to the provided string.
         ===========================================================
@@ -197,6 +197,11 @@ class Database:
 
     def execute(self, sql):
         """ Execute the provided sql code """
+        # If the user is not an admin automatically map tables in the query
+        # to their protected views
+        if not self.user == 'root':
+            for table in fig.PROTECTED_TABLES:
+                sql = sql.replace(table, 'protected_' + table)
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
