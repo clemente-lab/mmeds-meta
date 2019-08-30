@@ -397,7 +397,7 @@ class Validator:
             try:
                 self.subjects = self.df['Subjects']
             except KeyError:
-                pass  # If the subjects table is missing an error will already have been added
+                self.subjects = pd.DataFrame()
         except InvalidMetaDataFileError as e:
                 self.errors.append(e.message)
         return self.errors, self.warnings, self.subjects
