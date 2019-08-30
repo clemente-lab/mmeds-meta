@@ -43,6 +43,7 @@ setup(name='mmeds',
           'pytidylib',
           'ppretty',
           'imapclient',
-          'psutil'
+          'psutil',
+          'xlrd'
       ],
       zip_safe=False)

@@ -101,13 +101,13 @@ class MMEDSbase:
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
 
         # Check the metadata file for errors
-        errors, warnings, study_name, subjects = validate_mapping_file(metadata_copy)
+        errors, warnings, subjects = validate_mapping_file(metadata_copy)
 
         # The database for any issues with previous uploads
         with Database('.', owner=self.get_user(), testing=self.testing) as db:
             try:
                 warnings += db.check_repeated_subjects(subjects)
-                errors += db.check_user_study_name(study_name)
+                errors += db.check_user_study_name(cp.session['study_name'])
             except err.MetaDataError as e:
                 errors.append('-1\t-1\t' + e.message)
         return metadata_copy, errors, warnings

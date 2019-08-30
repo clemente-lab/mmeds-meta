@@ -229,7 +229,6 @@ class TestServer(helper.CPWebCase):
 
     def upload_metadata(self):
 
-        ### A
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
@@ -246,7 +245,7 @@ class TestServer(helper.CPWebCase):
         log('Checked invalid filetype')
 
         # Check a metadata file that errors
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_FAIL], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_ERROR], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
@@ -262,7 +261,11 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html', title='Warnings', user=self.server_user)
-        warning = '31\t3\tStdDev Warning: Value 25.0 outside of two standard deviations of mean in column 3'
+
+        warning = '7\t74\tStdDev Warning: Value 9.0 outside of two standard deviations of mean in column 74'
+        page = insert_warning(page, 22, warning)
+        warning = '-1\t55\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
+            ' may be in error, only 1 found.'
         page = insert_warning(page, 22, warning)
         self.assertBody(page)
         log('Checked metadata that warns')
@@ -372,4 +375,3 @@ class TestServer(helper.CPWebCase):
         print(metadata_path)
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
         self.assertStatus('200 OK')
-
