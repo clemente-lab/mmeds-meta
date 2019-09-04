@@ -154,6 +154,13 @@ class MetaDataUploaderTests(TestCase):
             # Confirm that trying to access admin tables raises an error
             with pytest.raises(TableAccessError):
                 db0.execute('Select * from users;')
+
+            # Test that automatically adding 'protected_' works when joining tables
+            sql = 'SELECT Subjects.HostSubjectId, Heights.Height FROM Subjects ' +\
+                'INNER JOIN Heights ON Subjects.idSubjects=Heights.Subjects_idSubjects'
+            result = db0.execute(sql)
+            print(result)
+
             # Check that the row level security works
             for table in fig.PROTECTED_TABLES:
                 # Get the columns from the view

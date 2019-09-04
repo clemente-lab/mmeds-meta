@@ -202,7 +202,11 @@ class Database:
         # to their protected views
         if not self.user == 'root':
             for table in fig.PROTECTED_TABLES:
-                sql = sql.replace(' ' + table, ' protected_' + table)
+                if table in sql:
+                    sql = sql.replace(' ' + table, ' protected_' + table)
+                    sql = sql.replace(' `' + table, ' `protected_' + table)
+                    sql = sql.replace('=`' + table, '=`protected_' + table)
+                    sql = sql.replace('=' + table, '=protected_' + table)
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
