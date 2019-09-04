@@ -956,8 +956,8 @@ def quote_sql(sql, quote='`', **kwargs):
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, and '_'
         if not item.replace('_', '').replace('`', '').isalnum():
-            raise InvalidSQLError('Illegal characters in identifier {}.' +
-                                  ' Only letters, numbers, "`", and "_" are permitted'.format(item))
+            raise InvalidSQLError('Illegal characters in identifier {}.'.format(item) +
+                                  ' Only letters, numbers, "`", and "_" are permitted')
 
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
