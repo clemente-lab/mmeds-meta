@@ -223,8 +223,7 @@ class Database:
             if e.args[0] == 1142:
                 raise TableAccessError(e.args[1])
             raise e
-        except pms.err.ProgrammingError as e:
-            cp.log('ProgrammingError')
+        except (pms.err.ProgrammingError, pms.err.InternalError) as e:
             cp.log(str(e))
             data = str(e)
             raise InvalidSQLError(e.args[1])

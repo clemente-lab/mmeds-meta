@@ -616,7 +616,7 @@ class MMEDSanalysis(MMEDSbase):
 
     @cp.expose
     def query_page(self):
-        """ Skip uploading a file. """
+        """ Load the page for executing Queries. """
         page = self.format_html('analysis_query', title='Execute Query')
         return page
 
