@@ -352,7 +352,7 @@ def load_html(file_path, **kwargs):
     with open(fig.HTML_DIR / 'topbar.html') as f:
         topbar = f.read().split('\n')
 
-    new_page = page[:3] + header + topbar + page[3:]
+    new_page = page[:2] + header + topbar + page[2:]
     return '\n'.join(new_page).format(**kwargs)
 
 
@@ -944,6 +944,8 @@ def quote_sql(sql, quote='`', **kwargs):
     """
     # There are only two quote characters allowed
     assert (quote == '`' or quote == "'")
+    # Clear any  existing quotes before adding the new ones
+    sql = sql.replace(quote, '')
     quoted_args = {}
     for key, item in kwargs.items():
         # Check the entry is a string
@@ -953,9 +955,9 @@ def quote_sql(sql, quote='`', **kwargs):
         if len(item) > 66:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, and '_'
-        if not item.replace('_', '').isalnum():
-            raise InvalidSQLError('Illegal characters in identifier {}.' +
-                                  ' Only letters, numbers, and "_" are permitted'.format(item))
+        if not item.replace('_', '').replace('`', '').isalnum():
+            raise InvalidSQLError('Illegal characters in identifier {}.'.format(item) +
+                                  ' Only letters, numbers, "`", and "_" are permitted')
 
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)

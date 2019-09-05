@@ -67,6 +67,12 @@ class TestServer(helper.CPWebCase):
         self.convert()
         self.lab_download()
 
+    def test_e_query(self):
+        self.login()
+        self.execute_invalid_query()
+        self.execute_protected_query()
+        self.execute_query()
+
     def test_z_cleanup(self):
         remove_user(self.server_user, testing=self.testing)
         remove_user(self.lab_user, testing=self.testing)
@@ -285,9 +291,6 @@ class TestServer(helper.CPWebCase):
                                           [fig.TEST_READS, '', fig.TEST_BARCODES, 'single_end'],
                                           ['application/gzip', 'application/octet-stream',
                                            'application/gzip', ''])
-        log('TESTING INFO')
-        log(headers)
-        log(body)
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
@@ -372,6 +375,27 @@ class TestServer(helper.CPWebCase):
         self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
         self.assertStatus('200 OK')
         metadata_path = self.body.decode('utf-8').split('\n')[33].split('"')[1]
-        print(metadata_path)
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    ###############
+    # SQL queries #
+    ###############
+
+    def execute_invalid_query(self):
+        self.getPage('/analysis/query_page', headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/analysis/execute_query?query={}'.format('asdf'), self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
+    def execute_protected_query(self):
+        self.getPage('/analysis/query_page', headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/analysis/execute_query?query={}'.format('Describe+Subjects'), self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
+    def execute_query(self):
+        self.getPage('/analysis/query_page', headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/analysis/execute_query?query={}'.format('Select+*+from+Subjects'), self.cookies, 'POST')
         self.assertStatus('200 OK')

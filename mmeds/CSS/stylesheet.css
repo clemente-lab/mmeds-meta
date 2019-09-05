@@ -74,9 +74,9 @@ div.inner {
     text-align: center;
 }
 
-div.inner h3, h4 {
+div.inner h3, h4, table {
     margin: auto;
-    padding: 10px 100px 10px 100px;
+    padding: 10px 210px 10px 210px;
     border: 10px;
     font-size: 100%;
     font: inherit;

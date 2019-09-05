@@ -14,7 +14,7 @@ from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
-from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError
+from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError, InvalidSQLError
 from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log, log
 from mmeds.documents import StudyDoc, AnalysisDoc
 
@@ -180,7 +180,7 @@ class Database:
         self.db.commit()
         return set_user
 
-    def format(self, text, header=None):
+    def format_html(self, text, header=None):
         """
         Applies PrettyTable HTML formatting to the provided string.
         ===========================================================
@@ -197,10 +197,19 @@ class Database:
 
     def execute(self, sql):
         """ Execute the provided sql code """
+        header = None
+        # If the user is not an admin automatically map tables in the query
+        # to their protected views
+        if not self.user == 'root':
+            for table in fig.PROTECTED_TABLES:
+                if table in sql:
+                    sql = sql.replace(' ' + table, ' protected_' + table)
+                    sql = sql.replace(' `' + table, ' `protected_' + table)
+                    sql = sql.replace('=`' + table, '=`protected_' + table)
+                    sql = sql.replace('=' + table, '=protected_' + table)
         try:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
-            header = None
             if 'from' in sql.casefold():
                 parsed = sql.split(' ')
                 index = list(map(lambda x: x.casefold(), parsed)).index('from')
@@ -208,14 +217,16 @@ class Database:
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
         except pms.err.OperationalError as e:
+            cp.log('OperationalError')
+            cp.log(str(e))
             # If it's a select command denied error
             if e.args[0] == 1142:
                 raise TableAccessError(e.args[1])
             raise e
-        except pms.err.ProgrammingError as e:
-            cp.log('Error executing SQL command: ' + sql)
+        except (pms.err.ProgrammingError, pms.err.InternalError) as e:
             cp.log(str(e))
             data = str(e)
+            raise InvalidSQLError(e.args[1])
         return data, header
 
     def purge(self):
@@ -380,11 +391,13 @@ class Database:
         # Insert the user with the updated password
         sql = 'INSERT INTO user (user_id, username, password, salt, email) VALUES\
             (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
-        self.cursor.execute(sql, {'id': result[0],
-                                  'uname': result[1],
-                                  'pass': new_password,
-                                  'salt': new_salt,
-                                  'email': result[4]})
+        self.cursor.execute(sql, {
+            'id': result[0],
+            'uname': result[1],
+            'pass': new_password,
+            'salt': new_salt,
+            'email': result[4]
+        })
         self.db.commit()
         return True
 

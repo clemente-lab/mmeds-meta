@@ -313,8 +313,8 @@ class MMEDSdownload(MMEDSbase):
 
     @cp.expose
     def download_file(self, file_name):
-        return static.serve_file(cp.session['error_file'], 'application/x-download',
-                                 'attachment', os.path.basename(cp.session['download_files'][file_name]))
+        return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
+                                 'attachment', Path(cp.session['download_files'][file_name]).name)
 
 
 @decorate_all_methods(catch_server_errors)
@@ -616,30 +616,35 @@ class MMEDSanalysis(MMEDSbase):
 
     @cp.expose
     def query_page(self):
-        """ Skip uploading a file. """
-        page = self.format_html('welcome')
+        """ Load the page for executing Queries. """
+        page = self.format_html('analysis_query', title='Execute Query')
         return page
 
     @cp.expose
-    def query(self, query):
-        # Set the session to use the current user
-        username = self.get_user()
-        with Database(self.get_dir(), user=sec.SQL_DATABASE_USER, owner=username, testing=self.testing) as db:
-            data, header = db.execute(query)
-            html_data = db.format(data, header)
-            page = self.format_html('welcome')
+    def execute_query(self, query):
+        """ Execute the provided query and format the results as an html table """
+        page = self.format_html('analysis_query')
+        try:
+            # Set the session to use the current user
+            with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
+                data, header = db.execute(query)
+                html_data = db.format_html(data, header)
 
-        cp.session['download_files']['query'] = self.get_dir() / 'query.tsv'
+            # Create a file with the results of the query
+            query_file = self.get_dir() / 'query.tsv'
+            if header is not None:
+                data = [header] + list(data)
+            with open(query_file, 'w') as f:
+                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
+            cp.session['download_files']['query'] = query_file
 
-        html = '<form action="download_query" method="post">\n\
-                <button type="submit">Download Results</button>\n\
-                </form>'
-        page = insert_html(page, 10, html)
-        page = insert_error(page, 10, html_data)
-        if header is not None:
-            data = [header] + list(data)
-        with open(self.get_dir() / cp.session['query'], 'w') as f:
-            f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
+            # Add the download button
+            html = '<form action="../download/download_file" method="post">\n\
+                    <button type="submit" name="file_name" value="query">Download Results</button>\n\
+                    </form>'
+            page = insert_html(page, 29, html_data + html)
+        except (err.InvalidSQLError, err.TableAccessError) as e:
+            page = insert_error(page, 29, e.message)
         return page
 
 
