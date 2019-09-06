@@ -393,7 +393,7 @@ class Validator:
                     self.check_table()
 
             # Check for missing tables
-            missing_tables = fig.SUBJECT_TABLES.difference(set(self.tables))
+            missing_tables = fig.SUBJECT_TABLES.difference(set(self.tables) | fig.ICD_TABLES)
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 

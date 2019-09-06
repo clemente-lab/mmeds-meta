@@ -137,8 +137,6 @@ class MMEDSbase:
 
     def handle_metadata_warnings(self, metadata_copy, metadata_type, errors, warnings):
         """ Create the page to return when there are errors in the metadata """
-        log('Some warnings')
-        cp.session['uploaded_files'].append(metadata_copy)
 
         # Write the errors to a file
         with open(self.get_dir() / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
@@ -339,7 +337,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        page = self.format_html('upload_metadata')
+        page = self.format_html('upload_metadata_file')
         return page
 
     @cp.expose
@@ -580,8 +578,9 @@ class MMEDSanalysis(MMEDSbase):
                 errors, warnings = [], []
             else:
                 cp.session['metadata_temporary'] = False
-                metadata_copy, errors, warnings = self.run_validate(myMetaData, metadata_type)
+                errors, warnings = self.run_validate(myMetaData, metadata_type)
 
+            metadata_copy = cp.session['uploaded_files'][metadata_type]
             # If there are errors report them and return the error page
             if errors:
                 page = self.handle_metadata_errors(metadata_copy, errors, warnings)
@@ -590,10 +589,9 @@ class MMEDSanalysis(MMEDSbase):
             else:
                 # If there are no errors or warnings proceed to upload the data files
                 log('No errors or warnings')
-                cp.session['uploaded_files'].append(metadata_copy)
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if metadata_type == 'subject':
-                    page = self.format_html('upload_metadata', title='Upload Metadata', metadata_type='specimen')
+                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='specimen')
                 # Otherwise proceed to uploading data files
                 else:
                     page = self.format_html('upload_data_files', title='Upload Data')

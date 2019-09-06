@@ -183,7 +183,7 @@ TABLE_ORDER = [
 
 
 # Tables that should exist in the subject metadata
-SUBJECT_TABLES = [
+SUBJECT_TABLES = {
     'ICDCode',
     'IllnessBroadCategory',
     'IllnessCategory',
@@ -196,10 +196,10 @@ SUBJECT_TABLES = [
     'Weights',
     'Illness',
     'Intervention'
-]
+}
 
 # Tables that should exist in the specimen metadata
-SPECIMEN_TABLES = list(set(TABLE_ORDER) - set(SUBJECT_TABLES))
+SPECIMEN_TABLES = set(TABLE_ORDER) - SUBJECT_TABLES
 
 # MMEDS users are not given direct access to
 # these tables as they will contain data that
@@ -241,7 +241,7 @@ USER_FILES = set(map(
         'analysis\w*_summary_dir'
     ]))
 
-ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
+ICD_TABLES = {'IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'}
 
 
 # These are the tables that users are given direct access to
