@@ -8,7 +8,6 @@
         <form action='../analysis/validate_metadata' method='post' enctype='multipart/form-data'>
             <p> {metadata_type} Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
           <p> Temporary Metadata File: <br> <input type='checkbox' name='temporary' /> </p>
-          <input type='hidden' name='metadata_type' value='{metadata_type}' />
           <p> <button type='submit' method='post'>Check Metadata</button> </p>
         </form>
       </p>

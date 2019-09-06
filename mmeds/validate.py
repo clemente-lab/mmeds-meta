@@ -25,19 +25,16 @@ def validate_mapping_file(file_fp, metadata_type, delimiter='\t'):
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, sep=delimiter)
-    if metadata_type == 'subject':
-        result = valid.run_subject()
-    else:
-        result = valid.run_specimen()
-    return result
+    valid = Validator(file_fp, metadata_type, sep=delimiter)
+    return valid.run()
 
 
 class Validator:
 
-    def __init__(self, file_fp, sep):
+    def __init__(self, file_fp, metadata_type, sep):
         """ Initialize the validator object. """
 
+        self.metadata_type = metadata_type
         self.errors = []
         self.warnings = []
         self.subjects = []
@@ -413,7 +410,7 @@ class Validator:
             # For each table
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it
-                if table not in fig.TABLE_SPECIMEN:
+                if table not in fig.SPECIMEN_TABLES:
                     self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
                 else:
                     self.cur_table = table
@@ -427,3 +424,10 @@ class Validator:
         except InvalidMetaDataFileError as e:
                 self.errors.append(e.message)
         return self.errors, self.warnings, pd.DataFrame()
+
+    def run(self):
+        if self.metadata_type == 'subject':
+            result = self.run_subject()
+        else:
+            result = self.run_specimen()
+        return result

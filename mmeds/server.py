@@ -89,7 +89,7 @@ class MMEDSbase:
             log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
 
-    def run_validate(self, myMetaData, metadata_type):
+    def run_validate(self, myMetaData):
         """ Run validate_mapping_file and return the results """
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
@@ -101,13 +101,13 @@ class MMEDSbase:
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
 
         # Store the copy's location
-        cp.session['uploaded_files'][metadata_type] = metadata_copy
+        cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
 
         # Check the metadata file for errors
-        errors, warnings, subjects = validate_mapping_file(metadata_copy, metadata_type)
+        errors, warnings, subjects = validate_mapping_file(metadata_copy, cp.session['metadata_type'])
 
         # The database for any issues with previous uploads for the subject metadata
-        if metadata_type == 'subject':
+        if cp.session['metadata_type'] == 'subject':
             with Database('.', owner=self.get_user(), testing=self.testing) as db:
                 try:
                     warnings += db.check_repeated_subjects(subjects)
@@ -135,7 +135,7 @@ class MMEDSbase:
 
         return uploaded_output  # generate_error_html(metadata_copy, errors, warnings)
 
-    def handle_metadata_warnings(self, metadata_copy, metadata_type, errors, warnings):
+    def handle_metadata_warnings(self, metadata_copy, errors, warnings):
         """ Create the page to return when there are errors in the metadata """
 
         # Write the errors to a file
@@ -144,7 +144,7 @@ class MMEDSbase:
 
         # Get the html for the upload page
         # Set the proceed button based on current metadata file
-        if metadata_type == 'subjects':
+        if cp.session['metadata_type'] == 'subjects':
             page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/upload_metadata')
         else:
             page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/upload_data')
@@ -337,7 +337,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        page = self.format_html('upload_metadata_file')
+        page = self.format_html('upload_metadata_file', metadata_type=cp.session['metadata_type'])
         return page
 
     @cp.expose
@@ -402,9 +402,10 @@ class MMEDSupload(MMEDSbase):
     def upload_metadata(self, studyType, studyName):
         """ Page for uploading Qiime data """
         cp.session['study_name'] = studyName
+        cp.session['metadata_type'] = 'subject'
         page = self.format_html('upload_metadata_file',
-                                metadata_type='subject',
                                 title='Upload Metadata',
+                                metadata_type=cp.session['metadata_type'],
                                 version=studyType)
         return page
 
@@ -568,7 +569,7 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData, metadata_type, temporary=False):
+    def validate_metadata(self, myMetaData, temporary=False):
         """ The page returned after a file is uploaded. """
         try:
             # If the metadata is temporary don't perform validation
@@ -578,25 +579,28 @@ class MMEDSanalysis(MMEDSbase):
                 errors, warnings = [], []
             else:
                 cp.session['metadata_temporary'] = False
-                errors, warnings = self.run_validate(myMetaData, metadata_type)
+                errors, warnings = self.run_validate(myMetaData)
 
-            metadata_copy = cp.session['uploaded_files'][metadata_type]
+            metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
             # If there are errors report them and return the error page
             if errors:
                 page = self.handle_metadata_errors(metadata_copy, errors, warnings)
             elif warnings:
-                page = self.handle_metadata_warnings(metadata_copy, metadata_type, errors, warnings)
+                page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
             else:
                 # If there are no errors or warnings proceed to upload the data files
                 log('No errors or warnings')
                 # If it's the subject metadata file return the page for uploading the specimen metadata
-                if metadata_type == 'subject':
-                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='specimen')
+                if cp.session['metadata_type'] == 'subject':
+                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='speciman')
+                    cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 else:
                     page = self.format_html('upload_data_files', title='Upload Data')
         except err.MetaDataError as e:
-            page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type=metadata_type)
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    metadata_type=cp.session['metadata_type'])
             page = insert_error(page, 22, e.message)
         return page
 
