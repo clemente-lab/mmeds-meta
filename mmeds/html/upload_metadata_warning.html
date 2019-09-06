@@ -2,11 +2,11 @@
 <html>
   <body>
     <div class='inner'>
-      <p>
+        <p>
         <h3>The metadata uploaded has produced the following warnings</h3>
         <h3>Do you wish to proceed?</h3>
-        <form action='../upload/upload_data' method='post'>
-          <button type='submit' method='post'>Yes</button>
+        <form action={next_page} method='post'>
+            <button type='submit' method='post'>Yes</button>
         </form>
         <form action='../upload/retry_upload' method='post'>
           <button type='submit' method='post'>No</button>

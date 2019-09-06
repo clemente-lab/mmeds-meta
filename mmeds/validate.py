@@ -19,14 +19,18 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, delimiter='\t'):
+def validate_mapping_file(file_fp, metadata_type, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
     valid = Validator(file_fp, sep=delimiter)
-    return valid.run()
+    if metadata_type == 'subject':
+        result = valid.run_subject()
+    else:
+        result = valid.run_specimen()
+    return result
 
 
 class Validator:
@@ -34,7 +38,6 @@ class Validator:
     def __init__(self, file_fp, sep):
         """ Initialize the validator object. """
 
-        log('init validator')
         self.errors = []
         self.warnings = []
         self.subjects = []
@@ -374,7 +377,7 @@ class Validator:
                         err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
                         self.errors.append(err.format(self.col_index, column))
 
-    def run(self):
+    def run_subject(self):
         log('In validate_mapping_file')
         try:
             self.load_mapping_file(self.file_fp, self.sep)
@@ -382,7 +385,7 @@ class Validator:
             # For each table
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it
-                if table not in fig.TABLE_ORDER:
+                if table not in fig.SUBJECT_TABLES:
                     self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
                 else:
                     self.cur_table = table
@@ -390,7 +393,7 @@ class Validator:
                     self.check_table()
 
             # Check for missing tables
-            missing_tables = fig.METADATA_TABLES.difference(set(self.tables))
+            missing_tables = fig.SUBJECT_TABLES.difference(set(self.tables))
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
@@ -401,3 +404,26 @@ class Validator:
         except InvalidMetaDataFileError as e:
                 self.errors.append(e.message)
         return self.errors, self.warnings, self.subjects
+
+    def run_specimen(self):
+        log('In validate_mapping_file')
+        try:
+            self.load_mapping_file(self.file_fp, self.sep)
+            self.check_column_types()
+            # For each table
+            for table in self.tables:
+                # If the table shouldn't exist add and error and skip checking it
+                if table not in fig.TABLE_SPECIMEN:
+                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
+                else:
+                    self.cur_table = table
+                    self.seen_tables.append(table)
+                    self.check_table()
+
+            # Check for missing tables
+            missing_tables = fig.SPECIMEN_TABLES.difference(set(self.tables))
+            if missing_tables:
+                self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
+        except InvalidMetaDataFileError as e:
+                self.errors.append(e.message)
+        return self.errors, self.warnings, pd.DataFrame()

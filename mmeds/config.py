@@ -181,6 +181,26 @@ TABLE_ORDER = [
     'AdditionalMetaData'
 ]
 
+
+# Tables that should exist in the subject metadata
+SUBJECT_TABLES = [
+    'ICDCode',
+    'IllnessBroadCategory',
+    'IllnessCategory',
+    'IllnessDetails',
+    'Interventions',
+    'Genotypes',
+    'Ethnicity',
+    'Subjects',
+    'Heights',
+    'Weights',
+    'Illness',
+    'Intervention'
+]
+
+# Tables that should exist in the specimen metadata
+SPECIMEN_TABLES = list(set(TABLE_ORDER) - set(SUBJECT_TABLES))
+
 # MMEDS users are not given direct access to
 # these tables as they will contain data that
 # is private to other users
