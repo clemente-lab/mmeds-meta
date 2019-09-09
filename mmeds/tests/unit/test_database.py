@@ -1,7 +1,7 @@
 from mmeds.database import Database, MetaDataUploader, SQLBuilder
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.util import sql_log, parse_ICD_codes
+from mmeds.util import sql_log, parse_ICD_codes, join_metadata, load_metadata
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
@@ -57,11 +57,12 @@ class MetaDataUploaderTests(TestCase):
         """ Load data that is to be used by multiple test cases """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
-        test_setups = [(fig.TEST_METADATA,
+
+        test_setups = [(TEST_METADATA,
                         fig.TEST_DIR,
                         fig.TEST_USER,
                         fig.TEST_CODE),
-                       (fig.TEST_METADATA_ALT,
+                       (TEST_METADATA_ALT,
                         fig.TEST_DIR_0,
                         fig.TEST_USER_0,
                         fig.TEST_CODE + '0')]
@@ -69,8 +70,8 @@ class MetaDataUploaderTests(TestCase):
         for setup in test_setups:
             upload_metadata(setup)
 
-        self.df = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
-        self.df0 = parse_ICD_codes(pd.read_csv(fig.TEST_METADATA_ALT, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
+        self.df = parse_ICD_codes(pd.read_csv(TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
+        self.df0 = parse_ICD_codes(pd.read_csv(TEST_METADATA_ALT, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
         # Connect to the database
         self.db = pms.connect('localhost',
                               user,

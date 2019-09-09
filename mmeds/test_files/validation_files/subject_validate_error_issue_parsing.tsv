@@ -1,6 +1,6 @@
 Ethnicity	Genotypes	Heights	Heights	ICDCode	Illness	Illness	Illness	Illness	Intervention	Intervention	Intervention	Interventions	Interventions	Interventions	Subjects	Subjects	Subjects	Subjects	Weights	Weights
 Ethnicity	Genotype	Height	HeightDateCollected	ICDCode	IllnessDescription	IllnessEndDate	IllnessInstanceID	IllnessStartDate	InterventionDescription	InterventionEndDate	InterventionStartDate	InterventionCode	InterventionName	InterventionType	BirthYear	HostSubjectId	Nationality	Sex	Weight	WeightDateCollected
-Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional
+Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Required	Optional	Optional	Optional	Optional
 Text	Text	Number	Date	Text	Text	Date	Date	Date	Text	Date	Date	Text	Text	Text	Number	Text	Text	Text	Number	Date
 Limit 45 Characters	Limit 180 Characters	Meters	Year-Month-Day	Limit 8 Characters	Limit 256 Characters	Year-Month-Day	Limit 256 Characters	Year-Month-Day	Limit 256 characters	Year-Month-Day	Year-Month-Day	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Year	Limit 256 Characters	Limit 45 Characters	Limit 45 Characters	Kilogram	Year-Month-Day
 Caucasian	Lucy	63	2018-01-05	A19.XXXX	Good	2018-12-01	4	2017-02-21	Helpful	2018-02-22	2018-02-21	Heart Transplant	200	Surgery	1905	1	American	F	124	2018-01-05
@@ -38,4 +38,4 @@ East Asian	Lucy	63	2018-02-04	V93.24XS	Bad	2018-12-31	34	2017-03-23	Helpful	2018
 East Asian	Lucy	63	2018-02-05	V93.24XS	Bad	2018-01-01	35	2017-03-24	Helpful	2018-03-25	2018-03-24	Heart Transplant	200	Surgery	1936	32	Swiss	M	155	2018-02-05
 East Asian	Lucy	63	2018-02-06	V93.24XS	Bad	2018-01-02	36	2017-03-25	Helpful	2018-03-26	2018-03-25	Heart Transplant	200	Surgery	1937	33	Polish	M	156	2018-02-06
 East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	37	2017-03-26	Helpful	2018-03-27	2018-03-26	Heart Transplant	200	Surgery	1938	34	Polish	M	157	2018-02-07
-Ñá‘å*ºŠf÷Èâ{Æ“&Ë`
+ŒÝa±—~!ã-p·Œ|mÚPöSz

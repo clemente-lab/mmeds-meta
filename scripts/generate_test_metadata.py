@@ -2,6 +2,7 @@
 
 import pandas as pd
 import mmeds.config as fig
+from mmeds.util import join_metadata, write_metadata, load_metadata
 from glob import glob
 from random import randrange, getrandbits
 from pathlib import Path
@@ -29,6 +30,9 @@ def write_test_metadata(df, output_path):
         for item in mmeds_meta.values():
             new_line.append(str(item[row]))
         lines.append('\t'.join(new_line))
+    output = Path(output_path)
+    if not output.exists():
+        output.touch()
     Path(output_path).write_text('\n'.join(lines) + '\n')
 
 
@@ -268,6 +272,7 @@ def write_warning_files(df, file_type):
 
 
 def write_alternate_files(df, file_type):
+    print('Write alternate_files {}'.format(file_type))
     if file_type == 'subject':
         col_one = ('Subjects', 'Nationality')
         col_two = ('Illness', 'IllnessDescription')
@@ -279,7 +284,9 @@ def write_alternate_files(df, file_type):
     for val in range(len(test_alt)):
         test_alt.loc[val][col_one] = test_alt.loc[val][col_one] + '_alt'
         test_alt.loc[val][col_two] = test_alt.loc[val][col_two] + '_alt'
-    write_test_metadata(test_alt, '{}/{}_test_metadata_alt.tsv'.format(file_path, file_type))
+    write_path = '{}/test_{}_alt.tsv'.format(file_path, file_type)
+    write_test_metadata(test_alt, write_path)
+    print('metadata written to {}'.format(write_path))
 
 
 # Specimen Metadata Test Files
@@ -303,3 +310,12 @@ if __name__ == '__main__':
     write_error_files(df, 'specimen')
     write_warning_files(df, 'specimen')
     write_alternate_files(df, 'specimen')
+
+    # Create the combined metadata file
+    df = join_metadata(load_metadata(fig.TEST_SUBJECT), load_metadata(fig. TEST_SPECIMEN))
+    write_metadata(df, fig.TEST_METADATA)
+    print('Wrote      test metadata')
+
+    df_alt = join_metadata(load_metadata(fig.TEST_SUBJECT_ALT), load_metadata(fig.TEST_SPECIMEN_ALT))
+    write_metadata(df_alt, fig.TEST_METADATA_ALT)
+    print('Write alt test metadata')
