@@ -80,7 +80,7 @@ def write_error_files(df, file_type):
     # Illegal Column Header
     illegal_header = df.copy(deep=True)
     col = illegal_header[unique_col]
-    col.rename((unique_col[0], 'IllegalColumn_'), inplace=True)
+    col.rename(('AdditionalMetaData', 'IllegalColumn_'), inplace=True)
     illegal_header = illegal_header.join(col, how='outer')
     write_test_metadata(illegal_header, '{}/{}_validate_error_illegal_header.tsv'.format(file_path, file_type))
 
@@ -186,14 +186,8 @@ def write_error_files(df, file_type):
 
     # duplicate value
     duplicate_value = df.copy(deep=True)
-    duplicate_value.iloc[10][random_col] = duplicate_value.iloc[11][random_col]
+    duplicate_value.iloc[10][unique_col] = duplicate_value.iloc[11][unique_col]
     write_test_metadata(duplicate_value, '{}/{}_validate_error_duplicate_value.tsv'.format(file_path, file_type))
-
-    # invalid_date range
-    invalid_date_range = df.copy(deep=True)
-    invalid_date_range.iloc[10][start_date_col] = '2012-05-1'
-    invalid_date_range.iloc[10][end_date_col] = '2011-05-1'
-    write_test_metadata(invalid_date_range, '{}/{}_validate_error_invalid_date_range.tsv'.format(file_path, file_type))
 
     # future_date
     future_date = df.copy(deep=True)
@@ -217,6 +211,14 @@ def write_error_files(df, file_type):
         col.rename(('AdditionalMetaData', 'Address'), inplace=True)
         phi_header = phi_header.join(col, how='outer')
         write_test_metadata(phi_header, '{}/{}_validate_error_phi_header.tsv'.format(file_path, file_type))
+
+        # invalid_date range
+        invalid_date_range = df.copy(deep=True)
+        invalid_date_range.iloc[10][start_date_col] = '2012-05-1'
+        invalid_date_range.iloc[10][end_date_col] = '2011-05-1'
+        write_test_metadata(invalid_date_range,
+                            '{}/{}_validate_error_invalid_date_range.tsv'.format(file_path, file_type))
+
     elif file_type == 'specimen':
         # different_length
         different_length = df.copy(deep=True)
@@ -291,7 +293,7 @@ if __name__ == '__main__':
         Path(test_file).unlink()
 
     # Create the subjects test files
-    df = pd.read_csv(fig.TEST_SUBJECTS, sep='\t', header=[0, 1], na_filter=False)
+    df = pd.read_csv(fig.TEST_SUBJECT, sep='\t', header=[0, 1], na_filter=False)
     write_error_files(df, 'subject')
     write_warning_files(df, 'subject')
     write_alternate_files(df, 'subject')

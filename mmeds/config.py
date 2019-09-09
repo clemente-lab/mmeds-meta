@@ -114,7 +114,7 @@ TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
-TEST_SUBJECTS = str(TEST_PATH / 'test_subjects.tsv')
+TEST_SUBJECT = str(TEST_PATH / 'test_subjects.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_METADATA_ALT = str(TEST_PATH / 'validation_files/test_metadata_alt.tsv')
 TEST_METADATA_ERROR = str(TEST_PATH / 'validation_files/test_metadata_error.tsv')
@@ -197,11 +197,12 @@ SUBJECT_TABLES = {
     'Heights',
     'Weights',
     'Illness',
-    'Intervention'
+    'Intervention',
+    'AdditionalMetaData'
 }
 
 # Tables that should exist in the specimen metadata
-SPECIMEN_TABLES = set(TABLE_ORDER) - SUBJECT_TABLES
+SPECIMEN_TABLES = (set(TABLE_ORDER) - SUBJECT_TABLES) | {'AdditionalMetaData'}
 
 # MMEDS users are not given direct access to
 # these tables as they will contain data that

@@ -49,6 +49,7 @@ class Validator:
 
         self.col_types = {}
         self.table_df = None
+        self.reference_header = None
         self.cur_col = None    # Current column being checked
         self.cur_row = 0       # Current row being checked
         self.cur_table = None  # Current table being checked
@@ -182,7 +183,7 @@ class Validator:
         for i, cell in enumerate(column):
             if pd.isna(cell):
                 # Check for missing required fields
-                if self.header_df[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
                     err = '{}\t{}\tMissing Required Value Error'
                     self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
             else:
@@ -330,6 +331,17 @@ class Validator:
                                          sep=self.sep,
                                          header=[0, 1],
                                          nrows=3)
+            if self.metadata_type == 'subject':
+                self.reference_header = pd.read_csv(fig.TEST_SUBJECT,
+                                                    sep=self.sep,
+                                                    header=[0, 1],
+                                                    nrows=3)
+
+            elif self.metadata_type == 'specimen':
+                self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
+                                                    sep=self.sep,
+                                                    header=[0, 1],
+                                                    nrows=3)
         except (pd.errors.ParserError, UnicodeDecodeError):
             raise InvalidMetaDataFileError('-1\t-1\tThere is an issue parsing your metadata. Please check that it is' +
                                            ' in tab delimited format with no tab or newline characters in any of the' +
@@ -390,7 +402,7 @@ class Validator:
                     self.check_table()
 
             # Check for missing tables
-            missing_tables = fig.SUBJECT_TABLES.difference(set(self.tables) | fig.ICD_TABLES)
+            missing_tables = fig.SUBJECT_TABLES.difference(set(self.tables) | fig.ICD_TABLES | {'AdditionalMetaData'})
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
 
@@ -418,7 +430,7 @@ class Validator:
                     self.check_table()
 
             # Check for missing tables
-            missing_tables = fig.SPECIMEN_TABLES.difference(set(self.tables))
+            missing_tables = fig.SPECIMEN_TABLES.difference(set(self.tables)) - {'AdditionalMetaData'}
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
         except InvalidMetaDataFileError as e:
