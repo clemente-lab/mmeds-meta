@@ -137,16 +137,17 @@ class MMEDSbase:
 
     def handle_metadata_warnings(self, metadata_copy, errors, warnings):
         """ Create the page to return when there are errors in the metadata """
-
+        cp.log('handle_metadata_warnings, type: {}'.format(cp.session['metadata_type']))
         # Write the errors to a file
         with open(self.get_dir() / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
             f.write('\n'.join(warnings))
 
         # Get the html for the upload page
         # Set the proceed button based on current metadata file
-        if cp.session['metadata_type'] == 'subjects':
-            page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/upload_metadata')
-        else:
+        if cp.session['metadata_type'] == 'subject':
+            page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/retry_upload')
+            cp.session['metadata_type'] = 'specimen'
+        elif cp.session['metadata_type'] == 'specimen':
             page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/upload_data')
 
         # Add the warnings
@@ -337,7 +338,9 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        page = self.format_html('upload_metadata_file', metadata_type=cp.session['metadata_type'])
+        page = self.format_html('upload_metadata_file',
+                                title='Upload Metadata',
+                                metadata_type=cp.session['metadata_type'])
         return page
 
     @cp.expose
@@ -572,6 +575,7 @@ class MMEDSanalysis(MMEDSbase):
     def validate_metadata(self, myMetaData, temporary=False):
         """ The page returned after a file is uploaded. """
         try:
+            cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
             # If the metadata is temporary don't perform validation
             if temporary:
                 cp.session['metadata_temporary'] = True
@@ -592,7 +596,7 @@ class MMEDSanalysis(MMEDSbase):
                 log('No errors or warnings')
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
-                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='speciman')
+                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='specimen')
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 else:
@@ -607,7 +611,8 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def process_data(self, for_reads, rev_reads, barcodes, reads_type, public='off'):
         # Create a unique dir for handling files uploaded by this user
-        metadata = Path(cp.session['uploaded_files'].pop())
+        subject_metadata = Path(cp.session['uploaded_files']['subject'])
+        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
         # Set the User
         if public == 'on':
@@ -620,7 +625,7 @@ class MMEDSanalysis(MMEDSbase):
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
-        self.q.put(('upload', cp.session['study_name'], metadata,
+        self.q.put(('upload', cp.session['study_name'], subject_metadata, specimen_metadata,
                     username, reads_type, datafiles, cp.session['metadata_temporary']))
 
         # Get the html for the upload page

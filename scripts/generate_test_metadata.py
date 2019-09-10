@@ -257,7 +257,7 @@ def write_warning_files(df, file_type):
     test_warning = df.copy(deep=True)
     test_warning.iloc[10][random_col] = '9'
     test_warning.iloc[10][cat_col] = 'Protocol90'
-    write_test_metadata(test_warning, '{}/{}_test_metadata_warn.tsv'.format(file_path, file_type))
+    write_test_metadata(test_warning, '{}/test_{}_warn.tsv'.format(file_path, file_type))
 
     # stddev_warning
     stddev_warning = df.copy(deep=True)

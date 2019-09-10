@@ -4,7 +4,9 @@ from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
-from mmeds.util import send_email, create_local_copy, log, load_config, read_processes, write_processes
+from mmeds.util import (send_email, create_local_copy, log, load_config,
+                        read_processes, write_processes, join_metadata,
+                        write_metadata, load_metadata)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
@@ -54,7 +56,8 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def handle_data_upload(metadata, username, reads_type, study_name, temporary, testing, *datafiles):
+def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type,
+                       study_name, temporary, testing, *datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -75,8 +78,17 @@ def handle_data_upload(metadata, username, reads_type, study_name, temporary, te
     new_dir.mkdir()
 
     # Create a copy of the MetaData
-    with open(metadata, 'rb') as f:
-        metadata_copy = create_local_copy(f, metadata.name, new_dir)
+    with open(subject_metadata, 'rb') as f:
+        subject_metadata_copy = create_local_copy(f, subject_metadata.name, new_dir)
+
+    # Create a copy of the Specimen MetaData
+    with open(specimen_metadata, 'rb') as f:
+        specimen_metadata_copy = create_local_copy(f, specimen_metadata.name, new_dir)
+
+    # Merge the metadata files
+    metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
+    metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
+    write_metadata(metadata_df, metadata_copy)
 
     # Create a copy of the Data file
     datafile_copies = {datafile[0]: create_local_copy(Path(datafile[1]).read_bytes(),
@@ -192,10 +204,12 @@ class Watcher(Process):
 
                     # If there is nothing uploading currently start the new upload process
                     if current_upload is None:
-                        ptype, study_name, metadata, username, reads_type, datafiles, temporary = process
+                        (ptype, study_name, subject_metadata, specimen_metadata,
+                         username, reads_type, datafiles, temporary) = process
                         # Start a process to handle loading the data
                         p = Process(target=handle_data_upload,
-                                    args=(metadata, username, reads_type, study_name, temporary, self.testing,
+                                    args=(subject_metadata, specimen_metadata, username,
+                                          reads_type, study_name, temporary, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
                         p.start()
