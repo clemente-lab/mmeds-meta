@@ -58,11 +58,11 @@ class MetaDataUploaderTests(TestCase):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
 
-        test_setups = [(TEST_METADATA,
+        test_setups = [(fig.TEST_METADATA,
                         fig.TEST_DIR,
                         fig.TEST_USER,
                         fig.TEST_CODE),
-                       (TEST_METADATA_ALT,
+                       (fig.TEST_METADATA_ALT,
                         fig.TEST_DIR_0,
                         fig.TEST_USER_0,
                         fig.TEST_CODE + '0')]
@@ -70,8 +70,8 @@ class MetaDataUploaderTests(TestCase):
         for setup in test_setups:
             upload_metadata(setup)
 
-        self.df = parse_ICD_codes(pd.read_csv(TEST_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
-        self.df0 = parse_ICD_codes(pd.read_csv(TEST_METADATA_ALT, header=[0, 1], skiprows=[2, 3, 4], sep='\t'))
+        self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA))
+        self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
         self.db = pms.connect('localhost',
                               user,

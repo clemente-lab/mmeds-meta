@@ -1,5 +1,6 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
+from operator import itemgetter
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
@@ -26,9 +27,9 @@ def load_metadata_template():
 
 def join_metadata(subject, specimen):
     """ Joins the subject and specimen metadata into a single data frame """
-    print(specimen.columns)
-    subject.set_index(('Subjects', 'HostSubjectId'), inplace=True)
-    specimen.set_index(('SubjectIdTable', 'SubjectIdCol'), inplace=True)
+    subject[('Subjects', 'SubjectIdCol')] = subject[('Subjects', 'HostSubjectId')]
+    subject.set_index(('Subjects', 'SubjectIdCol'), inplace=True)
+    specimen.set_index(('AdditionalMetaData', 'SubjectIdCol'), inplace=True)
     df = subject.join(specimen, how='outer')
     return df
 
@@ -46,18 +47,22 @@ def write_metadata(df, output_path):
     :df: A pandas dataframe or python dictionary formatted like mmeds metadata
     :output_path: The path to write the metadata to
     """
-    print('Write metadata to {}'.format(output_path))
     if isinstance(df, pd.DataFrame):
-        mmeds_meta = df.to_dict('list')
+        unsorted = df.to_dict('list')
     else:
-        mmeds_meta = df
+        unsorted = df
     template = load_metadata_template()
 
     # Add NAs for columns not included in the dict/DF
     for col in template.columns:
-        if mmeds_meta.get(col) is None:
-            mmeds_meta[col] = ['NA' for count in range(len(mmeds_meta[('RawData', 'RawDataID')]))]
-            print(len(mmeds_meta[col]))
+        if unsorted.get(col) is None:
+            unsorted[col] = ['NA' for count in range(len(unsorted[('RawData', 'RawDataID')]))]
+
+    # Create a sorted dictionary
+    mmeds_meta = OrderedDict.fromkeys(sorted(unsorted.keys(),
+                                             key=itemgetter(0, 1)))
+    for key in mmeds_meta.keys():
+        mmeds_meta[key] = unsorted[key]
 
     # Create the header lines
     lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
@@ -65,14 +70,14 @@ def write_metadata(df, output_path):
 
     # Add the additional column info
     additional_headers = ['Optional', 'Text', 'No Limit']
-    for i in range(len(template)):
+    for i in range(len(additional_headers)):
         header_line = []
         # Build the header info
         for table, column in mmeds_meta.keys():
             if table == 'AdditionalMetaData':
                 header_line.append(additional_headers[i])
             else:
-                header_line.append(template[table][column].iloc[i])
+                header_line.append(template[(table, column)].iloc[i])
 
         lines.append('\t'.join(header_line))
 

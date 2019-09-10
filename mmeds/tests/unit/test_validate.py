@@ -20,7 +20,6 @@ def test_error_files():
         for test_file in error_files:
             name = Path(test_file).name
             error = ' '.join(name.split('.')[0].split('_')[3:])
-            print('Testing Error file {}'.format(name))
             errors, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type)
 
             log(errors[0])

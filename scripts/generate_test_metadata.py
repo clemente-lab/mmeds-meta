@@ -62,7 +62,7 @@ def write_error_files(df, file_type):
     many_error = df.copy(deep=True)
     many_error.drop(unique_col[0], axis=1, inplace=True)
 
-    write_test_metadata(many_error, '{}/{}_test_metadata_error.tsv'.format(file_path, file_type))
+    write_test_metadata(many_error, '{}/test_{}_error.tsv'.format(file_path, file_type))
 
     # Parser issue
     issue_parsing = df.copy(deep=True)
@@ -271,7 +271,6 @@ def write_warning_files(df, file_type):
 
 
 def write_alternate_files(df, file_type):
-    print('Write alternate_files {}'.format(file_type))
     if file_type == 'subject':
         col_one = ('Subjects', 'Nationality')
         col_two = ('Illness', 'IllnessDescription')
@@ -284,9 +283,7 @@ def write_alternate_files(df, file_type):
         test_alt.loc[val][col_one] = test_alt.loc[val][col_one] + '_alt'
         test_alt.loc[val][col_two] = test_alt.loc[val][col_two] + '_alt'
     write_path = '{}/test_{}_alt.tsv'.format(file_path.parent, file_type)
-    print('Write alt to {}'.format(write_path))
     write_test_metadata(test_alt, write_path)
-    print('metadata written to {}'.format(write_path))
 
 
 # Specimen Metadata Test Files
@@ -312,13 +309,13 @@ if __name__ == '__main__':
     write_alternate_files(df, 'specimen')
 
     test_path = file_path.parent
+
     # Create the combined metadata file
     df = join_metadata(load_metadata(test_path / 'test_subject.tsv'),
                        load_metadata(test_path / 'test_specimen.tsv'))
     write_metadata(df, test_path / 'test_metadata.tsv')
-    print('Wrote      test metadata')
 
+    # Create the alternate combined metadata file
     df_alt = join_metadata(load_metadata(test_path / 'test_subject_alt.tsv'),
                            load_metadata(test_path / 'test_specimen_alt.tsv'))
     write_metadata(df_alt, test_path / 'test_metadata_alt.tsv')
-    print('Write alt test metadata')
