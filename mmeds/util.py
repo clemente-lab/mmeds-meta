@@ -56,7 +56,7 @@ def write_metadata(df, output_path):
     # Add NAs for columns not included in the dict/DF
     for col in template.columns:
         if unsorted.get(col) is None:
-            unsorted[col] = ['NA' for count in range(len(unsorted[('RawData', 'RawDataID')]))]
+            unsorted[col] = ['NA' for count, unso in enumerate(unsorted[('RawData', 'RawDataID')])]
 
     # Create a sorted dictionary
     mmeds_meta = OrderedDict.fromkeys(sorted(unsorted.keys(),
@@ -70,7 +70,7 @@ def write_metadata(df, output_path):
 
     # Add the additional column info
     additional_headers = ['Optional', 'Text', 'No Limit']
-    for i in range(len(additional_headers)):
+    for i, header in enumerate(additional_headers):
         header_line = []
         # Build the header info
         for table, column in mmeds_meta.keys():
@@ -81,7 +81,7 @@ def write_metadata(df, output_path):
 
         lines.append('\t'.join(header_line))
 
-    for row in range(len(df)):
+    for row, line in enumerate(df):
         new_line = []
         for key, item in mmeds_meta.items():
             new_line.append(str(item[row]).replace('\t', '').strip())
