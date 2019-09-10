@@ -3,7 +3,6 @@
 import pandas as pd
 import mmeds.config as fig
 from mmeds.util import join_metadata, write_metadata, load_metadata
-from glob import glob
 from random import randrange, getrandbits
 from pathlib import Path
 
@@ -284,7 +283,8 @@ def write_alternate_files(df, file_type):
     for val in range(len(test_alt)):
         test_alt.loc[val][col_one] = test_alt.loc[val][col_one] + '_alt'
         test_alt.loc[val][col_two] = test_alt.loc[val][col_two] + '_alt'
-    write_path = '{}/test_{}_alt.tsv'.format(file_path, file_type)
+    write_path = '{}/test_{}_alt.tsv'.format(file_path.parent, file_type)
+    print('Write alt to {}'.format(write_path))
     write_test_metadata(test_alt, write_path)
     print('metadata written to {}'.format(write_path))
 
@@ -294,8 +294,8 @@ def write_alternate_files(df, file_type):
 
 if __name__ == '__main__':
 
-    file_path = '/home/david/Work/mmeds-meta/mmeds/test_files/validation_files/'
-    for test_file in glob(file_path + 'validate_*'):
+    file_path = Path('/home/david/Work/mmeds-meta/mmeds/test_files/validation_files/')
+    for test_file in file_path.glob('validate_*'):
         print('Deleting {}'.format(test_file))
         Path(test_file).unlink()
 
@@ -311,11 +311,14 @@ if __name__ == '__main__':
     write_warning_files(df, 'specimen')
     write_alternate_files(df, 'specimen')
 
+    test_path = file_path.parent
     # Create the combined metadata file
-    df = join_metadata(load_metadata(fig.TEST_SUBJECT), load_metadata(fig. TEST_SPECIMEN))
-    write_metadata(df, fig.TEST_METADATA)
+    df = join_metadata(load_metadata(test_path / 'test_subject.tsv'),
+                       load_metadata(test_path / 'test_specimen.tsv'))
+    write_metadata(df, test_path / 'test_metadata.tsv')
     print('Wrote      test metadata')
 
-    df_alt = join_metadata(load_metadata(fig.TEST_SUBJECT_ALT), load_metadata(fig.TEST_SPECIMEN_ALT))
-    write_metadata(df_alt, fig.TEST_METADATA_ALT)
+    df_alt = join_metadata(load_metadata(test_path / 'test_subject_alt.tsv'),
+                           load_metadata(test_path / 'test_specimen_alt.tsv'))
+    write_metadata(df_alt, test_path / 'test_metadata_alt.tsv')
     print('Write alt test metadata')
