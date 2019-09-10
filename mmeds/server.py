@@ -602,7 +602,7 @@ class MMEDSanalysis(MMEDSbase):
                     page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='specimen')
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
-                else:
+                elif cp.session['metadata_type'] == 'specimen':
                     page = self.format_html('upload_data_files', title='Upload Data')
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
