@@ -386,7 +386,12 @@ class Validator:
                         err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
                         self.errors.append(err.format(self.col_index, column))
 
-    def run_subject(self):
+    def run(self):
+        """ Perform the validation. """
+        if self.metadata_type == 'subject':
+            tables = fig.SUBJECT_TABLES
+        elif self.metadata_type == 'specimen':
+            tables = fig.SPECIMEN_TABLES
         log('In validate_mapping_file')
         try:
             self.load_mapping_file(self.file_fp, self.sep)
@@ -394,7 +399,7 @@ class Validator:
             # For each table
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it
-                if table not in fig.SUBJECT_TABLES:
+                if table not in tables:
                     self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
                 else:
                     self.cur_table = table
@@ -402,44 +407,9 @@ class Validator:
                     self.check_table()
 
             # Check for missing tables
-            missing_tables = fig.SUBJECT_TABLES.difference(set(self.tables) | fig.ICD_TABLES | {'AdditionalMetaData'})
-            if missing_tables:
-                self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
-
-            try:
-                self.subjects = self.df['Subjects']
-            except KeyError:
-                self.subjects = pd.DataFrame()
-        except InvalidMetaDataFileError as e:
-                self.errors.append(e.message)
-        return self.errors, self.warnings, self.subjects
-
-    def run_specimen(self):
-        log('In validate_mapping_file')
-        try:
-            self.load_mapping_file(self.file_fp, self.sep)
-            self.check_column_types()
-            # For each table
-            for table in self.tables:
-                # If the table shouldn't exist add and error and skip checking it
-                if table not in fig.SPECIMEN_TABLES:
-                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
-                else:
-                    self.cur_table = table
-                    self.seen_tables.append(table)
-                    self.check_table()
-
-            # Check for missing tables
-            missing_tables = fig.SPECIMEN_TABLES.difference(set(self.tables)) - {'AdditionalMetaData'}
+            missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
         except InvalidMetaDataFileError as e:
                 self.errors.append(e.message)
         return self.errors, self.warnings, pd.DataFrame()
-
-    def run(self):
-        if self.metadata_type == 'subject':
-            result = self.run_subject()
-        else:
-            result = self.run_specimen()
-        return result

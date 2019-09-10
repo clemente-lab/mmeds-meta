@@ -107,13 +107,17 @@ class MMEDSbase:
         errors, warnings, subjects = validate_mapping_file(metadata_copy, cp.session['metadata_type'])
 
         # The database for any issues with previous uploads for the subject metadata
-        if cp.session['metadata_type'] == 'subject':
-            with Database('.', owner=self.get_user(), testing=self.testing) as db:
-                try:
+        with Database('.', owner=self.get_user(), testing=self.testing) as db:
+            try:
+
+                if cp.session['metadata_type'] == 'subject':
                     warnings += db.check_repeated_subjects(subjects)
+                elif cp.session['metadata_type'] == 'specimen':
                     errors += db.check_user_study_name(cp.session['study_name'])
-                except err.MetaDataError as e:
-                    errors.append('-1\t-1\t' + e.message)
+                else:
+                    raise ValueError('Invalid metadata type')
+            except err.MetaDataError as e:
+                errors.append('-1\t-1\t' + e.message)
         return errors, warnings
 
     def handle_metadata_errors(self, metadata_copy, errors, warnings):
@@ -463,7 +467,6 @@ class MMEDSauthentication(MMEDSbase):
         """
         Perform the actions necessary to sign up a new user.
         """
-
         try:
             check_password(password1, password2)
             check_username(username, testing=self.testing)
