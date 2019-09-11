@@ -10,12 +10,10 @@ In order to run the mmeds server locally you will need.
 
 -   Some mysql server running on your machine. For development we are using mariadb.
 To install on linux install the `mariadb` and `mariadb-server` packages using your distro's manager.
-For other OS's the installer can be found here  
-[https://downloads.mariadb.org]
+For other OS's the installer can be found [here](https://downloads.mariadb.org)
 
 
--   A mongoDB server running on your machine. Installers can be found at the following link.  
-[https://www.mongodb.com/download-center#community]
+-   A mongoDB server running on your machine. Installers can be found [here](https://www.mongodb.com/download-center#community)
 
 To setup the SQL database connect to you sql database as root:  
 `mysql -u root`  
@@ -27,7 +25,7 @@ Run `python setup.py install` to install the necessary dependencies.
 
 To start the server change to the server directory and run `python server.py 1`
 
-To connect to the server go to [https://localhost:8080]
+To connect to the server go to [MMEDS](https://localhost:8080)
 Allow access to the webpage despite your browsers warning. The security certificate is not signed.
 
 NOTE: Certain versions of openssl as installed by conda cause issues with cherrypy ssl. 
@@ -49,9 +47,9 @@ rpy2: 2.9.1
 readline headers  
 jupyter_contrib_nbextensions  
 
-latex_template: [https://michaelgoerz.net/notes/custom-template-for-converting-jupyter-notebooks-to-latex.html]
+[latex_template](https://michaelgoerz.net/notes/custom-template-for-converting-jupyter-notebooks-to-latex.html)
 
-font: [https://www.1001fonts.com/code-new-roman-font.html]
+[font](https://www.1001fonts.com/code-new-roman-font.html)
 
 If you encounter INVALID DISPLAY VARIABLE add the line `backend: agg` to your matplotlibrc
 (typically ~/.config/matplotlib/matploblibrc)
