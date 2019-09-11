@@ -79,9 +79,10 @@ class AnalysisTests(TestCase):
         p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG_SUB).read_text(),
                                  self.testing)
-        log('after spawned analysis')
+        print('spawned test process {}:{}'.format(p.name, p.pid))
         while p.is_alive():
-            print('{}: Waiting on process: {}'.format(datetime.now(), p.name))
+            print('{}: Waiting on process: {}:{}'.format(datetime.now(), p.name, p.pid))
+            print('{}, {}'.format(p.is_alive(), p.exitcode))
             sleep(20)
         log('analysis finished')
         self.assertTrue((Path(self.path) /

@@ -379,6 +379,7 @@ class Tool(mp.Process):
         """ Runs the setup, and starts the analysis process """
         try:
             self.setup_analysis()
+            print('I {} have setup analysis'.format(self.name))
 
             log('After setup analysis')
             if self.doc.sub_analysis:
@@ -403,10 +404,12 @@ class Tool(mp.Process):
 
             if self.testing:
                 self.doc.update(analysis_status='started')
+                print('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
+                print('I {} have finished running'.format(self.name))
             else:
                 # Create a file to execute the submission
                 submitfile = self.get_file('submitfile', True)
@@ -418,7 +421,9 @@ class Tool(mp.Process):
                 output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
+            print('{}: pre post analysis'.format(self.name))
             self.post_analysis()
+            print('{}: post post analysis'.format(self.name))
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
@@ -429,6 +434,7 @@ class Tool(mp.Process):
         log_text = self.get_file('errorlog', True).read_text()
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
+            print('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
             stage = 0
             for i in range(1, 6):
@@ -439,23 +445,40 @@ class Tool(mp.Process):
             self.doc.save()
             self.doc.reload()
 
+            print('{}: checking on files, restart stage: {}'.format(self.name, self.doc.restart_stage))
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
+                print('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
                 # If they should be created after the last checkpoint
                 if stage >= self.doc.restart_stage:
-                    for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
-                        # Check if they exist
-                        unfinished = self.get_file(f, True)
-                        if unfinished.exists():
-                            # Otherwise delete them
-                            if unfinished.is_dir():
-                                rmtree(unfinished)
+                    print('{}: Greater than restart stage'.format(self.name))
+                    for f in files:
+                        if not f == 'jobfile' and not f == 'errorlog':
+                            # Check if they exist
+                            unfinished = self.get_file(f, True)
+                            print('{}: checking file {}'.format(self.name, unfinished))
+                            if unfinished.exists():
+                                print('{}: file exists'.format(self.name))
+                                # Otherwise delete them
+                                if unfinished.is_dir():
+                                    print('{}: rmtree'.format(self.name))
+                                    rmtree(unfinished)
+                                else:
+                                    print('{}: unlink'.format(self.name))
+                                    unfinished.unlink()
                             else:
-                                unfinished.unlink()
+                                print('{}: file does exist {}'.format(self.name, unfinished))
+                else:
+                    print('{}: stage already passed'.format(self.name))
+            print('{}: finished file cleanup'.format(self.name))
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
+        print('{}: made it past restart stages'.format(self.name))
         self.doc.update(restart_stage=-1)  # Indicates analysis finished successfully
+        print('{}: updated mongo stuff'.format(self.name))
         self.doc.save()
+        print('{}: saved mongo stuff'.format(self.name))
         self.doc.reload()
+        print('{}: reloaded mongo stuff'.format(self.name))
         self.move_user_files()
 
         if not self.testing:
@@ -470,10 +493,15 @@ class Tool(mp.Process):
         """ Overrides Process.run() """
         print('I {} am running'.format(self.name))
         self.doc.update(pid=self.pid)
+        print('I {} have updated my ID'.format(self.name))
         if self.analysis:
+            print('I {} am running analysis'.format(self.name))
             self.run_analysis()
         else:
+            print('I {} am setting up analysis'.format(self.name))
             self.setup_analysis()
+        print('I {} am updating'.format(self.name))
         self.doc.update(pid=None, analysis_status='Finished')
+        print('I {} have updated'.format(self.name))
         self.doc.save()
         print('I {} have finished'.format(self.name))
