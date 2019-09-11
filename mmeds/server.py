@@ -109,13 +109,12 @@ class MMEDSbase:
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:
             try:
-
                 if cp.session['metadata_type'] == 'subject':
                     warnings += db.check_repeated_subjects(subjects)
                 elif cp.session['metadata_type'] == 'specimen':
                     errors += db.check_user_study_name(cp.session['study_name'])
                 else:
-                    raise ValueError('Invalid metadata type')
+                    raise err.MmedsError('Invalid metadata type')
             except err.MetaDataError as e:
                 errors.append('-1\t-1\t' + e.message)
         return errors, warnings

@@ -324,7 +324,7 @@ class Database:
         while True:
             # Ensure no document exists with the given access code
             if not (StudyDoc.objects(access_code=code).first() or
-                    AnalysisDoc.objects(analysis_code=code).first()):
+                    AnalysisDoc.objects(access_code=code).first()):
                 break
             else:
                 code = check_code + '-' + str(count)
@@ -497,7 +497,7 @@ class Database:
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return AnalysisDoc.objects(analysis_code=access_code, owner=self.owner).first()
+        return AnalysisDoc.objects(access_code=access_code, owner=self.owner).first()
 
     @classmethod
     def get_all_studies(cls):
@@ -517,7 +517,7 @@ class Database:
     @classmethod
     def get_study_analysis(cls, access_code):
         """ Return all studies currently stored in the database. """
-        return AnalysisDoc.objects(analysis_code=access_code).first()
+        return AnalysisDoc.objects(access_code=access_code).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
@@ -555,13 +555,13 @@ class Database:
     def get_mongo_docs(cls, access_code):
         """ For admin use """
         return (StudyDoc.objects(access_code=access_code),
-                AnalysisDoc.objects(analysis_code=access_code))
+                AnalysisDoc.objects(access_code=access_code))
 
     @classmethod
     def get_doc(cls, doc_type, access_code):
         """ For server use """
         if doc_type == 'analysis':
-            return AnalysisDoc.objects(analysis_code=access_code)
+            return AnalysisDoc.objects(access_code=access_code)
 
 
 class SQLBuilder:

@@ -36,6 +36,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
 
     if 'qiime1' in atype:
         tool = Qiime1(user, access_code, atype, config, testing)
+        print('Created tool {}'.format(tool.name))
     elif 'qiime2' in atype:
         tool = Qiime2(user, access_code, atype, config, testing)
     elif 'test' in atype:
@@ -44,6 +45,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
+    print('Sstart tool {}'.format(tool.name))
     tool.start()
     return tool
 
@@ -95,6 +97,7 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
                                                       datafile[1], new_dir) for datafile in datafiles
                        if datafile[1] is not None}
 
+    # Upload the combined file to the database
     with MetaDataUploader(metadata=metadata_copy,
                           path=new_dir,
                           study_type='qiime',

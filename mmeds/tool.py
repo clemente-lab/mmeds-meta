@@ -206,7 +206,7 @@ class Tool(mp.Process):
         """
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
-            f.write('{}\t{}\t{}\n'.format(self.doc.owner, self.doc.study_name, self.doc.analysis_code))
+            f.write('{}\t{}\t{}\n'.format(self.doc.owner, self.doc.study_name, self.doc.access_code))
             f.write('Key\tPath\n')
             for key, value in self.doc.files.items():
                 f.write('{}\t{}\n'.format(key, value))
@@ -327,6 +327,7 @@ class Tool(mp.Process):
             for val, df in mdf.groupby(t_col):
                 child = self.create_child(t_col, val)
                 self.children.append(child)
+        print('finished creating children')
 
     def start_children(self):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
@@ -467,6 +468,7 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
+        print('I {} am running'.format(self.name))
         self.doc.update(pid=self.pid)
         if self.analysis:
             self.run_analysis()
@@ -474,3 +476,4 @@ class Tool(mp.Process):
             self.setup_analysis()
         self.doc.update(pid=None, analysis_status='Finished')
         self.doc.save()
+        print('I {} have finished'.format(self.name))

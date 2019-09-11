@@ -63,6 +63,6 @@ class DocTests(TestCase):
         assert sd.owner == ad.owner
 
     def create_from_analysis(self):
-        ad = docs.AnalysisDoc(analysis_code=fig.TEST_CODE_DEMUX).first()
+        ad = docs.AnalysisDoc(access_code=fig.TEST_CODE_DEMUX).first()
         ad2 = ad.create_copy()
         print(ad2)
