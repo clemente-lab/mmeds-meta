@@ -234,7 +234,6 @@ class TestServer(helper.CPWebCase):
         return h, b
 
     def upload_metadata(self):
-
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
@@ -244,14 +243,17 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_file.html', title='Upload Metadata', user=self.server_user)
+        page = load_html(fig.HTML_DIR / 'upload_metadata_file.html',
+                         title='Upload Metadata',
+                         user=self.server_user,
+                         metadata_type='subject')
         err = 'Error: gz is not a valid filetype.'
         page = insert_error(page, 22, err)
         self.assertBody(page)
         log('Checked invalid filetype')
 
-        # Check a metadata file that errors
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_ERROR], ['text/tab-seperated-values'])
+        # Check a subject metadata file that errors
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ERROR], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
@@ -262,22 +264,54 @@ class TestServer(helper.CPWebCase):
 
         log('Checked metadata that errors')
 
-        # Check a metadata file that produces warnings
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_WARN], ['text/tab-seperated-values'])
+        # Check a subject metadata file that produces warnings
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_WARN], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html', title='Warnings', user=self.server_user)
+        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
+                         title='Warnings',
+                         user=self.server_user,
+                         next_page='../upload/retry_upload')
 
-        warning = '7\t74\tStdDev Warning: Value 9.0 outside of two standard deviations of mean in column 74'
-        page = insert_warning(page, 22, warning)
-        warning = '-1\t55\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
+        warning = '-1\t17\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
             ' may be in error, only 1 found.'
         page = insert_warning(page, 22, warning)
         self.assertBody(page)
         log('Checked metadata that warns')
 
-        # Check a metadata file that has no issues
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORTEST], ['text/tab-seperated-values'])
+        # Check a subject metadata file that has no issues
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        # Check a specimen metadata file that errors
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ERROR], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        log('Checked metadata that errors')
+
+        # Check a subject metadata file that produces warnings
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
+                         title='Warnings',
+                         user=self.server_user,
+                         next_page='../upload/upload_data')
+
+        warning = '-1\t41\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
+            ' may be in error, only 1 found.'
+        page = insert_warning(page, 22, warning)
+        self.assertBody(page)
+        log('Checked metadata that warns')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
         self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=self.server_user)

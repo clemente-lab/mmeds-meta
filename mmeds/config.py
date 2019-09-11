@@ -113,9 +113,16 @@ TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
 TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
+TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
+TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
+TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
+TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
+TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
+TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
+TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
+TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
-TEST_METADATA_ALT = str(TEST_PATH / 'validation_files/test_metadata_alt.tsv')
-TEST_METADATA_ERROR = str(TEST_PATH / 'validation_files/test_metadata_error.tsv')
+TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
 TEST_METADATA_WARN = str(TEST_PATH / 'validation_files/test_metadata_warn.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
 TEST_METADATA_SHORTEST = str(TEST_PATH / 'shortest_metadata.tsv')
@@ -181,6 +188,27 @@ TABLE_ORDER = [
     'AdditionalMetaData'
 ]
 
+
+# Tables that should exist in the subject metadata
+SUBJECT_TABLES = {
+    'ICDCode',
+    'IllnessBroadCategory',
+    'IllnessCategory',
+    'IllnessDetails',
+    'Interventions',
+    'Genotypes',
+    'Ethnicity',
+    'Subjects',
+    'Heights',
+    'Weights',
+    'Illness',
+    'Intervention',
+    'AdditionalMetaData'
+}
+
+# Tables that should exist in the specimen metadata
+SPECIMEN_TABLES = (set(TABLE_ORDER) - SUBJECT_TABLES) | {'AdditionalMetaData'}
+
 # MMEDS users are not given direct access to
 # these tables as they will contain data that
 # is private to other users
@@ -221,7 +249,7 @@ USER_FILES = set(map(
         'analysis\w*_summary_dir'
     ]))
 
-ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
+ICD_TABLES = {'IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'}
 
 
 # These are the tables that users are given direct access to

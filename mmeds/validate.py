@@ -19,22 +19,22 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, delimiter='\t'):
+def validate_mapping_file(file_fp, metadata_type, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, sep=delimiter)
+    valid = Validator(file_fp, metadata_type, sep=delimiter)
     return valid.run()
 
 
 class Validator:
 
-    def __init__(self, file_fp, sep):
+    def __init__(self, file_fp, metadata_type, sep):
         """ Initialize the validator object. """
 
-        log('init validator')
+        self.metadata_type = metadata_type
         self.errors = []
         self.warnings = []
         self.subjects = []
@@ -49,6 +49,7 @@ class Validator:
 
         self.col_types = {}
         self.table_df = None
+        self.reference_header = None
         self.cur_col = None    # Current column being checked
         self.cur_row = 0       # Current row being checked
         self.cur_table = None  # Current table being checked
@@ -182,7 +183,7 @@ class Validator:
         for i, cell in enumerate(column):
             if pd.isna(cell):
                 # Check for missing required fields
-                if self.header_df[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
                     err = '{}\t{}\tMissing Required Value Error'
                     self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
             else:
@@ -330,6 +331,17 @@ class Validator:
                                          sep=self.sep,
                                          header=[0, 1],
                                          nrows=3)
+            if self.metadata_type == 'subject':
+                self.reference_header = pd.read_csv(fig.TEST_SUBJECT,
+                                                    sep=self.sep,
+                                                    header=[0, 1],
+                                                    nrows=3)
+
+            elif self.metadata_type == 'specimen':
+                self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
+                                                    sep=self.sep,
+                                                    header=[0, 1],
+                                                    nrows=3)
         except (pd.errors.ParserError, UnicodeDecodeError):
             raise InvalidMetaDataFileError('-1\t-1\tThere is an issue parsing your metadata. Please check that it is' +
                                            ' in tab delimited format with no tab or newline characters in any of the' +
@@ -375,6 +387,11 @@ class Validator:
                         self.errors.append(err.format(self.col_index, column))
 
     def run(self):
+        """ Perform the validation. """
+        if self.metadata_type == 'subject':
+            tables = fig.SUBJECT_TABLES
+        elif self.metadata_type == 'specimen':
+            tables = fig.SPECIMEN_TABLES
         log('In validate_mapping_file')
         try:
             self.load_mapping_file(self.file_fp, self.sep)
@@ -382,7 +399,7 @@ class Validator:
             # For each table
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it
-                if table not in fig.TABLE_ORDER:
+                if table not in tables:
                     self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
                 else:
                     self.cur_table = table
@@ -390,14 +407,9 @@ class Validator:
                     self.check_table()
 
             # Check for missing tables
-            missing_tables = fig.METADATA_TABLES.difference(set(self.tables))
+            missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
-
-            try:
-                self.subjects = self.df['Subjects']
-            except KeyError:
-                self.subjects = pd.DataFrame()
         except InvalidMetaDataFileError as e:
                 self.errors.append(e.message)
-        return self.errors, self.warnings, self.subjects
+        return self.errors, self.warnings, pd.DataFrame()

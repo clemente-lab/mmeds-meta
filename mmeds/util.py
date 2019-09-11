@@ -1,5 +1,6 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
+from operator import itemgetter
 from subprocess import run
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +25,15 @@ def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
 
 
+def join_metadata(subject, specimen):
+    """ Joins the subject and specimen metadata into a single data frame """
+    subject[('Subjects', 'SubjectIdCol')] = subject[('Subjects', 'HostSubjectId')]
+    subject.set_index(('Subjects', 'SubjectIdCol'), inplace=True)
+    specimen.set_index(('AdditionalMetaData', 'SubjectIdCol'), inplace=True)
+    df = subject.join(specimen, how='outer')
+    return df
+
+
 def camel_case(value):
     """ Converts VALUE to camel case, replacing '_', '-', '.', ' ', with the capitalization. """
     return ''.join([x.capitalize() for x in
@@ -38,16 +48,23 @@ def write_metadata(df, output_path):
     :output_path: The path to write the metadata to
     """
     if isinstance(df, pd.DataFrame):
-        mmeds_meta = df.to_dict('list')
+        unsorted = df.to_dict('list')
     else:
-        mmeds_meta = df
+        unsorted = df
     template = load_metadata_template()
+
+    metadata_length = len(unsorted[('RawData', 'RawDataID')])
 
     # Add NAs for columns not included in the dict/DF
     for col in template.columns:
-        if mmeds_meta.get(col) is None:
-            mmeds_meta[col] = ['NA' for count in range(len(mmeds_meta[('RawData', 'RawDataID')]))]
-            print(len(mmeds_meta[col]))
+        if unsorted.get(col) is None:
+            unsorted[col] = ['NA'] * metadata_length
+
+    # Create a sorted dictionary
+    mmeds_meta = OrderedDict.fromkeys(sorted(unsorted.keys(),
+                                             key=itemgetter(0, 1)))
+    for key in mmeds_meta.keys():
+        mmeds_meta[key] = unsorted[key]
 
     # Create the header lines
     lines = ['\t'.join([key[0] for key in mmeds_meta.keys()]),
@@ -55,25 +72,29 @@ def write_metadata(df, output_path):
 
     # Add the additional column info
     additional_headers = ['Optional', 'Text', 'No Limit']
-    for i in range(len(template)):
+    for i in range(3):
         header_line = []
         # Build the header info
         for table, column in mmeds_meta.keys():
             if table == 'AdditionalMetaData':
                 header_line.append(additional_headers[i])
             else:
-                header_line.append(template[table][column].iloc[i])
+                header_line.append(template[(table, column)].iloc[i])
 
         lines.append('\t'.join(header_line))
 
-    for row in range(len(df)):
+    for row in range(metadata_length):
         new_line = []
         for key, item in mmeds_meta.items():
             new_line.append(str(item[row]).replace('\t', '').strip())
         # Remove all non-ASCII characters using regular expressions
         cleaned_line = sub(r'[^\x00-\x7f]', r'', '\t'.join(new_line))
         lines.append(cleaned_line)
-    Path(output_path).write_text('\n'.join(lines) + '\n')
+
+    output = Path(output_path)
+    if not output.exists():
+        output.touch()
+    output.write_text('\n'.join(lines) + '\n')
 
 
 def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', keep_default_na=False):
