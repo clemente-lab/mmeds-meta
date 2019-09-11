@@ -81,7 +81,10 @@ def write_metadata(df, output_path):
 
         lines.append('\t'.join(header_line))
 
-    for row, line in enumerate(df):
+    print(df)
+    for row, line in enumerate(df[('RawData', 'RawDataID')]):
+        print(row)
+        print(line)
         new_line = []
         for key, item in mmeds_meta.items():
             new_line.append(str(item[row]).replace('\t', '').strip())
