@@ -82,6 +82,7 @@ class Qiime2(Tool):
         """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
         self.add_path('demux_file', '.qza')
+        self.add_path('error_correction', '.qza')
 
         # Run the script
         cmd = [
@@ -90,6 +91,7 @@ class Qiime2(Tool):
             '--i-seqs {}'.format(self.get_file('working_file')),
             '--m-barcodes-file {}'.format(self.get_file('mapping')),
             '--m-barcodes-column {}'.format('BarcodeSequence'),
+            '--o-error-correction-details {}'.format(self.get_file('error_correction')),
             '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
         ]
         # Reverse compliment the barcodes in the mapping file if using paired reads

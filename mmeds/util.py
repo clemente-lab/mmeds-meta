@@ -931,6 +931,9 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
     headers[2] = 'LinkerPrimerSequence'
     headers[di] = hold
 
+    di = headers.index('SampleID')
+    headers[di] = 'MmedsSampleID'
+
     hold = headers[-1]
     di = headers.index('RawDataDescription')
     headers[-1] = 'Description'
