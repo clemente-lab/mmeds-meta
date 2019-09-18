@@ -122,11 +122,11 @@ class Validator:
             cells[cell].append(i)
         # Find any duplicates
         dups = {k: v for k, v in cells.items() if len(v) > 1}
+        err_str = '{}\t{}\tDuplicate Value Error: Duplicate value {} of row {} in row {} in column {}.'
         for dup_key in dups.keys():
             value = dups[dup_key]
             for val in value[1:]:
-                self.errors.append('%d\t%d\tDuplicate Value Error: Duplicate value of row %d, %s in row %d.' %
-                                   (val, self.col_index, value[0], dup_key, val))
+                self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
 
     def check_cell(self, row_index, cell, check_date=False):
         """
@@ -212,7 +212,7 @@ class Validator:
         for i, row in self.df[self.cur_table].iterrows():
             if row[start] > row[end]:
                 err = '{}\t{}\tInvalid Date Range Error: End date {} is earlier than start date {} in row {}'
-                self.errors.append(err.format(i, start_col, row[start], row[end], i))
+                self.errors.append(err.format(i, start_col, row[end], row[start], i))
 
     def check_table_column(self):
         """ Check the columns of a particular table """
@@ -246,8 +246,9 @@ class Validator:
         elif self.cur_table == 'ICDCode':
             self.check_ICD_codes(col)
         elif self.cur_col == 'HostSubjectId':
-            self.check_duplicates(col)
             self.check_NA(col)
+        elif self.cur_col == 'IllnessInstanceID':
+            self.check_duplicates(col)
 
     def check_table(self):
         """

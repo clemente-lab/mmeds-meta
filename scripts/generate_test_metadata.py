@@ -40,7 +40,7 @@ def write_error_files(df, file_type):
         random_col = ('Interventions', 'InterventionType')
         start_date_col = ('Illness', 'IllnessStartDate')
         end_date_col = ('Illness', 'IllnessEndDate')
-        unique_col = ('Subjects', 'HostSubjectId')
+        unique_col = ('Illness', 'IllnessInstanceID')
         required_col = ('Subjects', 'HostSubjectId')
     elif file_type == 'specimen':
         random_col = ('Specimen', 'SpecimenInformation')

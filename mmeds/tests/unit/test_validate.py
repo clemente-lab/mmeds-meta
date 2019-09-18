@@ -22,6 +22,7 @@ def test_error_files():
             error = ' '.join(name.split('.')[0].split('_')[3:])
             errors, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type)
 
+            print('testing {}'.format(error))
             log(errors[0])
             # Check the correct error is raised
             assert error in errors[0].lower()

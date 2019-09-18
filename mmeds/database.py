@@ -785,7 +785,7 @@ class MetaDataUploader:
         if not temporary:
             # Read in the metadata file to import
             df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
-            self.df = df.reindex_axis(df.columns, axis=1)
+            self.df = df.reindex(df.columns, axis=1)
             self.builder = SQLBuilder(self.df, self.db, owner)
 
         # If the owner is None set user_id to 0
