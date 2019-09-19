@@ -36,7 +36,6 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
 
     if 'qiime1' in atype:
         tool = Qiime1(user, access_code, atype, config, testing)
-        print('Created tool {}'.format(tool.name))
     elif 'qiime2' in atype:
         tool = Qiime2(user, access_code, atype, config, testing)
     elif 'test' in atype:
@@ -45,7 +44,6 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
-    print('Sstart tool {}'.format(tool.name))
     tool.start()
     return tool
 
