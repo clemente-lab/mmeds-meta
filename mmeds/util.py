@@ -943,11 +943,19 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
         f.write('\t'.join(headers) + '\n')
         if 'qiime2' in analysis_type:
             f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
+        seen_ids = set()
+        seen_bars = set()
         for row_index in range(len(mdata)):
+            if str(mdata['RawDataID'][row_index]) in seen_ids:
+                continue
             row = []
             for header in headers:
                 if header == '#SampleID':
                     row.append(str(mdata['RawDataID'][row_index]))
+                    seen_ids.add(str(mdata['RawDataID'][row_index]))
+                elif header == 'BarcodeSequence':
+                    row.append(str(mdata['BarcodeSequence'][row_index]))
+                    seen_bars.add(str(mdata['BarcodeSequence'][row_index]))
                 elif header == 'MmedsSampleID':
                     row.append(str(mdata['SampleID'][row_index]))
                 elif header == 'Description':

@@ -40,7 +40,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         log('initilize {}'.format(self.name))
-        self.debug = False
+        self.debug = True
         self.study_code = access_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
@@ -77,11 +77,16 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.children = []
         self.doc.sub_analysis = False
-        self.doc.save()
         log('finished initialization: {}'.format(self.name))
 
     def __str__(self):
         return ppretty(self, seq_length=20)
+
+    def update_doc(self, **kwargs):
+        """ Pass updates to the database and reload """
+        self.doc.modify(**kwargs)
+        self.doc.save()
+        self.doc.reload()
 
     def log(self, message):
         """ Print message if debugging is enabled """
@@ -107,10 +112,8 @@ class Tool(mp.Process):
             file_path = '{}{}'.format(self.path / name, extension)
 
         self.doc.files[str(file_key)] = file_path
-        self.doc.update(files=self.doc.files)
+        self.update_doc(files=self.doc.files)
         self.stage_files[self.current_stage].append(file_key)
-        self.doc.save()
-        self.doc.reload()
 
     def get_file(self, key, absolute=False):
         """ Get the path to the file stored under 'key' relative to the run dir """
@@ -379,7 +382,6 @@ class Tool(mp.Process):
             temp = JOB_TEMPLATE.read_text()
             # Write all the commands
             jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
-        self.doc.save()
 
     def run_analysis(self):
         """ Runs the setup, and starts the analysis process """
@@ -409,7 +411,7 @@ class Tool(mp.Process):
                 log([child.name for child in self.children])
 
             if self.testing:
-                self.doc.update(analysis_status='started')
+                self.update_doc(analysis_status='started')
                 self.log('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
@@ -446,14 +448,13 @@ class Tool(mp.Process):
             for i in range(1, 6):
                 if 'MMEDS_STAGE_{}'.format(i) in log_text:
                     stage = i
-            self.doc.update(set__restart_stage=stage)
+            self.update_doc(restart_stage=stage)
             log('{} restart_stage {}'.format(self.name, self.doc.restart_stage))
-            self.doc.save()
-            self.doc.reload()
 
             self.log('{}: checking on files, restart stage: {}'.format(self.name, self.doc.restart_stage))
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
+                continue
                 self.log('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
                 # If they should be created after the last checkpoint
                 if stage >= self.doc.restart_stage:
@@ -479,11 +480,9 @@ class Tool(mp.Process):
             self.log('{}: finished file cleanup'.format(self.name))
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
         self.log('{}: made it past restart stages'.format(self.name))
-        self.doc.update(restart_stage=-1)  # Indicates analysis finished successfully
+        self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.log('{}: updated mongo stuff'.format(self.name))
-        self.doc.save()
         self.log('{}: saved mongo stuff'.format(self.name))
-        self.doc.reload()
         self.log('{}: reloaded mongo stuff'.format(self.name))
         self.move_user_files()
 
@@ -498,7 +497,7 @@ class Tool(mp.Process):
     def run(self):
         """ Overrides Process.run() """
         self.log('I {} am running'.format(self.name))
-        self.doc.update(pid=self.pid)
+        self.update_doc(pid=self.pid)
         self.log('I {} have updated my ID'.format(self.name))
         if self.analysis:
             self.log('I {} am running analysis'.format(self.name))
@@ -507,7 +506,6 @@ class Tool(mp.Process):
             self.log('I {} am setting up analysis'.format(self.name))
             self.setup_analysis()
         self.log('I {} am updating'.format(self.name))
-        self.doc.update(pid=None, analysis_status='Finished')
+        self.update_doc(pid=None, analysis_status='Finished')
         self.log('I {} have updated'.format(self.name))
-        self.doc.save()
         self.log('I {} have finished'.format(self.name))
