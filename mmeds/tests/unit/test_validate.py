@@ -5,22 +5,25 @@ from mmeds.util import log
 
 
 def test_validate_mapping_files():
-    errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SUBJECT, 'subject')
+    errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SUBJECT, 'subject', None)
     assert not errors
     assert not warnings
 
-    errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN, 'specimen')
+    errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN, 'specimen', subjects)
     assert not errors
     assert not warnings
 
 
 def test_error_files():
-    for metadata_type in ['specimen', 'subject']:
+    subject_ids = None
+    for metadata_type in ['subject', 'specimen']:
         error_files = fig.TEST_PATH.glob('validation_files/{}_validate_error*'.format(metadata_type))
         for test_file in error_files:
             name = Path(test_file).name
             error = ' '.join(name.split('.')[0].split('_')[3:])
-            errors, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type)
+            errors, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type, subject_ids)
+            if subject_ids is None:
+                subject_ids = subjects
 
             print('testing {}'.format(error))
             log(errors[0])
@@ -35,13 +38,16 @@ def test_error_files():
 
 
 def test_warning_files():
-    for metadata_type in ['specimen', 'subject']:
+    subject_ids = None
+    for metadata_type in ['subject', 'specimen']:
         warning_files = fig.TEST_PATH.glob('validation_files/{}_validate_warning*'.format(metadata_type))
         for test_file in warning_files:
             name = Path(test_file).name
             warning = ' '.join(name.split('.')[0].split('_')[3:])
             log('Testing Warning file {}'.format(name))
-            warnings, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type)
+            warnings, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type, subject_ids)
+            if subject_ids is None:
+                subject_ids = subjects
 
             # Check the correct warning is raised
             assert warning in warnings[0].lower()

@@ -105,7 +105,7 @@ def test_mmeds_to_MIxS():
 
 
 def test_generate_error_html():
-    errors, warnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_ERROR, 'subject')
+    errors, warnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_ERROR, 'subject', None)
     html = util.generate_error_html(fig.TEST_SUBJECT_ERROR, errors, warnings)
     # Check that the html is valid
     document, errors = tidy_document(html)
@@ -147,6 +147,7 @@ def test_read_write_mmeds():
     hash2 = h2.hexdigest()
 
     assert hash1 == hash2
+
 
 def test_join_metadata():
     subject = util.load_metadata(fig.TEST_SUBJECT)

@@ -104,13 +104,16 @@ class MMEDSbase:
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
 
         # Check the metadata file for errors
-        errors, warnings, subjects = validate_mapping_file(metadata_copy, cp.session['metadata_type'])
+        errors, warnings, subjects = validate_mapping_file(metadata_copy,
+                                                           cp.session['metadata_type'],
+                                                           cp.session['subject_ids'])
 
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:
             try:
                 if cp.session['metadata_type'] == 'subject':
                     warnings += db.check_repeated_subjects(subjects)
+                    cp.session['subject_ids'] = subjects
                 elif cp.session['metadata_type'] == 'specimen':
                     errors += db.check_user_study_name(cp.session['study_name'])
                 else:
@@ -445,6 +448,7 @@ class MMEDSauthentication(MMEDSbase):
             cp.session['processes'] = {}
             cp.session['download_files'] = {}
             cp.session['uploaded_files'] = {}
+            cp.session['subject_ids'] = None
             page = self.format_html('welcome', title='Welcome to Mmeds', user=self.get_user())
             log('Login Successful')
         except err.InvalidLoginError as e:

@@ -42,12 +42,14 @@ def write_error_files(df, file_type):
         end_date_col = ('Illness', 'IllnessEndDate')
         unique_col = ('Illness', 'IllnessInstanceID')
         required_col = ('Subjects', 'HostSubjectId')
+        sub_col = required_col
     elif file_type == 'specimen':
         random_col = ('Specimen', 'SpecimenInformation')
         start_date_col = ('Specimen', 'SpecimenCollectionDate')
         end_date_col = ('Specimen', 'SpecimenCollectionDate')
         unique_col = ('RawData', 'RawDataID')
         required_col = ('RawData', 'RawDataID')
+        sub_col = ('AdditionalMetaData', 'SubjectIdCol')
 
     # Many Errors/Warnings
     many_error = df.copy(deep=True)
@@ -58,7 +60,6 @@ def write_error_files(df, file_type):
     many_error = df.copy(deep=True)
     many_error.drop(random_col, axis=1, inplace=True)
 
-    # Missing a table
     many_error = df.copy(deep=True)
     many_error.drop(unique_col[0], axis=1, inplace=True)
 
@@ -241,6 +242,11 @@ def write_error_files(df, file_type):
         if i in range(5, 10):
             multiple_studies.iloc[10]['Study']['StudyName'] = 'OtherStudy'
         write_test_metadata(multiple_studies, '{}/{}_validate_error_multiple_studies.tsv'.format(file_path, file_type))
+
+        # Missing a subject
+        missing_subject = df.copy(deep=True)
+        missing_subject = missing_subject[missing_subject[sub_col] != '4']
+        write_test_metadata(missing_subject, '{}/{}_validate_error_missing_subject.tsv'.format(file_path, file_type))
 
 
 def write_warning_files(df, file_type):
