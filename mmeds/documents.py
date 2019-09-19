@@ -12,6 +12,7 @@ class MMEDSDoc(men.Document):
     meta = {'allow_inheritance': True}
 
     access_code = men.StringField(max_length=50, required=True)
+
     # When the document is updated record the
     # location of all files in a new file
     def save(self):
@@ -46,24 +47,6 @@ class StudyDoc(MMEDSDoc):
     path = men.StringField(max_length=256, required=True)
     metadata = men.DictField()
     files = men.DictField()
-
-    # When the document is updated record the
-    # location of all files in a new file
-    def save(self):
-        with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
-            f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
-            f.write('Key\tPath\n')
-            for key, file_path in self.files.items():
-                # Skip non existent files
-                if file_path is None:
-                    continue
-                # If it's a key for an analysis point to the file index for that analysis
-                elif isinstance(file_path, dict):
-                    f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
-                # Otherwise just write the value
-                else:
-                    f.write('{}\t{}\n'.format(key, file_path))
-        super(StudyDoc, self).save()
 
     def __str__(self):
         """ Return a printable string """
