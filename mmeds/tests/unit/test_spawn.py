@@ -46,7 +46,7 @@ class SpawnTests(TestCase):
                            config=self.config,
                            testing=True,
                            analysis=False)
-        self.analysis_code = self.tool.doc.analysis_code
+        self.access_code = self.tool.doc.access_code
         self.dirs = [self.tool.doc.path]
         self.tool.start()
         while self.tool.is_alive():
@@ -60,7 +60,7 @@ class SpawnTests(TestCase):
 
     def test_b_restart_analysis(self):
         """ Test restarting an analysis from a analysis doc. """
-        tool = sp.restart_analysis(fig.TEST_USER, self.analysis_code, 1, self.testing, run_analysis=False)
+        tool = sp.restart_analysis(fig.TEST_USER, self.access_code, 1, self.testing, run_analysis=False)
         self.assertTrue(tool)
         self.assertEqual(tool.doc, self.tool.doc)
         tool.start()
@@ -71,7 +71,7 @@ class SpawnTests(TestCase):
 
     def test_c_start_sub_analysis_cold(self):
         """ Test that a sub-analysis can be successfully started from a previously run analysis. """
-        tool = sp.spawn_sub_analysis(fig.TEST_USER, self.analysis_code,
+        tool = sp.spawn_sub_analysis(fig.TEST_USER, self.access_code,
                                      ('BodySite', 'SpecimenBodySite'),
                                      'tongue', self.testing)
         self.assertTrue(tool)

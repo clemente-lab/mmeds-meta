@@ -19,19 +19,19 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, metadata_type, delimiter='\t'):
+def validate_mapping_file(file_fp, metadata_type, subject_ids, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, metadata_type, sep=delimiter)
+    valid = Validator(file_fp, metadata_type, subject_ids, sep=delimiter)
     return valid.run()
 
 
 class Validator:
 
-    def __init__(self, file_fp, metadata_type, sep):
+    def __init__(self, file_fp, metadata_type, subject_ids, sep):
         """ Initialize the validator object. """
 
         self.metadata_type = metadata_type
@@ -57,6 +57,10 @@ class Validator:
         self.seen_tables = []
         self.seen_cols = []
         self.col_index = 0
+
+        # List of ids found in subject metadata
+        # used when validating specimen metadata
+        self.subject_ids = subject_ids
 
     def check_number_column(self, column):
         """ Check for mixed types and values outside two standard deviations. """
@@ -122,11 +126,11 @@ class Validator:
             cells[cell].append(i)
         # Find any duplicates
         dups = {k: v for k, v in cells.items() if len(v) > 1}
+        err_str = '{}\t{}\tDuplicate Value Error: Duplicate value {} of row {} in row {} in column {}.'
         for dup_key in dups.keys():
             value = dups[dup_key]
             for val in value[1:]:
-                self.errors.append('%d\t%d\tDuplicate Value Error: Duplicate value of row %d, %s in row %d.' %
-                                   (val, self.col_index, value[0], dup_key, val))
+                self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
 
     def check_cell(self, row_index, cell, check_date=False):
         """
@@ -212,7 +216,7 @@ class Validator:
         for i, row in self.df[self.cur_table].iterrows():
             if row[start] > row[end]:
                 err = '{}\t{}\tInvalid Date Range Error: End date {} is earlier than start date {} in row {}'
-                self.errors.append(err.format(i, start_col, row[start], row[end], i))
+                self.errors.append(err.format(i, start_col, row[end], row[start], i))
 
     def check_table_column(self):
         """ Check the columns of a particular table """
@@ -246,8 +250,9 @@ class Validator:
         elif self.cur_table == 'ICDCode':
             self.check_ICD_codes(col)
         elif self.cur_col == 'HostSubjectId':
-            self.check_duplicates(col)
             self.check_NA(col)
+        elif self.cur_col == 'IllnessInstanceID':
+            self.check_duplicates(col)
 
     def check_table(self):
         """
@@ -264,6 +269,9 @@ class Validator:
             if missing_cols:
                 text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
                 self.errors.append(text.format(', '.join(missing_cols), self.cur_table))
+        # Check that subjects match
+        elif self.metadata_type == 'specimen':
+            self.check_matching_subjects()
 
         # For each table column
         for i, column in enumerate(self.table_df.columns):
@@ -386,15 +394,37 @@ class Validator:
                         err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
                         self.errors.append(err.format(self.col_index, column))
 
+    def check_matching_subjects(self):
+        """ Insure the subjects match those previouvs found in subject metadata """
+        # Get the subjects identified in the specimen metadata
+        specimen_subs = self.df['AdditionalMetaData']['SubjectIdCol'].tolist()
+        diff = set(self.subject_ids['HostSubjectId']).symmetric_difference(set(specimen_subs))
+        err = '{}\t{}\tMissing Subject Error: Subject with ID {} found in {} metadata file but not {} metadata'
+        for sub in diff:
+            try:
+                row_index = specimen_subs.index(sub)
+                found = 'specimen'
+                other = 'subject'
+            except ValueError:
+                row_index = self.subject_ids['HostSubjectId'].tolist().index(sub)
+                found = 'subject'
+                other = 'specimen'
+            self.errors.append(err.format(row_index, self.col_index, sub, found, other))
+
     def run(self):
         """ Perform the validation. """
-        if self.metadata_type == 'subject':
-            tables = fig.SUBJECT_TABLES
-        elif self.metadata_type == 'specimen':
-            tables = fig.SPECIMEN_TABLES
-        log('In validate_mapping_file')
+        subjects = pd.DataFrame()
         try:
             self.load_mapping_file(self.file_fp, self.sep)
+        except InvalidMetaDataFileError as e:
+                self.errors.append(e.message)
+        else:
+            if self.metadata_type == 'subject':
+                tables = fig.SUBJECT_TABLES
+                subjects = self.df['Subjects']
+            elif self.metadata_type == 'specimen':
+                tables = fig.SPECIMEN_TABLES
+            log('In validate_mapping_file')
             self.check_column_types()
             # For each table
             for table in self.tables:
@@ -410,6 +440,4 @@ class Validator:
             missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
             if missing_tables:
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
-        except InvalidMetaDataFileError as e:
-                self.errors.append(e.message)
-        return self.errors, self.warnings, pd.DataFrame()
+        return self.errors, self.warnings, subjects

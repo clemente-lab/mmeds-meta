@@ -95,6 +95,7 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
                                                       datafile[1], new_dir) for datafile in datafiles
                        if datafile[1] is not None}
 
+    # Upload the combined file to the database
     with MetaDataUploader(metadata=metadata_copy,
                           path=new_dir,
                           study_type='qiime',

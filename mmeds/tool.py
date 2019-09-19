@@ -40,6 +40,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         log('initilize {}'.format(self.name))
+        self.debug = False
         self.study_code = access_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
@@ -81,6 +82,11 @@ class Tool(mp.Process):
 
     def __str__(self):
         return ppretty(self, seq_length=20)
+
+    def log(self, message):
+        """ Print message if debugging is enabled """
+        if self.debug:
+            print(message)
 
     def set_stage(self, stage):
         """ Set self.current_stage to the provided value """
@@ -206,7 +212,7 @@ class Tool(mp.Process):
         """
         # Create the file index
         with open(self.path / 'file_index.tsv', 'w') as f:
-            f.write('{}\t{}\t{}\n'.format(self.doc.owner, self.doc.study_name, self.doc.analysis_code))
+            f.write('{}\t{}\t{}\n'.format(self.doc.owner, self.doc.study_name, self.doc.access_code))
             f.write('Key\tPath\n')
             for key, value in self.doc.files.items():
                 f.write('{}\t{}\n'.format(key, value))
@@ -317,7 +323,7 @@ class Tool(mp.Process):
 
         # For each column selected...
         for col in self.doc.config['sub_analysis']:
-            print('Create child for col {}'.format(col))
+            self.log('Create child for col {}'.format(col))
             try:
                 t_col = (COL_TO_TABLE[col], col)
             # Additional columns won't be in this table
@@ -327,6 +333,7 @@ class Tool(mp.Process):
             for val, df in mdf.groupby(t_col):
                 child = self.create_child(t_col, val)
                 self.children.append(child)
+        self.log('finished creating children')
 
     def start_children(self):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
@@ -378,6 +385,7 @@ class Tool(mp.Process):
         """ Runs the setup, and starts the analysis process """
         try:
             self.setup_analysis()
+            self.log('I {} have setup analysis'.format(self.name))
 
             log('After setup analysis')
             if self.doc.sub_analysis:
@@ -402,10 +410,12 @@ class Tool(mp.Process):
 
             if self.testing:
                 self.doc.update(analysis_status='started')
+                self.log('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
+                self.log('I {} have finished running'.format(self.name))
             else:
                 # Create a file to execute the submission
                 submitfile = self.get_file('submitfile', True)
@@ -417,7 +427,9 @@ class Tool(mp.Process):
                 output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
+            self.log('{}: pre post analysis'.format(self.name))
             self.post_analysis()
+            self.log('{}: post post analysis'.format(self.name))
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
@@ -428,6 +440,7 @@ class Tool(mp.Process):
         log_text = self.get_file('errorlog', True).read_text()
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
+            self.log('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
             stage = 0
             for i in range(1, 6):
@@ -438,23 +451,40 @@ class Tool(mp.Process):
             self.doc.save()
             self.doc.reload()
 
+            self.log('{}: checking on files, restart stage: {}'.format(self.name, self.doc.restart_stage))
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
+                self.log('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
                 # If they should be created after the last checkpoint
                 if stage >= self.doc.restart_stage:
-                    for f in [x for x in files if not x == 'jobfile' and not x == 'errorlog']:
-                        # Check if they exist
-                        unfinished = self.get_file(f, True)
-                        if unfinished.exists():
-                            # Otherwise delete them
-                            if unfinished.is_dir():
-                                rmtree(unfinished)
+                    self.log('{}: Greater than restart stage'.format(self.name))
+                    for f in files:
+                        if not f == 'jobfile' and not f == 'errorlog':
+                            # Check if they exist
+                            unfinished = self.get_file(f, True)
+                            self.log('{}: checking file {}'.format(self.name, unfinished))
+                            if unfinished.exists():
+                                self.log('{}: file exists'.format(self.name))
+                                # Otherwise delete them
+                                if unfinished.is_dir():
+                                    self.log('{}: rmtree'.format(self.name))
+                                    rmtree(unfinished)
+                                else:
+                                    self.log('{}: unlink'.format(self.name))
+                                    unfinished.unlink()
                             else:
-                                unfinished.unlink()
+                                self.log('{}: file does exist {}'.format(self.name, unfinished))
+                else:
+                    self.log('{}: stage already passed'.format(self.name))
+            self.log('{}: finished file cleanup'.format(self.name))
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
+        self.log('{}: made it past restart stages'.format(self.name))
         self.doc.update(restart_stage=-1)  # Indicates analysis finished successfully
+        self.log('{}: updated mongo stuff'.format(self.name))
         self.doc.save()
+        self.log('{}: saved mongo stuff'.format(self.name))
         self.doc.reload()
+        self.log('{}: reloaded mongo stuff'.format(self.name))
         self.move_user_files()
 
         if not self.testing:
@@ -467,10 +497,17 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
+        self.log('I {} am running'.format(self.name))
         self.doc.update(pid=self.pid)
+        self.log('I {} have updated my ID'.format(self.name))
         if self.analysis:
+            self.log('I {} am running analysis'.format(self.name))
             self.run_analysis()
         else:
+            self.log('I {} am setting up analysis'.format(self.name))
             self.setup_analysis()
+        self.log('I {} am updating'.format(self.name))
         self.doc.update(pid=None, analysis_status='Finished')
+        self.log('I {} have updated'.format(self.name))
         self.doc.save()
+        self.log('I {} have finished'.format(self.name))
