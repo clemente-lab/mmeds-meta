@@ -402,11 +402,11 @@ class Validator:
         err = '{}\t{}\tMissing Subject Error: Subject with ID {} found in {} metadata file but not {} metadata'
         for sub in diff:
             try:
-                row_index = specimen_subs.index(sub) + 5
+                row_index = specimen_subs.index(sub)
                 found = 'specimen'
                 other = 'subject'
             except ValueError:
-                row_index = self.subject_ids['HostSubjectId'].tolist().index(sub) + 5
+                row_index = self.subject_ids['HostSubjectId'].tolist().index(sub)
                 found = 'subject'
                 other = 'specimen'
             self.errors.append(err.format(row_index, self.col_index, sub, found, other))
