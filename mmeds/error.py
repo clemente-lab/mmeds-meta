@@ -92,3 +92,10 @@ class InvalidMetaDataFileError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+
+
+class MissingFileError(MmedsError):
+    """ Exception for missing file errors """
+
+    def __init__(self, message):
+        self.message = message

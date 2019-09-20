@@ -11,7 +11,7 @@ from mmeds.database import Database
 from mmeds.util import (log, create_qiime_from_mmeds,
                         load_metadata, write_metadata, camel_case,
                         send_email)
-from mmeds.error import AnalysisError
+from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 
 import multiprocessing as mp
@@ -115,8 +115,16 @@ class Tool(mp.Process):
         self.update_doc(files=self.doc.files)
         self.stage_files[self.current_stage].append(file_key)
 
-    def get_file(self, key, absolute=False):
-        """ Get the path to the file stored under 'key' relative to the run dir """
+    def get_file(self, key, absolute=False, check=False):
+        """
+        Get the path to the file stored under 'key' relative to the run dir
+        :key: A string. The key for accessing the file in the mongo document files dictionary
+        :absolute: A boolean. If True return an absolute file path rather than a relative one
+        :check: A boolean. If True check that the requested file exists, if it doesn't raise an error
+        """
+        if check and not Path(self.doc.files[key]).exists():
+            raise MissingFileError('No file {} at location {} found.'.format(key, self.doc.files[key]))
+
         if absolute:
             file_path = Path(self.doc.files[key])
         else:

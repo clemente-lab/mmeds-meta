@@ -50,9 +50,10 @@ class DocTests(TestCase):
         """ Clean up """
         remove_user(fig.TEST_USER, testing=True)
 
-    def test_access(self):
+    def test_creation(self):
         """"""
-        # TODO
+        self.creation_from_study()
+        self.creation_from_analysis()
 
     def creation_from_study(self):
         """ Test creating a document """
