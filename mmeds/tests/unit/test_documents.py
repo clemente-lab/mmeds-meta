@@ -8,6 +8,7 @@ from tempfile import gettempdir
 
 import mmeds.secrets as sec
 import mmeds.documents as docs
+import mmeds.util as util
 import mongoengine as men
 
 
@@ -43,7 +44,9 @@ class DocTests(TestCase):
                                       access_code=self.test_code,
                                       owner=self.owner,
                                       email=self.email,
-                                      path=gettempdir())
+                                      path=gettempdir(),
+                                      testing=True)
+        self.test_doc.save()
 
     @classmethod
     def tearDownClass(self):
@@ -52,13 +55,14 @@ class DocTests(TestCase):
 
     def test_creation(self):
         """"""
-        self.creation_from_study()
-        self.creation_from_analysis()
+        self.create_from_study()
+        self.create_from_analysis()
 
-    def creation_from_study(self):
+    def create_from_study(self):
         """ Test creating a document """
-        sd = docs.StudyDoc.objects(access_code=fig.TEST_CODE).first()
-        ad = sd.generate_AnalysisDoc('testDocument', 'qiime2-DADA2', fig.TEST_CODE_DEMUX)
+        config = util.load_config(None, fig.TEST_METADATA)
+        sd = docs.StudyDoc.objects(access_code=self.test_code).first()
+        ad = sd.generate_AnalysisDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX)
         assert Path(sd.path) == Path(ad.path).parent
         assert sd.owner == ad.owner
         assert sd.owner == ad.owner

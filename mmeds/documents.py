@@ -53,12 +53,13 @@ class StudyDoc(MMEDSDoc):
         return ppretty(self)
 
     def generate_AnalysisDoc(self, name, analysis_type, config, access_code):
-        """ Create a new AnalysisDoc from the current StudyDoc """
-        log('IN Generate AnalysisDoc')
-        log(name)
-        log(analysis_type)
-        log(config)
-        log(access_code)
+        """
+        Create a new AnalysisDoc from the current StudyDoc
+        :name: A string. The name of the new document
+        :analysis_type: A string. The type of analysis the new document will store information on
+        :config: A dictionary. The configuration for the analysis
+        :access_code: A string. A unique code for accessing the new document
+        """
         files = {}
         run_id = 0
 
@@ -70,7 +71,6 @@ class StudyDoc(MMEDSDoc):
 
         new_dir = new_dir.resolve()
         new_dir.mkdir()
-        log('Created dir {}'.format(new_dir))
 
         # Handle demuxed sequences
         if Path(self.files['for_reads']).suffix in ['.zip', '.tar']:
