@@ -8,6 +8,7 @@ from mmeds.util import load_config
 
 import mmeds.config as fig
 import mmeds.secrets as sec
+import mmeds.error as err
 
 
 def upload_metadata(args):
@@ -78,3 +79,16 @@ class ToolTests(TestCase):
     def test_missing_file(self):
         """ Test that an appropriate error will be raised if a file doesn't exist on disk """
         # TODO
+        files = self.tool.doc.files
+        # Add a non-existent file
+        files['fakefile'] = '/fake/dir/'
+        self.tool.update_doc(files=files)
+        with self.assertRaises(err.MissingFileError):
+            self.tool.get_file('fakefile', check=True)
+        del files['fakefile']
+        self.tool.update_doc(files=files)
+
+    def test_update_doc(self):
+        self.assertEqual(self.tool.doc.study_name, 'Test_Tool')
+        self.tool.update_doc(study_name='Test_Update')
+        self.assertEqual(self.tool.doc.study_name, 'Test_Update')

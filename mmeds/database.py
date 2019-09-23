@@ -558,10 +558,13 @@ class Database:
                 AnalysisDoc.objects(access_code=access_code))
 
     @classmethod
-    def get_doc(cls, doc_type, access_code):
+    def get_docs(cls, doc_type, access_code):
         """ For server use """
         if doc_type == 'analysis':
-            return AnalysisDoc.objects(access_code=access_code)
+            docs = AnalysisDoc.objects(access_code=access_code)
+        elif doc_type == 'study':
+            docs = StudyDoc.objects(access_code=access_code)
+        return docs
 
 
 class SQLBuilder:

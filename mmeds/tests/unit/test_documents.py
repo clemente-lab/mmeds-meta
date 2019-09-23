@@ -2,12 +2,13 @@ from unittest import TestCase
 import mmeds.config as fig
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.database import MetaDataUploader
+from mmeds.database import MetaDataUploader, Database
 from pathlib import Path
 from tempfile import gettempdir
 
 import mmeds.secrets as sec
 import mmeds.documents as docs
+import mmeds.util as util
 import mongoengine as men
 
 
@@ -21,9 +22,12 @@ def upload_metadata(args):
                           owner=fig.TEST_USER,
                           temporary=False,
                           testing=True) as up:
-        access_code, study_name, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                            barcodes=fig.TEST_BARCODES,
-                                                            access_code=access_code)
+        return up.import_metadata(for_reads=fig.TEST_READS,
+                                  barcodes=fig.TEST_BARCODES,
+                                  access_code=access_code)
+
+
+TESTING = True
 
 
 class DocTests(TestCase):
@@ -33,36 +37,54 @@ class DocTests(TestCase):
     def setUpClass(self):
         """ Set up tests """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+        test_setup = (fig.TEST_METADATA_SHORTEST,
+                      fig.TEST_DIR,
+                      fig.TEST_USER,
+                      fig.TEST_CODE)
+        access_code, email = upload_metadata(test_setup)
+
+        with Database(user='root', testing=TESTING) as db:
+            self.test_doc = db.get_docs('study', access_code).first()
+
         self.connection = men.connect('test', alias='test_documents.py')
-        self.test_code = 'ThisIsATest'
+        self.test_code = access_code  # 'ThisIsATest'
         self.owner = fig.TEST_USER  # 'test_owner'
         self.email = fig.TEST_EMAIL  # 'test_email'
+        """
         self.test_doc = docs.StudyDoc(study_type='test_study',
                                       reads_type='single_end',
                                       study='TestStudy',
                                       access_code=self.test_code,
                                       owner=self.owner,
                                       email=self.email,
-                                      path=gettempdir())
+                                      path=gettempdir(),
+                                      testing=True)
+        self.test_doc.save()
+        """
 
     @classmethod
     def tearDownClass(self):
         """ Clean up """
         remove_user(fig.TEST_USER, testing=True)
 
-    def test_access(self):
+    def test_creation(self):
         """"""
-        # TODO
+        self.create_from_study()
+        self.create_from_analysis()
 
-    def creation_from_study(self):
+    def create_from_study(self):
         """ Test creating a document """
-        sd = docs.StudyDoc.objects(access_code=fig.TEST_CODE).first()
-        ad = sd.generate_AnalysisDoc('testDocument', 'qiime2-DADA2', fig.TEST_CODE_DEMUX)
+        config = util.load_config(None, fig.TEST_METADATA)
+        sd = docs.StudyDoc.objects(access_code=self.test_code).first()
+        ad = sd.generate_AnalysisDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX)
         assert Path(sd.path) == Path(ad.path).parent
         assert sd.owner == ad.owner
-        assert sd.owner == ad.owner
+        assert sd.access_code == ad.study_code
 
     def create_from_analysis(self):
-        ad = docs.AnalysisDoc(access_code=fig.TEST_CODE_DEMUX).first()
-        ad2 = ad.create_copy()
+        ad = docs.AnalysisDoc.objects(access_code=fig.TEST_CODE_DEMUX).first()
+        ad2 = ad.create_sub_analysis('Nationality', 'American', 'child_code')
+        assert ad2.owner == ad.owner
+        print(ad)
         print(ad2)
+        assert Path(ad.path) == Path(ad2.path).parent
