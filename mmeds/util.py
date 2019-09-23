@@ -1,5 +1,6 @@
 from collections import defaultdict, OrderedDict
 from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
+from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
 from datetime import datetime
@@ -730,13 +731,8 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
     else:
         log_text = str(text)
 
-    if testing:
-        with open('/tmp/mmeds_log.txt', 'a+') as f:
-            f.write('{}: {}\n'.format(datetime.now(), log_text))
-    else:
-        with open(write_file, 'a+') as f:
-            f.write('{}: {}\n'.format(datetime.now(), log_text))
-
+    log = MMEDSLog()
+    log.debug(log_text)
 
 def sql_log(text):
     """ Write provided text to the sql log file. """

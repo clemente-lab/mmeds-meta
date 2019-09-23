@@ -1,5 +1,11 @@
+from mmeds.log import MMEDSLog
+from multiprocessing import current_process
+
+
 class MmedsError(Exception):
     """ Base class for errors in this module. """
+    log = MMEDSLog()
+    log.error('A {} was raised by {}'.format(__qualname__, current_process()))
 
 
 class MissingUploadError(MmedsError):
