@@ -1018,6 +1018,8 @@ def write_processes(process_codes):
     """
     Function for writing the access codes to all processes tracked by the server upon server exit.
     Part of the functionality for continuing unfinished analyses on server restart.
+    ===============================================================================
+    :process_codes: A dictionary of processcodes
     """
     all_codes = []
     # Go through all types of processdocs

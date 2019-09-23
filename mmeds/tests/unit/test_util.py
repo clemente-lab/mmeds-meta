@@ -165,8 +165,3 @@ class DocTests(TestCase):
 
         self.assertEquals('select `HostSubjectId` from `Subjects`',
                           util.quote_sql('select {col} from {table}', col='HostSubjectId', table='Subjects'))
-
-    def test_read_write_processes(self):
-        processes = util.read_processes()
-        print(processes)
-        util.write_processes(processes)
