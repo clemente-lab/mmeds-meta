@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG
-from mmeds.util import copy_metadata, log
+from mmeds.util import copy_metadata, log, camel_case
 from ppretty import ppretty
 
 
@@ -155,11 +155,15 @@ class AnalysisDoc(MMEDSDoc):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def create_sub_analysis(self, path, category, value, analysis_code):
+    def create_sub_analysis(self, category, value, analysis_code):
         """ Creates a new AnalysisDoc for a child analysis """
         log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
+
+        child_path = Path(self.path) / camel_case('{}_{}'.format(category[1], value))
+        child_path.mkdir()
+
         child_files = deepcopy(self.files)
-        child_files['metadata'] = str(path / 'metadata.tsv')
+        child_files['metadata'] = str(child_path / 'metadata.tsv')
 
         child_config = deepcopy(self.config)
         child_config['sub_analysis'] = 'None'
@@ -169,10 +173,10 @@ class AnalysisDoc(MMEDSDoc):
                             last_accessed=datetime.now(),
                             sub_analysis=True,
                             testing=self.testing,
-                            name=path.name,
+                            name=child_path.name,
                             owner=self.owner,
                             email=self.email,
-                            path=str(path),
+                            path=str(child_path),
                             study_code=self.study_code,
                             study_name=self.study_name,
                             access_code=analysis_code,
@@ -187,5 +191,5 @@ class AnalysisDoc(MMEDSDoc):
         # Update the child's attributes
         child.save()
         log(child)
-        log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, path))
+        log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child

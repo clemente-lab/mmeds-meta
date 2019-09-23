@@ -270,15 +270,11 @@ class Tool(mp.Process):
         child.name = child.name + '-{}-{}'.format(category[1], file_value)
         child.children = []
 
-        child.path = Path(self.path / '{}_{}'.format(category[1], file_value))
-        child.path.mkdir()
-        log('PATH {}'.format(child.path))
-
         with Database(owner=self.owner, testing=self.testing) as db:
             access_code = db.create_access_code(child.name)
         log('CHILD ACCESS CODE {}'.format(access_code))
 
-        child.doc = self.doc.create_sub_analysis(child.path, category, value, access_code)
+        child.doc = self.doc.create_sub_analysis(category, value, access_code)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
