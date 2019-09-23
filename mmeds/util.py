@@ -976,6 +976,10 @@ def quote_sql(sql, quote='`', **kwargs):
     """
     # There are only two quote characters allowed
     assert (quote == '`' or quote == "'")
+
+    if not isinstance(sql, str):
+        raise InvalidSQLError('Provided SQL {} is not a string'.format(sql))
+
     # Clear any  existing quotes before adding the new ones
     sql = sql.replace(quote, '')
     quoted_args = {}
