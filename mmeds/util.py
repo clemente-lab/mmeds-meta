@@ -722,8 +722,8 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def log(text, testing=False, write_file=fig.MMEDS_LOG):
-    """ Write provided text to the log file. """
+def log(text, testing=False, log_type='Debug'):
+    """ Pass provided text to the MmedsLogger. If given a dictionary, format it into a string. """
     if isinstance(text, dict):
         log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
     elif isinstance(text, list):
@@ -731,14 +731,16 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
     else:
         log_text = str(text)
 
-    log = MMEDSLog('Debug_logger')
-    log.debug(log_text)
+    if log_type == 'Debug':
+        logger = MMEDSLog('Debug_logger', testing)
+    elif log_type == 'SQL':
+        logger = MMEDSLog('SQL_logger', testing)
+    logger.debug(log_text)
 
 
 def sql_log(text):
-    """ Write provided text to the sql log file. """
-    log = MMEDSLog('SQL_logger')
-    log.debug(text)
+    """  Pass provided text to the SQL Logger """
+    log(text, log_type='SQL')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
