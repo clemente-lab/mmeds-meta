@@ -6,7 +6,7 @@ class MmedsError(Exception):
     """ Base class for errors in this module. """
     def __init__(self):
         log = MMEDSLog('MmedsError')
-        log.error('A {} was raised. Message {}'.format(self, self.message))
+        log.error('A {} was raised. Message {}'.format(type(self), self.message))
 
 
 class MissingUploadError(MmedsError):
