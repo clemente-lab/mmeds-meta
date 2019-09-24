@@ -44,6 +44,7 @@ setup(name='mmeds',
           'ppretty',
           'imapclient',
           'psutil',
-          'xlrd'
+          'xlrd',
+          'multiprocessing_logging'
       ],
       zip_safe=False)
