@@ -731,8 +731,9 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
     else:
         log_text = str(text)
 
-    log = MMEDSLog()
+    log = MMEDSLog('Debug_logger')
     log.debug(log_text)
+
 
 def sql_log(text):
     """ Write provided text to the sql log file. """

@@ -144,7 +144,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
-        page = insert_error(page, 14, err.InvalidLoginError.message)
+        page = insert_error(page, 14, err.InvalidLoginError().message)
         self.assertBody(page)
 
     def change_password(self, new_pass):
@@ -359,7 +359,7 @@ class TestServer(helper.CPWebCase):
                      headers=self.cookies)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=self.server_user)
-        page = insert_error(page, 22, err.MissingUploadError.message)
+        page = insert_error(page, 22, err.MissingUploadError().message)
         self.assertBody(page)
         self.getPage('/auth/logout', headers=self.cookies)
 
