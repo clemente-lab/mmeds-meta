@@ -489,6 +489,7 @@ class Qiime2(Tool):
         self.set_stage(4)
         self.jobtext.append('echo "MMEDS_STAGE_4"')
         self.classify_taxa()
+        self.taxa_diversity()
         # Calculate group significance
         for col in self.doc.config['metadata']:
             self.group_significance(col)

@@ -896,6 +896,8 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
+    log("Created environment for module {}".format(module))
+    log(new_env)
     return new_env
 
 
