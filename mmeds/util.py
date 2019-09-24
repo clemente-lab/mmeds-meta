@@ -1,5 +1,6 @@
 from collections import defaultdict, OrderedDict
 from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
+from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
 from datetime import datetime
@@ -721,8 +722,8 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def log(text, testing=False, write_file=fig.MMEDS_LOG):
-    """ Write provided text to the log file. """
+def log(text, testing=False, log_type='Debug'):
+    """ Pass provided text to the MmedsLogger. If given a dictionary, format it into a string. """
     if isinstance(text, dict):
         log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
     elif isinstance(text, list):
@@ -730,23 +731,16 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
     else:
         log_text = str(text)
 
-    if testing:
-        with open('/tmp/mmeds_log.txt', 'a+') as f:
-            f.write('{}: {}\n'.format(datetime.now(), log_text))
-    else:
-        with open(write_file, 'a+') as f:
-            f.write('{}: {}\n'.format(datetime.now(), log_text))
+    if log_type == 'Debug':
+        logger = MMEDSLog('Debug_logger', testing)
+    elif log_type == 'SQL':
+        logger = MMEDSLog('SQL_logger', testing)
+    logger.debug(log_text)
 
 
 def sql_log(text):
-    """ Write provided text to the sql log file. """
-    log(text, write_file=fig.SQL_LOG)
-
-
-def test_log(text):
-    """ Write provided text to the test log file. """
-    log(text, write_file=fig.SQL_LOG)
-    log(text, write_file=Path(gettempdir()) / 'test_log.txt')
+    """  Pass provided text to the SQL Logger """
+    log(text, log_type='SQL')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

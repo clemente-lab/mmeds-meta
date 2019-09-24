@@ -91,7 +91,7 @@ class Tool(mp.Process):
     def log(self, message):
         """ Print message if debugging is enabled """
         if self.debug:
-            print(message)
+            log(message)
 
     def set_stage(self, stage):
         """ Set self.current_stage to the provided value """

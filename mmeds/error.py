@@ -1,10 +1,20 @@
+from mmeds.log import MMEDSLog
+from multiprocessing import current_process
+
+
 class MmedsError(Exception):
     """ Base class for errors in this module. """
+    def __init__(self):
+        log = MMEDSLog('MmedsError')
+        log.error('A {} was raised. Message {}'.format(type(self), self.message))
 
 
 class MissingUploadError(MmedsError):
     """ Exception for missing uploads. """
-    message = 'No data belonging to the user exists for the given access code'
+
+    def __init__(self):
+        self.message = 'No data belonging to the user exists for the given access code'
+        super().__init__()
 
 
 class TableAccessError(MmedsError):
@@ -12,6 +22,7 @@ class TableAccessError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class MetaDataError(MmedsError):
@@ -19,6 +30,7 @@ class MetaDataError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class AnalysisError(MmedsError):
@@ -26,6 +38,7 @@ class AnalysisError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class LoggedOutError(MmedsError):
@@ -33,6 +46,7 @@ class LoggedOutError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class InvalidConfigError(MmedsError):
@@ -40,6 +54,7 @@ class InvalidConfigError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class InvalidSQLError(MmedsError):
@@ -47,6 +62,7 @@ class InvalidSQLError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class InvalidModuleError(MmedsError):
@@ -54,6 +70,7 @@ class InvalidModuleError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class NoResultError(MmedsError):
@@ -61,6 +78,7 @@ class NoResultError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class InvalidUsernameError(MmedsError):
@@ -68,6 +86,7 @@ class InvalidUsernameError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class InvalidPasswordErrors(MmedsError):
@@ -75,16 +94,21 @@ class InvalidPasswordErrors(MmedsError):
 
     def __init__(self, message):
         self.message = ','.join(message)
+        super().__init__()
 
 
 class UploadInUseError(MmedsError):
     """ Exception thrown when the requested dataset is currently in use """
-    message = 'Requested study is currently unavailable'
+    def __init__(self):
+        self.message = 'Requested study is currently unavailable'
+        super().__init__()
 
 
 class InvalidLoginError(MmedsError):
     """ Exception thrown when the provided login credentials don't match a known user """
-    message = 'No user exists with the provided username and password'
+    def __init__(self):
+        self.message = 'No user exists with the provided username and password'
+        super().__init__()
 
 
 class InvalidMetaDataFileError(MmedsError):
@@ -92,6 +116,7 @@ class InvalidMetaDataFileError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()
 
 
 class MissingFileError(MmedsError):
@@ -99,3 +124,4 @@ class MissingFileError(MmedsError):
 
     def __init__(self, message):
         self.message = message
+        super().__init__()

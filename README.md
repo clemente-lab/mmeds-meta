@@ -55,3 +55,8 @@ jupyter_contrib_nbextensions
 If you encounter INVALID DISPLAY VARIABLE add the line `backend: agg` to your matplotlibrc
 (typically ~/.config/matplotlib/matploblibrc)
 or setup your environment with `export MPLBACKEND="agg"`
+
+To install Qiime1.9.1 with a recent version of conda run:
+`conda config --set allow_conda_downgrades true`  
+`conda install conda=4.6.14`  
+Prior to running the conda command for installing Qiime
