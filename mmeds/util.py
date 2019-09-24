@@ -737,13 +737,8 @@ def log(text, testing=False, write_file=fig.MMEDS_LOG):
 
 def sql_log(text):
     """ Write provided text to the sql log file. """
-    log(text, write_file=fig.SQL_LOG)
-
-
-def test_log(text):
-    """ Write provided text to the test log file. """
-    log(text, write_file=fig.SQL_LOG)
-    log(text, write_file=Path(gettempdir()) / 'test_log.txt')
+    log = MMEDSLog('SQL_logger')
+    log.debug(text)
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

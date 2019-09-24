@@ -16,7 +16,10 @@ class MMEDSLog():
         else:
             self.logger = logging.getLogger('Error')
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            fh = logging.FileHandler(fig.MMEDS_LOG)
+            if 'SQL' in name:
+                fh = logging.FileHandler(fig.SQL_LOG)
+            else:
+                fh = logging.FileHandler(fig.MMEDS_LOG)
             fh.setLevel(logging.DEBUG)
             fh.setFormatter(formatter)
 
