@@ -180,9 +180,9 @@ for i, line in enumerate(lines):
 
 for key, value in allRGB.items():
     latex.append('\\definecolor{{{key}}}{{RGB}}{{{r},{g},{b}}}\n'.format(key=key,
-                                                                         r=value[1],
-                                                                         g=value[2],
-                                                                         b=value[3]))
+                                                                         r=value[0],
+                                                                         g=value[1],
+                                                                         b=value[2]))
 
 new_lines = lines[:packages_end] + latex + lines[packages_end:]
 

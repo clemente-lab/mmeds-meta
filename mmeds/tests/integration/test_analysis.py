@@ -135,4 +135,4 @@ class AnalysisTests(TestCase):
 
         self.assertEqual(tool.exitcode, 0)
         self.assertTrue((Path(self.path) /
-                         'Qiime2_0/summary/Good_Study-{}-{}.pdf'.format(fig.TEST_USER, 'qiime2')).is_file())
+                         'Qiime2_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER, 'qiime2')).is_file())
