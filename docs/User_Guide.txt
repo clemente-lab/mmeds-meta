@@ -1,10 +1,20 @@
 ### MMEDS User Guide ###
 
-The format for the metadata file is as follows.
-See example_metadata.tsv
+# 1) Overview
+
+The metadata for mmeds is split into two files. Subject metadata and specimen metadata.
+Both follow the same format. The column ('AdditionalMetaData', 'SubjectIdCol') in the
+specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
+metadata for the specimen to be linked to that particular subject.
+
+The reason they are split into separate files is to allow multiple rows of subject information,
+illnesses, treatments (interventions), etc without having to fill out all those rows with
+duplicate information for each specimen.
+
+
 The first row of the metadata file specifies the entity the metadata pertains
 to (i.e. the table in the database the information will be stored in).The
-second row specifies the specific property (This is akin to a tradional metadata
+second row specifies the specific property (This is akin to a traditional metadata
 header column). The third row specifies if this column is required for every sample.
 The fourth row specifies the data-type and the fifth row specifies the unit/format of the data.
 These rows are the header of the metadata file, the following rows should
@@ -21,6 +31,12 @@ The column
 
 This column should contain the height in meters of the subject the
 sample described in this row was taken from.
+
+To create a template to fill with your metadata delete all rows after
+the first five in example metadata files provided (or a copy if you want
+to use them for reference).
+
+# 2) Study Specific Metadata
 
 Not every metadata column will be relevant to every study. If the metadata
 doesn't exist for an optional column it should be filled in with 'NA' not
@@ -40,6 +56,8 @@ For Example:
 This metadata will be stored separately from the default columns so
 possible analysis based on these columns may be limited.
 
+
+# 3) Term Definitions
 
 Certain terms in our metadata may be used differently in others contexts.
 For reference we define them as follows:
@@ -61,6 +79,8 @@ For all fields entries should contain no special characters '$', '*', ';', etc.
 Metadata files containing entries with these characters cannot be uploaded to the server.
 All text fields will be converted to lowercase for storage in the database
 so be sure none of the entries are case sensitive.
+
+# 4) Column Specifics
 
 Certain Fields will only accept values that fall into certain categories.
 They are as follows:
