@@ -733,7 +733,12 @@ def log(text, testing=False, log_type='Debug'):
         log_text = str(text)
 
     logger = MMEDSLog(log_type, testing)
-    logger.debug(log_text)
+    if 'debug' in log_type.lower():
+        logger.debug(log_text)
+    elif 'info' in log_type.lower():
+        logger.info(log_text)
+    elif 'error' in log_type.lower():
+        logger.info(log_text)
 
 
 def sql_log(text):

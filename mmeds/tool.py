@@ -1,6 +1,7 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from shutil import copy, rmtree
+from psutil import pid_exists
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
@@ -268,6 +269,7 @@ class Tool(mp.Process):
         debug_log('CHILD ACCESS CODE {}'.format(access_code))
 
         child.doc = self.doc.create_sub_analysis(category, value, access_code)
+        child.path = Path(child.doc.path)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
@@ -283,6 +285,7 @@ class Tool(mp.Process):
                     child_file.symlink_to(self.get_file(parent_file, True))
                     child.add_path(child_file, key=parent_file)
 
+        # Handle Qiime1's format of splitting otu tables
         if 'Qiime1' in self.name:
             child.add_path(self.get_file('split_otu_{}'.format(category[1]), True) /
                            'otu_table__{}_{}__.biom'.format(category[1], value),
@@ -385,9 +388,12 @@ class Tool(mp.Process):
         try:
             self.setup_analysis()
             if self.doc.sub_analysis:
-                debug_log('I am a sub analysis {}'.format(self.name))
+                info_log('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
+                    if not pid_exists(self._parent_pid):
+                        info_log('Parent died prior to completion, self destructing')
+                        self.terminate()
                     debug_log('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))
                     sleep(20)
                 debug_log('I {} have awoken'.format(self.name))
@@ -400,7 +406,6 @@ class Tool(mp.Process):
                 debug_log('I am not a sub analysis {}'.format(self.name))
                 self.create_children()
                 self.start_children()
-                debug_log('started children')
                 debug_log([child.name for child in self.children])
 
             if self.testing:
@@ -481,7 +486,7 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        info_log('{} started'.format(self.name))
+        info_log('{} calling run'.format(self.name))
         self.update_doc(pid=self.pid)
         if self.analysis:
             debug_log('I {} am running analysis'.format(self.name))

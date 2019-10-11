@@ -72,7 +72,6 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1_with_children(self):
-        return
         log("in test_qiime1")
         self.handle_data_upload()
         log('after data upload')
@@ -88,7 +87,7 @@ class AnalysisTests(TestCase):
             sleep(20)
         log('analysis finished')
         self.assertTrue((Path(self.path) /
-                         'Qiime1_0/summary/Good_Study-{}-{}.pdf'.format(fig.TEST_USER, 'qiime1')).is_file())
+                         'Qiime1_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER, 'qiime1')).is_file())
         for child in p.children:
             while child.is_alive():
                 print('{}: Waiting on process: {}'.format(datetime.now(), child.name))
@@ -99,6 +98,7 @@ class AnalysisTests(TestCase):
         print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2_with_restarts(self):
+        return
         self.handle_data_upload()
         p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
