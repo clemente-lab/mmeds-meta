@@ -449,6 +449,7 @@ class Tool(mp.Process):
             self.update_doc(restart_stage=stage)
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
+                break
                 debug_log('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
                 # If they should be created after the last checkpoint
                 if stage >= self.doc.restart_stage:
