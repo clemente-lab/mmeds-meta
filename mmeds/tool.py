@@ -423,8 +423,7 @@ class Tool(mp.Process):
                 # Set execute permissions
                 submitfile.chmod(0o770)
                 jobfile.chmod(0o770)
-                #  Temporary for testing on Minerva
-                output = run([jobfile], check=True, capture_output=True)
+                output = run([submitfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
             debug_log('{}: pre post analysis'.format(self.name))

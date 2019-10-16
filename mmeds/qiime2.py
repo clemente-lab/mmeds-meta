@@ -182,8 +182,8 @@ class Qiime2(Tool):
             'qiime quality-filter q-score',
             '--i-demux {}'.format(self.get_file('demux_file')),
             '--o-filtered-sequences {}'.format(self.get_file('demux_filtered')),
-            '--o-filter-stats {};'.format(self.get_file('demux_filter_stats')),
-            '--quiet'
+            '--o-filter-stats {}'.format(self.get_file('demux_filter_stats')),
+            '--quiet;'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -200,8 +200,8 @@ class Qiime2(Tool):
             '--o-table {}'.format(self.get_file('otu_table')),
             '--p-sample-stats',
             '--p-jobs-to-start {}'.format(self.num_jobs),
-            '--o-stats {};'.format(self.get_file('stats_table')),
-            '--quiet'
+            '--o-stats {}'.format(self.get_file('stats_table')),
+            '--quiet;'
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -211,8 +211,8 @@ class Qiime2(Tool):
         cmd = [
             'qiime deblur visualize-stats',
             '--i-deblur-stats {}'.format(self.get_file('stats_table')),
-            '--o-visualization {};'.format(self.get_file('stats_deblur_visual')),
-            '--quiet'
+            '--o-visualization {}'.format(self.get_file('stats_deblur_visual')),
+            '--quiet;'
         ]
         self.jobtext.append(' '.join(cmd))
 
