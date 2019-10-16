@@ -49,7 +49,7 @@ class Tool(mp.Process):
         self.analysis = analysis
         self.module = None
         self.restart_stage = restart_stage
-        self.current_stage = 0
+        self.current_stage = -2
         self.stage_files = defaultdict(list)
 
         # If restarting get the associated AnalysisDoc from the database
@@ -447,6 +447,8 @@ class Tool(mp.Process):
                 if 'MMEDS_STAGE_{}'.format(i) in log_text:
                     stage = i
             self.update_doc(restart_stage=stage)
+            # Files removed
+            deleted = []
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
                 debug_log('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
@@ -455,6 +457,7 @@ class Tool(mp.Process):
                     debug_log('{}: Greater than restart stage'.format(self.name))
                     for f in files:
                         if not f == 'jobfile' and not f == 'errorlog':
+                            deleted.append(f)
                             # Check if they exist
                             unfinished = self.get_file(f, True)
                             debug_log('{}: checking file {}'.format(self.name, unfinished))
@@ -471,6 +474,13 @@ class Tool(mp.Process):
                                 debug_log('{}: file does exist {}'.format(self.name, unfinished))
                 else:
                     debug_log('{}: stage already passed'.format(self.name))
+
+            # Remove the deleted files from the mongodb document for the analysis
+            finished_files = self.doc.files
+            for key in deleted:
+                del finished_files[key]
+            self.update_doc(files=finished_files)
+
             debug_log('{}: finished file cleanup'.format(self.name))
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully

@@ -258,10 +258,10 @@ class MMEDSdownload(MMEDSbase):
                                  'attachment', os.path.basename(file_path))
 
     @cp.expose
-    def select_access(self, analysis_code):
+    def select_analysis(self, access_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_study_analysis(analysis_code)
+            analysis = db.get_study_analysis(access_code)
 
         page = self.format_html('download_selected_analysis',
                                 title='Analysis: {}'.format(analysis.name),
