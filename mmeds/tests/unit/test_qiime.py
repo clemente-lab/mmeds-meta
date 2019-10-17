@@ -6,26 +6,10 @@ from time import sleep
 from mmeds.authentication import add_user, remove_user
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
-from mmeds.database import MetaDataUploader
+from mmeds.database import upload_metadata
 from mmeds.util import load_config
 import mmeds.config as fig
 import mmeds.secrets as sec
-
-
-def upload_metadata(args):
-    metadata, path, owner, reads_type, for_reads, rev_reads, barcodes, access_code = args
-    with MetaDataUploader(metadata=metadata,
-                          path=path,
-                          study_type='qiime',
-                          study_name='Test_Qiime',
-                          reads_type=reads_type,
-                          owner=fig.TEST_USER,
-                          temporary=False,
-                          testing=True) as up:
-        access_code, email = up.import_metadata(for_reads=for_reads,
-                                                rev_reads=rev_reads,
-                                                barcodes=barcodes,
-                                                access_code=access_code)
 
 
 class QiimeTests(TestCase):

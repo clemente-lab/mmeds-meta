@@ -2,29 +2,13 @@ from unittest import TestCase
 import mmeds.config as fig
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.database import MetaDataUploader, Database
+from mmeds.database import upload_metadata, Database
 from pathlib import Path
-from tempfile import gettempdir
 
 import mmeds.secrets as sec
 import mmeds.documents as docs
 import mmeds.util as util
 import mongoengine as men
-
-
-def upload_metadata(args):
-    metadata, path, owner, access_code = args
-    with MetaDataUploader(metadata=metadata,
-                          path=path,
-                          study_name='Test_Documents',
-                          study_type='qiime',
-                          reads_type='single_end',
-                          owner=fig.TEST_USER,
-                          temporary=False,
-                          testing=True) as up:
-        return up.import_metadata(for_reads=fig.TEST_READS,
-                                  barcodes=fig.TEST_BARCODES,
-                                  access_code=access_code)
 
 
 TESTING = True
@@ -37,9 +21,14 @@ class DocTests(TestCase):
     def setUpClass(self):
         """ Set up tests """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
+
         test_setup = (fig.TEST_METADATA_SHORTEST,
                       fig.TEST_DIR,
                       fig.TEST_USER,
+                      'single_end',
+                      fig.TEST_READS,
+                      None,
+                      fig.TEST_BARCODES,
                       fig.TEST_CODE)
         access_code, email = upload_metadata(test_setup)
 

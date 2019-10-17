@@ -21,6 +21,24 @@ from mmeds.documents import StudyDoc, AnalysisDoc
 DAYS = 13
 
 
+# Used in test_cases
+def upload_metadata(args):
+    metadata, path, owner, reads_type, for_reads, rev_reads, barcodes, access_code = args
+    with MetaDataUploader(metadata=metadata,
+                          path=path,
+                          study_type='qiime',
+                          study_name='Test_Qiime',
+                          reads_type=reads_type,
+                          owner=fig.TEST_USER,
+                          temporary=False,
+                          public=False,
+                          testing=True) as up:
+        access_code, email = up.import_metadata(for_reads=for_reads,
+                                                rev_reads=rev_reads,
+                                                barcodes=barcodes,
+                                                access_code=access_code)
+
+
 class Database:
     def __init__(self, path='.', user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """

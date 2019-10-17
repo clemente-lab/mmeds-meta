@@ -3,27 +3,12 @@ from shutil import rmtree
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
-from mmeds.database import MetaDataUploader
+from mmeds.database import upload_metadata
 from mmeds.util import load_config
 
 import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
-
-
-def upload_metadata(args):
-    metadata, path, owner, access_code = args
-    with MetaDataUploader(metadata=metadata,
-                          path=path,
-                          study_type='qiime',
-                          study_name='Test_Tool',
-                          reads_type='single_end',
-                          owner=fig.TEST_USER,
-                          temporary=False,
-                          testing=True) as up:
-        access_code, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                barcodes=fig.TEST_BARCODES,
-                                                access_code=access_code)
 
 
 class ToolTests(TestCase):

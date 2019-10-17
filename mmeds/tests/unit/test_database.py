@@ -1,7 +1,7 @@
-from mmeds.database import Database, MetaDataUploader, SQLBuilder
+from mmeds.database import Database, upload_metadata, SQLBuilder
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
-from mmeds.util import sql_log, parse_ICD_codes, join_metadata, load_metadata
+from mmeds.util import sql_log, parse_ICD_codes, load_metadata
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
@@ -34,21 +34,6 @@ testing = True
 user = 'root'
 
 
-def upload_metadata(args):
-    metadata, path, owner, access_code = args
-    with MetaDataUploader(metadata=metadata,
-                          path=path,
-                          owner=fig.TEST_USER,
-                          study_type='qiime',
-                          study_name='Test_Datahase',
-                          reads_type='single_end',
-                          temporary=False,
-                          testing=testing) as up:
-        access_code, email = up.import_metadata(for_reads=fig.TEST_READS,
-                                                barcodes=fig.TEST_BARCODES,
-                                                access_code=access_code)
-
-
 class MetaDataUploaderTests(TestCase):
     """ Tests of top-level functions """
 
@@ -61,10 +46,18 @@ class MetaDataUploaderTests(TestCase):
         test_setups = [(fig.TEST_METADATA,
                         fig.TEST_DIR,
                         fig.TEST_USER,
+                        'single_end',
+                        None,
+                        None,
+                        None,
                         fig.TEST_CODE),
                        (fig.TEST_METADATA_ALT,
                         fig.TEST_DIR_0,
                         fig.TEST_USER_0,
+                        'single_end',
+                        None,
+                        None,
+                        None,
                         fig.TEST_CODE + '0')]
 
         for setup in test_setups:
