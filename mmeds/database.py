@@ -735,7 +735,7 @@ class SQLBuilder:
 
 
 class MetaDataUploader:
-    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, testing=False):
+    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, public, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -757,6 +757,7 @@ class MetaDataUploader:
         self.metadata = metadata
         self.study_name = study_name
         self.temporary = temporary
+        self.public = public
 
         # If testing connect to test server
         if testing:
@@ -808,6 +809,9 @@ class MetaDataUploader:
             self.user_id = int(result[0])
             self.email = result[1]
 
+        # If the metadata is to be made public overwrite the user_id
+        if public:
+            self.user_id = 1
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
     def __del__(self):
@@ -1046,6 +1050,7 @@ class MetaDataUploader:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
+                         public=self.public,
                          path=str(self.path.parent))
 
         # Add the files approprate to the type of study

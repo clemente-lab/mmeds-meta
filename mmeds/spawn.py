@@ -57,7 +57,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
 
 
 def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                       study_name, temporary, testing, *datafiles):
+                       study_name, temporary, public, testing, *datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -103,7 +103,8 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
                           owner=username,
                           study_name=study_name,
                           temporary=temporary,
-                          testing=testing) as up:
+                          testing=testing,
+                          public=public) as up:
         access_code, email = up.import_metadata(**datafile_copies)
 
     # Send the confirmation email
@@ -206,11 +207,11 @@ class Watcher(Process):
                     # If there is nothing uploading currently start the new upload process
                     if current_upload is None:
                         (ptype, study_name, subject_metadata, specimen_metadata,
-                         username, reads_type, datafiles, temporary) = process
+                         username, reads_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
                         p = Process(target=handle_data_upload,
                                     args=(subject_metadata, specimen_metadata, username,
-                                          reads_type, study_name, temporary, self.testing,
+                                          reads_type, study_name, temporary, public, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
                         p.start()
