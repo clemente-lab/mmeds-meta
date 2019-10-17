@@ -24,6 +24,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
+
     if isinstance(config_file, str):
         log('load path config {}'.format(config_file))
         config = load_config(config_file, files['metadata'])
@@ -44,6 +45,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
+    send_email(tool.doc.email, user, message='analysis', code=access_code,
+               testing=testing, study=tool.doc.study_name)
     tool.start()
     return tool
 
