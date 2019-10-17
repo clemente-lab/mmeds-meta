@@ -16,6 +16,7 @@ from email import message_from_bytes
 from tempfile import gettempdir
 from time import sleep
 from re import sub
+from ppretty import ppretty
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -725,22 +726,36 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
 def log(text, testing=False, log_type='Debug'):
     """ Pass provided text to the MmedsLogger. If given a dictionary, format it into a string. """
     if isinstance(text, dict):
-        log_text = '\n'.join(["{}: {}".format(key, value) for (key, value) in text.items()])
+        log_text = ppretty(text)
     elif isinstance(text, list):
         log_text = '\n'.join(list(map(str, text)))
     else:
         log_text = str(text)
 
-    if log_type == 'Debug':
-        logger = MMEDSLog('Debug_logger', testing)
-    elif log_type == 'SQL':
-        logger = MMEDSLog('SQL_logger', testing)
-    logger.debug(log_text)
+    logger = MMEDSLog(log_type, testing)
+    if 'debug' in log_type.lower():
+        logger.debug(log_text)
+    elif 'info' in log_type.lower():
+        logger.info(log_text)
+    elif 'error' in log_type.lower():
+        logger.info(log_text)
 
 
 def sql_log(text):
     """  Pass provided text to the SQL Logger """
     log(text, log_type='SQL')
+
+
+def error_log(text, testing=False):
+    log(text, testing=testing, log_type='Error')
+
+
+def debug_log(text, testing=False):
+    log(text, testing=testing, log_type='Debug')
+
+
+def info_log(text, testing=False):
+    log(text, testing=testing, log_type='Info')
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):
@@ -854,6 +869,23 @@ def pyformat_translate(value):
     return result
 
 
+def parse_locals(line, variables, new_env):
+    """
+    Replace variables used in the environment setup with their definitions.
+    """
+    # Update any values with local variables
+    if '$' in line:
+        for variable, path in variables.items():
+            line = line.replace('${}'.format(variable), path)
+    if '~' in line:
+        for variable, path in variables.items():
+            home = new_env.get('MMEDS')
+            if home is None:
+                home = new_env.get('HOME')
+            line = line.replace('~', home)
+    return line, variables
+
+
 def setup_environment(module):
     """
     Returns a dictionary with the environment variables loaded for a particular module.
@@ -872,16 +904,7 @@ def setup_environment(module):
     for line in module_file.splitlines():
         if line.startswith('#'):
             continue
-        # Update any values with local variables
-        if '$' in line:
-            for variable, path in variables.items():
-                line = line.replace('${}'.format(variable), path)
-        if '~' in line:
-            for variable, path in variables.items():
-                home = new_env.get('MMEDS')
-                if home is None:
-                    home = new_env.get('HOME')
-                line = line.replace('~', home)
+        line, variables = parse_locals(line, variables, new_env)
         parts = line.strip().split(' ')
         # Set locally used variables
         if parts[0] == 'set':
@@ -896,6 +919,8 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
+    log("Created environment for module {}".format(module))
+    log(new_env)
     return new_env
 
 

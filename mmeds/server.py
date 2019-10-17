@@ -248,7 +248,7 @@ class MMEDSdownload(MMEDSbase):
 
         for analysis in analyses:
             page = insert_html(page, 38 + len(study.files.keys()),
-                               '<option value="{}">{}</option>'.format(analysis.analysis_code,
+                               '<option value="{}">{}</option>'.format(analysis.access_code,
                                                                        analysis.name))
         return page
 
@@ -258,10 +258,10 @@ class MMEDSdownload(MMEDSbase):
                                  'attachment', os.path.basename(file_path))
 
     @cp.expose
-    def select_analysis(self, analysis_code):
+    def select_analysis(self, access_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_study_analysis(analysis_code)
+            analysis = db.get_study_analysis(access_code)
 
         page = self.format_html('download_selected_analysis',
                                 title='Analysis: {}'.format(analysis.name),
@@ -272,7 +272,7 @@ class MMEDSdownload(MMEDSbase):
                                 reads_type=analysis.reads_type,
                                 study_code=analysis.study_code,
                                 sub_analysis=analysis.sub_analysis,
-                                analysis_code=analysis.analysis_code,
+                                access_code=analysis.access_code,
                                 analysis_status=analysis.analysis_status,
                                 owner=analysis.owner,
                                 email=analysis.email,

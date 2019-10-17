@@ -1,6 +1,7 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from shutil import copy, rmtree
+from psutil import pid_exists
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
@@ -8,7 +9,7 @@ from ppretty import ppretty
 from collections import defaultdict
 
 from mmeds.database import Database
-from mmeds.util import (log, create_qiime_from_mmeds,
+from mmeds.util import (debug_log, info_log, create_qiime_from_mmeds,
                         load_metadata, write_metadata, camel_case,
                         send_email)
 from mmeds.error import AnalysisError, MissingFileError
@@ -39,7 +40,7 @@ class Tool(mp.Process):
         :child: A boolean. If True this Tool object is the child of another tool.
         """
         super().__init__()
-        log('initilize {}'.format(self.name))
+        debug_log('initilize {}'.format(self.name))
         self.debug = True
         self.study_code = access_code
         self.testing = testing
@@ -48,22 +49,22 @@ class Tool(mp.Process):
         self.analysis = analysis
         self.module = None
         self.restart_stage = restart_stage
-        self.current_stage = 0
+        self.current_stage = -2
         self.stage_files = defaultdict(list)
 
         # If restarting get the associated AnalysisDoc from the database
         if restart_stage:
-            log('Restarting {}'.format(self.name))
+            debug_log('Restarting {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 self.doc = db.get_analysis(self.study_code)
         # Otherwise create a new AnalysisDoc from the associated StudyDoc
         else:
-            log('Creating new doc {}'.format(self.name))
+            debug_log('Creating new doc {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
                 access_code = db.create_access_code(self.name)
                 self.doc = metadata.generate_AnalysisDoc(self.name.split('-')[0], atype, config, access_code)
-        log('Doc creation date: {}'.format(self.doc.created))
+        debug_log('Doc creation date: {}'.format(self.doc.created))
         self.path = Path(self.doc.path)
 
         if testing:
@@ -77,7 +78,7 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.children = []
         self.doc.sub_analysis = False
-        log('finished initialization: {}'.format(self.name))
+        debug_log('finished initialization: {}'.format(self.name))
 
     def __str__(self):
         return ppretty(self, seq_length=20)
@@ -87,11 +88,6 @@ class Tool(mp.Process):
         self.doc.modify(**kwargs)
         self.doc.save()
         self.doc.reload()
-
-    def log(self, message):
-        """ Print message if debugging is enabled """
-        if self.debug:
-            log(message)
 
     def set_stage(self, stage):
         """ Set self.current_stage to the provided value """
@@ -156,7 +152,7 @@ class Tool(mp.Process):
             else:
                 config_text.append('{}\t{}'.format(key, value))
         (self.path / 'config_file.txt').write_text('\n'.join(config_text))
-        log('{} write metadata {}'.format(self.name, self.doc.config['metadata']), True)
+        debug_log('{} write metadata {}'.format(self.name, self.doc.config['metadata']), True)
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
@@ -203,7 +199,7 @@ class Tool(mp.Process):
     def move_user_files(self):
         """ Move all visualization files intended for the user to a set location. """
         try:
-            log('Move analysis files into directory')
+            debug_log('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
             if not self.get_file('visualizations_dir', True).is_dir():
                 self.get_file('visualizations_dir', True).mkdir()
@@ -213,7 +209,6 @@ class Tool(mp.Process):
                     new_file = f.name
                     copy(self.get_file(key, True), self.get_file('visualizations_dir', True) / new_file)
         except FileNotFoundError as e:
-            log(e)
             raise AnalysisError(e.args[1])
 
     def write_file_locations(self):
@@ -260,8 +255,7 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
-        log('I AM {}'.format(mp.current_process()))
-        log('CREATE CHILD {}:{}'.format(category, value))
+        debug_log('CREATE CHILD {}:{}'.format(category, value))
 
         child = classcopy(self)
         file_value = camel_case(value)
@@ -272,9 +266,10 @@ class Tool(mp.Process):
 
         with Database(owner=self.owner, testing=self.testing) as db:
             access_code = db.create_access_code(child.name)
-        log('CHILD ACCESS CODE {}'.format(access_code))
+        debug_log('CHILD ACCESS CODE {}'.format(access_code))
 
         child.doc = self.doc.create_sub_analysis(category, value, access_code)
+        child.path = Path(child.doc.path)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
@@ -290,6 +285,7 @@ class Tool(mp.Process):
                     child_file.symlink_to(self.get_file(parent_file, True))
                     child.add_path(child_file, key=parent_file)
 
+        # Handle Qiime1's format of splitting otu tables
         if 'Qiime1' in self.name:
             child.add_path(self.get_file('split_otu_{}'.format(category[1]), True) /
                            'otu_table__{}_{}__.biom'.format(category[1], value),
@@ -297,12 +293,12 @@ class Tool(mp.Process):
         else:
             child.add_path(self.get_file('otu_table', True), key='parent_table', full_path=True)
 
-        log('load metadata  {}'.format(self.get_file('metadata', True)))
+        debug_log('load metadata  {}'.format(self.get_file('metadata', True)))
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.get_file('metadata', True))
         new_mdf = mdf.loc[mdf[category] == value]
         write_metadata(new_mdf, child.get_file('metadata', True))
-        log('write to {}'.format(child.get_file('metadata', True)))
+        debug_log('write to {}'.format(child.get_file('metadata', True)))
 
         # Update child's vars
         child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
@@ -330,7 +326,7 @@ class Tool(mp.Process):
 
         # For each column selected...
         for col in self.doc.config['sub_analysis']:
-            self.log('Create child for col {}'.format(col))
+            debug_log('Create child for col {}'.format(col))
             try:
                 t_col = (COL_TO_TABLE[col], col)
             # Additional columns won't be in this table
@@ -340,7 +336,7 @@ class Tool(mp.Process):
             for val, df in mdf.groupby(t_col):
                 child = self.create_child(t_col, val)
                 self.children.append(child)
-        self.log('finished creating children')
+        debug_log('finished creating children')
 
     def start_children(self):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
@@ -381,7 +377,7 @@ class Tool(mp.Process):
             # Set execute permissions
             jobfile.chmod(0o770)
         else:
-            log('In run_analysis')
+            debug_log('In run_analysis')
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
             # Write all the commands
@@ -391,37 +387,35 @@ class Tool(mp.Process):
         """ Runs the setup, and starts the analysis process """
         try:
             self.setup_analysis()
-            self.log('I {} have setup analysis'.format(self.name))
-
-            log('After setup analysis')
             if self.doc.sub_analysis:
-                log('I am a sub analysis {}'.format(self.name))
+                info_log('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
-                    log('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))
+                    if not pid_exists(self._parent_pid):
+                        info_log('Parent died prior to completion, self destructing')
+                        self.terminate()
+                    debug_log('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))
                     sleep(20)
-                log('I {} have awoken'.format(self.name))
+                debug_log('I {} have awoken'.format(self.name))
             jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
 
-            log('sub_analsysi config status')
-            log(self.doc.config['sub_analysis'])
+            debug_log(self.doc.config['sub_analysis'])
             # Start the sub analyses if so configured
             if not self.doc.config['sub_analysis'] == 'None':
-                log('I am not a sub analysis {}'.format(self.name))
+                debug_log('I am not a sub analysis {}'.format(self.name))
                 self.create_children()
                 self.start_children()
-                log('started children')
-                log([child.name for child in self.children])
+                debug_log([child.name for child in self.children])
 
             if self.testing:
                 self.update_doc(analysis_status='started')
-                self.log('I {} am about to run'.format(self.name))
+                debug_log('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
-                self.log('I {} have finished running'.format(self.name))
+                debug_log('I {} have finished running'.format(self.name))
             else:
                 # Create a file to execute the submission
                 submitfile = self.get_file('submitfile', True)
@@ -433,9 +427,9 @@ class Tool(mp.Process):
                 output = run([jobfile], check=True, capture_output=True)
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
                 self.wait_on_job(job_id)
-            self.log('{}: pre post analysis'.format(self.name))
+            debug_log('{}: pre post analysis'.format(self.name))
             self.post_analysis()
-            self.log('{}: post post analysis'.format(self.name))
+            debug_log('{}: post post analysis'.format(self.name))
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
@@ -446,47 +440,50 @@ class Tool(mp.Process):
         log_text = self.get_file('errorlog', True).read_text()
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
-            self.log('{}: Analysis did not finish'.format(self.name))
+            debug_log('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
             stage = 0
             for i in range(1, 6):
                 if 'MMEDS_STAGE_{}'.format(i) in log_text:
                     stage = i
             self.update_doc(restart_stage=stage)
-            log('{} restart_stage {}'.format(self.name, self.doc.restart_stage))
-
-            self.log('{}: checking on files, restart stage: {}'.format(self.name, self.doc.restart_stage))
+            # Files removed
+            deleted = []
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
-                self.log('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
+                debug_log('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
                 # If they should be created after the last checkpoint
                 if stage >= self.doc.restart_stage:
-                    self.log('{}: Greater than restart stage'.format(self.name))
+                    debug_log('{}: Greater than restart stage'.format(self.name))
                     for f in files:
                         if not f == 'jobfile' and not f == 'errorlog':
+                            deleted.append(f)
                             # Check if they exist
                             unfinished = self.get_file(f, True)
-                            self.log('{}: checking file {}'.format(self.name, unfinished))
+                            debug_log('{}: checking file {}'.format(self.name, unfinished))
                             if unfinished.exists():
-                                self.log('{}: file exists'.format(self.name))
+                                debug_log('{}: file exists'.format(self.name))
                                 # Otherwise delete them
                                 if unfinished.is_dir():
-                                    self.log('{}: rmtree'.format(self.name))
+                                    debug_log('{}: rmtree'.format(self.name))
                                     rmtree(unfinished)
                                 else:
-                                    self.log('{}: unlink'.format(self.name))
+                                    debug_log('{}: unlink'.format(self.name))
                                     unfinished.unlink()
                             else:
-                                self.log('{}: file does exist {}'.format(self.name, unfinished))
+                                debug_log('{}: file does exist {}'.format(self.name, unfinished))
                 else:
-                    self.log('{}: stage already passed'.format(self.name))
-            self.log('{}: finished file cleanup'.format(self.name))
+                    debug_log('{}: stage already passed'.format(self.name))
+
+            # Remove the deleted files from the mongodb document for the analysis
+            finished_files = self.doc.files
+            for key in deleted:
+                del finished_files[key]
+            self.update_doc(files=finished_files)
+
+            debug_log('{}: finished file cleanup'.format(self.name))
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
-        self.log('{}: made it past restart stages'.format(self.name))
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
-        self.log('{}: updated mongo stuff'.format(self.name))
-        self.log('{}: saved mongo stuff'.format(self.name))
-        self.log('{}: reloaded mongo stuff'.format(self.name))
         self.move_user_files()
 
         if not self.testing:
@@ -499,16 +496,12 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        self.log('I {} am running'.format(self.name))
+        info_log('{} calling run'.format(self.name))
         self.update_doc(pid=self.pid)
-        self.log('I {} have updated my ID'.format(self.name))
         if self.analysis:
-            self.log('I {} am running analysis'.format(self.name))
+            debug_log('I {} am running analysis'.format(self.name))
             self.run_analysis()
         else:
-            self.log('I {} am setting up analysis'.format(self.name))
+            debug_log('I {} am setting up analysis'.format(self.name))
             self.setup_analysis()
-        self.log('I {} am updating'.format(self.name))
         self.update_doc(pid=None, analysis_status='Finished')
-        self.log('I {} have updated'.format(self.name))
-        self.log('I {} have finished'.format(self.name))
