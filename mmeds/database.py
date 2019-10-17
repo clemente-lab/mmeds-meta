@@ -37,6 +37,7 @@ def upload_metadata(args):
                                                 rev_reads=rev_reads,
                                                 barcodes=barcodes,
                                                 access_code=access_code)
+        return access_code, email
 
 
 class Database:
