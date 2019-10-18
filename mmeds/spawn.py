@@ -45,6 +45,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
+    print(dir(tool))
     send_email(tool.doc.email, user, message='analysis', code=access_code,
                testing=testing, study=tool.doc.study_name)
     tool.start()

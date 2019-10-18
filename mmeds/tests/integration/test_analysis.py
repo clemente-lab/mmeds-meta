@@ -36,6 +36,7 @@ class AnalysisTests(TestCase):
                                                  'single_end',
                                                  'Qiime1-Test-Analysis',
                                                  False,
+                                                 False,
                                                  self.testing,
                                                  ('for_reads', Path(fig.TEST_METADATA), reads),
                                                  ('barcodes', Path(fig.TEST_BARCODES), barcodes))
@@ -78,7 +79,7 @@ class AnalysisTests(TestCase):
         log('after data upload')
         self.handle_modify_data()
         log('after data modification')
-        p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
+        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG_SUB).read_text(),
                                  self.testing)
         print('spawned test process {}:{}'.format(p.name, p.pid))
@@ -88,7 +89,8 @@ class AnalysisTests(TestCase):
             sleep(20)
         log('analysis finished')
         self.assertTrue((Path(self.path) /
-                         'Qiime1_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER, 'qiime1')).is_file())
+                         'Qiime2_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
+                                                                                      'qiime2')).is_file())
         for child in p.children:
             while child.is_alive():
                 print('{}: Waiting on process: {}'.format(datetime.now(), child.name))
@@ -100,7 +102,7 @@ class AnalysisTests(TestCase):
 
     def test_qiime2_with_restarts(self):
         self.handle_data_upload()
-        p = spawn.spawn_analysis('qiime1-closed', fig.TEST_USER, self.code,
+        p = spawn.spawn_analysis('qiime2-deblur', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG).read_text(),
                                  self.testing)
         code = p.doc.access_code
@@ -135,4 +137,5 @@ class AnalysisTests(TestCase):
 
         self.assertEqual(tool.exitcode, 0)
         self.assertTrue((Path(self.path) /
-                         'Qiime2_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER, 'qiime2')).is_file())
+                         'Qiime2_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
+                                                                                      'qiime2')).is_file())
