@@ -21,6 +21,30 @@ from mmeds.documents import StudyDoc, AnalysisDoc
 DAYS = 13
 
 
+# Used in test_cases
+def upload_metadata(args):
+    metadata, path, owner, study_name, reads_type, for_reads, rev_reads, barcodes, access_code = args
+    with MetaDataUploader(metadata=metadata,
+                          path=path,
+                          study_type='qiime',
+                          study_name=study_name,
+                          reads_type=reads_type,
+                          owner=fig.TEST_USER,
+                          temporary=False,
+                          public=False,
+                          testing=True) as up:
+        if rev_reads is None:
+            access_code, email = up.import_metadata(for_reads=for_reads,
+                                                    barcodes=barcodes,
+                                                    access_code=access_code)
+        else:
+            access_code, email = up.import_metadata(for_reads=for_reads,
+                                                    rev_reads=rev_reads,
+                                                    barcodes=barcodes,
+                                                    access_code=access_code)
+        return access_code, email
+
+
 class Database:
     def __init__(self, path='.', user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
@@ -332,11 +356,6 @@ class Database:
         return code
 
     def mongo_clean(self, access_code):
-        """
-        Delete all mongo objects with the given access_code.
-        It will not delete the files associated with those objects.
-        """
-
         obs = StudyDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
@@ -735,7 +754,7 @@ class SQLBuilder:
 
 
 class MetaDataUploader:
-    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, testing=False):
+    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, public, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -757,6 +776,7 @@ class MetaDataUploader:
         self.metadata = metadata
         self.study_name = study_name
         self.temporary = temporary
+        self.public = public
 
         # If testing connect to test server
         if testing:
@@ -808,6 +828,9 @@ class MetaDataUploader:
             self.user_id = int(result[0])
             self.email = result[1]
 
+        # If the metadata is to be made public overwrite the user_id
+        if public:
+            self.user_id = 1
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
     def __del__(self):
@@ -1046,6 +1069,7 @@ class MetaDataUploader:
                          access_code=access_code,
                          owner=self.owner,
                          email=self.email,
+                         public=self.public,
                          path=str(self.path.parent))
 
         # Add the files approprate to the type of study

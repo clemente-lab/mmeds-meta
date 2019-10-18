@@ -346,7 +346,9 @@ class MMEDSupload(MMEDSbase):
         """ Retry the upload of data files. """
         page = self.format_html('upload_metadata_file',
                                 title='Upload Metadata',
-                                metadata_type=cp.session['metadata_type'])
+                                metadata_type=cp.session['metadata_type'].capitalize())
+        if cp.session['metadata_type'] == 'specimen':
+            page = insert_html(page, 26, 'Subject table uploaded successfully')
         return page
 
     @cp.expose
@@ -414,7 +416,7 @@ class MMEDSupload(MMEDSbase):
         cp.session['metadata_type'] = 'subject'
         page = self.format_html('upload_metadata_file',
                                 title='Upload Metadata',
-                                metadata_type=cp.session['metadata_type'],
+                                metadata_type=cp.session['metadata_type'].capitalize(),
                                 version=studyType)
         return page
 
@@ -566,6 +568,8 @@ class MMEDSanalysis(MMEDSbase):
             self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
             cp.log('Valid config file')
             page = self.format_html('welcome', title='Welcome to MMEDS')
+            message = '<div> <font color="orange"> Analysis started you will recieve an email shortly </font> </div>'
+            page = insert_html(page, 22, message)
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_error(page, 22, e.message)
@@ -602,7 +606,9 @@ class MMEDSanalysis(MMEDSbase):
                 log('No errors or warnings')
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
-                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='specimen')
+                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
+                    message = '<p> <font color="orange"> Subject table uploaded successfully </font></p>'
+                    page = insert_html(page, 23, message)
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
@@ -615,16 +621,15 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def process_data(self, for_reads, rev_reads, barcodes, reads_type, public='off'):
+    def process_data(self, for_reads, rev_reads, barcodes, reads_type, public=False):
+
+        cp.log('Public is {}'.format(public))
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
-        # Set the User
-        if public == 'on':
-            username = 'public'
-        else:
-            username = self.get_user()
+        # Get the username
+        username = self.get_user()
 
         # Add the datafiles that exist as arguments
         datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
@@ -632,7 +637,7 @@ class MMEDSanalysis(MMEDSbase):
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, specimen_metadata,
-                    username, reads_type, datafiles, cp.session['metadata_temporary']))
+                    username, reads_type, datafiles, cp.session['metadata_temporary'], public))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')

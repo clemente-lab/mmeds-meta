@@ -771,7 +771,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
 
     # Templates for the different emails mmeds sends
     if message == 'upload':
-        body = 'Hello {email},\nthe user {user} uploaded data to the mmeds database server.\n' +\
+        body = 'Hello {email},\nthe user {user} uploaded data for the {study} study to the mmeds database server.\n' +\
                'In order to gain access to this data without the password to\n{user} you must provide ' +\
                'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
@@ -803,7 +803,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         cemail=fig.CONTACT_EMAIL,
         email=toaddr,
         analysis=kwargs.get('analysis_type'),
-        study=kwargs.get('study_name'),
+        study=kwargs.get('study'),
         code=kwargs.get('code'),
         password=kwargs.get('password'),
         contact=fig.CONTACT_EMAIL
@@ -813,6 +813,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         msg = EmailMessage()
         msg['From'] = fig.MMEDS_EMAIL
         msg['To'] = toaddr
+        msg['Subject'] = subject
         # Add in any necessary text fields
         msg.set_content(email_body)
 

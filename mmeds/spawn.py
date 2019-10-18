@@ -24,6 +24,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
+
     if isinstance(config_file, str):
         log('load path config {}'.format(config_file))
         config = load_config(config_file, files['metadata'])
@@ -44,6 +45,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
+    send_email(tool.doc.email, user, message='analysis', code=access_code,
+               testing=testing, study=tool.doc.study_name)
     tool.start()
     return tool
 
@@ -57,7 +60,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
 
 
 def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                       study_name, temporary, testing, *datafiles):
+                       study_name, temporary, public, testing, *datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -70,6 +73,7 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
     :testing: True if the server is running locally.
     :datafiles: A list of datafiles to be uploaded
     """
+    log('Handling upload for study {} for user {}'.format(study_name, username))
     count = 0
     new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
     while new_dir.is_dir():
@@ -103,11 +107,12 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
                           owner=username,
                           study_name=study_name,
                           temporary=temporary,
-                          testing=testing) as up:
+                          testing=testing,
+                          public=public) as up:
         access_code, email = up.import_metadata(**datafile_copies)
 
     # Send the confirmation email
-    send_email(email, username, code=access_code, testing=testing)
+    send_email(email, username, message='upload', study=study_name, code=access_code, testing=testing)
 
     return access_code
 
@@ -206,11 +211,11 @@ class Watcher(Process):
                     # If there is nothing uploading currently start the new upload process
                     if current_upload is None:
                         (ptype, study_name, subject_metadata, specimen_metadata,
-                         username, reads_type, datafiles, temporary) = process
+                         username, reads_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
                         p = Process(target=handle_data_upload,
                                     args=(subject_metadata, specimen_metadata, username,
-                                          reads_type, study_name, temporary, self.testing,
+                                          reads_type, study_name, temporary, public, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
                         p.start()

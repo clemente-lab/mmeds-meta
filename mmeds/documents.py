@@ -39,6 +39,7 @@ class StudyDoc(MMEDSDoc):
     created = men.DateTimeField()
     last_accessed = men.DateTimeField()
     testing = men.BooleanField(required=True)
+    public = men.BooleanField(required=True)
     study_type = men.StringField(max_length=45, required=True)
     reads_type = men.StringField(max_length=45, required=True)
     study = men.StringField(max_length=45, required=True)
