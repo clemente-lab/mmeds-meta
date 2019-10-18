@@ -73,6 +73,7 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
     :testing: True if the server is running locally.
     :datafiles: A list of datafiles to be uploaded
     """
+    log('Handling upload for study {} for user {}'.format(study_name, username))
     count = 0
     new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
     while new_dir.is_dir():
@@ -111,7 +112,7 @@ def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type
         access_code, email = up.import_metadata(**datafile_copies)
 
     # Send the confirmation email
-    send_email(email, username, code=access_code, testing=testing)
+    send_email(email, username, message='upload', study=study_name, code=access_code, testing=testing)
 
     return access_code
 
