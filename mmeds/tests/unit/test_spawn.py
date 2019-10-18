@@ -22,6 +22,11 @@ class SpawnTests(TestCase):
         test_setup = (fig.TEST_METADATA_SHORTEST,
                       fig.TEST_DIR,
                       fig.TEST_USER,
+                      'Test_Spawn',
+                      'single_end',
+                      fig.TEST_READS,
+                      None,
+                      fig.TEST_BARCODES,
                       fig.TEST_CODE)
         upload_metadata(test_setup)
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)

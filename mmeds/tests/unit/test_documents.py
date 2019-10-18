@@ -25,6 +25,7 @@ class DocTests(TestCase):
         test_setup = (fig.TEST_METADATA_SHORTEST,
                       fig.TEST_DIR,
                       fig.TEST_USER,
+                      'Test_Document',
                       'single_end',
                       fig.TEST_READS,
                       None,

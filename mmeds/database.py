@@ -23,20 +23,25 @@ DAYS = 13
 
 # Used in test_cases
 def upload_metadata(args):
-    metadata, path, owner, reads_type, for_reads, rev_reads, barcodes, access_code = args
+    metadata, path, owner, study_name, reads_type, for_reads, rev_reads, barcodes, access_code = args
     with MetaDataUploader(metadata=metadata,
                           path=path,
                           study_type='qiime',
-                          study_name='Test_Qiime',
+                          study_name=study_name,
                           reads_type=reads_type,
                           owner=fig.TEST_USER,
                           temporary=False,
                           public=False,
                           testing=True) as up:
-        access_code, email = up.import_metadata(for_reads=for_reads,
-                                                rev_reads=rev_reads,
-                                                barcodes=barcodes,
-                                                access_code=access_code)
+        if rev_reads is None:
+            access_code, email = up.import_metadata(for_reads=for_reads,
+                                                    barcodes=barcodes,
+                                                    access_code=access_code)
+        else:
+            access_code, email = up.import_metadata(for_reads=for_reads,
+                                                    rev_reads=rev_reads,
+                                                    barcodes=barcodes,
+                                                    access_code=access_code)
         return access_code, email
 
 
@@ -351,11 +356,6 @@ class Database:
         return code
 
     def mongo_clean(self, access_code):
-        """
-        Delete all mongo objects with the given access_code.
-        It will not delete the files associated with those objects.
-        """
-
         obs = StudyDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
