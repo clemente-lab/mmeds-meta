@@ -37,7 +37,7 @@ JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
-PROCESS_LOG = DATABASE_DIR / 'process_log.txt'
+PROCESS_LOG = DATABASE_DIR / 'process_log.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',

@@ -1,0 +1,2001 @@
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=286402} <unfinished ...>
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=309244} <unfinished ...>
+2181  wait4(3422,  <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\225<s\n\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0F&\0\0\225<s\n\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0z\257\316y\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0I&\0\0z\257\316y\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\204v5Z\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0L&\0\0\204v5Z\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0Sb\204V\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0O&\0\0Sb\204V\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\08\\\6B\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0R&\0\08\\\6B\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\362\357\203:\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0U&\0\0\362\357\203:\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0&o\2030\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0X&\0\0&o\2030\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\370\322)I\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0_&\0\0\370\322)I\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\374\235rc\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0c&\0\0\374\235rc\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\235\355\0377\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0g&\0\0\235\355\0377\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\300\25x+\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0k&\0\0\300\25x+\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\346z\323'\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0n&\0\0\346z\323'\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0k\273\234t\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0q&\0\0k\273\234t\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\36\213\247u\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0t&\0\0\36\213\247u\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\3\30\3009\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0{&\0\0\3\30\3009\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0wZ\323q\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0~&\0\0wZ\323q\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\22\353\340!\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0\201&\0\0\22\353\340!\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\363\21\355_\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0\204&\0\0\363\21\355_\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\351<\3323\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0\207&\0\0\351<\3323\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0(}+\t\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0\212&\0\0(}+\t\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0\273\302cV\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0\215&\0\0\273\302cV\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  getpid()                          = 2181
+2182  poll([{fd=17, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+2182  poll([{fd=17, events=POLLOUT}], 1, 20000) = 1 ([{fd=17, revents=POLLOUT}])
+2182  sendto(17, "_\0\0\0b\267\3202\0\0\0\0\335\7\0\0\0\0\0\0\0J\0\0\0\20ismast"..., 95, 0, NULL, 0) = 95
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\340\0\0\0\220&\0\0b\267\3202\335\7\0\0", 16, 0, NULL, NULL) = 16
+2182  poll([{fd=17, events=POLLIN}], 1, 20000) = 1 ([{fd=17, revents=POLLIN}])
+2182  recvfrom(17, "\0\0\0\0\0\313\0\0\0\10ismaster\0\1\20maxBsonObje"..., 208, 0, NULL, NULL) = 208
+2182  getpid()                          = 2181
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2183  <... select resumed>)             = 0 (Timeout)
+2183  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2182  <... select resumed>)             = 0 (Timeout)
+2182  select(0, NULL, NULL, NULL, {tv_sec=0, tv_usec=500000} <unfinished ...>
+2181  <... wait4 resumed>0x7ffd17255114, 0, NULL) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+2181  --- SIGINT {si_signo=SIGINT, si_code=SI_KERNEL} ---
+2181  getpid()                          = 2181
+2181  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_KILLED, si_pid=3422, si_uid=1000, si_status=SIGINT, si_utime=7, si_stime=4} ---
+2181  rt_sigreturn({mask=[]})           = -1 EINTR (Interrupted system call)
+2181  wait4(3422, [{WIFSIGNALED(s) && WTERMSIG(s) == SIGINT}], WNOHANG, NULL) = 3422
+2181  lseek(22, 0, SEEK_CUR)            = 4514
+2181  lseek(22, 0, SEEK_CUR)            = 4514
+2181  close(22)                         = 0
+2181  write(2, "Process Qiime2-3:1:\n", 20) = 20
+2181  stat("/home/david/anaconda3/envs/mmeds/lib/python3.7/multiprocessing/process.py", {st_mode=S_IFREG|0664, st_size=10548, ...}) = 0
+2181  openat(AT_FDCWD, "/home/david/anaconda3/envs/mmeds/lib/python3.7/multiprocessing/process.py", O_RDONLY|O_CLOEXEC) = 22
+2181  fstat(22, {st_mode=S_IFREG|0664, st_size=10548, ...}) = 0
+2181  ioctl(22, TCGETS, 0x7ffd172546b0) = -1 ENOTTY (Inappropriate ioctl for device)
+2181  lseek(22, 0, SEEK_CUR)            = 0
+2181  read(22, "#\n# Module providing the `Proces"..., 4096) = 4096
+2181  read(22, "pen.poll()\n        if returncode"..., 8192) = 6452
+2181  read(22, "", 8192)                = 0
+2181  close(22)                         = 0
+2181  stat("/home/david/anaconda3/envs/mmeds/lib/python3.7/site-packages/mmeds-0.5.0-py3.7.egg/mmeds/tool.py", {st_mode=S_IFREG|0664, st_size=22687, ...}) = 0
+2181  openat(AT_FDCWD, "/home/david/anaconda3/envs/mmeds/lib/python3.7/site-packages/mmeds-0.5.0-py3.7.egg/mmeds/tool.py", O_RDONLY|O_CLOEXEC) = 22
+2181  fstat(22, {st_mode=S_IFREG|0664, st_size=22687, ...}) = 0
+2181  ioctl(22, TCGETS, 0x7ffd172546b0) = -1 ENOTTY (Inappropriate ioctl for device)
+2181  lseek(22, 0, SEEK_CUR)            = 0
+2181  read(22, "from pathlib import Path\nfrom su"..., 4096) = 4096
+2181  read(22, "r an explicit key\n        if key"..., 8192) = 8192
+2181  read(22, "                else:\n          "..., 8192) = 8192
+2181  read(22, "hed = self.get_file(f, True)\n   "..., 8192) = 2207
+2181  read(22, "", 8192)                = 0
+2181  close(22)                         = 0
+2181  stat("/home/david/anaconda3/envs/mmeds/lib/python3.7/subprocess.py", {st_mode=S_IFREG|0664, st_size=70004, ...}) = 0
+2181  openat(AT_FDCWD, "/home/david/anaconda3/envs/mmeds/lib/python3.7/subprocess.py", O_RDONLY|O_CLOEXEC) = 22
+2181  fstat(22, {st_mode=S_IFREG|0664, st_size=70004, ...}) = 0
+2181  ioctl(22, TCGETS, 0x7ffd172546b0) = -1 ENOTTY (Inappropriate ioctl for device)
+2181  lseek(22, 0, SEEK_CUR)            = 0
+2181  read(22, "# subprocess - Subprocesses with"..., 4096) = 4096
+2181  read(22, " hStdOutput\n            self.hSt"..., 8192) = 8192
+2181  read(22, "        \"ls -l non_existent_file"..., 8192) = 8192
+2181  read(22, "etstatusoutput('cat /bin/junk')\n"..., 8192) = 8192
+2181  read(22, "         if stdin == PIPE:\n     "..., 8192) = 8192
+2181  read(22, "   if timeout is not None:\n     "..., 8192) = 8192
+2181  read(22, "hould have open.  You need\n     "..., 8192) = 8192
+2181  read(22, "                  errread, errwr"..., 8192) = 8192
+2181  read(22, "self._handle_exitstatus(sts)\n   "..., 8192) = 8192
+2181  read(22, "ow has already died.\n           "..., 8192) = 372
+2181  read(22, "", 8192)                = 0
+2181  close(22)                         = 0
+2181  write(2, "Traceback (most recent call last"..., 35) = 35
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 123) = 123
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 148) = 148
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 172) = 172
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 153) = 153
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 112) = 112
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 128) = 128
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 126) = 126
+2181  write(2, "  File \"/home/david/anaconda3/en"..., 145) = 145
+2181  write(2, "KeyboardInterrupt\n", 18) = 18
+2181  exit_group(1 <unfinished ...>
+2183  <... select resumed> <unfinished ...>) = ?
+2182  <... select resumed> <unfinished ...>) = ?
+2181  <... exit_group resumed>)         = ?
+2183  +++ exited with 1 +++
+2182  +++ exited with 1 +++
+2181  +++ exited with 1 +++

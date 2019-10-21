@@ -16,11 +16,13 @@ from email import message_from_bytes
 from tempfile import gettempdir
 from time import sleep
 from re import sub
+from copy import deepcopy
 from ppretty import ppretty
 
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
+import yaml
 
 
 def load_metadata_template():
@@ -1025,12 +1027,20 @@ def read_processes():
     Function for reading process access codes back from the log file.
     Part of the functionality for continuing unfinished analyses on server restart.
     """
+    '''
     processes = defaultdict(list)
     if fig.PROCESS_LOG.exists():
         all_codes = fig.PROCESS_LOG.read_text().split('\n')
         for code in all_codes:
             ptype, pcode = code.split('\t')
             processes[ptype].append(pcode)
+    '''
+    if fig.PROCESS_LOG.exists():
+        with open(fig.PROCESS_LOG, 'r') as f:
+            processes = yaml.load(f, Loader=yaml.Loader)
+    else:
+        # processes = {'test':[], 'analysis': [], 'upload': []}
+        processes = defaultdict(list)
     return processes
 
 
@@ -1041,15 +1051,6 @@ def write_processes(process_codes):
     ===============================================================================
     :process_codes: A dictionary of processcodes
     """
-    all_codes = []
-    # Go through all types of processdocs
-    for ptype, pcodes in process_codes.items():
-        # Go through each processdoc
-        for pdoc in pcodes:
-            if isinstance(pdoc, str):
-                all_codes.append('{}\t{}'.format(ptype, pdoc))
-            # If the process hasn't yet finished
-            elif not pdoc.status == 'Finished':
-                # Add it's access code to the process log
-                all_codes.append('{}\t{}'.format(ptype, pdoc.analysis_code))
-    fig.PROCESS_LOG.write_text('\n'.join(all_codes))
+    process_codes['TimeStamp'] = [datetime.now()]
+    with open(fig.PROCESS_LOG, 'w+') as f:
+        yaml.dump(deepcopy(process_codes), f)

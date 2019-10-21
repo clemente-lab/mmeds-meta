@@ -5,7 +5,7 @@ from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
 from mmeds.util import (send_email, create_local_copy, log, load_config,
-                        read_processes, write_processes, join_metadata,
+                        read_processes, write_processes, join_metadata, error_log,
                         write_metadata, load_metadata)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
@@ -45,10 +45,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
-    print(dir(tool))
     send_email(tool.doc.email, user, message='analysis', code=access_code,
                testing=testing, study=tool.doc.study_name)
-    tool.start()
     return tool
 
 
@@ -167,14 +165,21 @@ class Watcher(Process):
         self.parent_pid = parent_pid
         self.started = []
         super().__init__()
+        print('I am watch {}'.format(self.name))
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
+        error_log('Add process {}, type: {}'.format(process, ptype))
         self.processes[ptype].append(process)
+
+        """
+        write_processes(self.processes)
+
         atexit.unregister(write_processes)
         atexit.register(write_processes, self.processes)
         atexit.unregister(killall)
         atexit.register(killall, self.started)
+        """
 
     def run(self):
         """ The loop to run when a Watcher is started """
@@ -182,6 +187,7 @@ class Watcher(Process):
 
         # Continue until it's parent process is killed
         while True:
+            write_processes(self.processes)
             # If there is nothing in the process queue, sleep
             if self.q.empty():
                 sleep(10)
@@ -199,6 +205,7 @@ class Watcher(Process):
                     p = spawn_analysis(tool, user, access_code, config, self.testing)
                     # Add it to the list of analysis processes
                     self.add_process(ptype, p)
+                    p.start()
                 # If it's an upload
                 elif process[0] == 'upload':
                     # Check that there isn't another process currently uploading
@@ -219,9 +226,9 @@ class Watcher(Process):
                                           reads_type, study_name, temporary, public, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
+                        self.add_process('upload', p)
                         p.start()
                         self.started.append(p)
-                        self.add_process('upload', p.pid)
                         current_upload = p
                         if self.testing:
                             p.join()

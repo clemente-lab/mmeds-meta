@@ -1,0 +1,11 @@
+!!python/object/apply:collections.defaultdict
+args:
+- !!python/name:builtins.list ''
+dictitems:
+  test:
+  - time is 2019-10-18 12:51:21.186365
+  - time is 2019-10-18 12:51:21.191307
+  - time is 2019-10-18 12:58:21.508005
+  - time is 2019-10-18 12:58:21.516302
+  - time is 2019-10-21 09:38:06.855427
+  - time is 2019-10-21 09:38:06.860263

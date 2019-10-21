@@ -42,12 +42,11 @@ class MMEDSbase:
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
 
-    def __init__(self, testing=False):
+    def __init__(self, watcher, q, testing=False):
         self.db = None
         self.testing = bool(int(testing))
-        self.q = Queue()
-        self.monitor = Watcher(self.q, current_process(), self.testing)
-        self.monitor.start()
+        self.monitor = watcher
+        self.q = q
         # Set the server to kill the watcher process on exit
         atexit.register(kill_watcher, self.monitor)
 
@@ -203,8 +202,8 @@ class MMEDSbase:
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ########################################
     #            Download Pages            #
@@ -334,8 +333,8 @@ class MMEDSdownload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSupload(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ########################################
     #             Upload Pages             #
@@ -423,8 +422,8 @@ class MMEDSupload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ########################################
     #           Account Pages              #
@@ -541,8 +540,8 @@ class MMEDSauthentication(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ######################################
     #              Analysis              #
@@ -687,21 +686,26 @@ class MMEDSanalysis(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
-        self.download = MMEDSdownload(testing)
-        self.analysis = MMEDSanalysis(testing)
-        self.upload = MMEDSupload(testing)
-        self.auth = MMEDSauthentication(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+        self.download = MMEDSdownload(watcher, q, testing)
+        self.analysis = MMEDSanalysis(watcher, q, testing)
+        self.upload = MMEDSupload(watcher, q, testing)
+        self.auth = MMEDSauthentication(watcher, q, testing)
+        assert self.monitor == self.download.monitor
+        assert self.monitor == self.analysis.monitor
+        assert self.monitor == self.upload.monitor
+        assert self.monitor == self.auth.monitor
+        assert self.q == self.download.q
+        assert self.q == self.analysis.q
+        assert self.q == self.upload.q
+        assert self.q == self.auth.q
 
     @cp.expose
     def index(self):
         """ Home page of the application """
         if cp.session.get('user'):
             page = self.format_html('welcome', title='Welcome to MMEDS')
-            self.add_process('test', 'User {} is logged in. The time is {}'.format(cp.session.get('user'),
-                                                                                   datetime.now()))
         else:
             page = self.format_html('index')
-            self.add_process('test', 'time is {}'.format(datetime.now()))
         return page
