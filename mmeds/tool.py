@@ -482,9 +482,15 @@ class Tool(mp.Process):
             self.update_doc(files=finished_files)
 
             debug_log('{}: finished file cleanup'.format(self.name))
+
+            send_email(self.doc.email, self.doc.owner, message='error', code=self.doc.access_code,
+                       stage=self.doc.restart_stage, testing=self.testing, study=self.doc.study_name)
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
-        self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
-        self.move_user_files()
+        else:
+            send_email(self.doc.email, self.doc.owner, message='analysis_done', code=self.doc.access_code,
+                       testing=self.testing, study=self.doc.study_name)
+            self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
+            self.move_user_files()
 
         if not self.testing:
             send_email(self.doc.email,

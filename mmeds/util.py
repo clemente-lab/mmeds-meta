@@ -788,8 +788,15 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Password Change'
-    elif message == 'analysis':
+    elif message == 'analysis_start':
+        body = 'Hello {user},\nYour requested {analysis} analysis on study {study} has started.\n' +\
+               'You will recieve another email when this analysis completes.\n' +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Analysis Started'
+    elif message == 'analysis_done':
         body = 'Hello {user},\nYour requested {analysis} analysis on study {study} is complete.\n' +\
+               'You can retrieve the results using the access code {code}.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Complete'

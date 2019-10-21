@@ -45,7 +45,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         tool = Process(target=test, args=(time,))
     else:
         raise AnalysisError('atype didnt match any')
-    send_email(tool.doc.email, user, message='analysis', code=access_code,
+    send_email(tool.doc.email, user, message='analysis_start', code=access_code,
                testing=testing, study=tool.doc.study_name)
     return tool
 
@@ -174,7 +174,6 @@ class Watcher(Process):
 
         """
         write_processes(self.processes)
-
         atexit.unregister(write_processes)
         atexit.register(write_processes, self.processes)
         atexit.unregister(killall)
