@@ -199,7 +199,7 @@ class Watcher(Process):
                     p = spawn_analysis(tool, user, access_code, config, self.testing)
                     p.start()
                     # Add it to the list of analysis processes
-                    self.add_process(ptype, p.get_info())
+                    self.add_process(ptype, p)
                 # If it's an upload
                 elif process[0] == 'upload':
                     # Check that there isn't another process currently uploading

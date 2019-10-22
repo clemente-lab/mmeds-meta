@@ -1028,6 +1028,7 @@ def quote_sql(sql, quote='`', **kwargs):
     formatted = sql.format(**quoted_args)
     return formatted
 
+
 def read_processes():
     """
     Function for reading process access codes back from the log file.
@@ -1036,11 +1037,11 @@ def read_processes():
     if fig.CURRENT_PROCESSES.exists():
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             processes = yaml.load(f, Loader=yaml.Loader)
+        for key in processes.keys():
+            for process in processes[key]:
+                process['is_alive'] = False
     else:
         processes = defaultdict(list)
-    for key in processes.keys():
-        for process in processes[key]:
-            process['is_alive'] = False
     return processes
 
 
@@ -1055,6 +1056,8 @@ def write_processes(processes):
     finished = defaultdict(list)
     for key in processes.keys():
         for process in processes[key]:
+            if not isinstance(process, dict):
+                process = process.get_info()
             if process.get('is_alive'):
                 running[key].append(process)
             else:
