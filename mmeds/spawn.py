@@ -4,6 +4,7 @@ from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
+from datetime import datetime
 from mmeds.util import (send_email, create_local_copy, log, load_config,
                         read_processes, write_processes, join_metadata, error_log,
                         write_metadata, load_metadata)
@@ -12,6 +13,7 @@ from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.config import DATABASE_DIR
+
 
 
 def test(time):
@@ -171,14 +173,7 @@ class Watcher(Process):
         """ Add an analysis process to the list of processes. """
         error_log('Add process {}, type: {}'.format(process, ptype))
         self.processes[ptype].append(process)
-
-        """
         write_processes(self.processes)
-        atexit.unregister(write_processes)
-        atexit.register(write_processes, self.processes)
-        atexit.unregister(killall)
-        atexit.register(killall, self.started)
-        """
 
     def run(self):
         """ The loop to run when a Watcher is started """
@@ -202,9 +197,9 @@ class Watcher(Process):
                     ptype, user, access_code, tool, config = process
                     # Start the analysis running
                     p = spawn_analysis(tool, user, access_code, config, self.testing)
-                    # Add it to the list of analysis processes
-                    self.add_process(ptype, p)
                     p.start()
+                    # Add it to the list of analysis processes
+                    self.add_process(ptype, p.get_info())
                 # If it's an upload
                 elif process[0] == 'upload':
                     # Check that there isn't another process currently uploading
@@ -225,8 +220,17 @@ class Watcher(Process):
                                           reads_type, study_name, temporary, public, self.testing,
                                           # Unpack the list so the files are taken as a tuple
                                           *datafiles))
-                        self.add_process('upload', p)
+                        info = {
+                            'owner': username,
+                            'public': public,
+                            'study_name': study_name,
+                            'start_date': datetime.now(),
+                            'pid': p.pid,
+                            'name': p.name,
+                            'is_alive': False
+                        }
                         p.start()
+                        self.add_process('upload', info)
                         self.started.append(p)
                         current_upload = p
                         if self.testing:

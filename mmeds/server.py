@@ -347,7 +347,7 @@ class MMEDSupload(MMEDSbase):
                                 title='Upload Metadata',
                                 metadata_type=cp.session['metadata_type'].capitalize())
         if cp.session['metadata_type'] == 'specimen':
-            page = insert_html(page, 26, 'Subject table uploaded successfully')
+            page = insert_warning(page, 26, 'Subject table uploaded successfully')
         return page
 
     @cp.expose
@@ -567,8 +567,7 @@ class MMEDSanalysis(MMEDSbase):
             self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
             cp.log('Valid config file')
             page = self.format_html('welcome', title='Welcome to MMEDS')
-            message = '<div> <font color="orange"> Analysis started you will recieve an email shortly </font> </div>'
-            page = insert_html(page, 22, message)
+            page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_error(page, 22, e.message)
@@ -606,8 +605,7 @@ class MMEDSanalysis(MMEDSbase):
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
                     page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
-                    message = '<p> <font color="orange"> Subject table uploaded successfully </font></p>'
-                    page = insert_html(page, 23, message)
+                    page = insert_warning(page, 23, 'Subject table uploaded successfully')
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
@@ -640,8 +638,7 @@ class MMEDSanalysis(MMEDSbase):
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')
-        html = '<h1> Your data is being uploaded, you will recieve an email when this finishes </h1>'
-        page = insert_error(page, 22, html)
+        page = insert_warning(page, 23, 'Upload Initiated. You will recieve an email when this finishes')
         return page
 
     @cp.expose

@@ -7,6 +7,7 @@ from copy import copy as classcopy
 from copy import deepcopy
 from ppretty import ppretty
 from collections import defaultdict
+from datetime import datetime
 
 from mmeds.database import Database
 from mmeds.util import (debug_log, info_log, create_qiime_from_mmeds,
@@ -51,6 +52,7 @@ class Tool(mp.Process):
         self.restart_stage = restart_stage
         self.current_stage = -2
         self.stage_files = defaultdict(list)
+        self.created = datetime.now()
 
         # If restarting get the associated AnalysisDoc from the database
         if restart_stage:
@@ -82,6 +84,21 @@ class Tool(mp.Process):
 
     def __str__(self):
         return ppretty(self, seq_length=20)
+
+    def get_info(self):
+        """ Method for return a dictionary of relevant info for the process log """
+        info = {
+            'created': self.created,
+            'owner': self.owner,
+            'stage': self.restart_stage,
+            'study_code': self.study_code,
+            'analysis_code': self.doc.access_code,
+            'analysis': self.analysis,
+            'pid': self.pid,
+            'name': self.name,
+            'is_alive': self.is_alive()
+        }
+        return info
 
     def update_doc(self, **kwargs):
         """ Pass updates to the database and reload """

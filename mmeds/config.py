@@ -38,6 +38,7 @@ MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
 PROCESS_LOG = DATABASE_DIR / 'process_log.yaml'
+CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',

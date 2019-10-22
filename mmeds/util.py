@@ -419,7 +419,7 @@ def insert_warning(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
     new_lines = lines[:line_number] +\
-        ['<h4><font color="orange">' + error_message + '</font></h4>'] +\
+        ['<div><font color="orange">' + error_message + '</font></div>'] +\
         lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
@@ -1028,36 +1028,43 @@ def quote_sql(sql, quote='`', **kwargs):
     formatted = sql.format(**quoted_args)
     return formatted
 
-
 def read_processes():
     """
     Function for reading process access codes back from the log file.
     Part of the functionality for continuing unfinished analyses on server restart.
     """
-    '''
-    processes = defaultdict(list)
-    if fig.PROCESS_LOG.exists():
-        all_codes = fig.PROCESS_LOG.read_text().split('\n')
-        for code in all_codes:
-            ptype, pcode = code.split('\t')
-            processes[ptype].append(pcode)
-    '''
-    if fig.PROCESS_LOG.exists():
-        with open(fig.PROCESS_LOG, 'r') as f:
+    if fig.CURRENT_PROCESSES.exists():
+        with open(fig.CURRENT_PROCESSES, 'r') as f:
             processes = yaml.load(f, Loader=yaml.Loader)
     else:
-        # processes = {'test':[], 'analysis': [], 'upload': []}
         processes = defaultdict(list)
+    for key in processes.keys():
+        for process in processes[key]:
+            process['is_alive'] = False
     return processes
 
 
-def write_processes(process_codes):
+def write_processes(processes):
     """
     Function for writing the access codes to all processes tracked by the server upon server exit.
     Part of the functionality for continuing unfinished analyses on server restart.
     ===============================================================================
-    :process_codes: A dictionary of processcodes
+    :processes: A dictionary of processes
     """
-    process_codes['TimeStamp'] = [datetime.now()]
+    running = defaultdict(list)
+    finished = defaultdict(list)
+    for key in processes.keys():
+        for process in processes[key]:
+            if process.get('is_alive'):
+                running[key].append(process)
+            else:
+                finished[key].append(process)
+    with open(fig.CURRENT_PROCESSES, 'w+') as f:
+        yaml.dump(running, f)
+
+    if fig.PROCESS_LOG.exists():
+        with open(fig.PROCESS_LOG, 'r') as f:
+            finished.update(yaml.load(f, Loader=yaml.Loader))
+
     with open(fig.PROCESS_LOG, 'w+') as f:
-        yaml.dump(deepcopy(process_codes), f)
+        yaml.dump(finished, f)
