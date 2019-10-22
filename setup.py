@@ -45,6 +45,7 @@ setup(name='mmeds',
           'imapclient',
           'psutil',
           'xlrd',
-          'multiprocessing_logging'
+          'multiprocessing_logging',
+          'pyyaml'
       ],
       zip_safe=False)
