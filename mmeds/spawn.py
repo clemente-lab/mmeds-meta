@@ -1,19 +1,15 @@
-import atexit
-
 from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
+from collections import defaultdict
 from mmeds.util import (send_email, create_local_copy, log, load_config,
-                        read_processes, write_processes, join_metadata, error_log,
-                        write_metadata, load_metadata)
+                        read_processes, write_processes, error_log)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
-from mmeds.config import DATABASE_DIR
-
 
 
 def test(time):
@@ -60,62 +56,25 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                       study_name, temporary, public, testing, *datafiles):
+def spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
+                      study_name, temporary, public, testing, *datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
     :metadata_copy: A string. Location of the metadata.
     :reads: A tuple. First element is the name of the reads/data file,
-                     the second is a file type io object
+    the second is a file type io object
     :barcodes: A tuple. First element is the name of the barcodes file,
-                        the second is a file type io object
+    the second is a file type io object
     :username: A string. Name of the user that is uploading the files.
     :testing: True if the server is running locally.
     :datafiles: A list of datafiles to be uploaded
     """
-    log('Handling upload for study {} for user {}'.format(study_name, username))
-    count = 0
-    new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
-    while new_dir.is_dir():
-        new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
-        count += 1
-    new_dir.mkdir()
-
-    # Create a copy of the MetaData
-    with open(subject_metadata, 'rb') as f:
-        subject_metadata_copy = create_local_copy(f, subject_metadata.name, new_dir)
-
-    # Create a copy of the Specimen MetaData
-    with open(specimen_metadata, 'rb') as f:
-        specimen_metadata_copy = create_local_copy(f, specimen_metadata.name, new_dir)
-
-    # Merge the metadata files
-    metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
-    metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
-    write_metadata(metadata_df, metadata_copy)
-
-    # Create a copy of the Data file
-    datafile_copies = {datafile[0]: create_local_copy(Path(datafile[1]).read_bytes(),
-                                                      datafile[1], new_dir) for datafile in datafiles
-                       if datafile[1] is not None}
-
     # Upload the combined file to the database
-    with MetaDataUploader(metadata=metadata_copy,
-                          path=new_dir,
-                          study_type='qiime',
-                          reads_type=reads_type,
-                          owner=username,
-                          study_name=study_name,
-                          temporary=temporary,
-                          testing=testing,
-                          public=public) as up:
-        access_code, email = up.import_metadata(**datafile_copies)
-
-    # Send the confirmation email
-    send_email(email, username, message='upload', study=study_name, code=access_code, testing=testing)
-
-    return access_code
+    p = MetaDataUploader(subject_metadata=subject_metadata, specimen_metadata=specimen_metadata,
+                         study_type='qiime', reads_type=reads_type, owner=username, study_name=study_name,
+                         temporary=temporary, testing=testing, public=public, data_files=datafiles)
+    return p
 
 
 def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
@@ -164,6 +123,7 @@ class Watcher(Process):
         self.testing = testing
         self.q = queue
         self.processes = read_processes()
+        self.running_processes = defaultdict(list)
         self.parent_pid = parent_pid
         self.started = []
         super().__init__()
@@ -173,7 +133,28 @@ class Watcher(Process):
         """ Add an analysis process to the list of processes. """
         error_log('Add process {}, type: {}'.format(process, ptype))
         self.processes[ptype].append(process)
+        self.running_processes[ptype].append(process)
         write_processes(self.processes)
+
+    def check_processes(self):
+        still_running = []
+        # For each type of process 'upload', 'analysis', 'etc'
+        for ptype in self.running_processes.keys():
+            # Check each process is still alive
+            while self.running_processes[ptype]:
+                process = self.running_processes[ptype].pop()
+                if process.is_alive():
+                    print('process {} alive'.format(process.name))
+                    still_running.append(process)
+                else:
+                    print('process {} died'.format(process.name))
+                    self.processes[ptype].append(process)
+            self.running_processes[ptype] = still_running
+        # print('running {}'.format(self.running_processes))
+        # print('done {}'.format(self.processes))
+
+    def get_processes(self):
+        return self.running_processes, self.processes
 
     def run(self):
         """ The loop to run when a Watcher is started """
@@ -181,10 +162,11 @@ class Watcher(Process):
 
         # Continue until it's parent process is killed
         while True:
-            write_processes(self.processes)
+            self.check_processes()
+            #write_processes(self.processes)
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                sleep(10)
+                sleep(1)
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
@@ -215,22 +197,12 @@ class Watcher(Process):
                         (ptype, study_name, subject_metadata, specimen_metadata,
                          username, reads_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
-                        p = Process(target=handle_data_upload,
-                                    args=(subject_metadata, specimen_metadata, username,
-                                          reads_type, study_name, temporary, public, self.testing,
-                                          # Unpack the list so the files are taken as a tuple
-                                          *datafiles))
-                        info = {
-                            'owner': username,
-                            'public': public,
-                            'study_name': study_name,
-                            'start_date': datetime.now(),
-                            'pid': p.pid,
-                            'name': p.name,
-                            'is_alive': False
-                        }
+                        p = spawn_data_upload(subject_metadata, specimen_metadata, username,
+                                              reads_type, study_name, temporary, public, self.testing,
+                                              # Unpack the list so the files are taken as a tuple
+                                              *datafiles)
                         p.start()
-                        self.add_process('upload', info)
+                        self.add_process('upload', p)
                         self.started.append(p)
                         current_upload = p
                         if self.testing:

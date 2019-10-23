@@ -689,14 +689,6 @@ class MMEDSserver(MMEDSbase):
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
-        assert self.monitor == self.download.monitor
-        assert self.monitor == self.analysis.monitor
-        assert self.monitor == self.upload.monitor
-        assert self.monitor == self.auth.monitor
-        assert self.q == self.download.q
-        assert self.q == self.analysis.q
-        assert self.q == self.upload.q
-        assert self.q == self.auth.q
 
     @cp.expose
     def index(self):
