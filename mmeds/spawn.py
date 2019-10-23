@@ -4,7 +4,7 @@ from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-from mmeds.util import (send_email, create_local_copy, log, load_config,
+from mmeds.util import (send_email, create_local_copy, log, debug_log, load_config,
                         read_processes, write_processes, error_log)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
@@ -57,7 +57,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
 
 
 def spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                      study_name, temporary, public, testing, *datafiles):
+                      study_name, temporary, public, testing, datafiles):
     """
     Thread that handles the upload of large data files.
     ===================================================
@@ -71,9 +71,8 @@ def spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
     :datafiles: A list of datafiles to be uploaded
     """
     # Upload the combined file to the database
-    p = MetaDataUploader(subject_metadata=subject_metadata, specimen_metadata=specimen_metadata,
-                         study_type='qiime', reads_type=reads_type, owner=username, study_name=study_name,
-                         temporary=temporary, testing=testing, public=public, data_files=datafiles)
+    p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
+                         study_name, temporary, datafiles, public, testing)
     return p
 
 
@@ -128,7 +127,6 @@ class Watcher(Process):
         self.parent_pid = parent_pid
         self.started = []
         super().__init__()
-        print('I am watch {}'.format(self.name))
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
@@ -136,7 +134,6 @@ class Watcher(Process):
         #self.processes[ptype].append(process)
         self.running_processes.append(process)
 
-        print('dict {}: {}'.format(id(self.running_processes), self.running_processes))
         #write_processes(self.processes)
 
     def check_processes(self):
@@ -146,10 +143,8 @@ class Watcher(Process):
         while self.running_processes:
             process = self.running_processes.pop()
             if process.is_alive():
-                print('process {} alive'.format(process.name))
                 still_running.append(process)
             else:
-                print('process {} died'.format(process.name))
                 self.processes.append(process)
                 # Send the exitcode of the process
                 self.pipe.send(process.exitcode)
@@ -165,21 +160,18 @@ class Watcher(Process):
         return bool(self.running_processes['ptype'])
 
     def get_processes(self):
-        print('running {}'.format(self.running_processes))
-        print('done {}'.format(self.processes))
         return self.running_processes, self.processes
 
     def run(self):
         """ The loop to run when a Watcher is started """
         current_upload = None
-        print('I am the watcher {}'.format(id(self)))
         # Continue until it's parent process is killed
         while True:
             self.check_processes()
             #write_processes(self.processes)
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                sleep(1)
+                sleep(3)
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
@@ -201,7 +193,7 @@ class Watcher(Process):
                     if current_upload is not None and current_upload.is_alive():
                         # If there is another upload return the process info to the queue
                         self.q.put(process)
-                        sleep(10)
+                        sleep(3)
                     else:
                         current_upload = None
 
@@ -210,10 +202,8 @@ class Watcher(Process):
                         (ptype, study_name, subject_metadata, specimen_metadata,
                          username, reads_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
-                        p = spawn_data_upload(subject_metadata, specimen_metadata, username,
-                                              reads_type, study_name, temporary, public, self.testing,
-                                              # Unpack the list so the files are taken as a tuple
-                                              *datafiles)
+                        p = spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
+                                              study_name, temporary, public, self.testing, datafiles)
                         p.start()
                         self.add_process('upload', p)
                         self.started.append(p)

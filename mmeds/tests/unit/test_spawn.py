@@ -21,6 +21,7 @@ class SpawnTests(TestCase):
     @classmethod
     def setUpClass(self):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
+        add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
 
         self.q = mp.Queue()
         self.manager = mp.Manager()
@@ -29,21 +30,12 @@ class SpawnTests(TestCase):
         self.pipe = pipe_ends[0]
         self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
         self.watcher.start()
-        print('in test watcher {}'.format(id(self.watcher)))
-        test_setup = (fig.TEST_METADATA_SHORTEST,
-                      fig.TEST_DIR,
-                      fig.TEST_USER,
-                      'Test_Spawn',
-                      'single_end',
-                      fig.TEST_READS,
-                      None,
-                      fig.TEST_BARCODES,
-                      fig.TEST_CODE)
 
     @classmethod
     def tearDownClass(self):
         self.watcher.terminate()
         remove_user(fig.TEST_USER, testing=True)
+        remove_user(fig.TEST_USER_0, testing=True)
 
     def test_a_upload_data(self):
         """ Test uploading data through the queue """

@@ -17,7 +17,7 @@ from multiprocessing import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError, InvalidSQLError
 from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log,
-                        log, create_local_copy, load_metadata, join_metadata, write_metadata)
+                        debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
 from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
@@ -757,7 +757,7 @@ class SQLBuilder:
 
 class MetaDataUploader(Process):
     def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
-                 reads_type, study_name, temporary, public, data_files, testing=False):
+                 reads_type, study_name, temporary, data_files, public, testing=False):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -770,18 +770,32 @@ class MetaDataUploader(Process):
         """
         warnings.simplefilter('ignore')
         super().__init__()
+        debug_log('MetadataUploader created with params')
+        debug_log({
+            'subject_metadata': subject_metadata,
+            'specimen_metadata': specimen_metadata,
+            'owner': owner,
+            'study_type': study_type,
+            'reads_type': reads_type,
+            'study_name': study_name,
+            'temporary': temporary,
+            'data_files': data_files,
+            'public': public,
+            'testing': testing
+        })
+
 
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
         self.reads_type = reads_type
-        self.subject_metadata = subject_metadata
-        self.specimen_metadata = specimen_metadata
+        self.subject_metadata = Path(subject_metadata)
+        self.specimen_metadata = Path(specimen_metadata)
         self.study_name = study_name
         self.temporary = temporary
         self.public = public
-        self.data_files = data_files
+        self.datafiles = data_files
         self.created = datetime.now()
         self.access_code = None
 
@@ -858,11 +872,13 @@ class MetaDataUploader(Process):
         # Merge the metadata files
         metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
         metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
+        self.metadata = metadata_copy
         write_metadata(metadata_df, metadata_copy)
 
         if not self.temporary:
             # Read in the metadata file to import
-            self.df = metadata_df.reindex(metadata_df.columns, axis=1)
+            df = parse_ICD_codes(pd.read_csv(metadata_copy, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
+            self.df = df.reindex(df.columns, axis=1)
             self.builder = SQLBuilder(self.df, self.db, self.owner)
 
         # If the owner is None set user_id to 0
@@ -888,13 +904,15 @@ class MetaDataUploader(Process):
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
         # Create a copy of the Data file
-        datafile_copies = {datafile[0]: create_local_copy(Path(datafile[1]).read_bytes(),
-                                                          datafile[1], self.path.parent) for datafile in self.datafiles
-                           if datafile[1] is not None}
-        email = self.import_metadata(**datafile_copies)
+        datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),
+                                                  filepath, self.path.parent)
+                           for key, filepath in self.datafiles.items()
+                           if filepath is not None}
+        self.access_code = self.import_metadata(**datafile_copies)
 
         # Send the confirmation email
-        send_email(email, self.owner, message='upload', study=self.study_name, code=self.access_code, testing=self.testing)
+        send_email(self.email, self.owner, message='upload', study=self.study_name,
+                   code=self.access_code, testing=self.testing)
 
     def import_metadata(self, **kwargs):
         """
