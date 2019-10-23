@@ -1052,6 +1052,7 @@ def write_processes(processes):
     ===============================================================================
     :processes: A dictionary of processes
     """
+    print('WRite processessssssssssssssssssss')
     running = defaultdict(list)
     finished = defaultdict(list)
     for key in processes.keys():

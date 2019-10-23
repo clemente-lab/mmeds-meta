@@ -112,7 +112,7 @@ def killall(processes):
 
 class Watcher(Process):
 
-    def __init__(self, queue, parent_pid, testing=False):
+    def __init__(self, queue, pipe, parent_pid, testing=False):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
         =====================================================================================
@@ -122,8 +122,9 @@ class Watcher(Process):
         """
         self.testing = testing
         self.q = queue
-        self.processes = read_processes()
-        self.running_processes = defaultdict(list)
+        self.processes = [] # read_processes()
+        self.running_processes = []
+        self.pipe = pipe
         self.parent_pid = parent_pid
         self.started = []
         super().__init__()
@@ -132,34 +133,46 @@ class Watcher(Process):
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
         error_log('Add process {}, type: {}'.format(process, ptype))
-        self.processes[ptype].append(process)
-        self.running_processes[ptype].append(process)
-        write_processes(self.processes)
+        #self.processes[ptype].append(process)
+        self.running_processes.append(process)
+
+        print('dict {}: {}'.format(id(self.running_processes), self.running_processes))
+        #write_processes(self.processes)
 
     def check_processes(self):
         still_running = []
         # For each type of process 'upload', 'analysis', 'etc'
-        for ptype in self.running_processes.keys():
-            # Check each process is still alive
-            while self.running_processes[ptype]:
-                process = self.running_processes[ptype].pop()
-                if process.is_alive():
-                    print('process {} alive'.format(process.name))
-                    still_running.append(process)
-                else:
-                    print('process {} died'.format(process.name))
-                    self.processes[ptype].append(process)
-            self.running_processes[ptype] = still_running
-        # print('running {}'.format(self.running_processes))
-        # print('done {}'.format(self.processes))
+        # Check each process is still alive
+        while self.running_processes:
+            process = self.running_processes.pop()
+            if process.is_alive():
+                print('process {} alive'.format(process.name))
+                still_running.append(process)
+            else:
+                print('process {} died'.format(process.name))
+                self.processes.append(process)
+                # Send the exitcode of the process
+                self.pipe.send(process.exitcode)
+        for process in still_running:
+            self.running_processes.append(process)
+
+    def get_exit_codes(self, ptype):
+        """ Get exit codes for processes that have finished. """
+        return [process.exit_code for process in self.processes[ptype]]
+
+    def any_running(self, ptype):
+        """ Returns true if there is a process running """
+        return bool(self.running_processes['ptype'])
 
     def get_processes(self):
+        print('running {}'.format(self.running_processes))
+        print('done {}'.format(self.processes))
         return self.running_processes, self.processes
 
     def run(self):
         """ The loop to run when a Watcher is started """
         current_upload = None
-
+        print('I am the watcher {}'.format(id(self)))
         # Continue until it's parent process is killed
         while True:
             self.check_processes()
