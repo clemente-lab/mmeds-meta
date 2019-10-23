@@ -10,7 +10,7 @@ import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
 from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
 from mmeds.spawn import Watcher
-from multiprocessing import current_process, Queue
+from multiprocessing import current_process, Queue, Pipe
 
 import cherrypy as cp
 from cherrypy.test import helper
@@ -18,7 +18,9 @@ from cherrypy.test import helper
 
 testing = True
 q = Queue()
-watcher = Watcher(q, current_process(), testing)
+pipe_ends = Pipe()
+pipe = pipe_ends[0]
+watcher = Watcher(q, pipe_ends[1], current_process(), testing)
 watcher.start()
 server = MMEDSserver(watcher, q, testing)
 

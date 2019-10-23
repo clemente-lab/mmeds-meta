@@ -163,11 +163,11 @@ class MMEDSbase:
 
     def load_data_files(self, **kwargs):
         """ Load the files passed that exist. """
-        files = []
+        files = {}
         for key, value in kwargs.items():
             if value is not None:
                 file_copy = create_local_copy(value.file, value.filename, self.get_dir())
-                files.append((key, file_copy))
+                files[key] = file_copy
         return files
 
     def format_html(self, page, **kwargs):
