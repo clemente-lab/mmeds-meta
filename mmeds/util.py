@@ -464,8 +464,7 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
     # Ensure there is not already a file with the same name
     while file_copy.is_file():
-        file_copy = Path(path) / '_'.join([fig.get_salt(5), filename])
-    log('Created filepath {}'.format(file_copy))
+        file_copy = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
@@ -1052,7 +1051,6 @@ def write_processes(processes):
     ===============================================================================
     :processes: A dictionary of processes
     """
-    print('WRite processessssssssssssssssssss')
     running = defaultdict(list)
     finished = defaultdict(list)
     for key in processes.keys():

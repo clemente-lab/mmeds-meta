@@ -25,26 +25,17 @@ DAYS = 13
 
 # Used in test_cases
 def upload_metadata(args):
-    metadata, path, owner, study_name, reads_type, for_reads, rev_reads, barcodes, access_code = args
-    with MetaDataUploader(metadata=metadata,
-                          path=path,
-                          study_type='qiime',
-                          study_name=study_name,
-                          reads_type=reads_type,
-                          owner=fig.TEST_USER,
-                          temporary=False,
-                          public=False,
-                          testing=True) as up:
-        if rev_reads is None:
-            access_code, email = up.import_metadata(for_reads=for_reads,
-                                                    barcodes=barcodes,
-                                                    access_code=access_code)
-        else:
-            access_code, email = up.import_metadata(for_reads=for_reads,
-                                                    rev_reads=rev_reads,
-                                                    barcodes=barcodes,
-                                                    access_code=access_code)
-        return access_code, email
+    (subject_metadata, specimen_metadata, path, owner, study_name,
+     reads_type, for_reads, rev_reads, barcodes, access_code) = args
+    datafiles = {'for_reads': for_reads,
+                 'rev_reads': rev_reads,
+                 'barcodes': barcodes}
+    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
+                         study_name, False, datafiles,
+                         False, True, access_code)
+    p.start()
+    p.join()
+    return p.exitcode
 
 
 class Database:
@@ -764,7 +755,7 @@ class SQLBuilder:
 
 class MetaDataUploader(Process):
     def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
-                 reads_type, study_name, temporary, data_files, public, testing):
+                 reads_type, study_name, temporary, data_files, public, testing, access_code=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -803,7 +794,7 @@ class MetaDataUploader(Process):
         self.public = public
         self.datafiles = data_files
         self.created = datetime.now()
-        self.access_code = None
+        self.access_code = access_code
 
         count = 0
         new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
@@ -865,7 +856,7 @@ class MetaDataUploader(Process):
         :testing: True if the server is running locally.
         :datafiles: A list of datafiles to be uploaded
         """
-        log('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
+        debug_log('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
 
         # Create a copy of the MetaData
         with open(self.subject_metadata, 'rb') as f:
@@ -1128,7 +1119,7 @@ class MetaDataUploader(Process):
         # For testing purposes
         if kwargs.get('access_code') is not None:
             self.access_code = kwargs.get('access_code')
-        else:
+        elif self.access_code is None:
             self.access_code = get_salt(50)
 
         # Create the document

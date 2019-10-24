@@ -22,7 +22,8 @@ class DocTests(TestCase):
         """ Set up tests """
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
 
-        test_setup = (fig.TEST_METADATA_SHORTEST,
+        test_setup = (fig.TEST_SUBJECT,
+                      fig.TEST_SPECIMEN,
                       fig.TEST_DIR,
                       fig.TEST_USER,
                       'Test_Document',
@@ -31,26 +32,14 @@ class DocTests(TestCase):
                       None,
                       fig.TEST_BARCODES,
                       fig.TEST_CODE)
-        access_code, email = upload_metadata(test_setup)
+        upload_metadata(test_setup)
 
         with Database(user='root', testing=TESTING) as db:
-            self.test_doc = db.get_docs('study', access_code).first()
+            self.test_doc = db.get_docs('study', fig.TEST_CODE).first()
 
         self.connection = men.connect('test', alias='test_documents.py')
-        self.test_code = access_code  # 'ThisIsATest'
+        self.test_code = fig.TEST_CODE
         self.owner = fig.TEST_USER  # 'test_owner'
-        self.email = fig.TEST_EMAIL  # 'test_email'
-        """
-        self.test_doc = docs.StudyDoc(study_type='test_study',
-                                      reads_type='single_end',
-                                      study='TestStudy',
-                                      access_code=self.test_code,
-                                      owner=self.owner,
-                                      email=self.email,
-                                      path=gettempdir(),
-                                      testing=True)
-        self.test_doc.save()
-        """
 
     @classmethod
     def tearDownClass(self):
@@ -67,14 +56,12 @@ class DocTests(TestCase):
         config = util.load_config(None, fig.TEST_METADATA)
         sd = docs.StudyDoc.objects(access_code=self.test_code).first()
         ad = sd.generate_AnalysisDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX)
-        assert Path(sd.path) == Path(ad.path).parent
-        assert sd.owner == ad.owner
-        assert sd.access_code == ad.study_code
+        self.assertEqual(Path(sd.path), Path(ad.path).parent)
+        self.assertEqual(sd.owner, ad.owner)
+        self.assertEqual(sd.access_code, ad.study_code)
 
     def create_from_analysis(self):
         ad = docs.AnalysisDoc.objects(access_code=fig.TEST_CODE_DEMUX).first()
         ad2 = ad.create_sub_analysis('Nationality', 'American', 'child_code')
-        assert ad2.owner == ad.owner
-        print(ad)
-        print(ad2)
-        assert Path(ad.path) == Path(ad2.path).parent
+        self.assertEqual(ad2.owner, ad.owner)
+        self.assertEqual(Path(ad.path), Path(ad2.path).parent)
