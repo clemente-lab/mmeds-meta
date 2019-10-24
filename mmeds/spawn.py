@@ -71,8 +71,6 @@ def spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
     :datafiles: A list of datafiles to be uploaded
     """
     # Upload the combined file to the database
-    p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
-                         study_name, temporary, datafiles, public, testing)
     return p
 
 
@@ -202,8 +200,8 @@ class Watcher(Process):
                         (ptype, study_name, subject_metadata, specimen_metadata,
                          username, reads_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
-                        p = spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                                              study_name, temporary, public, self.testing, datafiles)
+                        p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
+                                             study_name, temporary, datafiles, public, self.testing)
                         p.start()
                         self.add_process('upload', p)
                         self.started.append(p)

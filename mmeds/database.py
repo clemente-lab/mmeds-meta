@@ -58,6 +58,13 @@ class Database:
             :owner: A string. The mmeds user account uploading or retrieving files.
             :testing: A boolean. Changes the connection parameters for testing.
         """
+        debug_log('Database created with params')
+        debug_log({
+            'path': path,
+            'user': user,
+            'owner': owner,
+            'testing': testing
+        })
         warnings.simplefilter('ignore')
 
         self.path = Path(path) / 'database_files'
@@ -757,7 +764,7 @@ class SQLBuilder:
 
 class MetaDataUploader(Process):
     def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
-                 reads_type, study_name, temporary, data_files, public, testing=False):
+                 reads_type, study_name, temporary, data_files, public, testing):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -783,7 +790,6 @@ class MetaDataUploader(Process):
             'public': public,
             'testing': testing
         })
-
 
         self.IDs = defaultdict(dict)
         self.owner = owner
@@ -908,7 +914,7 @@ class MetaDataUploader(Process):
                                                   filepath, self.path.parent)
                            for key, filepath in self.datafiles.items()
                            if filepath is not None}
-        self.access_code = self.import_metadata(**datafile_copies)
+        self.import_metadata(**datafile_copies)
 
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
@@ -924,7 +930,7 @@ class MetaDataUploader(Process):
             self.path.mkdir()
 
         # Import the files into the mongo database
-        self.access_code = self.mongo_import(**kwargs)
+        self.mongo_import(**kwargs)
 
         # If the metadata file is not temporary perform the import into the SQL database
         if not self.temporary:
@@ -958,8 +964,6 @@ class MetaDataUploader(Process):
 
             # Remove all row information from the current input
             self.IDs.clear()
-
-        return self.access_code, self.email
 
     def create_import_data(self, table, verbose=True):
         """
@@ -1123,9 +1127,9 @@ class MetaDataUploader(Process):
         # If an access_code is provided use that
         # For testing purposes
         if kwargs.get('access_code') is not None:
-            access_code = kwargs.get('access_code')
+            self.access_code = kwargs.get('access_code')
         else:
-            access_code = get_salt(50)
+            self.access_code = get_salt(50)
 
         # Create the document
         mdata = StudyDoc(created=datetime.utcnow(),
@@ -1134,7 +1138,7 @@ class MetaDataUploader(Process):
                          study_type=self.study_type,
                          reads_type=self.reads_type,
                          study=self.study_name,
-                         access_code=access_code,
+                         access_code=self.access_code,
                          owner=self.owner,
                          email=self.email,
                          public=self.public,
@@ -1146,4 +1150,3 @@ class MetaDataUploader(Process):
 
         # Save the document
         mdata.save()
-        return access_code

@@ -1,7 +1,7 @@
 from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
 from mmeds.spawn import Watcher
-from multiprocessing import current_process, Queue
+from multiprocessing import current_process, Queue, Pipe
 
 
 from sys import argv
@@ -25,6 +25,8 @@ if __name__ == '__main__':
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
 
     q = Queue()
-    watcher = Watcher(q, current_process(), testing)
+    pipe_ends = Pipe()
+    pipe = pipe_ends[0]
+    watcher = Watcher(q, pipe, current_process(), testing)
     watcher.start()
     cp.quickstart(MMEDSserver(watcher, q, testing), config=CONFIG)
