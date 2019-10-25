@@ -7,7 +7,6 @@ from collections import defaultdict
 
 import mmeds.config as fig
 import yaml
-from datetime import datetime
 
 from mmeds.util import (send_email, create_local_copy, log, debug_log, load_config, error_log)
 from mmeds.database import MetaDataUploader, Database
