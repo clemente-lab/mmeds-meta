@@ -4,12 +4,17 @@ from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-from mmeds.util import (send_email, create_local_copy, log, debug_log, load_config,
-                        read_processes, write_processes, error_log)
+
+import mmeds.config as fig
+import yaml
+from datetime import datetime
+
+from mmeds.util import (send_email, create_local_copy, log, debug_log, load_config, error_log)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
+from mmeds.tool import TestTool
 
 
 def test(time):
@@ -40,9 +45,10 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     elif 'test' in atype:
         log('test analysis')
         time = float(atype.split('-')[-1])
-        tool = Process(target=test, args=(time,))
+        tool = TestTool(user, access_code, atype, config, testing, time=time)
     else:
         raise AnalysisError('atype didnt match any')
+
     send_email(tool.doc.email, user, message='analysis_start', code=access_code,
                testing=testing, study=tool.doc.study_name)
     return tool
@@ -54,24 +60,6 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         files, path = db.get_mongo_files(access_code=access_code)
         data_copy = create_local_copy(myData[1], myData[0], path=path)
         db.modify_data(data_copy, access_code, data_type)
-
-
-def spawn_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                      study_name, temporary, public, testing, datafiles):
-    """
-    Thread that handles the upload of large data files.
-    ===================================================
-    :metadata_copy: A string. Location of the metadata.
-    :reads: A tuple. First element is the name of the reads/data file,
-    the second is a file type io object
-    :barcodes: A tuple. First element is the name of the barcodes file,
-    the second is a file type io object
-    :username: A string. Name of the user that is uploading the files.
-    :testing: True if the server is running locally.
-    :datafiles: A list of datafiles to be uploaded
-    """
-    # Upload the combined file to the database
-    return p
 
 
 def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
@@ -131,8 +119,7 @@ class Watcher(Process):
         error_log('Add process {}, type: {}'.format(process, ptype))
         #self.processes[ptype].append(process)
         self.running_processes.append(process)
-
-        #write_processes(self.processes)
+        self.write_running_processes()
 
     def check_processes(self):
         still_running = []
@@ -148,6 +135,46 @@ class Watcher(Process):
                 self.pipe.send(process.exitcode)
         for process in still_running:
             self.running_processes.append(process)
+
+    def read_processes():
+        """
+        Function for reading process access codes back from the log file.
+        Part of the functionality for continuing unfinished analyses on server restart.
+        """
+        if fig.CURRENT_PROCESSES.exists():
+            with open(fig.CURRENT_PROCESSES, 'r') as f:
+                processes = yaml.safe_load(f, Loader=yaml.Loader)
+            for key in processes.keys():
+                for process in processes[key]:
+                    process['is_alive'] = False
+        else:
+            processes = defaultdict(list)
+        return processes
+
+    def write_running_processes(self):
+        writeable = [process.get_info() for process in self.running_processes]
+        with open(fig.CURRENT_PROCESSES, 'w+') as f:
+            yaml.dump(writeable, f)
+
+    def log_processes(self):
+        """
+        Function for writing the access codes to all processes tracked by the server upon server exit.
+        Part of the functionality for continuing unfinished analyses on server restart.
+        ===============================================================================
+        :processes: A dictionary of processes
+        """
+        finished = [process.get_info() for process in self.processes]
+
+        # There is a seperate log of processes for each day
+        current_log = fig.PROCESS_LOG_DIR / (datetime.now().strftime('%Y%m%d') + '.yaml')
+        if current_log.exists():
+            with open(current_log, 'r') as f:
+                finished += yaml.safe_load(f)
+
+        with open(current_log, 'w+') as f:
+            yaml.dump(finished, f)
+        # Remove logged processes so they aren't recorded twice
+        self.processes.clear()
 
     def get_exit_codes(self, ptype):
         """ Get exit codes for processes that have finished. """
@@ -166,7 +193,9 @@ class Watcher(Process):
         # Continue until it's parent process is killed
         while True:
             self.check_processes()
-            #write_processes(self.processes)
+            self.write_running_processes()
+            self.log_processes()
+
             # If there is nothing in the process queue, sleep
             if self.q.empty():
                 sleep(3)
@@ -183,6 +212,7 @@ class Watcher(Process):
                     # Start the analysis running
                     p = spawn_analysis(tool, user, access_code, config, self.testing)
                     p.start()
+                    self.pipe.send(p.get_info())
                     # Add it to the list of analysis processes
                     self.add_process(ptype, p)
                 # If it's an upload
@@ -204,6 +234,7 @@ class Watcher(Process):
                                              study_name, temporary, datafiles, public, self.testing)
                         p.start()
                         self.add_process('upload', p)
+                        self.pipe.send(p.get_info())
                         self.started.append(p)
                         current_upload = p
                         if self.testing:

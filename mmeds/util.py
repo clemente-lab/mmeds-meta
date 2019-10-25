@@ -22,7 +22,6 @@ from ppretty import ppretty
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
-import yaml
 
 
 def load_metadata_template():
@@ -1026,47 +1025,3 @@ def quote_sql(sql, quote='`', **kwargs):
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
     return formatted
-
-
-def read_processes():
-    """
-    Function for reading process access codes back from the log file.
-    Part of the functionality for continuing unfinished analyses on server restart.
-    """
-    if fig.CURRENT_PROCESSES.exists():
-        with open(fig.CURRENT_PROCESSES, 'r') as f:
-            processes = yaml.load(f, Loader=yaml.Loader)
-        for key in processes.keys():
-            for process in processes[key]:
-                process['is_alive'] = False
-    else:
-        processes = defaultdict(list)
-    return processes
-
-
-def write_processes(processes):
-    """
-    Function for writing the access codes to all processes tracked by the server upon server exit.
-    Part of the functionality for continuing unfinished analyses on server restart.
-    ===============================================================================
-    :processes: A dictionary of processes
-    """
-    running = defaultdict(list)
-    finished = defaultdict(list)
-    for key in processes.keys():
-        for process in processes[key]:
-            if not isinstance(process, dict):
-                process = process.get_info()
-            if process.get('is_alive'):
-                running[key].append(process)
-            else:
-                finished[key].append(process)
-    with open(fig.CURRENT_PROCESSES, 'w+') as f:
-        yaml.dump(running, f)
-
-    if fig.PROCESS_LOG.exists():
-        with open(fig.PROCESS_LOG, 'r') as f:
-            finished.update(yaml.load(f, Loader=yaml.Loader))
-
-    with open(fig.PROCESS_LOG, 'w+') as f:
-        yaml.dump(finished, f)

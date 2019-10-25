@@ -37,7 +37,9 @@ JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
-PROCESS_LOG = DATABASE_DIR / 'process_log.yaml'
+PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
+if not os.path.exists(PROCESS_LOG_DIR):
+    os.mkdir(PROCESS_LOG_DIR)
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',

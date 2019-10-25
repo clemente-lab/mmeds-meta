@@ -7,6 +7,8 @@ from mmeds.qiime2 import Qiime2
 from mmeds.database import upload_metadata
 from mmeds.util import load_config
 
+from yaml import safe_load
+
 import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.spawn as sp
@@ -30,6 +32,7 @@ class SpawnTests(TestCase):
         self.pipe = pipe_ends[0]
         self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
         self.watcher.start()
+        self.infos = []
 
     @classmethod
     def tearDownClass(self):
@@ -48,14 +51,44 @@ class SpawnTests(TestCase):
         self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_ALT, fig.TEST_SPECIMEN_ALT,
                     fig.TEST_USER_0, 'single_end', test_files, False, False))
 
-        # Wait for both processes to exit with code 0
-        self.assertEqual(self.pipe.recv(), 0)
-        self.assertEqual(self.pipe.recv(), 0)
+        # Recieve the process info dicts from Watcher
+        # Sent one at time b/c only one upload can happen at a time
+        for i in [0, 1]:
+            info = self.pipe.recv()
+            # Check they match the contents of current_processes
+            with open(fig.CURRENT_PROCESSES, 'r') as f:
+                procs = safe_load(f)
+            self.infos += procs
+            self.assertEqual([info], procs)
+            # Check the process exited with code 0
+            self.assertEqual(self.pipe.recv(), 0)
+
+        # Wait for watcher to update current_processes
+        sleep(5)
+
+        # Check they've been removed from processes currently running
+        with open(fig.CURRENT_PROCESSES, 'r') as f:
+            procs = safe_load(f)
+        self.assertEqual([], procs)
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
-        return
-        self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
+        tool = 'test-20'
+        for proc in self.infos:
+            self.q.put(('analysis', proc['owner'], proc['study_code'], tool, None))
+
+        # Check the analyses are started and running simultainiously
+        info = self.pipe.recv()
+        info_0 = self.pipe.recv()
+        sleep(5)
+        # Check they match the contents of current_processes
+        with open(fig.CURRENT_PROCESSES, 'r') as f:
+            procs = safe_load(f)
+        self.assertEqual([info, info_0], procs)
+
+        # Check the process exited with code 0
+        self.assertEqual(self.pipe.recv(), 0)
+        self.assertEqual(self.pipe.recv(), 0)
 
     def test_c_restart_analysis(self):
         """ Test restarting an analysis from a analysis doc. """

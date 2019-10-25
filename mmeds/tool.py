@@ -93,7 +93,7 @@ class Tool(mp.Process):
             'stage': self.restart_stage,
             'study_code': self.study_code,
             'analysis_code': self.doc.access_code,
-            'analysis': self.analysis,
+            'type': self.analysis,
             'pid': self.pid,
             'name': self.name,
             'is_alive': self.is_alive()
@@ -503,11 +503,10 @@ class Tool(mp.Process):
             send_email(self.doc.email, self.doc.owner, message='error', code=self.doc.access_code,
                        stage=self.doc.restart_stage, testing=self.testing, study=self.doc.study_name)
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
-        else:
-            send_email(self.doc.email, self.doc.owner, message='analysis_done', code=self.doc.access_code,
-                       testing=self.testing, study=self.doc.study_name)
-            self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
-            self.move_user_files()
+        send_email(self.doc.email, self.doc.owner, message='analysis_done', code=self.doc.access_code,
+                   testing=self.testing, study=self.doc.study_name)
+        self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
+        self.move_user_files()
 
         if not self.testing:
             send_email(self.doc.email,
@@ -528,3 +527,16 @@ class Tool(mp.Process):
             debug_log('I {} am setting up analysis'.format(self.name))
             self.setup_analysis()
         self.update_doc(pid=None, analysis_status='Finished')
+
+
+class TestTool(Tool):
+    """ A class for running tool methods during testing """
+
+    def __init__(self, owner, access_code, atype, config, testing,
+                 analysis=True, restart_stage=0, kill_stage=-1, time=5):
+        super().__init__(owner, access_code, atype, config, testing,
+                         analysis=analysis, restart_stage=restart_stage)
+        self.time = time
+
+    def run(self):
+        sleep(self.time)

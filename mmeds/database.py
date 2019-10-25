@@ -794,7 +794,11 @@ class MetaDataUploader(Process):
         self.public = public
         self.datafiles = data_files
         self.created = datetime.now()
-        self.access_code = access_code
+
+        if access_code is None:
+            self.access_code = get_salt(50)
+        else:
+            self.access_code = access_code
 
         count = 0
         new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
@@ -836,6 +840,7 @@ class MetaDataUploader(Process):
         """ Method for return a dictionary of relevant info for the process log """
         info = {
             'created': self.created,
+            'type': 'upload',
             'owner': self.owner,
             'study_code': self.access_code,
             'pid': self.pid,
@@ -1116,11 +1121,6 @@ class MetaDataUploader(Process):
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
-        # For testing purposes
-        if kwargs.get('access_code') is not None:
-            self.access_code = kwargs.get('access_code')
-        elif self.access_code is None:
-            self.access_code = get_salt(50)
 
         # Create the document
         mdata = StudyDoc(created=datetime.utcnow(),
