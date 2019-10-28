@@ -30,7 +30,7 @@ else:
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
-if not DATABASE_DIR.exits():
+if not DATABASE_DIR.exists():
     DATABASE_DIR.mkdir()
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
