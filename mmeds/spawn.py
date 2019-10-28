@@ -3,12 +3,11 @@ from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
-from collections import defaultdict
 
 import mmeds.config as fig
 import yaml
 
-from mmeds.util import (send_email, create_local_copy, log, debug_log, load_config, error_log)
+from mmeds.util import (send_email, create_local_copy, debug_log, load_config, error_log)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
@@ -28,13 +27,13 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         files, path = db.get_mongo_files(access_code)
 
     if isinstance(config_file, str):
-        log('load path config {}'.format(config_file))
+        debug_log('load path config {}'.format(config_file))
         config = load_config(config_file, files['metadata'])
     elif config_file is None or config_file.file is None:
-        log('load default config')
+        debug_log('load default config')
         config = load_config(None, files['metadata'])
     else:
-        log('load passed config')
+        debug_log('load passed config')
         config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
 
     if 'qiime1' in atype:
@@ -42,7 +41,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     elif 'qiime2' in atype:
         tool = Qiime2(user, access_code, atype, config, testing)
     elif 'test' in atype:
-        log('test analysis')
+        debug_log('test analysis')
         time = float(atype.split('-')[-1])
         tool = TestTool(user, access_code, atype, config, testing, time=time)
     else:
@@ -106,7 +105,7 @@ class Watcher(Process):
         """
         self.testing = testing
         self.q = queue
-        self.processes = [] # read_processes()
+        self.processes = []
         self.running_processes = []
         self.pipe = pipe
         self.parent_pid = parent_pid
@@ -116,7 +115,6 @@ class Watcher(Process):
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
         error_log('Add process {}, type: {}'.format(process, ptype))
-        #self.processes[ptype].append(process)
         self.running_processes.append(process)
         self.write_running_processes()
 
@@ -134,21 +132,6 @@ class Watcher(Process):
                 self.pipe.send(process.exitcode)
         for process in still_running:
             self.running_processes.append(process)
-
-    def read_processes():
-        """
-        Function for reading process access codes back from the log file.
-        Part of the functionality for continuing unfinished analyses on server restart.
-        """
-        if fig.CURRENT_PROCESSES.exists():
-            with open(fig.CURRENT_PROCESSES, 'r') as f:
-                processes = yaml.safe_load(f, Loader=yaml.Loader)
-            for key in processes.keys():
-                for process in processes[key]:
-                    process['is_alive'] = False
-        else:
-            processes = defaultdict(list)
-        return processes
 
     def write_running_processes(self):
         writeable = [process.get_info() for process in self.running_processes]
@@ -202,8 +185,8 @@ class Watcher(Process):
                 # Otherwise get the queued item
                 process = self.q.get()
                 # Retrieve the info
-                log('Got process from queue')
-                log(process)
+                debug_log('Got process from queue')
+                debug_log(process)
 
                 # If it's an analysis
                 if process[0] == 'analysis':
