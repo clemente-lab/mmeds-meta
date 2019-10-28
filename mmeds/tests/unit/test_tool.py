@@ -18,7 +18,8 @@ class ToolTests(TestCase):
     @classmethod
     def setUpClass(self):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        test_setup = (fig.TEST_METADATA_SHORTEST,
+        test_setup = (fig.TEST_SUBJECT,
+                      fig.TEST_SPECIMEN,
                       fig.TEST_DIR,
                       fig.TEST_USER,
                       'Test_Tool',

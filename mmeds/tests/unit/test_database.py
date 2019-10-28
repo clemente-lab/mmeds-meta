@@ -43,7 +43,8 @@ class MetaDataUploaderTests(TestCase):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
 
-        test_setups = [(fig.TEST_METADATA,
+        test_setups = [(fig.TEST_SUBJECT,
+                        fig.TEST_SPECIMEN,
                         fig.TEST_DIR,
                         fig.TEST_USER,
                         'Test_Database',
@@ -52,7 +53,8 @@ class MetaDataUploaderTests(TestCase):
                         None,
                         None,
                         fig.TEST_CODE),
-                       (fig.TEST_METADATA_ALT,
+                       (fig.TEST_SUBJECT_ALT,
+                        fig.TEST_SPECIMEN_ALT,
                         fig.TEST_DIR_0,
                         fig.TEST_USER_0,
                         'Test_Database_0',

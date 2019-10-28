@@ -42,12 +42,11 @@ class MMEDSbase:
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
 
-    def __init__(self, testing=False):
+    def __init__(self, watcher, q, testing=False):
         self.db = None
         self.testing = bool(int(testing))
-        self.q = Queue()
-        self.monitor = Watcher(self.q, current_process(), self.testing)
-        self.monitor.start()
+        self.monitor = watcher
+        self.q = q
         # Set the server to kill the watcher process on exit
         atexit.register(kill_watcher, self.monitor)
 
@@ -164,11 +163,11 @@ class MMEDSbase:
 
     def load_data_files(self, **kwargs):
         """ Load the files passed that exist. """
-        files = []
+        files = {}
         for key, value in kwargs.items():
             if value is not None:
                 file_copy = create_local_copy(value.file, value.filename, self.get_dir())
-                files.append((key, file_copy))
+                files[key] = file_copy
         return files
 
     def format_html(self, page, **kwargs):
@@ -203,8 +202,8 @@ class MMEDSbase:
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ########################################
     #            Download Pages            #
@@ -334,8 +333,8 @@ class MMEDSdownload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSupload(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ########################################
     #             Upload Pages             #
@@ -348,7 +347,7 @@ class MMEDSupload(MMEDSbase):
                                 title='Upload Metadata',
                                 metadata_type=cp.session['metadata_type'].capitalize())
         if cp.session['metadata_type'] == 'specimen':
-            page = insert_html(page, 26, 'Subject table uploaded successfully')
+            page = insert_warning(page, 26, 'Subject table uploaded successfully')
         return page
 
     @cp.expose
@@ -423,8 +422,8 @@ class MMEDSupload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ########################################
     #           Account Pages              #
@@ -541,8 +540,8 @@ class MMEDSauthentication(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
 
     ######################################
     #              Analysis              #
@@ -568,8 +567,7 @@ class MMEDSanalysis(MMEDSbase):
             self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
             cp.log('Valid config file')
             page = self.format_html('welcome', title='Welcome to MMEDS')
-            message = '<div> <font color="orange"> Analysis started you will recieve an email shortly </font> </div>'
-            page = insert_html(page, 22, message)
+            page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_error(page, 22, e.message)
@@ -607,8 +605,7 @@ class MMEDSanalysis(MMEDSbase):
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
                     page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
-                    message = '<p> <font color="orange"> Subject table uploaded successfully </font></p>'
-                    page = insert_html(page, 23, message)
+                    page = insert_warning(page, 23, 'Subject table uploaded successfully')
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
@@ -641,8 +638,7 @@ class MMEDSanalysis(MMEDSbase):
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')
-        html = '<h1> Your data is being uploaded, you will recieve an email when this finishes </h1>'
-        page = insert_error(page, 22, html)
+        page = insert_warning(page, 23, 'Upload Initiated. You will recieve an email when this finishes')
         return page
 
     @cp.expose
@@ -687,21 +683,18 @@ class MMEDSanalysis(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
-    def __init__(self, testing=False):
-        super().__init__(testing)
-        self.download = MMEDSdownload(testing)
-        self.analysis = MMEDSanalysis(testing)
-        self.upload = MMEDSupload(testing)
-        self.auth = MMEDSauthentication(testing)
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+        self.download = MMEDSdownload(watcher, q, testing)
+        self.analysis = MMEDSanalysis(watcher, q, testing)
+        self.upload = MMEDSupload(watcher, q, testing)
+        self.auth = MMEDSauthentication(watcher, q, testing)
 
     @cp.expose
     def index(self):
         """ Home page of the application """
         if cp.session.get('user'):
             page = self.format_html('welcome', title='Welcome to MMEDS')
-            self.add_process('test', 'User {} is logged in. The time is {}'.format(cp.session.get('user'),
-                                                                                   datetime.now()))
         else:
             page = self.format_html('index')
-            self.add_process('test', 'time is {}'.format(datetime.now()))
         return page

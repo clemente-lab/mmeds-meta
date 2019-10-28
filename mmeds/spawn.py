@@ -1,17 +1,18 @@
-import atexit
-
 from time import sleep
 from multiprocessing import Process
 from shutil import rmtree
 from pathlib import Path
-from mmeds.util import (send_email, create_local_copy, log, load_config,
-                        read_processes, write_processes, join_metadata,
-                        write_metadata, load_metadata)
+from datetime import datetime
+
+import mmeds.config as fig
+import yaml
+
+from mmeds.util import (send_email, create_local_copy, debug_log, load_config, error_log)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
-from mmeds.config import DATABASE_DIR
+from mmeds.tool import TestTool
 
 
 def test(time):
@@ -26,13 +27,13 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         files, path = db.get_mongo_files(access_code)
 
     if isinstance(config_file, str):
-        log('load path config {}'.format(config_file))
+        debug_log('load path config {}'.format(config_file))
         config = load_config(config_file, files['metadata'])
     elif config_file is None or config_file.file is None:
-        log('load default config')
+        debug_log('load default config')
         config = load_config(None, files['metadata'])
     else:
-        log('load passed config')
+        debug_log('load passed config')
         config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
 
     if 'qiime1' in atype:
@@ -40,14 +41,14 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
     elif 'qiime2' in atype:
         tool = Qiime2(user, access_code, atype, config, testing)
     elif 'test' in atype:
-        log('test analysis')
+        debug_log('test analysis')
         time = float(atype.split('-')[-1])
-        tool = Process(target=test, args=(time,))
+        tool = TestTool(user, access_code, atype, config, testing, time=time)
     else:
         raise AnalysisError('atype didnt match any')
-    send_email(tool.doc.email, user, message='analysis', code=access_code,
+
+    send_email(tool.doc.email, user, message='analysis_start', code=access_code,
                testing=testing, study=tool.doc.study_name)
-    tool.start()
     return tool
 
 
@@ -57,64 +58,6 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         files, path = db.get_mongo_files(access_code=access_code)
         data_copy = create_local_copy(myData[1], myData[0], path=path)
         db.modify_data(data_copy, access_code, data_type)
-
-
-def handle_data_upload(subject_metadata, specimen_metadata, username, reads_type,
-                       study_name, temporary, public, testing, *datafiles):
-    """
-    Thread that handles the upload of large data files.
-    ===================================================
-    :metadata_copy: A string. Location of the metadata.
-    :reads: A tuple. First element is the name of the reads/data file,
-                     the second is a file type io object
-    :barcodes: A tuple. First element is the name of the barcodes file,
-                        the second is a file type io object
-    :username: A string. Name of the user that is uploading the files.
-    :testing: True if the server is running locally.
-    :datafiles: A list of datafiles to be uploaded
-    """
-    log('Handling upload for study {} for user {}'.format(study_name, username))
-    count = 0
-    new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
-    while new_dir.is_dir():
-        new_dir = DATABASE_DIR / ('{}_{}_{}'.format(username, study_name, count))
-        count += 1
-    new_dir.mkdir()
-
-    # Create a copy of the MetaData
-    with open(subject_metadata, 'rb') as f:
-        subject_metadata_copy = create_local_copy(f, subject_metadata.name, new_dir)
-
-    # Create a copy of the Specimen MetaData
-    with open(specimen_metadata, 'rb') as f:
-        specimen_metadata_copy = create_local_copy(f, specimen_metadata.name, new_dir)
-
-    # Merge the metadata files
-    metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
-    metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
-    write_metadata(metadata_df, metadata_copy)
-
-    # Create a copy of the Data file
-    datafile_copies = {datafile[0]: create_local_copy(Path(datafile[1]).read_bytes(),
-                                                      datafile[1], new_dir) for datafile in datafiles
-                       if datafile[1] is not None}
-
-    # Upload the combined file to the database
-    with MetaDataUploader(metadata=metadata_copy,
-                          path=new_dir,
-                          study_type='qiime',
-                          reads_type=reads_type,
-                          owner=username,
-                          study_name=study_name,
-                          temporary=temporary,
-                          testing=testing,
-                          public=public) as up:
-        access_code, email = up.import_metadata(**datafile_copies)
-
-    # Send the confirmation email
-    send_email(email, username, message='upload', study=study_name, code=access_code, testing=testing)
-
-    return access_code
 
 
 def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
@@ -152,7 +95,7 @@ def killall(processes):
 
 class Watcher(Process):
 
-    def __init__(self, queue, parent_pid, testing=False):
+    def __init__(self, queue, pipe, parent_pid, testing=False):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
         =====================================================================================
@@ -162,40 +105,96 @@ class Watcher(Process):
         """
         self.testing = testing
         self.q = queue
-        self.processes = read_processes()
+        self.processes = []
+        self.running_processes = []
+        self.pipe = pipe
         self.parent_pid = parent_pid
         self.started = []
         super().__init__()
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
-        self.processes[ptype].append(process)
-        atexit.unregister(write_processes)
-        atexit.register(write_processes, self.processes)
-        atexit.unregister(killall)
-        atexit.register(killall, self.started)
+        error_log('Add process {}, type: {}'.format(process, ptype))
+        self.running_processes.append(process)
+        self.write_running_processes()
+
+    def check_processes(self):
+        still_running = []
+        # For each type of process 'upload', 'analysis', 'etc'
+        # Check each process is still alive
+        while self.running_processes:
+            process = self.running_processes.pop()
+            if process.is_alive():
+                still_running.append(process)
+            else:
+                self.processes.append(process)
+                # Send the exitcode of the process
+                self.pipe.send(process.exitcode)
+        for process in still_running:
+            self.running_processes.append(process)
+
+    def write_running_processes(self):
+        writeable = [process.get_info() for process in self.running_processes]
+        with open(fig.CURRENT_PROCESSES, 'w+') as f:
+            yaml.dump(writeable, f)
+
+    def log_processes(self):
+        """
+        Function for writing the access codes to all processes tracked by the server upon server exit.
+        Part of the functionality for continuing unfinished analyses on server restart.
+        ===============================================================================
+        :processes: A dictionary of processes
+        """
+        finished = [process.get_info() for process in self.processes]
+
+        # There is a seperate log of processes for each day
+        current_log = fig.PROCESS_LOG_DIR / (datetime.now().strftime('%Y%m%d') + '.yaml')
+        if current_log.exists():
+            with open(current_log, 'r') as f:
+                finished += yaml.safe_load(f)
+
+        with open(current_log, 'w+') as f:
+            yaml.dump(finished, f)
+        # Remove logged processes so they aren't recorded twice
+        self.processes.clear()
+
+    def get_exit_codes(self, ptype):
+        """ Get exit codes for processes that have finished. """
+        return [process.exit_code for process in self.processes[ptype]]
+
+    def any_running(self, ptype):
+        """ Returns true if there is a process running """
+        return bool(self.running_processes['ptype'])
+
+    def get_processes(self):
+        return self.running_processes, self.processes
 
     def run(self):
         """ The loop to run when a Watcher is started """
         current_upload = None
-
         # Continue until it's parent process is killed
         while True:
+            self.check_processes()
+            self.write_running_processes()
+            self.log_processes()
+
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                sleep(10)
+                sleep(3)
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
                 # Retrieve the info
-                log('Got process from queue')
-                log(process)
+                debug_log('Got process from queue')
+                debug_log(process)
 
                 # If it's an analysis
                 if process[0] == 'analysis':
                     ptype, user, access_code, tool, config = process
                     # Start the analysis running
                     p = spawn_analysis(tool, user, access_code, config, self.testing)
+                    p.start()
+                    self.pipe.send(p.get_info())
                     # Add it to the list of analysis processes
                     self.add_process(ptype, p)
                 # If it's an upload
@@ -204,7 +203,7 @@ class Watcher(Process):
                     if current_upload is not None and current_upload.is_alive():
                         # If there is another upload return the process info to the queue
                         self.q.put(process)
-                        sleep(10)
+                        sleep(3)
                     else:
                         current_upload = None
 
@@ -213,14 +212,12 @@ class Watcher(Process):
                         (ptype, study_name, subject_metadata, specimen_metadata,
                          username, reads_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
-                        p = Process(target=handle_data_upload,
-                                    args=(subject_metadata, specimen_metadata, username,
-                                          reads_type, study_name, temporary, public, self.testing,
-                                          # Unpack the list so the files are taken as a tuple
-                                          *datafiles))
+                        p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
+                                             study_name, temporary, datafiles, public, self.testing)
                         p.start()
+                        self.add_process('upload', p)
+                        self.pipe.send(p.get_info())
                         self.started.append(p)
-                        self.add_process('upload', p.pid)
                         current_upload = p
                         if self.testing:
                             p.join()

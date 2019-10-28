@@ -9,12 +9,20 @@ import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
 from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
+from mmeds.spawn import Watcher
+from multiprocessing import current_process, Queue, Pipe
 
 import cherrypy as cp
 from cherrypy.test import helper
 
 
-server = MMEDSserver(True)
+testing = True
+q = Queue()
+pipe_ends = Pipe()
+pipe = pipe_ends[0]
+watcher = Watcher(q, pipe_ends[1], current_process(), testing)
+watcher.start()
+server = MMEDSserver(watcher, q, testing)
 
 
 class TestServer(helper.CPWebCase):
@@ -24,7 +32,6 @@ class TestServer(helper.CPWebCase):
     server_user = fig.SERVER_USER + str(int(time()))
     access_code = None
     lab_user = 'lab_user_' + fig.get_salt(10)
-    testing = True
 
     @staticmethod
     def setup_server():
@@ -74,8 +81,8 @@ class TestServer(helper.CPWebCase):
         self.execute_query()
 
     def test_z_cleanup(self):
-        remove_user(self.server_user, testing=self.testing)
-        remove_user(self.lab_user, testing=self.testing)
+        remove_user(self.server_user, testing=testing)
+        remove_user(self.lab_user, testing=testing)
 
     ####################
     #  Authentication  #

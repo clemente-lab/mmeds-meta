@@ -13,9 +13,11 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
+from multiprocessing import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError, InvalidSQLError
-from mmeds.util import send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log, log
+from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log,
+                        debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
 from mmeds.documents import StudyDoc, AnalysisDoc
 
 DAYS = 13
@@ -23,26 +25,17 @@ DAYS = 13
 
 # Used in test_cases
 def upload_metadata(args):
-    metadata, path, owner, study_name, reads_type, for_reads, rev_reads, barcodes, access_code = args
-    with MetaDataUploader(metadata=metadata,
-                          path=path,
-                          study_type='qiime',
-                          study_name=study_name,
-                          reads_type=reads_type,
-                          owner=fig.TEST_USER,
-                          temporary=False,
-                          public=False,
-                          testing=True) as up:
-        if rev_reads is None:
-            access_code, email = up.import_metadata(for_reads=for_reads,
-                                                    barcodes=barcodes,
-                                                    access_code=access_code)
-        else:
-            access_code, email = up.import_metadata(for_reads=for_reads,
-                                                    rev_reads=rev_reads,
-                                                    barcodes=barcodes,
-                                                    access_code=access_code)
-        return access_code, email
+    (subject_metadata, specimen_metadata, path, owner, study_name,
+     reads_type, for_reads, rev_reads, barcodes, access_code) = args
+    datafiles = {'for_reads': for_reads,
+                 'rev_reads': rev_reads,
+                 'barcodes': barcodes}
+    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
+                         study_name, False, datafiles,
+                         False, True, access_code)
+    p.start()
+    p.join()
+    return p.exitcode
 
 
 class Database:
@@ -56,6 +49,13 @@ class Database:
             :owner: A string. The mmeds user account uploading or retrieving files.
             :testing: A boolean. Changes the connection parameters for testing.
         """
+        debug_log('Database created with params')
+        debug_log({
+            'path': path,
+            'user': user,
+            'owner': owner,
+            'testing': testing
+        })
         warnings.simplefilter('ignore')
 
         self.path = Path(path) / 'database_files'
@@ -753,8 +753,9 @@ class SQLBuilder:
         return sql, args
 
 
-class MetaDataUploader:
-    def __init__(self, metadata, path, owner, study_type, reads_type, study_name, temporary, public, testing=False):
+class MetaDataUploader(Process):
+    def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
+                 reads_type, study_name, temporary, data_files, public, testing, access_code=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -766,17 +767,47 @@ class MetaDataUploader:
         :testing: A boolean. Changes the connection parameters for testing.
         """
         warnings.simplefilter('ignore')
+        super().__init__()
+        debug_log('MetadataUploader created with params')
+        debug_log({
+            'subject_metadata': subject_metadata,
+            'specimen_metadata': specimen_metadata,
+            'owner': owner,
+            'study_type': study_type,
+            'reads_type': reads_type,
+            'study_name': study_name,
+            'temporary': temporary,
+            'data_files': data_files,
+            'public': public,
+            'testing': testing
+        })
 
-        self.path = Path(path) / 'database_files'
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
         self.reads_type = reads_type
-        self.metadata = metadata
+        self.subject_metadata = Path(subject_metadata)
+        self.specimen_metadata = Path(specimen_metadata)
         self.study_name = study_name
         self.temporary = temporary
         self.public = public
+        self.datafiles = data_files
+        self.created = datetime.now()
+
+        if access_code is None:
+            self.access_code = get_salt(50)
+        else:
+            self.access_code = access_code
+
+        count = 0
+        new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
+        while new_dir.is_dir():
+            new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
+            count += 1
+        new_dir.mkdir()
+
+        self.path = Path(new_dir) / 'database_files'
 
         # If testing connect to test server
         if testing:
@@ -805,21 +836,62 @@ class MetaDataUploader:
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
 
-        if not temporary:
+    def get_info(self):
+        """ Method for return a dictionary of relevant info for the process log """
+        info = {
+            'created': self.created,
+            'type': 'upload',
+            'owner': self.owner,
+            'study_code': self.access_code,
+            'pid': self.pid,
+            'name': self.name,
+            'exitcode': self.exitcode
+        }
+        return info
+
+    def run(self):
+        """
+        Thread that handles the upload of large data files.
+        ===================================================
+        :metadata_copy: A string. Location of the metadata.
+        :reads: A tuple. First element is the name of the reads/data file,
+                         the second is a file type io object
+        :barcodes: A tuple. First element is the name of the barcodes file,
+                            the second is a file type io object
+        :testing: True if the server is running locally.
+        :datafiles: A list of datafiles to be uploaded
+        """
+        debug_log('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
+
+        # Create a copy of the MetaData
+        with open(self.subject_metadata, 'rb') as f:
+            subject_metadata_copy = create_local_copy(f, self.subject_metadata.name, self.path.parent)
+
+        # Create a copy of the Specimen MetaData
+        with open(self.specimen_metadata, 'rb') as f:
+            specimen_metadata_copy = create_local_copy(f, self.specimen_metadata.name, self.path.parent)
+
+        # Merge the metadata files
+        metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
+        metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
+        self.metadata = metadata_copy
+        write_metadata(metadata_df, metadata_copy)
+
+        if not self.temporary:
             # Read in the metadata file to import
-            df = parse_ICD_codes(pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
+            df = parse_ICD_codes(pd.read_csv(metadata_copy, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
             self.df = df.reindex(df.columns, axis=1)
-            self.builder = SQLBuilder(self.df, self.db, owner)
+            self.builder = SQLBuilder(self.df, self.db, self.owner)
 
         # If the owner is None set user_id to 0
-        if owner is None:
+        if self.owner is None:
             self.user_id = 0
             self.email = MMEDS_EMAIL
         # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
             cursor = self.db.cursor()
-            cursor.execute(sql, {'uname': owner})
+            cursor.execute(sql, {'uname': self.owner})
             result = cursor.fetchone()
             cursor.close()
             # Ensure the user exists
@@ -829,34 +901,32 @@ class MetaDataUploader:
             self.email = result[1]
 
         # If the metadata is to be made public overwrite the user_id
-        if public:
+        if self.public:
             self.user_id = 1
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-    def __del__(self):
-        """ Clear the current user session and disconnect from the database. """
-        self.db.close()
+        # Create a copy of the Data file
+        datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),
+                                                  filepath, self.path.parent)
+                           for key, filepath in self.datafiles.items()
+                           if filepath is not None}
+        self.import_metadata(**datafile_copies)
 
-    def __enter__(self):
-        """ Allows database connection to be used via a 'with' statement. """
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """ Delete the Database instance upon the end of the 'with' block. """
-        del self
+        # Send the confirmation email
+        send_email(self.email, self.owner, message='upload', study=self.study_name,
+                   code=self.access_code, testing=self.testing)
 
     def import_metadata(self, **kwargs):
         """
         Creates table specific input csv files from the complete metadata file.
         Imports each of those files into the database.
         """
-        access_code = None
 
         if not self.path.is_dir():
             self.path.mkdir()
 
         # Import the files into the mongo database
-        access_code = self.mongo_import(**kwargs)
+        self.mongo_import(**kwargs)
 
         # If the metadata file is not temporary perform the import into the SQL database
         if not self.temporary:
@@ -890,8 +960,6 @@ class MetaDataUploader:
 
             # Remove all row information from the current input
             self.IDs.clear()
-
-        return access_code, self.email
 
     def create_import_data(self, table, verbose=True):
         """
@@ -1053,11 +1121,6 @@ class MetaDataUploader:
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
-        # For testing purposes
-        if kwargs.get('access_code') is not None:
-            access_code = kwargs.get('access_code')
-        else:
-            access_code = get_salt(50)
 
         # Create the document
         mdata = StudyDoc(created=datetime.utcnow(),
@@ -1066,7 +1129,7 @@ class MetaDataUploader:
                          study_type=self.study_type,
                          reads_type=self.reads_type,
                          study=self.study_name,
-                         access_code=access_code,
+                         access_code=self.access_code,
                          owner=self.owner,
                          email=self.email,
                          public=self.public,
@@ -1078,4 +1141,3 @@ class MetaDataUploader:
 
         # Save the document
         mdata.save()
-        return access_code

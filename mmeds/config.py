@@ -30,14 +30,17 @@ else:
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
-if not os.path.exists(DATABASE_DIR):
-    os.mkdir(DATABASE_DIR)
+if not DATABASE_DIR.exists():
+    DATABASE_DIR.mkdir()
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
-PROCESS_LOG = DATABASE_DIR / 'process_log.txt'
+PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
+if not PROCESS_LOG_DIR.exists():
+    PROCESS_LOG_DIR.mkdir()
+CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',
@@ -92,11 +95,11 @@ CONFIG = {
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
 TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
-if not os.path.exists(TEST_DIR):
-    os.mkdir(TEST_DIR)
+if not TEST_DIR.exists():
+    TEST_DIR.mkdir()
 TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
-if not os.path.exists(TEST_DIR_0):
-    os.mkdir(TEST_DIR_0)
+if not TEST_DIR_0.exists():
+    TEST_DIR_0.mkdir()
 
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'

@@ -1,5 +1,8 @@
 from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
+from mmeds.spawn import Watcher
+from multiprocessing import current_process, Queue, Pipe
+
 
 from sys import argv
 import cherrypy as cp
@@ -20,4 +23,10 @@ if __name__ == '__main__':
     except IndexError:
         testing = False
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
-    cp.quickstart(MMEDSserver(testing), config=CONFIG)
+
+    q = Queue()
+    pipe_ends = Pipe()
+    pipe = pipe_ends[0]
+    watcher = Watcher(q, pipe, current_process(), testing)
+    watcher.start()
+    cp.quickstart(MMEDSserver(watcher, q, testing), config=CONFIG)

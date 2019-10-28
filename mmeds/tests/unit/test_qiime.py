@@ -23,7 +23,8 @@ class QiimeTests(TestCase):
         self.TEST_CODE_DEMUX = 'qiimeTestDemuxed'
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=self.testing)
         test_setups = [
-            (fig.TEST_METADATA_SHORT,
+            (fig.TEST_SUBJECT,
+             fig.TEST_SPECIMEN,
              fig.TEST_DIR,
              fig.TEST_USER,
              'Test_Qiime_0',
@@ -32,7 +33,8 @@ class QiimeTests(TestCase):
              None,
              fig.TEST_BARCODES,
              self.TEST_CODE),
-            (fig.TEST_METADATA_SHORT,
+            (fig.TEST_SUBJECT,
+             fig.TEST_SPECIMEN,
              fig.TEST_DIR,
              fig.TEST_USER,
              'Test_Qiime_1',
@@ -41,7 +43,8 @@ class QiimeTests(TestCase):
              fig.TEST_REV_READS,
              fig.TEST_BARCODES,
              self.TEST_CODE_PAIRED),
-            (fig.TEST_METADATA_SHORT,
+            (fig.TEST_SUBJECT,
+             fig.TEST_SPECIMEN,
              fig.TEST_DIR,
              fig.TEST_USER,
              'Test_Qiime_2',
@@ -52,7 +55,8 @@ class QiimeTests(TestCase):
              self.TEST_CODE_DEMUX)
         ]
         for test_setup in test_setups:
-            upload_metadata(test_setup)
+            assert 0 == upload_metadata(test_setup)
+        # Ensure the uploads completed correctly
         self.config = load_config(None, fig.TEST_METADATA_SHORT)
 
     @classmethod

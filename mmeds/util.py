@@ -16,6 +16,7 @@ from email import message_from_bytes
 from tempfile import gettempdir
 from time import sleep
 from re import sub
+from copy import deepcopy
 from ppretty import ppretty
 
 import mmeds.config as fig
@@ -417,7 +418,7 @@ def insert_warning(page, line_number, error_message):
     """ Inserts an error message in the provided HTML page at the specified line number. """
     lines = page.split('\n')
     new_lines = lines[:line_number] +\
-        ['<h4><font color="orange">' + error_message + '</font></h4>'] +\
+        ['<div><font color="orange">' + error_message + '</font></div>'] +\
         lines[line_number:]
     new_page = '\n'.join(new_lines)
     return new_page
@@ -462,8 +463,7 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
     # Ensure there is not already a file with the same name
     while file_copy.is_file():
-        file_copy = Path(path) / '_'.join([fig.get_salt(5), filename])
-    log('Created filepath {}'.format(file_copy))
+        file_copy = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
 
     # Write the data to a new file stored on the server
     with open(file_copy, 'wb') as nf:
@@ -786,8 +786,15 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Password Change'
-    elif message == 'analysis':
+    elif message == 'analysis_start':
+        body = 'Hello {user},\nYour requested {analysis} analysis on study {study} has started.\n' +\
+               'You will recieve another email when this analysis completes.\n' +\
+               'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Analysis Started'
+    elif message == 'analysis_done':
         body = 'Hello {user},\nYour requested {analysis} analysis on study {study} is complete.\n' +\
+               'You can retrieve the results using the access code {code}.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Complete'
@@ -1018,38 +1025,3 @@ def quote_sql(sql, quote='`', **kwargs):
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)
     return formatted
-
-
-def read_processes():
-    """
-    Function for reading process access codes back from the log file.
-    Part of the functionality for continuing unfinished analyses on server restart.
-    """
-    processes = defaultdict(list)
-    if fig.PROCESS_LOG.exists():
-        all_codes = fig.PROCESS_LOG.read_text().split('\n')
-        for code in all_codes:
-            ptype, pcode = code.split('\t')
-            processes[ptype].append(pcode)
-    return processes
-
-
-def write_processes(process_codes):
-    """
-    Function for writing the access codes to all processes tracked by the server upon server exit.
-    Part of the functionality for continuing unfinished analyses on server restart.
-    ===============================================================================
-    :process_codes: A dictionary of processcodes
-    """
-    all_codes = []
-    # Go through all types of processdocs
-    for ptype, pcodes in process_codes.items():
-        # Go through each processdoc
-        for pdoc in pcodes:
-            if isinstance(pdoc, str):
-                all_codes.append('{}\t{}'.format(ptype, pdoc))
-            # If the process hasn't yet finished
-            elif not pdoc.status == 'Finished':
-                # Add it's access code to the process log
-                all_codes.append('{}\t{}'.format(ptype, pdoc.analysis_code))
-    fig.PROCESS_LOG.write_text('\n'.join(all_codes))
