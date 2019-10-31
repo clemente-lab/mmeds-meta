@@ -226,7 +226,8 @@ class Tool(mp.Process):
                     new_file = f.name
                     copy(self.get_file(key, True), self.get_file('visualizations_dir', True) / new_file)
         except FileNotFoundError as e:
-            raise AnalysisError(e.args[1])
+            print('ack, missing {}'.format(key))
+            # raise AnalysisError(e.args[1])
 
     def write_file_locations(self):
         """

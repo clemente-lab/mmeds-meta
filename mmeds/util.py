@@ -134,8 +134,11 @@ def decorate_all_methods(decorator):
 def load_config(config_file, metadata, ignore_bad_cols=False):
     """ Read the provided config file to determine settings for the analysis. """
     config = {}
+    # If a Path was passed (as is the case during testing)
+    if isinstance(config_file, Path):
+        page = config_file.read_text()
     # If no config was provided load the default
-    if config_file is None or config_file == '':
+    elif config_file is None or config_file == '':
         log('Using default config')
         page = fig.DEFAULT_CONFIG.read_text()
     else:
