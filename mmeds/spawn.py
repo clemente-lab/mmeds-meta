@@ -81,6 +81,12 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
     elif 'qiime2' in ad.analysis_type:
         tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
                       testing=testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
+    elif 'test' in ad.analysis_type:
+        debug_log('test analysis')
+        time = float(ad.analysis_type.split('-')[-1])
+        tool = TestTool(user, code, ad.analysis_type, ad.config, testing, time=time)
+    else:
+        raise AnalysisError('atype didnt match any')
     return tool
 
 
