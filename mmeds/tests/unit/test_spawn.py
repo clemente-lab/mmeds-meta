@@ -1,11 +1,7 @@
 from unittest import TestCase
-from shutil import rmtree
 from time import sleep
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.qiime2 import Qiime2
-from mmeds.database import upload_metadata
-from mmeds.util import load_config
 
 from yaml import safe_load
 
@@ -100,11 +96,3 @@ class SpawnTests(TestCase):
             self.pipe.recv()
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
-
-    def test_d_start_sub_analysis_cold(self):
-        """ Test that a sub-analysis can be successfully started from a previously run analysis. """
-        return
-        tool = sp.spawn_sub_analysis(fig.TEST_USER, self.access_code,
-                                     ('BodySite', 'SpecimenBodySite'),
-                                     'tongue', self.testing)
-        self.assertTrue(tool)

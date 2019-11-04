@@ -1,4 +1,4 @@
-from mmeds.database import Database, upload_metadata, SQLBuilder
+from mmeds.database import Database, upload_metadata, SQLBuilder, MetaDataUploader
 from mmeds.authentication import add_user, remove_user
 from mmeds.error import TableAccessError
 from mmeds.util import sql_log, parse_ICD_codes, load_metadata
@@ -238,17 +238,3 @@ class MetaDataUploaderTests(TestCase):
             assert int(code.split('.')[0][1:]) == self.df['IllnessCategory']['ICDCategory'].iloc[i]
             assert code.split('.')[1][:-1] == self.df['IllnessDetails']['ICDDetails'].iloc[i]
             assert code.split('.')[1][-1] == self.df['IllnessDetails']['ICDExtension'].iloc[i]
-
-    ####################
-    #   Test MongoDB   #
-    ####################
-    def test_f_mongo_import(self):
-        return
-        """ Test the import of files into mongo. """
-        # Get a random string to use for the code
-        test_code = fig.get_salt(10)
-        args = {}
-        for i in range(5):
-            args[fig.get_salt(5)] = fig.get_salt(10)
-        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-            db.mongo_import('test_study', 'study_name', access_code=test_code, kwargs=args)
