@@ -1,5 +1,5 @@
 from collections import defaultdict, OrderedDict
-from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError, EmailError
 from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
@@ -860,6 +860,9 @@ def recieve_email(num_messages=1, wait=False, search=('FROM', fig.MMEDS_EMAIL), 
                 sleep(5)
                 if waittime > max_wait:
                     break
+        print('all_mail: {}'.format(all_mail))
+        if not all_mail:
+            raise EmailError('No email found matching criteria {}'.format(search))
 
         messages = []
         response = client.fetch(all_mail[-1 * num_messages:], ['RFC822'])
