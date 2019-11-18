@@ -65,7 +65,6 @@ class TestServer(helper.CPWebCase):
         self.change_password()
 
     def test_d_upload(self):
-        return
         self.login()
         self.upload_metadata()
         self.upload_data()
@@ -78,7 +77,6 @@ class TestServer(helper.CPWebCase):
         self.user_download()
 
     def test_e_query(self):
-        return
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()

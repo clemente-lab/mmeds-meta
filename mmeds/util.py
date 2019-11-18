@@ -326,6 +326,11 @@ def load_ICD_codes():
     return ICD_codes
 
 
+def convert_ICD_9_to_10():
+    df = pd.read_csv(fig.STORAGE_DIR / 'icd9toicd10cmgem.csv', sep='\t')
+    print(df.columns)
+
+
 def parse_ICD_codes(df):
     """ Parse the ICD codes into seperate columns """
     codes = df['ICDCode']['ICDCode'].tolist()
