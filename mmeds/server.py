@@ -564,7 +564,8 @@ class MMEDSanalysis(MMEDSbase):
                 config_text = DEFAULT_CONFIG.read_text()
             else:
                 config_text = config.file.read().decode('utf-8')
-            self.q.put(('analysis', self.get_user(), access_code, tool, config_text))
+            # -1 is the kill_stage (used when testing)
+            self.q.put(('analysis', self.get_user(), access_code, tool, config_text, -1))
             cp.log('Valid config file')
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')

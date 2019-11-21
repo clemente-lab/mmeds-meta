@@ -15,7 +15,8 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from multiprocessing import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
-from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError, InvalidSQLError
+from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
+                         MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log,
                         debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
 from mmeds.documents import StudyDoc, AnalysisDoc
@@ -497,6 +498,9 @@ class Database:
         # Raise an error if the upload does not exist
         if mdata is None:
             raise MissingUploadError()
+        for path in mdata.files.values():
+            if not Path(path).exists():
+                raise MissingFileError('File {}, does not exist')
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()

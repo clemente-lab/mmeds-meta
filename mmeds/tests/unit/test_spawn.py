@@ -1,11 +1,7 @@
 from unittest import TestCase
-from shutil import rmtree
 from time import sleep
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.qiime2 import Qiime2
-from mmeds.database import upload_metadata
-from mmeds.util import load_config
 
 from yaml import safe_load
 
@@ -33,6 +29,7 @@ class SpawnTests(TestCase):
         self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
         self.watcher.start()
         self.infos = []
+        self.analyses = []
 
     @classmethod
     def tearDownClass(self):
@@ -75,11 +72,12 @@ class SpawnTests(TestCase):
         """ Test starting analysis through the queue """
         tool = 'test-20'
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['study_code'], tool, None))
+            self.q.put(('analysis', proc['owner'], proc['study_code'], tool, None, -1))
 
         # Check the analyses are started and running simultainiously
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
+        self.analyses += [info, info_0]
         sleep(5)
         # Check they match the contents of current_processes
         with open(fig.CURRENT_PROCESSES, 'r') as f:
@@ -91,21 +89,10 @@ class SpawnTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_c_restart_analysis(self):
-        """ Test restarting an analysis from a analysis doc. """
-        return
-        tool = sp.restart_analysis(fig.TEST_USER, self.access_code, 1, self.testing, run_analysis=False)
-        self.assertTrue(tool)
-        self.assertEqual(tool.doc, self.tool.doc)
-        tool.start()
-        while tool.is_alive():
-            sleep(5)
-        self.assertEqual(tool.exitcode, 0)
-        self.assertTrue(tool.get_file('jobfile', True).is_file())
-
-    def test_d_start_sub_analysis_cold(self):
-        """ Test that a sub-analysis can be successfully started from a previously run analysis. """
-        return
-        tool = sp.spawn_sub_analysis(fig.TEST_USER, self.access_code,
-                                     ('BodySite', 'SpecimenBodySite'),
-                                     'tongue', self.testing)
-        self.assertTrue(tool)
+        """ Test restarting the two analyses from their respective docs. """
+        for proc in self.analyses:
+            self.q.put(('restart', proc['owner'], proc['analysis_code'], 0, -1))
+            # Get the test tool
+            self.pipe.recv()
+        self.assertEqual(self.pipe.recv(), 0)
+        self.assertEqual(self.pipe.recv(), 0)
