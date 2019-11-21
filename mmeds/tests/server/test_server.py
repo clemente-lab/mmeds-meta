@@ -428,11 +428,12 @@ class TestServer(helper.CPWebCase):
         # Login
         self.getPage("/auth/logout", headers=self.cookies)
         self.assertStatus('200 OK')
-        self.getPage("/auth/login?username={}&password={}".format(self.server_user, self.tp))
+        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
         self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
         self.assertStatus('200 OK')
-        metadata_path = self.body.decode('utf-8').split('\n')[33].split('"')[1]
+        page = self.body.decode('utf-8')
+        metadata_path = page.split('\n')[33].split('"')[1]
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
         self.assertStatus('200 OK')
 
