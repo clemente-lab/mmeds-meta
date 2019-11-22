@@ -132,8 +132,8 @@ class Qiime2(Tool):
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.doc.analysis_type.split('-')[1]), '.qzv')
-        viz_file = 'stats_{}_visual'.format(self.doc.analysis_type.split('-')[1])
+        self.add_path('stats_{}_visual'.format(self.doc.doc_type.split('-')[1]), '.qzv')
+        viz_file = 'stats_{}_visual'.format(self.doc.doc_type.split('-')[1])
         cmd = [
             'qiime metadata tabulate',
             '--m-input-file {}'.format(self.get_file('stats_table')),
@@ -448,11 +448,11 @@ class Qiime2(Tool):
             if 'demuxed' not in self.doc.data_type:
                 self.demultiplex()
                 self.demux_visualize()
-            if 'deblur' in self.doc.analysis_type:
+            if 'deblur' in self.doc.doc_type:
                 self.deblur_filter()
                 self.deblur_denoise()
                 self.deblur_visualize()
-            elif 'dada2' in self.doc.analysis_type:
+            elif 'dada2' in self.doc.doc_type:
                 self.dada2()
                 if self.kill_stage == 1:
                     self.jobtext.append('exit 1')

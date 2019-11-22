@@ -817,7 +817,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         user=user,
         cemail=fig.CONTACT_EMAIL,
         email=toaddr,
-        analysis=kwargs.get('analysis_type'),
+        analysis=kwargs.get('doc_type'),
         study=kwargs.get('study'),
         code=kwargs.get('code'),
         password=kwargs.get('password'),
@@ -943,7 +943,7 @@ def setup_environment(module):
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, doc_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -979,7 +979,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
-        if 'qiime2' in analysis_type:
+        if 'qiime2' in doc_type:
             f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         seen_ids = set()
         seen_bars = set()

@@ -267,7 +267,7 @@ class MMEDSdownload(MMEDSbase):
                                 name=analysis.name,
                                 date_created=analysis.created,
                                 last_accessed=analysis.last_accessed,
-                                analysis_type=analysis.analysis_type,
+                                doc_type=analysis.doc_type,
                                 reads_type=analysis.reads_type,
                                 study_code=analysis.study_code,
                                 sub_analysis=analysis.sub_analysis,

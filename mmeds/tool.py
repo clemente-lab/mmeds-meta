@@ -54,18 +54,18 @@ class Tool(mp.Process):
         self.stage_files = defaultdict(list)
         self.created = datetime.now()
 
-        # If restarting get the associated AnalysisDoc from the database
+        # If restarting get the associated MMEDSDoc from the database
         if restart_stage:
             debug_log('Restarting {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 self.doc = db.get_analysis(self.study_code)
-        # Otherwise create a new AnalysisDoc from the associated StudyDoc
+        # Otherwise create a new MMEDSDoc from the associated MMEDSDoc
         else:
             debug_log('Creating new doc {}'.format(self.name))
             with Database(owner=self.owner, testing=self.testing) as db:
                 metadata = db.get_metadata(self.study_code)
                 access_code = db.create_access_code(self.name)
-                self.doc = metadata.generate_AnalysisDoc(self.name.split('-')[0], atype, config, access_code)
+                self.doc = metadata.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code)
         debug_log('Doc creation date: {}'.format(self.doc.created))
         self.path = Path(self.doc.path)
 
@@ -247,7 +247,7 @@ class Tool(mp.Process):
 
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
-        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.analysis_type)
+        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.doc_type)
 
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
@@ -260,7 +260,7 @@ class Tool(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {}'.format(self.doc.analysis_type.split('-')[0])
+            '--tool_type {}'.format(self.doc.doc_type.split('-')[0])
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -512,7 +512,7 @@ class Tool(mp.Process):
             send_email(self.doc.email,
                        self.doc.owner,
                        'analysis',
-                       analysis_type=self.name + self.doc.analysis_type,
+                       doc_type=self.name + self.doc.doc_type,
                        study_name=self.doc.study,
                        testing=self.testing)
 
