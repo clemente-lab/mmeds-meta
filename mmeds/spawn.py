@@ -75,16 +75,16 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
             rmtree(ad.path)
 
     # Create the appropriate tool
-    if 'qiime1' in ad.analysis_type:
-        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
+    if 'qiime1' in ad.doc_type:
+        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.doc_type, config=ad.config,
                       testing=testing, analysis=run_analysis, restart_stage=restart_stage)
-    elif 'qiime2' in ad.analysis_type:
-        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
+    elif 'qiime2' in ad.doc_type:
+        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.doc_type, config=ad.config,
                       testing=testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
-    elif 'test' in ad.analysis_type:
+    elif 'test' in ad.doc_type:
         debug_log('test analysis')
-        time = float(ad.analysis_type.split('-')[-1])
-        tool = TestTool(user, code, ad.analysis_type, ad.config, testing, time=time)
+        time = float(ad.doc_type.split('-')[-1])
+        tool = TestTool(user, code, ad.doc_type, ad.config, testing, time=time)
     else:
         raise AnalysisError('atype didnt match any')
     return tool

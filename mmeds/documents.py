@@ -8,10 +8,30 @@ from ppretty import ppretty
 
 
 class MMEDSDoc(men.Document):
-    """ Base class for MongoDB documents used in MMEDS """
-    meta = {'allow_inheritance': True}
+    """ Class for MongoDB documents used in MMEDS """
+    created = men.DateTimeField(require=True)
+    last_accessed = men.DateTimeField(required=True)
+    public = men.BooleanField()
+    testing = men.BooleanField(required=True)
+    sub_analysis = men.BooleanField()
+    name = men.StringField(max_length=100)
+    owner = men.StringField(max_length=100, required=True)
+    email = men.StringField(max_length=100, required=True)
+    path = men.StringField(max_length=256, required=True)
+    study_code = men.StringField(max_length=100)
+    study_name = men.StringField(max_length=100)
+    access_code = men.StringField(max_length=50)
+    reads_type = men.StringField(max_length=45)
+    data_type = men.StringField(max_length=45)
+    doc_type = men.StringField(max_length=45)
+    study = men.StringField(max_length=45)
 
-    access_code = men.StringField(max_length=50, required=True)
+    # Stages: created, started, <Name of last method>, finished, errored
+    analysis_status = men.StringField(max_length=45)
+    restart_stage = men.IntField()
+    pid = men.IntField()
+    files = men.DictField()
+    config = men.DictField()
 
     # When the document is updated record the
     # location of all files in a new file
@@ -33,31 +53,54 @@ class MMEDSDoc(men.Document):
             f.write('-\t'.join([str(type(self)), self.owner, 'Upload', 'Finished', self.path, self.access_code]) + '\n')
         super().save()
 
-
-class StudyDoc(MMEDSDoc):
-    """ Document class for storing information related to a particular study. """
-    created = men.DateTimeField()
-    last_accessed = men.DateTimeField()
-    testing = men.BooleanField(required=True)
-    public = men.BooleanField(required=True)
-    study_type = men.StringField(max_length=45, required=True)
-    reads_type = men.StringField(max_length=45, required=True)
-    study = men.StringField(max_length=45, required=True)
-    owner = men.StringField(max_length=100, required=True)
-    email = men.StringField(max_length=100, required=True)
-    path = men.StringField(max_length=256, required=True)
-    metadata = men.DictField()
-    files = men.DictField()
-
     def __str__(self):
         """ Return a printable string """
-        return ppretty(self)
+        return ppretty(self, seq_length=20)
 
-    def generate_AnalysisDoc(self, name, analysis_type, config, access_code):
+    def create_sub_analysis(self, category, value, analysis_code):
+        """ Creates a new AnalysisDoc for a child analysis """
+        log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
+
+        child_path = Path(self.path) / camel_case('{}_{}'.format(category[1], value))
+        child_path.mkdir()
+
+        child_files = deepcopy(self.files)
+        child_files['metadata'] = str(child_path / 'metadata.tsv')
+
+        child_config = deepcopy(self.config)
+        child_config['sub_analysis'] = 'None'
+        child_config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
+
+        child = MMEDSDoc(created=datetime.now(),
+                         last_accessed=datetime.now(),
+                         sub_analysis=True,
+                         testing=self.testing,
+                         name=child_path.name,
+                         owner=self.owner,
+                         email=self.email,
+                         path=str(child_path),
+                         study_code=self.study_code,
+                         study_name=self.study_name,
+                         access_code=analysis_code,
+                         reads_type=self.reads_type,
+                         data_type=self.data_type,
+                         doc_type=self.doc_type,
+                         analysis_status='Pending',
+                         restart_stage='0',
+                         files=child_files,
+                         config=child_config)
+
+        # Update the child's attributes
+        child.save()
+        log(child)
+        log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
+        return child
+
+    def generate_MMEDSDoc(self, name, doc_type, config, access_code):
         """
         Create a new AnalysisDoc from the current StudyDoc
         :name: A string. The name of the new document
-        :analysis_type: A string. The type of analysis the new document will store information on
+        :doc_type: A string. The type of analysis the new document will store information on
         :config: A dictionary. The configuration for the analysis
         :access_code: A string. A unique code for accessing the new document
         """
@@ -102,95 +145,28 @@ class StudyDoc(MMEDSDoc):
         string_files = {str(key): str(value) for key, value in files.items()}
 
         log('creating analysis doc')
-        doc = AnalysisDoc(created=datetime.now(),
-                          last_accessed=datetime.now(),
-                          sub_analysis=False,
-                          testing=self.testing,
-                          name=new_dir.name,
-                          owner=self.owner,
-                          email=self.email,
-                          path=str(new_dir),
-                          study_code=self.access_code,
-                          study_name=self.study,
-                          access_code=access_code,
-                          reads_type=self.reads_type,
-                          data_type=data_type,
-                          analysis_type=analysis_type,
-                          analysis_status='created',
-                          restart_stage=0,
-                          config=config,
-                          files=string_files)
+        doc = MMEDSDoc(created=datetime.now(),
+                       last_accessed=datetime.now(),
+                       sub_analysis=False,
+                       testing=self.testing,
+                       name=new_dir.name,
+                       owner=self.owner,
+                       email=self.email,
+                       path=str(new_dir),
+                       study_code=self.access_code,
+                       study_name=self.study,
+                       access_code=access_code,
+                       reads_type=self.reads_type,
+                       data_type=data_type,
+                       doc_type=doc_type,
+                       analysis_status='created',
+                       restart_stage=0,
+                       config=config,
+                       files=string_files)
         doc.save()
         with open(DOCUMENT_LOG, 'a') as f:
-            f.write('-\t'.join([doc.study_name, doc.owner, doc.analysis_type,
+            f.write('-\t'.join([doc.study_name, doc.owner, doc.doc_type,
                                 doc.analysis_status, str(datetime.now()), doc.path,
                                 doc.access_code]) + '\n')
-        log('saved analysis doc')
-        return doc
-
-
-class AnalysisDoc(MMEDSDoc):
-    """ Document class for storing information related to a particular analysis run. """
-    created = men.DateTimeField(require=True)
-    last_accessed = men.DateTimeField(required=True)
-    sub_analysis = men.BooleanField(required=True)
-    testing = men.BooleanField(required=True)
-    name = men.StringField(max_length=100, required=True)
-    owner = men.StringField(max_length=100, required=True)
-    email = men.StringField(max_length=100, required=True)
-    path = men.StringField(max_length=256, required=True)
-    study_code = men.StringField(max_length=100, required=True)
-    study_name = men.StringField(max_length=100, required=True)
-    access_code = men.StringField(max_length=50, required=True)
-    reads_type = men.StringField(max_length=45, required=True)
-    data_type = men.StringField(max_length=45, required=True)
-    analysis_type = men.StringField(max_length=45, required=True)
-    # Stages: created, started, <Name of last method>, finished, errored
-    analysis_status = men.StringField(max_length=45, required=True)
-    restart_stage = men.IntField(required=True)
-    pid = men.IntField()
-    files = men.DictField()
-    config = men.DictField()
-
-    def __str__(self):
-        """ Return a printable string """
-        return ppretty(self, seq_length=20)
-
-    def create_sub_analysis(self, category, value, analysis_code):
-        """ Creates a new AnalysisDoc for a child analysis """
-        log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
-
-        child_path = Path(self.path) / camel_case('{}_{}'.format(category[1], value))
-        child_path.mkdir()
-
-        child_files = deepcopy(self.files)
-        child_files['metadata'] = str(child_path / 'metadata.tsv')
-
-        child_config = deepcopy(self.config)
-        child_config['sub_analysis'] = 'None'
-        child_config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
-
-        child = AnalysisDoc(created=datetime.now(),
-                            last_accessed=datetime.now(),
-                            sub_analysis=True,
-                            testing=self.testing,
-                            name=child_path.name,
-                            owner=self.owner,
-                            email=self.email,
-                            path=str(child_path),
-                            study_code=self.study_code,
-                            study_name=self.study_name,
-                            access_code=analysis_code,
-                            reads_type=self.reads_type,
-                            data_type=self.data_type,
-                            analysis_type=self.analysis_type,
-                            analysis_status='Pending',
-                            restart_stage='0',
-                            files=child_files,
-                            config=child_config)
-
-        # Update the child's attributes
-        child.save()
-        log(child)
-        log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
-        return child
+            log('saved analysis doc')
+            return doc
