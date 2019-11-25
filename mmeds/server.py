@@ -235,7 +235,7 @@ class MMEDSdownload(MMEDSbase):
                                 study=study.study,
                                 date_created=study.created,
                                 last_accessed=study.last_accessed,
-                                study_type=study.study_type,
+                                doc_type=study.doc_type,
                                 reads_type=study.reads_type,
                                 access_code=study.access_code,
                                 owner=study.owner,
