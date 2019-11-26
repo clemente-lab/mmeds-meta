@@ -26,3 +26,21 @@ class SparCC(Tool):
         if stat is not None:
             cmd += ' -a {}'.format(stat)
         self.jobtext.append(cmd)
+
+    def make_bootstraps(self):
+        """ Calculate the psuedo p-values """
+        stat = 'pearson'
+        iterations = 5
+        cmd = 'MakeBootstraps.py {data} -n {iterations} -t {permutations} -p {pvals}'
+        self.jobtext.append(cmd.format(data=self.get_file('correlation_matrix'),
+                                       iterations=iterations,
+                                       permutations=permutations,
+                                       pvals=pvals))
+    def pseudo_pvals(self):
+        cmd = 'PseudoPvals.py {data} {cor} {iter} -o {output} -t {type}'
+        self.jobtext.append(cmd.format(data=self.get_file('correlation_matrix'),
+                                       cor=correlations,
+                                       iterations=iterations,
+                                       output
+
+
