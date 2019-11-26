@@ -15,10 +15,11 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from multiprocessing import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
-from mmeds.error import TableAccessError, MissingUploadError, MetaDataError, NoResultError, InvalidSQLError
+from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
+                         MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log,
                         debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
-from mmeds.documents import StudyDoc, AnalysisDoc
+from mmeds.documents import MMEDSDoc
 
 DAYS = 13
 
@@ -347,8 +348,8 @@ class Database:
         count = 0
         while True:
             # Ensure no document exists with the given access code
-            if not (StudyDoc.objects(access_code=code).first() or
-                    AnalysisDoc.objects(access_code=code).first()):
+            if not (MMEDSDoc.objects(access_code=code).first() or
+                    MMEDSDoc.objects(access_code=code).first()):
                 break
             else:
                 code = check_code + '-' + str(count)
@@ -356,10 +357,10 @@ class Database:
         return code
 
     def mongo_clean(self, access_code):
-        obs = StudyDoc.objects(access_code=access_code)
+        obs = MMEDSDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
-        obs = AnalysisDoc.objects(access_code=access_code)
+        obs = MMEDSDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
 
@@ -369,7 +370,7 @@ class Database:
         :access_code: The code for identifying this dataset.
         :data_type: A string. Either 'reads' or 'barcodes' depending on which is being modified.
         """
-        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
+        mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
 
         # Remove the old data file if it exits
@@ -386,7 +387,7 @@ class Database:
         # Get a new code
         new_code = get_salt(50)
         # Get the mongo document
-        mdata = StudyDoc.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata = MMEDSDoc.objects(study=study_name, owner=self.owner, email=email).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.access_code = new_code
         mdata.save()
@@ -430,7 +431,7 @@ class Database:
                 file locations in a subdirectory
         """
         sql_log('Update metadata with {}: {}'.format(filekey, value))
-        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
+        mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
         mdata.save()
@@ -492,11 +493,14 @@ class Database:
 
     def get_mongo_files(self, access_code):
         """ Return mdata.files, mdata.path for the provided access_code. """
-        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
+        mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
             raise MissingUploadError()
+        for path in mdata.files.values():
+            if not Path(path).exists():
+                raise MissingFileError('File {}, does not exist')
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
@@ -504,43 +508,43 @@ class Database:
 
     def get_metadata(self, access_code):
         """
-        Return the StudyDoc object.
+        Return the MMEDSDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return StudyDoc.objects(access_code=access_code, owner=self.owner).first()
+        return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
     def get_analysis(self, access_code):
         """
-        Return the StudyDoc object.
+        Return the MMEDSDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return AnalysisDoc.objects(access_code=access_code, owner=self.owner).first()
+        return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
     @classmethod
     def get_all_studies(cls):
         """ Return all studies currently stored in the database. """
-        return StudyDoc.objects()
+        return MMEDSDoc.objects()
 
     @classmethod
     def get_study(cls, access_code):
         """ Return all studies currently stored in the database. """
-        return StudyDoc.objects(access_code=access_code).first()
+        return MMEDSDoc.objects(access_code=access_code).first()
 
     @classmethod
     def get_all_analyses_from_study(cls, access_code):
         """ Return all studies currently stored in the database. """
-        return AnalysisDoc.objects(study_code=access_code)
+        return MMEDSDoc.objects(study_code=access_code)
 
     @classmethod
     def get_study_analysis(cls, access_code):
         """ Return all studies currently stored in the database. """
-        return AnalysisDoc.objects(access_code=access_code).first()
+        return MMEDSDoc.objects(access_code=access_code).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
-        mdata = StudyDoc.objects(access_code=access_code, owner=self.owner).first()
+        mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         empty_files = []
         for key in mdata.files.keys():
             if not os.path.exists(mdata.files[key]):
@@ -551,14 +555,14 @@ class Database:
     @classmethod
     def clear_mongo_data(cls, username):
         """ Clear all metadata documents associated with the provided username. """
-        data = list(StudyDoc.objects(owner=username))
-        data2 = list(AnalysisDoc.objects(owner=username))
+        data = list(MMEDSDoc.objects(owner=username))
+        data2 = list(MMEDSDoc.objects(owner=username))
         for doc in data + data2:
             doc.delete()
 
     def clean(self):
         """ Remove all temporary and intermediate files. """
-        docs = StudyDoc.objects().first()
+        docs = MMEDSDoc.objects().first()
         if docs is None:
             return
         for mdata in docs:
@@ -573,16 +577,16 @@ class Database:
     @classmethod
     def get_mongo_docs(cls, access_code):
         """ For admin use """
-        return (StudyDoc.objects(access_code=access_code),
-                AnalysisDoc.objects(access_code=access_code))
+        return (MMEDSDoc.objects(access_code=access_code),
+                MMEDSDoc.objects(access_code=access_code))
 
     @classmethod
     def get_docs(cls, doc_type, access_code):
         """ For server use """
         if doc_type == 'analysis':
-            docs = AnalysisDoc.objects(access_code=access_code)
+            docs = MMEDSDoc.objects(access_code=access_code)
         elif doc_type == 'study':
-            docs = StudyDoc.objects(access_code=access_code)
+            docs = MMEDSDoc.objects(access_code=access_code)
         return docs
 
 
@@ -1123,10 +1127,10 @@ class MetaDataUploader(Process):
         # If an access_code is provided use that
 
         # Create the document
-        mdata = StudyDoc(created=datetime.utcnow(),
+        mdata = MMEDSDoc(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),
                          testing=self.testing,
-                         study_type=self.study_type,
+                         doc_type='study-' + self.study_type,
                          reads_type=self.reads_type,
                          study=self.study_name,
                          access_code=self.access_code,

@@ -8,7 +8,7 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
+from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning, send_email
 from mmeds.spawn import Watcher
 from multiprocessing import current_process, Queue, Pipe
 
@@ -29,9 +29,10 @@ class TestServer(helper.CPWebCase):
 
     server_code = 'server_code_' + fig.get_salt(10)
     # Create a unique user id from the current time
-    server_user = fig.SERVER_USER + str(int(time()))
+    server_user = fig.SERVER_USER + fig.get_salt(10)  # str(int(time()))
     access_code = None
-    lab_user = 'lab_user_' + fig.get_salt(10)
+    lab_user = 'lab_user_' + str(int(time()))
+    tp = None
 
     @staticmethod
     def setup_server():
@@ -60,8 +61,8 @@ class TestServer(helper.CPWebCase):
         self.logout()
         self.login_fail_password()
         self.login_fail_username()
-        tp = self.reset_password()
-        self.change_password(tp)
+        self.tp = self.reset_password()
+        self.change_password()
 
     def test_d_upload(self):
         self.login()
@@ -73,6 +74,7 @@ class TestServer(helper.CPWebCase):
         self.download()
         self.convert()
         self.lab_download()
+        self.user_download()
 
     def test_e_query(self):
         self.login()
@@ -83,6 +85,9 @@ class TestServer(helper.CPWebCase):
     def test_z_cleanup(self):
         remove_user(self.server_user, testing=testing)
         remove_user(self.lab_user, testing=testing)
+        # Send an email at the end to ensure there aren't issues with
+        # accessing the correct email in future test runs
+        send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
 
     ####################
     #  Authentication  #
@@ -154,20 +159,20 @@ class TestServer(helper.CPWebCase):
         page = insert_error(page, 14, err.InvalidLoginError().message)
         self.assertBody(page)
 
-    def change_password(self, new_pass):
-        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, new_pass))
+    def change_password(self):
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, self.tp))
         self.assertStatus('200 OK')
         self.getPage('/auth/input_password', self.cookies)
         self.assertStatus('200 OK')
         temp_pass_bad = 'thi$1sT'
-        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=new_pass,
+        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
                                                                                                     new=temp_pass_bad),
                      self.cookies)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'auth_change_password.html', title='Change Password')
         fail_page = insert_error(page, 9, 'Error: Passwords must be longer than 10 characters.')
         self.assertBody(fail_page)
-        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=new_pass,
+        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
                                                                                                     new=sec.TEST_PASS),
                      self.cookies)
         self.assertStatus('200 OK')
@@ -416,6 +421,19 @@ class TestServer(helper.CPWebCase):
         self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
         self.assertStatus('200 OK')
         metadata_path = self.body.decode('utf-8').split('\n')[33].split('"')[1]
+        self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    def user_download(self):
+        # Login
+        self.getPage("/auth/logout", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
+        self.assertStatus('200 OK')
+        self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
+        self.assertStatus('200 OK')
+        page = self.body.decode('utf-8')
+        metadata_path = page.split('\n')[33].split('"')[1]
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
         self.assertStatus('200 OK')
 

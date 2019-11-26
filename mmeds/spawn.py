@@ -20,13 +20,16 @@ def test(time):
     sleep(time)
 
 
-def spawn_analysis(atype, user, access_code, config_file, testing):
+def spawn_analysis(atype, user, access_code, config_file, testing, kill_stage=-1):
     """ Start running the analysis in a new process """
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
 
-    if isinstance(config_file, str):
+    if isinstance(config_file, Path):
+        debug_log('load path config {}'.format(config_file))
+        config = load_config(config_file.read_text(), files['metadata'])
+    elif isinstance(config_file, str):
         debug_log('load path config {}'.format(config_file))
         config = load_config(config_file, files['metadata'])
     elif config_file is None or config_file.file is None:
@@ -37,9 +40,9 @@ def spawn_analysis(atype, user, access_code, config_file, testing):
         config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
 
     if 'qiime1' in atype:
-        tool = Qiime1(user, access_code, atype, config, testing)
+        tool = Qiime1(user, access_code, atype, config, testing, kill_stage=kill_stage)
     elif 'qiime2' in atype:
-        tool = Qiime2(user, access_code, atype, config, testing)
+        tool = Qiime2(user, access_code, atype, config, testing, kill_stage=kill_stage)
     elif 'test' in atype:
         debug_log('test analysis')
         time = float(atype.split('-')[-1])
@@ -72,12 +75,18 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
             rmtree(ad.path)
 
     # Create the appropriate tool
-    if 'qiime1' in ad.analysis_type:
-        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
+    if 'qiime1' in ad.doc_type:
+        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.doc_type, config=ad.config,
                       testing=testing, analysis=run_analysis, restart_stage=restart_stage)
-    elif 'qiime2' in ad.analysis_type:
-        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.analysis_type, config=ad.config,
+    elif 'qiime2' in ad.doc_type:
+        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.doc_type, config=ad.config,
                       testing=testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
+    elif 'test' in ad.doc_type:
+        debug_log('test analysis')
+        time = float(ad.doc_type.split('-')[-1])
+        tool = TestTool(user, code, ad.doc_type, ad.config, testing, time=time)
+    else:
+        raise AnalysisError('atype didnt match any')
     return tool
 
 
@@ -190,9 +199,19 @@ class Watcher(Process):
 
                 # If it's an analysis
                 if process[0] == 'analysis':
-                    ptype, user, access_code, tool, config = process
+                    ptype, user, access_code, tool, config, kill_stage = process
+                    p = spawn_analysis(tool, user, access_code, config, self.testing, kill_stage)
                     # Start the analysis running
-                    p = spawn_analysis(tool, user, access_code, config, self.testing)
+                    p.start()
+                    self.pipe.send(p.get_info())
+                    # Add it to the list of analysis processes
+                    self.add_process(ptype, p)
+                # IF it's a restart of an analysis
+                elif process[0] == 'restart':
+                    ptype, user, analysis_code, restart_stage, kill_stage = process
+                    p = restart_analysis(user, analysis_code, restart_stage,
+                                         self.testing, kill_stage=kill_stage, run_analysis=True)
+                    # Start the analysis running
                     p.start()
                     self.pipe.send(p.get_info())
                     # Add it to the list of analysis processes

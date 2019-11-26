@@ -54,14 +54,14 @@ class DocTests(TestCase):
     def create_from_study(self):
         """ Test creating a document """
         config = util.load_config(None, fig.TEST_METADATA)
-        sd = docs.StudyDoc.objects(access_code=self.test_code).first()
-        ad = sd.generate_AnalysisDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX)
+        sd = docs.MMEDSDoc.objects(access_code=self.test_code).first()
+        ad = sd.generate_MMEDSDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX)
         self.assertEqual(Path(sd.path), Path(ad.path).parent)
         self.assertEqual(sd.owner, ad.owner)
         self.assertEqual(sd.access_code, ad.study_code)
 
     def create_from_analysis(self):
-        ad = docs.AnalysisDoc.objects(access_code=fig.TEST_CODE_DEMUX).first()
+        ad = docs.MMEDSDoc.objects(access_code=fig.TEST_CODE_DEMUX).first()
         ad2 = ad.create_sub_analysis('Nationality', 'American', 'child_code')
         self.assertEqual(ad2.owner, ad.owner)
         self.assertEqual(Path(ad.path), Path(ad2.path).parent)

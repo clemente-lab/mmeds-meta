@@ -1,5 +1,4 @@
 from mmeds.log import MMEDSLog
-from multiprocessing import current_process
 
 
 class MmedsError(Exception):
@@ -120,6 +119,14 @@ class InvalidMetaDataFileError(MmedsError):
 
 
 class MissingFileError(MmedsError):
+    """ Exception for missing file errors """
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__()
+
+
+class EmailError(MmedsError):
     """ Exception for missing file errors """
 
     def __init__(self, message):

@@ -1,5 +1,5 @@
 from collections import defaultdict, OrderedDict
-from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError, EmailError
 from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
@@ -134,8 +134,11 @@ def decorate_all_methods(decorator):
 def load_config(config_file, metadata, ignore_bad_cols=False):
     """ Read the provided config file to determine settings for the analysis. """
     config = {}
+    # If a Path was passed (as is the case during testing)
+    if isinstance(config_file, Path):
+        page = config_file.read_text()
     # If no config was provided load the default
-    if config_file is None or config_file == '':
+    elif config_file is None or config_file == '':
         log('Using default config')
         page = fig.DEFAULT_CONFIG.read_text()
     else:
@@ -321,6 +324,11 @@ def load_ICD_codes():
                 code += 'X'
             ICD_codes[code[:3]][code[3:]] = description
     return ICD_codes
+
+
+def convert_ICD_9_to_10():
+    df = pd.read_csv(fig.STORAGE_DIR / 'icd9toicd10cmgem.csv', sep='\t')
+    print(df.columns)
 
 
 def parse_ICD_codes(df):
@@ -809,7 +817,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         user=user,
         cemail=fig.CONTACT_EMAIL,
         email=toaddr,
-        analysis=kwargs.get('analysis_type'),
+        analysis=kwargs.get('doc_type'),
         study=kwargs.get('study'),
         code=kwargs.get('code'),
         password=kwargs.get('password'),
@@ -857,6 +865,9 @@ def recieve_email(num_messages=1, wait=False, search=('FROM', fig.MMEDS_EMAIL), 
                 sleep(5)
                 if waittime > max_wait:
                     break
+        print('all_mail: {}'.format(all_mail))
+        if not all_mail:
+            raise EmailError('No email found matching criteria {}'.format(search))
 
         messages = []
         response = client.fetch(all_mail[-1 * num_messages:], ['RFC822'])
@@ -932,7 +943,7 @@ def setup_environment(module):
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, doc_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -968,7 +979,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, analysis_type):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
-        if 'qiime2' in analysis_type:
+        if 'qiime2' in doc_type:
             f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         seen_ids = set()
         seen_bars = set()
