@@ -409,14 +409,15 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_metadata(self, studyType, studyName):
+    def upload_metadata(self, uploadType, studyName):
         """ Page for uploading Qiime data """
         cp.session['study_name'] = studyName
         cp.session['metadata_type'] = 'subject'
+        cp.session['upload_type'] = uploadType
         page = self.format_html('upload_metadata_file',
                                 title='Upload Metadata',
                                 metadata_type=cp.session['metadata_type'].capitalize(),
-                                version=studyType)
+                                version=uploadType)
         return page
 
 
@@ -610,7 +611,10 @@ class MMEDSanalysis(MMEDSbase):
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
-                    page = self.format_html('upload_data_files', title='Upload Data')
+                    if cp.session['upload_type'] == 'qiime':
+                        page = self.format_html('upload_data_files', title='Upload Data')
+                    elif cp.session['upload_type'] == 'sparcc':
+                        page = self.format_html('upload_otu_data', title='Upload Data')
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
                                     title='Upload Metadata',
@@ -619,8 +623,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def process_data(self, for_reads, rev_reads, barcodes, reads_type, public=False):
-
+    def process_data(self, public=False, **kwargs):
         cp.log('Public is {}'.format(public))
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
@@ -630,7 +633,15 @@ class MMEDSanalysis(MMEDSbase):
         username = self.get_user()
 
         # Add the datafiles that exist as arguments
-        datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
+        if cp.session['upload_type'] == 'qiime':
+            datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                             rev_reads=kwargs['rev_reads'],
+                                             barcodes=kwargs['barcodes'])
+        elif cp.session['upload_type'] == 'sparcc':
+            datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
+
+        # Will be None if uploading an OTU table
+        reads_type = kwargs.get('reads_type')
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
