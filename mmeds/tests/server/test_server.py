@@ -249,7 +249,7 @@ class TestServer(helper.CPWebCase):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?studyType=qiime&studyName=Test_Server', self.cookies)
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_Server', self.cookies)
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])

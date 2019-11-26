@@ -145,6 +145,8 @@ class MMEDSDoc(men.Document):
             data_type = 'otu_table'
             (new_dir / 'otu_table.tsv').symlink_to(self.files['otu_table'])
             files['otu_table'] = new_dir / 'otu_table.tsv'
+        elif 'test' in doc_type:
+            data_type = 'test_data'
         else:
             raise AnalysisError('Invalid type for analysis {}'.format(doc_type))
 
