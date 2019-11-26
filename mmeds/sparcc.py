@@ -17,32 +17,60 @@ class SparCC(Tool):
         parts = self.doc.doc_type.split('-')
         self.stat = parts[-1]
 
-    def sparcc(self):
+    def sparcc(self, data_permutation=None):
         """ Quantify the correlation between all OTUs """
-        self.add_path('correlation', '.out')
-        cmd = 'SparCC.py {} -i {} --cor_file={}'.format(self.get_file('otu_table'),
-                                                        self.doc.config['iterations'],
-                                                        self.get_file('correlation'))
+
+        if data_permutation is None:
+            data_file = self.get_file('otu_table')
+            self.add_path('correlation', '.out')
+        else:
+            data_file = data_permutation
+        cmd = 'SparCC.py {data} -i {iterations} --cor_file={output}'
+
         if self.stat is not None:
-            cmd += ' -a {}'.format(self.stat)
-        self.jobtext.append(cmd)
+            cmd += ' -a {stat}'
+
+        # If running on permutations have commands execute in parallel
+        if data_permutation is None:
+            cmd += ';'
+        else:
+            cmd += '&'
+        self.jobtext.append(cmd.format(data=data_file,
+                                       iterations=self.doc.config['iterations'],
+                                       output=self.get_file('correlation'),
+                                       stat=self.stat))
 
     def make_bootstraps(self):
-        """ Calculate the psuedo p-values """
-        iterations = 5
-        cmd = 'MakeBootstraps.py {data} -n {iterations} -t {permutations} -p {pvals}'
-        pvals = 'somewhereovertherainbow'
-        permutations = 5
-        self.jobtext.append(cmd.format(data=self.get_file('correlation_matrix'),
-                                       iterations=iterations,
-                                       permutations=permutations,
-                                       pvals=pvals))
+        """ Create the shuffled datasets """
+        cmd = 'MakeBootstraps.py {data} -n {permutations} -t permutation_#.txt -p {pvals}/'
+        self.add_path('pvals')
+        if not self.get_file('pvals', True).is_dir():
+            self.get_file('pvals', True).mkdir()
+        self.jobtext.append(cmd.format(data=self.get_file('correlation'),
+                                       permutations=self.doc.config['permutations'],
+                                       pvals=self.get_file('pvals')))
 
-    def pseudo_pvals(self):
-        cmd = 'PseudoPvals.py {data} {cor} {iter} -o {output} -t {type}'
-        print(cmd)
+    def pseudo_pvals(self, sides='two'):
+        """ Calculate the psuedo p-values """
+        self.add_path('PseudoPval', '.txt')
+        cmd = 'PseudoPvals.py {data} {perm} {iterations} -o {output} -t {sides}_sided'
+        self.jobtext.append(cmd.format(data=self.get_file('correlation'),
+                                       perm=self.get_file('pvals') / 'permutation_#.txt',
+                                       iterations=self.doc.config['iterations'],
+                                       output=self.get_file('PseudoPval'),
+                                       sides=sides))
 
     def setup_analysis(self):
+        self.set_stage(0)
         self.sparcc()
+        self.set_stage(1)
+        self.make_bootstraps()
+        self.set_stage(2)
+        files = [self.get_file('pvals') / 'perm_cor_{}.txt'.format(i)
+                 for i in range(int(self.doc.config['permutations']))]
+        for pfile in files:
+            self.sparcc(pfile)
+        self.set_stage(3)
+        self.pseudo_pvals()
         self.write_file_locations()
         super().setup_analysis(summary=False)

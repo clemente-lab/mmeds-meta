@@ -15,3 +15,7 @@ abundance_threshold	0.01
 font_size	15
 # Whether or not sub-analyses should be performed
 sub_analysis	none
+# SparCC stuff
+iterations	5
+permutations	5
+stat	spearman

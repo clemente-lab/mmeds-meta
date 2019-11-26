@@ -109,6 +109,7 @@ class Tool(mp.Process):
     def set_stage(self, stage):
         """ Set self.current_stage to the provided value """
         self.current_stage = stage
+        self.jobtext.append('echo "MMEDS_STAGE_{}"'.format(stage))
 
     def add_path(self, name, extension='', key=None, full_path=False):
         """ Add a file or directory with the full path to self.doc. """

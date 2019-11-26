@@ -4,6 +4,7 @@ from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG
 from mmeds.util import copy_metadata, log, camel_case
+from mmeds.error import AnalysisError
 from ppretty import ppretty
 
 
@@ -144,6 +145,8 @@ class MMEDSDoc(men.Document):
             data_type = 'otu_table'
             (new_dir / 'otu_table.tsv').symlink_to(self.files['otu_table'])
             files['otu_table'] = new_dir / 'otu_table.tsv'
+        else:
+            raise AnalysisError('Invalid type for analysis {}'.format(doc_type))
 
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'

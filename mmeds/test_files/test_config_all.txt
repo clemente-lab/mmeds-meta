@@ -13,3 +13,7 @@ abundance_threshold	0.1
 font_size	15
 # Columns to perform sub analysis on. 'all', 'none', or a comma seperated list
 sub_analysis	all
+# SparCC stuff
+iterations	5
+permutations	5
+stat	spearman
