@@ -24,9 +24,9 @@ Then run the following command.
 mmeds is written in in Python3 so you will need a python3 environment to run it.
 Run `python setup.py install` to install the necessary dependencies.
 
-To start the server change to the server directory and run `python server.py 1`
+To start the server change to the host directory and run `python host.py 1`
 
-To connect to the server go to [MMEDS](https://localhost:8080)
+To connect to the server go to [MMEDS](https://localhost:52953)
 Allow access to the webpage despite your browsers warning. The security certificate is not signed.
 
 NOTE: Certain versions of openssl as installed by conda cause issues with cherrypy ssl. 
