@@ -417,6 +417,7 @@ HTML_PAGES = {
     'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
     'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
