@@ -55,29 +55,45 @@ class Qiime2(Tool):
             for old_file in old_files:
                 old_file.unlink()
 
-            # Link the barcodes
-            (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
-            if self.doc.data_type == 'single_end':
+
+            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+            if 'single' in self.doc.data_type:
+                #Link the barcodes
+                (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
+
                 # Create links to the data in the qiime2 import directory
                 (self.get_file('working_dir', True) / 'sequences.fastq.gz').symlink_to(self.get_file('for_reads', True))
 
                 # Run the script
-                cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
                 command = cmd.format('EMPSingleEndSequences',
                                      self.get_file('working_dir'),
                                      self.get_file('working_file'))
-            elif self.doc.data_type == 'paired_end':
+            elif 'paired' in self.doc.data_type:
                 # Create links to the data in the qiime2 import directory
                 (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
                 (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
 
-                # Run the script
-                cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-                command = cmd.format('EMPPairedEndSequences',
-                                     self.get_file('working_dir'),
-                                     self.get_file('working_file'))
-        self.jobtext.append(command)
+                
+                if 'dual' not in self.doc.data_type:
+                    #Link the barcodes
+                    (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
+                    #Run the script
+                    command = cmd.format('EMPPairedEndSequences',
+                                         self.get_file('working_dir'),
+                                         self.get_file('working_file'))
+                else:
+                    #Link the barcodes
+                    (self.get_file('working_dir', True) / 'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
+                    (self.get_file('working_dir', True) / 'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
+
+                    #Run the script
+                    command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
+                                         self.get_file('working_dir'),
+                                         self.get_file('working_file'))
+                    
+        self.jobtext.append(command)
+        
     def demultiplex(self):
         """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
@@ -85,18 +101,35 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-        cmd = [
-            # Either emp-single or emp-paired depending on the data_type
-            'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),
-            '--i-seqs {}'.format(self.get_file('working_file')),
-            '--m-barcodes-file {}'.format(self.get_file('mapping')),
-            '--m-barcodes-column {}'.format('BarcodeSequence'),
-            '--o-error-correction-details {}'.format(self.get_file('error_correction')),
-            '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
-        ]
-        # Reverse compliment the barcodes in the mapping file if using paired reads
-        if 'paired' in self.doc.data_type:
-            cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
+
+        if 'dual' not in self.doc.data_type:
+            cmd = [
+                # Either emp-single or emp-paired depending on the data_type
+                'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),
+                '--i-seqs {}'.format(self.get_file('working_file')),
+                '--m-barcodes-file {}'.format(self.get_file('mapping')),
+                '--m-barcodes-column {}'.format('BarcodeSequence'),
+                '--o-error-correction-details {}'.format(self.get_file('error_correction')),
+                '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
+            ]
+            # Reverse compliment the barcodes in the mapping file if using paired reads
+            if 'paired' in self.doc.data_type:
+                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
+        
+        else:
+            cmd = [
+                'qiime cutadapt demux-paired',
+                '--i-seqs {}'.format(self.get_file('working_file')),
+                '--m-forward-barcodes-file {}'.format(self.get_file('mapping')),
+                '--m-forward-barcodes-column {}'.format('BarcodeSequenceF'),
+                '--m-reverse-barcodes-file {}'.format(self.get_file('mapping')),
+                '--m-reverse-barcodes-column {}'.format('BarcodeSequenceR')),
+                '--o-per-sample-sequences {}'.format(self.get_file('demux_file')),
+                '--o-untrimmed-sequences unmatched_demuxed_03.qza',
+                '--p-error-rate 0.3',
+                '--verbose &> demux)03_log.txt'
+            ]
+
         self.jobtext.append(' '.join(cmd))
 
     def filter_by_metadata(self, column=None, value=None):
