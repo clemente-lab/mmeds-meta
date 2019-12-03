@@ -101,7 +101,6 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-
         if 'dual' not in self.doc.data_type:
             cmd = [
                 # Either emp-single or emp-paired depending on the data_type
@@ -114,8 +113,7 @@ class Qiime2(Tool):
             ]
             # Reverse compliment the barcodes in the mapping file if using paired reads
             if 'paired' in self.doc.data_type:
-                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
-        
+                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:] 
         else:
             cmd = [
                 'qiime cutadapt demux-paired',
