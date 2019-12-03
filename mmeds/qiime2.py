@@ -55,7 +55,6 @@ class Qiime2(Tool):
             for old_file in old_files:
                 old_file.unlink()
 
-
             cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
             if 'single' in self.doc.data_type:
                 #Link the barcodes
@@ -72,7 +71,6 @@ class Qiime2(Tool):
                 # Create links to the data in the qiime2 import directory
                 (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
                 (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
-
                 
                 if 'dual' not in self.doc.data_type:
                     #Link the barcodes
@@ -121,7 +119,7 @@ class Qiime2(Tool):
                 '--m-forward-barcodes-file {}'.format(self.get_file('mapping')),
                 '--m-forward-barcodes-column {}'.format('BarcodeSequenceF'),
                 '--m-reverse-barcodes-file {}'.format(self.get_file('mapping')),
-                '--m-reverse-barcodes-column {}'.format('BarcodeSequenceR')),
+                '--m-reverse-barcodes-column {}'.format('BarcodeSequenceR'),
                 '--o-per-sample-sequences {}'.format(self.get_file('demux_file')),
                 '--o-untrimmed-sequences unmatched_demuxed_03.qza',
                 '--p-error-rate 0.3',
