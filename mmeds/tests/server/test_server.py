@@ -69,7 +69,6 @@ class TestServer(helper.CPWebCase):
         self.upload_metadata()
         self.upload_data()
         self.modify_upload()
-        self.upload_otu()
         self.download_page_fail()
         self.download_block()
         self.download()
@@ -77,7 +76,11 @@ class TestServer(helper.CPWebCase):
         self.lab_download()
         self.user_download()
 
-    def test_e_query(self):
+    def test_e_otu_upload(self):
+        self.login()
+        self.upload_otu()
+
+    def test_f_query(self):
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
@@ -266,6 +269,9 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
+
         headers, body = self.upload_files(['otu_table'], [fig.TEST_OTU], ['text/tab-seperated-values'])
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
@@ -273,7 +279,7 @@ class TestServer(helper.CPWebCase):
         # Search arguments for retrieving emails with access codes
         upload_args = [
             ['FROM', fig.MMEDS_EMAIL],
-            ['TEXT', 'user {} uploaded data'.format(self.server_user)]
+            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU')]
         ]
 
         recieve_email(1, True, upload_args)

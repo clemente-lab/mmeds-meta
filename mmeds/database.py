@@ -724,7 +724,7 @@ class SQLBuilder:
                 sql_log('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
                 sql_log(fsql)
                 sql_log(fargs)
-                raise e
+                raise InvalidSQLError('No key found for SQL: {} with args: {}'.format(fsql, fargs))
 
             # Add it to the original query
             if '=' in sql or 'ISNULL' in sql:
