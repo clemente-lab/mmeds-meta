@@ -6,7 +6,8 @@ from time import sleep
 from mmeds.authentication import add_user, remove_user
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
-from mmeds.database import upload_metadata
+from mmeds.sparcc import SparCC
+from mmeds.database import upload_metadata, upload_otu
 from mmeds.util import load_config
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -21,6 +22,7 @@ class QiimeTests(TestCase):
         self.TEST_CODE = 'qiimeTest'
         self.TEST_CODE_PAIRED = 'qiimeTestPaired'
         self.TEST_CODE_DEMUX = 'qiimeTestDemuxed'
+        self.TEST_CODE_OTU = 'qiimeTestOTU'
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=self.testing)
         test_setups = [
             (fig.TEST_SUBJECT,
@@ -56,6 +58,15 @@ class QiimeTests(TestCase):
         ]
         for test_setup in test_setups:
             assert 0 == upload_metadata(test_setup)
+
+        test_otu = (fig.TEST_SUBJECT,
+                    fig.TEST_SPECIMEN,
+                    fig.TEST_DIR,
+                    fig.TEST_USER,
+                    'Test_SparCC',
+                    fig.TEST_OTU,
+                    self.TEST_CODE_OTU)
+        assert 0 == upload_otu(test_otu)
         # Ensure the uploads completed correctly
         self.config = load_config(None, fig.TEST_METADATA_SHORT)
 
@@ -70,6 +81,9 @@ class QiimeTests(TestCase):
             sleep(2)
         self.assertEqual(qiime.doc.data_type, data_type)
         rmtree(qiime.path)
+
+    def test_sparcc_setup_analysis(self):
+        self.run_qiime(self.TEST_CODE_OTU, 'sparcc', 'otu_table', SparCC)
 
     def test_qiime1_setup_analysis(self):
         for atype in ['qiime1-open', 'qiime1-closed']:
