@@ -8,8 +8,9 @@
       <p>
         <h3>Select type of data for upload</h3>
         <form action='../upload/upload_metadata' method='post' enctype='multipart/form-data' id='upload_form'>
-          <select name='studyType' form='upload_form'>
-            <option value="qiime">Qiime</option>
+          <select name='uploadType' form='upload_form'>
+            <option value="qiime">Raw Reads</option>
+            <option value="sparcc">OTU Table</option>
             <option value="other">Other</option>
           </select>
           <p> Study Name: <br> <input type='text' name='studyName' required/> </p>

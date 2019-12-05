@@ -47,7 +47,10 @@ CONFIG_PARAMETERS = [
     'taxa_levels',
     'abundance_threshold',
     'font_size',
-    'sub_analysis'
+    'sub_analysis',
+    'iterations',
+    'permutations',
+    'stat'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
@@ -109,6 +112,7 @@ TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
+TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
 TEST_CONFIG = str(TEST_PATH / 'test_config_file.txt')
 TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.txt')
 TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
@@ -117,12 +121,10 @@ TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
-TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
 TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
 TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
 TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
-TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
 TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
 TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
@@ -415,6 +417,7 @@ HTML_PAGES = {
     'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
     'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),

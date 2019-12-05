@@ -457,10 +457,11 @@ class Qiime2(Tool):
                 if self.kill_stage == 1:
                     self.jobtext.append('exit 1')
                 self.tabulate()
+        else:
+            del self.jobtext[-1]
 
     def setup_stage_2(self):
         self.set_stage(2)
-        self.jobtext.append('echo "MMEDS_STAGE_2"')
         # Run these commands sequentially
         self.filter_by_metadata()
         self.alignment_mafft()
@@ -473,7 +474,6 @@ class Qiime2(Tool):
 
     def setup_stage_3(self):
         self.set_stage(3)
-        self.jobtext.append('echo "MMEDS_STAGE_3"')
         # Run these commands in parallel
         self.alpha_diversity()
         for col in self.doc.config['metadata']:
@@ -487,7 +487,6 @@ class Qiime2(Tool):
 
     def setup_stage_4(self):
         self.set_stage(4)
-        self.jobtext.append('echo "MMEDS_STAGE_4"')
         self.classify_taxa()
         self.taxa_diversity()
         # Calculate group significance

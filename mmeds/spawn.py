@@ -12,6 +12,7 @@ from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
+from mmeds.sparcc import SparCC
 from mmeds.tool import TestTool
 
 
@@ -43,6 +44,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing, kill_stage=-1
         tool = Qiime1(user, access_code, atype, config, testing, kill_stage=kill_stage)
     elif 'qiime2' in atype:
         tool = Qiime2(user, access_code, atype, config, testing, kill_stage=kill_stage)
+    elif 'sparcc' in atype:
+        tool = SparCC(user, access_code, atype, config, testing, kill_stage=kill_stage)
     elif 'test' in atype:
         debug_log('test analysis')
         time = float(atype.split('-')[-1])
