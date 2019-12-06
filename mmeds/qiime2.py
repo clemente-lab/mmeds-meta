@@ -117,7 +117,7 @@ class Qiime2(Tool):
                 'qiime cutadapt demux-paired',
                 '--i-seqs {}'.format(self.get_file('working_file')),
                 '--m-forward-barcodes-file {}'.format(self.get_file('mapping')),
-                '--m-forward-barcodes-column {}'.format('BarcodeSequenceF'),
+                '--m-forward-barcodes-column {}'.format('BarcodeSequence'),
                 '--m-reverse-barcodes-file {}'.format(self.get_file('mapping')),
                 '--m-reverse-barcodes-column {}'.format('BarcodeSequenceR'),
                 '--o-per-sample-sequences {}'.format(self.get_file('demux_file')),

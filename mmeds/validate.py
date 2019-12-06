@@ -264,15 +264,7 @@ class Validator:
         end_col = None
         self.table_df = self.df[self.cur_table]
         # For the built in table, ensure all columns are present
-        
-       """
-       This is where we would get an error with dual barcodes
-       The config file makes a list of table columns that only has BarcodeSequence and LinkerPrimerSequence, so if have F and R for each, BarcodeSequence and LinkerPrimerSequence are missing
-       Do I put exceptions here:
-           if BarcodeSequenceF and BarcodeSequenceR in missing cols, ignore
-           if LinerPrimerSequenceF and LinkerPrimerSequenceR missing in cols, ignore
-        Or, do I change the config file somehow (seems like a bad idea)
-        """
+         
         if not self.cur_table == 'AdditionalMetaData':
             missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
             if missing_cols:
