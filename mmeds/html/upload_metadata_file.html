@@ -6,9 +6,16 @@
       <p>
       <h3>Upload {metadata_type} metadata file</h3>
         <form action='../analysis/validate_metadata' method='post' enctype='multipart/form-data'>
-            <p> {metadata_type} Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
+          <p> {metadata_type} Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
           <p> Temporary Metadata File: <br> <input type='checkbox' name='temporary' /> </p>
-          <p> <button type='submit' method='post'>Check Metadata</button> </p>
+	  <div class='{metadata_type}'>
+	  <p> Barcodes Type: <br>
+            <select name='barcodes_type' form='upload_form'>
+              <option value='single_barcodes' selected='selected'>Single Barcodes</option>
+              <option value='dual_barcdes'>Dual Barcodes</option>
+            </select>
+	  </div>
+	  <p> <button type='submit' method='post'>Check Metadata</button> </p>
         </form>
       </p>
     </div>
