@@ -58,7 +58,6 @@ class QiimeTests(TestCase):
         ]
         for test_setup in test_setups:
             assert 0 == upload_metadata(test_setup)
-            break
 
         test_otu = (fig.TEST_SUBJECT,
                     fig.TEST_SPECIMEN,
