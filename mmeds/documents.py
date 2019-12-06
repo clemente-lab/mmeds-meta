@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG
-from mmeds.util import copy_metadata, log, camel_case
+from mmeds.util import copy_metadata, log, camel_case, error_log, debug_log
 from mmeds.error import AnalysisError
 from ppretty import ppretty
 
@@ -25,7 +25,6 @@ class MMEDSDoc(men.Document):
     reads_type = men.StringField(max_length=45)
     data_type = men.StringField(max_length=45)
     doc_type = men.StringField(max_length=45)
-    study = men.StringField(max_length=45)
 
     # Stages: created, started, <Name of last method>, finished, errored
     analysis_status = men.StringField(max_length=45)
@@ -93,11 +92,11 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        log(child)
-        log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
+        debug_log(child)
+        debug_log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 
-    def generate_MMEDSDoc(self, name, doc_type, config, access_code):
+    def generate_MMEDSDoc(self, name, doc_type, config, access_code, new_dir):
         """
         Create a new AnalysisDoc from the current StudyDoc
         :name: A string. The name of the new document
@@ -106,16 +105,6 @@ class MMEDSDoc(men.Document):
         :access_code: A string. A unique code for accessing the new document
         """
         files = {}
-        run_id = 0
-
-        # Create a new directory to perform the analysis in
-        new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
-        while new_dir.is_dir():
-            run_id += 1
-            new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
-
-        new_dir = new_dir.resolve()
-        new_dir.mkdir()
 
         if 'qiime' in doc_type:
             # Handle demuxed sequences
@@ -164,7 +153,7 @@ class MMEDSDoc(men.Document):
                        email=self.email,
                        path=str(new_dir),
                        study_code=self.access_code,
-                       study_name=self.study,
+                       study_name=self.study_name,
                        access_code=access_code,
                        reads_type=self.reads_type,
                        data_type=data_type,
@@ -173,10 +162,11 @@ class MMEDSDoc(men.Document):
                        restart_stage=0,
                        config=config,
                        files=string_files)
+
+        error_log(ppretty(doc))
         doc.save()
         with open(DOCUMENT_LOG, 'a') as f:
-            f.write('-\t'.join([doc.study_name, doc.owner, doc.doc_type,
-                                doc.analysis_status, str(datetime.now()), doc.path,
-                                doc.access_code]) + '\n')
+            f.write('-\t'.join([str(x) for x in [doc.study_name, doc.owner, doc.doc_type, doc.analysis_status,
+                                                 datetime.now(), doc.path, doc.access_code]]) + '\n')
             log('saved analysis doc')
-            return doc
+        return doc

@@ -58,6 +58,7 @@ class QiimeTests(TestCase):
         ]
         for test_setup in test_setups:
             assert 0 == upload_metadata(test_setup)
+            break
 
         test_otu = (fig.TEST_SUBJECT,
                     fig.TEST_SPECIMEN,
@@ -106,5 +107,15 @@ class QiimeTests(TestCase):
         q2.create_children()
         for child in q2.children:
             self.assertEqual(child.doc.data_type, 'single_end')
+
+        rmtree(q2.path)
+
+    def test_sparcc_sub_analysis(self):
+        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2-dada2', config, True, analysis=False)
+        q2.setup_analysis()
+
+        print(q2.doc.files.keys())
+        q2.create_child(SparCC, ('Study', 'StudyName'), 'Good_Study')
 
         rmtree(q2.path)

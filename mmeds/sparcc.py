@@ -7,15 +7,13 @@ class SparCC(Tool):
     """ A class for SparCC analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, atype, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=0):
+                 analysis=True, restart_stage=0, kill_stage=0, child=False):
         super().__init__(owner, access_code, atype, config, testing,
-                         analysis=analysis, restart_stage=restart_stage)
+                         analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-        parts = self.doc.doc_type.split('-')
-        self.stat = parts[-1]
 
     def sparcc(self, data_permutation=None):
         """ Quantify the correlation between all OTUs """

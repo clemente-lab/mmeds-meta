@@ -43,7 +43,7 @@ class Tool(mp.Process):
         super().__init__()
         debug_log('initilize {}'.format(self.name))
         self.debug = True
-        self.study_code = access_code
+        self.access_code = access_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
         self.owner = owner
@@ -54,32 +54,47 @@ class Tool(mp.Process):
         self.stage_files = defaultdict(list)
         self.created = datetime.now()
 
-        # If restarting get the associated MMEDSDoc from the database
-        if restart_stage:
-            debug_log('Restarting {}'.format(self.name))
-            with Database(owner=self.owner, testing=self.testing) as db:
-                self.doc = db.get_analysis(self.study_code)
-        # Otherwise create a new MMEDSDoc from the associated MMEDSDoc
-        else:
-            debug_log('Creating new doc {}'.format(self.name))
-            with Database(owner=self.owner, testing=self.testing) as db:
-                metadata = db.get_metadata(self.study_code)
-                access_code = db.create_access_code(self.name)
-                self.doc = metadata.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code)
-        debug_log('Doc creation date: {}'.format(self.doc.created))
-        self.path = Path(self.doc.path)
+        with Database(owner=self.owner, testing=self.testing) as db:
+            study_doc = db.get_study(self.access_code)
+
+        # Create a new directory to perform the analysis in
+        run_id = 0
+        new_dir = Path(study_doc.path) / '{}_{}'.format(self.name, run_id)
+        while new_dir.is_dir():
+            run_id += 1
+            new_dir = Path(study_doc.path) / '{}_{}'.format(self.name, run_id)
+
+        new_dir = new_dir.resolve()
+        new_dir.mkdir()
+        self.path = new_dir
 
         if testing:
             self.num_jobs = 2
         else:
             self.num_jobs = min([threads, mp.cpu_count()])
 
-        self.run_dir = Path('$RUN_{}'.format(self.doc.name))
-        self.add_path(self.path, key='path')
-        self.write_config()
-        self.create_qiime_mapping_file()
+        # If restarting get the associated MMEDSDoc from the database
+        if restart_stage:
+            debug_log('Restarting {}'.format(self.name))
+        # Otherwise create a new MMEDSDoc from the associated MMEDSDoc
+        elif child is False:
+            debug_log('Creating new doc {}'.format(self.name))
+            with Database(owner=self.owner, testing=self.testing) as db:
+                metadata = db.get_metadata(self.access_code)
+                access_code = db.create_access_code(self.name)
+                self.doc = metadata.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code, new_dir)
+
+        # If this tool is a child analysis this setup will be handled by the parent
+        if child is False:
+            debug_log('Doc creation date: {}'.format(self.doc.created))
+            self.path = Path(self.doc.path)
+            self.add_path(self.path, key='path')
+            self.write_config()
+            self.create_qiime_mapping_file()
+            self.doc.sub_analysis = False
+        self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
+
         self.children = []
-        self.doc.sub_analysis = False
         debug_log('finished initialization: {}'.format(self.name))
 
     def __str__(self):
@@ -265,7 +280,7 @@ class Tool(mp.Process):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def create_child(self, category, value):
+    def create_child(self, atype, category, value):
         """
         Create a child analysis process using only samples that have a particular value
         in a particular metadata column. Handles creating the analysis directory and such
@@ -275,7 +290,11 @@ class Tool(mp.Process):
         """
         debug_log('CREATE CHILD {}:{}'.format(category, value))
 
-        child = classcopy(self)
+        debug_log('creating child of {}'.format(atype))
+        child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.config,
+                      self.testing, self.analysis, self.restart_stage, child=True)
+        debug_log('finished child creation')
+        debug_log(child)
         file_value = camel_case(value)
 
         # Update process name and children
@@ -286,6 +305,8 @@ class Tool(mp.Process):
             access_code = db.create_access_code(child.name)
         debug_log('CHILD ACCESS CODE {}'.format(access_code))
 
+        debug_log('MY DOC')
+        debug_log(self.doc)
         child.doc = self.doc.create_sub_analysis(category, value, access_code)
         child.path = Path(child.doc.path)
 
@@ -319,8 +340,12 @@ class Tool(mp.Process):
         debug_log('write to {}'.format(child.get_file('metadata', True)))
 
         # Update child's vars
-        child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
-        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.doc.name, category[1], file_value))
+        if category is None:
+            child.add_path('{}/{}/'.format(self.doc.name, child.doc.name), '')
+            child.run_dir = Path('$RUN_{}_{}'.format(self.doc.name, child.doc.name))
+        else:
+            child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
+            child.run_dir = Path('$RUN_{}_{}_{}'.format(child.doc.name, category[1], file_value))
 
         # Update the text for the job file
         child.jobtext = deepcopy(self.jobtext)[:6]

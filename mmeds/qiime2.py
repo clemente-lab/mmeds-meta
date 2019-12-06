@@ -15,9 +15,9 @@ class Qiime2(Tool):
     classifier = STORAGE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
     def __init__(self, owner, access_code, atype, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=-1):
+                 analysis=True, restart_stage=0, kill_stage=-1, child=False):
         super().__init__(owner, access_code, atype, config, testing,
-                         analysis=analysis, restart_stage=restart_stage)
+                         analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))

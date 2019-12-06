@@ -397,7 +397,7 @@ class Database:
         # Get a new code
         new_code = get_salt(50)
         # Get the mongo document
-        mdata = MMEDSDoc.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata = MMEDSDoc.objects(study_name=study_name, owner=self.owner, email=email).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.access_code = new_code
         mdata.save()
@@ -591,12 +591,9 @@ class Database:
                 MMEDSDoc.objects(access_code=access_code))
 
     @classmethod
-    def get_docs(cls, doc_type, access_code):
+    def get_docs(cls, access_code):
         """ For server use """
-        if doc_type == 'analysis':
-            docs = MMEDSDoc.objects(access_code=access_code)
-        elif doc_type == 'study':
-            docs = MMEDSDoc.objects(access_code=access_code)
+        docs = MMEDSDoc.objects(access_code=access_code)
         return docs
 
 
@@ -1142,7 +1139,7 @@ class MetaDataUploader(Process):
                          testing=self.testing,
                          doc_type='study-' + self.study_type,
                          reads_type=self.reads_type,
-                         study=self.study_name,
+                         study_name=self.study_name,
                          access_code=self.access_code,
                          owner=self.owner,
                          email=self.email,

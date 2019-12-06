@@ -96,7 +96,7 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
 def spawn_sub_analysis(user, code, category, value, testing):
     """ Spawn a new sub analysis from a previous analysis. """
     tool = restart_analysis(user, code, 1, testing)
-    child = tool.create_child(category, value)
+    child = tool.create_child(tool.__init__, category, value)
     return child
 
 
