@@ -422,7 +422,9 @@ class Validator:
         else:
             if self.metadata_type == 'subject':
                 tables = fig.SUBJECT_TABLES
-                subjects = self.df['Subjects']
+                if 'Subjects' in self.df.keys():
+                    #Only define subjects if subject table is correctly uploaded
+                    subjects = self.df['Subjects']
             elif self.metadata_type == 'specimen':
                 tables = fig.SPECIMEN_TABLES
             log('In validate_mapping_file')
