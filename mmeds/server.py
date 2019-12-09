@@ -217,7 +217,8 @@ class MMEDSdownload(MMEDSbase):
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_studies()
             for study in studies:
-                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code, study.study))
+                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code,
+                                                                                     study.study_name))
         else:
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_error(page, 24, 'You do not have permissions to access uploaded studies.')
@@ -231,8 +232,8 @@ class MMEDSdownload(MMEDSbase):
             analyses = db.get_all_analyses_from_study(study_code)
 
         page = self.format_html('download_selected_study',
-                                title='Study: {}'.format(study.study),
-                                study=study.study,
+                                title='Study: {}'.format(study.study_name),
+                                study=study.study_name,
                                 date_created=study.created,
                                 last_accessed=study.last_accessed,
                                 doc_type=study.doc_type,

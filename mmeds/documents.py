@@ -10,11 +10,11 @@ from ppretty import ppretty
 
 class MMEDSDoc(men.Document):
     """ Class for MongoDB documents used in MMEDS """
-    created = men.DateTimeField(require=True)
+    created = men.DateTimeField(require=True)               # Datetime stamp of document creation
     last_accessed = men.DateTimeField(required=True)
     public = men.BooleanField()
     testing = men.BooleanField(required=True)
-    sub_analysis = men.BooleanField()
+    sub_analysis = men.BooleanField()                       # If this document corresponds to a sub analysis
     name = men.StringField(max_length=100)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
@@ -57,7 +57,49 @@ class MMEDSDoc(men.Document):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def create_sub_analysis(self, category, value, analysis_code):
+    def generate_analysis_doc(self, atype, access_code):
+        """
+        Creates a new AnalysisDoc for a child analysis
+        ==============================================
+        :atype: A string. The type of analysis this doc corresponds to
+        :access_code: A string. The code for accessing this analysis
+        """
+        debug_log('create analysis atype: {}, code: {}'.format(atype, access_code))
+
+        child_path = Path(self.path) / camel_case(atype)
+        child_path.mkdir()
+
+        child_files = deepcopy(self.files)
+        child_files['metadata'] = str(child_path / 'metadata.tsv')
+
+        child_config = deepcopy(self.config)
+        child_config['sub_analysis'] = 'None'
+
+        child = MMEDSDoc(created=datetime.now(),
+                         last_accessed=datetime.now(),
+                         sub_analysis=True,
+                         testing=self.testing,
+                         name=child_path.name,
+                         owner=self.owner,
+                         email=self.email,
+                         path=str(child_path),
+                         study_code=self.study_code,
+                         study_name=self.study_name,
+                         access_code=access_code,
+                         reads_type=self.reads_type,
+                         data_type=self.data_type,
+                         doc_type=self.doc_type,
+                         analysis_status='Pending',
+                         restart_stage='0',
+                         files=child_files,
+                         config=child_config)
+
+        # Update the child's attributes
+        child.save()
+        debug_log(child)
+        return child
+
+    def generate_sub_analysis_doc(self, category, value, analysis_code):
         """ Creates a new AnalysisDoc for a child analysis """
         log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
 

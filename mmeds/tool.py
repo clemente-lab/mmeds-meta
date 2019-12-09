@@ -106,7 +106,7 @@ class Tool(mp.Process):
             'created': self.created,
             'owner': self.owner,
             'stage': self.restart_stage,
-            'study_code': self.study_code,
+            'study_code': self.doc.study_code,
             'analysis_code': self.doc.access_code,
             'type': self.analysis,
             'pid': self.pid,
@@ -280,7 +280,7 @@ class Tool(mp.Process):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def create_child(self, atype, category, value):
+    def create_sub_analysis(self, category, value):
         """
         Create a child analysis process using only samples that have a particular value
         in a particular metadata column. Handles creating the analysis directory and such
@@ -290,11 +290,7 @@ class Tool(mp.Process):
         """
         debug_log('CREATE CHILD {}:{}'.format(category, value))
 
-        debug_log('creating child of {}'.format(atype))
-        child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.config,
-                      self.testing, self.analysis, self.restart_stage, child=True)
-        debug_log('finished child creation')
-        debug_log(child)
+        child = classcopy(self)
         file_value = camel_case(value)
 
         # Update process name and children
@@ -305,9 +301,7 @@ class Tool(mp.Process):
             access_code = db.create_access_code(child.name)
         debug_log('CHILD ACCESS CODE {}'.format(access_code))
 
-        debug_log('MY DOC')
-        debug_log(self.doc)
-        child.doc = self.doc.create_sub_analysis(category, value, access_code)
+        child.doc = self.doc.generate_sub_analysis_doc(category, value, access_code)
         child.path = Path(child.doc.path)
 
         # Link to the parent's OTU table(s)
@@ -340,12 +334,67 @@ class Tool(mp.Process):
         debug_log('write to {}'.format(child.get_file('metadata', True)))
 
         # Update child's vars
-        if category is None:
-            child.add_path('{}/{}/'.format(self.doc.name, child.doc.name), '')
-            child.run_dir = Path('$RUN_{}_{}'.format(self.doc.name, child.doc.name))
-        else:
-            child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
-            child.run_dir = Path('$RUN_{}_{}_{}'.format(child.doc.name, category[1], file_value))
+        child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
+        child.run_dir = Path('$RUN_{}_{}_{}'.format(child.doc.name, category[1], file_value))
+
+        # Update the text for the job file
+        child.jobtext = deepcopy(self.jobtext)[:6]
+        child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
+
+        # Create a new mapping file
+        child.create_qiime_mapping_file()
+
+        # Filter the config for the metadata category selected for this sub-analysis
+        child.config = deepcopy(child.doc.config)
+        child.is_child = True
+        child.write_config()
+
+        # Set the parent pid
+        child._parent_pid = self.pid
+        return child
+
+    def create_analysis(self, atype):
+        """
+        Create a child analysis process using only samples that have a particular value
+        in a particular metadata column. Handles creating the analysis directory and such
+        ===============================
+        :category: The column of the metadata to filter by
+        :value: The value that :column: must match for a sample to be included
+        """
+        debug_log('creating child of {}'.format(atype))
+        child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.config,
+                      self.testing, self.analysis, self.restart_stage, child=True)
+        debug_log('finished child creation')
+        debug_log(child)
+
+        # Update process name and children
+        child.name = child.name + '-{}'.format(atype.__name__)
+        child.children = []
+
+        with Database(owner=self.owner, testing=self.testing) as db:
+            access_code = db.create_access_code(child.name)
+        debug_log('CHILD ACCESS CODE {}'.format(access_code))
+        child.doc = self.doc.generate_analysis_doc(atype.__name__, access_code)  # TODO
+        child.path = Path(child.doc.path)
+
+        # Link to the parent's OTU table(s)
+        for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
+            if self.doc.files.get(parent_file) is not None:
+                child_file = child.path / self.get_file(parent_file).name
+                child_file.symlink_to(self.get_file(parent_file, True))
+                child.add_path(child_file, key=parent_file)
+
+        child.add_path(self.get_file('otu_table', True), key='parent_table', full_path=True)
+
+        debug_log('load metadata  {}'.format(self.get_file('metadata', True)))
+        # Filter the metadata and write the new file to the childs directory
+        mdf = load_metadata(self.get_file('metadata', True))
+        write_metadata(mdf, child.get_file('metadata', True))
+        debug_log('write to {}'.format(child.get_file('metadata', True)))
+
+        # Update child's vars
+        child.add_path('{}/{}/'.format(self.doc.name, child.doc.name), '')
+        child.run_dir = Path('$RUN_{}_{}'.format(self.doc.name, child.doc.name))
 
         # Update the text for the job file
         child.jobtext = deepcopy(self.jobtext)[:6]
@@ -460,7 +509,7 @@ class Tool(mp.Process):
                 t_col = ('AdditionalMetaData', col)
             # For each value in the column, create a sub-analysis
             for val, df in mdf.groupby(t_col):
-                child = self.create_child(t_col, val)
+                child = self.create_sub_analysis(t_col, val)
                 self.children.append(child)
         debug_log('finished creating children')
 

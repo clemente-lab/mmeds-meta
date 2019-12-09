@@ -25,7 +25,7 @@ class SparCC(Tool):
             data_file = data_permutation
         cmd = 'SparCC.py {data} -i {iterations} --cor_file={output}'
 
-        if self.stat is not None:
+        if self.doc.config.get('stat') is not None:
             cmd += ' -a {stat}'
 
         # If running on permutations have commands execute in parallel
@@ -36,7 +36,7 @@ class SparCC(Tool):
         self.jobtext.append(cmd.format(data=data_file,
                                        iterations=self.doc.config['iterations'],
                                        output=self.get_file('correlation'),
-                                       stat=self.stat))
+                                       stat=self.doc.config.get('stat')))
 
     def make_bootstraps(self):
         """ Create the shuffled datasets """

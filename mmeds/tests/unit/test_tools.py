@@ -115,6 +115,6 @@ class QiimeTests(TestCase):
         q2.setup_analysis()
 
         print(q2.doc.files.keys())
-        q2.create_child(SparCC, ('Study', 'StudyName'), 'Good_Study')
+        q2.create_analysis(SparCC)
 
         rmtree(q2.path)

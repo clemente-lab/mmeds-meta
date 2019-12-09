@@ -48,6 +48,7 @@ CONFIG_PARAMETERS = [
     'abundance_threshold',
     'font_size',
     'sub_analysis',
+    'additional_analysis',
     'iterations',
     'permutations',
     'stat'
