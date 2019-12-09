@@ -398,7 +398,10 @@ class MMEDSupload(MMEDSbase):
         log('In upload_data')
         cp.log('In upload_data')
         # If there are no errors or warnings proceed to upload the data files
-        page = self.format_html('upload_data_files', title='Upload Data')
+        if cp.session['dual_barcodes']:
+            page = self.format_html('upload_data_files_dual', title='Upload Data')
+        else:
+            page = self.format_html('upload_data_files', title='Upload Data')
         return page
 
     @cp.expose
@@ -581,7 +584,7 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData, temporary=False):
+    def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
         """ The page returned after a file is uploaded. """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
@@ -595,6 +598,11 @@ class MMEDSanalysis(MMEDSbase):
                 errors, warnings = self.run_validate(myMetaData)
 
             metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
+            if barcodes_type == 'dual':
+                cp.session['dual_barcodes'] = True
+            else:
+                cp.session['dual_barcodes'] = False
+            
             # If there are errors report them and return the error page
             if errors:
                 page = self.handle_metadata_errors(metadata_copy, errors, warnings)
@@ -610,7 +618,12 @@ class MMEDSanalysis(MMEDSbase):
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
-                    page = self.format_html('upload_data_files', title='Upload Data')
+                    #If it's the sspecimen metadata file, save the type of barcodes
+                    #And return the page for uploading data files
+                    if cp.session['dual_barcodess']:
+                        page = self.format_html('upload_data_files_dual', title='Upload Data')
+                    else:
+                        page = self.format_html('upload_data_files', title='Upload Data')
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
                                     title='Upload Metadata',
