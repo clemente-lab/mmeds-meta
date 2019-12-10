@@ -650,7 +650,7 @@ class MMEDSanalysis(MMEDSbase):
         if not cp.session['dual_barcodes']:
             barcodes = kwargs['barcodes']
             reads_type = kwargs['reads_type']
-            barcodes_type = 'single_barcodes'
+            barcodes_type = 'solo_barcodes'
             datafiles = self.load_data_files(for_reads=for_reads, 
                                              rev_reads=rev_reads, 
                                              barcodes=barcodes)
