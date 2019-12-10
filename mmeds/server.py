@@ -620,7 +620,7 @@ class MMEDSanalysis(MMEDSbase):
                 elif cp.session['metadata_type'] == 'specimen':
                     #If it's the sspecimen metadata file, save the type of barcodes
                     #And return the page for uploading data files
-                    if cp.session['dual_barcodess']:
+                    if cp.session['dual_barcodes']:
                         page = self.format_html('upload_data_files_dual', title='Upload Data')
                     else:
                         page = self.format_html('upload_data_files', title='Upload Data')
@@ -632,9 +632,10 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def process_data(self, for_reads, rev_reads, barcodes, reads_type, public=False):
+    def process_data(self, public=False, **kwargs):
 
         cp.log('Public is {}'.format(public))
+        
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
@@ -642,13 +643,27 @@ class MMEDSanalysis(MMEDSbase):
         # Get the username
         username = self.get_user()
 
+        # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
-        datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
+        for_reads = kwargs['for_reads']
+        rev_reads = kwargs['rev_reads']
+        if not cp.session['dual_barcodes']:
+            barcodes = kwargs['barcodes']
+            reads_type = kwargs['reads_type']
+            barcodes_type = 'single_barcodes'
+            datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, barcodes=barcodes)
+        else:
+            for_barcodes = kwargs['for_barcodes']
+            rev_barcodes = kwargs['rev_barcodes']
+            #If have dual barcodes, don't have a reads_type in kwargs so must set it 
+            reads_type = 'paired_end'
+            barcodes_type = 'dual_barcodes'
+            datafiles = self.load_data_files(for_reads=for_reads, rev_reads=rev_reads, for_barcodes=for_barcodes, rev_barcodes=rev_barcodes)
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, specimen_metadata,
-                    username, reads_type, datafiles, cp.session['metadata_temporary'], public))
+                    username, reads_type, barcodes_type, datafiles, cp.session['metadata_temporary'], public))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')
