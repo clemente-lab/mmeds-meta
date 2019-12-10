@@ -27,12 +27,12 @@ DAYS = 13
 # Used in test_cases
 def upload_metadata(args):
     (subject_metadata, specimen_metadata, path, owner, study_name,
-     reads_type, for_reads, rev_reads, barcodes, access_code) = args
+     reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
     datafiles = {'for_reads': for_reads,
                  'rev_reads': rev_reads,
                  'barcodes': barcodes}
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
-                         study_name, False, datafiles,
+                         barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
     p.start()
     p.join()
@@ -759,7 +759,8 @@ class SQLBuilder:
 
 class MetaDataUploader(Process):
     def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
-                 reads_type, study_name, temporary, data_files, public, testing, access_code=None):
+                 reads_type, barcodes_type, study_name, temporary, data_files, 
+                 public, testing, access_code=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -779,6 +780,7 @@ class MetaDataUploader(Process):
             'owner': owner,
             'study_type': study_type,
             'reads_type': reads_type,
+            'barcodes_type': barcodes_type,
             'study_name': study_name,
             'temporary': temporary,
             'data_files': data_files,
@@ -791,6 +793,7 @@ class MetaDataUploader(Process):
         self.testing = testing
         self.study_type = study_type
         self.reads_type = reads_type
+        self.barcodes_type = barcodes_type
         self.subject_metadata = Path(subject_metadata)
         self.specimen_metadata = Path(specimen_metadata)
         self.study_name = study_name
@@ -1132,6 +1135,7 @@ class MetaDataUploader(Process):
                          testing=self.testing,
                          doc_type='study-' + self.study_type,
                          reads_type=self.reads_type,
+                         barcodes_type=self.barcodes_type,
                          study=self.study_name,
                          access_code=self.access_code,
                          owner=self.owner,
