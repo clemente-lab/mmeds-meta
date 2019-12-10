@@ -24,6 +24,7 @@ class ToolTests(TestCase):
                       fig.TEST_USER,
                       'Test_Tool',
                       'single_end',
+                      'solo_barcodes',
                       fig.TEST_READS,
                       None,
                       fig.TEST_BARCODES,

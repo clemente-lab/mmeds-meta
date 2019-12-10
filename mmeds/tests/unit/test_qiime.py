@@ -29,6 +29,7 @@ class QiimeTests(TestCase):
              fig.TEST_USER,
              'Test_Qiime_0',
              'single_end',
+             'solo_barcodes',
              fig.TEST_READS,
              None,
              fig.TEST_BARCODES,
