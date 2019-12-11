@@ -22,6 +22,7 @@ class MMEDSDoc(men.Document):
     study_name = men.StringField(max_length=100)
     access_code = men.StringField(max_length=50)
     reads_type = men.StringField(max_length=45)
+    barcodes_type = men.StringField(max_length=45)
     data_type = men.StringField(max_length=45)
     doc_type = men.StringField(max_length=45)
     study = men.StringField(max_length=45)
@@ -83,6 +84,7 @@ class MMEDSDoc(men.Document):
                          study_name=self.study_name,
                          access_code=analysis_code,
                          reads_type=self.reads_type,
+                         barcodes_type=self.barcodes_type,
                          data_type=self.data_type,
                          doc_type=self.doc_type,
                          analysis_status='Pending',
@@ -157,6 +159,7 @@ class MMEDSDoc(men.Document):
                        study_name=self.study,
                        access_code=access_code,
                        reads_type=self.reads_type,
+                       barcodes_type=self.barcodes_type,
                        data_type=data_type,
                        doc_type=doc_type,
                        analysis_status='created',
