@@ -72,7 +72,7 @@ class Qiime2(Tool):
                 (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
                 (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
                 
-                if 'dual' not in self.doc.data_type:
+                if 'solo' in self.doc.barcodess_type:
                     #Link the barcodes
                     (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
@@ -99,7 +99,7 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-        if 'dual' not in self.doc.data_type:
+        if 'solo' in self.doc.barcodes_type:
             cmd = [
                 # Either emp-single or emp-paired depending on the data_type
                 'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),
