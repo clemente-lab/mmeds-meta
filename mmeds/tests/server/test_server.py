@@ -76,7 +76,11 @@ class TestServer(helper.CPWebCase):
         self.lab_download()
         self.user_download()
 
-    def test_e_query(self):
+    def test_e_otu_upload(self):
+        self.login()
+        self.upload_otu()
+
+    def test_f_query(self):
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
@@ -245,11 +249,46 @@ class TestServer(helper.CPWebCase):
              ('Connection', 'keep-alive')]
         return h, b
 
+    def upload_otu(self):
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        # Check an invalid metadata filetype
+        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_OTU', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ALT], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['otu_table'], [fig.TEST_OTU], ['text/tab-seperated-values'])
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        # Search arguments for retrieving emails with access codes
+        upload_args = [
+            ['FROM', fig.MMEDS_EMAIL],
+            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU')]
+        ]
+
+        recieve_email(1, True, upload_args)
+
     def upload_metadata(self):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?studyType=qiime&studyName=Test_Server', self.cookies)
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_Server', self.cookies)
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])

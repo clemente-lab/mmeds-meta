@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div class='inner'>
+      <h2>Welcome {user}</h2>
+      <p>
+        <h3>Upload data files</h3>
+        <form action='../analysis/process_data' method='post' enctype='multipart/form-data' id='upload_form'>
+          <p> OTU Table <br> <input type='file' name='otu_table'/> </p>
+          <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
+          <p> <button type='submit' method='post'>Submit Upload</button> </p>
+        </form>
+      </p>
+    </div>
+  </body>
+</html>

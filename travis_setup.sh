@@ -5,6 +5,11 @@ echo "Running setup from ${REPO_DIR}"
 
 full_install=false
 
+# For RedHat
+if $full_install; then
+    sudo dnf install texlive texlive-adjustbox texlive-ulem texlive-upquote texlive-xcolor texlive-braket texlive-revtex;
+fi
+
 # Install libtidy because package is super old
 git clone https://github.com/htacg/tidy-html5;
 cd tidy-html5/build/cmake;
@@ -37,14 +42,16 @@ fi
 if false; then
     if [ ! -d ~/.modules/qiime1 ]; then
         echo "Create qiime1 environment";
+        conda config --set restore_free_channel true
         conda create python=2.7 qiime matplotlib=1.4.3 mock nose -c bioconda --yes --quiet --copy -p ~/.modules/qiime1 &>/dev/null;
+        conda config --set restore_free_channel false
     fi
 
     if [ ! -d ~/.modules/qiime2 ]; then
         echo "Create qiime2 environment"
         # Old Qiime2 version
         # wget https://data.qiime2.org/distro/core/qiime2-2019.1-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
-        wget https://data.qiime2.org/distro/core/qiime2-2019.4-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
+        wget https://data.qiime2.org/distro/core/qiime2-2019.7-py36-linux-conda.yml -O ~/qiime2.yml --quiet;
         conda env create --file ~/qiime2.yml --quiet -p ~/.modules/qiime2;
     fi
 fi
@@ -80,7 +87,7 @@ if [ ! -d ~/.modules/modulefiles/qiime2 ]; then
     mkdir ~/.modules/modulefiles/qiime2
 fi
 ln -sf $REPO_DIR/modules/mmeds-stable ~/.modules/modulefiles/mmeds-stable
-ln -sf $REPO_DIR/modules/qiime2 ~/.modules/modulefiles/qiime2/2019.1
+ln -sf $REPO_DIR/modules/qiime2 ~/.modules/modulefiles/qiime2/2019.7
 ln -sf $REPO_DIR/modules/qiime1 ~/.modules/modulefiles/qiime/1.9.1
 
 cd $REPO_DIR;

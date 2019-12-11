@@ -114,7 +114,7 @@ def summarize_qiime2(path, files, config, study_name):
     log('Start Qiime2 summary')
 
     # Get the environment
-    new_env = setup_environment('qiime2/2019.1')
+    new_env = setup_environment('qiime2/2019.7')
 
     # Setup the summary directory
     summary_files = defaultdict(list)

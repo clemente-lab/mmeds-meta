@@ -328,7 +328,6 @@ def load_ICD_codes():
 
 def convert_ICD_9_to_10():
     df = pd.read_csv(fig.STORAGE_DIR / 'icd9toicd10cmgem.csv', sep='\t')
-    print(df.columns)
 
 
 def parse_ICD_codes(df):
@@ -865,7 +864,6 @@ def recieve_email(num_messages=1, wait=False, search=('FROM', fig.MMEDS_EMAIL), 
                 sleep(5)
                 if waittime > max_wait:
                     break
-        print('all_mail: {}'.format(all_mail))
         if not all_mail:
             raise EmailError('No email found matching criteria {}'.format(search))
 

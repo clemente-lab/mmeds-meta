@@ -39,6 +39,16 @@ def upload_metadata(args):
     return p.exitcode
 
 
+def upload_otu(args):
+    (subject_metadata, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
+    datafiles = {'otu_table': otu_table}
+    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', None,
+                         study_name, False, datafiles, False, True, access_code)
+    p.start()
+    p.join()
+    return p.exitcode
+
+
 class Database:
     def __init__(self, path='.', user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
@@ -720,11 +730,11 @@ class SQLBuilder:
             try:
                 # Get the resulting foreign key
                 fresult = self.cursor.fetchone()[0]
-            except TypeError as e:
+            except TypeError:
                 sql_log('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
                 sql_log(fsql)
                 sql_log(fargs)
-                raise e
+                raise InvalidSQLError('No key found for SQL: {} with args: {}'.format(fsql, fargs))
 
             # Add it to the original query
             if '=' in sql or 'ISNULL' in sql:

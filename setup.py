@@ -46,6 +46,7 @@ setup(name='mmeds',
           'psutil',
           'xlrd',
           'multiprocessing_logging',
-          'pyyaml'
+          'pyyaml',
+          'pandoc'
       ],
       zip_safe=False)
