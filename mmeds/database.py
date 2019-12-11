@@ -43,7 +43,7 @@ def upload_otu(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
     datafiles = {'otu_table': otu_table}
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', None,
-                         study_name, False, datafiles, False, True, access_code)
+                         None, study_name, False, datafiles, False, True, access_code)
     p.start()
     p.join()
     return p.exitcode
