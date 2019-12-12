@@ -671,9 +671,26 @@ class MMEDSanalysis(MMEDSbase):
                                              for_barcodes=for_barcodes, 
                                              rev_barcodes=rev_barcodes)
         if cp.session['upload_type'] == 'qiime':
-            datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                             rev_reads=kwargs['rev_reads'],
-                                             barcodes=kwargs['barcodes'])
+            for_reads = kwargs['for_reads']
+            rev_reads = kwargs['rev_reads']
+            if not cp.session['dual_barcodes']:
+                barcodes = kwargs['barcodes']
+                reads_type = kwargs['reads_type']
+                barcodes_type = 'solo_barcodes'
+                datafiles = self.load_data_files(for_reads=for_reads,
+                                                 rev_reads=rev_reads,
+                                                 barcodes=barcodes)
+            else:
+                for_barcodes = kwargs['for_barcodes']
+                rev_barcodes = kwargs['rev_barcodes']
+                #If have dual barcodes, don't have a reads_type in kwargs so must set it 
+                reads_type = 'paired_end'
+                barcodes_type = 'dual_barcodes'
+                datafiles = self.load_data_files(for_reads=for_reads,
+                                                 rev_reads=rev_reads,
+                                                 for_barcodes=for_barcodes,
+                                                 rev_barcodes=rev_barcodes)
+
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
 
