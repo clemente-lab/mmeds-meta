@@ -72,7 +72,7 @@ class Qiime2(Tool):
                 (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
                 (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
                 
-                if 'solo' in self.doc.barcodess_type:
+                if 'solo' in self.doc.barcodes_type:
                     #Link the barcodes
                     (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
@@ -123,7 +123,7 @@ class Qiime2(Tool):
                 '--o-per-sample-sequences {}'.format(self.get_file('demux_file')),
                 '--o-untrimmed-sequences unmatched_demuxed_03.qza',
                 '--p-error-rate 0.3',
-                '--verbose &> demux)03_log.txt'
+                '--verbose &> demux_03_log.txt'
             ]
 
         self.jobtext.append(' '.join(cmd))

@@ -146,7 +146,7 @@ class MMEDSDoc(men.Document):
                 elif 'dual' in self.barcodes_type:
                     #Create links to the files
                     (new_dir / 'for_barcodes.fastq.gz').symlink_to(self.files['for_barcodes'])
-                    (new_dir / 'for_reads.fastq.gz').symlink_to(self.file['for_reads'])
+                    (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
                     (new_dir / 'rev_barcodes.fastq.gz').symlink_to(self.files['rev_barcodes'])
                     (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
 
