@@ -651,25 +651,6 @@ class MMEDSanalysis(MMEDSbase):
 
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
-        for_reads = kwargs['for_reads']
-        rev_reads = kwargs['rev_reads']
-        if not cp.session['dual_barcodes']:
-            barcodes = kwargs['barcodes']
-            reads_type = kwargs['reads_type']
-            barcodes_type = 'solo_barcodes'
-            datafiles = self.load_data_files(for_reads=for_reads, 
-                                             rev_reads=rev_reads, 
-                                             barcodes=barcodes)
-        else:
-            for_barcodes = kwargs['for_barcodes']
-            rev_barcodes = kwargs['rev_barcodes']
-            #If have dual barcodes, don't have a reads_type in kwargs so must set it 
-            reads_type = 'paired_end'
-            barcodes_type = 'dual_barcodes'
-            datafiles = self.load_data_files(for_reads=for_reads, 
-                                             rev_reads=rev_reads, 
-                                             for_barcodes=for_barcodes, 
-                                             rev_barcodes=rev_barcodes)
         if cp.session['upload_type'] == 'qiime':
             for_reads = kwargs['for_reads']
             rev_reads = kwargs['rev_reads']
@@ -695,7 +676,7 @@ class MMEDSanalysis(MMEDSbase):
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
 
         # Will be None if uploading an OTU table
-        reads_type = kwargs.get('reads_type')
+        #reads_type = kwargs.get('reads_type')
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
