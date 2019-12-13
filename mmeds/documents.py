@@ -127,21 +127,35 @@ class MMEDSDoc(men.Document):
                 data_type = self.reads_type + '_demuxed'
             # Handle all sequences in one file
             else:
-                # Create links to the files
-                (new_dir / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-                (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
-
-                # Add the links to the files dict for this analysis
-                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-                files['for_reads'] = new_dir / 'for_reads.fastq.gz'
-
-                # Handle paired end sequences
-                if self.reads_type == 'paired_end':
+                if 'solo' in self.barcodes_type:
                     # Create links to the files
+                    (new_dir / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
+                    (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
+                    
+                    # Add the links to the files dict for this analysis
+                    files['barcodes'] = new_dir / 'barcodes.fastq.gz'
+                    files['for_reads'] = new_dir / 'for_reads.fastq.gz'
+                    
+                    # Handle paired end sequences
+                    if self.reads_type == 'paired_end':
+                        # Create links to the files
+                        (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
+                        
+                        # Add the links to the files dict for this analysis
+                        files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
+                elif 'dual' in self.barcodes_type:
+                    #Create links to the files
+                    (new_dir / 'for_barcodes.fastq.gz').symlink_to(self.files['for_barcodes'])
+                    (new_dir / 'for_reads.fastq.gz').symlink_to(self.file['for_reads'])
+                    (new_dir / 'rev_barcodes.fastq.gz').symlink_to(self.files['rev_barcodes'])
                     (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
 
-                    # Add the links to the files dict for this analysis
+                    #Add the links to the files dict for this analysis
+                    files['for_barcodes'] = new_dir / 'for_barcodes.fastq.gz'
+                    files['for_reads'] = new_dir / 'for_reads.fastq.gz'
+                    files['rev_barcodes'] = new_dir / 'rev_barcodes.fastq.gz'
                     files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
+
                 data_type = self.reads_type
         elif 'sparcc' in doc_type:
             data_type = 'otu_table'
