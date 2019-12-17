@@ -13,7 +13,7 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 
 
-class QiimeTests(TestCase):
+class ToolTests(TestCase):
     """ Tests of top-level functions """
     testing = True
 
