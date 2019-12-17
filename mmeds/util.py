@@ -19,6 +19,7 @@ from re import sub
 from copy import deepcopy
 from ppretty import ppretty
 
+import yaml
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
@@ -144,17 +145,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     else:
         # Load the file contents
         page = config_file
-
-    # Parse the config
-    lines = page.split('\n')
-    for line in lines:
-        if line.startswith('#') or line == '':
-            continue
-        else:
-            parts = line.split('\t')
-            if parts[0] not in fig.CONFIG_PARAMETERS:
-                raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
-            config[parts[0]] = parts[1]
+    config = yaml.safe_load(page)
     # Check if columns == 'all'
     for param in ['metadata', 'taxa_levels', 'sub_analysis']:
         config['{}_all'.format(param)] = (config[param] == 'all')
@@ -162,9 +153,13 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
 
 def parse_parameters(config, metadata, ignore_bad_cols=False):
+    diff = set(config.keys()).difference(fig.CONFIG_PARAMETERS)
+    if diff:
+        raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
+            debug_log('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata' or option == 'sub_analysis':
                 config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
@@ -177,7 +172,6 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
                     config['taxa_levels_all'] = True
                 else:
                     # Otherwise split the values into a list
-                    config[option] = config[option].split(',')
                     config['taxa_levels_all'] = False
             elif config[option] == 'False':
                 config[option] = False
@@ -231,7 +225,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
         if option == 'all':
             cols = df.columns
         else:
-            cols = option.split(',')
+            cols = option
 
         for col in cols:
             # Ensure there aren't any invalid columns specified to be included in the analysis

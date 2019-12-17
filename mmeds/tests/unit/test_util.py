@@ -58,17 +58,23 @@ class DocTests(TestCase):
         assert not col_types['GoodColumnDiscrete']
         assert col_types['GoodColumnContinuous']
 
-        columns, col_types = util.get_valid_columns(fig.TEST_METADATA, 'Ethnicity,Nationality')
+        columns, col_types = util.get_valid_columns(fig.TEST_METADATA, ['Ethnicity', 'Nationality'])
         assert columns == 'Ethnicity,Nationality'.split(',')
 
         with raises(InvalidConfigError) as e_info:
             columns, col_types = util.get_valid_columns(fig.TEST_METADATA,
-                                                        'Ethnicity,BarSequence,Nationality,StudyName')
+                                                        ['Ethnicity',
+                                                         'BarSequence',
+                                                         'Nationality',
+                                                         'StudyName'])
         assert 'Invalid metadata column' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
             columns, col_types = util.get_valid_columns(fig.TEST_METADATA,
-                                                        'Ethnicity,BarcodeSequence,Nationality,StudyName')
+                                                        ['Ethnicity',
+                                                         'BarcodeSequence',
+                                                         'Nationality',
+                                                         'StudyName'])
         assert 'selected for analysis' in e_info.value.message
 
     def test_load_config_file(self):
