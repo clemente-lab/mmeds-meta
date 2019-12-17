@@ -35,7 +35,7 @@ class DocTests(TestCase):
         upload_metadata(test_setup)
 
         with Database(user='root', testing=TESTING) as db:
-            self.test_doc = db.get_docs('study', fig.TEST_CODE).first()
+            self.test_doc = db.get_docs(fig.TEST_CODE).first()
 
         self.connection = men.connect('test', alias='test_documents.py')
         self.test_code = fig.TEST_CODE

@@ -524,7 +524,7 @@ class Database:
         """
         return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
-    def get_analysis(self, access_code):
+    def get_doc(self, access_code):
         """
         Return the MMEDSDoc object.
         This object should be treated as read only.

@@ -14,7 +14,7 @@ from mmeds.util import (debug_log, info_log, create_qiime_from_mmeds,
                         load_metadata, write_metadata, camel_case,
                         send_email)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, TOOL_FILES
 
 import multiprocessing as mp
 
@@ -26,13 +26,13 @@ class Tool(mp.Process):
     will happen in seperate processes.
     """
 
-    def __init__(self, owner, access_code, atype, config, testing,
+    def __init__(self, owner, parent_code, atype, config, testing,
                  threads=10, analysis=True, child=False, restart_stage=0):
         """
         Setup the Tool class
         ====================
         :owner: A string. The owner of the files being analyzed.
-        :access_code: A string. The code for accessing the files to be analyzed.
+        :parent_code: A string. The code for accessing the files belonging to the parent of this analysis.
         :atype: A string. The type of analysis to perform. Qiime1 or 2, DADA2 or DeBlur.
         :config: A file object. A custom config file, may be None.
         :testing: A boolean. If True run with configurations for a local server.
@@ -43,7 +43,7 @@ class Tool(mp.Process):
         super().__init__()
         debug_log('initilize {}'.format(self.name))
         self.debug = True
-        self.access_code = access_code
+        self.parent_code = parent_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
         self.owner = owner
@@ -53,49 +53,29 @@ class Tool(mp.Process):
         self.current_stage = -2
         self.stage_files = defaultdict(list)
         self.created = datetime.now()
-
-        with Database(owner=self.owner, testing=self.testing) as db:
-            study_doc = db.get_study(self.access_code)
-
-        # Create a new directory to perform the analysis in
-        run_id = 0
-        new_dir = Path(study_doc.path) / '{}_{}'.format(self.name, run_id)
-        while new_dir.is_dir():
-            run_id += 1
-            new_dir = Path(study_doc.path) / '{}_{}'.format(self.name, run_id)
-
-        new_dir = new_dir.resolve()
-        new_dir.mkdir()
-        self.path = new_dir
+        self.children = []
 
         if testing:
             self.num_jobs = 2
         else:
             self.num_jobs = min([threads, mp.cpu_count()])
 
-        # If restarting get the associated MMEDSDoc from the database
-        if restart_stage:
-            debug_log('Restarting {}'.format(self.name))
-        # Otherwise create a new MMEDSDoc from the associated MMEDSDoc
-        elif child is False:
-            debug_log('Creating new doc {}'.format(self.name))
-            with Database(owner=self.owner, testing=self.testing) as db:
-                metadata = db.get_metadata(self.access_code)
-                access_code = db.create_access_code(self.name)
-                self.doc = metadata.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code, new_dir)
+        # Get info on the study/parent analysis from the database
+        with Database(owner=self.owner, testing=self.testing) as db:
+            parent_doc = db.get_metadata(self.parent_code)
+            access_code = db.create_access_code(self.name)
+            self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code)
 
-        # If this tool is a child analysis this setup will be handled by the parent
-        if child is False:
-            debug_log('Doc creation date: {}'.format(self.doc.created))
-            self.path = Path(self.doc.path)
-            self.add_path(self.path, key='path')
-            self.write_config()
-            self.create_qiime_mapping_file()
-            self.doc.sub_analysis = False
+        self.path = Path(self.doc.path)
+
+        debug_log('Doc creation date: {}'.format(self.doc.created))
+        self.access_code = access_code
+        self.path = Path(self.doc.path)
+        self.add_path(self.path, key='path')
+        self.write_config()
+        self.create_qiime_mapping_file()
+        self.doc.sub_analysis = False
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
-
-        self.children = []
-        debug_log('finished initialization: {}'.format(self.name))
 
     def __str__(self):
         return ppretty(self, seq_length=20)

@@ -2,7 +2,7 @@ import mongoengine as men
 from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
-from mmeds.config import DOCUMENT_LOG
+from mmeds.config import DOCUMENT_LOG, TOOL_FILES
 from mmeds.util import copy_metadata, log, camel_case, error_log, debug_log
 from mmeds.error import AnalysisError
 from ppretty import ppretty
@@ -138,48 +138,31 @@ class MMEDSDoc(men.Document):
         debug_log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 
-    def generate_MMEDSDoc(self, name, doc_type, config, access_code, new_dir):
+    def generate_MMEDSDoc(self, name, atype, config, access_code):
         """
-        Create a new AnalysisDoc from the current StudyDoc
-        :name: A string. The name of the new document
-        :doc_type: A string. The type of analysis the new document will store information on
-        :config: A dictionary. The configuration for the analysis
-        :access_code: A string. A unique code for accessing the new document
+        Create a new AnalysisDoc from the current StudyDoc.
+        :name: A string. The name of the new document.
+        :doc_type: A string. The type of analysis the new document will store information on.
+        :config: A dictionary. The configuration for the analysis.
+        :access_code: A string. A unique code for accessing the new document.
+        :files: A list of strings. Keys for the files to link to from the parents doc
         """
+        tool_type, data_type = atype.split('-')
+        # Create a new directory to perform the analysis in
+        run_id = 0
+        new_dir = Path(self.path) / '{}_{}'.format(self.name, run_id)
+        while new_dir.is_dir():
+            run_id += 1
+            new_dir = Path(self.path) / '{}_{}'.format(self.name, run_id)
+
+        new_dir = new_dir.resolve()
+        new_dir.mkdir()
+
         files = {}
-
-        if 'qiime' in doc_type:
-            # Handle demuxed sequences
-            if Path(self.files['for_reads']).suffix in ['.zip', '.tar']:
-                (new_dir / 'data.zip').symlink_to(self.files['for_reads'])
-                files['data'] = new_dir / 'data.zip'
-                data_type = self.reads_type + '_demuxed'
-            # Handle all sequences in one file
-            else:
-                # Create links to the files
-                (new_dir / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-                (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
-
-                # Add the links to the files dict for this analysis
-                files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-                files['for_reads'] = new_dir / 'for_reads.fastq.gz'
-
-                # Handle paired end sequences
-                if self.reads_type == 'paired_end':
-                    # Create links to the files
-                    (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
-
-                    # Add the links to the files dict for this analysis
-                    files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
-                data_type = self.reads_type
-        elif 'sparcc' in doc_type:
-            data_type = 'otu_table'
-            (new_dir / 'otu_table.tsv').symlink_to(self.files['otu_table'])
-            files['otu_table'] = new_dir / 'otu_table.tsv'
-        elif 'test' in doc_type:
-            data_type = 'test_data'
-        else:
-            raise AnalysisError('Invalid type for analysis {}'.format(doc_type))
+        for file_key in TOOL_FILES[tool_type]:
+            # Create links to the files
+            (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
+            files[file_key] = new_dir / Path(self.files[file_key]).name
 
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
@@ -199,7 +182,7 @@ class MMEDSDoc(men.Document):
                        access_code=access_code,
                        reads_type=self.reads_type,
                        data_type=data_type,
-                       doc_type=doc_type,
+                       doc_type=tool_type,
                        analysis_status='created',
                        restart_stage=0,
                        config=config,
