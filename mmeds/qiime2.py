@@ -150,7 +150,7 @@ class Qiime2(Tool):
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
-
+        
         # Run the script
         cmd = [
             'qiime demux summarize',
@@ -473,7 +473,6 @@ class Qiime2(Tool):
     def setup_stage_1(self):
         self.set_stage(1)
         if not self.doc.sub_analysis:
-            self.jobtext.append('echo "MMEDS_STAGE_1"')
             if 'demuxed' not in self.doc.data_type:
                 self.demultiplex()
                 self.demux_visualize()
@@ -542,6 +541,5 @@ class Qiime2(Tool):
             self.setup_stage_4()
         if self.restart_stage < 6:
             self.set_stage(5)
-            self.jobtext.append('echo "MMEDS_STAGE_5"')
         # Perform standard tool setup
         super().setup_analysis()
