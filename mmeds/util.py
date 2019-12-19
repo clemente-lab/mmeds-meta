@@ -137,6 +137,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     config = {}
     # If a Path was passed (as is the case during testing)
     if isinstance(config_file, Path):
+        print('path to config {}'.format(config_file))
         page = config_file.read_text()
     # If no config was provided load the default
     elif config_file is None or config_file == '':
@@ -153,7 +154,9 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
 
 def parse_parameters(config, metadata, ignore_bad_cols=False):
-    diff = set(config.keys()).difference(fig.CONFIG_PARAMETERS)
+    # Ignore the 'all' keys
+    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS)
+            if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
@@ -165,7 +168,7 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
                 config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
                                                                                            config[option],
                                                                                            ignore_bad_cols)
-                # Split taxa_levels into a list or create the list if 'all'
+            # Split taxa_levels into a list or create the list if 'all'
             elif option == 'taxa_levels':
                 if config[option] == 'all':
                     config[option] = [i + 1 for i in range(7)]

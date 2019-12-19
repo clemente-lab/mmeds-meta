@@ -17,6 +17,7 @@ from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 
 import multiprocessing as mp
+from yaml import dump
 
 
 class Tool(mp.Process):
@@ -152,7 +153,7 @@ class Tool(mp.Process):
 
     def write_config(self):
         """ Write out the config file being used to the working directory. """
-        config_text = []
+        config_text = {}
         for (key, value) in self.doc.config.items():
             # Don't write values that are generated on loading
             if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
@@ -161,16 +162,16 @@ class Tool(mp.Process):
             # If the value was initially 'all', write that
             elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
                 if self.doc.config['{}_all'.format(key)]:
-                    config_text.append('{}\t{}'.format(key, 'all'))
+                    config_text[key] = 'all'
                 # Write lists as comma seperated strings
                 elif value:
-                    config_text.append('{}\t{}'.format(key, ','.join(list(map(str, value)))))
+                    config_text[key] = ','.join(list(map(str, value)))
                 else:
-                    config_text.append('{}\t{}'.format(key, 'none'))
+                    config_text[key] = 'none'
             else:
-                config_text.append('{}\t{}'.format(key, value))
-        (self.path / 'config_file.txt').write_text('\n'.join(config_text))
-        debug_log('{} write metadata {}'.format(self.name, self.doc.config['metadata']), True)
+                config_text[key] = value
+        with open(self.path / 'config_file.yaml', 'w') as f:
+            dump(config_text, f)
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
