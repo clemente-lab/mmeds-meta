@@ -3,7 +3,6 @@ from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError,
 from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
-from datetime import datetime
 from pathlib import Path
 from os import environ
 from numpy import nan, int64, float64, datetime64
@@ -13,10 +12,8 @@ from smtplib import SMTP
 from imapclient import IMAPClient
 from email.message import EmailMessage
 from email import message_from_bytes
-from tempfile import gettempdir
 from time import sleep
 from re import sub
-from copy import deepcopy
 from ppretty import ppretty
 
 import yaml
@@ -190,6 +187,29 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     return config
 
 
+def write_config(config, path):
+    """ Write out the config file being used to the working directory. """
+    config_text = {}
+    for (key, value) in config.items():
+        # Don't write values that are generated on loading
+        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
+                   'sub_analysis_continuous', 'sub_analysis_all']:
+            continue
+        # If the value was initially 'all', write that
+        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
+            if config['{}_all'.format(key)]:
+                config_text[key] = 'all'
+            # Write lists as comma seperated strings
+            elif value:
+                config_text[key] = value
+            else:
+                config_text[key] = 'none'
+        else:
+            config_text[key] = value
+    with open(path / 'config_file.yaml', 'w') as f:
+        yaml.dump(config_text, f)
+
+
 def copy_metadata(metadata_file, metadata_copy):
     """
     Copy the provided metadata file with a few additional columns to be used for analysis
@@ -321,10 +341,6 @@ def load_ICD_codes():
                 code += 'X'
             ICD_codes[code[:3]][code[3:]] = description
     return ICD_codes
-
-
-def convert_ICD_9_to_10():
-    df = pd.read_csv(fig.STORAGE_DIR / 'icd9toicd10cmgem.csv', sep='\t')
 
 
 def parse_ICD_codes(df):

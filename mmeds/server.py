@@ -7,8 +7,6 @@ import mmeds.error as err
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from multiprocessing import Queue, current_process
-from datetime import datetime
 import atexit
 
 
@@ -19,7 +17,7 @@ from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
-from mmeds.spawn import handle_modify_data, Watcher
+from mmeds.spawn import handle_modify_data
 
 absDir = Path(os.getcwd())
 
@@ -556,22 +554,19 @@ class MMEDSanalysis(MMEDSbase):
         :access_code: The code that identifies the dataset to run the tool on
         :tool: The tool to run on the chosen dataset
         """
-        log('In run_analysis')
         try:
             self.check_upload(access_code)
-            if isinstance(config, str):
-                config_text = config
-            elif config.file is None:
-                config_text = DEFAULT_CONFIG.read_text()
+            if config.file is None:
+                config_path = DEFAULT_CONFIG.read_text()
             else:
-                config_text = config.file.read().decode('utf-8')
+                config_path = create_local_copy(config.file, config.name)
+
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool, config_text, -1))
-            cp.log('Valid config file')
+            self.q.put(('analysis', self.get_user(), access_code, tool, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
-            page = self.format_html('welcome', title='Welcome to MMEDS')
+            page = self.format_html('analysis_page', title='Welcome to MMEDS')
             page = insert_error(page, 22, e.message)
         return page
 

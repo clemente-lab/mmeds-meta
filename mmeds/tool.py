@@ -10,14 +10,13 @@ from collections import defaultdict
 from datetime import datetime
 
 from mmeds.database import Database
-from mmeds.util import (debug_log, info_log, create_qiime_from_mmeds,
+from mmeds.util import (debug_log, info_log, create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case,
                         send_email)
 from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 
 import multiprocessing as mp
-from yaml import dump
 
 
 class Tool(mp.Process):
@@ -77,7 +76,7 @@ class Tool(mp.Process):
 
         self.run_dir = Path('$RUN_{}'.format(self.doc.name))
         self.add_path(self.path, key='path')
-        self.write_config()
+        write_config(self.doc.config, self.path)
         self.create_qiime_mapping_file()
         self.children = []
         self.doc.sub_analysis = False
@@ -150,28 +149,6 @@ class Tool(mp.Process):
                 # So try again with the parents path
                 file_path = self.run_dir / '..' / Path(self.doc.files[key]).relative_to(self.path.parent)
         return file_path
-
-    def write_config(self):
-        """ Write out the config file being used to the working directory. """
-        config_text = {}
-        for (key, value) in self.doc.config.items():
-            # Don't write values that are generated on loading
-            if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
-                       'sub_analysis_continuous', 'sub_analysis_all']:
-                continue
-            # If the value was initially 'all', write that
-            elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
-                if self.doc.config['{}_all'.format(key)]:
-                    config_text[key] = 'all'
-                # Write lists as comma seperated strings
-                elif value:
-                    config_text[key] = ','.join(list(map(str, value)))
-                else:
-                    config_text[key] = 'none'
-            else:
-                config_text[key] = value
-        with open(self.path / 'config_file.yaml', 'w') as f:
-            dump(config_text, f)
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
@@ -333,7 +310,7 @@ class Tool(mp.Process):
         # Filter the config for the metadata category selected for this sub-analysis
         child.config = deepcopy(child.doc.config)
         child.is_child = True
-        child.write_config()
+        write_config(child.doc.config, child.path)
 
         # Set the parent pid
         child._parent_pid = self.pid
