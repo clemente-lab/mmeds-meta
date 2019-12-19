@@ -674,9 +674,8 @@ class MMEDSanalysis(MMEDSbase):
 
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
-
-        # Will be None if uploading an OTU table
-        #reads_type = kwargs.get('reads_type')
+            reads_type = None
+            barcodes_type = None 
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
