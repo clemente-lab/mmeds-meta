@@ -658,7 +658,7 @@ class MMEDSanalysis(MMEDSbase):
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
                                                  barcodes=kwargs['barcodes'])
-           else:
+            else:
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it 
                 reads_type = 'paired_end'
                 barcodes_type = 'dual_barcodes'
