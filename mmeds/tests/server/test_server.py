@@ -80,7 +80,11 @@ class TestServer(helper.CPWebCase):
         self.login()
         self.upload_otu()
 
-    def test_f_query(self):
+    def test_f_dual_upload(self):
+        self.login()
+        self.upload_dualBarcode_metadata()
+
+    def test_g_query(self):
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
@@ -284,6 +288,40 @@ class TestServer(helper.CPWebCase):
 
         recieve_email(1, True, upload_args)
 
+    def upload_dualBarcode_metadata(self):
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_DualBarcodes', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT_DUAL], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT_DUAL], ['text/tab-seperated-values'])
+        self.getPage('/analysis/validate_metadata?barcodes_type=dual', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        documents, errors = tidy_document(page_body)
+        #Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
+        headers, body = self.upload_files(['for_reads', 'rev_reads', 'for_barcodes', 'rev_barcodes'],
+                                          [fig.TEST_READS, fig.TEST_REV_READS, fig.TEST_BARCODES, fig.TEST_BARCODES],
+                                          ['application/gzip', 'application/gzip', 'application/gzip', 'application/gzip'])
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        upload_args = [
+                ['FROM', fig.MMEDS_EMAIL],
+                ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_DualBarcodes')]
+        ]
+
+        recieve_email(1, True, upload_args)
+    
     def upload_metadata(self):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
