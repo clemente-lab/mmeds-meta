@@ -72,20 +72,20 @@ class Qiime2(Tool):
                 (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
                 (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
                 
-                if 'solo' in self.doc.barcodes_type:
-                    #Link the barcodes
+                if 'single' in self.doc.barcodes_type:
+                    # Link the barcodes
                     (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
-                    #Run the script
+                    # Run the script
                     command = cmd.format('EMPPairedEndSequences',
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
                 else:
-                    #Link the barcodes
+                    # Link the barcodes
                     (self.get_file('working_dir', True) / 'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
                     (self.get_file('working_dir', True) / 'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
 
-                    #Run the script
+                    # Run the script
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
@@ -99,7 +99,7 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-        if 'solo' in self.doc.barcodes_type:
+        if 'single' in self.doc.barcodes_type:
             cmd = [
                 # Either emp-single or emp-paired depending on the data_type
                 'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),

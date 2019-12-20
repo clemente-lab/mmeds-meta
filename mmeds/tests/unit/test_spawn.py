@@ -43,10 +43,10 @@ class SpawnTests(TestCase):
 
         # Add multiple uploads from different users
         self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT, fig.TEST_SPECIMEN,
-                    fig.TEST_USER, 'single_end', 'solo_barcodes', test_files, False, False))
+                    fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
 
         self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_ALT, fig.TEST_SPECIMEN_ALT,
-                    fig.TEST_USER_0, 'single_end', 'solo_barcodes', test_files, False, False))
+                    fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
 
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time

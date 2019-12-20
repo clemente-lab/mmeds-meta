@@ -303,7 +303,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         page_body = self.body
         documents, errors = tidy_document(page_body)
-        #Assert no errors, warnings are okay
+        # Assert no errors, warnings are okay
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
@@ -388,7 +388,7 @@ class TestServer(helper.CPWebCase):
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=solo', headers + self.cookies, 'POST', body)
+        self.getPage('/analysis/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
                          title='Warnings',
@@ -402,7 +402,7 @@ class TestServer(helper.CPWebCase):
         log('Checked metadata that warns')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=solo', headers + self.cookies, 'POST', body)
+        self.getPage('/analysis/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=self.server_user)
         self.assertBody(page)
