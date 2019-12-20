@@ -264,6 +264,7 @@ class Validator:
         end_col = None
         self.table_df = self.df[self.cur_table]
         # For the built in table, ensure all columns are present
+         
         if not self.cur_table == 'AdditionalMetaData':
             missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
             if missing_cols:
@@ -421,7 +422,9 @@ class Validator:
         else:
             if self.metadata_type == 'subject':
                 tables = fig.SUBJECT_TABLES
-                subjects = self.df['Subjects']
+                if 'Subjects' in self.df.keys():
+                    # Only define subjects if subject table is correctly uploaded
+                    subjects = self.df['Subjects']
             elif self.metadata_type == 'specimen':
                 tables = fig.SPECIMEN_TABLES
             log('In validate_mapping_file')
