@@ -320,6 +320,7 @@ class TestServer(helper.CPWebCase):
                 ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_DualBarcodes')]
         ]
 
+        # Retrieve the most recent email in the test email account to verify that email was successfully sent
         recieve_email(1, True, upload_args)
     
     def upload_metadata(self):
