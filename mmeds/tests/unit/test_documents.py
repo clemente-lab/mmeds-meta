@@ -28,6 +28,7 @@ class DocTests(TestCase):
                       fig.TEST_USER,
                       'Test_Document',
                       'single_end',
+                      'single_barcodes',
                       fig.TEST_READS,
                       None,
                       fig.TEST_BARCODES,

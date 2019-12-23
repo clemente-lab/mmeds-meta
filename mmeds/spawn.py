@@ -220,10 +220,10 @@ class Watcher(Process):
                     # If there is nothing uploading currently start the new upload process
                     if current_upload is None:
                         (ptype, study_name, subject_metadata, specimen_metadata,
-                         username, reads_type, datafiles, temporary, public) = process
+                         username, reads_type, barcodes_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
                         p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
-                                             study_name, temporary, datafiles, public, self.testing)
+                                             barcodes_type, study_name, temporary, datafiles, public, self.testing)
                         p.start()
                         self.add_process('upload', p)
                         self.pipe.send(p.get_info())
