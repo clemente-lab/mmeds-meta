@@ -56,7 +56,7 @@ class DocTests(TestCase):
         """ Test creating a document """
         config = util.load_config(None, fig.TEST_METADATA)
         sd = docs.MMEDSDoc.objects(access_code=self.test_code).first()
-        ad = sd.generate_MMEDSDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX, 'some_directory')
+        ad = sd.generate_MMEDSDoc('testDocument', 'qiime2-DADA2', config, fig.TEST_CODE_DEMUX)
         self.assertEqual(Path(sd.path), Path(ad.path).parent)
         self.assertEqual(sd.owner, ad.owner)
         self.assertEqual(sd.access_code, ad.study_code)

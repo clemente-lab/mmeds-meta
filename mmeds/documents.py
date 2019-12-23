@@ -4,7 +4,6 @@ from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG, TOOL_FILES
 from mmeds.util import copy_metadata, log, camel_case, error_log, debug_log
-from mmeds.error import AnalysisError
 from ppretty import ppretty
 
 
@@ -160,12 +159,12 @@ class MMEDSDoc(men.Document):
         new_dir = new_dir.resolve()
         new_dir.mkdir()
 
-        """
         files = {}
         for file_key in TOOL_FILES[tool_type]:
-            # Create links to the files
-            (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
-            files[file_key] = new_dir / Path(self.files[file_key]).name
+            # Create links to the files if they exist
+            if self.files.get(file_key) is not None:
+                (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
+                files[file_key] = new_dir / Path(self.files[file_key]).name
         """
         if 'qiime' in doc_type:
             # Handle demuxed sequences
@@ -213,6 +212,7 @@ class MMEDSDoc(men.Document):
             data_type = 'test_data'
         else:
             raise AnalysisError('Invalid type for analysis {}'.format(doc_type))
+        """
 
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
@@ -232,8 +232,8 @@ class MMEDSDoc(men.Document):
                        access_code=access_code,
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
+                       doc_type='{}-{}'.format(tool_type, data_type),
                        data_type=data_type,
-                       doc_type=tool_type,
                        analysis_status='created',
                        restart_stage=0,
                        config=config,

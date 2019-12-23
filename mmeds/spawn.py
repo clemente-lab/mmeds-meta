@@ -57,7 +57,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
 def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
-        ad = db.get_analysis(code)
+        ad = db.get_doc(code)
 
     # Create an entire new directory if restarting from the beginning
     if restart_stage < 1:
@@ -74,8 +74,7 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
                       testing=testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
     elif 'test' in ad.doc_type:
         debug_log('test analysis')
-        time = float(ad.doc_type.split('-')[-1])
-        tool = TestTool(user, code, ad.doc_type, ad.config, testing, time=time)
+        tool = TestTool(user, code, ad.doc_type, ad.config, testing, time=20)
     else:
         raise AnalysisError('atype didnt match any')
     return tool

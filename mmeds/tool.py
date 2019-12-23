@@ -630,7 +630,7 @@ class Tool(mp.Process):
                        self.doc.owner,
                        'analysis',
                        doc_type=self.name + self.doc.doc_type,
-                       study_name=self.doc.study,
+                       study_name=self.doc.study_name,
                        testing=self.testing)
 
     def run(self):

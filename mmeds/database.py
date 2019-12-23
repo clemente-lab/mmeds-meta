@@ -538,19 +538,9 @@ class Database:
         return MMEDSDoc.objects()
 
     @classmethod
-    def get_study(cls, access_code):
-        """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(access_code=access_code).first()
-
-    @classmethod
     def get_all_analyses_from_study(cls, access_code):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(study_code=access_code)
-
-    @classmethod
-    def get_study_analysis(cls, access_code):
-        """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(access_code=access_code).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
@@ -583,12 +573,6 @@ class Database:
                             os.remove(mdata.files[key])
                         elif os.path.exists(mdata.files[key]):
                             shutil.rmtree(mdata.files[key])
-
-    @classmethod
-    def get_mongo_docs(cls, access_code):
-        """ For admin use """
-        return (MMEDSDoc.objects(access_code=access_code),
-                MMEDSDoc.objects(access_code=access_code))
 
     @classmethod
     def get_docs(cls, access_code):
@@ -1143,7 +1127,7 @@ class MetaDataUploader(Process):
                          doc_type='study-' + self.study_type,
                          reads_type=self.reads_type,
                          barcodes_type=self.barcodes_type,
-                         study=self.study_name,
+                         study_name=self.study_name,
                          access_code=self.access_code,
                          owner=self.owner,
                          email=self.email,
