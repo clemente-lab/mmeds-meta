@@ -56,7 +56,7 @@ CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
-DEFAULT_CONFIG = STORAGE_DIR / 'config_file.txt'
+DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
 
 
 # Configuration for the CherryPy server
@@ -113,12 +113,12 @@ TEST_CODE_DEMUX = 'demuxedreads'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
-TEST_CONFIG = str(TEST_PATH / 'test_config_file.txt')
-TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.txt')
-TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
-TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
-TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
-TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
+TEST_CONFIG = str(TEST_PATH / 'test_config_file.yaml')
+TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.yaml')
+TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.yaml')
+TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.yaml')
+TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.yaml')
+TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
