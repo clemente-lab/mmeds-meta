@@ -26,19 +26,7 @@ def spawn_analysis(atype, user, access_code, config_file, testing, kill_stage=-1
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
         files, path = db.get_mongo_files(access_code)
-
-    if isinstance(config_file, Path):
-        debug_log('load path config {}'.format(config_file))
-        config = load_config(config_file.read_text(), files['metadata'])
-    elif isinstance(config_file, str):
-        debug_log('load path config {}'.format(config_file))
-        config = load_config(config_file, files['metadata'])
-    elif config_file is None or config_file.file is None:
-        debug_log('load default config')
-        config = load_config(None, files['metadata'])
-    else:
-        debug_log('load passed config')
-        config = load_config(config_file.file.read().decode('utf-8'), files['metadata'])
+    config = load_config(config_file, files['metadata'])
 
     if 'qiime1' in atype:
         tool = Qiime1(user, access_code, atype, config, testing, kill_stage=kill_stage)
@@ -232,10 +220,10 @@ class Watcher(Process):
                     # If there is nothing uploading currently start the new upload process
                     if current_upload is None:
                         (ptype, study_name, subject_metadata, specimen_metadata,
-                         username, reads_type, datafiles, temporary, public) = process
+                         username, reads_type, barcodes_type, datafiles, temporary, public) = process
                         # Start a process to handle loading the data
                         p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
-                                             study_name, temporary, datafiles, public, self.testing)
+                                             barcodes_type, study_name, temporary, datafiles, public, self.testing)
                         p.start()
                         self.add_process('upload', p)
                         self.pipe.send(p.get_info())

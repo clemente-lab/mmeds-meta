@@ -7,8 +7,6 @@ import mmeds.error as err
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from multiprocessing import Queue, current_process
-from datetime import datetime
 import atexit
 
 
@@ -19,7 +17,7 @@ from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
-from mmeds.spawn import handle_modify_data, Watcher
+from mmeds.spawn import handle_modify_data
 
 absDir = Path(os.getcwd())
 
@@ -238,6 +236,7 @@ class MMEDSdownload(MMEDSbase):
                                 last_accessed=study.last_accessed,
                                 doc_type=study.doc_type,
                                 reads_type=study.reads_type,
+                                barcodes_type=study.barcodes_type,
                                 access_code=study.access_code,
                                 owner=study.owner,
                                 email=study.email,
@@ -270,6 +269,7 @@ class MMEDSdownload(MMEDSbase):
                                 last_accessed=analysis.last_accessed,
                                 doc_type=analysis.doc_type,
                                 reads_type=analysis.reads_type,
+                                barcodes_type=analysis.barcodes_type,
                                 study_code=analysis.study_code,
                                 sub_analysis=analysis.sub_analysis,
                                 access_code=analysis.access_code,
@@ -399,7 +399,10 @@ class MMEDSupload(MMEDSbase):
         log('In upload_data')
         cp.log('In upload_data')
         # If there are no errors or warnings proceed to upload the data files
-        page = self.format_html('upload_data_files', title='Upload Data')
+        if cp.session['dual_barcodes']:
+            page = self.format_html('upload_data_files_dual', title='Upload Data')
+        else:
+            page = self.format_html('upload_data_files', title='Upload Data')
         return page
 
     @cp.expose
@@ -557,22 +560,19 @@ class MMEDSanalysis(MMEDSbase):
         :access_code: The code that identifies the dataset to run the tool on
         :tool: The tool to run on the chosen dataset
         """
-        log('In run_analysis')
         try:
             self.check_upload(access_code)
-            if isinstance(config, str):
-                config_text = config
-            elif config.file is None:
-                config_text = DEFAULT_CONFIG.read_text()
+            if config.file is None:
+                config_path = DEFAULT_CONFIG.read_text()
             else:
-                config_text = config.file.read().decode('utf-8')
+                config_path = create_local_copy(config.file, config.name)
+
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool, config_text, -1))
-            cp.log('Valid config file')
+            self.q.put(('analysis', self.get_user(), access_code, tool, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
-            page = self.format_html('welcome', title='Welcome to MMEDS')
+            page = self.format_html('analysis_page', title='Welcome to MMEDS')
             page = insert_error(page, 22, e.message)
         return page
 
@@ -583,7 +583,7 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData, temporary=False):
+    def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
         """ The page returned after a file is uploaded. """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
@@ -597,6 +597,11 @@ class MMEDSanalysis(MMEDSbase):
                 errors, warnings = self.run_validate(myMetaData)
 
             metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
+            if barcodes_type == 'dual':
+                cp.session['dual_barcodes'] = True
+            else:
+                cp.session['dual_barcodes'] = False
+            
             # If there are errors report them and return the error page
             if errors:
                 page = self.handle_metadata_errors(metadata_copy, errors, warnings)
@@ -612,10 +617,16 @@ class MMEDSanalysis(MMEDSbase):
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
+                    # If it's the sspecimen metadata file, save the type of barcodes
+                    # And return the page for uploading data files
                     if cp.session['upload_type'] == 'qiime':
-                        page = self.format_html('upload_data_files', title='Upload Data')
+                        if cp.session['dual_barcodes']:
+                            page = self.format_html('upload_data_files_dual', title='Upload Data')
+                        else:
+                            page = self.format_html('upload_data_files', title='Upload Data')
                     elif cp.session['upload_type'] == 'sparcc':
                         page = self.format_html('upload_otu_data', title='Upload Data')
+
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
                                     title='Upload Metadata',
@@ -626,6 +637,7 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def process_data(self, public=False, **kwargs):
         cp.log('Public is {}'.format(public))
+        
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
@@ -633,21 +645,33 @@ class MMEDSanalysis(MMEDSbase):
         # Get the username
         username = self.get_user()
 
+        # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
-            datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                             rev_reads=kwargs['rev_reads'],
-                                             barcodes=kwargs['barcodes'])
+            if not cp.session['dual_barcodes']:
+                reads_type = kwargs['reads_type']
+                barcodes_type = 'single_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+            else:
+                # If have dual barcodes, don't have a reads_type in kwargs so must set it 
+                reads_type = 'paired_end'
+                barcodes_type = 'dual_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 for_barcodes=kwargs['for_barcodes'],
+                                                 rev_barcodes=kwargs['rev_barcodes'])
+
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
-
-        # Will be None if uploading an OTU table
-        reads_type = kwargs.get('reads_type')
+            reads_type = None
+            barcodes_type = None 
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, specimen_metadata,
-                    username, reads_type, datafiles, cp.session['metadata_temporary'], public))
+                    username, reads_type, barcodes_type, datafiles, cp.session['metadata_temporary'], public))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')

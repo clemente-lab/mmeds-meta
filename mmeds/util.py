@@ -3,7 +3,6 @@ from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError,
 from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
-from datetime import datetime
 from pathlib import Path
 from os import environ
 from numpy import nan, int64, float64, datetime64
@@ -13,12 +12,11 @@ from smtplib import SMTP
 from imapclient import IMAPClient
 from email.message import EmailMessage
 from email import message_from_bytes
-from tempfile import gettempdir
 from time import sleep
 from re import sub
-from copy import deepcopy
 from ppretty import ppretty
 
+import yaml
 import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
@@ -136,6 +134,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     config = {}
     # If a Path was passed (as is the case during testing)
     if isinstance(config_file, Path):
+        print('path to config {}'.format(config_file))
         page = config_file.read_text()
     # If no config was provided load the default
     elif config_file is None or config_file == '':
@@ -144,17 +143,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     else:
         # Load the file contents
         page = config_file
-
-    # Parse the config
-    lines = page.split('\n')
-    for line in lines:
-        if line.startswith('#') or line == '':
-            continue
-        else:
-            parts = line.split('\t')
-            if parts[0] not in fig.CONFIG_PARAMETERS:
-                raise InvalidConfigError('Invalid parameter {} in config file'.format(parts[0]))
-            config[parts[0]] = parts[1]
+    config = yaml.safe_load(page)
     # Check if columns == 'all'
     for param in ['metadata', 'taxa_levels', 'sub_analysis']:
         config['{}_all'.format(param)] = (config[param] == 'all')
@@ -162,22 +151,27 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
 
 def parse_parameters(config, metadata, ignore_bad_cols=False):
+    # Ignore the 'all' keys
+    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS)
+            if '_all' not in x}
+    if diff:
+        raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
+            debug_log('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata' or option == 'sub_analysis':
                 config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
                                                                                            config[option],
                                                                                            ignore_bad_cols)
-                # Split taxa_levels into a list or create the list if 'all'
+            # Split taxa_levels into a list or create the list if 'all'
             elif option == 'taxa_levels':
                 if config[option] == 'all':
                     config[option] = [i + 1 for i in range(7)]
                     config['taxa_levels_all'] = True
                 else:
                     # Otherwise split the values into a list
-                    config[option] = config[option].split(',')
                     config['taxa_levels_all'] = False
             elif config[option] == 'False':
                 config[option] = False
@@ -191,6 +185,29 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config
+
+
+def write_config(config, path):
+    """ Write out the config file being used to the working directory. """
+    config_text = {}
+    for (key, value) in config.items():
+        # Don't write values that are generated on loading
+        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
+                   'sub_analysis_continuous', 'sub_analysis_all']:
+            continue
+        # If the value was initially 'all', write that
+        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
+            if config['{}_all'.format(key)]:
+                config_text[key] = 'all'
+            # Write lists as comma seperated strings
+            elif value:
+                config_text[key] = value
+            else:
+                config_text[key] = 'none'
+        else:
+            config_text[key] = value
+    with open(path / 'config_file.yaml', 'w') as f:
+        yaml.dump(config_text, f)
 
 
 def copy_metadata(metadata_file, metadata_copy):
@@ -231,7 +248,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
         if option == 'all':
             cols = df.columns
         else:
-            cols = option.split(',')
+            cols = option
 
         for col in cols:
             # Ensure there aren't any invalid columns specified to be included in the analysis
@@ -324,10 +341,6 @@ def load_ICD_codes():
                 code += 'X'
             ICD_codes[code[:3]][code[3:]] = description
     return ICD_codes
-
-
-def convert_ICD_9_to_10():
-    df = pd.read_csv(fig.STORAGE_DIR / 'icd9toicd10cmgem.csv', sep='\t')
 
 
 def parse_ICD_codes(df):

@@ -1,14 +1,25 @@
 # Sampling depth for qiime1 analysis
-sampling_depth	1114
+sampling_depth: 1114
 # The metadata columns to include in analysis
 # To include all columns set to 'all' (no quotes)
 # Otherwise list all the column names separated by commas
 # Example:
 # metadata	all
-metadata	Ethnicity,SpecimenBodySite
+metadata:
+    - SpecimenBodySite
+    - Nationality
 # The levels of taxa summary to include in the final summary of the analysis
-taxa_levels	2,3,4
+taxa_levels:
+    - 2
+# The minimum abundance a taxon must have in a sample in order to be included in the legend
+abundance_threshold: 0.1
 # The size of the font in the plot legends
-font_size	15
+font_size: 15
+# If an additional type of analysis should be run
+additional_analysis: sparcc
 # Whether or not sub-analyses should be performed
-sub_analysis	Ethnicity
+sub_analysis: none
+# SparCC stuff
+iterations: 5
+permutations: 5
+stat: spearman
