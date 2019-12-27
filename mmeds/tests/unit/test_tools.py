@@ -52,7 +52,7 @@ class ToolTests(TestCase):
              fig.TEST_DIR,
              fig.TEST_USER,
              'Test_Qiime_2',
-             'single_end',
+             'single_end_demuxed',
              'single_barcodes',
              fig.TEST_DEMUXED,
              None,
@@ -77,12 +77,14 @@ class ToolTests(TestCase):
     def tearDownClass(self):
         remove_user(fig.TEST_USER, testing=self.testing)
 
-    def run_qiime(self, code, atype, data_type, Qiime):
+    def run_qiime(self, code, atype, reads_type, Qiime):
+        print('atype: {}, data_type: {}'.format(atype, reads_type))
+
         qiime = Qiime(fig.TEST_USER, code, atype, self.config, testing=self.testing, analysis=False)
         qiime.start()
         while qiime.is_alive():
             sleep(2)
-        self.assertEqual(qiime.doc.data_type, data_type)
+        self.assertEqual(qiime.doc.reads_type, reads_type)
         rmtree(qiime.path)
 
     def test_sparcc_setup_analysis(self):

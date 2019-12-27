@@ -21,10 +21,11 @@ class MMEDSDoc(men.Document):
     study_code = men.StringField(max_length=100)
     study_name = men.StringField(max_length=100)
     access_code = men.StringField(max_length=50)
-    reads_type = men.StringField(max_length=45)
-    barcodes_type = men.StringField(max_length=45)
-    data_type = men.StringField(max_length=45)
+    reads_type = men.StringField(max_length=45)     # single_end or paired_end
+    barcodes_type = men.StringField(max_length=45)  # Single or Paired
+    data_type = men.StringField(max_length=45)  #
     doc_type = men.StringField(max_length=45)
+    analyis_type = men.StringField(max_length=45)
 
     # Stages: created, started, <Name of last method>, finished, errored
     analysis_status = men.StringField(max_length=45)
@@ -148,7 +149,9 @@ class MMEDSDoc(men.Document):
         :access_code: A string. A unique code for accessing the new document.
         :files: A list of strings. Keys for the files to link to from the parents doc
         """
-        tool_type, data_type = atype.split('-')
+        debug_log('create tool atype: {}'.format(atype))
+        tool_type, analysis_type = atype.split('-')
+
         # Create a new directory to perform the analysis in
         run_id = 0
         new_dir = Path(self.path) / '{}_{}'.format(self.name, run_id)
@@ -232,8 +235,9 @@ class MMEDSDoc(men.Document):
                        access_code=access_code,
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
-                       doc_type='{}-{}'.format(tool_type, data_type),
-                       data_type=data_type,
+                       doc_type=atype,
+                       data_type=self.data_type,
+                       #analysis_type=analysis_type,
                        analysis_status='created',
                        restart_stage=0,
                        config=config,

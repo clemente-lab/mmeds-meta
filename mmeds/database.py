@@ -1120,6 +1120,8 @@ class MetaDataUploader(Process):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
 
+        debug_log('Importing files with reads type: {}'.format(self.reads_type))
+
         # Create the document
         mdata = MMEDSDoc(created=datetime.utcnow(),
                          last_accessed=datetime.utcnow(),

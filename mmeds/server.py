@@ -601,7 +601,7 @@ class MMEDSanalysis(MMEDSbase):
                 cp.session['dual_barcodes'] = True
             else:
                 cp.session['dual_barcodes'] = False
-            
+
             # If there are errors report them and return the error page
             if errors:
                 page = self.handle_metadata_errors(metadata_copy, errors, warnings)
@@ -637,7 +637,7 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def process_data(self, public=False, **kwargs):
         cp.log('Public is {}'.format(public))
-        
+
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
@@ -648,25 +648,23 @@ class MMEDSanalysis(MMEDSbase):
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
-            if not cp.session['dual_barcodes']:
-                reads_type = kwargs['reads_type']
-                barcodes_type = 'single_barcodes'
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                 rev_reads=kwargs['rev_reads'],
-                                                 barcodes=kwargs['barcodes'])
-            else:
-                # If have dual barcodes, don't have a reads_type in kwargs so must set it 
-                reads_type = 'paired_end'
+            if cp.session['dual_barcodes']:
+                # If have dual barcodes, don't have a reads_type in kwargs so must set it
                 barcodes_type = 'dual_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
                                                  for_barcodes=kwargs['for_barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
-
+            else:
+                barcodes_type = 'single_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+            reads_type = kwargs['reads_type']
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
             reads_type = None
-            barcodes_type = None 
+            barcodes_type = None
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py

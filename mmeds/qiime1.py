@@ -1,7 +1,7 @@
 from subprocess import run
 
 from mmeds.config import DATABASE_DIR
-from mmeds.util import log, setup_environment
+from mmeds.util import log, setup_environment, debug_log
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -13,6 +13,7 @@ class Qiime1(Tool):
                  analysis=True, restart_stage=0, child=False):
         super().__init__(owner, access_code, atype, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
+        debug_log('Setup qiime with {}'.format(atype))
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
@@ -61,18 +62,18 @@ class Qiime1(Tool):
         self.add_path('split_output', '')
 
         # Run the script
-        if 'demuxed' in self.doc.data_type:
+        if 'demuxed' in self.doc.reads_type:
             cmd = 'multiple_split_libraries_fastq.py -o {} -i {};'
             command = cmd.format(self.get_file('split_output'),
                                  self.get_file('for_reads'))
-        elif self.doc.data_type == 'single_end':
+        elif 'single' in self.doc.reads_type:
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {};'
             command = cmd.format(self.get_file('split_output'),
                                  self.get_file('for_reads'),
                                  self.get_file('barcodes'),
                                  self.get_file('mapping'),
                                  12)
-        elif self.doc.data_type == 'paired_end':
+        elif 'paired' in self.doc.reads_type:
             cmd = 'split_libraries_fastq.py -o {} -i {} -b {} -m {} --barcode_type {} --rev_comp_mapping_barcodes;'
             command = cmd.format(self.get_file('split_output'),
                                  self.get_file('joined_dir') / 'fastqjoin.join.fastq',
@@ -161,9 +162,9 @@ class Qiime1(Tool):
         # Only the child run this analysis
         if not self.doc.sub_analysis:
             self.validate_mapping()
-            if 'demuxed' in self.doc.data_type:
+            if 'demuxed' in self.doc.reads_type:
                 self.unzip()
-            elif 'paired' in self.doc.data_type:
+            elif 'paired' in self.doc.reads_type:
                 self.join_paired_ends()
             self.split_libraries()
             self.pick_otu()

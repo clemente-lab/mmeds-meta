@@ -32,7 +32,7 @@ class Qiime2(Tool):
 
         self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
 
-        if 'demuxed' in self.doc.data_type:
+        if 'demuxed' in self.doc.reads_type:
             # If the reads are already demultiplexed import the whole directory
             cmd = [
                 'qiime tools import ',
@@ -56,7 +56,7 @@ class Qiime2(Tool):
                 old_file.unlink()
 
             cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            if 'single' in self.doc.data_type:
+            if 'single' in self.doc.reads_type:
                 #Link the barcodes
                 (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
@@ -67,11 +67,11 @@ class Qiime2(Tool):
                 command = cmd.format('EMPSingleEndSequences',
                                      self.get_file('working_dir'),
                                      self.get_file('working_file'))
-            elif 'paired' in self.doc.data_type:
+            elif 'paired' in self.doc.reads_type:
                 # Create links to the data in the qiime2 import directory
                 (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
                 (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
-                
+
                 if 'single' in self.doc.barcodes_type:
                     # Link the barcodes
                     (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
@@ -89,9 +89,9 @@ class Qiime2(Tool):
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
-                    
+
         self.jobtext.append(command)
-        
+
     def demultiplex(self):
         """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
@@ -101,8 +101,8 @@ class Qiime2(Tool):
         # Run the script
         if 'single' in self.doc.barcodes_type:
             cmd = [
-                # Either emp-single or emp-paired depending on the data_type
-                'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),
+                # Either emp-single or emp-paired depending on the reads_type
+                'qiime demux emp-{}'.format(self.doc.reads_type.split('_')[0]),
                 '--i-seqs {}'.format(self.get_file('working_file')),
                 '--m-barcodes-file {}'.format(self.get_file('mapping')),
                 '--m-barcodes-column {}'.format('BarcodeSequence'),
@@ -110,8 +110,8 @@ class Qiime2(Tool):
                 '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
             ]
             # Reverse compliment the barcodes in the mapping file if using paired reads
-            if 'paired' in self.doc.data_type:
-                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:] 
+            if 'paired' in self.doc.reads_type:
+                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         else:
             cmd = [
                 'qiime cutadapt demux-paired',
@@ -150,7 +150,7 @@ class Qiime2(Tool):
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
-        
+
         # Run the script
         cmd = [
             'qiime demux summarize',
@@ -177,7 +177,7 @@ class Qiime2(Tool):
         self.add_path('table_dada2', '.qza', key='otu_table')
         self.add_path('stats_dada2', '.qza', key='stats_table')
 
-        if 'single' in self.doc.data_type:
+        if 'single' in self.doc.reads_type:
             cmd = [
                 'qiime dada2 denoise-single',
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
@@ -188,7 +188,7 @@ class Qiime2(Tool):
                 '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
-        elif 'paired' in self.doc.data_type:
+        elif 'paired' in self.doc.reads_type:
             cmd = [
                 'qiime dada2 denoise-paired',
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
@@ -466,14 +466,14 @@ class Qiime2(Tool):
         self.set_stage(0)
         # Only the primary analysis runs these commands
         if not self.doc.sub_analysis:
-            if 'demuxed' in self.doc.data_type:
+            if 'demuxed' in self.doc.reads_type:
                 self.unzip()
             self.qimport()
 
     def setup_stage_1(self):
         self.set_stage(1)
         if not self.doc.sub_analysis:
-            if 'demuxed' not in self.doc.data_type:
+            if 'demuxed' not in self.doc.reads_type:
                 self.demultiplex()
                 self.demux_visualize()
             if 'deblur' in self.doc.doc_type:
