@@ -9,11 +9,10 @@ from mmeds.tool import Tool
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing,
+    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, child=False):
-        super().__init__(owner, access_code, atype, config, testing,
+        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
-        debug_log('Setup qiime with {}'.format(atype))
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
@@ -86,16 +85,16 @@ class Qiime1(Tool):
         """ Run the pick OTU scripts. """
         self.add_path('otu_output', '')
         # Link files for the otu and biom tables
-        if 'closed' in self.doc.doc_type:
+        if 'closed' == self.doc.analysis_type:
             self.add_path(self.get_file('otu_output').name + '/97_otus', '.tree', key='otu_table')
             self.add_path(self.get_file('otu_output').name + '/otu_table', '.biom', key='biom_table')
-        elif 'open' in self.doc.doc_type:
+        elif 'open' == self.doc.analysis_type:
             self.add_path(self.get_file('otu_output').name + '/rep_set', '.tre', key='otu_table')
             self.add_path(self.get_file('otu_output').name + '/otu_table_mc2_w_tax_no_pynast_failures',
                           '.biom', key='biom_table')
 
         cmd = 'pick_{}_reference_otus.py -a -O {} -o {} -i {} -p {};'
-        command = cmd.format(self.doc.doc_type.split('-')[1],
+        command = cmd.format(self.doc.analysis_type,
                              self.num_jobs,
                              self.get_file('otu_output'),
                              self.get_file('split_output') / 'seqs.fna',

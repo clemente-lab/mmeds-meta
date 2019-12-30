@@ -25,7 +25,7 @@ class MMEDSDoc(men.Document):
     barcodes_type = men.StringField(max_length=45)  # Single or Paired
     data_type = men.StringField(max_length=45)  #
     doc_type = men.StringField(max_length=45)
-    analyis_type = men.StringField(max_length=45)
+    analysis_type = men.StringField(max_length=45)
 
     # Stages: created, started, <Name of last method>, finished, errored
     analysis_status = men.StringField(max_length=45)
@@ -140,7 +140,7 @@ class MMEDSDoc(men.Document):
         debug_log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 
-    def generate_MMEDSDoc(self, name, atype, config, access_code):
+    def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code):
         """
         Create a new AnalysisDoc from the current StudyDoc.
         :name: A string. The name of the new document.
@@ -149,8 +149,6 @@ class MMEDSDoc(men.Document):
         :access_code: A string. A unique code for accessing the new document.
         :files: A list of strings. Keys for the files to link to from the parents doc
         """
-        debug_log('create tool atype: {}'.format(atype))
-        tool_type, analysis_type = atype.split('-')
 
         # Create a new directory to perform the analysis in
         run_id = 0
@@ -224,7 +222,6 @@ class MMEDSDoc(men.Document):
         files['metadata'] = new_dir / 'metadata.tsv'
         string_files = {str(key): str(value) for key, value in files.items()}
 
-        log('creating analysis doc')
         doc = MMEDSDoc(created=datetime.now(),
                        last_accessed=datetime.now(),
                        sub_analysis=False,
@@ -238,9 +235,9 @@ class MMEDSDoc(men.Document):
                        access_code=access_code,
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
-                       doc_type=atype,
+                       doc_type='analysis',
                        data_type=self.data_type,
-                       #analysis_type=analysis_type,
+                       analysis_type=analysis_type,
                        analysis_status='created',
                        restart_stage=0,
                        config=config,

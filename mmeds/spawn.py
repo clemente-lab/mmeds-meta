@@ -21,7 +21,7 @@ def test(time):
     sleep(time)
 
 
-def spawn_analysis(atype, user, access_code, config_file, testing, kill_stage=-1):
+def spawn_analysis(tool_type, analysis_type, user, access_code, config_file, testing, kill_stage=-1):
     """ Start running the analysis in a new process """
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
@@ -29,11 +29,11 @@ def spawn_analysis(atype, user, access_code, config_file, testing, kill_stage=-1
     config = load_config(config_file, files['metadata'])
 
     if 'qiime1' in atype:
-        tool = Qiime1(user, access_code, atype, config, testing, kill_stage=kill_stage)
+        tool = Qiime1(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
     elif 'qiime2' in atype:
-        tool = Qiime2(user, access_code, atype, config, testing, kill_stage=kill_stage)
+        tool = Qiime2(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
     elif 'sparcc' in atype:
-        tool = SparCC(user, access_code, atype, config, testing, kill_stage=kill_stage)
+        tool = SparCC(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
     elif 'test' in atype:
         debug_log('test analysis')
         time = float(atype.split('-')[-1])
@@ -189,8 +189,8 @@ class Watcher(Process):
 
                 # If it's an analysis
                 if process[0] == 'analysis':
-                    ptype, user, access_code, tool, config, kill_stage = process
-                    p = spawn_analysis(tool, user, access_code, config, self.testing, kill_stage)
+                    ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
+                    p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
                     # Start the analysis running
                     p.start()
                     self.pipe.send(p.get_info())

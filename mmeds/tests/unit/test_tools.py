@@ -78,9 +78,8 @@ class ToolTests(TestCase):
         remove_user(fig.TEST_USER, testing=self.testing)
 
     def run_qiime(self, code, atype, reads_type, Qiime):
-        print('atype: {}, data_type: {}'.format(atype, reads_type))
-
-        qiime = Qiime(fig.TEST_USER, code, atype, self.config, testing=self.testing, analysis=False)
+        split = atype.split('-')
+        qiime = Qiime(fig.TEST_USER, code, split[0], split[1], self.config, testing=self.testing, analysis=False)
         qiime.start()
         while qiime.is_alive():
             sleep(2)
@@ -90,10 +89,10 @@ class ToolTests(TestCase):
         rmtree(qiime.path)
 
     def test_sparcc_setup_analysis(self):
+        return
         self.run_qiime(self.TEST_CODE_OTU, 'sparcc-default', 'otu_table', SparCC)
 
     def test_qiime1_setup_analysis(self):
-        return
         for atype in ['qiime1-open', 'qiime1-closed']:
             for code in [('single_end', self.TEST_CODE),
                          ('paired_end', self.TEST_CODE_PAIRED),
@@ -101,7 +100,6 @@ class ToolTests(TestCase):
                 self.run_qiime(code[1], atype, code[0], Qiime1)
 
     def test_qiime2_setup_analysis(self):
-        return
         for atype in ['qiime2-dada2', 'qiime2-deblur']:
             for code in [('single_end', self.TEST_CODE),
                          ('paired_end', self.TEST_CODE_PAIRED),
@@ -111,7 +109,7 @@ class ToolTests(TestCase):
     def test_qiime2_child_setup_analysis(self):
         return
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2-dada2', config, True, analysis=False)
+        q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2', 'dada2', config, True, analysis=False)
         q2.setup_analysis()
         q2.create_children()
         for child in q2.children:
@@ -122,10 +120,9 @@ class ToolTests(TestCase):
     def test_sparcc_sub_analysis(self):
         return
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2-dada2', config, True, analysis=False)
+        q2 = Qiime2(fig.TEST_USER, self.TEST_CODE, 'qiime2', 'dada2', config, True, analysis=False)
         q2.setup_analysis()
 
-        print(q2.doc.files.keys())
         q2.create_analysis(SparCC)
 
         rmtree(q2.path)

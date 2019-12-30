@@ -436,8 +436,8 @@ HTML_PAGES = {
 
 TOOL_FILES = {
     'child_analysis': ['otu_table'],
-    'qiime1': ['for_reads', 'rev_reads', 'barcodes', 'metadata'],
-    'qiime2': ['for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
     'sparcc': ['otu_table'],
     'test': []
 }

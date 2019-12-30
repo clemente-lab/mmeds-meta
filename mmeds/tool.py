@@ -26,7 +26,7 @@ class Tool(mp.Process):
     will happen in seperate processes.
     """
 
-    def __init__(self, owner, parent_code, atype, config, testing,
+    def __init__(self, owner, parent_code, tool_type, analysis_type, config, testing,
                  threads=10, analysis=True, child=False, restart_stage=0):
         """
         Setup the Tool class
@@ -60,6 +60,7 @@ class Tool(mp.Process):
         else:
             self.num_jobs = min([threads, mp.cpu_count()])
 
+
         # Get info on the study/parent analysis from the database
         with Database(owner=self.owner, testing=self.testing) as db:
             parent_doc = db.get_metadata(self.parent_code)
@@ -67,7 +68,8 @@ class Tool(mp.Process):
             debug_log(parent_doc)
             debug_log(parent_doc.files.keys())
             access_code = db.create_access_code(self.name)
-            self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code)
+            self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], tool_type,
+                                                    analysis_type, config, access_code)
 
         self.path = Path(self.doc.path)
 

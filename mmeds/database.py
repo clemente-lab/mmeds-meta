@@ -28,9 +28,7 @@ DAYS = 13
 def upload_metadata(args):
     (subject_metadata, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
-    print('accuess code {}'.format(access_code))
     if 'zip' in for_reads:
-        print('uploading demux')
         datafiles = {'data': for_reads,
                      'barcodes': barcodes}
     else:
@@ -1125,9 +1123,6 @@ class MetaDataUploader(Process):
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # If an access_code is provided use that
-
-        debug_log('Importing files with reads type: {}'.format(self.reads_type))
-        debug_log('Args are {}'.format(kwargs))
 
         # Create the document
         mdata = MMEDSDoc(created=datetime.utcnow(),

@@ -14,9 +14,9 @@ class Qiime2(Tool):
     # The default classifier for Q2 analysis
     classifier = STORAGE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
-    def __init__(self, owner, access_code, atype, config, testing,
+    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, kill_stage=-1, child=False):
-        super().__init__(owner, access_code, atype, config, testing,
+        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
@@ -161,8 +161,8 @@ class Qiime2(Tool):
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.doc.doc_type.split('-')[1]), '.qzv')
-        viz_file = 'stats_{}_visual'.format(self.doc.doc_type.split('-')[1])
+        self.add_path('stats_{}_visual'.format(self.doc.analysis_type), '.qzv')
+        viz_file = 'stats_{}_visual'.format(self.doc.analysis_type)
         cmd = [
             'qiime metadata tabulate',
             '--m-input-file {}'.format(self.get_file('stats_table')),
@@ -476,11 +476,11 @@ class Qiime2(Tool):
             if 'demuxed' not in self.doc.reads_type:
                 self.demultiplex()
                 self.demux_visualize()
-            if 'deblur' in self.doc.doc_type:
+            if 'deblur' == self.doc.analysis_type:
                 self.deblur_filter()
                 self.deblur_denoise()
                 self.deblur_visualize()
-            elif 'dada2' in self.doc.doc_type:
+            elif 'dada2' == self.doc.analysis_type:
                 self.dada2()
                 if self.kill_stage == 1:
                     self.jobtext.append('exit 1')
@@ -491,6 +491,8 @@ class Qiime2(Tool):
     def setup_stage_2(self):
         self.set_stage(2)
         # Run these commands sequentially
+        print('files prior to stage 2 setup')
+        print(self.doc.files.keys())
         self.filter_by_metadata()
         self.alignment_mafft()
         self.alignment_mask()
