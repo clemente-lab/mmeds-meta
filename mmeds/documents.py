@@ -235,7 +235,7 @@ class MMEDSDoc(men.Document):
                        access_code=access_code,
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
-                       doc_type='analysis',
+                       doc_type=tool_type,
                        data_type=self.data_type,
                        analysis_type=analysis_type,
                        analysis_status='created',

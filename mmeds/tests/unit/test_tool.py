@@ -31,7 +31,7 @@ class ToolTests(TestCase):
                       fig.TEST_CODE)
         upload_metadata(test_setup)
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
-        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE, 'test-1', self.config, True, 2, True)
+        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE, 'test', '1', self.config, True, 2, True)
         self.dirs = [self.tool.doc.path]
 
     @classmethod

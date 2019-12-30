@@ -28,7 +28,7 @@ DAYS = 13
 def upload_metadata(args):
     (subject_metadata, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
-    if 'zip' in for_reads:
+    if for_reads is not None and 'zip' in for_reads:
         datafiles = {'data': for_reads,
                      'barcodes': barcodes}
     else:

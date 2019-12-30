@@ -15,6 +15,13 @@ from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
 from mmeds.tool import TestTool
 
+TOOLS = {
+    'qiime1': Qiime1,
+    'qiime2': Qiime2,
+    'sparcc': SparCC,
+    'test' :TestTool
+}
+
 
 def test(time):
     """ Simple function for analysis called during testing """
@@ -28,18 +35,11 @@ def spawn_analysis(tool_type, analysis_type, user, access_code, config_file, tes
         files, path = db.get_mongo_files(access_code)
     config = load_config(config_file, files['metadata'])
 
-    if 'qiime1' in atype:
-        tool = Qiime1(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
-    elif 'qiime2' in atype:
-        tool = Qiime2(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
-    elif 'sparcc' in atype:
-        tool = SparCC(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
-    elif 'test' in atype:
-        debug_log('test analysis')
-        time = float(atype.split('-')[-1])
-        tool = TestTool(user, access_code, atype, config, testing, time=time)
-    else:
-        raise AnalysisError('atype didnt match any')
+    try:
+        tool = TOOLS[tool_type](user, access_code, tool_type, analysis_type, config, testing,
+                                kill_stage=kill_stage)
+    except KeyError:
+        raise AnalysisError('Tool type did not match any')
 
     send_email(tool.doc.email, user, message='analysis_start', code=access_code,
                testing=testing, study=tool.doc.study_name)
@@ -59,6 +59,7 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
     with Database('.', owner=user, testing=testing) as db:
         ad = db.get_doc(code)
 
+    # TODO remove, handle in Tool
     # Create an entire new directory if restarting from the beginning
     if restart_stage < 1:
         code = ad.study_code
@@ -66,17 +67,11 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
             rmtree(ad.path)
 
     # Create the appropriate tool
-    if 'qiime1' in ad.doc_type:
-        tool = Qiime1(owner=ad.owner, access_code=code, atype=ad.doc_type, config=ad.config,
-                      testing=testing, analysis=run_analysis, restart_stage=restart_stage)
-    elif 'qiime2' in ad.doc_type:
-        tool = Qiime2(owner=ad.owner, access_code=code, atype=ad.doc_type, config=ad.config,
-                      testing=testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
-    elif 'test' in ad.doc_type:
-        debug_log('test analysis')
-        tool = TestTool(user, code, ad.doc_type, ad.config, testing, time=20)
-    else:
-        raise AnalysisError('atype didnt match any')
+    try:
+        tool = TOOLS[ad.doc_type](ad.owner, code, ad.doc_type, ad.analysis_type, ad.config, testing,
+                                  analysis=run_analysis, restart_stage=restart_stage)
+    except KeyError:
+        raise AnalysisError('Tool type did not match any')
     return tool
 
 
