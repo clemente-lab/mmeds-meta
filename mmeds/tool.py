@@ -63,6 +63,9 @@ class Tool(mp.Process):
         # Get info on the study/parent analysis from the database
         with Database(owner=self.owner, testing=self.testing) as db:
             parent_doc = db.get_metadata(self.parent_code)
+            debug_log('Generating doc from')
+            debug_log(parent_doc)
+            debug_log(parent_doc.files.keys())
             access_code = db.create_access_code(self.name)
             self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], atype, config, access_code)
 
@@ -147,6 +150,7 @@ class Tool(mp.Process):
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
+        debug_log('unzipping files for code {}'.format(self.doc.access_code))
         self.add_path('for_reads', '')
         command = 'unzip {} -d {}'.format(self.get_file('data'),
                                           self.get_file('for_reads'))

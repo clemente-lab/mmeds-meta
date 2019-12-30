@@ -28,9 +28,15 @@ DAYS = 13
 def upload_metadata(args):
     (subject_metadata, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
-    datafiles = {'for_reads': for_reads,
-                 'rev_reads': rev_reads,
-                 'barcodes': barcodes}
+    print('accuess code {}'.format(access_code))
+    if 'zip' in for_reads:
+        print('uploading demux')
+        datafiles = {'data': for_reads,
+                     'barcodes': barcodes}
+    else:
+        datafiles = {'for_reads': for_reads,
+                     'rev_reads': rev_reads,
+                     'barcodes': barcodes}
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
                          barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
@@ -42,7 +48,7 @@ def upload_metadata(args):
 def upload_otu(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
     datafiles = {'otu_table': otu_table}
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', None,
+    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', 'otu_table',
                          None, study_name, False, datafiles, False, True, access_code)
     p.start()
     p.join()
@@ -1121,6 +1127,7 @@ class MetaDataUploader(Process):
         # If an access_code is provided use that
 
         debug_log('Importing files with reads type: {}'.format(self.reads_type))
+        debug_log('Args are {}'.format(kwargs))
 
         # Create the document
         mdata = MMEDSDoc(created=datetime.utcnow(),

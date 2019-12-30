@@ -163,9 +163,12 @@ class MMEDSDoc(men.Document):
         new_dir.mkdir()
 
         files = {}
+        debug_log('Creating analysis {}'.format(name))
+
         for file_key in TOOL_FILES[tool_type]:
             # Create links to the files if they exist
             if self.files.get(file_key) is not None:
+                debug_log('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
                 (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
                 files[file_key] = new_dir / Path(self.files[file_key]).name
         """
