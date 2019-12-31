@@ -19,7 +19,7 @@ TOOLS = {
     'qiime1': Qiime1,
     'qiime2': Qiime2,
     'sparcc': SparCC,
-    'test' :TestTool
+    'test': TestTool
 }
 
 
@@ -215,6 +215,7 @@ class Watcher(Process):
                     if current_upload is None:
                         (ptype, study_name, subject_metadata, specimen_metadata,
                          username, reads_type, barcodes_type, datafiles, temporary, public) = process
+                        print('uploading data for user {}'.format(username))
                         # Start a process to handle loading the data
                         p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
                                              barcodes_type, study_name, temporary, datafiles, public, self.testing)

@@ -226,7 +226,7 @@ class MMEDSdownload(MMEDSbase):
     def download_study(self, study_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            study = db.get_study(study_code)
+            study = db.get_doc(study_code, check=False)
             analyses = db.get_all_analyses_from_study(study_code)
 
         page = self.format_html('download_selected_study',
@@ -260,7 +260,7 @@ class MMEDSdownload(MMEDSbase):
     def select_analysis(self, access_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_study_analysis(access_code)
+            analysis = db.get_doc(access_code, check=False)
 
         page = self.format_html('download_selected_analysis',
                                 title='Analysis: {}'.format(analysis.name),
@@ -562,8 +562,11 @@ class MMEDSanalysis(MMEDSbase):
         """
         try:
             self.check_upload(access_code)
+            print('config passed is {}'.format(config))
             if config.file is None:
                 config_path = DEFAULT_CONFIG.read_text()
+            elif isinstance(config, str):
+                config_path = config
             else:
                 config_path = create_local_copy(config.file, config.name)
 

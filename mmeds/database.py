@@ -528,13 +528,19 @@ class Database:
         """
         return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
-    def get_doc(self, access_code):
+    def get_doc(self, access_code, check):
         """
         Return the MMEDSDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        if check:
+            doc = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        else:
+            doc = MMEDSDoc.objects(access_code=access_code).first()
+        if doc is None:
+            raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
+        return doc
 
     @classmethod
     def get_all_studies(cls):
@@ -784,6 +790,7 @@ class MetaDataUploader(Process):
         })
 
         self.IDs = defaultdict(dict)
+        print('in uploader for {}'.format(owner))
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
