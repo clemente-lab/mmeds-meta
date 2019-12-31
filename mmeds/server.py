@@ -658,12 +658,13 @@ class MMEDSanalysis(MMEDSbase):
                                                  rev_reads=kwargs['rev_reads'],
                                                  for_barcodes=kwargs['for_barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
+                reads_type = 'paired_end'
             else:
                 barcodes_type = 'single_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
                                                  barcodes=kwargs['barcodes'])
-            reads_type = kwargs['reads_type']
+                reads_type = kwargs['reads_type']
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
             reads_type = None

@@ -74,21 +74,17 @@ class TestServer(helper.CPWebCase):
         self.download()
         self.convert()
         self.lab_download()
-        print('user download')
         self.user_download()
 
     def test_e_otu_upload(self):
-        return
         self.login()
         self.upload_otu()
 
     def test_f_dual_upload(self):
-        return
         self.login()
         self.upload_dualBarcode_metadata()
 
     def test_g_query(self):
-        return
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
