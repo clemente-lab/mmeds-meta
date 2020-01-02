@@ -601,6 +601,7 @@ class Tool(mp.Process):
                 if stage >= self.doc.restart_stage:
                     debug_log('{}: Greater than restart stage'.format(self.name))
                     for f in files:
+                        break
                         if not f == 'jobfile' and not f == 'errorlog':
                             deleted.append(f)
                             # Check if they exist
