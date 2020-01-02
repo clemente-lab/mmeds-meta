@@ -4,6 +4,7 @@ from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG, TOOL_FILES
 from mmeds.util import copy_metadata, log, camel_case, error_log, debug_log
+from mmeds.error import AnalysisError
 from ppretty import ppretty
 
 
@@ -163,60 +164,15 @@ class MMEDSDoc(men.Document):
         files = {}
         debug_log('Creating analysis {}'.format(name))
 
-        for file_key in TOOL_FILES[tool_type]:
-            # Create links to the files if they exist
-            if self.files.get(file_key) is not None:
-                debug_log('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
-                (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
-                files[file_key] = new_dir / Path(self.files[file_key]).name
-        """
-        if 'qiime' in doc_type:
-            # Handle demuxed sequences
-            if Path(self.files['for_reads']).suffix in ['.zip', '.tar']:
-                (new_dir / 'data.zip').symlink_to(self.files['for_reads'])
-                files['data'] = new_dir / 'data.zip'
-                data_type = self.reads_type + '_demuxed'
-            # Handle all sequences in one file
-            else:
-                if 'single' in self.barcodes_type:
-                    # Create links to the files
-                    (new_dir / 'barcodes.fastq.gz').symlink_to(self.files['barcodes'])
-                    (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
-
-                    # Add the links to the files dict for this analysis
-                    files['barcodes'] = new_dir / 'barcodes.fastq.gz'
-                    files['for_reads'] = new_dir / 'for_reads.fastq.gz'
-
-                    # Handle paired end sequences
-                    if self.reads_type == 'paired_end':
-                        # Create links to the files
-                        (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
-
-                        # Add the links to the files dict for this analysis
-                        files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
-                elif 'dual' in self.barcodes_type:
-                    # Create links to the files
-                    (new_dir / 'for_barcodes.fastq.gz').symlink_to(self.files['for_barcodes'])
-                    (new_dir / 'for_reads.fastq.gz').symlink_to(self.files['for_reads'])
-                    (new_dir / 'rev_barcodes.fastq.gz').symlink_to(self.files['rev_barcodes'])
-                    (new_dir / 'rev_reads.fastq.gz').symlink_to(self.files['rev_reads'])
-
-                    # Add the links to the files dict for this analysis
-                    files['for_barcodes'] = new_dir / 'for_barcodes.fastq.gz'
-                    files['for_reads'] = new_dir / 'for_reads.fastq.gz'
-                    files['rev_barcodes'] = new_dir / 'rev_barcodes.fastq.gz'
-                    files['rev_reads'] = new_dir / 'rev_reads.fastq.gz'
-
-                data_type = self.reads_type
-        elif 'sparcc' in doc_type:
-            data_type = 'otu_table'
-            (new_dir / 'otu_table.tsv').symlink_to(self.files['otu_table'])
-            files['otu_table'] = new_dir / 'otu_table.tsv'
-        elif 'test' in doc_type:
-            data_type = 'test_data'
-        else:
-            raise AnalysisError('Invalid type for analysis {}'.format(doc_type))
-        """
+        try:
+            for file_key in TOOL_FILES[tool_type]:
+                # Create links to the files if they exist
+                if self.files.get(file_key) is not None:
+                    debug_log('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
+                    (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
+                    files[file_key] = new_dir / Path(self.files[file_key]).name
+        except KeyError:
+            raise AnalysisError('Invalid type for analysis {}'.format(tool_type))
 
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'

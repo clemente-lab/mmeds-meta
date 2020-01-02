@@ -528,7 +528,7 @@ class Database:
         """
         return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
-    def get_doc(self, access_code, check):
+    def get_doc(self, access_code, check=True):
         """
         Return the MMEDSDoc object.
         This object should be treated as read only.

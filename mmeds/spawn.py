@@ -57,7 +57,7 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
 def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
-        ad = db.get_doc(code)
+        ad = db.get_doc(code, check=True)
 
     # TODO remove, handle in Tool
     # Create an entire new directory if restarting from the beginning
