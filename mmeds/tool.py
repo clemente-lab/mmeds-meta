@@ -39,6 +39,8 @@ class Tool(mp.Process):
         :threads: An int. The number of threads to use during analysis, is overwritten if testing==True.
         :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
         :child: A boolean. If True this Tool object is the child of another tool.
+        :access_code: A string. If this analysis is being restarted from a previous analysis then this
+            will be the access_code for the previous document
         """
         super().__init__()
         debug_log('initilize {}'.format(self.name))
@@ -60,16 +62,18 @@ class Tool(mp.Process):
         else:
             self.num_jobs = min([threads, mp.cpu_count()])
 
-
         # Get info on the study/parent analysis from the database
         with Database(owner=self.owner, testing=self.testing) as db:
-            parent_doc = db.get_metadata(self.parent_code)
-            debug_log('Generating doc from')
-            debug_log(parent_doc)
-            debug_log(parent_doc.files.keys())
-            access_code = db.create_access_code(self.name)
-            self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], tool_type,
-                                                    analysis_type, config, access_code)
+            if restart_stage == 0:
+                parent_doc = db.get_doc(self.parent_code)
+                debug_log('Generating doc from')
+                debug_log(parent_doc)
+                debug_log(parent_doc.files.keys())
+                access_code = db.create_access_code(self.name)
+                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], tool_type,
+                                                        analysis_type, config, access_code)
+            else:
+                self.doc = db.get_doc(access_code)
 
         self.path = Path(self.doc.path)
 
@@ -118,6 +122,7 @@ class Tool(mp.Process):
             file_key = key
         else:
             file_key = name
+        debug_log('adding key {}'.format(file_key))
 
         # The provided 'name' may be a full path, in which case adding the tool path is unnecessary
         if full_path:

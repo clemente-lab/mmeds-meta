@@ -56,8 +56,8 @@ class Qiime2(Tool):
                 old_file.unlink()
 
             cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            if 'single' in self.doc.reads_type:
-                #Link the barcodes
+            if 'single_end' == self.doc.reads_type:
+                # Link the barcodes
                 (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
                 # Create links to the data in the qiime2 import directory
@@ -67,14 +67,17 @@ class Qiime2(Tool):
                 command = cmd.format('EMPSingleEndSequences',
                                      self.get_file('working_dir'),
                                      self.get_file('working_file'))
-            elif 'paired' in self.doc.reads_type:
+            elif 'paired_end' == self.doc.reads_type:
                 # Create links to the data in the qiime2 import directory
-                (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
-                (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
+                (self.get_file('working_dir', True) /
+                 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
+                (self.get_file('working_dir', True) /
+                 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
 
-                if 'single' in self.doc.barcodes_type:
+                if 'single' == self.doc.barcodes_type:
                     # Link the barcodes
-                    (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
+                    (self.get_file('working_dir', True) /
+                     'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
                     # Run the script
                     command = cmd.format('EMPPairedEndSequences',
@@ -82,8 +85,10 @@ class Qiime2(Tool):
                                          self.get_file('working_file'))
                 else:
                     # Link the barcodes
-                    (self.get_file('working_dir', True) / 'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
-                    (self.get_file('working_dir', True) / 'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
+                    (self.get_file('working_dir', True) /
+                     'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
+                    (self.get_file('working_dir', True) /
+                     'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
 
                     # Run the script
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
@@ -99,7 +104,7 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-        if 'single' in self.doc.barcodes_type:
+        if 'single' == self.doc.barcodes_type:
             cmd = [
                 # Either emp-single or emp-paired depending on the reads_type
                 'qiime demux emp-{}'.format(self.doc.reads_type.split('_')[0]),
@@ -110,9 +115,11 @@ class Qiime2(Tool):
                 '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
             ]
             # Reverse compliment the barcodes in the mapping file if using paired reads
-            if 'paired' in self.doc.reads_type:
+            if 'paired_end' == self.doc.reads_type:
                 cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         else:
+            self.add_path('unmatched_demuxed', '.qza')
+            self.add_path('demux_log', '.txt')
             cmd = [
                 'qiime cutadapt demux-paired',
                 '--i-seqs {}'.format(self.get_file('working_file')),
@@ -121,9 +128,9 @@ class Qiime2(Tool):
                 '--m-reverse-barcodes-file {}'.format(self.get_file('mapping')),
                 '--m-reverse-barcodes-column {}'.format('BarcodeSequenceR'),
                 '--o-per-sample-sequences {}'.format(self.get_file('demux_file')),
-                '--o-untrimmed-sequences unmatched_demuxed_03.qza',
+                '--o-untrimmed-sequences {}'.format(self.get_file('unmatched_demuxed')),
                 '--p-error-rate 0.3',
-                '--verbose &> demux_03_log.txt'
+                '--verbose &> {}'.format(self.get_file('demux_log'))
             ]
 
         self.jobtext.append(' '.join(cmd))

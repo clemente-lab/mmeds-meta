@@ -153,10 +153,11 @@ class MMEDSDoc(men.Document):
 
         # Create a new directory to perform the analysis in
         run_id = 0
-        new_dir = Path(self.path) / '{}_{}'.format(self.name, run_id)
+
+        new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
         while new_dir.is_dir():
             run_id += 1
-            new_dir = Path(self.path) / '{}_{}'.format(self.name, run_id)
+            new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
 
         new_dir = new_dir.resolve()
         new_dir.mkdir()
