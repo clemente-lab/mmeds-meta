@@ -14,7 +14,7 @@ from mmeds.util import (debug_log, info_log, create_qiime_from_mmeds, write_conf
                         load_metadata, write_metadata, camel_case,
                         send_email)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, TOOL_FILES
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 
 import multiprocessing as mp
 
@@ -73,12 +73,12 @@ class Tool(mp.Process):
                 self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], tool_type,
                                                         analysis_type, config, access_code)
             else:
-                self.doc = db.get_doc(access_code)
+                self.doc = db.get_doc(self.parent_code)
 
         self.path = Path(self.doc.path)
 
         debug_log('Doc creation date: {}'.format(self.doc.created))
-        self.access_code = access_code
+        self.access_code = self.doc.access_code
         self.path = Path(self.doc.path)
         self.add_path(self.path, key='path')
         write_config(self.doc.config, self.path)
@@ -601,7 +601,6 @@ class Tool(mp.Process):
                 if stage >= self.doc.restart_stage:
                     debug_log('{}: Greater than restart stage'.format(self.name))
                     for f in files:
-                        break
                         if not f == 'jobfile' and not f == 'errorlog':
                             deleted.append(f)
                             # Check if they exist

@@ -85,7 +85,7 @@ class AnalysisTests(TestCase):
         print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2_with_restarts(self):
-        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), -1))
+        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), 1))
 
         # Get the info on the analysis
         analysis = self.pipe.recv()
@@ -93,7 +93,6 @@ class AnalysisTests(TestCase):
 
         # Check it failed
         self.assertEqual(self.pipe.recv(), 1)
-        return
 
         # Test restarting from each checkpoint
         for i in range(1, 5):
