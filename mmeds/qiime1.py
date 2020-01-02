@@ -10,7 +10,7 @@ class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
-                 analysis=True, restart_stage=0, child=False):
+                 analysis=True, restart_stage=0, child=False, kill_stage=-1):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)

@@ -53,7 +53,7 @@ class AnalysisTests(TestCase):
     def test_qiime1_with_children(self):
         print('Running qiime1 tests')
         log('after data modification')
-        p = spawn.spawn_analysis('qiime2', 'dada2', fig.TEST_USER, self.code,
+        p = spawn.spawn_analysis('qiime1', 'closed', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG_SUB).read_text(),
                                  self.testing)
         #$self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG_SUB), 1))
