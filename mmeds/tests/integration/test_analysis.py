@@ -17,6 +17,7 @@ class AnalysisTests(TestCase):
 
     @classmethod
     def setUpClass(self):
+        print('Setting up analysis tests')
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=self.testing)
         self.code = 'test_analysis'
         self.files = None
@@ -30,7 +31,7 @@ class AnalysisTests(TestCase):
         self.watcher.start()
         test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
         self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER, 'single_end', test_files, False, False))
+                    fig.TEST_USER, 'single_end', 'single', test_files, False, False))
 
         # Assert upload has started
         upload = self.pipe.recv()
@@ -50,16 +51,21 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1_with_children(self):
-        return
-        log("in test_qiime1")
-        self.handle_data_upload()
-        log('after data upload')
-        self.handle_modify_data()
+        print('Running qiime1 tests')
         log('after data modification')
-        p = spawn.spawn_analysis('qiime2-dada2', fig.TEST_USER, self.code,
+        p = spawn.spawn_analysis('qiime2', 'dada2', fig.TEST_USER, self.code,
                                  Path(fig.TEST_CONFIG_SUB).read_text(),
                                  self.testing)
+        #$self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG_SUB), 1))
         print('spawned test process {}:{}'.format(p.name, p.pid))
+
+        # Get the info on the analysis
+        analysis = self.pipe.recv()
+        print(analysis)
+
+        code = analysis['analysis_code']
+        # Check it failed
+        self.assertEqual(self.pipe.recv(), 1)
         while p.is_alive():
             print('{}: Waiting on process: {}:{}'.format(datetime.now(), p.name, p.pid))
             print('{}, {}'.format(p.is_alive(), p.exitcode))
@@ -78,8 +84,9 @@ class AnalysisTests(TestCase):
         print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2_with_restarts(self):
-
-        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2-dada2', Path(fig.TEST_CONFIG), 1))
+        return
+        print('running qiime2 tests')
+        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), 1))
 
         # Get the info on the analysis
         analysis = self.pipe.recv()
