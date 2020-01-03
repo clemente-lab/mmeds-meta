@@ -23,7 +23,6 @@ class ToolTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
         for new_dir in self.dirs:
             rmtree(new_dir)
 
@@ -64,6 +63,6 @@ class ToolTests(TestCase):
         self.tool.update_doc(files=files)
 
     def test_update_doc(self):
-        self.assertEqual(self.tool.doc.study_name, 'Test_Tool')
+        self.assertEqual(self.tool.doc.study_name, 'Test_Single')
         self.tool.update_doc(study_name='Test_Update')
         self.assertEqual(self.tool.doc.study_name, 'Test_Update')

@@ -19,25 +19,7 @@ class QiimeTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.TEST_CODE = 'qiimeTest'
-        self.TEST_CODE_PAIRED = 'qiimeTestPaired'
-        self.TEST_CODE_DEMUX = 'qiimeTestDemuxed'
-        self.TEST_CODE_OTU = 'qiimeTestOTU'
-
-        test_otu = (fig.TEST_SUBJECT,
-                    fig.TEST_SPECIMEN,
-                    fig.TEST_DIR,
-                    fig.TEST_USER,
-                    'Test_SparCC',
-                    fig.TEST_OTU,
-                    self.TEST_CODE_OTU)
-        assert 0 == upload_otu(test_otu)
-        # Ensure the uploads completed correctly
         self.config = load_config(None, fig.TEST_METADATA_SHORT)
-
-    @classmethod
-    def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=self.testing)
 
     def run_qiime(self, code, atype, data_type, Qiime):
         qiime = Qiime(fig.TEST_USER, code, atype, self.config, testing=self.testing, analysis=False)
@@ -48,7 +30,7 @@ class QiimeTests(TestCase):
         rmtree(qiime.path)
 
     def test_sparcc_setup_analysis(self):
-        self.run_qiime(self.TEST_CODE_OTU, 'sparcc', 'otu_table', SparCC)
+        self.run_qiime(fig.TEST_CODE_OTU, 'sparcc', 'otu_table', SparCC)
 
     def test_qiime1_setup_analysis(self):
         for atype in ['qiime1-open', 'qiime1-closed']:

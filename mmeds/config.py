@@ -110,6 +110,7 @@ TEST_USER_0 = 'testuser0'
 TEST_CODE = 'singlereads'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
+TEST_CODE_OTU = 'otutable'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
