@@ -20,21 +20,6 @@ class DocTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Set up tests """
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-
-        test_setup = (fig.TEST_SUBJECT,
-                      fig.TEST_SPECIMEN,
-                      fig.TEST_DIR,
-                      fig.TEST_USER,
-                      'Test_Document',
-                      'single_end',
-                      'single_barcodes',
-                      fig.TEST_READS,
-                      None,
-                      fig.TEST_BARCODES,
-                      fig.TEST_CODE)
-        upload_metadata(test_setup)
-
         with Database(user='root', testing=TESTING) as db:
             self.test_doc = db.get_docs('study', fig.TEST_CODE).first()
 
@@ -42,10 +27,12 @@ class DocTests(TestCase):
         self.test_code = fig.TEST_CODE
         self.owner = fig.TEST_USER  # 'test_owner'
 
+    '''
     @classmethod
     def tearDownClass(self):
         """ Clean up """
         remove_user(fig.TEST_USER, testing=True)
+    '''
 
     def test_creation(self):
         """"""

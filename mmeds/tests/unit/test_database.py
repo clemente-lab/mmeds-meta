@@ -40,35 +40,6 @@ class MetaDataUploaderTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Load data that is to be used by multiple test cases """
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
-        add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
-
-        test_setups = [(fig.TEST_SUBJECT,
-                        fig.TEST_SPECIMEN,
-                        fig.TEST_DIR,
-                        fig.TEST_USER,
-                        'Test_Database',
-                        'single_end',
-                        'single_barcodes',
-                        None,
-                        None,
-                        None,
-                        fig.TEST_CODE),
-                       (fig.TEST_SUBJECT_ALT,
-                        fig.TEST_SPECIMEN_ALT,
-                        fig.TEST_DIR_0,
-                        fig.TEST_USER_0,
-                        'Test_Database_0',
-                        'single_end',
-                        'single_barcodes',
-                        None,
-                        None,
-                        None,
-                        fig.TEST_CODE + '0')]
-
-        for setup in test_setups:
-            upload_metadata(setup)
-
         self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA))
         self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
@@ -89,8 +60,6 @@ class MetaDataUploaderTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=testing)
-        remove_user(fig.TEST_USER_0, testing=testing)
         self.db.close()
 
     ################
