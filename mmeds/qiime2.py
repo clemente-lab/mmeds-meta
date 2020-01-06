@@ -532,9 +532,9 @@ class Qiime2(Tool):
             # For the requested taxanomic levels
             for level in self.doc.config['taxa_levels']:
                 self.group_significance(col, level)
+        self.jobtext.append('wait')
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')
-        self.jobtext.append('wait')
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """

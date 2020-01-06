@@ -108,12 +108,11 @@ class AnalysisTests(TestCase):
         for i in range(1, 5):
             self.q.put(('restart', fig.TEST_USER, code, i, i + 1))
             analysis = self.pipe.recv()
-            print(analysis)
             exitcode = self.pipe.recv()
             if i < 4:
                 self.assertEqual(exitcode, 1)
 
         self.assertEqual(exitcode, 0)
-        self.assertTrue((Path(self.path) /
-                         'Qiime2_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
-                                                                                      'qiime2')).is_file())
+        self.assertTrue((Path(analysis['path']) /
+                         'summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
+                                                                             'qiime2')).is_file())

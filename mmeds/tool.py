@@ -99,6 +99,7 @@ class Tool(mp.Process):
             'analysis_code': self.doc.access_code,
             'type': self.analysis,
             'pid': self.pid,
+            'path': self.doc.path,
             'name': self.name,
             'is_alive': self.is_alive()
         }
