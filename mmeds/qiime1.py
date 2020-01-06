@@ -1,7 +1,7 @@
 from subprocess import run
 
 from mmeds.config import DATABASE_DIR
-from mmeds.util import log, setup_environment, debug_log
+from mmeds.util import debug_log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tool import Tool
 
@@ -136,24 +136,24 @@ class Qiime1(Tool):
             output = run(cmd, check=True, env=new_env)
 
             out = output.stdout.decode('utf-8')
-            log('Output: {}'.format(out))
+            debug_log('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
             # Count the sequences in the output of the diversity analysis
             with open(self.get_file('diversity_output', True) / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
-                log('Check lines: {}'.format(lines))
+                debug_log('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
 
             # Check that the counts are approximately equal
             if abs(initial_count - final_count) > 0.30 * (initial_count + final_count):
                 message = 'Large difference ({}) between initial and final counts'
-                log('Raise analysis error')
+                debug_log('Raise analysis error')
                 raise AnalysisError(message.format(initial_count - final_count))
-            log('Sanity check completed successfully')
+            debug_log('Sanity check completed successfully')
 
         except ValueError as e:
-            log(str(e))
+            debug_log(str(e))
             raise AnalysisError(e.args[0])
 
     def setup_analysis(self):

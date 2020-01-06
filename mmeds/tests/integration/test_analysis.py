@@ -50,6 +50,12 @@ class AnalysisTests(TestCase):
         summarize_qiime(tool.path, tool)
         self.assertTrue((tool.path / 'summary').is_dir())
 
+    def test_qiime1(self):
+        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG), 1))
+        analysis = self.pipe.recv()
+        # Check for success
+        self.assertEqual(self.pipe.recv(), 0)
+
     def test_qiime1_with_children(self):
         return
         print('Running qiime1 tests')
@@ -95,6 +101,7 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime2_with_restarts(self):
+        return
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), 1))
 
         # Get the info on the analysis
