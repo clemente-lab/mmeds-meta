@@ -25,6 +25,9 @@ def summarize_qiime(summary_path, tool):
         else:
             study_name = '{}-{}-{}'.format(parts[1], parts[0], tool)
 
+    if files.get('summary') is None:
+        files['summary'] = path / 'summary'
+
     # Create the summary directory
     if not files['summary'].is_dir():
         files['summary'].mkdir()
@@ -36,6 +39,7 @@ def summarize_qiime(summary_path, tool):
     # Get the mapping file
     copy(files['mapping'], files['summary'])
     copy(files['metadata'], files['summary'] / 'metadata.tsv')
+    print('WHy is not this being usedd!!!?????')
     copy(path / 'config_file.yaml', files['summary'] / 'config_file.yaml')
 
     # Get the template
