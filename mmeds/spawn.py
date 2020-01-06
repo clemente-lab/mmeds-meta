@@ -69,7 +69,7 @@ def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_anal
     # Create the appropriate tool
     try:
         tool = TOOLS[ad.doc_type](ad.owner, code, ad.doc_type, ad.analysis_type, ad.config, testing,
-                                  analysis=run_analysis, restart_stage=restart_stage)
+                                  analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
     return tool

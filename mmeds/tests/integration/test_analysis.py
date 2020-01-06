@@ -85,6 +85,7 @@ class AnalysisTests(TestCase):
         print('Still exists {}'.format(p.path.is_dir()))
 
     def test_qiime2(self):
+        return
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), -1))
         # Get the info on the analysis
         analysis = self.pipe.recv()
@@ -94,7 +95,6 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime2_with_restarts(self):
-        return
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), 1))
 
         # Get the info on the analysis
@@ -112,10 +112,6 @@ class AnalysisTests(TestCase):
             exitcode = self.pipe.recv()
             if i < 4:
                 self.assertEqual(exitcode, 1)
-
-        analysis = self.pipe.recv()
-        print(analysis)
-        exitcode = self.pipe.recv()
 
         self.assertEqual(exitcode, 0)
         self.assertTrue((Path(self.path) /
