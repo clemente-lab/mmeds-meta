@@ -14,6 +14,8 @@ class Qiime1(Tool):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
+        print('initialzing Qiime1')
+        print('I am a child? {}'.format(child))
         self.jobtext.append(load)
         self.module = load
         if testing:

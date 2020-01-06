@@ -469,6 +469,7 @@ class Tool(mp.Process):
         """ Create child analysis processes """
         mdf = load_metadata(self.get_file('metadata', True))
 
+        print('in create children')
         # For each column selected...
         for col in self.doc.config['sub_analysis']:
             debug_log('Create child for col {}'.format(col))

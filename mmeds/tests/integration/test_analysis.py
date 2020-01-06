@@ -71,9 +71,10 @@ class AnalysisTests(TestCase):
             print('{}, {}'.format(p.is_alive(), p.exitcode))
             sleep(20)
         log('analysis finished')
-        self.assertTrue((Path(self.path) /
-                         'Qiime2_0/summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
-                                                                                      'qiime2')).is_file())
+        self.assertEqual(p.exitcode, 0)
+        self.assertTrue((Path(p.doc.path) /
+                         'summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
+                                                                             'qiime1')).is_file())
         for child in p.children:
             while child.is_alive():
                 print('{}: Waiting on process: {}'.format(datetime.now(), child.name))

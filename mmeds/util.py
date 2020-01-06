@@ -131,6 +131,8 @@ def decorate_all_methods(decorator):
 
 def load_config(config_file, metadata, ignore_bad_cols=False):
     """ Read the provided config file to determine settings for the analysis. """
+    print('config file is')
+    print(config_file)
     config = {}
     # If a Path was passed (as is the case during testing)
     if isinstance(config_file, Path):
