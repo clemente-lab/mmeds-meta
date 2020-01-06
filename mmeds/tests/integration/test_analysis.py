@@ -51,13 +51,14 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1(self):
+        return
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG), 1))
         analysis = self.pipe.recv()
+
         # Check for success
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime1_with_children(self):
-        return
         print('Running qiime1 tests')
         log('after data modification')
         p = spawn.spawn_analysis('qiime1', 'closed', fig.TEST_USER, self.code,
@@ -65,14 +66,6 @@ class AnalysisTests(TestCase):
                                  self.testing)
         #$self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG_SUB), 1))
         print('spawned test process {}:{}'.format(p.name, p.pid))
-
-        # Get the info on the analysis
-        analysis = self.pipe.recv()
-        print(analysis)
-
-        code = analysis['analysis_code']
-        # Check it failed
-        self.assertEqual(self.pipe.recv(), 1)
         while p.is_alive():
             print('{}: Waiting on process: {}:{}'.format(datetime.now(), p.name, p.pid))
             print('{}, {}'.format(p.is_alive(), p.exitcode))
