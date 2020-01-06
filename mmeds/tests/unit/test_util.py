@@ -12,7 +12,7 @@ import hashlib as hl
 import os
 
 
-class DocTests(TestCase):
+class UtilTests(TestCase):
     def test_is_numeric(self):
         assert util.is_numeric('45') is True
         assert util.is_numeric('4.5') is True

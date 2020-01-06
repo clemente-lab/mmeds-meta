@@ -14,7 +14,7 @@ import mongoengine as men
 TESTING = True
 
 
-class DocTests(TestCase):
+class DocumentsTests(TestCase):
     """ Tests of top-level functions """
 
     @classmethod

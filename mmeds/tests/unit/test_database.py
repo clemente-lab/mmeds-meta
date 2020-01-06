@@ -34,7 +34,7 @@ testing = True
 user = 'root'
 
 
-class MetaDataUploaderTests(TestCase):
+class DatabaseTests(TestCase):
     """ Tests of top-level functions """
 
     @classmethod

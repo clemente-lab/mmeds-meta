@@ -1,5 +1,6 @@
 from subprocess import run
 import sys
+import os
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.database import upload_metadata, upload_otu
@@ -73,23 +74,26 @@ if ('database' in tests) or ('documents' in tests) or ('tool' in tests) or ('too
                            None,
                            fig.TEST_BARCODES,
                            fig.TEST_CODE_DEMUX))
+        test_otu = (fig.TEST_SUBJECT,
+                    fig.TEST_SPECIMEN,
+                    fig.TEST_DIR,
+                    fig.TEST_USER,
+                    'Test_SparCC',
+                    fig.TEST_OTU,
+                    fig.TEST_CODE_OTU)
+        assert 0 == upload_otu(test_otu)
 for setup in test_setup:
     assert 0 == upload_metadata(setup)
-if 'tools' in tests:
-    test_otu = (fig.TEST_SUBJECT,
-                fig.TEST_SPECIMEN,
-                fig.TEST_DIR,
-                fig.TEST_USER,
-                'Test_SparCC',
-                fig.TEST_OTU,
-                fig.TEST_CODE_OTU)
-    assert 0 == upload_otu(test_otu)
 
+test_class = []
 for test in tests:
-    run(['pytest', 'test_{}.py'.format(test)])
+    test_class.append(test.capitalize() + 'Test')
+test_directory = os.path.dirname(os.path.abspath(__file__))
+run(['pytest', test_directory, '-k', ' or '.join(test_class)])
 
 #remove users when done
 if users_added >= 1:
     remove_user(fig.TEST_USER, testing = testing)
     if users_added == 2:
         remove_user(fig.TEST_USER_0, testing = testing)
+
