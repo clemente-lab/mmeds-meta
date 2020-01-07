@@ -46,8 +46,7 @@ install:
     - mysql -u root < setup.sql
     - module avail
 script:
-    - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
-        -s ./mmeds/tests/unit -x --durations=0
+    - travis_wait 30 python ./mmeds/tests/server/test.py log
     - bash <(curl -s https://codecov.io/bash) -cF unit
     - tail -n 50 ~/mmeds_server_data/mmeds_log.txt
     - travis_wait 30 pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
