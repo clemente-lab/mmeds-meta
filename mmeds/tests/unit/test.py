@@ -1,4 +1,5 @@
 from subprocess import run
+from pathlib import Path
 import sys
 import os
 
@@ -21,8 +22,7 @@ log = False
 
 def main():
     global log
-    if 'log' in sys.argv:
-        log = True
+    log = 'log' in sys.argv
     tests = set_tests(sys.argv)
     users_added = add_users(tests)
     setup_tests(tests)
@@ -42,11 +42,12 @@ def add_users(tests):
     # add users as needed
     # users_added keeps track of the number of users added so they can all be removed at the end
     users_added = 0 
-    if ('database' in tests) or ('documents' in tests) or ('spawn' in tests) or ('tool' in tests) or ('tools' in tests):
+    if 'database' in tests or 'documents' in tests or 'spawn' in tests or\
+            'tool' in tests or 'tools' in tests:
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing = testing)
         users_added += 1
     # database and spawn tests require a second user
-    if ('database' in tests) or ('spawn' in tests):
+    if 'database' in tests or 'spawn' in tests:
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing = testing)
         users_added += 1
     return users_added
@@ -54,7 +55,7 @@ def add_users(tests):
 def setup_tests(tests):
     # add test setups as needed:
     test_setup = []
-    if ('documents' in tests) or ('tool' in tests) or ('tools' in tests):
+    if 'documents' in tests or 'tool' in tests or 'tools' in tests:
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            fig.TEST_SPECIMEN_SHORT,
                            fig.TEST_DIR,
@@ -127,7 +128,7 @@ def run_tests(tests):
     test_class = []
     for test in tests:
         test_class.append(test.capitalize() + 'Test')
-    test_directory = os.path.dirname(os.path.abspath(__file__))
+    test_directory = Path(__file__).parent.resolve()
     if not log:
         run(['pytest', '--cov=mmeds', '-W', 'ignore::DeprecationWarning', '-W', 'ignore::FutureWarning', test_directory, '-k', ' or '.join(test_class), '--durations=0'])
     else:
@@ -140,5 +141,5 @@ def remove_users(users_added):
         if users_added == 2:
             remove_user(fig.TEST_USER_0, testing = testing)
 
-
-main()
+if __name__ == '__main__':
+    main()
