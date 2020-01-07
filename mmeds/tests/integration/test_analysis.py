@@ -32,7 +32,7 @@ class AnalysisTests(TestCase):
         self.watcher = spawn.Watcher(self.q, pipe_ends[1], mp.current_process(), self.testing)
         self.watcher.start()
         test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
-        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, fig.TEST_SPECIMEN_SHORT,
+        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT, fig.TEST_SPECIMEN,
                     fig.TEST_USER, 'single_end', 'single', test_files, False, False))
 
         # Assert upload has started

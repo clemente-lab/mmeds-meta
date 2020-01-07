@@ -472,7 +472,6 @@ class Tool(mp.Process):
         """ Create child analysis processes """
         mdf = load_metadata(self.get_file('metadata', True))
 
-        print('in create children')
         # For each column selected...
         for col in self.doc.config['sub_analysis']:
             logger.debug('Create child for col {}'.format(col))
@@ -490,7 +489,9 @@ class Tool(mp.Process):
     def start_children(self):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
         for child in self.children:
-            logger.debug('I am {}, this tool is {}, my childs parent is {}'.format(os.getpid(), self.pid, child._parent_pid))
+            logger.debug('I am {}, this tool is {}, my childs parent is {}'.format(os.getpid(),
+                                                                                   self.pid,
+                                                                                   child._parent_pid))
             child.start()
 
     def wait_on_children(self):
@@ -552,11 +553,8 @@ class Tool(mp.Process):
             self.write_file_locations()
 
             logger.debug(self.doc.config['sub_analysis'])
-            print('CHecked sub analysiss')
-            print(self.doc.config['sub_analysis'])
             # Start the sub analyses if so configured
             if not self.doc.config['sub_analysis'] == 'None':
-                print('ypypypypyyoyoyoyoyoyoyoyoyoyoyoyoyoyoyyoy')
                 logger.debug('I am not a sub analysis {}'.format(self.name))
                 self.create_children()
                 self.start_children()

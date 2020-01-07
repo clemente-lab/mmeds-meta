@@ -6,7 +6,6 @@ sampling_depth: 1114
 # Example:
 # metadata: all
 metadata:
-    - Biome
     - SpecimenBodySite
     - Nationality
 # The levels of taxa summary to include in the final summary of the analysis
