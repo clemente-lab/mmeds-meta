@@ -21,10 +21,10 @@ class DocumentsTests(TestCase):
     def setUpClass(self):
         """ Set up tests """
         with Database(user='root', testing=TESTING) as db:
-            self.test_doc = db.get_docs('study', fig.TEST_CODE).first()
+            self.test_doc = db.get_docs('study', fig.TEST_CODE_SHORT).first()
 
         self.connection = men.connect('test', alias='test_documents.py')
-        self.test_code = fig.TEST_CODE
+        self.test_code = fig.TEST_CODE_SHORT
         self.owner = fig.TEST_USER  # 'test_owner'
 
     def test_creation(self):

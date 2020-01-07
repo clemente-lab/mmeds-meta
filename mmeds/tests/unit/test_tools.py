@@ -34,21 +34,21 @@ class ToolsTests(TestCase):
 
     def test_qiime1_setup_analysis(self):
         for atype in ['qiime1-open', 'qiime1-closed']:
-            for code in [('single_end', fig.TEST_CODE),
+            for code in [('single_end', fig.TEST_CODE_SHORT),
                          ('paired_end', fig.TEST_CODE_PAIRED),
                          ('single_end_demuxed', fig.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime1)
 
     def test_qiime2_setup_analysis(self):
         for atype in ['qiime2-dada2', 'qiime2-deblur']:
-            for code in [('single_end', fig.TEST_CODE),
+            for code in [('single_end', fig.TEST_CODE_SHORT),
                          ('paired_end', fig.TEST_CODE_PAIRED),
                          ('single_end_demuxed', fig.TEST_CODE_DEMUX)]:
                 self.run_qiime(code[1], atype, code[0], Qiime2)
 
     def test_qiime2_child_setup_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE, 'qiime2-dada2', config, True, analysis=False)
+        q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2-dada2', config, True, analysis=False)
         q2.setup_analysis()
         q2.create_children()
         for child in q2.children:

@@ -18,7 +18,7 @@ class ToolTests(TestCase):
     @classmethod
     def setUpClass(self):
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
-        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE, 'test-1', self.config, True, 2, True)
+        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE_SHORT, 'test-1', self.config, True, 2, True)
         self.dirs = [self.tool.doc.path]
 
     @classmethod
@@ -63,6 +63,6 @@ class ToolTests(TestCase):
         self.tool.update_doc(files=files)
 
     def test_update_doc(self):
-        self.assertEqual(self.tool.doc.study_name, 'Test_Single')
+        self.assertEqual(self.tool.doc.study_name, 'Test_Single_Short')
         self.tool.update_doc(study_name='Test_Update')
         self.assertEqual(self.tool.doc.study_name, 'Test_Update')
