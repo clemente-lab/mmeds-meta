@@ -7,13 +7,16 @@ from datetime import datetime
 import mmeds.config as fig
 import yaml
 
-from mmeds.util import (send_email, create_local_copy, debug_log, load_config, error_log)
+from mmeds.util import (send_email, create_local_copy, load_config)
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
 from mmeds.tool import TestTool
+from mmeds.log import MMEDSLog
+
+logger = MMEDSLog('debug').logger
 
 TOOLS = {
     'qiime1': Qiime1,
@@ -108,7 +111,6 @@ class Watcher(Process):
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
-        error_log('Add process {}, type: {}'.format(process, ptype))
         self.running_processes.append(process)
         self.write_running_processes()
 
@@ -179,8 +181,8 @@ class Watcher(Process):
                 # Otherwise get the queued item
                 process = self.q.get()
                 # Retrieve the info
-                debug_log('Got process from queue')
-                debug_log(process)
+                logger.debug('Got process from queue')
+                logger.debug(process)
 
                 # If it's an analysis
                 if process[0] == 'analysis':

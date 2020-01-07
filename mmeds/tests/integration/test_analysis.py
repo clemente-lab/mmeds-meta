@@ -1,7 +1,9 @@
 from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.summary import summarize_qiime
-from mmeds.util import log
+from mmeds.util import log, load_config
+from mmeds.database import Database
+from mmeds.qiime1 import Qiime1
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
@@ -61,10 +63,13 @@ class AnalysisTests(TestCase):
     def test_qiime1_with_children(self):
         print('Running qiime1 tests')
         log('after data modification')
-        p = spawn.spawn_analysis('qiime1', 'closed', fig.TEST_USER, self.code,
-                                 Path(fig.TEST_CONFIG_SUB).read_text(),
-                                 self.testing)
-        #$self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG_SUB), 1))
+        with Database('.', owner=fig.TEST_USER, testing=self.testing) as db:
+            files, path = db.get_mongo_files(self.code)
+        config = load_config(Path(fig.TEST_CONFIG_SUB), files['metadata'])
+
+        p = Qiime1(fig.TEST_USER, self.code, 'qiime1', 'closed', config, self.testing)
+        p.start()
+
         print('spawned test process {}:{}'.format(p.name, p.pid))
         while p.is_alive():
             print('{}: Waiting on process: {}:{}'.format(datetime.now(), p.name, p.pid))

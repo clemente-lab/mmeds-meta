@@ -21,6 +21,8 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
 
+logger = MMEDSLog('debug').logger
+
 
 def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')

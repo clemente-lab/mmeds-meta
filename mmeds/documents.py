@@ -3,9 +3,12 @@ from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG, TOOL_FILES
-from mmeds.util import copy_metadata, log, camel_case, error_log, debug_log
+from mmeds.util import copy_metadata, log, camel_case, error_log
 from mmeds.error import AnalysisError
+from mmeds.log import MMEDSLog
 from ppretty import ppretty
+
+logger = MMEDSLog('debug').logger
 
 
 class MMEDSDoc(men.Document):
@@ -66,7 +69,7 @@ class MMEDSDoc(men.Document):
         :atype: A string. The type of analysis this doc corresponds to
         :access_code: A string. The code for accessing this analysis
         """
-        debug_log('create analysis atype: {}, code: {}'.format(atype, access_code))
+        logger.debug('create analysis atype: {}, code: {}'.format(atype, access_code))
 
         child_path = Path(self.path) / camel_case(atype)
         child_path.mkdir()
@@ -98,7 +101,7 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        debug_log(child)
+        logger.debug(child)
         return child
 
     def generate_sub_analysis_doc(self, category, value, analysis_code):
@@ -137,8 +140,8 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        debug_log(child)
-        debug_log('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
+        logger.debug(child)
+        logger.debug('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 
     def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code):
@@ -163,13 +166,13 @@ class MMEDSDoc(men.Document):
         new_dir.mkdir()
 
         files = {}
-        debug_log('Creating analysis {}'.format(name))
+        logger.debug('Creating analysis {}'.format(name))
 
         try:
             for file_key in TOOL_FILES[tool_type]:
                 # Create links to the files if they exist
                 if self.files.get(file_key) is not None:
-                    debug_log('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
+                    logger.debug('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
                     (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
                     files[file_key] = new_dir / Path(self.files[file_key]).name
         except KeyError:
