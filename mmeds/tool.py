@@ -381,9 +381,6 @@ class Tool(mp.Process):
         child.config = deepcopy(child.doc.config)
         child.is_child = True
         write_config(child.config, Path(child.doc.path))
-
-        # Set the parent pid
-        child._parent_pid = self.pid
         return child
 
     def create_additional_analysis(self, atype):
