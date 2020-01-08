@@ -17,26 +17,12 @@ class ToolTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        test_setup = (fig.TEST_SUBJECT,
-                      fig.TEST_SPECIMEN,
-                      fig.TEST_DIR,
-                      fig.TEST_USER,
-                      'Test_Tool',
-                      'single_end',
-                      'single_barcodes',
-                      fig.TEST_READS,
-                      None,
-                      fig.TEST_BARCODES,
-                      fig.TEST_CODE)
-        upload_metadata(test_setup)
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
-        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE, 'test-1', self.config, True, 2, True)
+        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE_SHORT, 'test-1', self.config, True, 2, True)
         self.dirs = [self.tool.doc.path]
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
         for new_dir in self.dirs:
             rmtree(new_dir)
 
@@ -77,6 +63,6 @@ class ToolTests(TestCase):
         self.tool.update_doc(files=files)
 
     def test_update_doc(self):
-        self.assertEqual(self.tool.doc.study_name, 'Test_Tool')
+        self.assertEqual(self.tool.doc.study_name, 'Test_Single_Short')
         self.tool.update_doc(study_name='Test_Update')
         self.assertEqual(self.tool.doc.study_name, 'Test_Update')
