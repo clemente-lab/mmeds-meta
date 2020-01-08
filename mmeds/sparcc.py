@@ -6,16 +6,14 @@ from mmeds.tool import Tool
 class SparCC(Tool):
     """ A class for SparCC analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=0):
-        super().__init__(owner, access_code, atype, config, testing,
-                         analysis=analysis, restart_stage=restart_stage)
+    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
+                 analysis=True, restart_stage=0, kill_stage=0, child=False):
+        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
+                         analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-        parts = self.doc.doc_type.split('-')
-        self.stat = parts[-1]
 
     def sparcc(self, data_permutation=None):
         """ Quantify the correlation between all OTUs """
@@ -27,7 +25,7 @@ class SparCC(Tool):
             data_file = data_permutation
         cmd = 'SparCC.py {data} -i {iterations} --cor_file={output}'
 
-        if self.stat is not None:
+        if self.doc.config.get('stat') is not None:
             cmd += ' -a {stat}'
 
         # If running on permutations have commands execute in parallel
@@ -38,7 +36,7 @@ class SparCC(Tool):
         self.jobtext.append(cmd.format(data=data_file,
                                        iterations=self.doc.config['iterations'],
                                        output=self.get_file('correlation'),
-                                       stat=self.stat))
+                                       stat=self.doc.config.get('stat')))
 
     def make_bootstraps(self):
         """ Create the shuffled datasets """

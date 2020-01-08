@@ -65,9 +65,8 @@ class SpawnTests(TestCase):
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
-        tool = 'test-20'
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['study_code'], tool, None, -1))
+            self.q.put(('analysis', proc['owner'], proc['study_code'], 'test', '20', None, -1))
 
         # Check the analyses are started and running simultainiously
         info = self.pipe.recv()

@@ -1,13 +1,10 @@
 from unittest import TestCase
 from shutil import rmtree
 
-from mmeds.authentication import add_user, remove_user
 from mmeds.tool import Tool
-from mmeds.database import upload_metadata
 from mmeds.util import load_config
 
 import mmeds.config as fig
-import mmeds.secrets as sec
 import mmeds.error as err
 
 
@@ -18,7 +15,7 @@ class ToolTests(TestCase):
     @classmethod
     def setUpClass(self):
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
-        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE_SHORT, 'test-1', self.config, True, 2, True)
+        self.tool = Tool(fig.TEST_USER, fig.TEST_CODE_SHORT, 'test', '1', self.config, True, 2, True)
         self.dirs = [self.tool.doc.path]
 
     @classmethod

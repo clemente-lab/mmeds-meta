@@ -11,8 +11,8 @@ class MmedsError(Exception):
 class MissingUploadError(MmedsError):
     """ Exception for missing uploads. """
 
-    def __init__(self):
-        self.message = 'No data belonging to the user exists for the given access code'
+    def __init__(self, message='No data belonging to the user exists for the given access code'):
+        self.message = message
         super().__init__()
 
 

@@ -12,6 +12,8 @@ abundance_threshold: 0.1
 # The size of the font in the plot legends
 font_size: 15
 # Columns to perform sub analysis on. 'all', 'none', or a comma seperated list
+# If an additional type of analysis should be run
+additional_analysis: sparcc
 sub_analysis: all
 # SparCC stuff
 iterations: 5

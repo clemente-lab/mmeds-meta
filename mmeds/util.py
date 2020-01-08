@@ -21,6 +21,8 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import pandas as pd
 
+logger = MMEDSLog('debug').logger
+
 
 def load_metadata_template():
     return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
@@ -143,6 +145,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
     else:
         # Load the file contents
         page = config_file
+
     config = yaml.safe_load(page)
     # Check if columns == 'all'
     for param in ['metadata', 'taxa_levels', 'sub_analysis']:
@@ -201,7 +204,7 @@ def write_config(config, path):
                 config_text[key] = 'all'
             # Write lists as comma seperated strings
             elif value:
-                config_text[key] = value
+                config_text[key] = list(value)
             else:
                 config_text[key] = 'none'
         else:

@@ -14,10 +14,10 @@ class Qiime2(Tool):
     # The default classifier for Q2 analysis
     classifier = STORAGE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
-    def __init__(self, owner, access_code, atype, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=-1):
-        super().__init__(owner, access_code, atype, config, testing,
-                         analysis=analysis, restart_stage=restart_stage)
+    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
+                 analysis=True, restart_stage=0, kill_stage=-1, child=False):
+        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
+                         analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
@@ -32,7 +32,7 @@ class Qiime2(Tool):
 
         self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
 
-        if 'demuxed' in self.doc.data_type:
+        if 'demuxed' in self.doc.reads_type:
             # If the reads are already demultiplexed import the whole directory
             cmd = [
                 'qiime tools import ',
@@ -56,8 +56,8 @@ class Qiime2(Tool):
                 old_file.unlink()
 
             cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            if 'single' in self.doc.data_type:
-                #Link the barcodes
+            if 'single_end' == self.doc.reads_type:
+                # Link the barcodes
                 (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
                 # Create links to the data in the qiime2 import directory
@@ -67,14 +67,17 @@ class Qiime2(Tool):
                 command = cmd.format('EMPSingleEndSequences',
                                      self.get_file('working_dir'),
                                      self.get_file('working_file'))
-            elif 'paired' in self.doc.data_type:
+            elif 'paired_end' == self.doc.reads_type:
                 # Create links to the data in the qiime2 import directory
-                (self.get_file('working_dir', True) / 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
-                (self.get_file('working_dir', True) / 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
-                
-                if 'single' in self.doc.barcodes_type:
+                (self.get_file('working_dir', True) /
+                 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
+                (self.get_file('working_dir', True) /
+                 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
+
+                if 'single' == self.doc.barcodes_type:
                     # Link the barcodes
-                    (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
+                    (self.get_file('working_dir', True) /
+                     'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
 
                     # Run the script
                     command = cmd.format('EMPPairedEndSequences',
@@ -82,16 +85,18 @@ class Qiime2(Tool):
                                          self.get_file('working_file'))
                 else:
                     # Link the barcodes
-                    (self.get_file('working_dir', True) / 'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
-                    (self.get_file('working_dir', True) / 'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
+                    (self.get_file('working_dir', True) /
+                     'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
+                    (self.get_file('working_dir', True) /
+                     'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
 
                     # Run the script
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
-                    
+
         self.jobtext.append(command)
-        
+
     def demultiplex(self):
         """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
@@ -99,10 +104,10 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-        if 'single' in self.doc.barcodes_type:
+        if 'single' == self.doc.barcodes_type:
             cmd = [
-                # Either emp-single or emp-paired depending on the data_type
-                'qiime demux emp-{}'.format(self.doc.data_type.split('_')[0]),
+                # Either emp-single or emp-paired depending on the reads_type
+                'qiime demux emp-{}'.format(self.doc.reads_type.split('_')[0]),
                 '--i-seqs {}'.format(self.get_file('working_file')),
                 '--m-barcodes-file {}'.format(self.get_file('mapping')),
                 '--m-barcodes-column {}'.format('BarcodeSequence'),
@@ -110,9 +115,11 @@ class Qiime2(Tool):
                 '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
             ]
             # Reverse compliment the barcodes in the mapping file if using paired reads
-            if 'paired' in self.doc.data_type:
-                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:] 
+            if 'paired_end' == self.doc.reads_type:
+                cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
         else:
+            self.add_path('unmatched_demuxed', '.qza')
+            self.add_path('demux_log', '.txt')
             cmd = [
                 'qiime cutadapt demux-paired',
                 '--i-seqs {}'.format(self.get_file('working_file')),
@@ -121,9 +128,9 @@ class Qiime2(Tool):
                 '--m-reverse-barcodes-file {}'.format(self.get_file('mapping')),
                 '--m-reverse-barcodes-column {}'.format('BarcodeSequenceR'),
                 '--o-per-sample-sequences {}'.format(self.get_file('demux_file')),
-                '--o-untrimmed-sequences unmatched_demuxed_03.qza',
+                '--o-untrimmed-sequences {}'.format(self.get_file('unmatched_demuxed')),
                 '--p-error-rate 0.3',
-                '--verbose &> demux_03_log.txt'
+                '--verbose &> {}'.format(self.get_file('demux_log'))
             ]
 
         self.jobtext.append(' '.join(cmd))
@@ -150,7 +157,7 @@ class Qiime2(Tool):
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
-        
+
         # Run the script
         cmd = [
             'qiime demux summarize',
@@ -161,8 +168,8 @@ class Qiime2(Tool):
 
     def tabulate(self):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.doc.doc_type.split('-')[1]), '.qzv')
-        viz_file = 'stats_{}_visual'.format(self.doc.doc_type.split('-')[1])
+        self.add_path('stats_{}_visual'.format(self.doc.analysis_type), '.qzv')
+        viz_file = 'stats_{}_visual'.format(self.doc.analysis_type)
         cmd = [
             'qiime metadata tabulate',
             '--m-input-file {}'.format(self.get_file('stats_table')),
@@ -177,7 +184,7 @@ class Qiime2(Tool):
         self.add_path('table_dada2', '.qza', key='otu_table')
         self.add_path('stats_dada2', '.qza', key='stats_table')
 
-        if 'single' in self.doc.data_type:
+        if 'single' in self.doc.reads_type:
             cmd = [
                 'qiime dada2 denoise-single',
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
@@ -188,7 +195,7 @@ class Qiime2(Tool):
                 '--o-denoising-stats {}'.format(self.get_file('stats_table')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
-        elif 'paired' in self.doc.data_type:
+        elif 'paired' in self.doc.reads_type:
             cmd = [
                 'qiime dada2 denoise-paired',
                 '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
@@ -466,31 +473,33 @@ class Qiime2(Tool):
         self.set_stage(0)
         # Only the primary analysis runs these commands
         if not self.doc.sub_analysis:
-            if 'demuxed' in self.doc.data_type:
+            if 'demuxed' in self.doc.reads_type:
                 self.unzip()
             self.qimport()
 
     def setup_stage_1(self):
         self.set_stage(1)
         if not self.doc.sub_analysis:
-            if 'demuxed' not in self.doc.data_type:
+            if 'demuxed' not in self.doc.reads_type:
                 self.demultiplex()
                 self.demux_visualize()
-            if 'deblur' in self.doc.doc_type:
+            if 'deblur' == self.doc.analysis_type:
                 self.deblur_filter()
                 self.deblur_denoise()
                 self.deblur_visualize()
-            elif 'dada2' in self.doc.doc_type:
+            elif 'dada2' == self.doc.analysis_type:
                 self.dada2()
-                if self.kill_stage == 1:
-                    self.jobtext.append('exit 1')
-                self.tabulate()
+            if self.kill_stage == 1:
+                self.jobtext.append('exit 1')
+            self.tabulate()
         else:
             del self.jobtext[-1]
 
     def setup_stage_2(self):
         self.set_stage(2)
         # Run these commands sequentially
+        print('files prior to stage 2 setup')
+        print(self.doc.files.keys())
         self.filter_by_metadata()
         self.alignment_mafft()
         self.alignment_mask()
@@ -523,9 +532,9 @@ class Qiime2(Tool):
             # For the requested taxanomic levels
             for level in self.doc.config['taxa_levels']:
                 self.group_significance(col, level)
+        self.jobtext.append('wait')
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')
-        self.jobtext.append('wait')
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """

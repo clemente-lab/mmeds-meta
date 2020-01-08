@@ -48,6 +48,7 @@ CONFIG_PARAMETERS = [
     'abundance_threshold',
     'font_size',
     'sub_analysis',
+    'additional_analysis',
     'iterations',
     'permutations',
     'stat'
@@ -132,6 +133,7 @@ TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
 TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
 TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
+TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
@@ -428,4 +430,18 @@ HTML_PAGES = {
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
+}
+
+
+##########################
+# CONFIGURE TOOL GLOBALS #
+###########################
+
+
+TOOL_FILES = {
+    'child_analysis': ['otu_table'],
+    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'sparcc': ['otu_table'],
+    'test': []
 }

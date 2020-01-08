@@ -309,9 +309,12 @@ class TestServer(helper.CPWebCase):
 
         self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
-        headers, body = self.upload_files(['for_reads', 'rev_reads', 'for_barcodes', 'rev_barcodes'],
-                                          [fig.TEST_READS, fig.TEST_REV_READS, fig.TEST_BARCODES, fig.TEST_BARCODES],
-                                          ['application/gzip', 'application/gzip', 'application/gzip', 'application/gzip'])
+        headers, body = self.upload_files(['for_reads', 'rev_reads',
+                                           'for_barcodes', 'rev_barcodes'],
+                                          [fig.TEST_READS, fig.TEST_REV_READS,
+                                           fig.TEST_BARCODES, fig.TEST_BARCODES],
+                                          ['application/gzip', 'application/gzip',
+                                           'application/gzip', 'application/gzip'])
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
@@ -322,7 +325,7 @@ class TestServer(helper.CPWebCase):
 
         # Retrieve the most recent email in the test email account to verify that email was successfully sent
         recieve_email(1, True, upload_args)
-    
+
     def upload_metadata(self):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
@@ -458,9 +461,9 @@ class TestServer(helper.CPWebCase):
         # Login
         self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
         # Start test analysis
-        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
-                                                                                    fig.TEST_TOOL),
-                     headers=self.cookies)
+        address = '/analysis/run_analysis?access_code={}&tool_type={}&analysis_type={}&config='
+        tool, analysis = fig.TEST_TOOL.split('-')
+        self.getPage(address.format(self.access_code, tool, analysis), headers=self.cookies)
 
         # Wait for analysis to finish
         sleep(int(fig.TEST_TOOL.split('-')[-1]))
@@ -484,7 +487,9 @@ class TestServer(helper.CPWebCase):
             self.assertStatus('200 OK')
 
     def convert(self):
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORTEST], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'],
+                                          [fig.TEST_METADATA_SHORTEST],
+                                          ['text/tab-seperated-values'])
         addr = '/upload/convert_metadata?convertTo=mixs&unitCol=&skipRows='
         self.getPage(addr, headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')

@@ -215,7 +215,8 @@ class MMEDSdownload(MMEDSbase):
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_studies()
             for study in studies:
-                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code, study.study))
+                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code,
+                                                                                     study.study_name))
         else:
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_error(page, 24, 'You do not have permissions to access uploaded studies.')
@@ -225,12 +226,12 @@ class MMEDSdownload(MMEDSbase):
     def download_study(self, study_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            study = db.get_study(study_code)
+            study = db.get_doc(study_code, check=False)
             analyses = db.get_all_analyses_from_study(study_code)
 
         page = self.format_html('download_selected_study',
-                                title='Study: {}'.format(study.study),
-                                study=study.study,
+                                title='Study: {}'.format(study.study_name),
+                                study=study.study_name,
                                 date_created=study.created,
                                 last_accessed=study.last_accessed,
                                 doc_type=study.doc_type,
@@ -259,7 +260,7 @@ class MMEDSdownload(MMEDSbase):
     def select_analysis(self, access_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_study_analysis(access_code)
+            analysis = db.get_doc(access_code, check=False)
 
         page = self.format_html('download_selected_analysis',
                                 title='Analysis: {}'.format(analysis.name),
@@ -552,7 +553,7 @@ class MMEDSanalysis(MMEDSbase):
     ######################################
 
     @cp.expose
-    def run_analysis(self, access_code, tool, config):
+    def run_analysis(self, access_code, tool_type, analysis_type, config):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -561,13 +562,16 @@ class MMEDSanalysis(MMEDSbase):
         """
         try:
             self.check_upload(access_code)
+            print('config passed is {}'.format(config))
             if config.file is None:
                 config_path = DEFAULT_CONFIG.read_text()
+            elif isinstance(config, str):
+                config_path = config
             else:
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool, config_path, -1))
+            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
@@ -600,7 +604,7 @@ class MMEDSanalysis(MMEDSbase):
                 cp.session['dual_barcodes'] = True
             else:
                 cp.session['dual_barcodes'] = False
-            
+
             # If there are errors report them and return the error page
             if errors:
                 page = self.handle_metadata_errors(metadata_copy, errors, warnings)
@@ -636,7 +640,7 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def process_data(self, public=False, **kwargs):
         cp.log('Public is {}'.format(public))
-        
+
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
@@ -647,25 +651,24 @@ class MMEDSanalysis(MMEDSbase):
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
-            if not cp.session['dual_barcodes']:
-                reads_type = kwargs['reads_type']
-                barcodes_type = 'single_barcodes'
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                 rev_reads=kwargs['rev_reads'],
-                                                 barcodes=kwargs['barcodes'])
-            else:
-                # If have dual barcodes, don't have a reads_type in kwargs so must set it 
-                reads_type = 'paired_end'
+            if cp.session['dual_barcodes']:
+                # If have dual barcodes, don't have a reads_type in kwargs so must set it
                 barcodes_type = 'dual_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
                                                  for_barcodes=kwargs['for_barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
-
+                reads_type = 'paired_end'
+            else:
+                barcodes_type = 'single_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+                reads_type = kwargs['reads_type']
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
             reads_type = None
-            barcodes_type = None 
+            barcodes_type = None
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py

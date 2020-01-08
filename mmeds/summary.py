@@ -25,6 +25,9 @@ def summarize_qiime(summary_path, tool):
         else:
             study_name = '{}-{}-{}'.format(parts[1], parts[0], tool)
 
+    if files.get('summary') is None:
+        files['summary'] = path / 'summary'
+
     # Create the summary directory
     if not files['summary'].is_dir():
         files['summary'].mkdir()
@@ -36,13 +39,14 @@ def summarize_qiime(summary_path, tool):
     # Get the mapping file
     copy(files['mapping'], files['summary'])
     copy(files['metadata'], files['summary'] / 'metadata.tsv')
-    copy(path / 'config_file.txt', files['summary'] / 'config_file.txt')
+    print('WHy is not this being usedd!!!?????')
+    copy(path / 'config_file.yaml', files['summary'] / 'config_file.yaml')
 
     # Get the template
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config((path / 'config_file.txt').read_text(), files['metadata'], True)
+    config = load_config((path / 'config_file.yaml').read_text(), files['metadata'], True)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)

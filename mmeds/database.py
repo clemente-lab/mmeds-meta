@@ -28,9 +28,13 @@ DAYS = 13
 def upload_metadata(args):
     (subject_metadata, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
-    datafiles = {'for_reads': for_reads,
-                 'rev_reads': rev_reads,
-                 'barcodes': barcodes}
+    if for_reads is not None and 'zip' in for_reads:
+        datafiles = {'data': for_reads,
+                     'barcodes': barcodes}
+    else:
+        datafiles = {'for_reads': for_reads,
+                     'rev_reads': rev_reads,
+                     'barcodes': barcodes}
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
                          barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
@@ -42,7 +46,7 @@ def upload_metadata(args):
 def upload_otu(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
     datafiles = {'otu_table': otu_table}
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', None,
+    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', 'otu_table',
                          None, study_name, False, datafiles, False, True, access_code)
     p.start()
     p.join()
@@ -145,7 +149,8 @@ class Database:
             sql = 'SELECT unset_connection_auth(%(token)s)'
             self.cursor.execute(sql, {'token': sec.SECURITY_TOKEN})
             self.db.commit()
-        self.db.close()
+        if self.db:
+            self.db.close()
 
     def __enter__(self):
         """ Allows database connection to be used via a 'with' statement. """
@@ -397,7 +402,7 @@ class Database:
         # Get a new code
         new_code = get_salt(50)
         # Get the mongo document
-        mdata = MMEDSDoc.objects(study=study_name, owner=self.owner, email=email).first()
+        mdata = MMEDSDoc.objects(study_name=study_name, owner=self.owner, email=email).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.access_code = new_code
         mdata.save()
@@ -524,13 +529,19 @@ class Database:
         """
         return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
-    def get_analysis(self, access_code):
+    def get_doc(self, access_code, check=True):
         """
         Return the MMEDSDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        if check:
+            doc = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        else:
+            doc = MMEDSDoc.objects(access_code=access_code).first()
+        if doc is None:
+            raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
+        return doc
 
     @classmethod
     def get_all_studies(cls):
@@ -538,19 +549,9 @@ class Database:
         return MMEDSDoc.objects()
 
     @classmethod
-    def get_study(cls, access_code):
-        """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(access_code=access_code).first()
-
-    @classmethod
     def get_all_analyses_from_study(cls, access_code):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(study_code=access_code)
-
-    @classmethod
-    def get_study_analysis(cls, access_code):
-        """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(access_code=access_code).first()
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
@@ -585,18 +586,9 @@ class Database:
                             shutil.rmtree(mdata.files[key])
 
     @classmethod
-    def get_mongo_docs(cls, access_code):
-        """ For admin use """
-        return (MMEDSDoc.objects(access_code=access_code),
-                MMEDSDoc.objects(access_code=access_code))
-
-    @classmethod
-    def get_docs(cls, doc_type, access_code):
+    def get_docs(cls, access_code):
         """ For server use """
-        if doc_type == 'analysis':
-            docs = MMEDSDoc.objects(access_code=access_code)
-        elif doc_type == 'study':
-            docs = MMEDSDoc.objects(access_code=access_code)
+        docs = MMEDSDoc.objects(access_code=access_code)
         return docs
 
 
@@ -769,7 +761,7 @@ class SQLBuilder:
 
 class MetaDataUploader(Process):
     def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
-                 reads_type, barcodes_type, study_name, temporary, data_files, 
+                 reads_type, barcodes_type, study_name, temporary, data_files,
                  public, testing, access_code=None):
         """
         Connect to the specified database.
@@ -799,6 +791,7 @@ class MetaDataUploader(Process):
         })
 
         self.IDs = defaultdict(dict)
+        print('in uploader for {}'.format(owner))
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
@@ -1146,7 +1139,7 @@ class MetaDataUploader(Process):
                          doc_type='study-' + self.study_type,
                          reads_type=self.reads_type,
                          barcodes_type=self.barcodes_type,
-                         study=self.study_name,
+                         study_name=self.study_name,
                          access_code=self.access_code,
                          owner=self.owner,
                          email=self.email,
