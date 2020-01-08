@@ -149,7 +149,8 @@ class Database:
             sql = 'SELECT unset_connection_auth(%(token)s)'
             self.cursor.execute(sql, {'token': sec.SECURITY_TOKEN})
             self.db.commit()
-        self.db.close()
+        if self.db:
+            self.db.close()
 
     def __enter__(self):
         """ Allows database connection to be used via a 'with' statement. """

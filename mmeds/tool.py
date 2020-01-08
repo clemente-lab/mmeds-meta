@@ -335,8 +335,9 @@ class Tool(mp.Process):
         :value: The value that :column: must match for a sample to be included
         """
         logger.debug('creating child of {}'.format(atype))
-        child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.config,
-                      self.testing, self.analysis, self.restart_stage, child=True)
+        child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.analysis_type,
+                      self.doc.config, self.testing, analysis=self.analysis, restart_stage=self.restart_stage,
+                      child=True)
         logger.debug('finished child creation')
         logger.debug(child)
 
@@ -379,7 +380,7 @@ class Tool(mp.Process):
         # Filter the config for the metadata category selected for this sub-analysis
         child.config = deepcopy(child.doc.config)
         child.is_child = True
-        child.write_config()
+        write_config(child.config, Path(child.doc.path))
 
         # Set the parent pid
         child._parent_pid = self.pid
