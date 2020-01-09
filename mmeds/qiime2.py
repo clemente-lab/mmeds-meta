@@ -18,10 +18,6 @@ class Qiime2(Tool):
                  analysis=True, restart_stage=0, kill_stage=-1, child=False):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
-        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
-        self.jobtext.append(load)
-        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-        self.module = load
         self.kill_stage = kill_stage
 
     # =============== #
@@ -535,6 +531,13 @@ class Qiime2(Tool):
         self.jobtext.append('wait')
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')
+
+    def initial_setup(self):
+        super().initial_setup()
+        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
+        self.module = load
+        self.jobtext.append(load)
+        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
     def setup_analysis(self):
         """ Create the job file for the analysis. """

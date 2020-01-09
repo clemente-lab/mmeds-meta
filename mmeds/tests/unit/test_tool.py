@@ -16,6 +16,7 @@ class ToolTests(TestCase):
     def setUpClass(self):
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
         self.tool = Tool(fig.TEST_USER, fig.TEST_CODE_SHORT, 'test', '1', self.config, True, 2, True)
+        self.tool.initial_setup()
         self.dirs = [self.tool.doc.path]
 
     @classmethod

@@ -12,6 +12,7 @@ import mmeds.config as fig
 
 logger = MMEDSLog('debug').logger
 
+
 class ToolsTests(TestCase):
     """ Tests of top-level functions """
     testing = True
@@ -23,7 +24,10 @@ class ToolsTests(TestCase):
     def run_qiime(self, code, tool_type, analysis_type, data_type, Qiime):
         qiime = Qiime(fig.TEST_USER, code, tool_type, analysis_type, self.config, testing=self.testing, analysis=False)
         qiime.start()
+        logger.debug(qiime)
+        sleep(4)
         while qiime.is_alive():
+            logger.debug(qiime)
             sleep(2)
         self.assertEqual(qiime.doc.reads_type, data_type)
         rmtree(qiime.path)
@@ -32,7 +36,6 @@ class ToolsTests(TestCase):
         self.run_qiime(fig.TEST_CODE_OTU, 'sparcc', 'default', 'otu_table', SparCC)
 
     def test_qiime1_setup_analysis(self):
-        return  # TODO remove
         for tool_type, analysis_type in [('qiime1', 'open'), ('qiime1', 'closed')]:
             for data_type, code in [('single_end', fig.TEST_CODE_SHORT),
                                     ('paired_end', fig.TEST_CODE_PAIRED),
@@ -40,7 +43,6 @@ class ToolsTests(TestCase):
                 self.run_qiime(code, tool_type, analysis_type, data_type, Qiime1)
 
     def test_qiime2_setup_analysis(self):
-        return  # TODO remove
         for tool_type, analysis_type in [('qiime2', 'dada2'), ('qiime2', 'deblur')]:
             for data_type, code in [('single_end', fig.TEST_CODE_SHORT),
                                     ('paired_end', fig.TEST_CODE_PAIRED),
@@ -48,9 +50,9 @@ class ToolsTests(TestCase):
                 self.run_qiime(code, tool_type, analysis_type, data_type, Qiime2)
 
     def test_qiime2_child_setup_analysis(self):
-        return  # TODO remove
-        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA, testing=self.testing)
+        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2', 'dada2', config, testing=self.testing, analysis=False)
+        q2.initial_setup()
         q2.setup_analysis()
         q2.create_children()
         for child in q2.children:
@@ -61,6 +63,7 @@ class ToolsTests(TestCase):
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2', 'dada2', config, testing=self.testing, analysis=False)
+        q2.initial_setup()
         logger.debug('Im the parent and my code is {}'.format(q2.doc.access_code))
         logger.debug('pre setup {}'.format(q2.doc.files.keys()))
         q2.setup_analysis()

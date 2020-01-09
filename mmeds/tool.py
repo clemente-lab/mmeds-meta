@@ -62,22 +62,26 @@ class Tool(mp.Process):
         self.child = child
         self.created = datetime.now()
         self.children = []
+        self.doc = None
+        self.run_dir = None
+        self.restart_stage = restart_stage
+        self.analysis_type = analysis_type
+        self.tool_type = tool_type
+        self.config = config
 
         if testing:
             self.num_jobs = 2
         else:
             self.num_jobs = min([threads, mp.cpu_count()])
 
+    def initial_setup(self):
         # Get info on the study/parent analysis from the database
         with Database(owner=self.owner, testing=self.testing) as db:
-            if restart_stage == 0:
+            if self.restart_stage == 0:
                 parent_doc = db.get_doc(self.parent_code)
-                logger.debug('Generating doc from')
-                logger.debug(parent_doc)
-                logger.debug(parent_doc.files.keys())
                 access_code = db.create_access_code(self.name)
-                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], tool_type,
-                                                        analysis_type, config, access_code)
+                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
+                                                        self.analysis_type, self.config, access_code)
             else:
                 self.doc = db.get_doc(self.parent_code)
 
@@ -658,6 +662,8 @@ class Tool(mp.Process):
     def run(self):
         """ Overrides Process.run() """
         logger.debug('{} calling run'.format(self.name))
+        self.initial_setup()
+        logger.debug('Finished initial setup')
         self.update_doc(pid=self.pid)
         if self.analysis:
             logger.debug('I {} am running analysis'.format(self.name))

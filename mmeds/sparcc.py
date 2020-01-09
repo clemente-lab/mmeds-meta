@@ -10,6 +10,9 @@ class SparCC(Tool):
                  analysis=True, restart_stage=0, kill_stage=0, child=False):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, child=child)
+
+    def inital_setup(self):
+        super().initial_setup()
         load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
