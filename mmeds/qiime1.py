@@ -15,13 +15,13 @@ class Qiime1(Tool):
     def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, child=False, kill_stage=-1):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
-                         analysis=analysis, restart_stage=restart_stage, child=child)
-
-    def inital_setup(self):
-        super().initial_setup()
+                         analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
+
+    def inital_setup(self):
+        super().initial_setup()
         if self.testing:
             settings = [
                 'alpha_diversity:metrics	shannon',
@@ -33,7 +33,6 @@ class Qiime1(Tool):
                 'alpha_diversity:metrics	shannon,PD_whole_tree,chao1,observed_species',
                 'beta_diversity_through_plots:ignore_missing_samples	True'
             ]
-        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
         with open(self.path / 'params.txt', 'w') as f:
             f.write('\n'.join(settings))

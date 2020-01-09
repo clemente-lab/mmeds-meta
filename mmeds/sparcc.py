@@ -7,16 +7,12 @@ class SparCC(Tool):
     """ A class for SparCC analysis of uploaded studies. """
 
     def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=0, child=False):
+                 analysis=True, restart_stage=0, kill_stage=-1, child=False):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
-                         analysis=analysis, restart_stage=restart_stage, child=child)
-
-    def inital_setup(self):
-        super().initial_setup()
+                         analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
-        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
     def sparcc(self, data_permutation=None):
         """ Quantify the correlation between all OTUs """
@@ -60,6 +56,9 @@ class SparCC(Tool):
                                        iterations=self.doc.config['iterations'],
                                        output=self.get_file('PseudoPval'),
                                        sides=sides))
+
+    def initial_setup(self):
+        super().initial_setup()
 
     def setup_analysis(self):
         self.set_stage(0)
