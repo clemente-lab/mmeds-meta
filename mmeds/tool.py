@@ -49,6 +49,7 @@ class Tool(mp.Process):
         super().__init__()
         logger.debug('initilize {}'.format(self.name))
         self.debug = True
+        self.tool_type = tool_type
         self.parent_code = parent_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
@@ -58,6 +59,7 @@ class Tool(mp.Process):
         self.restart_stage = restart_stage
         self.current_stage = -2
         self.stage_files = defaultdict(list)
+        self.child = child
         self.created = datetime.now()
         self.children = []
 
@@ -89,6 +91,9 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.doc.sub_analysis = False
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
+
+        if self.child:
+            self.child_setup()
 
     def __str__(self):
         return ppretty(self, seq_length=5)
@@ -334,54 +339,54 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
-        logger.debug('creating child of {}'.format(atype))
-        child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.analysis_type,
+        child = atype(self.owner, self.doc.access_code, atype.__name__.lower(), self.doc.analysis_type,
                       self.doc.config, self.testing, analysis=self.analysis, restart_stage=self.restart_stage,
                       child=True)
-        logger.debug('finished child creation')
-        logger.debug(child)
+        return child
+
+    def child_setup(self):
 
         # Update process name and children
-        child.name = child.name + '-{}'.format(atype.__name__)
-        child.children = []
+        self.name = self.name + '-{}'.format(self.tool_type)
 
         with Database(owner=self.owner, testing=self.testing) as db:
-            access_code = db.create_access_code(child.name)
-        logger.debug('CHILD ACCESS CODE {}'.format(access_code))
-        child.doc = self.doc.generate_analysis_doc(atype.__name__, access_code)  # TODO
-        child.path = Path(child.doc.path)
+            parent_doc = db.get_doc(self.parent_code)
+            access_code = db.create_access_code(self.name)
+
+        logger.debug('My parents code is {}'.format(self.parent_code))
+        logger.debug('Im the child and my code is {}'.format(access_code))
+
+        self.doc = parent_doc.generate_analysis_doc(self.name, access_code)
+        self.path = Path(self.doc.path)
 
         # Link to the parent's OTU table(s)
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
-            if self.doc.files.get(parent_file) is not None:
-                child_file = child.path / self.get_file(parent_file).name
-                child_file.symlink_to(self.get_file(parent_file, True))
-                child.add_path(child_file, key=parent_file)
+            if parent_doc.files.get(parent_file) is not None:
+                self_file = self.path / Path(parent_doc.files[parent_file]).name
+                logger.debug('FOUND PARENT FILE {}'.format(self_file))
+                self_file.symlink_to(self.get_file(parent_file, True))
+                self.add_path(self_file, key=parent_file)
 
-        child.add_path(self.get_file('otu_table', True), key='parent_table', full_path=True)
+        self.add_path(self.get_file('otu_table', True), key='parent_table', full_path=True)
 
-        logger.debug('load metadata  {}'.format(self.get_file('metadata', True)))
-        # Filter the metadata and write the new file to the childs directory
-        mdf = load_metadata(self.get_file('metadata', True))
-        write_metadata(mdf, child.get_file('metadata', True))
-        logger.debug('write to {}'.format(child.get_file('metadata', True)))
+        # Filter the metadata and write the new file to the selfs directory
+        mdf = load_metadata(parent_doc.files['metadata'])
+        write_metadata(mdf, self.get_file('metadata', True))
 
-        # Update child's vars
-        child.add_path('{}/{}/'.format(self.doc.name, child.doc.name), '')
-        child.run_dir = Path('$RUN_{}_{}'.format(self.doc.name, child.doc.name))
+        # Update self's vars
+        self.add_path('{}/{}/'.format(parent_doc.name, self.doc.name), '')
+        self.run_dir = Path('$RUN_{}_{}'.format(parent_doc.name, self.doc.name))
 
         # Update the text for the job file
-        child.jobtext = deepcopy(self.jobtext)[:6]
-        child.jobtext.append('{}={};'.format(str(child.run_dir).replace('$', ''), child.path))
+        self.jobtext = deepcopy(self.jobtext)[:6]
+        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
 
         # Create a new mapping file
-        child.create_qiime_mapping_file()
+        self.create_qiime_mapping_file()
 
         # Filter the config for the metadata category selected for this sub-analysis
-        child.config = deepcopy(child.doc.config)
-        child.is_child = True
-        write_config(child.config, Path(child.doc.path))
-        return child
+        self.config = deepcopy(self.doc.config)
+        write_config(self.config, Path(self.doc.path))
 
     def create_additional_analysis(self, atype):
         """
@@ -532,6 +537,7 @@ class Tool(mp.Process):
             temp = JOB_TEMPLATE.read_text()
             # Write all the commands
             jobfile.write_text('\n'.join([temp.format(**self.get_job_params())] + self.jobtext))
+        self.doc.save(validate=True)
 
     def run_analysis(self):
         """ Runs the setup, and starts the analysis process """

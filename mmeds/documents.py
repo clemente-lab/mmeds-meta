@@ -40,7 +40,7 @@ class MMEDSDoc(men.Document):
 
     # When the document is updated record the
     # location of all files in a new file
-    def save(self):
+    def save(self, **kwargs):
         with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
             f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
             f.write('Key\tPath\n')
@@ -56,22 +56,21 @@ class MMEDSDoc(men.Document):
                     f.write('{}\t{}\n'.format(key, file_path))
         with open(DOCUMENT_LOG, 'a') as f:
             f.write('-\t'.join([str(type(self)), self.owner, 'Upload', 'Finished', self.path, self.access_code]) + '\n')
-        super().save()
+        super().save(**kwargs)
 
     def __str__(self):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
 
-    def generate_analysis_doc(self, atype, access_code):
+    def generate_analysis_doc(self, name, access_code):
         """
         Creates a new AnalysisDoc for a child analysis
         ==============================================
         :atype: A string. The type of analysis this doc corresponds to
         :access_code: A string. The code for accessing this analysis
         """
-        logger.debug('create analysis atype: {}, code: {}'.format(atype, access_code))
 
-        child_path = Path(self.path) / camel_case(atype)
+        child_path = Path(self.path) / camel_case(name)
         child_path.mkdir()
 
         child_files = deepcopy(self.files)

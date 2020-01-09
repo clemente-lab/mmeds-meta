@@ -7,8 +7,10 @@ from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
 from mmeds.util import load_config
+from mmeds.log import MMEDSLog
 import mmeds.config as fig
 
+logger = MMEDSLog('debug').logger
 
 class ToolsTests(TestCase):
     """ Tests of top-level functions """
@@ -59,6 +61,9 @@ class ToolsTests(TestCase):
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2', 'dada2', config, testing=self.testing, analysis=False)
+        logger.debug('Im the parent and my code is {}'.format(q2.doc.access_code))
+        logger.debug('pre setup {}'.format(q2.doc.files.keys()))
         q2.setup_analysis()
+        logger.debug('post setup {}'.format(q2.doc.files.keys()))
         q2.create_analysis(SparCC)
         rmtree(q2.path)
