@@ -21,8 +21,8 @@ class MMEDSDoc(men.Document):
     is_alive = men.BooleanField()  # If the process it's related to is currently running
     name = men.StringField(max_length=100)
     owner = men.StringField(max_length=100, required=True)
-    email = men.StringField(max_length=100, required=True)
-    path = men.StringField(max_length=256, required=True)
+    email = men.StringField(max_length=100)
+    path = men.StringField(max_length=256)
     study_code = men.StringField(max_length=100)
     study_name = men.StringField(max_length=100)
     access_code = men.StringField(max_length=50)
@@ -43,22 +43,24 @@ class MMEDSDoc(men.Document):
     # When the document is updated record the
     # location of all files in a new file
     def save(self, **kwargs):
-        with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
-            f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
-            f.write('Key\tPath\n')
-            for key, file_path in self.files.items():
-                # Skip non existent files
-                if file_path is None:
-                    continue
-                # If it's a key for an analysis point to the file index for that analysis
-                elif isinstance(file_path, dict):
-                    f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
-                # Otherwise just write the value
-                else:
-                    f.write('{}\t{}\n'.format(key, file_path))
-        with open(DOCUMENT_LOG, 'a') as f:
-            f.write('-\t'.join([str(type(self)), self.owner, 'Upload', 'Finished', self.path, self.access_code]) + '\n')
         super().save(**kwargs)
+        if self.path is not None:
+            with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
+                f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
+                f.write('Key\tPath\n')
+                for key, file_path in self.files.items():
+                    # Skip non existent files
+                    if file_path is None:
+                        continue
+                    # If it's a key for an analysis point to the file index for that analysis
+                    elif isinstance(file_path, dict):
+                        f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
+                    # Otherwise just write the value
+                    else:
+                        f.write('{}\t{}\n'.format(key, file_path))
+            with open(DOCUMENT_LOG, 'a') as f:
+                f.write('-\t'.join([str(type(self)), self.owner, 'Upload', 'Finished',
+                                    self.path, self.access_code]) + '\n')
 
     def __str__(self):
         """ Return a printable string """

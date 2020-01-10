@@ -811,6 +811,20 @@ class MetaDataUploader(Process):
         else:
             self.access_code = access_code
 
+        # Create the document
+        self.mdata = MMEDSDoc(created=datetime.utcnow(),
+                              last_accessed=datetime.utcnow(),
+                              testing=self.testing,
+                              doc_type='study-' + self.study_type,
+                              reads_type=self.reads_type,
+                              barcodes_type=self.barcodes_type,
+                              study_name=self.study_name,
+                              access_code=self.access_code,
+                              owner=self.owner,
+                              public=self.public)
+
+        self.mdata.save()
+
         count = 0
         new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
         while new_dir.is_dir():
@@ -1131,25 +1145,9 @@ class MetaDataUploader(Process):
 
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
-        # If an access_code is provided use that
-
-        # Create the document
-        mdata = MMEDSDoc(created=datetime.utcnow(),
-                         last_accessed=datetime.utcnow(),
-                         testing=self.testing,
-                         doc_type='study-' + self.study_type,
-                         reads_type=self.reads_type,
-                         barcodes_type=self.barcodes_type,
-                         study_name=self.study_name,
-                         access_code=self.access_code,
-                         owner=self.owner,
-                         email=self.email,
-                         public=self.public,
-                         path=str(self.path.parent))
-
         # Add the files approprate to the type of study
-        mdata.files.update(kwargs)
-        mdata.files['metadata'] = self.metadata
-
+        self.mdata.files.update(kwargs)
+        self.mdata.files['metadata'] = self.metadata
+        self.mdata.update(email=self.email, path=str(self.path.parent))
         # Save the document
-        mdata.save()
+        self.mdata.save()

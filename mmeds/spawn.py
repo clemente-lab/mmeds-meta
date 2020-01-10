@@ -39,7 +39,7 @@ def spawn_analysis(tool_type, analysis_type, user, parent_code, config_file, tes
                                 kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
-
+    sleep(10)
     return tool
 
 
@@ -103,9 +103,9 @@ class Watcher(Process):
         self.started = []
         super().__init__()
 
-    def add_process(self, ptype, process):
+    def add_process(self, ptype, process_code):
         """ Add an analysis process to the list of processes. """
-        self.running_processes.append(process.access_code)
+        self.running_processes.append(process_code)
         self.write_running_processes()
 
     def check_processes(self):
@@ -230,7 +230,7 @@ class Watcher(Process):
                         p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
                                              barcodes_type, study_name, temporary, datafiles, public, self.testing)
                         p.start()
-                        self.add_process('upload', p)
+                        self.add_process('upload', p.access_code)
                         self.pipe.send(p.get_info())
                         self.started.append(p)
                         current_upload = p

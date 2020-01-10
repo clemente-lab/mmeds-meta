@@ -4,6 +4,7 @@ from time import sleep
 from yaml import safe_load
 
 from mmeds.log import MMEDSLog
+from mmeds.database import Database
 import mmeds.config as fig
 import mmeds.spawn as sp
 import multiprocessing as mp
@@ -47,12 +48,13 @@ class SpawnTests(TestCase):
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time
         for i in [0, 1]:
-            info = self.pipe.recv()
             sleep(10)
+            info = self.pipe.recv()
             # Check they match the contents of current_processes
             with open(fig.CURRENT_PROCESSES, 'r') as f:
                 procs = safe_load(f)
             self.infos += procs
+            print(info)
             self.assertEqual([info], procs)
             # Check the process exited with code 0
             self.assertEqual(self.pipe.recv(), 0)
