@@ -18,6 +18,7 @@ class MMEDSDoc(men.Document):
     public = men.BooleanField()
     testing = men.BooleanField(required=True)
     sub_analysis = men.BooleanField()                       # If this document corresponds to a sub analysis
+    is_alive = men.BooleanField()  # If the process it's related to is currently running
     name = men.StringField(max_length=100)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100, required=True)
@@ -35,6 +36,7 @@ class MMEDSDoc(men.Document):
     analysis_status = men.StringField(max_length=45)
     restart_stage = men.IntField()
     pid = men.IntField()
+    exit_code = men.IntField()
     files = men.DictField()
     config = men.DictField()
 
@@ -61,6 +63,22 @@ class MMEDSDoc(men.Document):
     def __str__(self):
         """ Return a printable string """
         return ppretty(self, seq_length=20)
+
+    def get_info(self):
+        """ Method for return a dictionary of relevant info for the process log """
+        info = {
+            'created': self.created,
+            'owner': self.owner,
+            'stage': self.restart_stage,
+            'study_code': self.study_code,
+            'analysis_code': self.access_code,
+            'type': self.analysis_type,
+            'pid': self.pid,
+            'path': self.path,
+            'name': self.name,
+            'is_alive': self.is_alive
+        }
+        return info
 
     def generate_analysis_doc(self, name, access_code):
         """
@@ -185,6 +203,7 @@ class MMEDSDoc(men.Document):
                        last_accessed=datetime.now(),
                        sub_analysis=False,
                        testing=self.testing,
+                       is_alive=True,
                        name=new_dir.name,
                        owner=self.owner,
                        email=self.email,
@@ -203,7 +222,7 @@ class MMEDSDoc(men.Document):
                        files=string_files)
 
         error_log(ppretty(doc))
-        doc.save()
+        doc.save(check=True)
         with open(DOCUMENT_LOG, 'a') as f:
             f.write('-\t'.join([str(x) for x in [doc.study_name, doc.owner, doc.doc_type, doc.analysis_status,
                                                  datetime.now(), doc.path, doc.access_code]]) + '\n')

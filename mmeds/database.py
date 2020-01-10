@@ -357,18 +357,19 @@ class Database:
     #               MongoDB                #
     ########################################
     @classmethod
-    def create_access_code(cls, check_code, length=20):
+    def create_access_code(cls, check_code=None, length=20):
         """ Creates a unique code for identifying a mongo db document """
+        if check_code is None:
+            check_code = fig.get_salt(20)
         code = check_code
         count = 0
         while True:
             # Ensure no document exists with the given access code
-            if not (MMEDSDoc.objects(access_code=code).first() or
-                    MMEDSDoc.objects(access_code=code).first()):
-                break
-            else:
+            if MMEDSDoc.objects(access_code=code).first():
                 code = check_code + '-' + str(count)
                 count += 1
+            else:
+                break
         return code
 
     def mongo_clean(self, access_code):

@@ -12,16 +12,17 @@ logger = MMEDSLog('debug').logger
 class Qiime1(Tool):
     """ A class for qiime 1.9.1 analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
+    def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, child=False, kill_stage=-1):
-        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
+        super().__init__(owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load
 
-    def inital_setup(self):
+    def initial_setup(self):
         super().initial_setup()
+        logger.debug('Running Qiime1 initial setup')
         if self.testing:
             settings = [
                 'alpha_diversity:metrics	shannon',

@@ -7,9 +7,9 @@ from datetime import datetime
 import mmeds.config as fig
 import yaml
 
-from mmeds.util import (send_email, create_local_copy, load_config)
+from mmeds.util import create_local_copy, load_config
 from mmeds.database import MetaDataUploader, Database
-from mmeds.error import AnalysisError
+from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
@@ -26,26 +26,20 @@ TOOLS = {
 }
 
 
-def test(time):
-    """ Simple function for analysis called during testing """
-    sleep(time)
-
-
-def spawn_analysis(tool_type, analysis_type, user, access_code, config_file, testing, kill_stage=-1):
+def spawn_analysis(tool_type, analysis_type, user, parent_code, config_file, testing, kill_stage=-1):
     """ Start running the analysis in a new process """
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
-        files, path = db.get_mongo_files(access_code)
+        files, path = db.get_mongo_files(parent_code)
+        access_code = db.create_access_code()
     config = load_config(config_file, files['metadata'])
 
     try:
-        tool = TOOLS[tool_type](user, access_code, tool_type, analysis_type, config, testing,
+        tool = TOOLS[tool_type](user, access_code, parent_code, tool_type, analysis_type, config, testing,
                                 kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
 
-    send_email(tool.doc.email, user, message='analysis_start', code=access_code,
-               testing=testing, study=tool.doc.study_name)
     return tool
 
 
@@ -111,26 +105,40 @@ class Watcher(Process):
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
-        self.running_processes.append(process)
+        self.running_processes.append(process.access_code)
         self.write_running_processes()
 
     def check_processes(self):
         still_running = []
-        # For each type of process 'upload', 'analysis', 'etc'
-        # Check each process is still alive
-        while self.running_processes:
-            process = self.running_processes.pop()
-            if process.is_alive():
-                still_running.append(process)
-            else:
-                self.processes.append(process)
-                # Send the exitcode of the process
-                self.pipe.send(process.exitcode)
+        with Database(testing=self.testing) as db:
+            # For each type of process 'upload', 'analysis', 'etc'
+            # Check each process is still alive
+            while self.running_processes:
+                process_code = self.running_processes.pop()
+                while True:
+                    try:
+                        process_doc = db.get_doc(process_code, False)
+                        break
+                    except MissingUploadError:
+                        continue
+                if process_doc.is_alive:
+                    still_running.append(process_doc)
+                else:
+                    self.processes.append(process_doc)
+                    # Send the exitcode of the process
+                    self.pipe.send(process_doc.exit_code)
         for process in still_running:
             self.running_processes.append(process)
 
     def write_running_processes(self):
-        writeable = [process.get_info() for process in self.running_processes]
+        with Database(testing=self.testing) as db:
+            # writeable = [ for process_code in self.running_processes]
+            writeable = []
+            for process_code in self.running_processes:
+                try:
+                    writeable.append(db.get_doc(process_code, False).get_info())
+                except MissingUploadError:
+                    continue
         with open(fig.CURRENT_PROCESSES, 'w+') as f:
             yaml.dump(writeable, f)
 

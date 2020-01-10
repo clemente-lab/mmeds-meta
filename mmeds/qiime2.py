@@ -14,10 +14,11 @@ class Qiime2(Tool):
     # The default classifier for Q2 analysis
     classifier = STORAGE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
-    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
+    def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, kill_stage=-1, child=False):
-        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
-                         analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage, child=child)
+        super().__init__(owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+                         analysis=analysis, restart_stage=restart_stage,
+                         kill_stage=kill_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.module = load
         self.jobtext.append(load)
@@ -72,7 +73,7 @@ class Qiime2(Tool):
                 (self.get_file('working_dir', True) /
                  'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
 
-                if 'single' == self.doc.barcodes_type:
+                if 'single_barcodes' == self.doc.barcodes_type:
                     # Link the barcodes
                     (self.get_file('working_dir', True) /
                      'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))

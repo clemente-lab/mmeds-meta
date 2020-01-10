@@ -1,16 +1,17 @@
 from unittest import TestCase
 from time import sleep
 
-from mmeds.authentication import add_user, remove_user
-
 from yaml import safe_load
 
+from mmeds.log import MMEDSLog
 import mmeds.config as fig
-import mmeds.secrets as sec
 import mmeds.spawn as sp
 import multiprocessing as mp
+import sys
 
 testing = True
+
+logger = MMEDSLog('debug').logger
 
 
 class SpawnTests(TestCase):
@@ -37,16 +38,17 @@ class SpawnTests(TestCase):
         test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
 
         # Add multiple uploads from different users
-        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT, fig.TEST_SPECIMEN,
+        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, fig.TEST_SPECIMEN_SHORT,
                     fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
 
-        self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_ALT, fig.TEST_SPECIMEN_ALT,
+        self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, fig.TEST_SPECIMEN_SHORT,
                     fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
 
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time
         for i in [0, 1]:
             info = self.pipe.recv()
+            sleep(10)
             # Check they match the contents of current_processes
             with open(fig.CURRENT_PROCESSES, 'r') as f:
                 procs = safe_load(f)
@@ -62,12 +64,15 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([], procs)
+        sys.stderr.write('Upload data finished')
+        print('Upload data finished')
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
             self.q.put(('analysis', proc['owner'], proc['study_code'], 'test', '20', None, -1))
 
+        sys.stderr.write('Waiting on analysis')
         # Check the analyses are started and running simultainiously
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
@@ -77,9 +82,11 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([info, info_0], procs)
+        print('Waiting for exit codes 1')
 
         # Check the process exited with code 0
         self.assertEqual(self.pipe.recv(), 0)
+        print('Waiting for exit codes 2')
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_c_restart_analysis(self):

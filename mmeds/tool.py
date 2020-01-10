@@ -21,15 +21,14 @@ import multiprocessing as mp
 import os
 
 
-
 class Tool(mp.Process):
     """
     The base class for tools used by mmeds inherits the python Process class.
-    self.run is overridden by the classes that inherit from Tool so the analysis
-    will happen in seperate processes.
+    Process.run is overridden by the classes that inherit from Tool so the analysis
+    will happen in seperate processes when Process.start() is called.
     """
 
-    def __init__(self, owner, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  threads=10, analysis=True, child=False, restart_stage=0, kill_stage=-1):
         """
         Setup the Tool class
@@ -69,6 +68,7 @@ class Tool(mp.Process):
         self.tool_type = tool_type
         self.config = config
         self.kill_stage = kill_stage
+        self.access_code = access_code
 
         if testing:
             self.num_jobs = 2
@@ -76,24 +76,19 @@ class Tool(mp.Process):
             self.num_jobs = min([threads, mp.cpu_count()])
 
     def initial_setup(self):
-        self.logger.debug('Hi my name is {} and I in initial setup'.format(self.name))
         # Get info on the study/parent analysis from the database
         with Database(owner=self.owner, testing=self.testing) as db:
             if self.restart_stage == 0:
                 parent_doc = db.get_doc(self.parent_code)
-                access_code = db.create_access_code(self.name)
                 self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
-                                                        self.analysis_type, self.config, access_code)
+                                                        self.analysis_type, self.config, self.access_code)
             else:
                 self.doc = db.get_doc(self.parent_code)
-        print('set doc')
-        print(self.doc)
 
         self.path = Path(self.doc.path)
         if self.child:
             self.child_setup()
 
-        self.logger.debug('Doc creation date: {}'.format(self.doc.created))
         self.access_code = self.doc.access_code
         self.path = Path(self.doc.path)
         self.add_path(self.path, key='path')
@@ -101,7 +96,9 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.doc.sub_analysis = False
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
-        print('I am {} and my id is {}'.format(self.name, id(self)))
+
+        send_email(self.doc.email, self.owner, message='analysis_start', code=self.access_code,
+                   testing=self.testing, study=self.doc.study_name)
 
     def __str__(self):
         return ppretty(self, seq_length=5)
@@ -347,7 +344,9 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
-        child = atype(self.owner, self.doc.access_code, atype.__name__.lower(), self.doc.analysis_type,
+        with Database(owner=self.owner, testing=self.testing) as db:
+            access_code = db.create_access_code()
+        child = atype(self.owner, access_code, self.doc.access_code, atype.__name__.lower(), self.doc.analysis_type,
                       self.doc.config, self.testing, analysis=self.analysis, restart_stage=self.restart_stage,
                       child=True)
         return child
@@ -604,6 +603,7 @@ class Tool(mp.Process):
         log_text = self.get_file('errorlog', True).read_text()
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
+            self.update_doc(exit_code=1)
             self.logger.debug('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
             stage = 0
@@ -665,22 +665,24 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        super().run()
-        self.logger.debug('{} calling run'.format(self.name))
-        print('{} calling run'.format(self.name))
-        self.initial_setup()
+        try:
+            self.logger.debug('{} calling run'.format(self.name))
+            print('{} calling run'.format(self.name))
+            self.initial_setup()
 
-        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-        self.logger.debug('Finished initial setup')
-        print('Finished initial setup')
-        self.update_doc(pid=self.pid)
-        if self.analysis:
-            self.logger.debug('I {} am running analysis'.format(self.name))
-            self.run_analysis()
-        else:
-            self.logger.debug('I {} am setting up analysis'.format(self.name))
-            self.setup_analysis()
-        self.update_doc(pid=None, analysis_status='Finished')
+            self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
+            self.logger.debug('Finished initial setup')
+            print('Finished initial setup')
+            self.update_doc(pid=self.pid)
+            if self.analysis:
+                self.logger.debug('I {} am running analysis'.format(self.name))
+                self.run_analysis()
+            else:
+                self.logger.debug('I {} am setting up analysis'.format(self.name))
+                self.setup_analysis()
+            self.update_doc(exit_code=1)
+        finally:
+            self.update_doc(pid=None, is_alive=False, analysis_status='Finished')
 
 
 class TestTool(Tool):
