@@ -1,4 +1,5 @@
-from mmeds.tool import tool
+from mmeds.config import DAABASE_DIR
+from mmeds.tool import Tool
 
 class Lefse(Tool):
     """ A class for LEfSe analysis of uploaded studies. """
@@ -12,23 +13,75 @@ class Lefse(Tool):
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
         self.module = load
 
-        TODO: kill stage value
+        self.subclass = 'subclass' in self.doc.doc_type
+        self.subjects = 'subjects' in self.doc.doc_type
 
-    #format
-    #run
-    #plot
-    #cladogram
-    #other plots
+    def format_input(self):
+        """Convert uploaded .txt file into file type usable by LEfSe"""
 
+        self.add_path('lefse_input', '.in')
+        cmd = 'format_input.py {data} {output} -c 1'
+
+        if self.subclass:
+            cmd += ' -s 2'
+        if self.subjects:
+            cmd += ' -u 3'
+        cmd += ' -o 1000000;'
+
+        self.jobtext.append(cmd.format(data = self.get_file('lefse_table'),
+                                       output=self.get_file('lefse_input')))
+
+    def lefse(self):
+        """Perform the analysis"""
+
+        self.add_path('lefse_results', '.res')
+        cmd = 'run_lefse.py {input} {output};'
+        self.jobtext.append(cmd.format(input = self.get_file('lefse_input'),
+                                       output = self.get_file('lefse_results')))
+
+    def plot_results(self):
+        """Create basic plot of the results"""
+
+        self.add_path('plot_resutls', '.png')
+        cmd = 'plot_res.py {input} {plot};'
+        self.jobtext.append(cmd.format(input = self.get_file('lefse_results'),
+                                       plot = self.get_file('lefse_plot')))
+
+    def cladogram(self):
+        """Create cladogram of the restuls"""
+
+        self.add_path('cladogram', '.png')
+        cmd = 'plot_cladogram.py {input} {cladogram} --format png;'
+        self.jobtext.append(cmd.format(input = self.get_file('lefse_results'),
+                                       cladogram = self.get_file('cladogram')))
+    
+    def features(self):
+        """Create plots of abundance for specific bacteria
+           Produce a .zip with just features identified as biomarkers and
+           produce a .zip with all the features
+        """ 
+        
+        self.add_path('features_biomarkers', '.zip')
+        self.add_path('features_all', '.zip')
+        cmd = 'plot_features.py -f {type} --archive zip {input_1} {input_2} {output};'
+        self.jobtext.append(cmd.format(type = 'diff'),
+                                       input_1 = self.get_file('lefse_input'),
+                                       input_2 = self.get_file('lefse_results'),
+                                       output = self.get_file('features_biomarkers'))
+        self.jobtext.append(cmd.format(type = 'all').
+                                       input_1 = self.get_file('lefse_input'),
+                                       input_2 = self.get_file('lefse_results'),
+                                       output = self.get_file('features_all')))
 
     def setup_analysis:
         self.set_stage(0)
-        #format
+        self.format_input()
         self.set_stage(1)
-        #run
+        self.lefse()
         self.set_stage(2)
-        #plot
-        #cladogram
-        #other plots
-        super().setup_analysis()
+        self.plot_results()
+        self.cladogram()
+        self.features()
+        self.write_file_locations()
+        super().setup_analysis(summary = False)
 
