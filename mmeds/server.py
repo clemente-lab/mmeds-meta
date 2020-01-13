@@ -399,10 +399,13 @@ class MMEDSupload(MMEDSbase):
         log('In upload_data')
         cp.log('In upload_data')
         # If there are no errors or warnings proceed to upload the data files
-        if cp.session['dual_barcodes']:
-            page = self.format_html('upload_data_files_dual', title='Upload Data')
-        else:
-            page = self.format_html('upload_data_files', title='Upload Data')
+        if cp.session['upload_type'] == 'qiime':
+            if cp.session['dual_barcodes']:
+                page = self.format_html('upload_data_files_dual', title='Upload Data')
+            else:
+                page = self.format_html('upload_data_files', title='Upload Data')
+        elif cp.session['upload_type'] == 'sparcc':
+            page = self.format_html('upload_otu_data', title='Upload Data')
         return page
 
     @cp.expose
@@ -553,13 +556,19 @@ class MMEDSanalysis(MMEDSbase):
     ######################################
 
     @cp.expose
-    def run_analysis(self, access_code, tool_type, analysis_type, config):
+    def run_analysis(self, access_code, tool, config):
         """
         Run analysis on the specified study
         ----------------------------------------
         :access_code: The code that identifies the dataset to run the tool on
         :tool: The tool to run on the chosen dataset
         """
+        if '-' in tool:
+            tool_type = tool.split('-')[0]
+            analysis_type = tool.split('-')[1]
+        else:
+            tool_type = tool
+            analysis_type = None
         try:
             self.check_upload(access_code)
             print('config passed is {}'.format(config))
