@@ -35,24 +35,24 @@ class Lefse(Tool):
         """Perform the analysis"""
 
         self.add_path('lefse_results', '.res')
-        cmd = 'run_lefse.py {input} {output};'
-        self.jobtext.append(cmd.format(input = self.get_file('lefse_input'),
-                                       output = self.get_file('lefse_results')))
+        cmd = 'run_lefse.py {input_file} {output_file};'
+        self.jobtext.append(cmd.format(input_file = self.get_file('lefse_input'),
+                                       output_file = self.get_file('lefse_results')))
 
     def plot_results(self):
         """Create basic plot of the results"""
 
         self.add_path('plot_resutls', '.png')
-        cmd = 'plot_res.py {input} {plot};'
-        self.jobtext.append(cmd.format(input = self.get_file('lefse_results'),
+        cmd = 'plot_res.py {input_file} {plot};'
+        self.jobtext.append(cmd.format(input_file = self.get_file('lefse_results'),
                                        plot = self.get_file('lefse_plot')))
 
     def cladogram(self):
         """Create cladogram of the restuls"""
 
         self.add_path('cladogram', '.png')
-        cmd = 'plot_cladogram.py {input} {cladogram} --format png;'
-        self.jobtext.append(cmd.format(input = self.get_file('lefse_results'),
+        cmd = 'plot_cladogram.py {input_file} {cladogram} --format png;'
+        self.jobtext.append(cmd.format(input_file = self.get_file('lefse_results'),
                                        cladogram = self.get_file('cladogram')))
     
     def features(self):
@@ -63,12 +63,12 @@ class Lefse(Tool):
         
         self.add_path('features_biomarkers', '.zip')
         self.add_path('features_all', '.zip')
-        cmd = 'plot_features.py -f {type} --archive zip {input_1} {input_2} {output};'
-        self.jobtext.append(cmd.format(type = 'diff'),
+        cmd = 'plot_features.py -f {features} --archive zip {input_1} {input_2} {output};'
+        self.jobtext.append(cmd.format(features = 'diff',
                                        input_1 = self.get_file('lefse_input'),
                                        input_2 = self.get_file('lefse_results'),
-                                       output = self.get_file('features_biomarkers'))
-        self.jobtext.append(cmd.format(type = 'all').
+                                       output = self.get_file('features_biomarkers')))
+        self.jobtext.append(cmd.format(features = 'all',
                                        input_1 = self.get_file('lefse_input'),
                                        input_2 = self.get_file('lefse_results'),
                                        output = self.get_file('features_all')))
