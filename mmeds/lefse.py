@@ -8,13 +8,13 @@ class Lefse(Tool):
                  analysis= True, restart_stage=0, kill_stage=0, child = False):
         super().__init__(owner, access_code, tool_type, analysis_type, config, testing, 
                          analysis=analysis, restart_stage=restart_stage, child=child)
-        load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
+        load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
         self.module = load
 
-        self.subclass = 'subclass' in self.doc.doc_type
-        self.subjects = 'subjects' in self.doc.doc_type
+        self.subclass = 'subclass' in self.doc.reads_type
+        self.subjects = 'subjects' in self.doc.reads_type
 
     def format_input(self):
         """Convert uploaded .txt file into file type usable by LEfSe"""
@@ -24,8 +24,10 @@ class Lefse(Tool):
 
         if self.subclass:
             cmd += ' -s 2'
-        if self.subjects:
-            cmd += ' -u 3'
+            if self.subjects:
+                cmd += ' -u 3'
+        elif self.subjects:
+            cmd += ' -u 2'
         cmd += ' -o 1000000;'
 
         self.jobtext.append(cmd.format(data = self.get_file('lefse_table'),
@@ -42,18 +44,18 @@ class Lefse(Tool):
     def plot_results(self):
         """Create basic plot of the results"""
 
-        self.add_path('plot_resutls', '.png')
+        self.add_path('results_plot', '.png')
         cmd = 'plot_res.py {input_file} {plot};'
         self.jobtext.append(cmd.format(input_file = self.get_file('lefse_results'),
-                                       plot = self.get_file('lefse_plot')))
+                                       plot = self.get_file('results_plot')))
 
     def cladogram(self):
         """Create cladogram of the restuls"""
 
-        self.add_path('cladogram', '.png')
+        self.add_path('results_cladogram', '.png')
         cmd = 'plot_cladogram.py {input_file} {cladogram} --format png;'
         self.jobtext.append(cmd.format(input_file = self.get_file('lefse_results'),
-                                       cladogram = self.get_file('cladogram')))
+                                       cladogram = self.get_file('results_cladogram')))
     
     def features(self):
         """Create plots of abundance for specific bacteria

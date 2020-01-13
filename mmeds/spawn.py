@@ -46,18 +46,18 @@ def spawn_analysis(tool_type, analysis_type, user, access_code, config_file, tes
     except KeyError:
         raise AnalysisError('Tool type did not match any')
 
-    if 'qiime1' in atype:
-        tool = Qiime1(user, access_code, atype, config, testing, kill_stage=kill_stage)
-    elif 'qiime2' in atype:
-        tool = Qiime2(user, access_code, atype, config, testing, kill_stage=kill_stage)
-    elif 'sparcc' in atype:
-        tool = SparCC(user, access_code, atype, config, testing, kill_stage=kill_stage)
-    elif 'lefse' in atype:
-        tool = Lefse(user, access_code, atype, config, testing, kill_stage=kill_stage)
-    elif 'test' in atype:
+    if 'qiime1' in tool_type:
+        tool = Qiime1(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
+    elif 'qiime2' in tool_type:
+        tool = Qiime2(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
+    elif 'sparcc' in tool_type:
+        tool = SparCC(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
+    elif 'lefse' in tool_type:
+        tool = Lefse(user, access_code, tool_type, analysis_type, config, testing, kill_stage=kill_stage)
+    elif 'test' in tool_type:
         debug_log('test analysis')
-        time = float(atype.split('-')[-1])
-        tool = TestTool(user, access_code, atype, config, testing, time=time)
+        time = float(test_type.split('-')[-1])
+        tool = TestTool(user, access_code, tool_type, analysis_type, config, testing, time=time)
     else:
         raise AnalysisError('atype didnt match any')
 

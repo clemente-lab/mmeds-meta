@@ -683,8 +683,15 @@ class MMEDSanalysis(MMEDSbase):
             reads_type = None
             barcodes_type = None 
         elif cp.session['upload_type'] == 'lefse':
-            datafiles = self.load_data_files(lefse=kwargs['lefse_table'])
-            reads_type = None
+            datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
+            if kwargs['subclass']:
+                reads_type = 'subclass'
+                if kwargs['subjects']:
+                    reads_type = reads_type + '_subject'
+            elif kwargs['subjects']:
+                reads_type = 'subject'
+            else:
+                reads_type = None
             barcodes_type = None
 
         # Add the files to be uploaded to the queue for uploads
