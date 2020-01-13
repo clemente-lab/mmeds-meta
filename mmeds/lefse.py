@@ -4,10 +4,10 @@ from mmeds.tool import Tool
 class Lefse(Tool):
     """ A class for LEfSe analysis of uploaded studies. """
 
-    def __init__(self, owner, access_code, atype, config, testing,
-                 analysis= True, restart_stage=0, kill_stage=0):
-        super().__init__(owner, access_code, atype, config, testing, 
-                         analysis=analysis, restart_stage=restart_stage)
+    def __init__(self, owner, access_code, tool_type, analysis_type,  config, testing,
+                 analysis= True, restart_stage=0, kill_stage=0, child = False):
+        super().__init__(owner, access_code, tool_type, analysis_type, config, testing, 
+                         analysis=analysis, restart_stage=restart_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))

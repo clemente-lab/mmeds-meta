@@ -54,8 +54,8 @@ def upload_otu(args):
 
 def upload_lefse(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
-    datafiles = {'lefse_talbe:': lefse_table}
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'lefse', None,
+    datafiles = {'lefse_table:': lefse_table}
+    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'lefse', 'lefse_table',
                          None, study_name, False, datafiles, False, True, access_code)
     p.start()
     p.join()

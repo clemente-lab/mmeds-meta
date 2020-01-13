@@ -570,7 +570,7 @@ class MMEDSanalysis(MMEDSbase):
             analysis_type = tool.split('-')[1]
         else:
             tool_type = tool
-            analysis_type = None
+            analysis_type = 'default'
         try:
             self.check_upload(access_code)
             print('config passed is {}'.format(config))

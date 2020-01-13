@@ -23,6 +23,7 @@ TOOLS = {
     'qiime1': Qiime1,
     'qiime2': Qiime2,
     'sparcc': SparCC,
+    'lefse': Lefse,
     'test': TestTool
 }
 

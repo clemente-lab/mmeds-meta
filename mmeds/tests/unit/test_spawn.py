@@ -81,7 +81,7 @@ class SpawnTests(TestCase):
         # Check the process exited with code 0
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
-
+    
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:

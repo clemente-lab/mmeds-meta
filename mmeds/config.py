@@ -113,9 +113,11 @@ TEST_CODE_SHORT = 'singlereadsshort'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
 TEST_CODE_OTU = 'otutable'
+TEST_CODE_LEFSE = 'lefsetable'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
+TEST_LEFSE = str(TEST_PATH / 'test_lefse_table.txt')
 TEST_CONFIG = str(TEST_PATH / 'test_config_file.yaml')
 TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.yaml')
 TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.yaml')
@@ -444,5 +446,6 @@ TOOL_FILES = {
     'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
     'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
     'sparcc': ['otu_table'],
+    'lefse': ['lefse_table'],
     'test': []
 }
