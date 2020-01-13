@@ -426,6 +426,7 @@ HTML_PAGES = {
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
     'upload_data_files_dual': (HTML_DIR / 'upload_data_files_dual.html', True),
     'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
+    'upload_lefse_data': (HTML_DIR / 'upload_lefse_data.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),

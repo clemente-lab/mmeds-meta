@@ -1,4 +1,4 @@
-from mmeds.config import DAABASE_DIR
+from mmeds.config import DATABASE_DIR
 from mmeds.tool import Tool
 
 class Lefse(Tool):
@@ -73,7 +73,7 @@ class Lefse(Tool):
                                        input_2 = self.get_file('lefse_results'),
                                        output = self.get_file('features_all')))
 
-    def setup_analysis:
+    def setup_analysis(self):
         self.set_stage(0)
         self.format_input()
         self.set_stage(1)
