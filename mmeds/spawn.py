@@ -13,6 +13,7 @@ from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
+from mmeds.lefse import Lefse
 from mmeds.tool import TestTool
 
 
@@ -34,6 +35,8 @@ def spawn_analysis(atype, user, access_code, config_file, testing, kill_stage=-1
         tool = Qiime2(user, access_code, atype, config, testing, kill_stage=kill_stage)
     elif 'sparcc' in atype:
         tool = SparCC(user, access_code, atype, config, testing, kill_stage=kill_stage)
+    elif 'lefse' in atype:
+        tool = Lefse(user, access_code, atype, config, testing, kill_stage=kill_stage)
     elif 'test' in atype:
         debug_log('test analysis')
         time = float(atype.split('-')[-1])

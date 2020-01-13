@@ -398,10 +398,15 @@ class MMEDSupload(MMEDSbase):
         log('In upload_data')
         cp.log('In upload_data')
         # If there are no errors or warnings proceed to upload the data files
-        if cp.session['dual_barcodes']:
-            page = self.format_html('upload_data_files_dual', title='Upload Data')
-        else:
-            page = self.format_html('upload_data_files', title='Upload Data')
+        if cp.session['upload_type'] == 'qiime':
+            if cp.session['dual_barcodes']:
+                page = self.format_html('upload_data_files_dual', title='Upload Data')
+            else:
+                page = self.format_html('upload_data_files', title='Upload Data')
+        elif cp.session['upload_type'] == 'sparcc':
+            page = self.format_html('upload_otu_data', title='Upload Data')
+        elif cp.session['upload_type'] == 'lefse':
+            page = self.format_html('upload_lefse_data', title='Upload Data')
         return page
 
     @cp.expose
@@ -625,6 +630,8 @@ class MMEDSanalysis(MMEDSbase):
                             page = self.format_html('upload_data_files', title='Upload Data')
                     elif cp.session['upload_type'] == 'sparcc':
                         page = self.format_html('upload_otu_data', title='Upload Data')
+                    elif cp.session['upload_type'] == 'lefse':
+                        page = self.format_html('upload_lefse_data', title='Upload Data')
 
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
@@ -661,11 +668,14 @@ class MMEDSanalysis(MMEDSbase):
                                                  rev_reads=kwargs['rev_reads'],
                                                  for_barcodes=kwargs['for_barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
-
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
             reads_type = None
             barcodes_type = None 
+        elif cp.session['upload_type'] == 'lefse':
+            datafiles = self.load_data_files(lefse=kwargs['lefse_table'])
+            reads_type = None
+            barcodes_type = None
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
