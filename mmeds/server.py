@@ -406,6 +406,8 @@ class MMEDSupload(MMEDSbase):
                 page = self.format_html('upload_data_files', title='Upload Data')
         elif cp.session['upload_type'] == 'sparcc':
             page = self.format_html('upload_otu_data', title='Upload Data')
+        elif cp.session['upload_type'] == 'lefse':
+            page = self.format_html('upload_lefse_data', title='Upload Data')
         return page
 
     @cp.expose
@@ -638,6 +640,8 @@ class MMEDSanalysis(MMEDSbase):
                             page = self.format_html('upload_data_files', title='Upload Data')
                     elif cp.session['upload_type'] == 'sparcc':
                         page = self.format_html('upload_otu_data', title='Upload Data')
+                    elif cp.session['upload_type'] == 'lefse':
+                        page = self.format_html('upload_lefse_data', title='Upload Data')
 
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
@@ -676,6 +680,10 @@ class MMEDSanalysis(MMEDSbase):
                 reads_type = kwargs['reads_type']
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
+            reads_type = None
+            barcodes_type = None 
+        elif cp.session['upload_type'] == 'lefse':
+            datafiles = self.load_data_files(lefse=kwargs['lefse_table'])
             reads_type = None
             barcodes_type = None
 

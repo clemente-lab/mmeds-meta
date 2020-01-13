@@ -13,6 +13,7 @@ from mmeds.error import AnalysisError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
+from mmeds.lefse import Lefse
 from mmeds.tool import TestTool
 from mmeds.log import MMEDSLog
 
@@ -43,6 +44,21 @@ def spawn_analysis(tool_type, analysis_type, user, access_code, config_file, tes
                                 kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
+
+    if 'qiime1' in atype:
+        tool = Qiime1(user, access_code, atype, config, testing, kill_stage=kill_stage)
+    elif 'qiime2' in atype:
+        tool = Qiime2(user, access_code, atype, config, testing, kill_stage=kill_stage)
+    elif 'sparcc' in atype:
+        tool = SparCC(user, access_code, atype, config, testing, kill_stage=kill_stage)
+    elif 'lefse' in atype:
+        tool = Lefse(user, access_code, atype, config, testing, kill_stage=kill_stage)
+    elif 'test' in atype:
+        debug_log('test analysis')
+        time = float(atype.split('-')[-1])
+        tool = TestTool(user, access_code, atype, config, testing, time=time)
+    else:
+        raise AnalysisError('atype didnt match any')
 
     send_email(tool.doc.email, user, message='analysis_start', code=access_code,
                testing=testing, study=tool.doc.study_name)
