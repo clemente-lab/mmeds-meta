@@ -9,7 +9,6 @@ from pathlib import Path
 from subprocess import run
 import atexit
 
-
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
                         mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
