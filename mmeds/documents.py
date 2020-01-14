@@ -70,17 +70,24 @@ class MMEDSDoc(men.Document):
         """ Method for return a dictionary of relevant info for the process log """
         info = {
             'created': self.created,
+            'type': '{}-{}'.format(self.doc_type, self.analysis_type),
             'owner': self.owner,
             'stage': self.restart_stage,
             'study_code': self.study_code,
-            'analysis_code': self.access_code,
+            'access_code': self.access_code,
             'type': self.analysis_type,
             'pid': self.pid,
             'path': self.path,
             'name': self.name,
             'is_alive': self.is_alive
         }
-        return info
+        writeable = {}
+        for key, item in info.items():
+            if item is None:
+                writeable[key] = None
+            else:
+                writeable[key] = str(deepcopy(item))
+        return writeable
 
     def generate_analysis_doc(self, name, access_code):
         """
@@ -107,9 +114,9 @@ class MMEDSDoc(men.Document):
                          owner=self.owner,
                          email=self.email,
                          path=str(child_path),
-                         study_code=self.study_code,
+                         study_code=str(self.study_code),
                          study_name=self.study_name,
-                         access_code=access_code,
+                         access_code=str(access_code),
                          reads_type=self.reads_type,
                          data_type=self.data_type,
                          doc_type=self.doc_type,
@@ -210,9 +217,9 @@ class MMEDSDoc(men.Document):
                        owner=self.owner,
                        email=self.email,
                        path=str(new_dir),
-                       study_code=self.access_code,
+                       study_code=str(self.access_code),
                        study_name=self.study_name,
-                       access_code=access_code,
+                       access_code=str(access_code),
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
                        doc_type=tool_type,

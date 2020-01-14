@@ -507,9 +507,12 @@ class Database:
             result = []
         return result
 
-    def get_mongo_files(self, access_code):
+    def get_mongo_files(self, access_code, check=True):
         """ Return mdata.files, mdata.path for the provided access_code. """
-        mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        if check:
+            mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        else:
+            mdata = MMEDSDoc.objects(access_code=access_code).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
@@ -537,9 +540,9 @@ class Database:
         Any modifications should be done through the Database class.
         """
         if check:
-            doc = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+            doc = MMEDSDoc.objects(access_code=str(access_code), owner=self.owner).first()
         else:
-            doc = MMEDSDoc.objects(access_code=access_code).first()
+            doc = MMEDSDoc.objects(access_code=str(access_code)).first()
         if doc is None:
             raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
         return doc
@@ -940,6 +943,9 @@ class MetaDataUploader(Process):
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
                    code=self.access_code, testing=self.testing)
+        # Update the doc to reflect the successful upload
+        self.mdata.update(is_alive=False, exit_code=0)
+        self.mdata.save()
 
     def import_metadata(self, **kwargs):
         """

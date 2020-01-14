@@ -45,6 +45,7 @@ class Tool(mp.Process):
             will be the access_code for the previous document
         """
         super().__init__()
+        print('Hello I am {} Im new here'.format(self.name))
         self.logger = MMEDSLog('debug').logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
@@ -84,6 +85,8 @@ class Tool(mp.Process):
                                                         self.analysis_type, self.config, self.access_code)
             else:
                 self.doc = db.get_doc(self.parent_code)
+        self.doc.save()
+        print('I {} created doc with code {}'.format(self.name, self.access_code))
 
         self.path = Path(self.doc.path)
         if self.child:
@@ -682,17 +685,23 @@ class Tool(mp.Process):
                 self.setup_analysis()
             self.update_doc(exit_code=1)
         finally:
-            self.update_doc(pid=None, is_alive=False, analysis_status='Finished')
+            self.update_doc(pid=None, is_alive=False, analysis_status='Finished', exit_code=0)
 
 
 class TestTool(Tool):
     """ A class for running tool methods during testing """
 
-    def __init__(self, owner, access_code, tool_type, analysis_type, config, testing,
+    def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, kill_stage=-1, time=5):
-        super().__init__(owner, access_code, tool_type, analysis_type, config, testing,
+        super().__init__(owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage)
         self.time = time
 
     def run(self):
-        sleep(self.time)
+        self.initial_setup()
+        for i in range(self.time):
+            my_value = (float(datetime.utcnow().microsecond) / 102321)
+            sleep(0.5)
+            my_value = (float(datetime.utcnow().second) / 102321)
+            sleep(0.5)
+        print('Test tool {} finishing'.format(self.name))
