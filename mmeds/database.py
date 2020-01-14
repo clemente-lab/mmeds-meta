@@ -52,6 +52,7 @@ def upload_otu(args):
     p.join()
     return p.exitcode
 
+
 def upload_lefse(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
     datafiles = {'lefse_table:': lefse_table}
@@ -60,7 +61,8 @@ def upload_lefse(args):
     p.start()
     p.join()
     return p.exitcode
-    
+
+
 class Database:
     def __init__(self, path='.', user=sec.SQL_ADMIN_NAME, owner=None, testing=False):
         """
