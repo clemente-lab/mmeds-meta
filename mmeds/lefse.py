@@ -85,5 +85,4 @@ class Lefse(Tool):
         self.cladogram()
         self.features()
         self.write_file_locations()
-        super().setup_analysis(summary = False)
-
+        super().setup_analysis(summary = False
