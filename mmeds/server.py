@@ -1,3 +1,4 @@
+
 import os
 import tempfile
 import cherrypy as cp
@@ -633,15 +634,7 @@ class MMEDSanalysis(MMEDSbase):
                 elif cp.session['metadata_type'] == 'specimen':
                     # If it's the sspecimen metadata file, save the type of barcodes
                     # And return the page for uploading data files
-                    if cp.session['upload_type'] == 'qiime':
-                        if cp.session['dual_barcodes']:
-                            page = self.format_html('upload_data_files_dual', title='Upload Data')
-                        else:
-                            page = self.format_html('upload_data_files', title='Upload Data')
-                    elif cp.session['upload_type'] == 'sparcc':
-                        page = self.format_html('upload_otu_data', title='Upload Data')
-                    elif cp.session['upload_type'] == 'lefse':
-                        page = self.format_html('upload_lefse_data', title='Upload Data')
+                    page = self.upload_data()
 
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
@@ -681,7 +674,7 @@ class MMEDSanalysis(MMEDSbase):
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
             reads_type = None
-            barcodes_type = None 
+            barcodes_type = None
         elif cp.session['upload_type'] == 'lefse':
             datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
             if 'subclass' in kwargs.items():
