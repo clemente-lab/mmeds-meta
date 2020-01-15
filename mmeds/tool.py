@@ -85,7 +85,7 @@ class Tool(mp.Process):
             else:
                 self.doc = db.get_doc(self.access_code)
 
-        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=int(deepcopy(self.pid)))
+        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.pid)
         self.doc.save()
 
         self.path = Path(self.doc.path)

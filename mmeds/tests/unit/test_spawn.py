@@ -4,7 +4,6 @@ from time import sleep
 from yaml import safe_load
 
 from mmeds.log import MMEDSLog
-from mmeds.database import Database
 import mmeds.config as fig
 import mmeds.spawn as sp
 import multiprocessing as mp
@@ -77,6 +76,7 @@ class SpawnTests(TestCase):
         info_0 = self.pipe.recv()
         self.analyses += [info, info_0]
         sleep(1)
+
         # Check they match the contents of current_processes
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
@@ -91,12 +91,8 @@ class SpawnTests(TestCase):
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
-            print('Restarting')
-            print(proc)
             self.q.put(('restart', proc['owner'], proc['access_code'], 1, -1))
             # Get the test tool
-            got = self.pipe.recv()
-            print('got {}'.format(got))
-        print('waiting on restarts to finish')
+            self.pipe.recv()
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)

@@ -795,7 +795,6 @@ class MetaDataUploader(Process):
         })
 
         self.IDs = defaultdict(dict)
-        print('in uploader for {}'.format(owner))
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
