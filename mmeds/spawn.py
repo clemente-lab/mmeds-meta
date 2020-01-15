@@ -207,7 +207,7 @@ class Watcher(Process):
             current_upload = p
             if self.testing:
                 p.join()
-            return current_upload
+        return current_upload
 
     def handle_restart(self, process):
         ptype, user, analysis_code, restart_stage, kill_stage = process
