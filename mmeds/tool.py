@@ -699,9 +699,5 @@ class TestTool(Tool):
 
     def run(self):
         self.initial_setup()
-        for i in range(self.time):
-            my_value = (float(datetime.utcnow().microsecond) / 102321)
-            sleep(0.5)
-            my_value = (float(datetime.utcnow().second) / 102321)
-            sleep(0.5)
-        print('Test tool {} finishing'.format(self.name))
+        sleep(self.time)
+        self.update_doc(exit_code=0, is_alive=False)

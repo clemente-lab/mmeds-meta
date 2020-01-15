@@ -82,8 +82,10 @@ class SpawnTests(TestCase):
             procs = safe_load(f)
         self.assertEqual([info, info_0], procs)
 
+        print('Waiting for first process to exit')
         # Check the process exited with code 0
         self.assertEqual(self.pipe.recv(), 0)
+        print('Waiting for 2nd process to exit')
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_c_restart_analysis(self):

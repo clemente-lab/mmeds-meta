@@ -107,6 +107,7 @@ class Watcher(Process):
         self.write_running_processes()
 
     def check_processes(self):
+        print('checking processes')
         still_running = []
         with Database(testing=self.testing) as db:
             # For each type of process 'upload', 'analysis', 'etc'
@@ -119,9 +120,12 @@ class Watcher(Process):
                         break
                     except MissingUploadError:
                         sleep(1)
+                print(process_doc)
                 if process_doc.is_alive:
+                    print('alive')
                     still_running.append(process_code)
                 else:
+                    print('done')
                     self.processes.append(process_doc)
                     # Send the exitcode of the process
                     self.pipe.send(process_doc.exit_code)
