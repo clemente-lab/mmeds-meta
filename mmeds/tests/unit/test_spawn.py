@@ -76,24 +76,27 @@ class SpawnTests(TestCase):
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
         self.analyses += [info, info_0]
-        sleep(5)
+        sleep(1)
         # Check they match the contents of current_processes
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
-        self.assertEqual([info, info_0], procs)
 
-        print('Waiting for first process to exit')
+        self.assertEqual(info, procs[0])
+        self.assertEqual(info_0, procs[1])
+
         # Check the process exited with code 0
         self.assertEqual(self.pipe.recv(), 0)
-        print('Waiting for 2nd process to exit')
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_c_restart_analysis(self):
-        return
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
-            self.q.put(('restart', proc['owner'], proc['analysis_code'], 0, -1))
+            print('Restarting')
+            print(proc)
+            self.q.put(('restart', proc['owner'], proc['access_code'], 1, -1))
             # Get the test tool
-            self.pipe.recv()
+            got = self.pipe.recv()
+            print('got {}'.format(got))
+        print('waiting on restarts to finish')
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)

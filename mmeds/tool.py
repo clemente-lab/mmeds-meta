@@ -45,7 +45,6 @@ class Tool(mp.Process):
             will be the access_code for the previous document
         """
         super().__init__()
-        print('Hello I am {} Im new here'.format(self.name))
         self.logger = MMEDSLog('debug').logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
@@ -84,9 +83,10 @@ class Tool(mp.Process):
                 self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
                                                         self.analysis_type, self.config, self.access_code)
             else:
-                self.doc = db.get_doc(self.parent_code)
+                self.doc = db.get_doc(self.access_code)
+
+        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=int(deepcopy(self.pid)))
         self.doc.save()
-        print('I {} created doc with code {}'.format(self.name, self.access_code))
 
         self.path = Path(self.doc.path)
         if self.child:
@@ -97,7 +97,6 @@ class Tool(mp.Process):
         self.add_path(self.path, key='path')
         write_config(self.doc.config, self.path)
         self.create_qiime_mapping_file()
-        self.doc.sub_analysis = False
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
         send_email(self.doc.email, self.owner, message='analysis_start', code=self.access_code,
@@ -668,36 +667,33 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        try:
-            self.logger.debug('{} calling run'.format(self.name))
-            print('{} calling run'.format(self.name))
-            self.initial_setup()
+        self.logger.debug('{} calling run'.format(self.name))
+        self.initial_setup()
 
-            self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-            self.logger.debug('Finished initial setup')
-            print('Finished initial setup')
-            self.update_doc(pid=self.pid)
-            if self.analysis:
-                self.logger.debug('I {} am running analysis'.format(self.name))
-                self.run_analysis()
-            else:
-                self.logger.debug('I {} am setting up analysis'.format(self.name))
-                self.setup_analysis()
-            self.update_doc(exit_code=1)
-        finally:
-            self.update_doc(pid=None, is_alive=False, analysis_status='Finished', exit_code=0)
+        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
+        self.logger.debug('Finished initial setup')
+        if self.analysis:
+            self.logger.debug('I {} am running analysis'.format(self.name))
+            self.run_analysis()
+        else:
+            self.logger.debug('I {} am setting up analysis'.format(self.name))
+            self.setup_analysis()
+        self.update_doc(pid=None, is_alive=False, analysis_status='Finished', exit_code=0)
+        print('I {} am finished'.format(self.name))
 
 
 class TestTool(Tool):
     """ A class for running tool methods during testing """
 
     def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=-1, time=5):
+                 analysis=True, restart_stage=0, kill_stage=-1, time=20):
         super().__init__(owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage)
+        print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))
         self.time = time
 
-    def run(self):
-        self.initial_setup()
-        sleep(self.time)
-        self.update_doc(exit_code=0, is_alive=False)
+    def run_analysis(self):
+        sleep(int(self.time))
+
+    def setup_analysis(self):
+        sleep(int(self.doc.analysis_type) / 10)

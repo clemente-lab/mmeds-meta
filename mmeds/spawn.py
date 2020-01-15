@@ -49,22 +49,21 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
+def restart_analysis(user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
-        ad = db.get_doc(code, check=True)
+        ad = db.get_doc(analysis_code, check=True)
+    ad.modify(is_alive=True, exit_code=1)
 
     # TODO remove, handle in Tool
     # Create an entire new directory if restarting from the beginning
     if restart_stage < 1:
-        code = ad.study_code
         if Path(ad.path).exists():
             rmtree(ad.path)
-
     # Create the appropriate tool
     try:
-        tool = TOOLS[ad.doc_type](ad.owner, code, ad.doc_type, ad.analysis_type, ad.config, testing,
-                                  analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
+        tool = TOOLS[ad.doc_type](ad.owner, analysis_code, ad.study_code, ad.doc_type, ad.analysis_type, ad.config,
+                                  testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
     return tool
@@ -107,7 +106,6 @@ class Watcher(Process):
         self.write_running_processes()
 
     def check_processes(self):
-        print('checking processes')
         still_running = []
         with Database(testing=self.testing) as db:
             # For each type of process 'upload', 'analysis', 'etc'
@@ -117,15 +115,13 @@ class Watcher(Process):
                 while True:
                     try:
                         process_doc = db.get_doc(process_code, False)
+                        process_doc.reload()
                         break
                     except MissingUploadError:
                         sleep(1)
-                print(process_doc)
                 if process_doc.is_alive:
-                    print('alive')
                     still_running.append(process_code)
                 else:
-                    print('done')
                     self.processes.append(process_doc)
                     # Send the exitcode of the process
                     self.pipe.send(process_doc.exit_code)
@@ -133,7 +129,6 @@ class Watcher(Process):
             self.running_processes.append(process)
 
     def write_running_processes(self):
-        # writeable = [ for process_code in self.running_processes]
         writeable = []
         for process_code in self.running_processes:
             try:
@@ -174,6 +169,18 @@ class Watcher(Process):
     def get_processes(self):
         return self.running_processes, self.processes
 
+    def handle_analysis(self, process):
+        ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
+        p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
+        # Start the analysis running
+        p.start()
+        sleep(1)
+        with Database(testing=self.testing, owner=user) as db:
+            doc = db.get_doc(p.access_code)
+        self.pipe.send(doc.get_info())
+        # Add it to the list of analysis processes
+        self.add_process(ptype, p.access_code)
+
     def handle_upload(self, process, current_upload):
         # Check that there isn't another process currently uploading
         if current_upload is not None and current_upload.is_alive():
@@ -202,6 +209,19 @@ class Watcher(Process):
                 p.join()
             return current_upload
 
+    def handle_restart(self, process):
+        ptype, user, analysis_code, restart_stage, kill_stage = process
+        p = restart_analysis(user, analysis_code, restart_stage,
+                             self.testing, kill_stage=kill_stage, run_analysis=True)
+        # Start the analysis running
+        p.start()
+        sleep(1)
+        with Database(testing=self.testing, owner=user) as db:
+            doc = db.get_doc(p.access_code)
+        self.pipe.send(doc.get_info())
+        # Add it to the list of analysis processes
+        self.add_process(ptype, p.access_code)
+
     def run(self):
         """ The loop to run when a Watcher is started """
         current_upload = None
@@ -223,26 +243,10 @@ class Watcher(Process):
 
                 # If it's an analysis
                 if process[0] == 'analysis':
-                    ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
-                    p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
-                    # Start the analysis running
-                    p.start()
-                    sleep(1)
-                    with Database(testing=self.testing, owner=user) as db:
-                        doc = db.get_doc(p.access_code)
-                    self.pipe.send(doc.get_info())
-                    # Add it to the list of analysis processes
-                    self.add_process(ptype, p.access_code)
+                    self.handle_analysis(process)
                 # IF it's a restart of an analysis
                 elif process[0] == 'restart':
-                    ptype, user, analysis_code, restart_stage, kill_stage = process
-                    p = restart_analysis(user, analysis_code, restart_stage,
-                                         self.testing, kill_stage=kill_stage, run_analysis=True)
-                    # Start the analysis running
-                    p.start()
-                    self.pipe.send(p.get_info())
-                    # Add it to the list of analysis processes
-                    self.add_process(ptype, p.access_code)
+                    self.handle_restart(process)
                 # If it's an upload
                 elif process[0] == 'upload':
                     current_upload = self.handle_upload(process, current_upload)

@@ -70,7 +70,6 @@ class MMEDSDoc(men.Document):
         """ Method for return a dictionary of relevant info for the process log """
         info = {
             'created': self.created,
-            'type': '{}-{}'.format(self.doc_type, self.analysis_type),
             'owner': self.owner,
             'stage': self.restart_stage,
             'study_code': self.study_code,
@@ -85,6 +84,8 @@ class MMEDSDoc(men.Document):
         for key, item in info.items():
             if item is None:
                 writeable[key] = None
+            elif isinstance(item, bool):
+                writeable[key] = bool(deepcopy(item))
             else:
                 writeable[key] = str(deepcopy(item))
         return writeable
