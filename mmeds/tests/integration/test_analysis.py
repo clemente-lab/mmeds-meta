@@ -66,7 +66,6 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime1_with_children(self):
-        return
         log('after data modification')
         with Database('.', owner=fig.TEST_USER, testing=self.testing) as db:
             files, path = db.get_mongo_files(self.code)
@@ -101,6 +100,7 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime2_with_restarts(self):
+        return
         print('start initial analysis')
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), 1))
 
