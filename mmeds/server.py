@@ -642,6 +642,7 @@ class MMEDSanalysis(MMEDSbase):
 
     @cp.expose
     def process_data(self, public=False, **kwargs):
+        print(kwargs)
         cp.log('Public is {}'.format(public))
 
         # Create a unique dir for handling files uploaded by this user
@@ -675,14 +676,14 @@ class MMEDSanalysis(MMEDSbase):
         elif cp.session['upload_type'] == 'lefse':
             datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
             # Use reads_type variable to store if data file contins subclass and subjects
-            if kwargs['subclass']:
+            if 'subclass' in kwargs.keys():
                 reads_type = 'subclass'
-                if kwargs['subjects']:
+                if 'subjects' in kwargs.keys():
                     reads_type = reads_type + '_subjects'
-            elif kwargs['subjects']:
+            elif 'subjects' in kwargs.keys():
                 reads_type = 'subjects'
             else:
-                reads_type = None
+                reads_type = 'class_only'
             barcodes_type = None
 
         # Add the files to be uploaded to the queue for uploads
