@@ -5,7 +5,7 @@
       <h2>Welcome {user}</h2>
       <p>
       <h3>Upload {metadata_type} metadata file</h3>
-        <form action='../analysis/validate_metadata' method='post' enctype='multipart/form-data', id='upload_form'>
+        <form action='../upload/validate_metadata' method='post' enctype='multipart/form-data', id='upload_form'>
 	  <p> {metadata_type} Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
           <p> Temporary Metadata File: <br> <input type='checkbox' name='temporary' /> </p>
 	  <div class='{metadata_type}'>
