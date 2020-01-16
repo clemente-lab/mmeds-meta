@@ -18,7 +18,7 @@ class Lefse(Tool):
         self.subjects = 'subjects' in self.doc.reads_type
 
     def format_input(self):
-        """Convert uploaded .txt file into file type usable by LEfSe"""
+        """ Convert uploaded .txt file into file type usable by LEfSe """
 
         self.add_path('lefse_input', '.in')
         cmd = 'format_input.py {data} {output} -c 1'
@@ -35,7 +35,7 @@ class Lefse(Tool):
                                        output=self.get_file('lefse_input')))
 
     def lefse(self):
-        """Perform the analysis"""
+        """ Perform the analysis """
 
         self.add_path('lefse_results', '.res')
         cmd = 'run_lefse.py {input_file} {output_file};'
@@ -43,7 +43,7 @@ class Lefse(Tool):
                                        output_file=self.get_file('lefse_results')))
 
     def plot_results(self):
-        """Create basic plot of the results"""
+        """ Create basic plot of the results """
 
         self.add_path('results_plot', '.png')
         cmd = 'plot_res.py {input_file} {plot};'
@@ -51,7 +51,7 @@ class Lefse(Tool):
                                        plot=self.get_file('results_plot')))
 
     def cladogram(self):
-        """Create cladogram of the restuls"""
+        """ Create cladogram of the results """
 
         self.add_path('results_cladogram', '.png')
         cmd = 'plot_cladogram.py {input_file} {cladogram} --format png;'
@@ -59,9 +59,9 @@ class Lefse(Tool):
                                        cladogram=self.get_file('results_cladogram')))
 
     def features(self):
-        """Create plots of abundance for specific bacteria
-           Produce a .zip with just features identified as biomarkers and
-           produce a .zip with all the features
+        """ Create plots of abundance for specific bacteria
+            Produce a .zip with just features identified as biomarkers and
+            produce a .zip with all the features
         """
 
         self.add_path('features_biomarkers', '.zip')
