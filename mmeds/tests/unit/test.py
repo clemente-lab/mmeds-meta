@@ -102,7 +102,7 @@ def setup_tests(tests):
                         fig.TEST_OTU,
                         fig.TEST_CODE_OTU)
             assert 0 == upload_otu(test_otu)
-            #Upload Lefse data if running test_tools.py
+            # Upload Lefse data if running test_tools.py
             test_lefse = (fig.TEST_SUBJECT_SHORT,
                           fig.TEST_SPECIMEN_SHORT,
                           fig.TEST_DIR,
