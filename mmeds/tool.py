@@ -667,19 +667,24 @@ class Tool(mp.Process):
 
     def run(self):
         """ Overrides Process.run() """
-        self.logger.debug('{} calling run'.format(self.name))
-        self.initial_setup()
+        # Unless all of run completes succesfully exit code should be 1
+        exit_code = 1
+        try:
+            self.logger.debug('{} calling run'.format(self.name))
+            self.initial_setup()
 
-        self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-        self.logger.debug('Finished initial setup')
-        if self.analysis:
-            self.logger.debug('I {} am running analysis'.format(self.name))
-            self.run_analysis()
-        else:
-            self.logger.debug('I {} am setting up analysis'.format(self.name))
-            self.setup_analysis()
-        self.update_doc(pid=None, is_alive=False, analysis_status='Finished', exit_code=0)
-        print('I {} am finished'.format(self.name))
+            self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
+            self.logger.debug('Finished initial setup')
+            if self.analysis:
+                self.logger.debug('I {} am running analysis'.format(self.name))
+                self.run_analysis()
+            else:
+                self.logger.debug('I {} am setting up analysis'.format(self.name))
+                self.setup_analysis()
+            exit_code = 0  # Tool as completed successfully
+        finally:
+            # Update the related document that the process as terminated
+            self.update_doc(pid=None, is_alive=False, analysis_status='Finished', exit_code=exit_code)
 
 
 class TestTool(Tool):

@@ -101,24 +101,29 @@ class Watcher(Process):
         super().__init__()
 
     def add_process(self, ptype, process_code):
-        """ Add an analysis process to the list of processes. """
+        """ Add a process to the list of currently running processes. """
         self.running_processes.append(process_code)
         self.write_running_processes()
 
     def check_processes(self):
+        """
+        Updates the list of currently running processes. It does this by checking
+        the mongo documents for he processes. Completed processes are removed from
+        current_processes and written to the completed process log
+        """
         still_running = []
         with Database(testing=self.testing) as db:
             # For each type of process 'upload', 'analysis', 'etc'
             # Check each process is still alive
             while self.running_processes:
                 process_code = self.running_processes.pop()
-                while True:
+                process_doc = None
+                while process_doc is None:
                     try:
                         process_doc = db.get_doc(process_code, False)
-                        process_doc.reload()
-                        break
                     except MissingUploadError:
                         sleep(1)
+                # Record the processes that are still alive
                 if process_doc.is_alive:
                     still_running.append(process_code)
                 else:
@@ -129,6 +134,9 @@ class Watcher(Process):
             self.running_processes.append(process)
 
     def write_running_processes(self):
+        """
+        Writes the currently running processes to the process log
+        """
         writeable = []
         for process_code in self.running_processes:
             try:
@@ -170,6 +178,11 @@ class Watcher(Process):
         return self.running_processes, self.processes
 
     def handle_analysis(self, process):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles the creation of analysis processes
+        """
         ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
         p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
         # Start the analysis running
@@ -182,6 +195,11 @@ class Watcher(Process):
         self.add_process(ptype, p.access_code)
 
     def handle_upload(self, process, current_upload):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles the creation of uploader processes
+        """
         # Check that there isn't another process currently uploading
         if current_upload is not None and current_upload.is_alive():
             # If there is another upload return the process info to the queue
@@ -210,6 +228,13 @@ class Watcher(Process):
         return current_upload
 
     def handle_restart(self, process):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles creating new processes to restart previous analyses.
+        """
+        print('Handling restart')
+        print(process)
         ptype, user, analysis_code, restart_stage, kill_stage = process
         p = restart_analysis(user, analysis_code, restart_stage,
                              self.testing, kill_stage=kill_stage, run_analysis=True)
