@@ -602,18 +602,18 @@ class MMEDSanalysis(MMEDSbase):
     ######################################
 
     @cp.expose
-    def run_analysis(self, access_code, tool, config):
+    def run_analysis(self, access_code, analysis_method, config):
         """
         Run analysis on the specified study
         ----------------------------------------
         :access_code: The code that identifies the dataset to run the tool on
-        :tool: The tool to run on the chosen dataset
+        :analysis_method: The tool and analysis to run on the chosen dataset
         """
-        if '-' in tool:
-            tool_type = tool.split('-')[0]
-            analysis_type = tool.split('-')[1]
+        if '-' in analysis_method:
+            tool_type = analysis_method.split('-')[0]
+            analysis_type = analysis_method.split('-')[1]
         else:
-            tool_type = tool
+            tool_type = analysis_method
             analysis_type = 'default'
         try:
             self.check_upload(access_code)
@@ -626,7 +626,9 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
+            self.q.put(('analysis', self.get_user(), access_code, 
+                        
+                        _type, analysis_type, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
