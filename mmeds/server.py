@@ -674,6 +674,7 @@ class MMEDSanalysis(MMEDSbase):
             barcodes_type = None
         elif cp.session['upload_type'] == 'lefse':
             datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
+            # Use reads_type variable to store if data file contins subclass and subjects
             if 'subclass' in kwargs.items():
                 reads_type = 'subclass'
                 if 'subjects' in kwargs.items():
