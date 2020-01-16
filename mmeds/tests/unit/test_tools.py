@@ -30,7 +30,6 @@ class ToolsTests(TestCase):
     def test_sparcc_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_OTU, 'sparcc', 'default', 'otu_table', SparCC)
 
-    
     def test_lefse_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_LEFSE, 'lefse', 'default', 'lefse_table', Lefse)
 
@@ -74,4 +73,3 @@ class ToolsTests(TestCase):
         q2.setup_analysis()
         q2.create_analysis(SparCC)
         rmtree(q2.path)
-
