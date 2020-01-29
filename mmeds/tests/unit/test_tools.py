@@ -6,6 +6,7 @@ from time import sleep
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
+from mmeds.lefse import Lefse
 from mmeds.util import load_config
 import mmeds.config as fig
 
@@ -28,6 +29,9 @@ class ToolsTests(TestCase):
 
     def test_sparcc_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_OTU, 'sparcc', 'default', 'otu_table', SparCC)
+
+    def test_lefse_setup_analysis(self):
+        self.run_qiime(fig.TEST_CODE_LEFSE, 'lefse', 'default', 'lefse_table', Lefse)
 
     def test_qiime1_setup_analysis(self):
         return  # TODO remove
@@ -55,7 +59,14 @@ class ToolsTests(TestCase):
             self.assertEqual(child.doc.data_type, 'single_end')
 
         rmtree(q2.path)
-
+    
+    def test_lefse_sub_analysis(self):
+        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2', 'dada2', config, testing = self.testing, analysis=False)
+        q2.setup_analysis()
+        q2.create_analysis(Lefse)
+        rmtree(q2.path)
+    
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2', 'dada2', config, testing=self.testing, analysis=False)

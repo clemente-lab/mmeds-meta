@@ -80,11 +80,15 @@ class TestServer(helper.CPWebCase):
         self.login()
         self.upload_otu()
 
-    def test_f_dual_upload(self):
+    def test_f_lefse_upload(self):
+        self.login()
+        self.upload_lefse()
+
+    def test_g_dual_upload(self):
         self.login()
         self.upload_dualBarcode_metadata()
 
-    def test_g_query(self):
+    def test_h_query(self):
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
@@ -261,11 +265,11 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ALT], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=otu', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
         document, errors = tidy_document(page_body)
@@ -288,6 +292,40 @@ class TestServer(helper.CPWebCase):
 
         recieve_email(1, True, upload_args)
 
+    def upload_lefse(self):
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/upload/upload_metadata?uploadType=lefse&studyName=Test_Lefse', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ALT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['lefse_table'], [fig.TEST_LEFSE], ['text/tab-seperated-values'])
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        # Search arguments for retrieving emails with access codes
+        upload_args = [
+            ['FROM', fig.MMEDS_EMAIL],
+            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_Lefse')]
+        ]
+
+        recieve_email(1, True, upload_args)
+
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
@@ -295,11 +333,11 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT_DUAL], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=dual', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=dual', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
         documents, errors = tidy_document(page_body)
@@ -334,7 +372,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_file.html',
                          title='Upload Metadata',
@@ -347,7 +385,7 @@ class TestServer(helper.CPWebCase):
 
         # Check a subject metadata file that errors
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ERROR], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
         document, errors = tidy_document(page_body)
@@ -359,7 +397,7 @@ class TestServer(helper.CPWebCase):
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_WARN], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
                          title='Warnings',
@@ -374,12 +412,12 @@ class TestServer(helper.CPWebCase):
 
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         # Check a specimen metadata file that errors
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ERROR], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=sol', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=sol', headers + self.cookies, 'POST', body)
 
         self.assertStatus('200 OK')
         page_body = self.body
@@ -392,7 +430,7 @@ class TestServer(helper.CPWebCase):
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
                          title='Warnings',
@@ -406,7 +444,7 @@ class TestServer(helper.CPWebCase):
         log('Checked metadata that warns')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=self.server_user)
         self.assertBody(page)

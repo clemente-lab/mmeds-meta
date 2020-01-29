@@ -9,7 +9,6 @@ from pathlib import Path
 from subprocess import run
 import atexit
 
-
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
                         mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
@@ -399,10 +398,15 @@ class MMEDSupload(MMEDSbase):
         log('In upload_data')
         cp.log('In upload_data')
         # If there are no errors or warnings proceed to upload the data files
-        if cp.session['dual_barcodes']:
-            page = self.format_html('upload_data_files_dual', title='Upload Data')
-        else:
-            page = self.format_html('upload_data_files', title='Upload Data')
+        if cp.session['upload_type'] == 'qiime':
+            if cp.session['dual_barcodes']:
+                page = self.format_html('upload_data_files_dual', title='Upload Data')
+            else:
+                page = self.format_html('upload_data_files', title='Upload Data')
+        elif cp.session['upload_type'] == 'sparcc':
+            page = self.format_html('upload_otu_data', title='Upload Data')
+        elif cp.session['upload_type'] == 'lefse':
+            page = self.format_html('upload_lefse_data', title='Upload Data')
         return page
 
     @cp.expose
@@ -422,6 +426,51 @@ class MMEDSupload(MMEDSbase):
                                 title='Upload Metadata',
                                 metadata_type=cp.session['metadata_type'].capitalize(),
                                 version=uploadType)
+        return page
+
+    @cp.expose
+    def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
+        """ The page returned after a file is uploaded. """
+        try:
+            cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
+            # If the metadata is temporary don't perform validation
+            if temporary:
+                cp.session['metadata_temporary'] = True
+                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+                errors, warnings = [], []
+            else:
+                cp.session['metadata_temporary'] = False
+                errors, warnings = self.run_validate(myMetaData)
+            metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
+            if barcodes_type == 'dual':
+                cp.session['dual_barcodes'] = True
+            else:
+                cp.session['dual_barcodes'] = False
+
+            # If there are errors report them and return the error page
+            if errors:
+                page = self.handle_metadata_errors(metadata_copy, errors, warnings)
+            elif warnings:
+                page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
+            else:
+                # If there are no errors or warnings proceed to upload the data files
+                log('No errors or warnings')
+                # If it's the subject metadata file return the page for uploading the specimen metadata
+                if cp.session['metadata_type'] == 'subject':
+                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
+                    page = insert_warning(page, 23, 'Subject table uploaded successfully')
+                    cp.session['metadata_type'] = 'specimen'
+                # Otherwise proceed to uploading data files
+                elif cp.session['metadata_type'] == 'specimen':
+                    # If it's the sspecimen metadata file, save the type of barcodes
+                    # And return the page for uploading data files
+                    page = self.upload_data()
+
+        except err.MetaDataError as e:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    metadata_type=cp.session['metadata_type'])
+            page = insert_error(page, 22, e.message)
         return page
 
 
@@ -553,13 +602,19 @@ class MMEDSanalysis(MMEDSbase):
     ######################################
 
     @cp.expose
-    def run_analysis(self, access_code, tool_type, analysis_type, config):
+    def run_analysis(self, access_code, analysis_method, config):
         """
         Run analysis on the specified study
         ----------------------------------------
         :access_code: The code that identifies the dataset to run the tool on
-        :tool: The tool to run on the chosen dataset
+        :analysis_method: The tool and analysis to run on the chosen dataset
         """
+        if '-' in analysis_method:
+            tool_type = analysis_method.split('-')[0]
+            analysis_type = analysis_method.split('-')[1]
+        else:
+            tool_type = analysis_method
+            analysis_type = 'default'
         try:
             self.check_upload(access_code)
             print('config passed is {}'.format(config))
@@ -571,7 +626,9 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
+            self.q.put(('analysis', self.get_user(), access_code, 
+                        
+                        _type, analysis_type, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
@@ -586,59 +643,8 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
-        """ The page returned after a file is uploaded. """
-        try:
-            cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
-            # If the metadata is temporary don't perform validation
-            if temporary:
-                cp.session['metadata_temporary'] = True
-                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-                errors, warnings = [], []
-            else:
-                cp.session['metadata_temporary'] = False
-                errors, warnings = self.run_validate(myMetaData)
-
-            metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
-            if barcodes_type == 'dual':
-                cp.session['dual_barcodes'] = True
-            else:
-                cp.session['dual_barcodes'] = False
-
-            # If there are errors report them and return the error page
-            if errors:
-                page = self.handle_metadata_errors(metadata_copy, errors, warnings)
-            elif warnings:
-                page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
-            else:
-                # If there are no errors or warnings proceed to upload the data files
-                log('No errors or warnings')
-                # If it's the subject metadata file return the page for uploading the specimen metadata
-                if cp.session['metadata_type'] == 'subject':
-                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
-                    page = insert_warning(page, 23, 'Subject table uploaded successfully')
-                    cp.session['metadata_type'] = 'specimen'
-                # Otherwise proceed to uploading data files
-                elif cp.session['metadata_type'] == 'specimen':
-                    # If it's the sspecimen metadata file, save the type of barcodes
-                    # And return the page for uploading data files
-                    if cp.session['upload_type'] == 'qiime':
-                        if cp.session['dual_barcodes']:
-                            page = self.format_html('upload_data_files_dual', title='Upload Data')
-                        else:
-                            page = self.format_html('upload_data_files', title='Upload Data')
-                    elif cp.session['upload_type'] == 'sparcc':
-                        page = self.format_html('upload_otu_data', title='Upload Data')
-
-        except err.MetaDataError as e:
-            page = self.format_html('upload_metadata_file',
-                                    title='Upload Metadata',
-                                    metadata_type=cp.session['metadata_type'])
-            page = insert_error(page, 22, e.message)
-        return page
-
-    @cp.expose
     def process_data(self, public=False, **kwargs):
+        print(kwargs)
         cp.log('Public is {}'.format(public))
 
         # Create a unique dir for handling files uploaded by this user
@@ -668,6 +674,18 @@ class MMEDSanalysis(MMEDSbase):
         elif cp.session['upload_type'] == 'sparcc':
             datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
             reads_type = None
+            barcodes_type = None
+        elif cp.session['upload_type'] == 'lefse':
+            datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
+            # Use reads_type variable to store if data file contins subclass and subjects
+            if 'subclass' in kwargs.keys():
+                reads_type = 'subclass'
+                if 'subjects' in kwargs.keys():
+                    reads_type = reads_type + '_subjects'
+            elif 'subjects' in kwargs.keys():
+                reads_type = 'subjects'
+            else:
+                reads_type = 'class_only'
             barcodes_type = None
 
         # Add the files to be uploaded to the queue for uploads
