@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.database import upload_metadata, upload_otu
+from mmeds.database import upload_metadata, upload_otu, upload_lefse
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -102,6 +102,15 @@ def setup_tests(tests):
                         fig.TEST_OTU,
                         fig.TEST_CODE_OTU)
             assert 0 == upload_otu(test_otu)
+            # Upload Lefse data if running test_tools.py
+            test_lefse = (fig.TEST_SUBJECT_SHORT,
+                          fig.TEST_SPECIMEN_SHORT,
+                          fig.TEST_DIR,
+                          fig.TEST_USER,
+                          'Test_Lefse',
+                          fig.TEST_LEFSE,
+                          fig.TEST_CODE_LEFSE)
+            assert 0 == upload_lefse(test_lefse)
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
                            fig.TEST_SPECIMEN,
