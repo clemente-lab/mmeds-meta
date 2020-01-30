@@ -75,14 +75,17 @@ class TestServer(helper.CPWebCase):
         self.convert()
         self.lab_download()
         self.user_download()
+        self.logout()
 
     def test_e_otu_upload(self):
         self.login()
         self.upload_otu()
+        self.logout()
 
     def test_f_lefse_upload(self):
         self.login()
         self.upload_lefse()
+        self.logout()
 
     def test_g_dual_upload(self):
         self.login()
