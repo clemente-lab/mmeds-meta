@@ -38,9 +38,8 @@ def upload_metadata(args):
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
                          barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
-    p.start()
-    p.join()
-    return p.exitcode
+    p.run()
+    return 0
 
 
 def upload_otu(args):
@@ -48,19 +47,18 @@ def upload_otu(args):
     datafiles = {'otu_table': otu_table}
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', 'otu_table',
                          None, study_name, False, datafiles, False, True, access_code)
-    p.start()
-    p.join()
-    return p.exitcode
+    p.run()
+    return 0
 
 
 def upload_lefse(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
-    datafiles = {'lefse_table:': lefse_table}
+    datafiles = {'lefse_table': lefse_table}
+
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'lefse', 'lefse_table',
                          None, study_name, False, datafiles, False, True, access_code)
-    p.start()
-    p.join()
-    return p.exitcode
+    p.run()
+    return 0
 
 
 class Database:
@@ -367,18 +365,16 @@ class Database:
     #               MongoDB                #
     ########################################
     @classmethod
-    def create_access_code(cls, check_code, length=20):
+    def create_access_code(cls, check_code=None, length=20):
         """ Creates a unique code for identifying a mongo db document """
+        if check_code is None:
+            check_code = fig.get_salt(20)
         code = check_code
         count = 0
-        while True:
-            # Ensure no document exists with the given access code
-            if not (MMEDSDoc.objects(access_code=code).first() or
-                    MMEDSDoc.objects(access_code=code).first()):
-                break
-            else:
-                code = check_code + '-' + str(count)
-                count += 1
+        # Ensure no document exists with the given access code
+        while MMEDSDoc.objects(access_code=code).first():
+            code = check_code + '-' + str(count)
+            count += 1
         return code
 
     def mongo_clean(self, access_code):
@@ -516,9 +512,12 @@ class Database:
             result = []
         return result
 
-    def get_mongo_files(self, access_code):
+    def get_mongo_files(self, access_code, check=True):
         """ Return mdata.files, mdata.path for the provided access_code. """
-        mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        if check:
+            mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+        else:
+            mdata = MMEDSDoc.objects(access_code=access_code).first()
 
         # Raise an error if the upload does not exist
         if mdata is None:
@@ -546,9 +545,9 @@ class Database:
         Any modifications should be done through the Database class.
         """
         if check:
-            doc = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
+            doc = MMEDSDoc.objects(access_code=str(access_code), owner=self.owner).first()
         else:
-            doc = MMEDSDoc.objects(access_code=access_code).first()
+            doc = MMEDSDoc.objects(access_code=str(access_code)).first()
         if doc is None:
             raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
         return doc
@@ -801,7 +800,6 @@ class MetaDataUploader(Process):
         })
 
         self.IDs = defaultdict(dict)
-        print('in uploader for {}'.format(owner))
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
@@ -819,6 +817,20 @@ class MetaDataUploader(Process):
             self.access_code = get_salt(50)
         else:
             self.access_code = access_code
+
+        # Create the document
+        self.mdata = MMEDSDoc(created=datetime.utcnow(),
+                              last_accessed=datetime.utcnow(),
+                              testing=self.testing,
+                              doc_type='study-' + self.study_type,
+                              reads_type=self.reads_type,
+                              barcodes_type=self.barcodes_type,
+                              study_name=self.study_name,
+                              access_code=self.access_code,
+                              owner=self.owner,
+                              public=self.public)
+
+        self.mdata.save()
 
         count = 0
         new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
@@ -935,6 +947,9 @@ class MetaDataUploader(Process):
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
                    code=self.access_code, testing=self.testing)
+        # Update the doc to reflect the successful upload
+        self.mdata.update(is_alive=False, exit_code=0)
+        self.mdata.save()
 
     def import_metadata(self, **kwargs):
         """
@@ -1140,25 +1155,9 @@ class MetaDataUploader(Process):
 
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
-        # If an access_code is provided use that
-
-        # Create the document
-        mdata = MMEDSDoc(created=datetime.utcnow(),
-                         last_accessed=datetime.utcnow(),
-                         testing=self.testing,
-                         doc_type='study-' + self.study_type,
-                         reads_type=self.reads_type,
-                         barcodes_type=self.barcodes_type,
-                         study_name=self.study_name,
-                         access_code=self.access_code,
-                         owner=self.owner,
-                         email=self.email,
-                         public=self.public,
-                         path=str(self.path.parent))
-
         # Add the files approprate to the type of study
-        mdata.files.update(kwargs)
-        mdata.files['metadata'] = self.metadata
-
+        self.mdata.files.update(kwargs)
+        self.mdata.files['metadata'] = self.metadata
+        self.mdata.update(email=self.email, path=str(self.path.parent))
         # Save the document
-        mdata.save()
+        self.mdata.save()

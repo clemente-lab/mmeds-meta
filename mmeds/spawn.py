@@ -7,9 +7,9 @@ from datetime import datetime
 import mmeds.config as fig
 import yaml
 
-from mmeds.util import (send_email, create_local_copy, load_config)
+from mmeds.util import create_local_copy, load_config
 from mmeds.database import MetaDataUploader, Database
-from mmeds.error import AnalysisError
+from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
 from mmeds.sparcc import SparCC
@@ -28,26 +28,18 @@ TOOLS = {
 }
 
 
-def test(time):
-    """ Simple function for analysis called during testing """
-    sleep(time)
-
-
-def spawn_analysis(tool_type, analysis_type, user, access_code, config_file, testing, kill_stage=-1):
+def spawn_analysis(tool_type, analysis_type, user, parent_code, config_file, testing, kill_stage=-1):
     """ Start running the analysis in a new process """
     # Load the config for this analysis
     with Database('.', owner=user, testing=testing) as db:
-        files, path = db.get_mongo_files(access_code)
+        files, path = db.get_mongo_files(parent_code)
+        access_code = db.create_access_code()
     config = load_config(config_file, files['metadata'])
-
     try:
-        tool = TOOLS[tool_type](user, access_code, tool_type, analysis_type, config, testing,
+        tool = TOOLS[tool_type](user, access_code, parent_code, tool_type, analysis_type, config, testing,
                                 kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
-
-    send_email(tool.doc.email, user, message='analysis_start', code=access_code,
-               testing=testing, study=tool.doc.study_name)
     return tool
 
 
@@ -59,22 +51,21 @@ def handle_modify_data(access_code, myData, user, data_type, testing):
         db.modify_data(data_copy, access_code, data_type)
 
 
-def restart_analysis(user, code, restart_stage, testing, kill_stage=-1, run_analysis=True):
+def restart_analysis(user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
     """ Restart the specified analysis. """
     with Database('.', owner=user, testing=testing) as db:
-        ad = db.get_doc(code, check=True)
+        ad = db.get_doc(analysis_code, check=True)
+    ad.modify(is_alive=True, exit_code=1)
 
     # TODO remove, handle in Tool
     # Create an entire new directory if restarting from the beginning
     if restart_stage < 1:
-        code = ad.study_code
         if Path(ad.path).exists():
             rmtree(ad.path)
-
     # Create the appropriate tool
     try:
-        tool = TOOLS[ad.doc_type](ad.owner, code, ad.doc_type, ad.analysis_type, ad.config, testing,
-                                  analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
+        tool = TOOLS[ad.doc_type](ad.owner, analysis_code, ad.study_code, ad.doc_type, ad.analysis_type, ad.config,
+                                  testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
     except KeyError:
         raise AnalysisError('Tool type did not match any')
     return tool
@@ -111,30 +102,55 @@ class Watcher(Process):
         self.started = []
         super().__init__()
 
-    def add_process(self, ptype, process):
-        """ Add an analysis process to the list of processes. """
-        self.running_processes.append(process)
+    def add_process(self, ptype, process_code):
+        """ Add a process to the list of currently running processes. """
+        self.running_processes.append(process_code)
         self.write_running_processes()
 
     def check_processes(self):
+        """
+        Updates the list of currently running processes. It does this by checking
+        the mongo documents for he processes. Completed processes are removed from
+        current_processes and written to the completed process log
+        """
         still_running = []
-        # For each type of process 'upload', 'analysis', 'etc'
-        # Check each process is still alive
-        while self.running_processes:
-            process = self.running_processes.pop()
-            if process.is_alive():
-                still_running.append(process)
-            else:
-                self.processes.append(process)
-                # Send the exitcode of the process
-                self.pipe.send(process.exitcode)
+        with Database(testing=self.testing) as db:
+            # For each type of process 'upload', 'analysis', 'etc'
+            # Check each process is still alive
+            while self.running_processes:
+                process_code = self.running_processes.pop()
+                process_doc = None
+                while process_doc is None:
+                    try:
+                        process_doc = db.get_doc(process_code, False)
+                    except MissingUploadError:
+                        sleep(1)
+                # Record the processes that are still alive
+                if process_doc.is_alive:
+                    still_running.append(process_code)
+                else:
+                    self.processes.append(process_doc)
+                    # Send the exitcode of the process
+                    self.pipe.send(process_doc.exit_code)
         for process in still_running:
             self.running_processes.append(process)
 
     def write_running_processes(self):
-        writeable = [process.get_info() for process in self.running_processes]
+        """
+        Writes the currently running processes to the process log
+        """
+        writeable = []
+        for process_code in self.running_processes:
+            try:
+                with Database(testing=self.testing) as db:
+                    doc = db.get_doc(process_code, False)
+                info = doc.get_info()
+                writeable.append(info)
+            # If the upload doesn't exist yet, just proceed
+            except MissingUploadError:
+                continue
         with open(fig.CURRENT_PROCESSES, 'w+') as f:
-            yaml.dump(writeable, f)
+            yaml.dump(sorted(writeable, key=lambda x: x['created']), f)
 
     def log_processes(self):
         """
@@ -156,16 +172,82 @@ class Watcher(Process):
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 
-    def get_exit_codes(self, ptype):
-        """ Get exit codes for processes that have finished. """
-        return [process.exit_code for process in self.processes[ptype]]
-
     def any_running(self, ptype):
         """ Returns true if there is a process running """
         return bool(self.running_processes['ptype'])
 
     def get_processes(self):
         return self.running_processes, self.processes
+
+    def handle_analysis(self, process):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles the creation of analysis processes
+        """
+        ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
+        p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
+        # Start the analysis running
+        p.start()
+        sleep(1)
+        with Database(testing=self.testing, owner=user) as db:
+            doc = db.get_doc(p.access_code)
+        self.pipe.send(doc.get_info())
+        # Add it to the list of analysis processes
+        self.add_process(ptype, p.access_code)
+
+    def handle_upload(self, process, current_upload):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles the creation of uploader processes
+        """
+        # Check that there isn't another process currently uploading
+        if current_upload is not None and current_upload.is_alive():
+            # If there is another upload return the process info to the queue
+            self.q.put(process)
+            sleep(3)
+        else:
+            current_upload = None
+
+        # If there is nothing uploading currently start the new upload process
+        if current_upload is None:
+            (ptype, study_name, subject_metadata, specimen_metadata,
+             username, reads_type, barcodes_type, datafiles, temporary, public) = process
+            # Start a process to handle loading the data
+            p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
+                                 barcodes_type, study_name, temporary, datafiles, public, self.testing)
+            p.start()
+            self.add_process('upload', p.access_code)
+
+            with Database(testing=self.testing) as db:
+                doc = db.get_doc(p.access_code, False)
+            self.pipe.send(doc.get_info())
+            self.started.append(p.access_code)
+            current_upload = p
+            if self.testing:
+                p.join()
+        return current_upload
+
+    def handle_restart(self, process):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles creating new processes to restart previous analyses.
+        """
+        print('Handling restart')
+        print(process)
+        ptype, user, analysis_code, restart_stage, kill_stage = process
+        p = restart_analysis(user, analysis_code, restart_stage,
+                             self.testing, kill_stage=kill_stage, run_analysis=True)
+        # Start the analysis running
+        p.start()
+        sleep(1)
+        with Database(testing=self.testing, owner=user) as db:
+            doc = db.get_doc(p.access_code)
+        self.pipe.send(doc.get_info())
+        # Add it to the list of analysis processes
+        self.add_process(ptype, p.access_code)
 
     def run(self):
         """ The loop to run when a Watcher is started """
@@ -188,45 +270,10 @@ class Watcher(Process):
 
                 # If it's an analysis
                 if process[0] == 'analysis':
-                    ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
-                    p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
-                    # Start the analysis running
-                    p.start()
-                    self.pipe.send(p.get_info())
-                    # Add it to the list of analysis processes
-                    self.add_process(ptype, p)
+                    self.handle_analysis(process)
                 # IF it's a restart of an analysis
                 elif process[0] == 'restart':
-                    ptype, user, analysis_code, restart_stage, kill_stage = process
-                    p = restart_analysis(user, analysis_code, restart_stage,
-                                         self.testing, kill_stage=kill_stage, run_analysis=True)
-                    # Start the analysis running
-                    p.start()
-                    self.pipe.send(p.get_info())
-                    # Add it to the list of analysis processes
-                    self.add_process(ptype, p)
+                    self.handle_restart(process)
                 # If it's an upload
                 elif process[0] == 'upload':
-                    # Check that there isn't another process currently uploading
-                    if current_upload is not None and current_upload.is_alive():
-                        # If there is another upload return the process info to the queue
-                        self.q.put(process)
-                        sleep(3)
-                    else:
-                        current_upload = None
-
-                    # If there is nothing uploading currently start the new upload process
-                    if current_upload is None:
-                        (ptype, study_name, subject_metadata, specimen_metadata,
-                         username, reads_type, barcodes_type, datafiles, temporary, public) = process
-                        print('uploading data for user {}'.format(username))
-                        # Start a process to handle loading the data
-                        p = MetaDataUploader(subject_metadata, specimen_metadata, username, 'qiime', reads_type,
-                                             barcodes_type, study_name, temporary, datafiles, public, self.testing)
-                        p.start()
-                        self.add_process('upload', p)
-                        self.pipe.send(p.get_info())
-                        self.started.append(p)
-                        current_upload = p
-                        if self.testing:
-                            p.join()
+                    current_upload = self.handle_upload(process, current_upload)

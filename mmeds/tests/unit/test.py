@@ -143,12 +143,12 @@ def run_tests(tests):
     for test in tests:
         test_class.append(test.capitalize() + 'Test')
     test_directory = Path(__file__).parent.resolve()
-    if not log:
-        run(['pytest', '--cov=mmeds', '-W', 'ignore::DeprecationWarning', '-W',
-             'ignore::FutureWarning', test_directory, '-k', ' or '.join(test_class), '--durations=0'])
+    if log:
+        run(['pytest', '--cov=mmeds', '--pudb', '-W', 'ignore::DeprecationWarning', '-W', 'ignore::FutureWarning',
+             '-s', test_directory, '-x', '-k', ' or '.join(test_class), '--durations=0'], check=True)
     else:
-        run(['pytest', '--cov=mmeds', '-W', 'ignore::DeprecationWarning', '-W', 'ignore::FutureWarning',
-             '-s', test_directory, '-x', '-k', ' or '.join(test_class), '--durations=0'])
+        run(['pytest', '--cov=mmeds', '-W', 'ignore::DeprecationWarning', '-W',
+             'ignore::FutureWarning', test_directory, '-k', ' or '.join(test_class), '--durations=0'], check=True)
 
 
 def remove_users(users_added):
