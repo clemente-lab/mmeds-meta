@@ -38,9 +38,8 @@ def upload_metadata(args):
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
                          barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
-    p.start()
-    p.join()
-    return p.exitcode
+    p.run()
+    return 0
 
 
 def upload_otu(args):
@@ -48,19 +47,18 @@ def upload_otu(args):
     datafiles = {'otu_table': otu_table}
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', 'otu_table',
                          None, study_name, False, datafiles, False, True, access_code)
-    p.start()
-    p.join()
-    return p.exitcode
+    p.run()
+    return 0
 
 
 def upload_lefse(args):
     (subject_metadata, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
-    datafiles = {'lefse_table:': lefse_table}
+    datafiles = {'lefse_table': lefse_table}
+
     p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'lefse', 'lefse_table',
                          None, study_name, False, datafiles, False, True, access_code)
-    p.start()
-    p.join()
-    return p.exitcode
+    p.run()
+    return 0
 
 
 class Database:

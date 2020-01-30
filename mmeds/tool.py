@@ -349,8 +349,8 @@ class Tool(mp.Process):
         with Database(owner=self.owner, testing=self.testing) as db:
             access_code = db.create_access_code()
         child = atype(self.owner, access_code, self.doc.access_code, atype.__name__.lower(), self.doc.analysis_type,
-                      self.doc.config, self.testing, analysis=self.analysis, restart_stage=self.restart_stage,
-                      child=True)
+                      self.doc.config, self.testing, analysis=self.analysis, child=True,
+                      restart_stage=self.restart_stage, kill_stage=self.kill_stage)
         return child
 
     def child_setup(self):
@@ -672,7 +672,6 @@ class Tool(mp.Process):
         try:
             self.logger.debug('{} calling run'.format(self.name))
             self.initial_setup()
-
             self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
             self.logger.debug('Finished initial setup')
             if self.analysis:

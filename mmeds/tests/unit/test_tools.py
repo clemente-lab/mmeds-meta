@@ -61,14 +61,18 @@ class ToolsTests(TestCase):
             self.assertEqual(child.doc.data_type, 'single_end')
 
         rmtree(q2.path)
-    
+
     def test_lefse_sub_analysis(self):
+        # TODO: Implement conversion from otu table to lefse table so Lefse can be run as a sub analysis
+        return
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, fig.TEST_CODE_SHORT, 'qiime2', 'dada2', config, testing = self.testing, analysis=False)
+        q2 = Qiime2(fig.TEST_USER, 'SomeCodeHere', fig.TEST_CODE_SHORT, 'qiime2', 'dada2',
+                    config, testing=self.testing, analysis=False)
+        q2.initial_setup()
         q2.setup_analysis()
         q2.create_analysis(Lefse)
         rmtree(q2.path)
-    
+
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
