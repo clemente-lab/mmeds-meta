@@ -28,7 +28,7 @@ class Tool(mp.Process):
     will happen in seperate processes when Process.start() is called.
     """
 
-    def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  threads=10, analysis=True, child=False, restart_stage=0, kill_stage=-1):
         """
         Setup the Tool class
@@ -45,6 +45,7 @@ class Tool(mp.Process):
             will be the access_code for the previous document
         """
         super().__init__()
+        self.queue = queue
         self.logger = MMEDSLog('debug').logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
@@ -348,8 +349,8 @@ class Tool(mp.Process):
         """
         with Database(owner=self.owner, testing=self.testing) as db:
             access_code = db.create_access_code()
-        child = atype(self.owner, access_code, self.doc.access_code, atype.__name__.lower(), self.doc.analysis_type,
-                      self.doc.config, self.testing, analysis=self.analysis, child=True,
+        child = atype(self.queue, self.owner, access_code, self.doc.access_code, atype.__name__.lower(),
+                      self.doc.analysis_type, self.doc.config, self.testing, analysis=self.analysis, child=True,
                       restart_stage=self.restart_stage, kill_stage=self.kill_stage)
         return child
 
@@ -689,9 +690,9 @@ class Tool(mp.Process):
 class TestTool(Tool):
     """ A class for running tool methods during testing """
 
-    def __init__(self, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, kill_stage=-1, time=20):
-        super().__init__(owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          analysis=analysis, restart_stage=restart_stage)
         print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))
         self.time = time

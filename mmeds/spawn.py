@@ -28,54 +28,12 @@ TOOLS = {
 }
 
 
-def spawn_analysis(tool_type, analysis_type, user, parent_code, config_file, testing, kill_stage=-1):
-    """ Start running the analysis in a new process """
-    # Load the config for this analysis
-    with Database('.', owner=user, testing=testing) as db:
-        files, path = db.get_mongo_files(parent_code)
-        access_code = db.create_access_code()
-    config = load_config(config_file, files['metadata'])
-    try:
-        tool = TOOLS[tool_type](user, access_code, parent_code, tool_type, analysis_type, config, testing,
-                                kill_stage=kill_stage)
-    except KeyError:
-        raise AnalysisError('Tool type did not match any')
-    return tool
-
-
 def handle_modify_data(access_code, myData, user, data_type, testing):
     with Database(owner=user, testing=testing) as db:
         # Create a copy of the Data file
         files, path = db.get_mongo_files(access_code=access_code)
         data_copy = create_local_copy(myData[1], myData[0], path=path)
         db.modify_data(data_copy, access_code, data_type)
-
-
-def restart_analysis(user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
-    """ Restart the specified analysis. """
-    with Database('.', owner=user, testing=testing) as db:
-        ad = db.get_doc(analysis_code, check=True)
-    ad.modify(is_alive=True, exit_code=1)
-
-    # TODO remove, handle in Tool
-    # Create an entire new directory if restarting from the beginning
-    if restart_stage < 1:
-        if Path(ad.path).exists():
-            rmtree(ad.path)
-    # Create the appropriate tool
-    try:
-        tool = TOOLS[ad.doc_type](ad.owner, analysis_code, ad.study_code, ad.doc_type, ad.analysis_type, ad.config,
-                                  testing, analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
-    except KeyError:
-        raise AnalysisError('Tool type did not match any')
-    return tool
-
-
-def spawn_sub_analysis(user, code, category, value, testing):
-    """ Spawn a new sub analysis from a previous analysis. """
-    tool = restart_analysis(user, code, 1, testing)
-    child = tool.create_sub_analysis(category, value)
-    return child
 
 
 def killall(processes):
@@ -101,6 +59,46 @@ class Watcher(Process):
         self.parent_pid = parent_pid
         self.started = []
         super().__init__()
+
+    def spawn_analysis(self, tool_type, analysis_type, user, parent_code, config_file, testing, kill_stage=-1):
+        """ Start running the analysis in a new process """
+        # Load the config for this analysis
+        with Database('.', owner=user, testing=testing) as db:
+            files, path = db.get_mongo_files(parent_code)
+            access_code = db.create_access_code()
+        config = load_config(config_file, files['metadata'])
+        try:
+            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type, analysis_type, config, testing,
+                                    kill_stage=kill_stage)
+        except KeyError:
+            raise AnalysisError('Tool type did not match any')
+        return tool
+
+    def restart_analysis(self, user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
+        """ Restart the specified analysis. """
+        with Database('.', owner=user, testing=testing) as db:
+            ad = db.get_doc(analysis_code, check=True)
+        ad.modify(is_alive=True, exit_code=1)
+
+        # TODO remove, handle in Tool
+        # Create an entire new directory if restarting from the beginning
+        if restart_stage < 1:
+            if Path(ad.path).exists():
+                rmtree(ad.path)
+        # Create the appropriate tool
+        try:
+            tool = TOOLS[ad.doc_type](self.q, ad.owner, analysis_code, ad.study_code, ad.doc_type, ad.analysis_type,
+                                      ad.config, testing, analysis=run_analysis, restart_stage=restart_stage,
+                                      kill_stage=kill_stage)
+        except KeyError:
+            raise AnalysisError('Tool type did not match any')
+        return tool
+
+    def spawn_sub_analysis(self, user, code, category, value, testing):
+        """ Spawn a new sub analysis from a previous analysis. """
+        tool = self.restart_analysis(user, code, 1, testing)
+        child = tool.create_sub_analysis(category, value)
+        return child
 
     def add_process(self, ptype, process_code):
         """ Add a process to the list of currently running processes. """
@@ -186,7 +184,7 @@ class Watcher(Process):
         Handles the creation of analysis processes
         """
         ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
-        p = spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
+        p = self.spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
         # Start the analysis running
         p.start()
         sleep(1)
@@ -238,8 +236,8 @@ class Watcher(Process):
         print('Handling restart')
         print(process)
         ptype, user, analysis_code, restart_stage, kill_stage = process
-        p = restart_analysis(user, analysis_code, restart_stage,
-                             self.testing, kill_stage=kill_stage, run_analysis=True)
+        p = self.restart_analysis(user, analysis_code, restart_stage, self.testing,
+                                  kill_stage=kill_stage, run_analysis=True)
         # Start the analysis running
         p.start()
         sleep(1)

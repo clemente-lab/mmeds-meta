@@ -1,6 +1,7 @@
 from unittest import TestCase
 from shutil import rmtree
 from pathlib import Path
+from multiprocessing import Queue
 
 from mmeds.qiime1 import Qiime1
 from mmeds.qiime2 import Qiime2
@@ -20,9 +21,10 @@ class ToolsTests(TestCase):
     @classmethod
     def setUpClass(self):
         self.config = load_config(None, fig.TEST_METADATA_SHORT)
+        self.q = Queue()
 
     def run_qiime(self, code, tool_type, analysis_type, data_type, Qiime):
-        qiime = Qiime(fig.TEST_USER, 'random_code', code, tool_type, analysis_type, self.config,
+        qiime = Qiime(self.q, fig.TEST_USER, 'random_code', code, tool_type, analysis_type, self.config,
                       testing=self.testing, analysis=False)
         logger.debug('Starting {}, id is {}'.format(qiime.name, id(qiime)))
         qiime.run()
@@ -52,7 +54,7 @@ class ToolsTests(TestCase):
 
     def test_qiime2_child_setup_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
+        q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
                     'dada2', config, testing=self.testing, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
@@ -66,7 +68,7 @@ class ToolsTests(TestCase):
         # TODO: Implement conversion from otu table to lefse table so Lefse can be run as a sub analysis
         return
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, 'SomeCodeHere', fig.TEST_CODE_SHORT, 'qiime2', 'dada2',
+        q2 = Qiime2(self.q, fig.TEST_USER, 'SomeCodeHere', fig.TEST_CODE_SHORT, 'qiime2', 'dada2',
                     config, testing=self.testing, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
@@ -75,7 +77,7 @@ class ToolsTests(TestCase):
 
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
-        q2 = Qiime2(fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
+        q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
                     'dada2', config, testing=self.testing, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
