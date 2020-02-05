@@ -81,5 +81,9 @@ class ToolsTests(TestCase):
                     'dada2', config, testing=self.testing, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
-        q2.create_analysis(SparCC)
+        q2.queue_analysis('sparcc')
+        process = self.q.get()
+        self.assertSequenceEqual(process,
+                                 ('analysis', q2.owner, q2.doc.access_code, 'sparcc',
+                                  q2.config['type'], q2.doc.config, q2.kill_stage))
         rmtree(q2.path)

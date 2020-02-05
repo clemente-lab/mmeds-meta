@@ -51,7 +51,7 @@ CONFIG_PARAMETERS = [
     'additional_analysis',
     'iterations',
     'permutations',
-    'stat'
+    'type'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'

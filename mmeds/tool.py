@@ -339,23 +339,16 @@ class Tool(mp.Process):
         child._parent_pid = self.pid
         return child
 
-    def create_analysis(self, atype):
+    def queue_analysis(self, tool_type):
         """
-        Create a child analysis process using only samples that have a particular value
-        in a particular metadata column. Handles creating the analysis directory and such
+        Add an analysis of the specified type to the watcher queue
         ===============================
-        :category: The column of the metadata to filter by
-        :value: The value that :column: must match for a sample to be included
+        :tool_type: The type of tool to spawn
         """
-        with Database(owner=self.owner, testing=self.testing) as db:
-            access_code = db.create_access_code()
-        child = atype(self.queue, self.owner, access_code, self.doc.access_code, atype.__name__.lower(),
-                      self.doc.analysis_type, self.doc.config, self.testing, analysis=self.analysis, child=True,
-                      restart_stage=self.restart_stage, kill_stage=self.kill_stage)
-        return child
+        self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
+                        self.config['type'], self.doc.config, self.kill_stage))
 
     def child_setup(self):
-
         # Update process name and children
         self.name = self.name + '-{}'.format(self.tool_type)
 
