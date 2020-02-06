@@ -77,7 +77,7 @@ class Watcher(Process):
     def restart_analysis(self, user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
         """ Restart the specified analysis. """
         with Database('.', owner=user, testing=testing) as db:
-            ad = db.get_doc(analysis_code, check=True)
+            ad = db.get_doc(analysis_code)
         ad.modify(is_alive=True, exit_code=1)
 
         # TODO remove, handle in Tool

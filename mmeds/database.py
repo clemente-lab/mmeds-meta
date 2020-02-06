@@ -512,9 +512,9 @@ class Database:
             result = []
         return result
 
-    def get_mongo_files(self, access_code, check=True):
+    def get_mongo_files(self, access_code, check_owner=True):
         """ Return mdata.files, mdata.path for the provided access_code. """
-        if check:
+        if check_owner:
             mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         else:
             mdata = MMEDSDoc.objects(access_code=access_code).first()
@@ -538,13 +538,13 @@ class Database:
         """
         return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
-    def get_doc(self, access_code, check=True):
+    def get_doc(self, access_code, check_owner=True):
         """
         Return the MMEDSDoc object.
         This object should be treated as read only.
         Any modifications should be done through the Database class.
         """
-        if check:
+        if check_owner:
             doc = MMEDSDoc.objects(access_code=str(access_code), owner=self.owner).first()
         else:
             doc = MMEDSDoc.objects(access_code=str(access_code)).first()

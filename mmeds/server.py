@@ -225,7 +225,7 @@ class MMEDSdownload(MMEDSbase):
     def download_study(self, study_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            study = db.get_doc(study_code, check=False)
+            study = db.get_doc(study_code, check_owner=False)
             analyses = db.get_all_analyses_from_study(study_code)
 
         page = self.format_html('download_selected_study',
@@ -259,7 +259,7 @@ class MMEDSdownload(MMEDSbase):
     def select_analysis(self, access_code):
         """ Display the information and files of a particular study. """
         with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_doc(access_code, check=False)
+            analysis = db.get_doc(access_code, check_owner=False)
 
         page = self.format_html('download_selected_analysis',
                                 title='Analysis: {}'.format(analysis.name),
@@ -626,8 +626,8 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, 
-                        
+            self.q.put(('analysis', self.get_user(), access_code,
+
                         _type, analysis_type, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
