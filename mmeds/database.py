@@ -835,8 +835,8 @@ class MetaDataUploader(Process):
         count = 0
         new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
         while new_dir.is_dir():
-            new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
             count += 1
+            new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
         new_dir.mkdir()
 
         self.path = Path(new_dir) / 'database_files'
