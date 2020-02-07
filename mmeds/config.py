@@ -1,6 +1,7 @@
 from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
+from multiprocessing import Lock
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -16,6 +17,8 @@ import re
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
+global EMAIL_LOCK
+EMAIL_LOCK = Lock()
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'

@@ -15,6 +15,7 @@ from email import message_from_bytes
 from time import sleep
 from re import sub
 from ppretty import ppretty
+from multiprocessing import Lock
 
 import yaml
 import mmeds.config as fig
@@ -847,6 +848,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         # Add in any necessary text fields
         msg.set_content(email_body)
 
+        fig.EMAIL_LOCK.acquire()
         # Connect to the server and send the mail
         # server = SMTP('smtp.gmail.com', 587)
         server = SMTP('smtp.office365.com', 587)
@@ -854,6 +856,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         server.login(fig.MMEDS_EMAIL, sec.EMAIL_PASS)
         server.send_message(msg)
         server.quit()
+        fig.EMAIL_LOCK.release()
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
