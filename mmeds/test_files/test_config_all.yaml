@@ -18,4 +18,4 @@ sub_analysis: all
 # SparCC stuff
 iterations: 5
 permutations: 5
-stat: spearman
+type: spearman

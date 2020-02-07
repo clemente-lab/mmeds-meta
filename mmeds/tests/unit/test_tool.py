@@ -1,5 +1,6 @@
 from unittest import TestCase
 from shutil import rmtree
+from multiprocessing import Queue
 
 from mmeds.tool import Tool
 from mmeds.util import load_config
@@ -14,8 +15,10 @@ class ToolTests(TestCase):
 
     @classmethod
     def setUpClass(self):
+        self.q = Queue()
         self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
-        self.tool = Tool(fig.TEST_USER, 'some new code', fig.TEST_CODE_SHORT, 'test', '1', self.config, True, 2, True)
+        self.tool = Tool(self.q, fig.TEST_USER, 'some new code', fig.TEST_CODE_SHORT,
+                         'test', '1', self.config, True, 2, True)
         self.tool.initial_setup()
         self.dirs = [self.tool.doc.path]
 

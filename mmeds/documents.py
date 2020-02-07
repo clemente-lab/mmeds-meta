@@ -188,7 +188,6 @@ class MMEDSDoc(men.Document):
         while new_dir.is_dir():
             run_id += 1
             new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
-
         new_dir = new_dir.resolve()
         new_dir.mkdir()
 
