@@ -15,7 +15,6 @@ from email import message_from_bytes
 from time import sleep
 from re import sub
 from ppretty import ppretty
-from multiprocessing import Lock
 
 import yaml
 import mmeds.config as fig
