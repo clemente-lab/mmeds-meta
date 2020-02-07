@@ -1,4 +1,3 @@
-
 from mmeds.config import DATABASE_DIR
 from mmeds.tools.tool import Tool
 
