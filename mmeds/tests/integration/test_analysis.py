@@ -3,7 +3,7 @@ from mmeds.authentication import add_user, remove_user
 from mmeds.summary import summarize_qiime
 from mmeds.util import log, load_config
 from mmeds.database import Database
-from mmeds.qiime1 import Qiime1
+from mmeds.tools.qiime1 import Qiime1
 from unittest import TestCase
 from pathlib import Path
 from time import sleep

@@ -5,7 +5,7 @@ from pandas import read_csv
 from mmeds.config import STORAGE_DIR, DATABASE_DIR
 from mmeds.util import log, setup_environment
 from mmeds.error import AnalysisError
-from mmeds.tool import Tool
+from mmeds.tools.tool import Tool
 
 
 class Qiime2(Tool):

@@ -3,10 +3,10 @@ from shutil import rmtree
 from pathlib import Path
 from multiprocessing import Queue
 
-from mmeds.qiime1 import Qiime1
-from mmeds.qiime2 import Qiime2
-from mmeds.sparcc import SparCC
-from mmeds.lefse import Lefse
+from mmeds.tools.qiime1 import Qiime1
+from mmeds.tools.qiime2 import Qiime2
+from mmeds.tools.sparcc import SparCC
+from mmeds.tools.lefse import Lefse
 from mmeds.util import load_config
 from mmeds.log import MMEDSLog
 import mmeds.config as fig

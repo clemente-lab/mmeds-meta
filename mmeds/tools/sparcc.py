@@ -1,6 +1,6 @@
 
 from mmeds.config import DATABASE_DIR
-from mmeds.tool import Tool
+from mmeds.tools.tool import Tool
 
 
 class SparCC(Tool):

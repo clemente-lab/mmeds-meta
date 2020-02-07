@@ -3,7 +3,7 @@ from subprocess import run
 from mmeds.config import DATABASE_DIR
 from mmeds.util import setup_environment
 from mmeds.error import AnalysisError
-from mmeds.tool import Tool
+from mmeds.tools.tool import Tool
 from mmeds.log import MMEDSLog
 
 logger = MMEDSLog('debug').logger

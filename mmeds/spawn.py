@@ -10,11 +10,11 @@ import yaml
 from mmeds.util import create_local_copy, load_config
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError, MissingUploadError
-from mmeds.qiime1 import Qiime1
-from mmeds.qiime2 import Qiime2
-from mmeds.sparcc import SparCC
-from mmeds.lefse import Lefse
-from mmeds.tool import TestTool
+from mmeds.tools.qiime1 import Qiime1
+from mmeds.tools.qiime2 import Qiime2
+from mmeds.tools.sparcc import SparCC
+from mmeds.tools.lefse import Lefse
+from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
 
 logger = MMEDSLog('debug').logger
