@@ -447,5 +447,6 @@ TOOL_FILES = {
     'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
     'sparcc': ['otu_table'],
     'lefse': ['lefse_table'],
+    'picrust1': ['otu_table'],
     'test': []
 }

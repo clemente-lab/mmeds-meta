@@ -626,9 +626,7 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code,
-
-                        _type, analysis_type, config_path, -1))
+            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
