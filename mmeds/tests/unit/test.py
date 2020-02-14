@@ -139,6 +139,7 @@ def remove_users(users_added):
 
 
 def main():
+    # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
     log = 'log' in tests
     if log:
@@ -152,7 +153,7 @@ def main():
     if cleanup:
         tests.remove('cleanup')
 
-    if len(tests) == 0:
+    if not tests:
         tests = ['authentication', 'database', 'documents', 'spawn', 'tool', 'tools', 'util', 'validate']
 
     users_added = add_users(tests)

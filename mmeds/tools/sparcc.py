@@ -56,7 +56,7 @@ class SparCC(Tool):
                                        output=self.get_file('PseudoPval'),
                                        sides=sides))
 
-    def setup_analysis(self):
+    def setup_analysis(self, summary=False):
         self.set_stage(0)
         self.sparcc()
         self.set_stage(1)
@@ -69,4 +69,4 @@ class SparCC(Tool):
         self.set_stage(3)
         self.pseudo_pvals()
         self.write_file_locations()
-        super().setup_analysis(summary=False)
+        super().setup_analysis(summary=summary)

@@ -46,7 +46,7 @@ class PiCRUSt1(Tool):
                                                                 self.get_file('nsti_values'))
         self.jobtext.append(cmd)
 
-    def setup_analysis(self):
+    def setup_analysis(self, summary=False):
         self.set_stage(0)
         self.convert_to_biom()
         self.set_stage(1)
@@ -54,4 +54,4 @@ class PiCRUSt1(Tool):
         self.set_stage(2)
         self.predict_metagenomes()
         self.write_file_locations()
-        super().setup_analysis(summary=False)
+        super().setup_analysis(summary=summary)

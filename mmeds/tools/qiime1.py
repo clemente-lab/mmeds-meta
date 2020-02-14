@@ -162,7 +162,7 @@ class Qiime1(Tool):
             logger.debug(str(e))
             raise AnalysisError(e.args[0])
 
-    def setup_analysis(self):
+    def setup_analysis(self, summary=True):
         """ Add all the necessary commands to the jobfile """
         # Only the child run this analysis
         if not self.doc.sub_analysis:
@@ -179,4 +179,4 @@ class Qiime1(Tool):
         self.write_file_locations()
 
         # Perform standard tool setup
-        super().setup_analysis()
+        super().setup_analysis(summary=summary)
