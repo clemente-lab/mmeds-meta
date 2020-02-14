@@ -1,5 +1,5 @@
 from mmeds.config import DATABASE_DIR
-from mmeds.tool import Tool
+from mmeds.tools.tool import Tool
 
 
 class Lefse(Tool):
@@ -75,7 +75,7 @@ class Lefse(Tool):
                                        input_2=self.get_file('lefse_results'),
                                        output=self.get_file('features_all')))
 
-    def setup_analysis(self):
+    def setup_analysis(self, summary=False):
         self.subclass = 'subclass' in self.doc.reads_type
         self.subjects = 'subjects' in self.doc.reads_type
         self.set_stage(0)
@@ -87,4 +87,4 @@ class Lefse(Tool):
         self.cladogram()
         self.features()
         self.write_file_locations()
-        super().setup_analysis(summary=False)
+        super().setup_analysis(summary=summary)

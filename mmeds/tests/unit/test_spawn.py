@@ -75,7 +75,7 @@ class SpawnTests(TestCase):
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
         self.analyses += [info, info_0]
-        sleep(1)
+        sleep(2)
 
         # Check they match the contents of current_processes
         with open(fig.CURRENT_PROCESSES, 'r') as f:

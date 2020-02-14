@@ -2,7 +2,7 @@ from unittest import TestCase
 from shutil import rmtree
 from multiprocessing import Queue
 
-from mmeds.tool import Tool
+from mmeds.tools.tool import Tool
 from mmeds.util import load_config
 
 import mmeds.config as fig

@@ -545,7 +545,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
         self.assertStatus('200 OK')
-        metadata_path = self.body.decode('utf-8').split('\n')[33].split('"')[1]
+        metadata_path = self.body.decode('utf-8').split('\n')[34].split('"')[1]
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
         self.assertStatus('200 OK')
 
@@ -558,7 +558,7 @@ class TestServer(helper.CPWebCase):
         self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
         self.assertStatus('200 OK')
         page = self.body.decode('utf-8')
-        metadata_path = page.split('\n')[33].split('"')[1]
+        metadata_path = page.split('\n')[34].split('"')[1]
         self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
         self.assertStatus('200 OK')
 

@@ -242,10 +242,10 @@ class MMEDSdownload(MMEDSbase):
                                 path=study.path)
 
         for filename, filepath in study.files.items():
-            page = insert_html(page, 33, '<option value="{}">{}</option>'.format(filepath, filename))
+            page = insert_html(page, 34, '<option value="{}">{}</option>'.format(filepath, filename))
 
         for analysis in analyses:
-            page = insert_html(page, 38 + len(study.files.keys()),
+            page = insert_html(page, 39 + len(study.files.keys()),
                                '<option value="{}">{}</option>'.format(analysis.access_code,
                                                                        analysis.name))
         return page
@@ -286,7 +286,7 @@ class MMEDSdownload(MMEDSbase):
                                                              Path(file_path).name)
                         run(cmd.split(' '), check=True)
                     file_path += '.tar.gz'
-                page = insert_html(page, 36, '<option value="{}">{}</option>'.format(file_path, filename))
+                page = insert_html(page, 37, '<option value="{}">{}</option>'.format(file_path, filename))
         return page
 
     @cp.expose
@@ -626,9 +626,7 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code,
-
-                        _type, analysis_type, config_path, -1))
+            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
             page = self.format_html('welcome', title='Welcome to MMEDS')
             page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:

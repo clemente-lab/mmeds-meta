@@ -5,7 +5,7 @@ from pandas import read_csv
 from mmeds.config import STORAGE_DIR, DATABASE_DIR
 from mmeds.util import log, setup_environment
 from mmeds.error import AnalysisError
-from mmeds.tool import Tool
+from mmeds.tools.tool import Tool
 
 
 class Qiime2(Tool):
@@ -535,7 +535,7 @@ class Qiime2(Tool):
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')
 
-    def setup_analysis(self):
+    def setup_analysis(self, summary=True):
         """ Create the job file for the analysis. """
         if self.restart_stage < 1:
             self.setup_stage_0()
@@ -550,4 +550,4 @@ class Qiime2(Tool):
         if self.restart_stage < 6:
             self.set_stage(5)
         # Perform standard tool setup
-        super().setup_analysis()
+        super().setup_analysis(summary=summary)

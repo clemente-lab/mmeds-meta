@@ -22,7 +22,10 @@ setup(name='mmeds',
       author=__author__,
       author_email=__email__,
       license=__license__,
-      packages=['mmeds'],
+      packages=[
+          'mmeds',
+          'mmeds.tools'
+      ],
       include_package_data=True,
       scripts=glob('scripts/*.py'),
       install_requires=[

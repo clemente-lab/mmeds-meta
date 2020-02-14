@@ -17,27 +17,6 @@ import mmeds.secrets as sec
 """
 
 testing = True
-log = False
-
-
-def main():
-    global log
-    log = 'log' in sys.argv
-    tests = set_tests(sys.argv)
-    users_added = add_users(tests)
-    setup_tests(tests)
-    run_tests(tests)
-    remove_users(users_added)
-
-
-def set_tests(sys_args):
-    tests = sys.argv[1:]
-    if 'log' in tests:
-        tests.remove('log')
-    # if there are no specific tests passed, then run all of them
-    if len(tests) == 0:
-        tests = ['authentication', 'database', 'documents', 'spawn', 'tool', 'tools', 'util', 'validate']
-    return tests
 
 
 def add_users(tests):
@@ -138,7 +117,7 @@ def setup_tests(tests):
         assert 0 == upload_metadata(setup)
 
 
-def run_tests(tests):
+def run_tests(tests, log):
     test_class = []
     for test in tests:
         test_class.append(test.capitalize() + 'Test')
@@ -157,6 +136,35 @@ def remove_users(users_added):
         remove_user(fig.TEST_USER, testing=testing)
         if users_added == 2:
             remove_user(fig.TEST_USER_0, testing=testing)
+
+
+def main():
+    # Grab the arguments passed to the script, skipping the script itself
+    tests = sys.argv[1:]
+    log = 'log' in tests
+    if log:
+        tests.remove('log')
+
+    setup = 'setup' in tests
+    if setup:
+        tests.remove('setup')
+
+    cleanup = 'cleanup' in tests
+    if cleanup:
+        tests.remove('cleanup')
+
+    if not tests:
+        tests = ['authentication', 'database', 'documents', 'spawn', 'tool', 'tools', 'util', 'validate']
+
+    users_added = add_users(tests)
+
+    # Logic to allow for setting up or cleaning up tests without running them
+    if not cleanup:
+        setup_tests(tests)
+    if not setup:
+        if not cleanup:
+            run_tests(tests, log)
+        remove_users(users_added)
 
 
 if __name__ == '__main__':
