@@ -7,6 +7,7 @@ from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
 from mmeds.tools.sparcc import SparCC
 from mmeds.tools.lefse import Lefse
+from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.util import load_config
 from mmeds.log import MMEDSLog
 import mmeds.config as fig
@@ -37,6 +38,9 @@ class ToolsTests(TestCase):
 
     def test_lefse_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_LEFSE, 'lefse', 'default', 'lefse_table', Lefse)
+
+    def test_picrust1_setup_analysis(self):
+        self.run_qiime(fig.TEST_CODE_OTU, 'picrust1', 'default', 'otu_table', PiCRUSt1)
 
     def test_qiime1_setup_analysis(self):
         for tool_type, analysis_type in [('qiime1', 'open'), ('qiime1', 'closed')]:
