@@ -29,7 +29,8 @@ class MMEDSDoc(men.Document):
     reads_type = men.StringField(max_length=45)     # single_end or paired_end
     barcodes_type = men.StringField(max_length=45)  # Single or Paired
     data_type = men.StringField(max_length=45)  #
-    doc_type = men.StringField(max_length=45)
+    tool_type = men.StringField(max_length=45)  # Type of tool
+    doc_type = men.StringField(max_length=45)  # Study or Analysis
     analysis_type = men.StringField(max_length=45)
 
     # Stages: created, started, <Name of last method>, finished, errored
@@ -120,7 +121,7 @@ class MMEDSDoc(men.Document):
                          access_code=str(access_code),
                          reads_type=self.reads_type,
                          data_type=self.data_type,
-                         doc_type=self.doc_type,
+                         doc_type='analysis',
                          analysis_status='Pending',
                          restart_stage='0',
                          files=child_files,
@@ -159,7 +160,8 @@ class MMEDSDoc(men.Document):
                          reads_type=self.reads_type,
                          barcodes_type=self.barcodes_type,
                          data_type=self.data_type,
-                         doc_type=self.doc_type,
+                         tool_type=self.tool_type,
+                         doc_type='analysis',
                          analysis_status='Pending',
                          restart_stage='0',
                          files=child_files,
@@ -222,7 +224,8 @@ class MMEDSDoc(men.Document):
                        access_code=str(access_code),
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
-                       doc_type=tool_type,
+                       doc_type='analysis',
+                       tool_type=tool_type,
                        data_type=self.data_type,
                        analysis_type=analysis_type,
                        analysis_status='created',
