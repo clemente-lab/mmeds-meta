@@ -89,9 +89,9 @@ class Watcher(Process):
                 rmtree(ad.path)
         # Create the appropriate tool
         try:
-            tool = TOOLS[ad.doc_type](self.q, ad.owner, analysis_code, ad.study_code, ad.doc_type, ad.analysis_type,
-                                      ad.config, testing, analysis=run_analysis, restart_stage=restart_stage,
-                                      kill_stage=kill_stage)
+            tool = TOOLS[ad.tool_type](self.q, ad.owner, analysis_code, ad.study_code, ad.tool_type, ad.analysis_type,
+                                       ad.config, testing, analysis=run_analysis, restart_stage=restart_stage,
+                                       kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
         return tool
