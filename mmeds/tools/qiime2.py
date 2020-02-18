@@ -103,7 +103,7 @@ class Qiime2(Tool):
         self.add_path('error_correction', '.qza')
 
         # Run the script
-        if 'single' == self.doc.barcodes_type:
+        if 'single_barcodes' == self.doc.barcodes_type:
             cmd = [
                 # Either emp-single or emp-paired depending on the reads_type
                 'qiime demux emp-{}'.format(self.doc.reads_type.split('_')[0]),
