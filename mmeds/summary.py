@@ -39,7 +39,6 @@ def summarize_qiime(summary_path, tool):
     # Get the mapping file
     copy(files['mapping'], files['summary'])
     copy(files['metadata'], files['summary'] / 'metadata.tsv')
-    print('WHy is not this being usedd!!!?????')
     copy(path / 'config_file.yaml', files['summary'] / 'config_file.yaml')
 
     # Get the template
@@ -124,7 +123,6 @@ def summarize_qiime2(path, files, config, study_name):
     summary_files = defaultdict(list)
 
     # Get Taxa
-    print('get taxa')
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['taxa_bar_plot']),
            '--output-path', str(path / 'temp')]
@@ -136,7 +134,6 @@ def summarize_qiime2(path, files, config, study_name):
     rmtree(path / 'temp')
 
     # Get Beta
-    print('get beta')
     beta_files = files['core_metrics_results'].glob('*pcoa*')
     for beta_file in beta_files:
         cmd = ['qiime', 'tools', 'export',
@@ -150,7 +147,6 @@ def summarize_qiime2(path, files, config, study_name):
     rmtree(path / 'temp')
 
     # Get Alpha
-    print('get alpha')
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]
@@ -392,19 +388,16 @@ class MMEDSNotebook():
         self.add_markdown('# Taxa Summary')
         for data_file in included_files:
             self.taxa_plots(data_file)
-        print('write latex_legend')
         self.add_code(self.source['latex_legend_py'])
 
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
-            print('Write diversity_legend_latex for {}'.format(column))
             self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
         self.add_markdown('# Alpha Diversity Summary')
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
-        print('Write group_legends_py for alpha')
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity
@@ -459,7 +452,6 @@ class MMEDSNotebook():
             output = run(cmd.split(' '), check=True, capture_output=True)
 
         except RuntimeError:
-            print(output)
             log(output)
 
     def create_notebook(self):

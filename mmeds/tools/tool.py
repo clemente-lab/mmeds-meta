@@ -11,8 +11,7 @@ from datetime import datetime
 
 from mmeds.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
-                        load_metadata, write_metadata, camel_case,
-                        send_email)
+                        load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 from mmeds.log import MMEDSLog
@@ -100,8 +99,9 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
-        send_email(self.doc.email, self.owner, message='analysis_start', code=self.access_code,
-                   testing=self.testing, study=self.doc.study_name)
+        email = ('email', self.doc.email, self.owner, 'analysis_start',
+                 dict(code=self.access_code, study=self.doc.study_name))
+        self.queue.put(email)
 
     def __str__(self):
         return ppretty(self, seq_length=5)
@@ -614,8 +614,8 @@ class Tool(mp.Process):
                     stage = i
             self.update_doc(restart_stage=stage)
             # Files removed
-            deleted = []
-            # TODO Move this to happen when an anlysis is restarted 
+            # deleted = []
+            # TODO Move this to happen when an anlysis is restarted
             # Go through all files in the analysis
             # for stage, files in self.stage_files.items():
             #     self.logger.debug('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
@@ -650,21 +650,27 @@ class Tool(mp.Process):
 
             # self.logger.debug('{}: finished file cleanup'.format(self.name))
 
-            send_email(self.doc.email, self.doc.owner, message='error', code=self.doc.access_code,
-                       stage=self.doc.restart_stage, testing=self.testing, study=self.doc.study_name)
+            email = ('email', self.doc.email, self.doc.owner, 'error',
+                     dict(code=self.doc.access_code,
+                          stage=self.doc.restart_stage,
+                          study=self.doc.study_name))
+            self.queue.put(email)
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
-        send_email(self.doc.email, self.doc.owner, message='analysis_done', code=self.doc.access_code,
-                   testing=self.testing, study=self.doc.study_name)
+
+        email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
+                 dict(code=self.doc.access_code, study=self.doc.study_name))
+        self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.move_user_files()
 
         if not self.testing:
-            send_email(self.doc.email,
-                       self.doc.owner,
-                       'analysis',
-                       doc_type=self.name + self.doc.doc_type,
-                       study_name=self.doc.study_name,
-                       testing=self.testing)
+            email = ('email',
+                     self.doc.email,
+                     self.doc.owner,
+                     'analysis',
+                     dict(doc_type=self.name + self.doc.doc_type,
+                          study_name=self.doc.study_name))
+            self.queue.put(email)
 
     def run(self):
         """ Overrides Process.run() """

@@ -7,7 +7,7 @@ from datetime import datetime
 import mmeds.config as fig
 import yaml
 
-from mmeds.util import create_local_copy, load_config
+from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
@@ -235,8 +235,6 @@ class Watcher(Process):
         ====================================================================
         Handles creating new processes to restart previous analyses.
         """
-        print('Handling restart')
-        print(process)
         ptype, user, analysis_code, restart_stage, kill_stage = process
         p = self.restart_analysis(user, analysis_code, restart_stage, self.testing,
                                   kill_stage=kill_stage, run_analysis=True)
@@ -277,3 +275,8 @@ class Watcher(Process):
                 # If it's an upload
                 elif process[0] == 'upload':
                     current_upload = self.handle_upload(process, current_upload)
+                elif process[0] == 'email':
+                    print('Got email')
+                    ptype, toaddr, user, message, kwargs = process
+                    print(process)
+                    send_email(toaddr, user, message, self.testing, **kwargs)
