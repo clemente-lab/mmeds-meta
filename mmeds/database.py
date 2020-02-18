@@ -127,6 +127,7 @@ class Database:
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
 
+        MMEDSDoc.objects.timeout(False)
         self.cursor = self.db.cursor()
         # Setup RLS for regular users
         if user == sec.SQL_USER_NAME:
@@ -867,6 +868,7 @@ class MetaDataUploader(Process):
                                      port=sec.MONGO_PORT,
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
+        MMEDSDoc.objects.timeout(False)
 
     def get_info(self):
         """ Method for return a dictionary of relevant info for the process log """
