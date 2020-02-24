@@ -556,7 +556,7 @@ class Database:
     @classmethod
     def get_all_studies(cls):
         """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects()
+        return MMEDSDoc.objects(doc_type='study')
 
     @classmethod
     def get_all_analyses_from_study(cls, access_code):
@@ -823,7 +823,8 @@ class MetaDataUploader(Process):
         self.mdata = MMEDSDoc(created=datetime.utcnow(),
                               last_accessed=datetime.utcnow(),
                               testing=self.testing,
-                              doc_type='study-' + self.study_type,
+                              doc_type='study',
+                              tool_type=self.study_type,
                               reads_type=self.reads_type,
                               barcodes_type=self.barcodes_type,
                               study_name=self.study_name,
