@@ -522,19 +522,22 @@ class Tool(mp.Process):
             count += 1
         self.add_path(jobfile, key='jobfile')
 
-        count = 0
-        errorlog = self.path / 'errorlog_{}.err'.format(count)
-        while errorlog.exists():
-            errorlog = self.path / 'errorlog_{}.err'.format(count)
-            count += 1
-        self.add_path(errorlog, key='errorlog')
 
         if self.testing:
+            # Setup the error log in a testing environment
+            count = 0
+            errorlog = self.path / 'errorlog_{}.err'.format(count)
+            while errorlog.exists():
+                errorlog = self.path / 'errorlog_{}.err'.format(count)
+                count += 1
+            self.add_path(errorlog, key='errorlog')
             # Open the jobfile to write all the commands
             jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
             # Set execute permissions
             jobfile.chmod(0o770)
         else:
+            errorlog = self.path / '{}-{}'.format(self.owner, self.doc.name)
+            self.add_path(errorlog, key='errorlog')
             self.logger.debug('In run_analysis')
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
