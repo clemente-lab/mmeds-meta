@@ -11,8 +11,7 @@ from datetime import datetime
 
 from mmeds.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
-                        load_metadata, write_metadata, camel_case,
-                        send_email)
+                        load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 from mmeds.log import MMEDSLog
@@ -46,7 +45,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         self.queue = queue
-        self.logger = MMEDSLog('debug').logger
+        self.logger = MMEDSLog('debug-{}'.format(self.name)).logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
         self.tool_type = tool_type
@@ -100,8 +99,9 @@ class Tool(mp.Process):
         self.create_qiime_mapping_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
-        send_email(self.doc.email, self.owner, message='analysis_start', code=self.access_code,
-                   testing=self.testing, study=self.doc.study_name)
+        email = ('email', self.doc.email, self.owner, 'analysis_start',
+                 dict(code=self.access_code, study=self.doc.study_name))
+        self.queue.put(email)
 
     def __str__(self):
         return ppretty(self, seq_length=5)
@@ -206,14 +206,17 @@ class Tool(mp.Process):
         while running:
             # Set running to false
             running = False
-            output = run(['/hpc/lsf/9.1/linux2.6-glibc2.3-x86_64/bin/bjobs'],
-                         capture_output=True).stdout.decode('utf-8').split('\n')
-            for job in output:
-                # If the job is found set it back to true
-                if str(job_id) in job:
-                    running = True
-            # Wait thirty seconds to check again
+            # Wait thirty seconds
             sleep(30)
+            # Check bjobs
+            jobs = run(['/hpc/lsf/10.1/linux3.10-glibc2.17-x86_64/bin/bjobs'],
+                         capture_output=True).stdout.decode('utf-8')
+            self.logger.error(type(jobs))
+            self.logger.error(jobs)
+            self.logger.error('waiting on {}'.format(job_id))
+            # If the job is found set it back to true
+            if str(job_id) in jobs:
+                running = True
 
     def move_user_files(self):
         """ Move all visualization files intended for the user to a set location. """
@@ -522,19 +525,22 @@ class Tool(mp.Process):
             count += 1
         self.add_path(jobfile, key='jobfile')
 
-        count = 0
-        error_log = self.path / 'errorlog_{}.err'.format(count)
-        while error_log.exists():
-            error_log = self.path / 'errorlog_{}.err'.format(count)
-            count += 1
-        self.add_path(error_log, key='errorlog')
 
         if self.testing:
+            # Setup the error log in a testing environment
+            count = 0
+            errorlog = self.path / 'errorlog_{}.err'.format(count)
+            while errorlog.exists():
+                errorlog = self.path / 'errorlog_{}.err'.format(count)
+                count += 1
+            self.add_path(errorlog, key='errorlog')
             # Open the jobfile to write all the commands
             jobfile.write_text('\n'.join(['#!/bin/bash -l'] + self.jobtext))
             # Set execute permissions
             jobfile.chmod(0o770)
         else:
+            errorlog = self.path / '{}-{}.stdout'.format(self.owner, self.doc.name)
+            self.add_path(errorlog, key='errorlog')
             self.logger.debug('In run_analysis')
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
@@ -567,8 +573,8 @@ class Tool(mp.Process):
                 self.start_children()
                 self.logger.debug([child.name for child in self.children])
 
+            self.update_doc(analysis_status='started')
             if self.testing:
-                self.update_doc(analysis_status='started')
                 self.logger.debug('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
@@ -582,10 +588,13 @@ class Tool(mp.Process):
                 # Set execute permissions
                 submitfile.chmod(0o770)
                 jobfile.chmod(0o770)
-                #  Temporary for testing on Minerva
-                output = run([jobfile], check=True, capture_output=True)
+
+                output = run([submitfile], check=True, capture_output=True)
+                self.logger.debug('Submitted job {}'.format(output.stdout))
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                self.logger.error(job_id)
                 self.wait_on_job(job_id)
+
             self.logger.debug('{}: pre post analysis'.format(self.name))
             self.post_analysis()
             self.logger.debug('{}: post post analysis'.format(self.name))
@@ -609,6 +618,7 @@ class Tool(mp.Process):
             self.update_doc(restart_stage=stage)
             # Files removed
             deleted = []
+            # TODO Move this to happen when an anlysis is restarted
             # Go through all files in the analysis
             for stage, files in self.stage_files.items():
                 self.logger.debug('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
@@ -643,21 +653,18 @@ class Tool(mp.Process):
 
             self.logger.debug('{}: finished file cleanup'.format(self.name))
 
-            send_email(self.doc.email, self.doc.owner, message='error', code=self.doc.access_code,
-                       stage=self.doc.restart_stage, testing=self.testing, study=self.doc.study_name)
+            email = ('email', self.doc.email, self.doc.owner, 'error',
+                     dict(code=self.doc.access_code,
+                          stage=self.doc.restart_stage,
+                          study=self.doc.study_name))
+            self.queue.put(email)
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
-        send_email(self.doc.email, self.doc.owner, message='analysis_done', code=self.doc.access_code,
-                   testing=self.testing, study=self.doc.study_name)
+
+        email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
+                 dict(code=self.doc.access_code, study=self.doc.study_name))
+        self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.move_user_files()
-
-        if not self.testing:
-            send_email(self.doc.email,
-                       self.doc.owner,
-                       'analysis',
-                       doc_type=self.name + self.doc.doc_type,
-                       study_name=self.doc.study_name,
-                       testing=self.testing)
 
     def run(self):
         """ Overrides Process.run() """

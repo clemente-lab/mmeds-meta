@@ -7,7 +7,7 @@ from datetime import datetime
 import mmeds.config as fig
 import yaml
 
-from mmeds.util import create_local_copy, load_config
+from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database import MetaDataUploader, Database
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
@@ -164,11 +164,16 @@ class Watcher(Process):
         # There is a seperate log of processes for each day
         current_log = fig.PROCESS_LOG_DIR / (datetime.now().strftime('%Y%m%d') + '.yaml')
         if current_log.exists():
-            with open(current_log, 'r') as f:
-                finished += yaml.safe_load(f)
+            try:
+                finished += yaml.safe_load(current_log.read_text())
+            # TODO Figure out why this is happening
+            except TypeError:
+                logger.error('Error loading process log {}'.format(current_log))
 
-        with open(current_log, 'w+') as f:
-            yaml.dump(finished, f)
+        # Only create the file if there are processes to log
+        if finished:
+            with open(current_log, 'w+') as f:
+                yaml.dump(finished, f)
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 
@@ -235,8 +240,6 @@ class Watcher(Process):
         ====================================================================
         Handles creating new processes to restart previous analyses.
         """
-        print('Handling restart')
-        print(process)
         ptype, user, analysis_code, restart_stage, kill_stage = process
         p = self.restart_analysis(user, analysis_code, restart_stage, self.testing,
                                   kill_stage=kill_stage, run_analysis=True)
@@ -265,7 +268,6 @@ class Watcher(Process):
                 # Otherwise get the queued item
                 process = self.q.get()
                 # Retrieve the info
-                logger.debug('Got process from queue')
                 logger.debug(process)
 
                 # If it's an analysis
@@ -277,3 +279,6 @@ class Watcher(Process):
                 # If it's an upload
                 elif process[0] == 'upload':
                     current_upload = self.handle_upload(process, current_upload)
+                elif process[0] == 'email':
+                    ptype, toaddr, user, message, kwargs = process
+                    send_email(toaddr, user, message, self.testing, **kwargs)

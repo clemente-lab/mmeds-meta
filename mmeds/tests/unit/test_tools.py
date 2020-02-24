@@ -86,7 +86,10 @@ class ToolsTests(TestCase):
         q2.initial_setup()
         q2.setup_analysis()
         q2.queue_analysis('sparcc')
-        process = self.q.get()
+        item = self.q.get()
+        while item[0] == 'email':
+            item = self.q.get()
+        process = item
         self.assertSequenceEqual(process,
                                  ('analysis', q2.owner, q2.doc.access_code, 'sparcc',
                                   q2.config['type'], q2.doc.config, q2.kill_stage))

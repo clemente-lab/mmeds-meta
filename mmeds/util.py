@@ -790,7 +790,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :message: The type of message to send
     :kwargs: Any information that is specific to a paricular message type
     """
-    log('Send email to: {} on behalf of {}'.format(toaddr, user))
+    logger.error('Send email of type: {} to: {} on behalf of {}'.format(message, toaddr, user))
 
     # Templates for the different emails mmeds sends
     if message == 'upload':
