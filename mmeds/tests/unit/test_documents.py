@@ -41,6 +41,6 @@ class DocumentsTests(TestCase):
 
     def create_from_analysis(self):
         ad = docs.MMEDSDoc.objects(access_code='test_documents').first()
-        ad2 = ad.generate_sub_analysis_doc('Nationality', 'American', 'child_code')
+        ad2 = ad.generate_sub_analysis_doc(('Subject', 'Nationality'), 'American', 'child_code')
         self.assertEqual(ad2.owner, ad.owner)
         self.assertEqual(Path(ad.path), Path(ad2.path).parent)
