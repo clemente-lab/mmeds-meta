@@ -164,7 +164,11 @@ class Watcher(Process):
         # There is a seperate log of processes for each day
         current_log = fig.PROCESS_LOG_DIR / (datetime.now().strftime('%Y%m%d') + '.yaml')
         if current_log.exists():
-            finished += yaml.safe_load(current_log.read_text())
+            try:
+                finished += yaml.safe_load(current_log.read_text())
+            # TODO Figure out why this is happening
+            except TypeError:
+                logger.error('Error loading process log {}'.format(current_log))
 
         # Only create the file if there are processes to log
         if finished:
@@ -264,7 +268,6 @@ class Watcher(Process):
                 # Otherwise get the queued item
                 process = self.q.get()
                 # Retrieve the info
-                logger.debug('Got process from queue')
                 logger.debug(process)
 
                 # If it's an analysis

@@ -45,7 +45,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         self.queue = queue
-        self.logger = MMEDSLog('debug').logger
+        self.logger = MMEDSLog('debug-{}'.format(self.name)).logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
         self.tool_type = tool_type
@@ -206,14 +206,17 @@ class Tool(mp.Process):
         while running:
             # Set running to false
             running = False
-            output = run(['/hpc/lsf/9.1/linux2.6-glibc2.3-x86_64/bin/bjobs'],
-                         capture_output=True).stdout.decode('utf-8').split('\n')
-            for job in output:
-                # If the job is found set it back to true
-                if str(job_id) in job:
-                    running = True
-            # Wait thirty seconds to check again
+            # Wait thirty seconds
             sleep(30)
+            # Check bjobs
+            jobs = run(['/hpc/lsf/10.1/linux3.10-glibc2.17-x86_64/bin/bjobs'],
+                         capture_output=True).stdout.decode('utf-8')
+            self.logger.error(type(jobs))
+            self.logger.error(jobs)
+            self.logger.error('waiting on {}'.format(job_id))
+            # If the job is found set it back to true
+            if str(job_id) in jobs:
+                running = True
 
     def move_user_files(self):
         """ Move all visualization files intended for the user to a set location. """
@@ -536,7 +539,7 @@ class Tool(mp.Process):
             # Set execute permissions
             jobfile.chmod(0o770)
         else:
-            errorlog = self.path / '{}-{}'.format(self.owner, self.doc.name)
+            errorlog = self.path / '{}-{}.stdout'.format(self.owner, self.doc.name)
             self.add_path(errorlog, key='errorlog')
             self.logger.debug('In run_analysis')
             # Get the job header text from the template
@@ -570,8 +573,8 @@ class Tool(mp.Process):
                 self.start_children()
                 self.logger.debug([child.name for child in self.children])
 
+            self.update_doc(analysis_status='started')
             if self.testing:
-                self.update_doc(analysis_status='started')
                 self.logger.debug('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
@@ -586,13 +589,10 @@ class Tool(mp.Process):
                 submitfile.chmod(0o770)
                 jobfile.chmod(0o770)
 
-                # TODO Temporary for testing on Minerva, switch to submitfile eventuall
-                # with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
-                #     # Run the command
-                #     run([jobfile], stdout=f, stderr=f)
-
-                output = run([jobfile], check=True, capture_output=True)
+                output = run([submitfile], check=True, capture_output=True)
+                self.logger.debug('Submitted job {}'.format(output.stdout))
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                self.logger.error(job_id)
                 self.wait_on_job(job_id)
 
             self.logger.debug('{}: pre post analysis'.format(self.name))
