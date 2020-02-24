@@ -614,41 +614,41 @@ class Tool(mp.Process):
                     stage = i
             self.update_doc(restart_stage=stage)
             # Files removed
-            # deleted = []
+            deleted = []
             # TODO Move this to happen when an anlysis is restarted
             # Go through all files in the analysis
-            # for stage, files in self.stage_files.items():
-            #     self.logger.debug('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
-            #     # If they should be created after the last checkpoint
-            #     if stage >= self.doc.restart_stage:
-            #         self.logger.debug('{}: Greater than restart stage'.format(self.name))
-            #         for f in files:
-            #             if not f == 'jobfile' and not f == 'errorlog':
-            #                 deleted.append(f)
-            #                 # Check if they exist
-            #                 unfinished = self.get_file(f, True)
-            #                 self.logger.debug('{}: checking file {}'.format(self.name, unfinished))
-            #                 if unfinished.exists():
-            #                     self.logger.debug('{}: file exists'.format(self.name))
-            #                     # Otherwise delete them
-            #                     if unfinished.is_dir():
-            #                         self.logger.debug('{}: rmtree'.format(self.name))
-            #                         rmtree(unfinished)
-            #                     else:
-            #                         self.logger.debug('{}: unlink'.format(self.name))
-            #                         unfinished.unlink()
-            #                 else:
-            #                     self.logger.debug('{}: file does exist {}'.format(self.name, unfinished))
-            #     else:
-            #         self.logger.debug('{}: stage already passed'.format(self.name))
+            for stage, files in self.stage_files.items():
+                self.logger.debug('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
+                # If they should be created after the last checkpoint
+                if stage >= self.doc.restart_stage:
+                    self.logger.debug('{}: Greater than restart stage'.format(self.name))
+                    for f in files:
+                        if not f == 'jobfile' and not f == 'errorlog':
+                            deleted.append(f)
+                            # Check if they exist
+                            unfinished = self.get_file(f, True)
+                            self.logger.debug('{}: checking file {}'.format(self.name, unfinished))
+                            if unfinished.exists():
+                                self.logger.debug('{}: file exists'.format(self.name))
+                                # Otherwise delete them
+                                if unfinished.is_dir():
+                                    self.logger.debug('{}: rmtree'.format(self.name))
+                                    rmtree(unfinished)
+                                else:
+                                    self.logger.debug('{}: unlink'.format(self.name))
+                                    unfinished.unlink()
+                            else:
+                                self.logger.debug('{}: file does exist {}'.format(self.name, unfinished))
+                else:
+                    self.logger.debug('{}: stage already passed'.format(self.name))
 
-            # # Remove the deleted files from the mongodb document for the analysis
-            # finished_files = self.doc.files
-            # for key in deleted:
-            #     del finished_files[key]
-            # self.update_doc(files=finished_files)
+            # Remove the deleted files from the mongodb document for the analysis
+            finished_files = self.doc.files
+            for key in deleted:
+                del finished_files[key]
+            self.update_doc(files=finished_files)
 
-            # self.logger.debug('{}: finished file cleanup'.format(self.name))
+            self.logger.debug('{}: finished file cleanup'.format(self.name))
 
             email = ('email', self.doc.email, self.doc.owner, 'error',
                      dict(code=self.doc.access_code,

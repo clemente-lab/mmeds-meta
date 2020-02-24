@@ -276,7 +276,5 @@ class Watcher(Process):
                 elif process[0] == 'upload':
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
-                    print('Got email')
                     ptype, toaddr, user, message, kwargs = process
-                    print(process)
                     send_email(toaddr, user, message, self.testing, **kwargs)
