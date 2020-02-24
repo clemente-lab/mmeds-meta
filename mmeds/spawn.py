@@ -164,11 +164,12 @@ class Watcher(Process):
         # There is a seperate log of processes for each day
         current_log = fig.PROCESS_LOG_DIR / (datetime.now().strftime('%Y%m%d') + '.yaml')
         if current_log.exists():
-            with open(current_log, 'r') as f:
-                finished += yaml.safe_load(f)
+            finished += yaml.safe_load(current_log.read_text())
 
-        with open(current_log, 'w+') as f:
-            yaml.dump(finished, f)
+        # Only create the file if there are processes to log
+        if finished:
+            with open(current_log, 'w+') as f:
+                yaml.dump(finished, f)
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 

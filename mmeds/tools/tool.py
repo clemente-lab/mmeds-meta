@@ -584,13 +584,13 @@ class Tool(mp.Process):
                 jobfile.chmod(0o770)
 
                 # TODO Temporary for testing on Minerva, switch to submitfile eventuall
-                with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
-                    # Run the command
-                    run([jobfile], stdout=f, stderr=f)
+                # with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
+                #     # Run the command
+                #     run([jobfile], stdout=f, stderr=f)
 
-                # output = run([jobfile], check=True, capture_output=True)
-                # job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-                # self.wait_on_job(job_id)
+                output = run([jobfile], check=True, capture_output=True)
+                job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
+                self.wait_on_job(job_id)
 
             self.logger.debug('{}: pre post analysis'.format(self.name))
             self.post_analysis()
