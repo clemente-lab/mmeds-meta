@@ -666,15 +666,6 @@ class Tool(mp.Process):
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.move_user_files()
 
-        if not self.testing:
-            email = ('email',
-                     self.doc.email,
-                     self.doc.owner,
-                     'analysis',
-                     dict(doc_type=self.name + self.doc.doc_type,
-                          study_name=self.doc.study_name))
-            self.queue.put(email)
-
     def run(self):
         """ Overrides Process.run() """
         # Unless all of run completes succesfully exit code should be 1
