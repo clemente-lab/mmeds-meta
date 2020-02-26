@@ -189,10 +189,20 @@ TABLE_ORDER = [
     'Genotypes',
     'Ethnicity',
     'Subjects',
+    'AnimalSubjects',
+    'SubjectType',
     'Heights',
     'Weights',
     'Illness',
     'Intervention',
+    'Chow',
+    'ChowDates',
+    'Species',
+    'Strain',
+    'Facility',
+    'Housing',
+    'Husbandry',
+    'Vendor',
     'Specimen',
     'Aliquot',
     'SampleProtocol',
@@ -222,6 +232,18 @@ SUBJECT_TABLES = {
     'AdditionalMetaData'
 }
 
+ANIMAL_SUBJECT_TABLES = {
+    'Chow',
+    'ChowDates',
+    'Species',
+    'Strain',
+    'Facility',
+    'Housing',
+    'Husbandry',
+    'Vendor',
+    'AnimalSubjects'
+}
+
 # Tables that should exist in the specimen metadata
 SPECIMEN_TABLES = (set(TABLE_ORDER) - SUBJECT_TABLES) | {'AdditionalMetaData'}
 
@@ -249,7 +271,7 @@ PROTECTED_TABLES = [
 
 JUNCTION_TABLES = [
     'Subjects_has_Ethnicity',
-    'Subjects_has_Experiment',
+    'SubjectType_has_Experiment',
     'Subjects_has_Genotypes'
 ]
 
