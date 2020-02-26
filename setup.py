@@ -22,7 +22,10 @@ setup(name='mmeds',
       author=__author__,
       author_email=__email__,
       license=__license__,
-      packages=['mmeds'],
+      packages=[
+          'mmeds',
+          'mmeds.tools'
+      ],
       include_package_data=True,
       scripts=glob('scripts/*.py'),
       install_requires=[
@@ -40,7 +43,14 @@ setup(name='mmeds',
           'locustio',
           'codecov',
           'pytest-cov',
+          'pytest-pudb',
           'pytidylib',
-          'imapclient'
+          'ppretty',
+          'imapclient',
+          'psutil',
+          'xlrd',
+          'multiprocessing_logging',
+          'pyyaml',
+          'pandoc'
       ],
       zip_safe=False)

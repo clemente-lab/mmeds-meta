@@ -1,60 +1,40 @@
 from unittest import TestCase
+from shutil import rmtree
+from multiprocessing import Queue
 
-from mmeds.authentication import add_user, remove_user
-from mmeds.tool import Tool
-from mmeds.database import Database
+from mmeds.tools.tool import Tool
 from mmeds.util import load_config
 
-from shutil import rmtree
 import mmeds.config as fig
-import mmeds.secrets as sec
+import mmeds.error as err
 
 
 class ToolTests(TestCase):
     """ Tests of top-level functions """
+    testing = True
 
     @classmethod
     def setUpClass(self):
-        add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=True)
-        with Database(fig.TEST_DIR, user='root', owner=fig.TEST_USER, testing=True) as db:
-            access_code, study_name, email = db.read_in_sheet(fig.TEST_METADATA,
-                                                              'qiime',
-                                                              for_reads=fig.TEST_READS,
-                                                              barcodes=fig.TEST_BARCODES,
-                                                              access_code=fig.TEST_CODE)
-        self.config = load_config(None, fig.TEST_METADATA)
-        self.tool = Tool(fig.TEST_USER,
-                         fig.TEST_CODE,
-                         'test-1',
-                         self.config, True,
-                         8, True)
-        self.dirs = [self.tool.path]
+        self.q = Queue()
+        self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
+        self.tool = Tool(self.q, fig.TEST_USER, 'some new code', fig.TEST_CODE_SHORT,
+                         'test', '1', self.config, True, 2, True)
+        self.tool.initial_setup()
+        self.dirs = [self.tool.doc.path]
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=True)
         for new_dir in self.dirs:
             rmtree(new_dir)
 
-    def test_setup_dir(self):
-        new_dir, run_id, files, data_type = self.tool.setup_dir(fig.TEST_DIR)
-        self.dirs.append(new_dir)
-
-        assert str(fig.TEST_DIR / 'analysis') in str(new_dir)
-        assert data_type == 'single_end'
-        assert 'metadata' in files.keys()
-        assert files['metadata'].is_file()
-
     def test_add_path(self):
         """ Test that adding files to the tool object works properly """
-        assert 'testfile' not in self.tool.files.keys()
+        assert 'testfile' not in self.tool.doc.files.keys()
         self.tool.add_path('testfile', '.txt')
-        assert 'testfile' in self.tool.files.keys()
-        assert not self.tool.files['testfile'].is_file()
+        assert 'testfile' in self.tool.doc.files.keys()
 
     def test_get_job_params(self):
         params = self.tool.get_job_params()
-        assert '{}-{}'.format(fig.TEST_USER, 1) in params['jobname']
         assert params['nodes'] == 2
 
     def test_move_user_files(self):
@@ -70,3 +50,20 @@ class ToolTests(TestCase):
         assert (self.tool.path / 'visualizations_dir').is_dir()
         assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
         assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
+
+    def test_missing_file(self):
+        """ Test that an appropriate error will be raised if a file doesn't exist on disk """
+        # TODO
+        files = self.tool.doc.files
+        # Add a non-existent file
+        files['fakefile'] = '/fake/dir/'
+        self.tool.update_doc(files=files)
+        with self.assertRaises(err.MissingFileError):
+            self.tool.get_file('fakefile', check=True)
+        del files['fakefile']
+        self.tool.update_doc(files=files)
+
+    def test_update_doc(self):
+        self.assertEqual(self.tool.doc.study_name, 'Test_Single_Short')
+        self.tool.update_doc(study_name='Test_Update')
+        self.assertEqual(self.tool.doc.study_name, 'Test_Update')

@@ -1,0 +1,1 @@
+2019-07-08: Non-ASCII character found in American Gut Metadata.

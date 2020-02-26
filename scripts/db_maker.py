@@ -1,6 +1,6 @@
-from mmeds.config import PROTECTED_TABLES, PUBLIC_TABLES
+from mmeds.config import PROTECTED_TABLES, PUBLIC_TABLES, ALL_TABLE_COLS, TABLE_ORDER
 from mmeds.secrets import SQL_USER_NAME, SQL_DATABASE
-from mmeds.mmeds import quote_sql
+from mmeds.util import quote_sql
 from sys import argv
 
 
@@ -11,6 +11,22 @@ view_sql = 'CREATE\nSQL SECURITY DEFINER\nVIEW {db}.{ptable} AS\nSELECT cc.* FRO
 grant_sql = "GRANT SELECT ON TABLE {db}.{ptable} TO "
 public_sql = "GRANT SELECT ON TABLE {db}.{table} TO "
 user = "{user}@'%';\n\n"
+
+
+def insert_null(table):
+    print('insert null into {}'.format(table))
+    sql = quote_sql('INSERT INTO {table} VALUES (', table=table)
+    for i, column in enumerate(ALL_TABLE_COLS[table]):
+            if 'id' in column:
+                if i == 0:
+                    sql += '1'
+                else:
+                    sql += ', 1'
+            else:
+                sql += ', NULL'
+    sql += ');\n\n'
+    return sql
+
 
 # If given an argument write the script where specified
 if len(argv) < 2:
@@ -32,3 +48,10 @@ with open(view_file, 'w') as f:
     for table in PUBLIC_TABLES:
         f.write(quote_sql(public_sql, db=SQL_DATABASE, table=table) +
                 quote_sql(user, quote="'", user=SQL_USER_NAME))
+
+    for table in TABLE_ORDER:
+        try:
+            f.write(insert_null(table))
+        # AdditionalMetaData and ICDCode don't exist in the database
+        except KeyError as e:
+            print(e)

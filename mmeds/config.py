@@ -1,6 +1,6 @@
 from pathlib import Path
 from random import choice
-from pandas import read_csv
+from pandas import read_csv, Timestamp
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -30,23 +30,34 @@ else:
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
-if not os.path.exists(DATABASE_DIR):
-    os.mkdir(DATABASE_DIR)
+if not DATABASE_DIR.exists():
+    DATABASE_DIR.mkdir()
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
+SQL_LOG = DATABASE_DIR / 'sql_log.txt'
+DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
+PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
+if not PROCESS_LOG_DIR.exists():
+    PROCESS_LOG_DIR.mkdir()
+CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',
     'metadata',
     'taxa_levels',
     'abundance_threshold',
-    'font_size'
+    'font_size',
+    'sub_analysis',
+    'additional_analysis',
+    'iterations',
+    'permutations',
+    'type'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
-# MMEDS_EMAIL = 'donotreply.mmed.server@gmail.com'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
+DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
 
 
 # Configuration for the CherryPy server
@@ -87,36 +98,52 @@ CONFIG = {
 ##########################
 
 TEST_PATH = Path(test_files.__file__).parent.resolve()
-TEST_DIR = DATABASE_DIR / 'test_dir'
-if not os.path.exists(TEST_DIR):
-    os.mkdir(TEST_DIR)
-TEST_DIR_0 = DATABASE_DIR / 'test_dir0'
-if not os.path.exists(TEST_DIR_0):
-    os.mkdir(TEST_DIR_0)
+TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
+if not TEST_DIR.exists():
+    TEST_DIR.mkdir()
+TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
+if not TEST_DIR_0.exists():
+    TEST_DIR_0.mkdir()
 
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
 TEST_USER_0 = 'testuser0'
 TEST_CODE = 'singlereads'
+TEST_CODE_SHORT = 'singlereadsshort'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
+TEST_CODE_OTU = 'otutable'
+TEST_CODE_LEFSE = 'lefsetable'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
-TEST_CONFIG = str(TEST_PATH / 'test_config_file.txt')
-TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.txt')
-TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.txt')
-TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.txt')
-TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.txt')
+TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
+TEST_LEFSE = str(TEST_PATH / 'test_lefse_table.txt')
+TEST_CONFIG = str(TEST_PATH / 'test_config_file.yaml')
+TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.yaml')
+TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.yaml')
+TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.yaml')
+TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.yaml')
+TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
+TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
+TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
+TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
+TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
+TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
+TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
+TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
+TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
+TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
+TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
+TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
+TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
-TEST_METADATA_0 = str(TEST_PATH / 'test_metadata_0.tsv')
-TEST_METADATA_1 = str(TEST_PATH / 'test_metadata_1.tsv')
+TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
+TEST_METADATA_WARN = str(TEST_PATH / 'validation_files/test_metadata_warn.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
+TEST_METADATA_SHORTEST = str(TEST_PATH / 'shortest_metadata.tsv')
 UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
 TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
-TEST_METADATA_FAIL = str(TEST_PATH / 'test_metadata_fail.tsv')
-TEST_METADATA_WARN = str(TEST_PATH / 'test_metadata_warn.tsv')
-TEST_METADATA_VALID = str(TEST_PATH / 'test_metadata_valid.tsv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
@@ -146,7 +173,6 @@ for key in TEST_FILES.keys():
 # before they are referenced as foreign keys
 TABLE_ORDER = [
     'Lab',
-    'Interventions',
     'SampleProtocols',
     'RawDataProtocols',
     'ResultsProtocols',
@@ -177,6 +203,27 @@ TABLE_ORDER = [
     'Results',
     'AdditionalMetaData'
 ]
+
+
+# Tables that should exist in the subject metadata
+SUBJECT_TABLES = {
+    'ICDCode',
+    'IllnessBroadCategory',
+    'IllnessCategory',
+    'IllnessDetails',
+    'Interventions',
+    'Genotypes',
+    'Ethnicity',
+    'Subjects',
+    'Heights',
+    'Weights',
+    'Illness',
+    'Intervention',
+    'AdditionalMetaData'
+}
+
+# Tables that should exist in the specimen metadata
+SPECIMEN_TABLES = (set(TABLE_ORDER) - SUBJECT_TABLES) | {'AdditionalMetaData'}
 
 # MMEDS users are not given direct access to
 # these tables as they will contain data that
@@ -218,7 +265,7 @@ USER_FILES = set(map(
         'analysis\w*_summary_dir'
     ]))
 
-ICD_TABLES = set(['IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'])
+ICD_TABLES = {'IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'}
 
 
 # These are the tables that users are given direct access to
@@ -226,7 +273,9 @@ PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalM
 
 # These are the columns for each table
 TABLE_COLS = {}
+ALL_TABLE_COLS = {}
 ALL_COLS = []
+COL_SIZES = {}
 
 # Try connecting via the testing setup
 try:
@@ -243,16 +292,38 @@ except pms.err.OperationalError:
                      password=sec.SQL_ADMIN_PASS,
                      database=sec.SQL_DATABASE,
                      local_infile=True)
+
+# Get the columns that exist in each table
 c = db.cursor()
 for table in TABLE_ORDER:
     if table == 'ICDCode':
         TABLE_COLS['ICDCode'] = ['ICDCode']
         ALL_COLS += 'ICDCode'
+        COL_SIZES['ICDCode'] = ('varchar', 9)
     elif not table == 'AdditionalMetaData':
         c.execute('DESCRIBE ' + table)
-        results = [x[0] for x in c.fetchall() if 'id' not in x[0]]
-        TABLE_COLS[table] = results
+        info = c.fetchall()
+        results = [x[0] for x in info]
+        sizes = [x[1] for x in info]
+        for col, size in zip(results, sizes):
+            if '(' in size:
+                parts = size.split('(')
+                ctype = parts[0]
+                parsing = parts[1].split(')')[0]
+                if ',' in parsing:
+                    cparts = parsing.split(',')
+                    csize = (int(cparts[0]), int(cparts[1]))
+                else:
+                    csize = int(parsing)
+            else:
+                ctype = size
+                csize = 0
+
+            COL_SIZES[col] = (ctype, csize)
+        TABLE_COLS[table] = [x for x in results if 'id' not in x]
+        ALL_TABLE_COLS[table] = results
         ALL_COLS += results
+c.close()
 TABLE_COLS['AdditionalMetaData'] = []
 
 # For use when working with Metadata files
@@ -269,18 +340,28 @@ tdf = read_csv(TEST_METADATA,
                skiprows=[2, 4],
                na_filter=False)
 
+COL_TO_TABLE = {}
+
+TYPE_MAP = {
+    'Text': str,
+    'Text: Must be unique': str,
+    'Web Address': str,
+    'Email': str,
+    'Decimal': float,
+    'Integer': int,
+    'Number': float,
+    'Date': Timestamp,
+    'Time': Timestamp
+}
+
 for table in TABLE_COLS:
     # Temporary solution
     try:
         COLUMN_TYPES[table] = {}
         for column in TABLE_COLS[table]:
             col_type = tdf[table][column].iloc[0]
-            if 'Text' in col_type:
-                COLUMN_TYPES[table][column] = 'str'
-            elif 'Number' in col_type:
-                COLUMN_TYPES[table][column] = 'float'
-            elif 'Date' in col_type:
-                COLUMN_TYPES[table][column] = 'datetime64'
+            COLUMN_TYPES[table][column] = TYPE_MAP[col_type]
+            COL_TO_TABLE[column] = table
     except KeyError:
         continue
 
@@ -333,14 +414,39 @@ def get_salt(length=10):
 HTML_PAGES = {
     'index': (HTML_DIR / 'index.html', False),
     'welcome': (HTML_DIR / 'welcome.html', True),
+    'blank': (HTML_DIR / 'blank.html', True),
     'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
+    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
     'download_study_files': (HTML_DIR / 'download_study_files.html', True),
     'download_select_file': (HTML_DIR / 'download_select_file.html', True),
+    'download_select_study': (HTML_DIR / 'download_select_study.html', True),
+    'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
+    'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
+    'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_data_files_dual': (HTML_DIR / 'upload_data_files_dual.html', True),
+    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
+    'upload_lefse_data': (HTML_DIR / 'upload_lefse_data.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
+}
+
+
+##########################
+# CONFIGURE TOOL GLOBALS #
+###########################
+
+
+TOOL_FILES = {
+    'child_analysis': ['otu_table'],
+    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'sparcc': ['otu_table'],
+    'lefse': ['lefse_table'],
+    'picrust1': ['otu_table'],
+    'test': []
 }

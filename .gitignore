@@ -36,3 +36,7 @@ htmlcov/
 
 # What latex is doing to create this
 **/sys
+**/deblur.log
+
+# My Git tags file
+tags

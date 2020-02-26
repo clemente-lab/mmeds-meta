@@ -8,6 +8,9 @@ templated.co @templatedco
 Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
  */
 
+/*Hide the dual barcodes dropdown if metadata_type is Subject */
+div.Subject {display: none;}
+
 ul.topbar {
     list-style-type: none;
     margin: 0;
@@ -19,6 +22,7 @@ ul.topbar {
     top: 0;
     width: 210px;
     height: 100%;
+    font-weight: bold;
 }
 
 ul.topbar li {
@@ -72,11 +76,12 @@ div.inner {
     font: inherit;
     vertical-align: baseline;
     text-align: center;
+    font-weight: bold;
 }
 
-div.inner h3, h4 {
+div.inner h3, h4, table {
     margin: auto;
-    padding: 10px 100px 10px 100px;
+    padding: 10px 210px 10px 210px;
     border: 10px;
     font-size: 100%;
     font: inherit;
@@ -3196,3 +3201,6 @@ button:disabled,
 
 /* Change the background color of the dropdown button when the dropdown content is shown */
 .dropdown:hover .dropbtn {background-color: #3e8e41;} 
+
+/*Hide the dual barcodes dropdown if metadata_type is Subject */
+div.Subject {display: none;}

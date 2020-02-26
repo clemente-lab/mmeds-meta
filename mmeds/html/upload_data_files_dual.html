@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div class='inner'>
+      <h2>Welcome {user}</h2>
+      <p>
+        <h3>Upload data files</h3>
+        <form action='../analysis/process_data' method='post' enctype='multipart/form-data' id='upload_form'>
+          <p> Forward Reads (Upload a zip if demultiplexed): <br> <input type='file' name='for_reads'/> </p>
+          <p> Reverse Reads: <br> <input type='file' name='rev_reads'/> </p>
+          <p> Forward Barcodes: <br> <input type='file' name='for_barcodes'/> </p>
+          <p> Reverse Barcodes: <br> <input type='file' name='rev_barcodes'/> </p>
+          <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
+          <p> <button type='submit' method='post'>Submit Upload</button> </p>
+        </form>
+      </p>
+    </div>
+  </body>
+</html>
+

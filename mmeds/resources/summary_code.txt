@@ -3,6 +3,7 @@ from pathlib import Path
 from copy import deepcopy
 import pandas as pd
 import rpy2.rinterface
+from math import floor
 from warnings import filterwarnings
 from IPython.display import Image
 from random import shuffle
@@ -13,7 +14,7 @@ from mmeds.util import load_config
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
 # Load the configuration
-config = load_config(Path('config_file.txt').read_text(), Path('metadata.tsv'))
+config = load_config(Path('config_file.yaml'), Path('metadata.tsv'), True)
 
 # Load metadata file
 if '{analysis_type}' == 'qiime2':
@@ -26,53 +27,62 @@ mdf.set_index('#SampleID', inplace=True)
 metadata_columns = sorted(config['metadata'])
 
 # Stores a list of values shared accross groups but unique within (for graphing)
-group_ids = []
-color_maps = {{}}
-max_colors = []
-max_colors_con = []
+max_colors = 0
+max_colors_con = 0
 # Create information for R color palettes
 for group_name in metadata_columns:
     if not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         uni = grouping.nunique()
         if config['metadata_continuous'][group_name]:
-            group_ids.append(['con' + str(i) for i in range(uni)])
             # Get the category with the most colors to use for palette creation
-            if uni > len(max_colors_con):
-                max_colors_con = group_ids[-1]
-            color_maps[group_name] = {{str(x):'con{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
+            if uni > max_colors_con:
+                max_colors_con = uni
         else:
-            group_ids.append(['color' + str(i) for i in range(uni)])
             # Get the category with the most colors to use for palette creation
-            if uni > len(max_colors):
-                max_colors = group_ids[-1]
-            color_maps[group_name] = {{str(x):'color{{}}'.format(i) for i, x in enumerate(grouping.drop_duplicates())}}
+            if uni > max_colors:
+                max_colors = uni
 
-# Shuffle the non-continuous colors so values near each other won't be similar shades
-shuffle(max_colors, lambda: 0.25)
+all_colors_con = ['con{{}}'.format(i) for i in range(max_colors_con)]
+all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
 # Load the extention for jupyter
 %load_ext rpy2.ipython
 =====
+py_setup_2<source>
+color_maps = {}
+for group_name in metadata_columns:
+    if not mdf[group_name].isnull().all():
+        grouping = mdf[group_name]
+        uni = grouping.nunique() # Unique values in the column
+        if config['metadata_continuous'][group_name]:
+            inc = floor(max_colors_con / uni) # Increment to advance the color assignments
+            color_maps[group_name] = {str(x):'con{}'.format(i * inc)
+                                      for i,x in enumerate(grouping.drop_duplicates())}
+        else:
+            inc = floor(max_colors / uni) # Increment to advance the color assignments
+            color_maps[group_name] = {str(x):'color{}'.format(i * inc)
+                                      for i, x in enumerate(grouping.drop_duplicates())}
+=====
 r_setup<source>
-%%R -i max_colors -i max_colors_con -o allRGB
+%%R -i all_colors -i all_colors_con -o allRGB
 library(ggplot2)
 library(RColorBrewer)
 library(GGally)
 library(ggrepel)
 
 # Create custom color palette
-myColors <- brewer.pal(12, "Paired")
+myColors <- brewer.pal(11, "Paired")
 colorMaker <- colorRampPalette(myColors)
-allColorsDisc <- colorMaker(length(unique(max_colors)))
+allColorsDisc <- colorMaker(length(unique(all_colors)))
 # Custom continuous(ish) color palette
-myColorsCon <- brewer.pal(9, "YlOrRd")
+myColorsCon <- brewer.pal(11, "Spectral")
 colorMakerCon <- colorRampPalette(myColorsCon)
-allColorsCon <- colorMakerCon(length(unique(max_colors_con)))
+allColorsCon <- colorMakerCon(length(unique(all_colors_con)))
 
 # Rename the colors to match with the groups
-names(allColorsDisc) <- max_colors
-names(allColorsCon) <- max_colors_con
+names(allColorsDisc) <- all_colors
+names(allColorsCon) <- all_colors_con
 
 # Create the objects for graphing with the colors
 allColors <- append(allColorsDisc, allColorsCon)
@@ -160,6 +170,8 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
 ggsave("{plot}", height = 6, width = 8)
 =====
 latex_legend_py<source>
+# Reset this variable
+latex = []
 with open('mod_revtex.tplx', 'r') as f:
     lines = f.readlines()
 for i, line in enumerate(lines):
@@ -168,29 +180,32 @@ for i, line in enumerate(lines):
 
 for key, value in allRGB.items():
     latex.append('\\definecolor{{{key}}}{{RGB}}{{{r},{g},{b}}}\n'.format(key=key,
-                                                                         r=value[1],
-                                                                         g=value[2],
-                                                                         b=value[3]))
+                                                                         r=value[0],
+                                                                         g=value[1],
+                                                                         b=value[2]))
+
+new_lines = lines[:packages_end] + latex + lines[packages_end:]
 
 with open('mod_revtex.tplx', 'w') as f:
     for line in new_lines:
         f.write(line)
 =====
 group_legends_py<source>
+# Reset this variable
+latex = []
 with open('mod_revtex.tplx', 'r') as f:
     lines = f.readlines()
 for i, line in enumerate(lines):
     if '((* endblock packages *))' in line:
         packages_end = i
 
+# Define the colors for each category/value in the alpha/beta plots
 for group_name, group in df.groupby('GroupName'):
     zipped = zip(group.GroupID.unique(), group.Grouping.unique())
     lists = ['{}/{}'.format(x, y) for x, y in zipped]
     latex.append('\\def\\{group}{{{colors}}}\n'.format(group=group_name, colors=','.join(lists)))
 
-# Remove duplicate values
-for row in df:
-    new_lines = lines[:packages_end] + latex + lines[packages_end:]
+new_lines = lines[:packages_end] + latex + lines[packages_end:]
 
 with open('mod_revtex.tplx', 'w') as f:
     for line in new_lines:
@@ -308,7 +323,7 @@ p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
      geom_point(stat='identity', position = pd, size = 1) +
      geom_line(stat='identity', position = pd) +
      facet_wrap(~GroupName) + colFill + colScale +
-     labs(title = 'Alpha Diveristy',
+     labs(title = 'Alpha Diversity',
           subtitle = 'Grouped by Metadata Catagory') +
      theme_bw() +
      theme(legend.position = 'none',
@@ -348,7 +363,7 @@ beta_r<source>
 
 # Create the plots for the first three PCs
 png('{plot}', width = 6, height = 6, unit='in', res=200)
-p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df))) +
+p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df), alpha=0.5)) +
          theme_bw() +
          theme(legend.position = 'none',
                plot.title = element_text(hjust = 0.5),

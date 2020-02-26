@@ -1,0 +1,46 @@
+Ethnicity	Genotypes	Heights	Heights	ICDCode	Illness	Illness	Illness	Illness	Intervention	Intervention	Intervention	Interventions	Interventions	Interventions	Subjects	Subjects	Subjects	Subjects	Weights	Weights	AdditionalMetaData
+Ethnicity	Genotype	Height	HeightDateCollected	ICDCode	IllnessDescription	IllnessEndDate	IllnessInstanceID	IllnessStartDate	InterventionDescription	InterventionEndDate	InterventionStartDate	InterventionCode	InterventionName	InterventionType	BirthYear	HostSubjectId	Nationality	Sex	Weight	WeightDateCollected	0
+Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Required	Optional	Optional	Optional	Optional	Optional
+Text	Text	Number	Date	Text	Text	Date	Date	Date	Text	Date	Date	Text	Text	Text	Number	Text	Text	Text	Number	Date	Text
+Limit 45 Characters	Limit 180 Characters	Meters	Year-Month-Day	Limit 8 Characters	Limit 256 Characters	Year-Month-Day	Limit 256 Characters	Year-Month-Day	Limit 256 characters	Year-Month-Day	Year-Month-Day	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Year	Limit 256 Characters	Limit 45 Characters	Limit 45 Characters	Kilogram	Year-Month-Day	Limit 45 Characters
+Caucasian	Charles	63	2018-01-05	A19.XXXX	Good	2018-12-01	1	2017-02-21	Quality of life improvement	2018-02-22	2018-02-21	Rotator-Cuff Replacement	Rotator-Cuff Replacement	Surgery	1905	1	American	M	124	2018-01-05	Surgery
+Caucasian	Charles	63	2018-01-05	A19.XXXX	Good	2018-12-01	2	2017-02-21	Quality of life improvement	2015-02-15	2015-02-14	Knee Replacement	Knee Replacement	Surgery	1905	1	American	M	124	2018-01-05	Surgery
+Caucasian	Charles	63	2018-01-05	A19.XXXX	Good	2018-12-01	3	2017-02-21	Top Secret	2000-01-02	2000-01-02	Bionic Eye	Bionic Eye	Surgery	1905	1	American	M	124	2018-01-05	Surgery
+Caucasian	Lucy	63	2018-01-05	A19.XXXX	Good	2018-12-01	4	2017-02-21	Top Secret	2000-01-02	2000-01-02	Bionic Eye	Bionic Eye	Surgery	1905	1	American	M	124	2018-01-05	Surgery
+Caucasian	Lucy	63	2018-01-05	A19.XXXX	Good	2018-12-01	5	2017-02-21	Top Secret	2000-01-02	2000-01-02	Bionic Eye	Bionic Eye	Surgery	1905	1	American	M	124	2018-01-05	Surgery
+Caucasian	Lucy	63	2018-01-06	A19.XXXX	Bad	2018-12-02	6	2017-02-22	Helpful	2018-02-23	2018-02-22	Heart Transplant	200	Surgery	1906	2	American	F	125	2018-01-06	Surgery
+Caucasian	Lucy	63	2018-01-07	A19.XXXX	Ugly	2018-12-03	7	2017-02-23	Helpful	2018-02-24	2018-02-23	Heart Transplant	200	Surgery	1907	3	American	F	126	2018-01-07	Surgery
+Caucasian	Lucy	63	2018-01-08	A34.XXXX	Bad	2018-12-04	8	2017-02-24	Helpful	2018-02-25	2018-02-24	Heart Transplant	200	Surgery	1908	4	American	F	127	2018-01-08	Surgery
+Caucasian	Lucy	63	2018-01-09	A34.XXXX	Bad	2018-12-05	9	2017-02-25	Helpful	2018-02-26	2018-02-25	Heart Transplant	200	Surgery	1909	5	Mexican	F	128	2018-01-09	Surgery
+Caucasian	Lucy	63	2018-01-10	A34.XXXX	Bad	2018-12-06	10	2017-02-26	Helpful	2018-02-27	2018-02-26	Heart Transplant	200	Surgery	1910	6	Mexican	F	129	2018-01-10	Surgery
+Caucasian	Lucy	63	2018-01-11	A34.XXXX	Bad	2018-12-07	11	2017-02-27	Helpful	2018-02-28	2018-02-27	Heart Transplant	200	Surgery	1911	7	Mexican	F	130	2018-01-11	Surgery
+Caucasian	Lucy	63	2018-01-12	A34.XXXX	Bad	2018-12-08	12	2017-02-28	Helpful	2018-03-01	2018-02-28	Heart Transplant	200	Surgery	1912	8	Mexican	F	131	2018-01-12	Surgery
+Caucasian	Lucy	63	2018-01-13	A34.XXXX	Bad	2018-12-09	13	2017-03-01	Helpful	2018-03-02	2018-03-01	Heart Transplant	200	Surgery	1913	9	Spanish	F	132	2018-01-13	Surgery
+Caucasian	Lucy	63	2018-01-14	A34.XXXX	Bad	2018-12-10	14	2017-03-02	Helpful	2018-03-03	2018-03-02	Heart Transplant	200	Surgery	1914	10	Spanish	F	133	2018-01-14	Surgery
+Caucasian	Lucy	63	2018-01-15	A36.0XXX	Bad	2018-12-11	15	2017-03-03	Helpful	2018-03-04	2018-03-03	Heart Transplant	200	Surgery	1915	11	Spanish	F	134	2018-01-15	Surgery
+Caucasian	Lucy	63	2018-01-16	A36.1XXX	Bad	2018-12-12	16	2017-03-04	Helpful	2018-03-05	2018-03-04	Heart Transplant	200	Surgery	1916	12	Spanish	F	135	2018-01-16	Surgery
+Caucasian	Lucy	63	2018-01-17	A36.2XXX	Bad	2018-12-13	17	2017-03-05	Helpful	2018-03-06	2018-03-05	Heart Transplant	200	Surgery	1917	13	Spanish	F	136	2018-01-17	Surgery
+African American	Lucy	63	2018-01-18	A36.3XXX	Bad	2018-12-14	18	2017-03-06	Helpful	2018-03-07	2018-03-06	Heart Transplant	200	Surgery	1918	14	Spanish	F	137	2018-01-18	Surgery
+African American	Lucy	63	2018-01-19	A06.81XX	Bad	2018-12-15	19	2017-03-07	Helpful	2018-03-08	2018-03-07	Heart Transplant	200	Surgery	1919	15	Spanish	F	138	2018-01-19	Surgery
+African American	Lucy	63	2018-01-20	A06.81XX	Bad	2018-12-16	20	2017-03-08	Helpful	2018-03-09	2018-03-08	Heart Transplant	200	Surgery	1920	16	Spanish	F	139	2018-01-20	Surgery
+African American	Lucy	63	2018-01-21	A06.81XX	Bad	2018-12-17	21	2017-03-09	Helpful	2018-03-10	2018-03-09	Heart Transplant	200	Surgery	1921	17	Italian	M	140	2018-01-21	Surgery
+African American	Lucy	63	2018-01-22	A06.89XX	Bad	2018-12-18	22	2017-03-10	Helpful	2018-03-11	2018-03-10	Heart Transplant	200	Surgery	1922	18	Italian	M	141	2018-01-22	Surgery
+African American	Lucy	63	2018-01-23	A06.89XX	Bad	2018-12-19	23	2017-03-11	Helpful	2018-03-12	2018-03-11	Heart Transplant	200	Surgery	1923	19	Italian	M	142	2018-01-23	Surgery
+African American	Lucy	63	2018-01-24	A06.89XX	Bad	2018-12-20	24	2017-03-12	Helpful	2018-03-13	2018-03-12	Heart Transplant	200	Surgery	1924	20	Italian	M	143	2018-01-24	Surgery
+African American	Lucy	63	2018-01-25	A06.89XX	Bad	2018-12-21	25	2017-03-13	Helpful	2018-03-14	2018-03-13	Heart Transplant	200	Surgery	1925	21	Italian	M	144	2018-01-25	Surgery
+African American	Lucy	63	2018-01-25	A06.89XX	Bad	2018-12-21	26	2017-03-13	Painful	2017-02-14	2017-02-13	Liver Transplant	200	Surgery	1925	21	Italian	M	144	2018-01-25	Surgery
+African American	Lucy	63	2018-01-26	Y33.XXXA	Bad	2018-12-22	27	2017-03-14	Helpful	2018-03-15	2018-03-14	Heart Transplant	200	Surgery	1926	22	Italian	M	145	2018-01-26	Surgery
+African American	Lucy	63	2018-01-27	Y33.XXXA	Bad	2018-12-23	28	2017-03-15	Helpful	2018-03-16	2018-03-15	Heart Transplant	200	Surgery	1927	23	Italian	M	146	2018-01-27	Surgery
+African	Lucy	63	2018-01-28	Y33.XXXA	Bad	2018-12-24	29	2017-03-16	Helpful	2018-03-17	2018-03-16	Heart Transplant	200	Surgery	1928	24	Italian	M	147	2018-01-28	Surgery
+African	Lucy	63	2018-01-29	Y33.XXXD	Bad	2018-12-25	30	2017-03-17	Helpful	2018-03-18	2018-03-17	Heart Transplant	200	Surgery	1929	25	Italian	M	148	2018-01-29	Surgery
+African	Lucy	63	2018-01-30	Y33.XXXD	Bad	2018-12-26	31	2017-03-18	Helpful	2018-03-19	2018-03-18	Heart Transplant	200	Surgery	1930	26	Canadian	M	149	2018-01-30	Surgery
+Caucasian	Lucy	63	2018-01-31	Y33.XXXS	Bad	2018-12-27	32	2017-03-19	Helpful	2018-03-20	2018-03-19	Heart Transplant	200	Surgery	1931	27	Canadian	M	150	2018-01-31	Surgery
+Caucasian	Lucy	63	2018-02-01	Y33.XXXS	Bad	2018-12-28	33	2017-03-20	Helpful	2018-03-21	2018-03-20	Heart Transplant	200	Surgery	1932	28	Canadian	M	151	2018-02-01	Surgery
+Caucasian	Lucy	63	2018-02-02	Y33.XXXS	Bad	2018-12-29	34	2017-03-21	Helpful	2018-03-22	2018-03-21	Heart Transplant	200	Surgery	1933	29	Canadian	M	152	2018-02-02	Surgery
+Caucasian	Lucy	63	2018-02-03	V93.24XS	Bad	2018-12-30	35	2017-03-22	Helpful	2018-03-23	2018-03-22	Heart Transplant	200	Surgery	1934	30	Canadian	M	153	2018-02-03	Surgery
+East Asian	Lucy	63	2018-02-04	V93.24XS	Bad	2018-12-31	36	2017-03-23	Helpful	2018-03-24	2018-03-23	Heart Transplant	200	Surgery	1935	31	Polish	M	154	2018-02-04	Surgery
+East Asian	Lucy	63	2018-02-05	V93.24XS	Bad	2018-01-01	37	2017-03-24	Helpful	2018-03-25	2018-03-24	Heart Transplant	200	Surgery	1936	32	Polish	M	155	2018-02-05	Surgery
+East Asian	Lucy	63	2018-02-06	V93.24XS	Bad	2018-01-02	38	2017-03-25	Helpful	2018-03-26	2018-03-25	Heart Transplant	200	Surgery	1937	33	Polish	M	156	2018-02-06	Surgery
+East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	39	2017-03-26	Helpful	2018-03-27	2018-03-26	Heart Transplant	200	Surgery	1938	34	Polish	M	157	2018-02-07	Surgery
+East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	40	2017-03-26	Helpful	2010-03-01	2010-03-01	Kidney Transplant	200	Surgery	1938	34	Polish	M	157	2018-02-07	Surgery
+East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	41	2017-03-26	Helpful	2007-03-27	2007-03-27	Fecal Transplant	200	Surgery	1938	34	Polish	M	157	2018-02-07	Surgery

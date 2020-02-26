@@ -1,5 +1,5 @@
 from mmeds.server import MMEDSserver
-from time import sleep
+from time import sleep, time
 from collections import defaultdict
 from pathlib import Path
 from tidylib import tidy_document
@@ -7,29 +7,44 @@ from tidylib import tidy_document
 import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
-from mmeds.authentication import remove_user
-from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning
+from mmeds.authentication import add_user, remove_user
+from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning, send_email
+from mmeds.spawn import Watcher
+from multiprocessing import current_process, Queue, Pipe
 
 import cherrypy as cp
 from cherrypy.test import helper
 
 
+testing = True
+q = Queue()
+pipe_ends = Pipe()
+pipe = pipe_ends[0]
+watcher = Watcher(q, pipe_ends[1], current_process(), testing)
+watcher.start()
+server = MMEDSserver(watcher, q, testing)
+
+
 class TestServer(helper.CPWebCase):
 
     server_code = 'server_code_' + fig.get_salt(10)
+    # Create a unique user id from the current time
+    server_user = fig.SERVER_USER + fig.get_salt(10)  # str(int(time()))
     access_code = None
+    lab_user = 'lab_user_' + str(int(time()))
+    tp = None
 
+    @staticmethod
     def setup_server():
-        cp.tree.mount(MMEDSserver(True))
+        cp.tree.mount(server)
         test_config = defaultdict(dict)
         test_config['global']['tools.sessions.on'] = True
         test_config['global']['tools.sessions.name'] = 'cp_session'
         cp.config.update(test_config)
 
-    setup_server = staticmethod(setup_server)
-
     def test_a_setup(self):
         log('===== Test Server Start =====')
+        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
     def test_b_index(self):
         self.getPage('/index')
@@ -46,8 +61,8 @@ class TestServer(helper.CPWebCase):
         self.logout()
         self.login_fail_password()
         self.login_fail_username()
-        tp = self.reset_password()
-        self.change_password(tp)
+        self.tp = self.reset_password()
+        self.change_password()
 
     def test_d_upload(self):
         self.login()
@@ -58,9 +73,36 @@ class TestServer(helper.CPWebCase):
         self.download_block()
         self.download()
         self.convert()
+        self.lab_download()
+        self.user_download()
+        self.logout()
+
+    def test_e_otu_upload(self):
+        self.login()
+        self.upload_otu()
+        self.logout()
+
+    def test_f_lefse_upload(self):
+        self.login()
+        self.upload_lefse()
+        self.logout()
+
+    def test_g_dual_upload(self):
+        self.login()
+        self.upload_dualBarcode_metadata()
+
+    def test_h_query(self):
+        self.login()
+        self.execute_invalid_query()
+        self.execute_protected_query()
+        self.execute_query()
 
     def test_z_cleanup(self):
-        remove_user(fig.SERVER_USER, testing=True)
+        remove_user(self.server_user, testing=testing)
+        remove_user(self.lab_user, testing=testing)
+        # Send an email at the end to ensure there aren't issues with
+        # accessing the correct email in future test runs
+        send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
 
     ####################
     #  Authentication  #
@@ -92,24 +134,24 @@ class TestServer(helper.CPWebCase):
         self.assertBody(bad_page)
 
         # Test signup with an invalid password
-        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS + 'xx'))
+        self.getPage(addr.format(self.server_user, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS + 'xx'))
         self.assertStatus('200 OK')
         bad_page = insert_error(page, 25, 'Error: Passwords do not match')
         self.assertBody(bad_page)
 
         # Test successful signup
-        self.getPage(addr.format(fig.SERVER_USER, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS))
+        self.getPage(addr.format(self.server_user, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS))
         self.assertStatus('200 OK')
         self.assertBody((fig.HTML_DIR / 'index.html').read_text())
 
     def login(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to Mmeds', user=fig.SERVER_USER)
+        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to Mmeds', user=self.server_user)
         self.assertBody(page)
 
     def logout(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.getPage('/auth/logout', headers=self.cookies)
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
@@ -117,7 +159,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def login_fail_password(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS + 'garbage'))
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS + 'garbage'))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
@@ -125,59 +167,64 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def login_fail_username(self):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER + 'garbage', sec.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user + 'garbage', sec.TEST_PASS))
         self.assertStatus('200 OK')
         with open(fig.HTML_DIR / 'index.html') as f:
             page = f.read()
-        page = insert_error(page, 14, err.InvalidLoginError.message)
+        page = insert_error(page, 14, err.InvalidLoginError().message)
         self.assertBody(page)
 
-    def change_password(self, new_pass):
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, new_pass))
+    def change_password(self):
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, self.tp))
         self.assertStatus('200 OK')
         self.getPage('/auth/input_password', self.cookies)
         self.assertStatus('200 OK')
         temp_pass_bad = 'thi$1sT'
-        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=new_pass,
+        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
                                                                                                     new=temp_pass_bad),
                      self.cookies)
         self.assertStatus('200 OK')
         page = load_html(fig.HTML_DIR / 'auth_change_password.html', title='Change Password')
         fail_page = insert_error(page, 9, 'Error: Passwords must be longer than 10 characters.')
         self.assertBody(fail_page)
-        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=new_pass,
+        self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
                                                                                                     new=sec.TEST_PASS),
                      self.cookies)
         self.assertStatus('200 OK')
         pass_page = insert_html(page, 9, 'Your password was successfully changed.')
         self.assertBody(pass_page)
 
-        self.getPage('/auth/login?username={}&password={}'.format(fig.SERVER_USER, sec.TEST_PASS))
+        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
 
     def reset_password(self):
         orig_page = (fig.HTML_DIR / 'index.html').read_text()
-        self.getPage('/auth/password_recovery?username={}&email={}'.format(fig.SERVER_USER, fig.TEST_EMAIL + 'dfa'),
+        self.getPage('/auth/password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL + 'dfa'),
                      self.cookies)
         self.assertStatus('200 OK')
         fail_page = insert_error(orig_page, 14, 'No account exists with the provided username and email.')
         self.assertBody(fail_page)
 
-        self.getPage('/auth/password_recovery?username={}&email={}'.format(fig.SERVER_USER, fig.TEST_EMAIL),
+        self.getPage('/auth/password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL),
                      self.cookies)
         self.assertStatus('200 OK')
         pass_page = insert_html(orig_page, 14, 'A new password has been sent to your email.')
         self.assertBody(pass_page)
 
-        sleep(10)
-        mail = recieve_email(1)
+        # Arguments for finding the right email
+        password_args = [
+            ['FROM', fig.MMEDS_EMAIL],
+            ['TEXT', 'Hello {},'.format(self.server_user)],
+            ['TEXT', 'Your password has been reset.']
+        ]
+        mail = recieve_email(1, True, password_args)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         new_pass = code.split('password is:')[1].splitlines()[1].strip()
         return new_pass
 
     def reset_access_code(self):
         return
-        mail = recieve_email(1)
+        mail = recieve_email(1, True, self.email_args)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         self.access_code = code.split('access code:')[1].splitlines()[1]
         pass
@@ -193,15 +240,19 @@ class TestServer(helper.CPWebCase):
         b = b''
         for file_handle, file_path, file_type in zipped:
             # Byte strings
-            b += str.encode('--{}\n'.format(boundry) +
-                            'Content-Disposition: form-data; name="{}"; '.format(file_handle) +
-                            'filename="{}"\r\n'.format(Path(file_path).name) +
-                            'Content-Type: {}\r\n'.format(file_type) +
-                            '\r\n')
-            if not file_path == '':
-                b += Path(file_path).read_bytes() + str.encode('\n')
-            b + str.encode('\n')
-        b += str.encode('--{}--\n'.format(boundry))
+            b += str.encode('--{}\r\n'.format(boundry) +
+                            'Content-Disposition: form-data; name="{}"; '.format(file_handle))
+            # IF the file_type is '' treat it as a string param
+            if file_type == '':
+                b += str.encode('\r\n\r\n{}\r\n'.format(file_path))
+            # Otherwise load the file
+            else:
+                b += str.encode('filename="{}"\r\n'.format(Path(file_path).name) +
+                                'Content-Type: {}\r\n\r\n'.format(file_type))
+                if not file_path == '':
+                    b += Path(file_path).read_bytes() + str.encode('\r\n')
+            b + str.encode('\r\n')
+        b += str.encode('--{}--\r\n'.format(boundry))
 
         filesize = len(b)
         h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
@@ -209,24 +260,19 @@ class TestServer(helper.CPWebCase):
              ('Connection', 'keep-alive')]
         return h, b
 
-    def upload_metadata(self):
-        # Check the page for uploading metadata
+    def upload_otu(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?study_type=qiime', self.cookies)
-        self.assertStatus('200 OK')
         # Check an invalid metadata filetype
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
-        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_OTU', self.cookies)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_file.html', title='Upload Metadata', user=fig.SERVER_USER)
-        err = 'Error: gz is not a valid filetype.'
-        page = insert_error(page, 22, err)
-        self.assertBody(page)
 
-        # Check a metadata file that errors
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_FAIL], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ALT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
         document, errors = tidy_document(page_body)
@@ -234,32 +280,196 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
-        # Check a metadata file that produces warnings
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_WARN], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html', title='Warnings', user=fig.SERVER_USER)
-        warning = '34\t3\tStdDev Warning: Value 25.025 outside of two standard deviations of mean in column 3'
+
+        headers, body = self.upload_files(['otu_table'], [fig.TEST_OTU], ['text/tab-seperated-values'])
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        # Search arguments for retrieving emails with access codes
+        upload_args = [
+            ['FROM', fig.MMEDS_EMAIL],
+            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU')]
+        ]
+
+        recieve_email(1, True, upload_args)
+
+    def upload_lefse(self):
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/upload/upload_metadata?uploadType=lefse&studyName=Test_Lefse', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ALT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['lefse_table'], [fig.TEST_LEFSE], ['text/tab-seperated-values'])
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        # Search arguments for retrieving emails with access codes
+        upload_args = [
+            ['FROM', fig.MMEDS_EMAIL],
+            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_Lefse')]
+        ]
+
+        recieve_email(1, True, upload_args)
+
+    def upload_dualBarcode_metadata(self):
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_DualBarcodes', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT_DUAL], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=dual', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        documents, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        self.getPage('/upload/upload_data', self.cookies)
+        self.assertStatus('200 OK')
+        headers, body = self.upload_files(['for_reads', 'rev_reads',
+                                           'for_barcodes', 'rev_barcodes'],
+                                          [fig.TEST_READS, fig.TEST_REV_READS,
+                                           fig.TEST_BARCODES, fig.TEST_BARCODES],
+                                          ['application/gzip', 'application/gzip',
+                                           'application/gzip', 'application/gzip'])
+        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        upload_args = [
+                ['FROM', fig.MMEDS_EMAIL],
+                ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_DualBarcodes')]
+        ]
+
+        # Retrieve the most recent email in the test email account to verify that email was successfully sent
+        recieve_email(1, True, upload_args)
+
+    def upload_metadata(self):
+        # Check the page for uploading metadata
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_Server', self.cookies)
+        self.assertStatus('200 OK')
+        # Check an invalid metadata filetype
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_metadata_file.html',
+                         title='Upload Metadata',
+                         user=self.server_user,
+                         metadata_type='subject')
+        err = 'Error: gz is not a valid filetype.'
+        page = insert_error(page, 22, err)
+        self.assertBody(page)
+        log('Checked invalid filetype')
+
+        # Check a subject metadata file that errors
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ERROR], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        log('Checked metadata that errors')
+
+        # Check a subject metadata file that produces warnings
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_WARN], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
+                         title='Warnings',
+                         user=self.server_user,
+                         next_page='../upload/retry_upload')
+
+        warning = '-1\t17\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
+            ' may be in error, only 1 found.'
         page = insert_warning(page, 22, warning)
         self.assertBody(page)
+        log('Checked metadata that warns')
 
-        # Check a metadata file that has no issues
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
-        self.getPage('/analysis/validate_metadata', headers + self.cookies, 'POST', body)
+        # Check a subject metadata file that has no issues
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=fig.SERVER_USER)
+
+        # Check a specimen metadata file that errors
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ERROR], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=sol', headers + self.cookies, 'POST', body)
+
+        self.assertStatus('200 OK')
+        page_body = self.body
+        document, errors = tidy_document(page_body)
+        # Assert no errors, warnings are okay
+        for warn in errors:
+            assert not ('error' in warn or 'Error' in warn)
+
+        log('Checked metadata that errors')
+
+        # Check a subject metadata file that produces warnings
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
+                         title='Warnings',
+                         user=self.server_user,
+                         next_page='../upload/upload_data')
+
+        warning = '-1\t41\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
+            ' may be in error, only 1 found.'
+        page = insert_warning(page, 22, warning)
         self.assertBody(page)
+        log('Checked metadata that warns')
+
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=self.server_user)
+        self.assertBody(page)
+        log('Checked a metadata file with no problems')
 
     def upload_data(self):
         self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
-        headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes'],
-                                          [fig.TEST_READS, '', fig.TEST_BARCODES],
-                                          ['application/gzip', 'application/octet-stream', 'application/gzip'])
+        headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes', 'reads_type'],
+                                          [fig.TEST_READS, '', fig.TEST_BARCODES, 'single_end'],
+                                          ['application/gzip', 'application/octet-stream',
+                                           'application/gzip', ''])
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        sleep(10)
-        mail = recieve_email(1)
+
+        # Search arguments for retrieving emails with access codes
+        upload_args = [
+            ['FROM', fig.MMEDS_EMAIL],
+            ['TEXT', 'user {} uploaded data'.format(self.server_user)]
+        ]
+
+        mail = recieve_email(1, True, upload_args)
         code = mail[0].get_payload(decode=True).decode('utf-8')
         self.access_code = code.split('access code:')[1].splitlines()[1]
 
@@ -268,39 +478,33 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/modify_upload?data_type=for_reads&access_code=badcode',
                      headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        orig_page = load_html(fig.HTML_DIR / 'upload_select_page.html', title='Upload Type', user=fig.SERVER_USER)
+        orig_page = load_html(fig.HTML_DIR / 'upload_select_page.html', title='Upload Type', user=self.server_user)
         err_page = insert_error(orig_page, 22, err.MissingUploadError().message)
         self.assertBody(err_page)
         self.getPage('/upload/modify_upload?data_type=for_reads&access_code={}'.format(self.access_code),
                      headers + self.cookies, 'POST', body)
-        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=fig.SERVER_USER)
+        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=self.server_user)
         page = insert_html(page, 22, 'Upload modification successful')
         self.assertStatus('200 OK')
         self.assertBody(page)
 
     def download_page_fail(self):
-        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, sec.TEST_PASS))
+        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
         self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
                      headers=self.cookies)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=fig.SERVER_USER)
-        page = insert_error(page, 22, err.MissingUploadError.message)
+        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=self.server_user)
+        page = insert_error(page, 22, err.MissingUploadError().message)
         self.assertBody(page)
         self.getPage('/auth/logout', headers=self.cookies)
 
     def download_block(self):
         # Login
-        self.getPage("/auth/login?username={}&password={}".format(fig.SERVER_USER, sec.TEST_PASS))
+        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
         # Start test analysis
-        self.getPage('/analysis/run_analysis?access_code={}&tool={}&config='.format(self.access_code,
-                                                                                    fig.TEST_TOOL),
-                     headers=self.cookies)
-        sleep(2)
-        # Try to access
-        self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
-        page = load_html(fig.HTML_DIR / 'welcome.html', user=fig.SERVER_USER, title='Welcome to MMEDS')
-        page = insert_error(page, 22, 'Requested study is currently unavailable')
-        self.assertBody(page)
+        address = '/analysis/run_analysis?access_code={}&tool_type={}&analysis_type={}&config='
+        tool, analysis = fig.TEST_TOOL.split('-')
+        self.getPage(address.format(self.access_code, tool, analysis), headers=self.cookies)
 
         # Wait for analysis to finish
         sleep(int(fig.TEST_TOOL.split('-')[-1]))
@@ -309,7 +513,7 @@ class TestServer(helper.CPWebCase):
         self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
 
         page = load_html(fig.HTML_DIR / 'download_select_file.html',
-                         user=fig.SERVER_USER, title='Select Download')
+                         user=self.server_user, title='Select Download')
         for i, f in enumerate(sorted(fig.TEST_FILES)):
             page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
 
@@ -324,7 +528,58 @@ class TestServer(helper.CPWebCase):
             self.assertStatus('200 OK')
 
     def convert(self):
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_METADATA_SHORT], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'],
+                                          [fig.TEST_METADATA_SHORTEST],
+                                          ['text/tab-seperated-values'])
         addr = '/upload/convert_metadata?convertTo=mixs&unitCol=&skipRows='
         self.getPage(addr, headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+    def lab_download(self):
+        # Login
+        self.getPage("/auth/logout", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/auth/login?username={}&password={}".format(self.lab_user, sec.TEST_PASS))
+        self.assertStatus('200 OK')
+        self.getPage("/download/select_study", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
+        self.assertStatus('200 OK')
+        metadata_path = self.body.decode('utf-8').split('\n')[34].split('"')[1]
+        self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    def user_download(self):
+        # Login
+        self.getPage("/auth/logout", headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
+        self.assertStatus('200 OK')
+        self.getPage("/download/download_study?study_code={}".format(self.access_code), headers=self.cookies)
+        self.assertStatus('200 OK')
+        page = self.body.decode('utf-8')
+        metadata_path = page.split('\n')[34].split('"')[1]
+        self.getPage("/download/download_filepath?file_path={}".format(metadata_path), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    ###############
+    # SQL queries #
+    ###############
+
+    def execute_invalid_query(self):
+        self.getPage('/analysis/query_page', headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/analysis/execute_query?query={}'.format('asdf'), self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
+    def execute_protected_query(self):
+        self.getPage('/analysis/query_page', headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/analysis/execute_query?query={}'.format('Describe+Subjects'), self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
+    def execute_query(self):
+        self.getPage('/analysis/query_page', headers=self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/analysis/execute_query?query={}'.format('Select+*+from+Subjects'), self.cookies, 'POST')
         self.assertStatus('200 OK')
