@@ -266,7 +266,10 @@ PROTECTED_TABLES = [
     'Specimen',
     'Study',
     'Subjects',
-    'Weights'
+    'Weights',
+    'ChowDates',
+    'Housing',
+    'AnimalSubjects'
 ]
 
 JUNCTION_TABLES = [
