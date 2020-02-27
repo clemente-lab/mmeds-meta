@@ -704,6 +704,14 @@ class SQLBuilder:
         foreign_keys = list(filter(lambda x: '_has_' not in x,
                                    list(filter(lambda x: '_id' in x,
                                                all_cols))))
+        # For the SubjectType table one of the keys will be NULL depending on
+        # if the metadata is for an Animal subject or a human subject
+        if table == 'SubjectType':
+            if self.df['SubjectType']['SubjectType'].iloc[self.row] == 'Human':
+                del foreign_keys[foreign_keys.index('AnimalSubjects_idAnimalSubjects')]
+            else:
+                del foreign_keys[foreign_keys.index('Subjects_idSubjects')]
+
         # Get the non foreign key columns
         columns = list(filter(lambda x: '_id' not in x, all_cols))
 
@@ -1051,9 +1059,9 @@ class MetaDataUploader(Process):
         """
         Creates a single line of the input file for the specified metadata table
         :table: The name of the table the input is for
-        :structure: ...
-        :columns: ...
-        :row_index: ...
+        :structure: The structure of the SQL table the line will be imported into
+        :columns: A list. The columns of the table to fill out
+        :row_index: A int. The index of the row of the metadata this line corresponds to
         """
         line = []
         # For each column in the table
@@ -1065,7 +1073,15 @@ class MetaDataUploader(Process):
                 try:
                     line.append(self.IDs[key_table][row_index])
                 except KeyError:
-                    raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, row_index))
+                    # Depending on the type of the subject one of these keys should be NULL
+                    # Check for that case before raising an Error
+                    if ((key_table == 'AnimalSubjects' and
+                         self.df['SubjectType']['SubjectType'].iloc[row_index] == 'Human') or
+                        (key_table == 'Subjects' and
+                         not self.df['SubjectType']['SubjectType'].iloc[row_index] == 'Human')):
+                        line.append('\\N')
+                    else:
+                        raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, row_index))
             elif structure[j][0] == 'user_id':
                 line.append(str(self.user_id))
             elif structure[j][0] == 'AdditionalMetaDataRow':
