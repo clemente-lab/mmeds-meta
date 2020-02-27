@@ -122,7 +122,7 @@ class DatabaseTests(TestCase):
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
             # Confirm that trying to access admin tables raises an error
             with pytest.raises(TableAccessError):
-                db0.execute('Select * from users;')
+                db0.execute('SELECT * FROM mysql.user')
 
             # Test that automatically adding 'protected_' works when joining tables
             sql = 'SELECT Subjects.HostSubjectId, Heights.Height FROM Subjects ' +\

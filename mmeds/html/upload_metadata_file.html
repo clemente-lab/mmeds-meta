@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <div class='inner'>
-      <h2>Welcome {user}</h2>
-      <p>
-      <h3>Upload {metadata_type} metadata file</h3>
-        <form action='../upload/validate_metadata' method='post' enctype='multipart/form-data', id='upload_form'>
-	  <p> {metadata_type} Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
-          <p> Temporary Metadata File: <br> <input type='checkbox' name='temporary' /> </p>
-	  <div class='{metadata_type}'>
-	  <p> Barcodes Type: <br>
-            <select name='barcodes_type' form='upload_form'>
-              <option value='single' selected='selected'>Single Barcodes</option>
-              <option value='dual'>Dual Barcodes</option>
-              <option value='other'>No Barcodes (OTU Table, LEfSe)</option>
-            </select>
-	  </div>
-	  <p> <button type='submit' method='post'>Check Metadata</button> </p>
-        </form>
-      </p>
-    </div>
-  </body>
+    <body>
+        <div class='inner'>
+            <h2>Welcome {user}</h2>
+            <p>
+            <h3>Upload {metadata_type} metadata file</h3>
+            <form action='../upload/validate_metadata' method='post' enctype='multipart/form-data', id='upload_form'>
+                <p> {metadata_type} Meta Data File: <br> <input type='file' name='myMetaData' required/> </p>
+                <p> Temporary Metadata File: <br> <input type='checkbox' name='temporary' /> </p>
+                <div class='{metadata_type}'>
+                    <p> Barcodes Type: <br>
+                    <select name='barcodes_type' form='upload_form'>
+                        <option value='single' selected='selected'>Single Barcodes</option>
+                        <option value='dual'>Dual Barcodes</option>
+                        <option value='other'>No Barcodes (OTU Table, LEfSe)</option>
+                    </select>
+                </div>
+                <p> <button type='submit' method='post'>Check Metadata</button> </p>
+            </form>
+                    </p>
+        </div>
+    </body>
 </html>

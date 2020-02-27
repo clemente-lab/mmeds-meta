@@ -267,7 +267,6 @@ PROTECTED_TABLES = [
     'SampleProtocol',
     'Specimen',
     'Study',
-    'SubjectType',
     'Subjects',
     'Weights',
     'ChowDates',
