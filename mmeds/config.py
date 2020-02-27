@@ -189,8 +189,6 @@ TABLE_ORDER = [
     'Genotypes',
     'Ethnicity',
     'Subjects',
-    'AnimalSubjects',
-    'SubjectType',
     'Heights',
     'Weights',
     'Illness',
@@ -203,6 +201,9 @@ TABLE_ORDER = [
     'Housing',
     'Husbandry',
     'Vendor',
+    'AnimalSubjects',
+    'HousingDates',
+    'SubjectType',
     'Specimen',
     'Aliquot',
     'SampleProtocol',
@@ -239,6 +240,7 @@ ANIMAL_SUBJECT_TABLES = {
     'Strain',
     'Facility',
     'Housing',
+    'HousingDates',
     'Husbandry',
     'Vendor',
     'AnimalSubjects'
@@ -265,10 +267,12 @@ PROTECTED_TABLES = [
     'SampleProtocol',
     'Specimen',
     'Study',
+    'SubjectType',
     'Subjects',
     'Weights',
     'ChowDates',
-    'Housing',
+    'HousingDates',
+    'Husbandry',
     'AnimalSubjects'
 ]
 

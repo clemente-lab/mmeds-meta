@@ -10,11 +10,10 @@ view_sql = 'CREATE\nSQL SECURITY DEFINER\nVIEW {db}.{ptable} AS\nSELECT cc.* FRO
             'cc WHERE {db}.owner_check(cc.user_id)\nWITH CHECK OPTION;\n\n'
 grant_sql = "GRANT SELECT ON TABLE {db}.{ptable} TO "
 public_sql = "GRANT SELECT ON TABLE {db}.{table} TO "
-user = "{user}@'%';\n\n"
+user = '{user}@"%";\n\n'
 
 
 def insert_null(table):
-    print('insert null into {}'.format(table))
     sql = quote_sql('INSERT INTO {table} VALUES (', table=table)
     for i, column in enumerate(ALL_TABLE_COLS[table]):
             if 'id' in column:
