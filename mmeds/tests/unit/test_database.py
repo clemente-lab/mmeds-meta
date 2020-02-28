@@ -1,11 +1,9 @@
-from mmeds.database import Database, upload_metadata, SQLBuilder, MetaDataUploader
-from mmeds.authentication import add_user, remove_user
+from mmeds.database import Database, SQLBuilder
 from mmeds.error import TableAccessError
 from mmeds.util import sql_log, parse_ICD_codes, load_metadata
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
 import mmeds.config as fig
-import mmeds.secrets as sec
 import pymysql as pms
 import pandas as pd
 import pytest
@@ -149,12 +147,12 @@ class DatabaseTests(TestCase):
 
     def test_d_metadata_checks(self):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-            warnings = db.check_repeated_subjects(self.df['Subjects'])
+            warnings = db.check_repeated_subjects(self.df['Subjects'], 'human')
         assert warnings
 
         ndf = pd.read_csv(fig.UNIQUE_METADATA, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-            warnings = db.check_repeated_subjects(ndf['Subjects'])
+            warnings = db.check_repeated_subjects(ndf['Subjects'], 'human')
             errors = db.check_user_study_name('Unique_Studay')
         assert not warnings
         assert not errors

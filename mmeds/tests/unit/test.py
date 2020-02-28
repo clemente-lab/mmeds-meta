@@ -39,6 +39,7 @@ def setup_tests(tests):
     test_setup = []
     if 'documents' in tests or 'tool' in tests or 'tools' in tests:
         test_setup.append((fig.TEST_SUBJECT_SHORT,
+                           'human',
                            fig.TEST_SPECIMEN_SHORT,
                            fig.TEST_DIR,
                            fig.TEST_USER,
@@ -51,6 +52,7 @@ def setup_tests(tests):
                            fig.TEST_CODE_SHORT))
         if 'tools' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
+                               'human',
                                fig.TEST_SPECIMEN_SHORT,
                                fig.TEST_DIR,
                                fig.TEST_USER,
@@ -62,6 +64,7 @@ def setup_tests(tests):
                                fig.TEST_BARCODES,
                                fig.TEST_CODE_PAIRED))
             test_setup.append((fig.TEST_SUBJECT_SHORT,
+                               'human',
                                fig.TEST_SPECIMEN_SHORT,
                                fig.TEST_DIR,
                                fig.TEST_USER,
@@ -92,6 +95,7 @@ def setup_tests(tests):
             assert 0 == upload_lefse(test_lefse)
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
+                           'human',
                            fig.TEST_SPECIMEN,
                            fig.TEST_DIR,
                            fig.TEST_USER,
@@ -102,7 +106,20 @@ def setup_tests(tests):
                            None,
                            fig.TEST_BARCODES,
                            fig.TEST_CODE))
+        test_setup.append((fig.TEST_ANIMAL_SUBJECT,
+                           'animal',
+                           fig.TEST_SPECIMEN,
+                           fig.TEST_DIR,
+                           fig.TEST_USER,
+                           'Test_Animal_Single',
+                           'single_end',
+                           'single_barcodes',
+                           fig.TEST_READS,
+                           None,
+                           fig.TEST_BARCODES,
+                           fig.TEST_CODE))
         test_setup.append((fig.TEST_SUBJECT_ALT,
+                           'human',
                            fig.TEST_SPECIMEN_ALT,
                            fig.TEST_DIR_0,
                            fig.TEST_USER_0,

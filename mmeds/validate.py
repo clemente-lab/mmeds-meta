@@ -411,7 +411,11 @@ class Validator:
         """ Insure the subjects match those previouvs found in subject metadata """
         # Get the subjects identified in the specimen metadata
         specimen_subs = self.df['AdditionalMetaData']['SubjectIdCol'].tolist()
-        diff = set(self.subject_ids['HostSubjectId']).symmetric_difference(set(specimen_subs))
+        if self.subject_type == 'human':
+            check_subs = self.subject_ids['HostSubjectId']
+        elif self.subject_type == 'animal':
+            check_subs = self.subject_ids['AnimalSubjectID']
+        diff = set(check_subs).symmetric_difference(set(specimen_subs))
         err = '{}\t{}\tMissing Subject Error: Subject with ID {} found in {} metadata file but not {} metadata'
         for sub in diff:
             try:
@@ -435,11 +439,14 @@ class Validator:
             if self.metadata_type == 'subject':
                 if self.subject_type == 'human':
                     tables = fig.SUBJECT_TABLES
+                    if 'Subjects' in self.df.keys():
+                        # Only define subjects if subject table is correctly uploaded
+                        subjects = self.df['Subjects']
                 elif self.subject_type == 'animal':
                     tables = fig.ANIMAL_SUBJECT_TABLES
-                if 'Subjects' in self.df.keys():
-                    # Only define subjects if subject table is correctly uploaded
-                    subjects = self.df['Subjects']
+                    if 'AnimalSubjects' in self.df.keys():
+                        # Only define subjects if subject table is correctly uploaded
+                        subjects = self.df['AnimalSubjects']
             elif self.metadata_type == 'specimen':
                 tables = fig.SPECIMEN_TABLES
             log('In validate_mapping_file')

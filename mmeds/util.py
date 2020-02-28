@@ -24,13 +24,20 @@ import pandas as pd
 logger = MMEDSLog('debug').logger
 
 
-def load_metadata_template():
-    return pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
+def load_metadata_template(subject_type):
+    if subject_type == 'human':
+        df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
+    elif subject_type == 'animal':
+        df = pd.read_csv(fig.TEST_ANIMAL_METADATA, header=[0, 1], nrows=3, sep='\t')
+    return df
 
 
-def join_metadata(subject, specimen):
+def join_metadata(subject, specimen, subject_type):
     """ Joins the subject and specimen metadata into a single data frame """
-    subject[('Subjects', 'SubjectIdCol')] = subject[('Subjects', 'HostSubjectId')]
+    if subject_type == 'human':
+        subject[('Subjects', 'SubjectIdCol')] = subject[('Subjects', 'HostSubjectId')]
+    elif subject_type == 'animal':
+        subject[('Subjects', 'SubjectIdCol')] = subject[('AnimalSubjects', 'AnimalSubjectID')]
     subject.set_index(('Subjects', 'SubjectIdCol'), inplace=True)
     specimen.set_index(('AdditionalMetaData', 'SubjectIdCol'), inplace=True)
     df = subject.join(specimen, how='outer')
@@ -54,7 +61,12 @@ def write_metadata(df, output_path):
         unsorted = df.to_dict('list')
     else:
         unsorted = df
-    template = load_metadata_template()
+
+    if ('Subjects', 'HostSubjectId') in unsorted.keys():
+        subject_type = 'human'
+    elif ('AnimalSubjects', 'AnimalSubjectID') in unsorted.keys():
+        subject_type = 'animal'
+    template = load_metadata_template(subject_type)
 
     metadata_length = len(unsorted[('RawData', 'RawDataID')])
 

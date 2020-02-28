@@ -26,7 +26,7 @@ DAYS = 13
 
 # Used in test_cases
 def upload_metadata(args):
-    (subject_metadata, specimen_metadata, path, owner, study_name,
+    (subject_metadata, subject_type, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
     if for_reads is not None and 'zip' in for_reads:
         datafiles = {'data': for_reads,
@@ -35,7 +35,7 @@ def upload_metadata(args):
         datafiles = {'for_reads': for_reads,
                      'rev_reads': rev_reads,
                      'barcodes': barcodes}
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
+    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime', reads_type,
                          barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
     p.run()
@@ -784,7 +784,7 @@ class SQLBuilder:
 
 
 class MetaDataUploader(Process):
-    def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
+    def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
                  reads_type, barcodes_type, study_name, temporary, data_files,
                  public, testing, access_code=None):
         """
@@ -814,6 +814,7 @@ class MetaDataUploader(Process):
             'testing': testing
         })
 
+        self.subject_type = subject_type
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.testing = testing
@@ -922,13 +923,18 @@ class MetaDataUploader(Process):
 
         # Merge the metadata files
         metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
-        metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
+        metadata_df = join_metadata(load_metadata(subject_metadata_copy),
+                                    load_metadata(specimen_metadata_copy),
+                                    self.subject_type)
         self.metadata = metadata_copy
         write_metadata(metadata_df, metadata_copy)
 
         if not self.temporary:
             # Read in the metadata file to import
-            df = parse_ICD_codes(pd.read_csv(metadata_copy, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
+            if self.subject_type == 'human':
+                df = parse_ICD_codes(load_metadata(metadata_copy))
+            elif self.subject_type == 'animal':
+                df = load_metadata(metadata_copy)
             self.df = df.reindex(df.columns, axis=1)
             self.builder = SQLBuilder(self.df, self.db, self.owner)
 
