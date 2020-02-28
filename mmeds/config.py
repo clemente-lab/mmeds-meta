@@ -251,7 +251,7 @@ ANIMAL_SUBJECT_TABLES = {
 }
 
 # Tables that should exist in the specimen metadata
-SPECIMEN_TABLES = (set(TABLE_ORDER) - SUBJECT_TABLES - ANIMAL_SUBJECT_TABLES) | {'AdditionalMetaData'}
+SPECIMEN_TABLES = ((set(TABLE_ORDER) - SUBJECT_TABLES) - ANIMAL_SUBJECT_TABLES) | {'AdditionalMetaData'}
 
 # MMEDS users are not given direct access to
 # these tables as they will contain data that
@@ -399,7 +399,10 @@ for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPEC
                 col_types[table][column] = TYPE_MAP[col_type]
                 COL_TO_TABLE[column] = table
         except KeyError:
-            continue
+            if table in ICD_TABLES or table == 'ICDcode':
+                continue
+            else:
+                raise
 
 # Clean up
 del db
