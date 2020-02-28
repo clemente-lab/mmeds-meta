@@ -350,7 +350,6 @@ class Validator:
                                                         sep=self.sep,
                                                         header=[0, 1],
                                                         nrows=3)
-
             elif self.metadata_type == 'specimen':
                 self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
                                                     sep=self.sep,
@@ -367,9 +366,17 @@ class Validator:
             if column not in self.columns:
                 self.columns.append(column)
 
+        if self.metadata_type == 'subject':
+            if self.subject_type == 'human':
+                col_types = fig.COLUMN_TYPES_SUBJECT
+            elif self.subject_type == 'animal':
+                col_types = fig.COLUMN_TYPES_ANIMAL_SUBJECT
+        else:
+            col_types = fig.COLUMN_TYPES_SPECIMEN
+
         # Update column types
-        for table in fig.COLUMN_TYPES.keys():
-            for column, col_type in fig.COLUMN_TYPES[table].items():
+        for table in col_types.keys():
+            for column, col_type in col_types[table].items():
                 self.col_types[column] = col_type
         self.tables = list(dict.fromkeys(self.tables))
 

@@ -17,7 +17,7 @@ from multiprocessing import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
                          MetaDataError, NoResultError, InvalidSQLError)
-from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log, capitalize,
+from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log,
                         debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
 from mmeds.documents import MMEDSDoc
 
@@ -468,7 +468,10 @@ class Database:
         # can't be any repeated subjects so it will just return the
         # empty list
         if not df.empty:
-            initial_sql = """SELECT * FROM {} WHERE""".format(capitalize(subject_type))
+            if subject_type == 'human':
+                initial_sql = """SELECT * FROM Subjects WHERE"""
+            elif subject_type == 'animal':
+                initial_sql = """SELECT * FROM AnimalSubjects WHERE"""
             # Go through each row
             for j in range(len(df.index)):
                 sql = initial_sql
