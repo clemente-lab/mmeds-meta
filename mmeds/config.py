@@ -272,7 +272,8 @@ PROTECTED_TABLES = [
     'ChowDates',
     'HousingDates',
     'Husbandry',
-    'AnimalSubjects'
+    'AnimalSubjects',
+    'SubjectType'
 ]
 
 JUNCTION_TABLES = [
