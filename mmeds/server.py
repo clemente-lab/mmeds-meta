@@ -102,13 +102,14 @@ class MMEDSbase:
         # Check the metadata file for errors
         errors, warnings, subjects = validate_mapping_file(metadata_copy,
                                                            cp.session['metadata_type'],
-                                                           cp.session['subject_ids'])
+                                                           cp.session['subject_ids'],
+                                                           cp.session['subject_type'])
 
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:
             try:
                 if cp.session['metadata_type'] == 'subject':
-                    warnings += db.check_repeated_subjects(subjects)
+                    warnings += db.check_repeated_subjects(subjects, cp.session['subject_type'])
                     cp.session['subject_ids'] = subjects
                 elif cp.session['metadata_type'] == 'specimen':
                     errors += db.check_user_study_name(cp.session['study_name'])
@@ -347,7 +348,7 @@ class MMEDSupload(MMEDSbase):
                                 title='Upload Metadata',
                                 metadata_type=cp.session['metadata_type'].capitalize())
         if cp.session['metadata_type'] == 'specimen':
-            page = insert_warning(page, 26, 'Subject table uploaded successfully')
+            page = insert_html(page, 26, 'Subject table uploaded successfully')
         return page
 
     @cp.expose
@@ -417,10 +418,11 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_metadata(self, uploadType, studyName):
+    def upload_metadata(self, uploadType, subjectType, studyName):
         """ Page for uploading Qiime data """
         cp.session['study_name'] = studyName
         cp.session['metadata_type'] = 'subject'
+        cp.session['subject_type'] = subjectType
         cp.session['upload_type'] = uploadType
         page = self.format_html('upload_metadata_file',
                                 title='Upload Metadata',

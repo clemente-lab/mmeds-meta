@@ -17,7 +17,7 @@ from multiprocessing import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
                          MetaDataError, NoResultError, InvalidSQLError)
-from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log,
+from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes, sql_log, capitalize,
                         debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
 from mmeds.documents import MMEDSDoc
 
@@ -458,17 +458,20 @@ class Database:
         mdata.files[filekey] = value
         mdata.save()
 
-    def check_repeated_subjects(self, df, subject_col=-2):
-        """ Checks for users that match those already in the database. """
+    def check_repeated_subjects(self, df, subject_type, subject_col=-2):
+        """
+        Checks for users that match those already in the database.
+        """
         warnings = []
         # If there is no subjects table in the metadata this
         # dataframe will be empty. If there are no subjects there
         # can't be any repeated subjects so it will just return the
         # empty list
         if not df.empty:
+            initial_sql = """SELECT * FROM {} WHERE""".format(capitalize(subject_type))
             # Go through each row
             for j in range(len(df.index)):
-                sql = """SELECT * FROM Subjects WHERE"""
+                sql = initial_sql
                 args = {}
                 # Check if there is an entry already in the database that matches every column
                 for i, column in enumerate(df):
