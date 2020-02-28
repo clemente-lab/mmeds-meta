@@ -690,8 +690,9 @@ class MMEDSanalysis(MMEDSbase):
 
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
-        self.q.put(('upload', cp.session['study_name'], subject_metadata, specimen_metadata,
-                    username, reads_type, barcodes_type, datafiles, cp.session['metadata_temporary'], public))
+        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
+                    specimen_metadata, username, reads_type, barcodes_type, datafiles,
+                    cp.session['metadata_temporary'], public))
 
         # Get the html for the upload page
         page = self.format_html('welcome', title='Welcome to MMEDS')

@@ -67,6 +67,8 @@ class TestServer(helper.CPWebCase):
     def test_da_animal_upload(self):
         self.login()
         self.upload_animal_metadata()
+        self.upload_otu()
+        self.logout()
 
     def test_d_upload(self):
         self.login()
@@ -303,7 +305,8 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
-        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_OTU&subjectType=animal', self.cookies)
+        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_Animal_OTU&subjectType=animal',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_ANIMAL_SUBJECT], ['text/tab-seperated-values'])
@@ -329,7 +332,7 @@ class TestServer(helper.CPWebCase):
         # Search arguments for retrieving emails with access codes
         upload_args = [
             ['FROM', fig.MMEDS_EMAIL],
-            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU')]
+            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_Animal_OTU')]
         ]
 
         recieve_email(1, True, upload_args)
