@@ -1,47 +1,52 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <div class='inner'>
-      <h2>
-        Welcome {user}
-      </h2>
-      <p>
-        <h3>Select type of data for upload</h3>
-        <form action='../upload/upload_metadata' method='post' enctype='multipart/form-data' id='upload_form'>
-          <select name='uploadType' form='upload_form'>
-            <option value="qiime">Raw Reads</option>
-            <option value="sparcc">OTU Table</option>
-            <option value="lefse">LEfSe Table</option>
-            <option value="other">Other</option>
-          </select>
-          <select name='subjectType' form='upload_form'>
-            <option value="human">Human</option>
-            <option value="animal">Animal</option>
-          </select>
-          <p> Study Name: <br> <input type='text' name='studyName' required/> </p>
-          <button type='submit' method='post'>Upload Data</button>
-        </form>
-      </p>
-      <p>
-        <h3>Modify a previous upload</h3>
-        <form action='../upload/modify_upload' method='post' enctype='multipart/form-data', id='modify_form'>
-          <p> Data File: <br> <input type='file' name='myData' required/> </p>
-          <p><select name='data_type' form='modify_form'>
-            <option value="metadata">Metadata</option>
-            <option value="for_reads">Forward Reads</option>
-            <option value="rev_reads">Reverse Reads</option>
-            <option value="barcodes">Barcodes</option>
-          </select></p>
-          <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
-          <p> <button type='submit' method='post'>Modify Upload</button> </p>
-        </form>
-      </p>
-      <p>
-        <h3>Change Password</h3>
-        <form action='../auth/input_password' method='post'>
-          <button type='submit' method='post'>Change Password</button>
-        </form>
-      </p>
-    </div>
-  </body>
+    <body>
+        <div class='inner'>
+            <h2>
+                Welcome {user}
+            </h2>
+            <p>
+            <form action='../upload/upload_metadata' method='post' enctype='multipart/form-data' id='upload_form'>
+                <p>
+                <h3>Upload Data Type</h3>
+                <select name='uploadType' form='upload_form' placeholder='Data Type'>
+                    <option value="qiime">Raw Reads</option>
+                    <option value="sparcc">OTU Table</option>
+                    <option value="lefse">LEfSe Table</option>
+                    <option value="other">Other</option>
+                </select>
+                </p>
+                <p>
+                <h3>Upload Subject Type</h3>
+                <select name='subjectType' form='upload_form' placeholder='Subject Type'>
+                    <option value="human">Human</option>
+                    <option value="animal">Animal</option>
+                </select>
+                </p>
+                <p> Study Name: <br> <input type='text' name='studyName' required/> </p>
+                <button type='submit' method='post'>Upload Data</button>
+            </form>
+            </p>
+            <p>
+            <h3>Modify a previous upload</h3>
+            <form action='../upload/modify_upload' method='post' enctype='multipart/form-data', id='modify_form'>
+                <p> Data File: <br> <input type='file' name='myData' required/> </p>
+                <p><select name='data_type' form='modify_form'>
+                    <option value="metadata">Metadata</option>
+                    <option value="for_reads">Forward Reads</option>
+                    <option value="rev_reads">Reverse Reads</option>
+                    <option value="barcodes">Barcodes</option>
+                </select></p>
+                <p> <input type="text" placeholder="Access Code" name="access_code" required/> </p>
+                <p> <button type='submit' method='post'>Modify Upload</button> </p>
+            </form>
+            </p>
+            <p>
+            <h3>Change Password</h3>
+            <form action='../auth/input_password' method='post'>
+                <button type='submit' method='post'>Change Password</button>
+            </form>
+            </p>
+        </div>
+    </body>
 </html>
