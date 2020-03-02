@@ -38,10 +38,10 @@ class SpawnTests(TestCase):
         test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
 
         # Add multiple uploads from different users
-        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, fig.TEST_SPECIMEN_SHORT,
+        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
                     fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
 
-        self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, fig.TEST_SPECIMEN_SHORT,
+        self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
                     fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
 
         # Recieve the process info dicts from Watcher

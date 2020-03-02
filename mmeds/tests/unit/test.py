@@ -77,6 +77,7 @@ def setup_tests(tests):
                                fig.TEST_CODE_DEMUX))
             # Upload OTU if running test_tools.py
             test_otu = (fig.TEST_SUBJECT_SHORT,
+                        'human',
                         fig.TEST_SPECIMEN_SHORT,
                         fig.TEST_DIR,
                         fig.TEST_USER,
@@ -86,6 +87,7 @@ def setup_tests(tests):
             assert 0 == upload_otu(test_otu)
             # Upload Lefse data if running test_tools.py
             test_lefse = (fig.TEST_SUBJECT_SHORT,
+                          'human',
                           fig.TEST_SPECIMEN_SHORT,
                           fig.TEST_DIR,
                           fig.TEST_USER,
@@ -93,43 +95,43 @@ def setup_tests(tests):
                           fig.TEST_LEFSE,
                           fig.TEST_CODE_LEFSE)
             assert 0 == upload_lefse(test_lefse)
-    if 'database' in tests:
-        test_setup.append((fig.TEST_SUBJECT,
-                           'human',
-                           fig.TEST_SPECIMEN,
-                           fig.TEST_DIR,
-                           fig.TEST_USER,
-                           'Test_Single',
-                           'single_end',
-                           'single_barcodes',
-                           fig.TEST_READS,
-                           None,
-                           fig.TEST_BARCODES,
-                           fig.TEST_CODE))
-        test_setup.append((fig.TEST_ANIMAL_SUBJECT,
-                           'animal',
-                           fig.TEST_SPECIMEN,
-                           fig.TEST_DIR,
-                           fig.TEST_USER,
-                           'Test_Animal_Single',
-                           'single_end',
-                           'single_barcodes',
-                           fig.TEST_READS,
-                           None,
-                           fig.TEST_BARCODES,
-                           fig.TEST_CODE))
-        test_setup.append((fig.TEST_SUBJECT_ALT,
-                           'human',
-                           fig.TEST_SPECIMEN_ALT,
-                           fig.TEST_DIR_0,
-                           fig.TEST_USER_0,
-                           'Test_Single_0',
-                           'single_end',
-                           'single_barcodes',
-                           fig.TEST_READS,
-                           None,
-                           fig.TEST_BARCODES,
-                           fig.TEST_CODE + '0'))
+            if 'database' in tests:
+                test_setup.append((fig.TEST_SUBJECT,
+                                   'human',
+                                   fig.TEST_SPECIMEN,
+                                   fig.TEST_DIR,
+                                   fig.TEST_USER,
+                                   'Test_Single',
+                                   'single_end',
+                                   'single_barcodes',
+                                   fig.TEST_READS,
+                                   None,
+                                   fig.TEST_BARCODES,
+                                   fig.TEST_CODE))
+                test_setup.append((fig.TEST_ANIMAL_SUBJECT,
+                                   'animal',
+                                   fig.TEST_SPECIMEN,
+                                   fig.TEST_DIR,
+                                   fig.TEST_USER,
+                                   'Test_Animal_Single',
+                                   'single_end',
+                                   'single_barcodes',
+                                   fig.TEST_READS,
+                                   None,
+                                   fig.TEST_BARCODES,
+                                   fig.TEST_CODE))
+                test_setup.append((fig.TEST_SUBJECT_ALT,
+                                   'human',
+                                   fig.TEST_SPECIMEN_ALT,
+                                   fig.TEST_DIR_0,
+                                   fig.TEST_USER_0,
+                                   'Test_Single_0',
+                                   'single_end',
+                                   'single_barcodes',
+                                   fig.TEST_READS,
+                                   None,
+                                   fig.TEST_BARCODES,
+                                   fig.TEST_CODE + '0'))
     for setup in test_setup:
         assert 0 == upload_metadata(setup)
 

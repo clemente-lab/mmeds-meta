@@ -157,13 +157,13 @@ class UtilTests(TestCase):
         # Test joining human metadata
         subject = util.load_metadata(fig.TEST_SUBJECT)
         specimen = util.load_metadata(fig.TEST_SPECIMEN)
-        df = util.join_metadata(subject, specimen)
+        df = util.join_metadata(subject, specimen, 'human')
         assert df is not None
 
         # Test joining animal metadata
         subject = util.load_metadata(fig.TEST_ANIMAL_SUBJECT)
         specimen = util.load_metadata(fig.TEST_SPECIMEN)
-        df = util.join_metadata(subject, specimen)
+        df = util.join_metadata(subject, specimen, 'animal')
         assert df is not None
 
     def test_quote_sql(self):
