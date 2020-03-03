@@ -715,7 +715,7 @@ class SQLBuilder:
         if table == 'SubjectType':
             if self.df['SubjectType']['SubjectType'].iloc[self.row] == 'Human':
                 del foreign_keys[foreign_keys.index('AnimalSubjects_idAnimalSubjects')]
-            else:
+            elif self.df['SubjectType']['SubjectType'].iloc[self.row] == 'Animal':
                 del foreign_keys[foreign_keys.index('Subjects_idSubjects')]
 
         # Get the non foreign key columns
