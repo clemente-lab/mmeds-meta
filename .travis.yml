@@ -1,18 +1,12 @@
 language: python
 python: '3.7'
-dist: xenial
+dist: bionic
 sudo: true
 addons:
     apt:
         packages:
-            - texlive-latex-base
-            - texlive-latex-extra
-            - texlive-latex-recommended
-            - texlive-generic-recommended
-            - texlive-pictures
-            - texlive-publishers
-            - texlive-fonts-recommended
-            - texlive-fonts-extra
+            libtidy5
+            environment-modules
 before_cache:
     - sudo chown -R travis:travis $HOME
     - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
