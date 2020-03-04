@@ -845,7 +845,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(user, message, text, max_count=10):
+def recieve_email(user, message, text, max_count=60):
     """
     Checks for a email for USER of type MESSAGE containing TEXT
     COUNT: How many seconds to wait
