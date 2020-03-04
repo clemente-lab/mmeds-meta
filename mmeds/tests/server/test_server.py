@@ -78,24 +78,20 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_e_otu_upload(self):
-        return
         self.login()
         self.upload_otu()
         self.logout()
 
     def test_f_lefse_upload(self):
-        return
         self.login()
         self.upload_lefse()
         self.logout()
 
     def test_g_dual_upload(self):
-        return
         self.login()
         self.upload_dualBarcode_metadata()
 
     def test_h_query(self):
-        return
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
@@ -277,13 +273,8 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        # Search arguments for retrieving emails with access codes
-        upload_args = [
-            ['FROM', fig.MMEDS_EMAIL],
-            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU')]
-        ]
-
-        recieve_email(1, True, upload_args)
+        assert recieve_email(self.server_user, 'upload',
+                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU'))
 
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)
@@ -312,12 +303,8 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Search arguments for retrieving emails with access codes
-        upload_args = [
-            ['FROM', fig.MMEDS_EMAIL],
-            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_Lefse')]
-        ]
-
-        recieve_email(1, True, upload_args)
+        assert recieve_email(self.server_user, 'upload',
+                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_Lefse'))
 
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
@@ -349,7 +336,8 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        assert recieve_email(self.server_user, 'Test_DualBarcodes', 'user {} uploaded data'.format(self.server_user))
+        assert recieve_email(self.server_user, 'upload',
+                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_DualBarcodes'))
 
     def upload_metadata(self):
         # Check the page for uploading metadata
@@ -447,9 +435,9 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        mail = recieve_email(self.server_user, self.study, 'user {} uploaded data'.format(self.server_user))
-        code = mail[0].get_payload(decode=True).decode('utf-8')
-        self.access_code = code.split('access code:')[1].splitlines()[1]
+        mail = recieve_email(self.server_user, 'upload',
+                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_Server'))
+        self.access_code = mail.split('access code:')[1].splitlines()[1]
 
     def modify_upload(self):
         headers, body = self.upload_files(['myData'], [fig.TEST_READS], ['application/gzip'])

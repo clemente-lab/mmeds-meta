@@ -9,17 +9,12 @@ from numpy import nan, int64, float64, datetime64
 from functools import wraps
 from inspect import isfunction
 from tempfile import gettempdir
-from smtplib import SMTP
-from imapclient import IMAPClient
-from email.message import EmailMessage
-from email import message_from_bytes
-from time import sleep
 from re import sub
 from ppretty import ppretty
+from time import sleep
 
 import yaml
 import mmeds.config as fig
-import mmeds.secrets as sec
 import pandas as pd
 
 logger = MMEDSLog('debug').logger
@@ -850,16 +845,28 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(user, message, text):
+def recieve_email(user, message, text, max_count=10):
     """
     Checks for a email for USER of type MESSAGE containing TEXT
+    COUNT: How many seconds to wait
     """
     result = False
-    mail = Path(gettempdir()) / '{user}_{message}.mail'
-    if mail.format(user=user, message=message).exists():
+    mail = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
+
+    count = 0
+    while count < max_count and not mail.exists():
+        count += 1
+        sleep(1)
+
+    if mail.exists():
         body = mail.read_text()
         if text in body:
             result = body
+            mail.unlink()  # Delete the email so it doesn't affect future tests
+        else:
+            raise EmailError('Email for {} about {} does not contain correct contents'.format(user, message))
+    else:
+        raise EmailError('Email for {} about {} was not sent'.format(user, message))
     return result
 
 

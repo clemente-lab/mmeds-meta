@@ -25,7 +25,7 @@ BEGIN
     -- Create a security token for that account
     INSERT INTO security_token (username, security_token) VALUES ('mmedsusers@localhost', 'some_security_token');
 
-    IF NOT EXISTS(SELECT * FROM mmeds_data1.user WHERE user_id = 1) THEN
+    IF NOT EXISTS(SELECT user_id FROM mmeds_data1.user WHERE user_id = 1) THEN
         INSERT INTO user VALUES (1, 'Public', '', '', '', 1);
     END IF;
 END //
