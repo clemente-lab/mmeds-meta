@@ -31,14 +31,10 @@ before_install:
     - ~/miniconda.sh -b &>/dev/null
     - export PATH=~/miniconda2/bin:$PATH
     - conda update --yes conda &>/dev/null
-    - bash travis_setup.sh
-    - source ~/.bashrc
-    - conda info --envs
 install:
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
-    - module avail
 script:
     - travis_wait 30 python ./mmeds/tests/unit/test.py
     - bash <(curl -s https://codecov.io/bash) -cF unit
