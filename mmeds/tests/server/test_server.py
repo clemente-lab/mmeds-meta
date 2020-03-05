@@ -311,12 +311,8 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Search arguments for retrieving emails with access codes
-        upload_args = [
-            ['FROM', fig.MMEDS_EMAIL],
-            ['TEXT', 'user {} uploaded data for the {}'.format(self.server_user, 'Test_Animal_OTU')]
-        ]
-
-        recieve_email(1, True, upload_args)
+        assert recieve_email(self.server_user, 'upload',
+                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_Animal_OTU'))
 
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)

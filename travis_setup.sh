@@ -33,11 +33,6 @@ if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds-stable environment";
     conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy &>/dev/null;
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
-    # source activate mmeds-stable;
-    # echo "Install R libraries";
-    # Skip because it takes forever and isn't necessary
-    # Rscript setup.R &> /dev/null;
-    # source deactivate;
 fi
 
 if false; then
