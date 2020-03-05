@@ -3,7 +3,6 @@ CREATE
 SQL SECURITY DEFINER
 VIEW `mmeds_data1`.`protected_Aliquot` AS
 SELECT cc.* FROM `mmeds_data1`.`Aliquot` cc WHERE `mmeds_data1`.owner_check(cc.user_id)
-ENGINE = MEMORY
 WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds_data1`.`protected_Aliquot` TO 'mmedsusers';

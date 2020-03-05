@@ -2,6 +2,7 @@ from mmeds.config import PROTECTED_TABLES, PUBLIC_TABLES, ALL_TABLE_COLS, TABLE_
 from mmeds.secrets import SQL_USER_NAME, SQL_DATABASE
 from mmeds.util import quote_sql
 from sys import argv
+from pathlib import Path
 
 
 # Define the sql statments
@@ -10,7 +11,7 @@ view_sql = 'CREATE\nSQL SECURITY DEFINER\nVIEW {db}.{ptable} AS\nSELECT cc.* FRO
             'cc WHERE {db}.owner_check(cc.user_id)\nWITH CHECK OPTION;\n\n'
 grant_sql = "GRANT SELECT ON TABLE {db}.{ptable} TO "
 public_sql = "GRANT SELECT ON TABLE {db}.{table} TO "
-user = "{user}@'%';\n\n"
+user = "{user};\n\n"
 
 
 def insert_null(table):
@@ -55,3 +56,17 @@ with open(view_file, 'w') as f:
         # AdditionalMetaData and ICDCode don't exist in the database
         except KeyError as e:
             print(e)
+
+# Based on the location of the views file collect all sql files
+sql_root = Path(view_file).parent
+test_root = sql_root / 'test_sql'
+if not test_root.is_dir():
+    test_root.mkdir()
+
+# Re-Write sql files using the memory engine
+for sql_file in sql_root.glob('*.sql'):
+    sql = sql_file.read_text()
+    test_sql = sql.replace('InnoDB', 'MEMORY')
+    test_file = test_root / sql_file.name
+    test_file.touch()
+    test_file.write_text(test_sql)

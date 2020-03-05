@@ -8,17 +8,13 @@ from os import environ
 from numpy import nan, int64, float64, datetime64
 from functools import wraps
 from inspect import isfunction
-from smtplib import SMTP
-from imapclient import IMAPClient
-from email.message import EmailMessage
-from email import message_from_bytes
-from time import sleep
+from tempfile import gettempdir
 from re import sub
 from ppretty import ppretty
+from time import sleep
 
 import yaml
 import mmeds.config as fig
-import mmeds.secrets as sec
 import pandas as pd
 
 logger = MMEDSLog('debug').logger
@@ -839,21 +835,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         contact=fig.CONTACT_EMAIL
     )
     if testing:
-        # Setup the email to be sent
-        msg = EmailMessage()
-        msg['From'] = fig.MMEDS_EMAIL
-        msg['To'] = toaddr
-        msg['Subject'] = subject
-        # Add in any necessary text fields
-        msg.set_content(email_body)
-
-        # Connect to the server and send the mail
-        # server = SMTP('smtp.gmail.com', 587)
-        server = SMTP('smtp.office365.com', 587)
-        server.starttls()
-        server.login(fig.MMEDS_EMAIL, sec.EMAIL_PASS)
-        server.send_message(msg)
-        server.quit()
+        path = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
+        path.write_text(email_body)
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
@@ -862,33 +845,29 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(num_messages=1, wait=False, search=('FROM', fig.MMEDS_EMAIL), max_wait=200):
+def recieve_email(user, message, text, max_count=60):
     """
-    Fetch email from the test account
-    :num_messages: An int. How many emails to return, starting with the most recent
-    :search: A string. Any specific search criteria, default is emails from mmeds
+    Checks for a email for USER of type MESSAGE containing TEXT
+    COUNT: How many seconds to wait
     """
-    with IMAPClient('outlook.office365.com') as client:
-        client.login(fig.TEST_EMAIL, sec.TEST_EMAIL_PASS)
-        client.select_folder('inbox')
-        all_mail = client.search(search)
-        if wait:
-            waittime = 0
-            while not all_mail:
-                all_mail = client.search(search)
-                waittime += 5
-                sleep(5)
-                if waittime > max_wait:
-                    break
-        if not all_mail:
-            raise EmailError('No email found matching criteria {}'.format(search))
+    result = False
+    mail = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
 
-        messages = []
-        response = client.fetch(all_mail[-1 * num_messages:], ['RFC822'])
-        for message_id, data in response.items():
-            emessage = message_from_bytes(data[b'RFC822'])
-            messages.append(emessage)
-    return messages
+    count = 0
+    while count < max_count and not mail.exists():
+        count += 1
+        sleep(1)
+
+    if mail.exists():
+        body = mail.read_text()
+        if text in body:
+            result = body
+            mail.unlink()  # Delete the email so it doesn't affect future tests
+        else:
+            raise EmailError('Email for {} about {} does not contain correct contents'.format(user, message))
+    else:
+        raise EmailError('Email for {} about {} was not sent'.format(user, message))
+    return result
 
 
 def pyformat_translate(value):
