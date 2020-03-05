@@ -77,7 +77,8 @@ CONFIG = {
         'tools.sessions.secure': True,
         'tools.sessions.on': True,
         'tools.sessions.httponly': True,
-        'tools.sessions.timeout': 15
+        'tools.sessions.timeout': 15,
+        'tools.compress.gzip': True,
     },
     # Content in this directory will be made directly
     # available on the web server
