@@ -26,7 +26,7 @@ DAYS = 13
 
 # Used in test_cases
 def upload_metadata(args):
-    (subject_metadata, specimen_metadata, path, owner, study_name,
+    (subject_metadata, subject_type, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
     if for_reads is not None and 'zip' in for_reads:
         datafiles = {'data': for_reads,
@@ -35,7 +35,7 @@ def upload_metadata(args):
         datafiles = {'for_reads': for_reads,
                      'rev_reads': rev_reads,
                      'barcodes': barcodes}
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'qiime', reads_type,
+    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime', reads_type,
                          barcodes_type, study_name, False, datafiles,
                          False, True, access_code)
     p.run()
@@ -43,19 +43,19 @@ def upload_metadata(args):
 
 
 def upload_otu(args):
-    (subject_metadata, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
+    (subject_metadata, subject_type, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
     datafiles = {'otu_table': otu_table}
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'sparcc', 'otu_table',
+    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'sparcc', 'otu_table',
                          None, study_name, False, datafiles, False, True, access_code)
     p.run()
     return 0
 
 
 def upload_lefse(args):
-    (subject_metadata, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
+    (subject_metadata, subject_type, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
     datafiles = {'lefse_table': lefse_table}
 
-    p = MetaDataUploader(subject_metadata, specimen_metadata, owner, 'lefse', 'lefse_table',
+    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'lefse', 'lefse_table',
                          None, study_name, False, datafiles, False, True, access_code)
     p.run()
     return 0
@@ -458,17 +458,23 @@ class Database:
         mdata.files[filekey] = value
         mdata.save()
 
-    def check_repeated_subjects(self, df, subject_col=-2):
-        """ Checks for users that match those already in the database. """
+    def check_repeated_subjects(self, df, subject_type, subject_col=-2):
+        """
+        Checks for users that match those already in the database.
+        """
         warnings = []
         # If there is no subjects table in the metadata this
         # dataframe will be empty. If there are no subjects there
         # can't be any repeated subjects so it will just return the
         # empty list
         if not df.empty:
+            if subject_type == 'human':
+                initial_sql = """SELECT * FROM Subjects WHERE"""
+            elif subject_type == 'animal':
+                initial_sql = """SELECT * FROM AnimalSubjects WHERE"""
             # Go through each row
             for j in range(len(df.index)):
-                sql = """SELECT * FROM Subjects WHERE"""
+                sql = initial_sql
                 args = {}
                 # Check if there is an entry already in the database that matches every column
                 for i, column in enumerate(df):
@@ -704,6 +710,14 @@ class SQLBuilder:
         foreign_keys = list(filter(lambda x: '_has_' not in x,
                                    list(filter(lambda x: '_id' in x,
                                                all_cols))))
+        # For the SubjectType table one of the keys will be NULL depending on
+        # if the metadata is for an Animal subject or a human subject
+        if table == 'SubjectType':
+            if self.df['SubjectType']['SubjectType'].iloc[self.row] == 'Human':
+                del foreign_keys[foreign_keys.index('AnimalSubjects_idAnimalSubjects')]
+            elif self.df['SubjectType']['SubjectType'].iloc[self.row] == 'Animal':
+                del foreign_keys[foreign_keys.index('Subjects_idSubjects')]
+
         # Get the non foreign key columns
         columns = list(filter(lambda x: '_id' not in x, all_cols))
 
@@ -770,7 +784,7 @@ class SQLBuilder:
 
 
 class MetaDataUploader(Process):
-    def __init__(self, subject_metadata, specimen_metadata, owner, study_type,
+    def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
                  reads_type, barcodes_type, study_name, temporary, data_files,
                  public, testing, access_code=None):
         """
@@ -800,6 +814,7 @@ class MetaDataUploader(Process):
             'testing': testing
         })
 
+        self.subject_type = subject_type
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.testing = testing
@@ -908,13 +923,18 @@ class MetaDataUploader(Process):
 
         # Merge the metadata files
         metadata_copy = str(Path(subject_metadata_copy).parent / 'full_metadata.tsv')
-        metadata_df = join_metadata(load_metadata(subject_metadata_copy), load_metadata(specimen_metadata_copy))
+        metadata_df = join_metadata(load_metadata(subject_metadata_copy),
+                                    load_metadata(specimen_metadata_copy),
+                                    self.subject_type)
         self.metadata = metadata_copy
         write_metadata(metadata_df, metadata_copy)
 
         if not self.temporary:
             # Read in the metadata file to import
-            df = parse_ICD_codes(pd.read_csv(metadata_copy, sep='\t', header=[0, 1], skiprows=[2, 3, 4]))
+            if self.subject_type == 'human':
+                df = parse_ICD_codes(load_metadata(metadata_copy))
+            elif self.subject_type == 'animal':
+                df = load_metadata(metadata_copy)
             self.df = df.reindex(df.columns, axis=1)
             self.builder = SQLBuilder(self.df, self.db, self.owner)
 
@@ -1051,9 +1071,9 @@ class MetaDataUploader(Process):
         """
         Creates a single line of the input file for the specified metadata table
         :table: The name of the table the input is for
-        :structure: ...
-        :columns: ...
-        :row_index: ...
+        :structure: The structure of the SQL table the line will be imported into
+        :columns: A list. The columns of the table to fill out
+        :row_index: A int. The index of the row of the metadata this line corresponds to
         """
         line = []
         # For each column in the table
@@ -1065,7 +1085,15 @@ class MetaDataUploader(Process):
                 try:
                     line.append(self.IDs[key_table][row_index])
                 except KeyError:
-                    raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, row_index))
+                    # Depending on the type of the subject one of these keys should be NULL
+                    # Check for that case before raising an Error
+                    if ((key_table == 'AnimalSubjects' and
+                         self.df['SubjectType']['SubjectType'].iloc[row_index] == 'Human') or
+                        (key_table == 'Subjects' and
+                         not self.df['SubjectType']['SubjectType'].iloc[row_index] == 'Human')):
+                        line.append('\\N')
+                    else:
+                        raise KeyError('Error getting key self.IDs[{}][{}]'.format(key_table, row_index))
             elif structure[j][0] == 'user_id':
                 line.append(str(self.user_id))
             elif structure[j][0] == 'AdditionalMetaDataRow':

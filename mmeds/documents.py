@@ -136,7 +136,11 @@ class MMEDSDoc(men.Document):
         """ Creates a new AnalysisDoc for a child analysis """
         log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
 
-        child_path = Path(self.path) / camel_case('{}_{}'.format(category[1], value))
+        count = 0
+        child_path = Path(self.path) / camel_case('{}_{}_{}'.format(category[1], value, count))
+        while child_path.exists():
+            count += 1
+            child_path = Path(self.path) / camel_case('{}_{}_{}'.format(category[1], value, count))
         child_path.mkdir()
 
         child_files = deepcopy(self.files)

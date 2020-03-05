@@ -1,6 +1,7 @@
 from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
+from collections import defaultdict
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -132,12 +133,14 @@ TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
 TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
 TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
 TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
+TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
 TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
 TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
 TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+TEST_ANIMAL_METADATA = str(TEST_PATH / 'test_animal_metadata.tsv')
 TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
 TEST_METADATA_WARN = str(TEST_PATH / 'validation_files/test_metadata_warn.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
@@ -193,6 +196,17 @@ TABLE_ORDER = [
     'Weights',
     'Illness',
     'Intervention',
+    'Chow',
+    'ChowDates',
+    'Species',
+    'Strain',
+    'Facility',
+    'Housing',
+    'Husbandry',
+    'Vendor',
+    'AnimalSubjects',
+    'HousingDates',
+    'SubjectType',
     'Specimen',
     'Aliquot',
     'SampleProtocol',
@@ -215,6 +229,7 @@ SUBJECT_TABLES = {
     'Genotypes',
     'Ethnicity',
     'Subjects',
+    'SubjectType',
     'Heights',
     'Weights',
     'Illness',
@@ -222,8 +237,22 @@ SUBJECT_TABLES = {
     'AdditionalMetaData'
 }
 
+ANIMAL_SUBJECT_TABLES = {
+    'Chow',
+    'ChowDates',
+    'Species',
+    'Strain',
+    'Facility',
+    'Housing',
+    'HousingDates',
+    'Husbandry',
+    'Vendor',
+    'AnimalSubjects',
+    'SubjectType'
+}
+
 # Tables that should exist in the specimen metadata
-SPECIMEN_TABLES = (set(TABLE_ORDER) - SUBJECT_TABLES) | {'AdditionalMetaData'}
+SPECIMEN_TABLES = ((set(TABLE_ORDER) - SUBJECT_TABLES) - ANIMAL_SUBJECT_TABLES) | {'AdditionalMetaData'}
 
 # MMEDS users are not given direct access to
 # these tables as they will contain data that
@@ -244,12 +273,17 @@ PROTECTED_TABLES = [
     'Specimen',
     'Study',
     'Subjects',
-    'Weights'
+    'Weights',
+    'ChowDates',
+    'HousingDates',
+    'Husbandry',
+    'AnimalSubjects',
+    'SubjectType'
 ]
 
 JUNCTION_TABLES = [
     'Subjects_has_Ethnicity',
-    'Subjects_has_Experiment',
+    'SubjectType_has_Experiment',
     'Subjects_has_Genotypes'
 ]
 
@@ -333,13 +367,9 @@ for table in METADATA_TABLES:
     METADATA_COLS[table] = TABLE_COLS[table]
 
 
-COLUMN_TYPES = {}
-tdf = read_csv(TEST_METADATA,
-               sep='\t',
-               header=[0, 1],
-               skiprows=[2, 4],
-               na_filter=False)
-
+COLUMN_TYPES_SPECIMEN = defaultdict(dict)
+COLUMN_TYPES_SUBJECT = defaultdict(dict)
+COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
 TYPE_MAP = {
@@ -354,16 +384,26 @@ TYPE_MAP = {
     'Time': Timestamp
 }
 
-for table in TABLE_COLS:
-    # Temporary solution
-    try:
-        COLUMN_TYPES[table] = {}
-        for column in TABLE_COLS[table]:
-            col_type = tdf[table][column].iloc[0]
-            COLUMN_TYPES[table][column] = TYPE_MAP[col_type]
-            COL_TO_TABLE[column] = table
-    except KeyError:
-        continue
+for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPECIMEN_TABLES),
+                                     (TEST_SUBJECT, COLUMN_TYPES_SUBJECT, SUBJECT_TABLES),
+                                     (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES)]:
+    tdf = read_csv(test_file,
+                   sep='\t',
+                   header=[0, 1],
+                   skiprows=[2, 4],
+                   na_filter=False)
+
+    for table in tables:
+        try:
+            for column in TABLE_COLS[table]:
+                col_type = tdf[table][column].iloc[0]
+                col_types[table][column] = TYPE_MAP[col_type]
+                COL_TO_TABLE[column] = table
+        except KeyError:
+            if table in ICD_TABLES or table == 'ICDcode':
+                continue
+            else:
+                raise
 
 # Clean up
 del db

@@ -19,30 +19,29 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, metadata_type, subject_ids, delimiter='\t'):
+def validate_mapping_file(file_fp, metadata_type, subject_ids, subject_type, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, metadata_type, subject_ids, sep=delimiter)
+    valid = Validator(file_fp, metadata_type, subject_ids, subject_type, sep=delimiter)
     return valid.run()
 
 
 class Validator:
 
-    def __init__(self, file_fp, metadata_type, subject_ids, sep):
+    def __init__(self, file_fp, metadata_type, subject_ids, subject_type, sep):
         """ Initialize the validator object. """
 
         self.metadata_type = metadata_type
+        self.subject_type = subject_type
         self.errors = []
         self.warnings = []
         self.subjects = []
         self.file_fp = file_fp
         self.sep = sep
-        log(file_fp)
         self.header_df = None
-        log(self.header_df)
         self.df = None
         self.tables = []
         self.columns = []
@@ -264,7 +263,7 @@ class Validator:
         end_col = None
         self.table_df = self.df[self.cur_table]
         # For the built in table, ensure all columns are present
-         
+
         if not self.cur_table == 'AdditionalMetaData':
             missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
             if missing_cols:
@@ -341,11 +340,16 @@ class Validator:
                                          header=[0, 1],
                                          nrows=3)
             if self.metadata_type == 'subject':
-                self.reference_header = pd.read_csv(fig.TEST_SUBJECT,
-                                                    sep=self.sep,
-                                                    header=[0, 1],
-                                                    nrows=3)
-
+                if self.subject_type == 'human':
+                    self.reference_header = pd.read_csv(fig.TEST_SUBJECT,
+                                                        sep=self.sep,
+                                                        header=[0, 1],
+                                                        nrows=3)
+                elif self.subject_type == 'animal':
+                    self.reference_header = pd.read_csv(fig.TEST_ANIMAL_SUBJECT,
+                                                        sep=self.sep,
+                                                        header=[0, 1],
+                                                        nrows=3)
             elif self.metadata_type == 'specimen':
                 self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
                                                     sep=self.sep,
@@ -362,9 +366,17 @@ class Validator:
             if column not in self.columns:
                 self.columns.append(column)
 
+        if self.metadata_type == 'subject':
+            if self.subject_type == 'human':
+                col_types = fig.COLUMN_TYPES_SUBJECT
+            elif self.subject_type == 'animal':
+                col_types = fig.COLUMN_TYPES_ANIMAL_SUBJECT
+        else:
+            col_types = fig.COLUMN_TYPES_SPECIMEN
+
         # Update column types
-        for table in fig.COLUMN_TYPES.keys():
-            for column, col_type in fig.COLUMN_TYPES[table].items():
+        for table in col_types.keys():
+            for column, col_type in col_types[table].items():
                 self.col_types[column] = col_type
         self.tables = list(dict.fromkeys(self.tables))
 
@@ -399,7 +411,11 @@ class Validator:
         """ Insure the subjects match those previouvs found in subject metadata """
         # Get the subjects identified in the specimen metadata
         specimen_subs = self.df['AdditionalMetaData']['SubjectIdCol'].tolist()
-        diff = set(self.subject_ids['HostSubjectId']).symmetric_difference(set(specimen_subs))
+        if self.subject_type == 'human':
+            check_subs = self.subject_ids['HostSubjectId']
+        elif self.subject_type == 'animal':
+            check_subs = self.subject_ids['AnimalSubjectID']
+        diff = set(check_subs).symmetric_difference(set(specimen_subs))
         err = '{}\t{}\tMissing Subject Error: Subject with ID {} found in {} metadata file but not {} metadata'
         for sub in diff:
             try:
@@ -421,10 +437,16 @@ class Validator:
                 self.errors.append(e.message)
         else:
             if self.metadata_type == 'subject':
-                tables = fig.SUBJECT_TABLES
-                if 'Subjects' in self.df.keys():
-                    # Only define subjects if subject table is correctly uploaded
-                    subjects = self.df['Subjects']
+                if self.subject_type == 'human':
+                    tables = fig.SUBJECT_TABLES
+                    if 'Subjects' in self.df.keys():
+                        # Only define subjects if subject table is correctly uploaded
+                        subjects = self.df['Subjects']
+                elif self.subject_type == 'animal':
+                    tables = fig.ANIMAL_SUBJECT_TABLES
+                    if 'AnimalSubjects' in self.df.keys():
+                        # Only define subjects if subject table is correctly uploaded
+                        subjects = self.df['AnimalSubjects']
             elif self.metadata_type == 'specimen':
                 tables = fig.SPECIMEN_TABLES
             log('In validate_mapping_file')
