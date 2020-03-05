@@ -1,18 +1,12 @@
 language: python
 python: '3.7'
-dist: xenial
+dist: bionic
 sudo: true
 addons:
     apt:
         packages:
-            - texlive-latex-base
-            - texlive-latex-extra
-            - texlive-latex-recommended
-            - texlive-generic-recommended
-            - texlive-pictures
-            - texlive-publishers
-            - texlive-fonts-recommended
-            - texlive-fonts-extra
+            libtidy5
+            environment-modules
 before_cache:
     - sudo chown -R travis:travis $HOME
     - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
@@ -44,7 +38,6 @@ install:
     - source activate mmeds-stable
     - pip install .
     - mysql -u root < setup.sql
-    - module avail
 script:
     - travis_wait 30 python ./mmeds/tests/unit/test.py
     - bash <(curl -s https://codecov.io/bash) -cF unit
