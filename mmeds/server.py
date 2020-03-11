@@ -198,7 +198,7 @@ class MMEDSbase:
             template = HTML_PAGES['logged_out_template'].read_text()
             body = path.read_text()
 
-        args['body'] = body
+        args['body'] = body.format(**args)
         args['title'] = title
 
         # TODO: A hack to prevent the page displaying before the CSS loads

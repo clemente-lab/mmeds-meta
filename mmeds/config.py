@@ -497,8 +497,9 @@ HTML_ARGS = {
     'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
     'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
     'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
-    'login_page': SERVER_PATH,
+    # 'login_page': SERVER_PATH,
     'register_account_page': SERVER_PATH + 'auth/register',
+    'login_page': SERVER_PATH + 'auth/login',
 }
 
 ##########################
