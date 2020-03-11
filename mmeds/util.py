@@ -12,6 +12,7 @@ from tempfile import gettempdir
 from re import sub
 from ppretty import ppretty
 from time import sleep
+from copy import deepcopy
 
 import yaml
 import mmeds.config as fig
@@ -124,9 +125,10 @@ def catch_server_errors(page_method):
         try:
             return page_method(*a, **kwargs)
         except LoggedOutError:
-            with open(fig.HTML_DIR / 'index.html') as f:
-                page = f.read()
-            return page
+            body = fig.HTML_PAGES['login'][0].read_text()
+            args = deepcopy(fig.HTML_ARGS)
+            args['body'] = body.format(**args)
+            return fig.HTML_PAGES['logged_out_template'].read_text().format(**args)
     return wrapper
 
 

@@ -488,6 +488,63 @@ class MMEDSupload(MMEDSbase):
             page = insert_error(page, 22, e.message)
         return page
 
+    @cp.expose
+    def process_data(self, public=False, **kwargs):
+        print(kwargs)
+        cp.log('Public is {}'.format(public))
+
+        # Create a unique dir for handling files uploaded by this user
+        subject_metadata = Path(cp.session['uploaded_files']['subject'])
+        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
+
+        # Get the username
+        username = self.get_user()
+
+        # Unpack kwargs based on barcode type
+        # Add the datafiles that exist as arguments
+        if cp.session['upload_type'] == 'qiime':
+            if cp.session['dual_barcodes']:
+                # If have dual barcodes, don't have a reads_type in kwargs so must set it
+                barcodes_type = 'dual_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 for_barcodes=kwargs['for_barcodes'],
+                                                 rev_barcodes=kwargs['rev_barcodes'])
+                reads_type = 'paired_end'
+            else:
+                barcodes_type = 'single_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+                reads_type = kwargs['reads_type']
+        elif cp.session['upload_type'] == 'sparcc':
+            datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
+            reads_type = None
+            barcodes_type = None
+        elif cp.session['upload_type'] == 'lefse':
+            datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
+            # Use reads_type variable to store if data file contins subclass and subjects
+            if 'subclass' in kwargs.keys():
+                reads_type = 'subclass'
+                if 'subjects' in kwargs.keys():
+                    reads_type = reads_type + '_subjects'
+            elif 'subjects' in kwargs.keys():
+                reads_type = 'subjects'
+            else:
+                reads_type = 'class_only'
+            barcodes_type = None
+
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
+                    specimen_metadata, username, reads_type, barcodes_type, datafiles,
+                    cp.session['metadata_temporary'], public))
+
+        # Get the html for the upload page
+        page = self.format_html('home')
+        page = insert_warning(page, 23, 'Upload Initiated. You will recieve an email when this finishes')
+        return page
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
@@ -531,7 +588,7 @@ class MMEDSauthentication(MMEDSbase):
         """ Expires the session and returns to login page """
         cp.log('Logout user {}'.format(self.get_user()))
         cp.lib.sessions.expire()
-        return open(HTML_DIR / 'index.html')
+        return self.format_html('login')
 
     @cp.expose
     def sign_up(self, username, password1, password2, email):
@@ -654,63 +711,6 @@ class MMEDSanalysis(MMEDSbase):
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
-    def process_data(self, public=False, **kwargs):
-        print(kwargs)
-        cp.log('Public is {}'.format(public))
-
-        # Create a unique dir for handling files uploaded by this user
-        subject_metadata = Path(cp.session['uploaded_files']['subject'])
-        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
-
-        # Get the username
-        username = self.get_user()
-
-        # Unpack kwargs based on barcode type
-        # Add the datafiles that exist as arguments
-        if cp.session['upload_type'] == 'qiime':
-            if cp.session['dual_barcodes']:
-                # If have dual barcodes, don't have a reads_type in kwargs so must set it
-                barcodes_type = 'dual_barcodes'
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                 rev_reads=kwargs['rev_reads'],
-                                                 for_barcodes=kwargs['for_barcodes'],
-                                                 rev_barcodes=kwargs['rev_barcodes'])
-                reads_type = 'paired_end'
-            else:
-                barcodes_type = 'single_barcodes'
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                 rev_reads=kwargs['rev_reads'],
-                                                 barcodes=kwargs['barcodes'])
-                reads_type = kwargs['reads_type']
-        elif cp.session['upload_type'] == 'sparcc':
-            datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
-            reads_type = None
-            barcodes_type = None
-        elif cp.session['upload_type'] == 'lefse':
-            datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
-            # Use reads_type variable to store if data file contins subclass and subjects
-            if 'subclass' in kwargs.keys():
-                reads_type = 'subclass'
-                if 'subjects' in kwargs.keys():
-                    reads_type = reads_type + '_subjects'
-            elif 'subjects' in kwargs.keys():
-                reads_type = 'subjects'
-            else:
-                reads_type = 'class_only'
-            barcodes_type = None
-
-        # Add the files to be uploaded to the queue for uploads
-        # This will be handled by the Watcher class found in spawn.py
-        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, username, reads_type, barcodes_type, datafiles,
-                    cp.session['metadata_temporary'], public))
-
-        # Get the html for the upload page
-        page = self.format_html('welcome', title='Welcome to MMEDS')
-        page = insert_warning(page, 23, 'Upload Initiated. You will recieve an email when this finishes')
-        return page
-
-    @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
         page = self.format_html('analysis_select_tool', title='Select Analysis')
@@ -763,7 +763,7 @@ class MMEDSserver(MMEDSbase):
     def index(self):
         """ Home page of the application """
         if cp.session.get('user'):
-            page = self.format_html('welcome', title='Welcome to MMEDS')
+            page = self.format_html('home')
         else:
             page = self.format_html('login')
         return page

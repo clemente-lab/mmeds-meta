@@ -102,7 +102,7 @@ CONFIG = {
 testing = False
 
 if testing:
-    TEST_PATH = Path('pants')  #TODO  Path(test_files.__file__).parent.resolve()
+    TEST_PATH = Path('pants')  # TODO  Path(test_files.__file__).parent.resolve()
     TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
     if not TEST_DIR.exists():
         TEST_DIR.mkdir()
@@ -513,7 +513,18 @@ HTML_ARGS = {
     # Paths to other pages of the website
     'register_account_page': SERVER_PATH + 'auth/register',
     'forgot_password_page': SERVER_PATH + 'auth/register',
+    'home_page': SERVER_PATH + 'index',
     'login_page': SERVER_PATH + 'auth/login',
+    'logout_page': SERVER_PATH + 'auth/logout',
+    'upload_page': SERVER_PATH + 'upload/upload_page',
+    'analysis_page': SERVER_PATH + 'index',
+    'access_page': SERVER_PATH + 'index',
+    'account_page': SERVER_PATH + 'index',
+    'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
+    'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
+    'process_data_page': SERVER_PATH + 'upload/process_data',
+    # Where to insert errors on a given page
+    'error': '',
     # Settings for highlighting the section of the web site currently being accessed
     'upload_selected': '',
     'analysis_selected': '',

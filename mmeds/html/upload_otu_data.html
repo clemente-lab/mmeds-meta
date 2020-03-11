@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html>
-  <body>
-    <div class='inner'>
-      <h2>Welcome {user}</h2>
-      <p>
-        <h3>Upload data files</h3>
-        <form action='../analysis/process_data' method='post' enctype='multipart/form-data' id='upload_form'>
-          <p> OTU Table <br> <input type='file' name='otu_table'/> </p>
-          <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
-          <p> <button type='submit' method='post'>Submit Upload</button> </p>
-        </form>
-      </p>
-    </div>
-  </body>
-</html>
+<form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+  <p>
+  <label class> OTU Table </label>
+  <input class="w3-input" type='file' name='otu_table'/>
+  </p>
+  <p>
+  <label class> Make Data Public </label>
+  <input class="w3-checkbox" type='checkbox' name='public' />
+  </p>
+  <p>
+  <button class="w3-button w3-blue" type='submit' method='post'>Submit Upload</button> </p>
+</form>
