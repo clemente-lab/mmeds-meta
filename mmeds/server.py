@@ -1,18 +1,21 @@
 import os
 import tempfile
 import cherrypy as cp
-import mmeds.secrets as sec
-import mmeds.error as err
 
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
+from copy import deepcopy
 import atexit
+
+
+import mmeds.secrets as sec
+import mmeds.error as err
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
                         mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
-from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG
+from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
@@ -180,24 +183,29 @@ class MMEDSbase:
         else:
             title = 'MMEDS Analysis Server'
 
-        args = {
-            'title': title,
-            'version': 'Unknown'
-        }
+        # Named formatting arguments for web pages
+        args = deepcopy(HTML_ARGS)
+
         args.update(kwargs)
+
         # If a user is logged in, load the side bar
         if header:
+            template = HTML_PAGES['logged_in_template'].read_text()
             args['user'] = self.get_user()
             args['dir'] = self.get_dir()
-            return_page = load_html(path, **args)
+            body = load_html(path, **args)
         else:
-            return_page = path.read_text()
+            template = HTML_PAGES['logged_out_template'].read_text()
+            body = path.read_text()
 
-        # A hack to prevent the page displaying before the CSS loads
-        page_hider = '<head><div id="loadOverlay" style="background-color:#FFFFFF;\
-            position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:2000;"></div></head>\n'
+        args['body'] = body
+        args['title'] = title
 
-        return page_hider + return_page
+        # TODO: A hack to prevent the page displaying before the CSS loads
+        # page_hider = '<head><div id="loadOverlay" style="background-color:#FFFFFF;\
+        #     position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:2000;"></div></head>\n'
+
+        return template.format(**args)
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
@@ -760,5 +768,5 @@ class MMEDSserver(MMEDSbase):
         if cp.session.get('user'):
             page = self.format_html('welcome', title='Welcome to MMEDS')
         else:
-            page = self.format_html('index')
+            page = self.format_html('login')
         return page

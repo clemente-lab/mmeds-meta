@@ -450,9 +450,19 @@ def get_salt(length=10):
 ############################
 
 
+# Load the path to where images are hosted
+SERVER_PATH = 'https://{}:{}/'.format(CONFIG['global']['server.socket_host'],
+                                      CONFIG['global']['server.socket_port'])
+
+# Load the path to where images are hosted
+IMAGE_PATH = SERVER_PATH + 'CSS/'
+
 # Each page returns a tuple
 # (<Path to the page>, <Should the header and topbar be loaded>)
 HTML_PAGES = {
+    'logged_out_template': HTML_DIR / 'logged_out_template.html',
+    'logged_in_template': HTML_DIR / 'logged_in_template.html',
+    'login': (HTML_DIR / 'login_body.html', False),
     'index': (HTML_DIR / 'index.html', False),
     'welcome': (HTML_DIR / 'welcome.html', True),
     'blank': (HTML_DIR / 'blank.html', True),
@@ -473,9 +483,23 @@ HTML_PAGES = {
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
-    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
+    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
 }
 
+# Predefined options for formatting webpages are set here
+HTML_ARGS = {
+    'version': '0.3.0',
+    'study_count': 0,
+    'user_count': 0,
+    'analysis_count': 0,
+    'query_count': 0,
+    'favicon': IMAGE_PATH + 'favicon.ico',
+    'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
+    'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
+    'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
+    'login_page': SERVER_PATH,
+    'register_account_page': SERVER_PATH + 'auth/register',
+}
 
 ##########################
 # CONFIGURE TOOL GLOBALS #
