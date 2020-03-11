@@ -406,10 +406,7 @@ def load_html(file_path, **kwargs):
     # Load the topbar information
     with open(fig.HTML_DIR / 'topbar.html') as f:
         topbar = f.read().split('\n')
-    # A hack to prevent the page displaying before the CSS loads
-    page_hider = '<head><div id="loadOverlay" style="background-color:#FFFFFF;\
-        position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:2000;"></div></head>'
-    new_page = [page_hider] + page[:2] + header + topbar + page[2:]
+    new_page = page[:2] + header + topbar + page[2:]
     return '\n'.join(new_page).format(**kwargs)
 
 

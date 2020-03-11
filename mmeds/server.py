@@ -185,13 +185,19 @@ class MMEDSbase:
             'version': 'Unknown'
         }
         args.update(kwargs)
+        # If a user is logged in, load the side bar
         if header:
             args['user'] = self.get_user()
             args['dir'] = self.get_dir()
             return_page = load_html(path, **args)
         else:
             return_page = path.read_text()
-        return return_page
+
+        # A hack to prevent the page displaying before the CSS loads
+        page_hider = '<head><div id="loadOverlay" style="background-color:#FFFFFF;\
+            position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:2000;"></div></head>\n'
+
+        return page_hider + return_page
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
