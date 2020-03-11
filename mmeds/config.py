@@ -5,7 +5,7 @@ from collections import defaultdict
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
-import mmeds.test_files as test_files
+# import mmeds.test_files as test_files
 import mmeds.resources as resources
 import mmeds.CSS as css
 import mmeds
@@ -99,73 +99,81 @@ CONFIG = {
 # CONFIGURE TEST GLOBALS #
 ##########################
 
-TEST_PATH = Path(test_files.__file__).parent.resolve()
-TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
-if not TEST_DIR.exists():
-    TEST_DIR.mkdir()
-TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
-if not TEST_DIR_0.exists():
-    TEST_DIR_0.mkdir()
+testing = False
 
-TEST_USER = 'testuser'
-SERVER_USER = 'serveruser'
-TEST_USER_0 = 'testuser0'
-TEST_CODE = 'singlereads'
-TEST_CODE_SHORT = 'singlereadsshort'
-TEST_CODE_PAIRED = 'pairedreads'
-TEST_CODE_DEMUX = 'demuxedreads'
-TEST_CODE_OTU = 'otutable'
-TEST_CODE_LEFSE = 'lefsetable'
-TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
-TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
-TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
-TEST_LEFSE = str(TEST_PATH / 'test_lefse_table.txt')
-TEST_CONFIG = str(TEST_PATH / 'test_config_file.yaml')
-TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.yaml')
-TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.yaml')
-TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.yaml')
-TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.yaml')
-TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
-TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
-TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
-TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
-TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
-TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
-TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
-TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
-TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
-TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
-TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
-TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
-TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
-TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
-TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
-TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
-TEST_ANIMAL_METADATA = str(TEST_PATH / 'test_animal_metadata.tsv')
-TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
-TEST_METADATA_WARN = str(TEST_PATH / 'validation_files/test_metadata_warn.tsv')
-TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
-TEST_METADATA_SHORTEST = str(TEST_PATH / 'shortest_metadata.tsv')
-UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
-TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
-TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
-TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
-TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
-TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
-TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
-TEST_TOOL = 'tester-5'
-TEST_FILES = {
-    'barcodes': TEST_BARCODES,
-    'for_reads': TEST_READS,
-    'metadata': TEST_METADATA
-}
-TEST_CHECKS = {}
-for key in TEST_FILES.keys():
-    hash1 = hashlib.sha256()
-    with open(TEST_FILES[key], 'rb') as f:
-        contents = f.read()
-    hash1.update(contents)
-    TEST_CHECKS[key] = hash1.digest()
+if testing:
+    TEST_PATH = Path('pants')  #TODO  Path(test_files.__file__).parent.resolve()
+    TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
+    if not TEST_DIR.exists():
+        TEST_DIR.mkdir()
+    TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
+    if not TEST_DIR_0.exists():
+        TEST_DIR_0.mkdir()
+
+    TEST_USER = 'testuser'
+    SERVER_USER = 'serveruser'
+    TEST_USER_0 = 'testuser0'
+    TEST_CODE = 'singlereads'
+    TEST_CODE_SHORT = 'singlereadsshort'
+    TEST_CODE_PAIRED = 'pairedreads'
+    TEST_CODE_DEMUX = 'demuxedreads'
+    TEST_CODE_OTU = 'otutable'
+    TEST_CODE_LEFSE = 'lefsetable'
+    TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
+    TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
+    TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
+    TEST_LEFSE = str(TEST_PATH / 'test_lefse_table.txt')
+    TEST_CONFIG = str(TEST_PATH / 'test_config_file.yaml')
+    TEST_CONFIG_SUB = str(TEST_PATH / 'sub_config_file.yaml')
+    TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.yaml')
+    TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.yaml')
+    TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.yaml')
+    TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
+    TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
+    TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
+    TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
+    TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
+    TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
+    TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
+    TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
+    TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
+    TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
+    TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
+    TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
+    TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
+    TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
+    TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
+    TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+    TEST_ANIMAL_METADATA = str(TEST_PATH / 'test_animal_metadata.tsv')
+    TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
+    TEST_METADATA_WARN = str(TEST_PATH / 'validation_files/test_metadata_warn.tsv')
+    TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
+    TEST_METADATA_SHORTEST = str(TEST_PATH / 'shortest_metadata.tsv')
+    UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
+    TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
+    TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
+    TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
+    TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
+    TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
+    TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
+    TEST_TOOL = 'tester-5'
+    TEST_FILES = {
+        'barcodes': TEST_BARCODES,
+        'for_reads': TEST_READS,
+        'metadata': TEST_METADATA
+    }
+    TEST_CHECKS = {}
+    for key in TEST_FILES.keys():
+        hash1 = hashlib.sha256()
+        with open(TEST_FILES[key], 'rb') as f:
+            contents = f.read()
+        hash1.update(contents)
+        TEST_CHECKS[key] = hash1.digest()
+else:
+    TEST_PATH = Path('/home/david/Work/mmeds-meta/test_files/')
+    TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
+    TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
+    TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
 
 
 ##############################
