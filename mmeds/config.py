@@ -471,6 +471,9 @@ HTML_PAGES = {
     'logged_out_template': HTML_DIR / 'logged_out_template.html',
     'logged_in_template': HTML_DIR / 'logged_in_template.html',
     'login': (HTML_DIR / 'login_body.html', False),
+    'home': (HTML_DIR / 'home_body.html', True),
+
+    # TODO below this are outdated
     'index': (HTML_DIR / 'index.html', False),
     'welcome': (HTML_DIR / 'welcome.html', True),
     'blank': (HTML_DIR / 'blank.html', True),
@@ -501,13 +504,23 @@ HTML_ARGS = {
     'user_count': 0,
     'analysis_count': 0,
     'query_count': 0,
+    # Images
     'favicon': IMAGE_PATH + 'favicon.ico',
     'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
     'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
     'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
     # 'login_page': SERVER_PATH,
+    # Paths to other pages of the website
     'register_account_page': SERVER_PATH + 'auth/register',
+    'forgot_password_page': SERVER_PATH + 'auth/register',
     'login_page': SERVER_PATH + 'auth/login',
+    # Settings for highlighting the section of the web site currently being accessed
+    'upload_selected': '',
+    'analysis_selected': '',
+    'access_selected': '',
+    'query_selected': '',
+    'home_selected': '',
+    'account_selected': '',
 }
 
 ##########################

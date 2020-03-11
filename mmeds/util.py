@@ -393,6 +393,7 @@ def parse_ICD_codes(df):
 
 def load_html(file_path, **kwargs):
     """
+    TODO: DEPRICATED
     Load the specified html file. Inserting the head and topbar
     """
     # Load the html page

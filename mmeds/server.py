@@ -193,10 +193,9 @@ class MMEDSbase:
             template = HTML_PAGES['logged_in_template'].read_text()
             args['user'] = self.get_user()
             args['dir'] = self.get_dir()
-            body = load_html(path, **args)
         else:
             template = HTML_PAGES['logged_out_template'].read_text()
-            body = path.read_text()
+        body = path.read_text()
 
         args['body'] = body.format(**args)
         args['title'] = title
@@ -520,13 +519,11 @@ class MMEDSauthentication(MMEDSbase):
             cp.session['download_files'] = {}
             cp.session['uploaded_files'] = {}
             cp.session['subject_ids'] = None
-            page = self.format_html('welcome', title='Welcome to Mmeds', user=self.get_user())
+            page = self.format_html('home', title='Welcome to Mmeds')
             log('Login Successful')
         except err.InvalidLoginError as e:
-            page = self.format_html('index')
+            page = self.format_html('login')
             page = insert_error(page, 14, e.message)
-            log(e)
-            log(e.message)
         return page
 
     @cp.expose
