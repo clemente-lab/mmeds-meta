@@ -126,20 +126,16 @@ class MMEDSbase:
 
     def handle_metadata_errors(self, metadata_copy, errors, warnings):
         """ Create the page to return when there are errors in the metadata """
-        log('Errors in metadata')
-        log('\n'.join(errors))
         cp.session['download_files']['error_file'] = self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
-        # Write the errors to a file
-        with open(cp.session['download_files']['error_file'], 'w') as f:
-            f.write('\n'.join(errors + warnings))
 
-        uploaded_output = self.format_html('upload_metadata_error', title='Errors')
-        uploaded_output = insert_error(
-            uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
+
         for i, warning in enumerate(warnings):
             uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
         for i, error in enumerate(errors):
             uploaded_output = insert_error(uploaded_output, 22 + i, error)
+
+        uploaded_output = self.format_html('upload_metadata_error',
+                                           title='Errors')
 
         return uploaded_output  # generate_error_html(metadata_copy, errors, warnings)
 
@@ -487,9 +483,31 @@ class MMEDSupload(MMEDSbase):
 
             # If there are errors report them and return the error page
             if errors:
-                page = self.handle_metadata_errors(metadata_copy, errors, warnings)
+                # Write the errors to a file
+                with open(cp.session['download_files']['error_file'], 'w') as f:
+                    f.write('\n'.join(errors + warnings))
+                if warnings:
+                    page = self.format_html('upload_metadata_error',
+                                            error=errors,
+                                            warning=warnings,
+                                            title='Errors')
+                else:
+                    page = self.format_html('upload_metadata_error',
+                                            error=errors,
+                                            title='Errors')
             elif warnings:
-                page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
+                 # Set the proceed button based on current metadata file
+                 if cp.session['metadata_type'] == 'subject':
+                     page = self.format_html('upload_metadata_warning',
+                                             title='Warnings',
+                                             warning=warnings,
+                                             next_page='{retry_upload_page}')
+                     cp.session['metadata_type'] = 'specimen'
+                 elif cp.session['metadata_type'] == 'specimen':
+                     page = self.format_html('upload_metadata_warning',
+                                             title='Warnings',
+                                             warning=warnings,
+                                             next_page='{upload_data_page}')
             else:
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
@@ -513,8 +531,6 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def process_data(self, public=False, **kwargs):
-        print(kwargs)
-        cp.log('Public is {}'.format(public))
 
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
@@ -563,10 +579,7 @@ class MMEDSupload(MMEDSbase):
                     specimen_metadata, username, reads_type, barcodes_type, datafiles,
                     cp.session['metadata_temporary'], public))
 
-        # Get the html for the upload page
-        page = self.format_html('home')
-        page = insert_warning(page, 23, 'Upload Initiated. You will recieve an email when this finishes')
-        return page
+        return self.format_html('home', success='Upload Initiated. You will recieve an email when this finishes')
 
 
 @decorate_all_methods(catch_server_errors)

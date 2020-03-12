@@ -57,9 +57,14 @@ def format_alerts(args):
     '''
     for alert, color in [('error', 'red'), ('warning', 'yellow'), ('success', 'green')]:
         try:
-            logger.error('trying {}'.format(alert))
             message = args[alert]
-            args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
+            logger.error('Message type: {}'.format(type(message)))
+            if isinstance(message, list):
+                outline = '<ul class="w3-ul w3-border">{}</ul>'
+                formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
+                args[alert] = template.format(alert=alert.capitalize(), message=formatted, color=color)
+            else:
+                args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
         except KeyError:
             pass
     return args

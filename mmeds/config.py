@@ -174,6 +174,7 @@ else:
     TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
     TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
     TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
+    TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 
 
 ##############################
@@ -525,6 +526,8 @@ HTML_ARGS = {
     'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
     'process_data_page': SERVER_PATH + 'upload/process_data',
+    'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
+    'upload_data_page': SERVER_PATH + 'upload/upload_data',
     # Where to insert errors/warnings on a given page
     'error': '',
     'warning': '',
