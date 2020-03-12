@@ -8,7 +8,25 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
     <script src="https://kit.fontawesome.com/7e4e0c6c2d.js" crossorigin="anonymous"></script>
     <style>
-html,body,h1,h2,h3,h4,h5 {{{{font-family: "Raleway", sans-serif}}}}
+html,body,h1,h2,h3,h4,h5 {{{{
+                /* font-family: "Raleway", sans-serif */
+
+}}}}
+/* Custom options so the upload buttons don't look terrible */
+.upload-btn-wrapper {{{{
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}}}}
+
+.upload-btn-wrapper input[type=file] {{{{
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+}}}}
+
     </style>
     <body class="w3-light-grey">
         <!-- Top container -->

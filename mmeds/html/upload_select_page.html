@@ -6,7 +6,7 @@
 <!-- Upload Form -->
 <form class="w3-container w3-card-4" action="{upload_metadata_page}" method="post" enctype="multipart/form-data" id="upload_form">
     <p>
-    <label class><b>Upload</b></label>
+    <label><b>Upload</b></label>
     <select class="w3-select w3-border" name="uploadType" form="upload_form" required>
         <option value="other" disabled="disabled" selected="selected">Choose your option</option>
         <option value="qiime">Raw Reads</option>
@@ -15,14 +15,14 @@
     </select>
     </p>
     <p>
-    <label class><b>Subject Type</b></label>
+    <label><b>Subject Type</b></label>
     <select class="w3-select w3-border" name="subjectType" form="upload_form" placeholder="Subject Type" required>
         <option value="human" selected="selected">Human</option>
         <option value="animal">Animal</option>
     </select>
     </p>
     <p>
-    <label class><b>Study Name</b></label>
+    <label><b>Study Name</b></label>
     <input class="w3-input w3-border" type="text" name="studyName" required>
     </p>
     <p><button class="w3-btn w3-blue" type="submit" method="post"><b>Begin Upload</b></button></p>
