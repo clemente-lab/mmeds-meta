@@ -11,6 +11,7 @@ import atexit
 
 import mmeds.secrets as sec
 import mmeds.error as err
+import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
@@ -177,11 +178,10 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
-        cp.log('in lower level format')
-        cp.log(str(type(kwargs)))
-        cp.log(str(kwargs))
-
         path, header = HTML_PAGES[page]
+
+        # Handle any user alerts messages
+        kwargs = util.format_alerts(kwargs)
 
         # Predefined arguments to format in
         args = SafeDict(HTML_ARGS)
@@ -206,11 +206,9 @@ class MMEDSbase:
         # Format all provided arguments
         page = page.format_map(args)
 
-        cp.log('check for errors')
         # Check there is nothing missing from the page
         if args.missed:
             raise err.FormatError(args.missed)
-        cp.log(page)
         return page
 
     def add_process(self, ptype, process):
@@ -237,8 +235,9 @@ class MMEDSdownload(MMEDSbase):
                 page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code,
                                                                                      study.study_name))
         else:
-            page = self.format_html('welcome', title='Welcome to MMEDS')
-            page = insert_error(page, 24, 'You do not have permissions to access uploaded studies.')
+            page = self.format_html('welcome',
+                                    title='Welcome to MMEDS',
+                                    error='You do not have permissions to access uploaded studies.')
         return page
 
     @cp.expose
@@ -368,11 +367,16 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        page = self.format_html('upload_metadata_file',
-                                title='Upload Metadata',
-                                metadata_type=cp.session['metadata_type'].capitalize())
+        # Add the success message if applicable
         if cp.session['metadata_type'] == 'specimen':
-            page = insert_html(page, 26, 'Subject table uploaded successfully')
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    success='Subject table uploaded successfully',
+                                    metadata_type=cp.session['metadata_type'].capitalize())
+        else:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    metadata_type=cp.session['metadata_type'].capitalize())
         return page
 
     @cp.expose
@@ -420,18 +424,17 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def upload_data(self):
-        log('In upload_data')
-        cp.log('In upload_data')
         # If there are no errors or warnings proceed to upload the data files
+        alert = 'Specimen metadata uploaded successfully'
         if cp.session['upload_type'] == 'qiime':
             if cp.session['dual_barcodes']:
-                page = self.format_html('upload_data_files_dual', title='Upload Data')
+                page = self.format_html('upload_data_files_dual', title='Upload Data', success=alert)
             else:
-                page = self.format_html('upload_data_files', title='Upload Data')
+                page = self.format_html('upload_data_files', title='Upload Data', success=alert)
         elif cp.session['upload_type'] == 'sparcc':
-            page = self.format_html('upload_otu_data', title='Upload Data')
+            page = self.format_html('upload_otu_data', title='Upload Data', success=alert)
         elif cp.session['upload_type'] == 'lefse':
-            page = self.format_html('upload_lefse_data', title='Upload Data')
+            page = self.format_html('upload_lefse_data', title='Upload Data', success=alert)
         return page
 
     @cp.expose
@@ -448,11 +451,20 @@ class MMEDSupload(MMEDSbase):
         cp.session['metadata_type'] = 'subject'
         cp.session['subject_type'] = subjectType
         cp.session['upload_type'] = uploadType
-        page = self.format_html('upload_metadata_file',
-                                title='Upload Metadata',
-                                metadata_type=cp.session['metadata_type'].capitalize(),
-                                version=uploadType)
-        return page
+
+        # Add the success message if applicable
+        if cp.session['metadata_type'] == 'specimen':
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    success='Subject table uploaded successfully',
+                                    metadata_type=cp.session['metadata_type'].capitalize(),
+                                    version=uploadType)
+        else:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    metadata_type=cp.session['metadata_type'].capitalize(),
+                                    version=uploadType)
+            return page
 
     @cp.expose
     def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
@@ -479,12 +491,12 @@ class MMEDSupload(MMEDSbase):
             elif warnings:
                 page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
             else:
-                # If there are no errors or warnings proceed to upload the data files
-                log('No errors or warnings')
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
-                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
-                    page = insert_warning(page, 23, 'Subject table uploaded successfully')
+                    page = self.format_html('upload_metadata_file',
+                                            title='Upload Metadata',
+                                            metadata_type='Specimen',
+                                            success='Subject table uploaded successfully')
                     cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
@@ -495,8 +507,8 @@ class MMEDSupload(MMEDSbase):
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
                                     title='Upload Metadata',
+                                    error=e.message,
                                     metadata_type=cp.session['metadata_type'])
-            page = insert_error(page, 22, e.message)
         return page
 
     @cp.expose
@@ -772,10 +784,7 @@ class MMEDSserver(MMEDSbase):
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
-        cp.log('in top level format')
         kwargs['home_selected'] = 'w3-text-blue'
-        cp.log(str(type(kwargs)))
-        cp.log(str(kwargs))
         return super().format_html(page, **kwargs)
 
     @cp.expose

@@ -525,8 +525,10 @@ HTML_ARGS = {
     'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
     'process_data_page': SERVER_PATH + 'upload/process_data',
-    # Where to insert errors on a given page
+    # Where to insert errors/warnings on a given page
     'error': '',
+    'warning': '',
+    'success': '',
     # Settings for highlighting the section of the web site currently being accessed
     'upload_selected': '',
     'analysis_selected': '',

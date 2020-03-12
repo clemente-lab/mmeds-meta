@@ -47,6 +47,23 @@ class SafeDict(dict):
 # Functions #
 #############
 
+def format_alerts(args):
+    """ Takes a dictionary and performs formatting on any entries with the keys: 'error', 'warning', or 'success' """
+    template = '''
+    <div class="w3-card-4 w3-padding w3-panel w3-pale-{color} w3-border" >
+    <h3> {alert}! </h3>
+    <p> {message} </p>
+    </div>
+    '''
+    for alert, color in [('error', 'red'), ('warning', 'yellow'), ('success', 'green')]:
+        try:
+            logger.error('trying {}'.format(alert))
+            message = args[alert]
+            args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
+        except KeyError:
+            pass
+    return args
+
 def load_metadata_template(subject_type):
     if subject_type == 'human':
         df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')

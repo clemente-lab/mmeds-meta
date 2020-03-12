@@ -168,7 +168,8 @@ class Watcher(Process):
                 finished += yaml.safe_load(current_log.read_text())
             # TODO Figure out why this is happening
             except TypeError:
-                logger.error('Error loading process log {}'.format(current_log))
+                logger.error('Error loading process log {}. Removing corrupted log.'.format(current_log))
+                current_log.unlink()
 
         # Only create the file if there are processes to log
         if finished:

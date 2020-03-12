@@ -1,15 +1,24 @@
 <form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
     <p>
     <label class> Forward Reads (Upload a zip if demultiplexed) </label>
-    <input class="w3-input" type='file' name='for_reads'/>
+    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
+        Select fastq file for upload...
+        <input type="file" name="for_reads" required>
+    </button>
     </p>
     <p>
     <label class> Reverse Reads (Optional) </label>
-    <input class="w3-input" type='file' name='rev_reads'/>
+    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
+        Select fastq file for upload...
+        <input type="file" name="rev_reads">
+    </button>
     </p>
     <p>
     <label class> Barcodes (Optional) </label>
-    <input class="w3-input" type='file' name='barcodes'/>
+    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
+        Select Barcodes file for upload...
+        <input type="file" name="barcodes">
+    </button>
     </p>
     <p>
     <label class> Reads Type </label>
@@ -19,10 +28,10 @@
     </select>
     </p>
     <p>
+    <input class="w3-check" type='checkbox' name='public' />
     <label class> Make data public </label>
-    <input class="w3-checkbox" type='checkbox' name='public' />
     </p>
     <p>
-    <button class="w3-button w3-blue" type='submit' method='post'> Submit Upload </button>
+    <button class="w3-button w3-blue" type='submit' method='post'> Submit Study </button>
     </p>
 </form>
