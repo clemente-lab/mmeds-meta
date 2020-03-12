@@ -13,8 +13,9 @@ import mmeds.secrets as sec
 import mmeds.error as err
 
 from mmeds.validate import validate_mapping_file
-from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
-                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
+from mmeds.util import (insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
+                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy,
+                        SafeDict)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
@@ -176,16 +177,16 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
+        cp.log('in lower level format')
+        cp.log(str(type(kwargs)))
+        cp.log(str(kwargs))
+
         path, header = HTML_PAGES[page]
 
-        if page in ['welcome', 'index']:
-            title = 'Welcome to MMEDS'
-        else:
-            title = 'MMEDS Analysis Server'
+        # Predefined arguments to format in
+        args = SafeDict(HTML_ARGS)
 
-        # Named formatting arguments for web pages
-        args = deepcopy(HTML_ARGS)
-
+        # Add the arguments included in this format call
         args.update(kwargs)
 
         # If a user is logged in, load the side bar
@@ -195,16 +196,22 @@ class MMEDSbase:
             args['dir'] = self.get_dir()
         else:
             template = HTML_PAGES['logged_out_template'].read_text()
+
+        # Load the body of the requested webpage
         body = path.read_text()
 
-        args['body'] = body.format(**args)
-        args['title'] = title
+        # Insert the body into the outer template
+        page = template.format_map(SafeDict({'body': body}))
 
-        # TODO: A hack to prevent the page displaying before the CSS loads
-        # page_hider = '<head><div id="loadOverlay" style="background-color:#FFFFFF;\
-        #     position:absolute; top:0px; left:0px; width:100%; height:100%; z-index:2000;"></div></head>\n'
+        # Format all provided arguments
+        page = page.format_map(args)
 
-        return template.format(**args)
+        cp.log('check for errors')
+        # Check there is nothing missing from the page
+        if args.missed:
+            raise err.FormatError(args.missed)
+        cp.log(page)
+        return page
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
@@ -219,7 +226,6 @@ class MMEDSdownload(MMEDSbase):
     ########################################
     #            Download Pages            #
     ########################################
-
     @cp.expose
     def select_study(self):
         """ Allows authorized user accounts to access uploaded studies. """
@@ -353,6 +359,11 @@ class MMEDSupload(MMEDSbase):
     ########################################
     #             Upload Pages             #
     ########################################
+
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        kwargs['upload_selected'] = 'w3-blue'
+        return super().format_html(page, **kwargs)
 
     @cp.expose
     def retry_upload(self):
@@ -758,6 +769,14 @@ class MMEDSserver(MMEDSbase):
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
+
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        cp.log('in top level format')
+        kwargs['home_selected'] = 'w3-text-blue'
+        cp.log(str(type(kwargs)))
+        cp.log(str(kwargs))
+        return super().format_html(page, **kwargs)
 
     @cp.expose
     def index(self):

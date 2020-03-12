@@ -21,6 +21,32 @@ import pandas as pd
 logger = MMEDSLog('debug').logger
 
 
+###########
+# Classes #
+###########
+class SafeDict(dict):
+    """ Used with str.format_map() to allow inserting formatting arguments in multiple stages """
+    def __init__(self, dictionary):
+        """ Initialize Safe Dict with a previously created dictionary """
+        super().__init__(dictionary)
+        self.missed = set()  # A set of parsing arguments
+
+    def __getitem__(self, key):
+        """ Update missed if an item is successfully formatted from the SafeDict """
+        if key in self.missed:
+            self.missed.remove(key)
+        return super().__getitem__(key)
+
+    def __missing__(self, key):
+        """ Missing formating options are returned as is and the option is added to the missed set """
+        self.missed.add(key)
+        return '{' + key + '}'
+
+
+#############
+# Functions #
+#############
+
 def load_metadata_template(subject_type):
     if subject_type == 'human':
         df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')

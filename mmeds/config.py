@@ -504,6 +504,8 @@ HTML_ARGS = {
     'user_count': 0,
     'analysis_count': 0,
     'query_count': 0,
+    # Site Wide
+    'title': 'MMEDs Database and Analysis Server',
     # Images
     'favicon': IMAGE_PATH + 'favicon.ico',
     'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
