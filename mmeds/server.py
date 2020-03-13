@@ -13,7 +13,7 @@ import mmeds.error as err
 import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
-from mmeds.util import (insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
+from mmeds.util import (insert_html, log, MIxS_to_mmeds,
                         mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy,
                         SafeDict)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
@@ -282,8 +282,7 @@ class MMEDSdownload(MMEDSbase):
                     page = insert_html(page, 24, '<option value="{}">{}</option>'.format(k, k))
             cp.session['download_access'] = access_code
         except (err.MissingUploadError, err.UploadInUseError) as e:
-                page = self.format_html('welcome')
-                page = insert_error(page, 22, e.message)
+                page = self.format_html('welcome', error=e.message)
         return page
 
     @cp.expose
@@ -353,8 +352,7 @@ class MMEDSupload(MMEDSbase):
             page = self.format_html('welcome')
             page = insert_html(page, 22, 'Upload modification successful')
         except err.MissingUploadError as e:
-            page = self.format_html('upload_select_page', title='Upload Type')
-            page = insert_error(page, 22, e.message)
+            page = self.format_html('upload_select_page', title='Upload Type', error=e.message)
         return page
 
     @cp.expose
@@ -377,8 +375,7 @@ class MMEDSupload(MMEDSbase):
                                      'attachment', os.path.basename(file_path))
         # If there is an issue with the provided unit column display an error
         except err.MetaDataError as e:
-            page = self.format_html('welcome', title='Welcome to Mmeds')
-            page = insert_error(page, 31, e.message)
+            page = self.format_html('welcome', title='Welcome to Mmeds', error=e.message)
         return page
 
     @cp.expose
@@ -501,7 +498,7 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def process_data(self, public=False, **kwargs):
-
+        """ The page for loading data files into the database """
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
@@ -561,6 +558,11 @@ class MMEDSauthentication(MMEDSbase):
     #           Account Pages              #
     ########################################
 
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        kwargs['account_selected'] = 'w3-blue'
+        return super().format_html(page, **kwargs)
+
     @cp.expose
     def sign_up_page(self):
         """ Return the page for signing up. """
@@ -585,8 +587,7 @@ class MMEDSauthentication(MMEDSbase):
             page = self.format_html('home', title='Welcome to Mmeds')
             log('Login Successful')
         except err.InvalidLoginError as e:
-            page = self.format_html('login')
-            page = insert_error(page, 14, e.message)
+            page = self.format_html('login', error=e.message)
         return page
 
     @cp.expose
@@ -607,9 +608,7 @@ class MMEDSauthentication(MMEDSbase):
             add_user(username, password1, email, testing=self.testing)
             page = self.format_html('index')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
-            page = self.format_html('auth_sign_up_page')
-            for message in e.message.split(','):
-                page = insert_error(page, 25, message)
+            page = self.format_html('auth_sign_up_page', error=e.message.split(','))
         return page
 
     @cp.expose
@@ -637,8 +636,7 @@ class MMEDSauthentication(MMEDSbase):
             change_password(self.get_user(), password1, testing=self.testing)
             page = insert_html(page, 9, 'Your password was successfully changed.')
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
-            for message in e.message.split(','):
-                page = insert_error(page, 9, message)
+            page = self.format_html('auth_sign_up_page', error=e.message.split(','))
         return page
 
     @cp.expose
@@ -648,23 +646,19 @@ class MMEDSauthentication(MMEDSbase):
         with Database(self.get_dir(), owner=self.get_user(), testing=self.testing) as db:
             try:
                 db.reset_access_code(study_name, study_email)
-                page = self.format_html('welcome')
-                page = insert_html(page, 14, 'Upload Successful')
+                page = self.format_html('welcome', success='Upload Successful')
             except err.MissingUploadError:
-                page = self.format_html('welcome')
-                page = insert_error(page, 14, 'There was an error during the upload')
+                page = self.format_html('welcome', error='There was an error during the upload')
         return page
 
     @cp.expose
     def password_recovery(self, username, email):
         """ Page for reseting a user's password. """
         try:
-            page = self.format_html('index')
             reset_password(username, email, testing=self.testing)
-            page = insert_html(page, 14, 'A new password has been sent to your email.')
+            page = self.format_html('index', success='A new password has been sent to your email.')
         except err.NoResultError:
-            page = insert_error(
-                page, 14, 'No account exists with the provided username and email.')
+            page = self.format_html('index', error='No account exists with the provided username and email.')
         return page
 
 
@@ -708,11 +702,10 @@ class MMEDSanalysis(MMEDSbase):
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
-            page = self.format_html('welcome', title='Welcome to MMEDS')
-            page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
+            page = self.format_html('welcome', title='Welcome to MMEDS',
+                                    success='Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
-            page = self.format_html('analysis_page', title='Welcome to MMEDS')
-            page = insert_error(page, 22, e.message)
+            page = self.format_html('analysis_page', title='Welcome to MMEDS', error=e.message)
         return page
 
     @cp.expose
@@ -736,7 +729,6 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def execute_query(self, query):
         """ Execute the provided query and format the results as an html table """
-        page = self.format_html('analysis_query')
         try:
             # Set the session to use the current user
             with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
@@ -755,9 +747,10 @@ class MMEDSanalysis(MMEDSbase):
             html = '<form action="../download/download_file" method="post">\n\
                     <button type="submit" name="file_name" value="query">Download Results</button>\n\
                     </form>'
+            page = self.format_html('analysis_query')
             page = insert_html(page, 29, html_data + html)
         except (err.InvalidSQLError, err.TableAccessError) as e:
-            page = insert_error(page, 29, e.message)
+            page = self.format_html('analysis_query', error=e.message)
         return page
 
 
