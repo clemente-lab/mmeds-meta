@@ -677,6 +677,11 @@ class MMEDSanalysis(MMEDSbase):
     #              Analysis              #
     ######################################
 
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        kwargs['analysis_selected'] = 'w3-blue'
+        return super().format_html(page, **kwargs)
+
     @cp.expose
     def run_analysis(self, access_code, analysis_method, config):
         """

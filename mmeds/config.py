@@ -520,7 +520,7 @@ HTML_ARGS = {
     'login_page': SERVER_PATH + 'auth/login',
     'logout_page': SERVER_PATH + 'auth/logout',
     'upload_page': SERVER_PATH + 'upload/upload_page',
-    'analysis_page': SERVER_PATH + 'index',
+    'analysis_page': SERVER_PATH + 'analysis/analysis_page',
     'access_page': SERVER_PATH + 'index',
     'account_page': SERVER_PATH + 'index',
 
