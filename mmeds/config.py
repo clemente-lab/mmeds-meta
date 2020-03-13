@@ -523,11 +523,17 @@ HTML_ARGS = {
     'analysis_page': SERVER_PATH + 'index',
     'access_page': SERVER_PATH + 'index',
     'account_page': SERVER_PATH + 'index',
+
+    # Upload Pages
     'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
     'process_data_page': SERVER_PATH + 'upload/process_data',
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
+
+    # Download Pages
+    'download_page': SERVER_PATH + 'download/download_file',
+
     # Where to insert errors/warnings on a given page
     'error': '',
     'warning': '',

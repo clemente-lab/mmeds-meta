@@ -69,6 +69,7 @@ def format_alerts(args):
             pass
     return args
 
+
 def load_metadata_template(subject_type):
     if subject_type == 'human':
         df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
@@ -177,6 +178,8 @@ def catch_server_errors(page_method):
             args = deepcopy(fig.HTML_ARGS)
             args['body'] = body.format(**args)
             return fig.HTML_PAGES['logged_out_template'].read_text().format(**args)
+        except KeyError as e:
+            return "There was an error, contact server admin with:\n {}".format(e)
     return wrapper
 
 

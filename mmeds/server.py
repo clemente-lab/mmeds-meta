@@ -5,7 +5,6 @@ import cherrypy as cp
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
-from copy import deepcopy
 import atexit
 
 
@@ -123,42 +122,6 @@ class MMEDSbase:
             except err.MetaDataError as e:
                 errors.append('-1\t-1\t' + e.message)
         return errors, warnings
-
-    def handle_metadata_errors(self, metadata_copy, errors, warnings):
-        """ Create the page to return when there are errors in the metadata """
-        cp.session['download_files']['error_file'] = self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
-
-
-        for i, warning in enumerate(warnings):
-            uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-        for i, error in enumerate(errors):
-            uploaded_output = insert_error(uploaded_output, 22 + i, error)
-
-        uploaded_output = self.format_html('upload_metadata_error',
-                                           title='Errors')
-
-        return uploaded_output  # generate_error_html(metadata_copy, errors, warnings)
-
-    def handle_metadata_warnings(self, metadata_copy, errors, warnings):
-        """ Create the page to return when there are errors in the metadata """
-        cp.log('handle_metadata_warnings, type: {}'.format(cp.session['metadata_type']))
-        # Write the errors to a file
-        with open(self.get_dir() / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
-            f.write('\n'.join(warnings))
-
-        # Get the html for the upload page
-        # Set the proceed button based on current metadata file
-        if cp.session['metadata_type'] == 'subject':
-            page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/retry_upload')
-            cp.session['metadata_type'] = 'specimen'
-        elif cp.session['metadata_type'] == 'specimen':
-            page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/upload_data')
-
-        # Add the warnings
-        for i, warning in enumerate(warnings):
-            page = insert_warning(page, 22 + i, warning)
-
-        return page
 
     def load_data_files(self, **kwargs):
         """ Load the files passed that exist. """
@@ -483,9 +446,15 @@ class MMEDSupload(MMEDSbase):
 
             # If there are errors report them and return the error page
             if errors:
+                cp.log('There are errors')
                 # Write the errors to a file
+                cp.session['download_files']['error_file'] =\
+                    self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
+
                 with open(cp.session['download_files']['error_file'], 'w') as f:
                     f.write('\n'.join(errors + warnings))
+                cp.log('Created error file at {}'.format(cp.session['download_files']['error_file']))
+
                 if warnings:
                     page = self.format_html('upload_metadata_error',
                                             error=errors,
@@ -496,31 +465,32 @@ class MMEDSupload(MMEDSbase):
                                             error=errors,
                                             title='Errors')
             elif warnings:
-                 # Set the proceed button based on current metadata file
-                 if cp.session['metadata_type'] == 'subject':
-                     page = self.format_html('upload_metadata_warning',
-                                             title='Warnings',
-                                             warning=warnings,
-                                             next_page='{retry_upload_page}')
-                     cp.session['metadata_type'] = 'specimen'
-                 elif cp.session['metadata_type'] == 'specimen':
-                     page = self.format_html('upload_metadata_warning',
-                                             title='Warnings',
-                                             warning=warnings,
-                                             next_page='{upload_data_page}')
-            else:
-                # If it's the subject metadata file return the page for uploading the specimen metadata
+                cp.log('There are warnings')
+                # Set the proceed button based on current metadata file
                 if cp.session['metadata_type'] == 'subject':
-                    page = self.format_html('upload_metadata_file',
-                                            title='Upload Metadata',
-                                            metadata_type='Specimen',
-                                            success='Subject table uploaded successfully')
+                    page = self.format_html('upload_metadata_warning',
+                                            title='Warnings',
+                                            warning=warnings,
+                                            next_page='{retry_upload_page}')
                     cp.session['metadata_type'] = 'specimen'
-                # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
-                    # If it's the sspecimen metadata file, save the type of barcodes
-                    # And return the page for uploading data files
-                    page = self.upload_data()
+                    page = self.format_html('upload_metadata_warning',
+                                            title='Warnings',
+                                            warning=warnings,
+                                            next_page='{upload_data_page}')
+                else:
+                    # If it's the subject metadata file return the page for uploading the specimen metadata
+                    if cp.session['metadata_type'] == 'subject':
+                        page = self.format_html('upload_metadata_file',
+                                                title='Upload Metadata',
+                                                metadata_type='Specimen',
+                                                success='Subject table uploaded successfully')
+                        cp.session['metadata_type'] = 'specimen'
+                        # Otherwise proceed to uploading data files
+                    elif cp.session['metadata_type'] == 'specimen':
+                        # If it's the sspecimen metadata file, save the type of barcodes
+                        # And return the page for uploading data files
+                        page = self.upload_data()
 
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
