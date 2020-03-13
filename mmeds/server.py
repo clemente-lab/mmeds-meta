@@ -478,19 +478,19 @@ class MMEDSupload(MMEDSbase):
                                             title='Warnings',
                                             warning=warnings,
                                             next_page='{upload_data_page}')
-                else:
-                    # If it's the subject metadata file return the page for uploading the specimen metadata
-                    if cp.session['metadata_type'] == 'subject':
-                        page = self.format_html('upload_metadata_file',
-                                                title='Upload Metadata',
-                                                metadata_type='Specimen',
-                                                success='Subject table uploaded successfully')
-                        cp.session['metadata_type'] = 'specimen'
-                        # Otherwise proceed to uploading data files
-                    elif cp.session['metadata_type'] == 'specimen':
-                        # If it's the sspecimen metadata file, save the type of barcodes
-                        # And return the page for uploading data files
-                        page = self.upload_data()
+            else:
+                # If it's the subject metadata file return the page for uploading the specimen metadata
+                if cp.session['metadata_type'] == 'subject':
+                    page = self.format_html('upload_metadata_file',
+                                            title='Upload Metadata',
+                                            metadata_type='Specimen',
+                                            success='Subject table uploaded successfully')
+                    cp.session['metadata_type'] = 'specimen'
+                    # Otherwise proceed to uploading data files
+                elif cp.session['metadata_type'] == 'specimen':
+                    # If it's the sspecimen metadata file, save the type of barcodes
+                    # And return the page for uploading data files
+                    page = self.upload_data()
 
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',

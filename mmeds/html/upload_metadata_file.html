@@ -1,10 +1,8 @@
 <form class="w3-container w3-card-4 w3-padding" action='{validate_metadata_page}' method='post' enctype='multipart/form-data' id='upload_form'>
     <p>
     <label><b>{metadata_type} Data File </b></label>
-    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
-        Select file for upload...
-        <input type="file" name="myMetaData" required>
-    </button>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="myMetaData" required>
+    </input>
     </p>
     <p>
     <input class="w3-check w3-padding" type='checkbox' name='temporary' />

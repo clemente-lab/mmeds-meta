@@ -1,24 +1,15 @@
 <form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
     <p>
     <label class> Forward Reads (Upload a zip if demultiplexed) </label>
-    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
-        Select fastq file for upload...
-        <input type="file" name="for_reads" required>
-    </button>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="for_reads" required>
     </p>
     <p>
     <label class> Reverse Reads (Optional) </label>
-    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
-        Select fastq file for upload...
-        <input type="file" name="rev_reads">
-    </button>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="rev_reads" required>
     </p>
     <p>
     <label class> Barcodes (Optional) </label>
-    <button class="upload-btn-wrapper w3-btn w3-border w3-input">
-        Select Barcodes file for upload...
-        <input type="file" name="barcodes">
-    </button>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="barcodes" required>
     </p>
     <p>
     <label class> Reads Type </label>
