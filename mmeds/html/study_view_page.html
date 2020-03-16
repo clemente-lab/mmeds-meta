@@ -1,6 +1,6 @@
 <!-- Header -->
 <header class="w3-container" style="padding-top:22px">
-    <h5><b><i class="fas fa-server"></i> ACTIVATE</b></h5>
+    <h5><b><i class="fas fa-server"></i> {study_name} </b></h5>
 </header>
 
 <div class='w3-container'>
@@ -49,21 +49,18 @@
     <!-- Sections of the page that only appear upon selection -->
     <div id="SelectAnalysis" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> Related Analyses </h2>
-        <form action='Analysis.html' method='post' enctype='multipart/form-data' id='analysis_form'>
+        <form action='{analysis_view_page}' method='post' enctype='multipart/form-data' id='analysis_form'>
             <select class="w3-select w3-border" name='access_code' form='analysis_form'>
-                <option value="wbiazdwsbhgkzrjriesg">Qiime2_0</option>
-                <option value="mngcjmvaiqypreewkjve">Qiime1_0</option>
+                {study_analyses}
             </select>
             <button class="w3-btn w3-border" type='submit' method='post'>Select Analysis</button>
         </form>
     </div>
     <div id="ModifyUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> File to Modify </h2>
-        <form action='#' method='post' enctype='multipart/form-data' id='study_form'>
-            <select class="w3-select w3-border" name='file_path' form='study_form'>
-                <option value="full_metadata.tsv">metadata</option>
-                <option value="barcodes.fastq.gz">barcodes</option>
-                <option value="forward_reads.fastq.gz">for_reads</option>
+        <form action='{upload_modify_page}' method='post' enctype='multipart/form-data' id='modify_form'>
+            <select class="w3-select w3-border" name='file_name' form='modify_form'>
+                {study_files}
             </select>
             <p>
             <label class> <b>New File</b> </label>
@@ -97,11 +94,9 @@
     </div>
     <div id="DownloadFiles" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> File to Download </h2>
-        <form action='#' method='post' enctype='multipart/form-data' id='study_form'>
-            <select class="w3-select w3-border" name='file_path' form='study_form'>
-                <option value="/sc/orga/projects/MMEDS/mmeds_server_data/mstapylton_matt_study_0/full_metadata.tsv">metadata</option>
-                <option value="/sc/orga/projects/MMEDS/mmeds_server_data/mstapylton_matt_study_0/barcodes.fastq.gz">barcodes</option>
-                <option value="/sc/orga/projects/MMEDS/mmeds_server_data/mstapylton_matt_study_0/forward_reads.fastq.gz">for_reads</option>
+        <form action='{download_page}' method='post' enctype='multipart/form-data' id='download_form'>
+            <select class="w3-select w3-border" name='file_name' form='download_form'>
+                {study_files}
             </select>
             <button class="w3-btn w3-border" type='submit' method='post'>Download File</button>
         </form>

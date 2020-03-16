@@ -476,6 +476,8 @@ HTML_PAGES = {
     'logged_in_template': HTML_DIR / 'logged_in_template.html',
     'login': (HTML_DIR / 'login_body.html', False),
     'home': (HTML_DIR / 'home_body.html', True),
+    'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
+    'account_register_page': (HTML_DIR / 'account_register_page.html', False),
 
     # Upload Pages
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
@@ -487,6 +489,9 @@ HTML_PAGES = {
     # Study Pages
     'study_select_page': (HTML_DIR / 'study_select_page.html', True),
     'study_view_page': (HTML_DIR / 'study_view_page.html', True),
+
+    # Analysis Pages
+    'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
 
     # TODO below this are outdated
     'index': (HTML_DIR / 'index.html', False),
@@ -524,8 +529,6 @@ HTML_ARGS = {
     # 'login_page': SERVER_PATH,
 
     # Paths to other pages of the website
-    'register_account_page': SERVER_PATH + 'auth/register',
-    'forgot_password_page': SERVER_PATH + 'auth/register',
     'home_page': SERVER_PATH + 'index',
     'login_page': SERVER_PATH + 'auth/login',
     'logout_page': SERVER_PATH + 'auth/logout',
@@ -540,6 +543,7 @@ HTML_ARGS = {
     'process_data_page': SERVER_PATH + 'upload/process_data',
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
+    'upload_modify_page': SERVER_PATH + 'upload/upload_page',
 
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',
@@ -547,6 +551,15 @@ HTML_ARGS = {
     # Study Pages
     'study_select_page': SERVER_PATH + 'study/select_study',
     'study_view_page': SERVER_PATH + 'study/view_study',
+
+    # Analysis Pages
+    'analysis_view_page': SERVER_PATH + 'analysis/view_analysis',
+
+    # Account Pages
+    'register_account_page': SERVER_PATH + 'auth/register_account',
+    'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
+    'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
+    'sign_up_page': SERVER_PATH + 'auth/sign_up',
 
     # Where to insert errors/warnings on a given page
     'error': '',
@@ -556,7 +569,7 @@ HTML_ARGS = {
     # Settings for highlighting the section of the web site currently being accessed
     'upload_selected': '',
     'analysis_selected': '',
-    'access_selected': '',
+    'study_selected': '',
     'query_selected': '',
     'home_selected': '',
     'account_selected': '',

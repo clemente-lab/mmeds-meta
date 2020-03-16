@@ -349,6 +349,22 @@ class MMEDSstudy(MMEDSbase):
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             # Check the study belongs to the user only if the user doesn't have elevated privileges
             study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+            docs = db.get_docs(study_code=access_code)
+
+        option_template = '<option value="{}">{}</option>'
+
+        # Get analyses related to this study
+        analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
+                                                                              doc.analysis_type,
+                                                                              doc.created.strftime("%Y-%m-%d")))
+                    for doc in docs]
+
+        # Get files downloadable from this study
+        study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
+
+        for key, path in study.files.items():
+            cp.session['download_files'][key] = path
+
         page = self.format_html('study_view_page',
                                 title=study.study_name,
                                 study_name=study.study_name,
@@ -359,7 +375,9 @@ class MMEDSstudy(MMEDSbase):
                                 access_code=study.access_code,
                                 owner=study.owner,
                                 email=study.email,
-                                path=study.path)
+                                path=study.path,
+                                study_analyses=analyses,
+                                study_files=study_files)
         return page
 
 
@@ -619,7 +637,7 @@ class MMEDSauthentication(MMEDSbase):
         return super().format_html(page, **kwargs)
 
     @cp.expose
-    def sign_up_page(self):
+    def register_account(self):
         """ Return the page for signing up. """
         return self.format_html('auth_sign_up_page')
 
@@ -661,7 +679,7 @@ class MMEDSauthentication(MMEDSbase):
             check_password(password1, password2)
             check_username(username, testing=self.testing)
             add_user(username, password1, email, testing=self.testing)
-            page = self.format_html('index')
+            page = self.format_html('home')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
             page = self.format_html('auth_sign_up_page', error=e.message.split(','))
         return page
@@ -707,7 +725,11 @@ class MMEDSauthentication(MMEDSbase):
         return page
 
     @cp.expose
-    def password_recovery(self, username, email):
+    def password_recovery(self):
+        return self.format_html('forgot_password')
+
+    @cp.expose
+    def submit_password_recovery(self, username, email):
         """ Page for reseting a user's password. """
         try:
             reset_password(username, email, testing=self.testing)
@@ -730,6 +752,41 @@ class MMEDSanalysis(MMEDSbase):
         """ Add the highlighting for this section of the website """
         kwargs['analysis_selected'] = 'w3-blue'
         return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def view_analysis(self, access_code):
+        """ The page for viewing information on a particular analysis """
+        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+            # Check the study belongs to the user only if the user doesn't have elevated privileges
+            analysis = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+
+        option_template = '<option value="{}">{}</option>'
+
+        # Get files downloadable from this study
+        analysis_files = [option_template.format(key, key.capitalize())
+                          for key, path in analysis.files.items()
+                          if Path(path).exists()]
+
+        for key, path in analysis.files.items():
+            cp.session['download_files'][key] = path
+
+        page = self.format_html('analysis_view_page',
+                                title=analysis.study_name,
+                                study_name=analysis.study_name,
+                                analysis_name='{}-{}'.format(analysis.tool_type, analysis.analysis_type),
+                                date_created=analysis.created,
+                                last_accessed=analysis.last_accessed,
+                                reads_type=analysis.reads_type,
+                                barcodes_type=analysis.barcodes_type,
+                                access_code=analysis.access_code,
+                                owner=analysis.owner,
+                                email=analysis.email,
+                                path=analysis.path,
+                                tool_type=analysis.tool_type,
+                                analysis_type=analysis.analysis_type,
+                                analysis_status=analysis.analysis_status,
+                                analysis_files=analysis_files)
+        return page
 
     @cp.expose
     def run_analysis(self, access_code, analysis_method, config):

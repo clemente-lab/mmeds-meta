@@ -607,10 +607,9 @@ class Database:
                             shutil.rmtree(mdata.files[key])
 
     @classmethod
-    def get_docs(cls, access_code):
+    def get_docs(cls, **kwargs):
         """ For server use """
-        docs = MMEDSDoc.objects(access_code=access_code)
-        return docs
+        return MMEDSDoc.objects(**kwargs)
 
 
 class SQLBuilder:
