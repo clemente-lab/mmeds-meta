@@ -175,6 +175,7 @@ else:
     TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
     TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
     TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+    TEST_ANIMAL_METADATA = str(TEST_PATH / 'test_animal_metadata.tsv')
 
 
 ##############################
@@ -469,10 +470,23 @@ IMAGE_PATH = SERVER_PATH + 'CSS/'
 # Each page returns a tuple
 # (<Path to the page>, <Should the header and topbar be loaded>)
 HTML_PAGES = {
+
+    # Authentication Pages
     'logged_out_template': HTML_DIR / 'logged_out_template.html',
     'logged_in_template': HTML_DIR / 'logged_in_template.html',
     'login': (HTML_DIR / 'login_body.html', False),
     'home': (HTML_DIR / 'home_body.html', True),
+
+    # Upload Pages
+    'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
+    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
+    'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
+    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
+    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+
+    # Study Pages
+    'study_select_page': (HTML_DIR / 'study_select_page.html', True),
+    'study_view_page': (HTML_DIR / 'study_view_page.html', True),
 
     # TODO below this are outdated
     'index': (HTML_DIR / 'index.html', False),
@@ -488,13 +502,8 @@ HTML_PAGES = {
     'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
     'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
     'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
-    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
     'upload_data_files_dual': (HTML_DIR / 'upload_data_files_dual.html', True),
-    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
     'upload_lefse_data': (HTML_DIR / 'upload_lefse_data.html', True),
-    'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
-    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
-    'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
 }
 
@@ -513,6 +522,7 @@ HTML_ARGS = {
     'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
     'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
     # 'login_page': SERVER_PATH,
+
     # Paths to other pages of the website
     'register_account_page': SERVER_PATH + 'auth/register',
     'forgot_password_page': SERVER_PATH + 'auth/register',
@@ -521,7 +531,7 @@ HTML_ARGS = {
     'logout_page': SERVER_PATH + 'auth/logout',
     'upload_page': SERVER_PATH + 'upload/upload_page',
     'analysis_page': SERVER_PATH + 'analysis/analysis_page',
-    'access_page': SERVER_PATH + 'index',
+    'study_page': SERVER_PATH + 'study/select_study',
     'account_page': SERVER_PATH + 'index',
 
     # Upload Pages
@@ -534,10 +544,15 @@ HTML_ARGS = {
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',
 
+    # Study Pages
+    'study_select_page': SERVER_PATH + 'study/select_study',
+    'study_view_page': SERVER_PATH + 'study/view_study',
+
     # Where to insert errors/warnings on a given page
     'error': '',
     'warning': '',
     'success': '',
+
     # Settings for highlighting the section of the web site currently being accessed
     'upload_selected': '',
     'analysis_selected': '',

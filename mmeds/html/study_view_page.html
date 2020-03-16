@@ -1,0 +1,135 @@
+<!-- Header -->
+<header class="w3-container" style="padding-top:22px">
+    <h5><b><i class="fas fa-server"></i> ACTIVATE</b></h5>
+</header>
+
+<div class='w3-container'>
+    <h2> Study Information </h2>
+    <table class="w3-table-all w3-card-4 w3-hoverable">
+        <tr><th> Study Name </th><th> {study_name} </th></tr>
+        <tr><th> Created </th><th> {date_created} </th></tr>
+        <tr><th> Last Accessed </th><th> {last_accessed} </th></tr>
+        <tr><th> Reads Type </th><th> {reads_type} </th></tr>
+        <tr><th> Barcodes Type </th><th> {barcodes_type} </th></tr>
+        <tr><th> Access Code </th><th> {access_code} </th></tr>
+        <tr><th> Owner </th><th> {owner} </th></tr>
+        <tr><th> Email </th><th> {email} </th></tr>
+        <tr><th> Path </th><th> {path} </th></tr>
+    </table>
+</div>
+<hr>
+
+<div class='w3-container w3-grey'>
+    <h2> Study Options </h2>
+    <div class="w3-bar w3-card-4 w3-dark-grey">
+        <button onclick="openStudyAction(event, 'SelectAnalysis')" class="action-link w3-quarter w3-button">
+            <i class="fa fa-eye w3-xxxlarge"></i>
+            <div class="w3-clear"></div>
+            <h4>View Analyses</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'ModifyUpload')" class="action-link w3-quarter w3-button">
+            <i class="fa fa-redo w3-xxxlarge"></i>
+            <div class="w3-clear"></div>
+            <h4>Modify Study</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'GenerateID')" class="action-link w3-quarter w3-button">
+            <i class="fa fa-clipboard-check w3-xxxlarge"></i>
+            <div class="w3-clear"></div>
+            <h4>Generate ID</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'DownloadFiles')" class="action-link w3-quarter w3-button">
+            <i class="fa fa-cloud-download w3-xxxlarge"></i>
+            <div class="w3-clear"></div>
+            <h4>Download Files</h4>
+        </button>
+    </div>
+
+    <hr>
+
+    <!-- Sections of the page that only appear upon selection -->
+    <div id="SelectAnalysis" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> Related Analyses </h2>
+        <form action='Analysis.html' method='post' enctype='multipart/form-data' id='analysis_form'>
+            <select class="w3-select w3-border" name='access_code' form='analysis_form'>
+                <option value="wbiazdwsbhgkzrjriesg">Qiime2_0</option>
+                <option value="mngcjmvaiqypreewkjve">Qiime1_0</option>
+            </select>
+            <button class="w3-btn w3-border" type='submit' method='post'>Select Analysis</button>
+        </form>
+    </div>
+    <div id="ModifyUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> File to Modify </h2>
+        <form action='#' method='post' enctype='multipart/form-data' id='study_form'>
+            <select class="w3-select w3-border" name='file_path' form='study_form'>
+                <option value="full_metadata.tsv">metadata</option>
+                <option value="barcodes.fastq.gz">barcodes</option>
+                <option value="forward_reads.fastq.gz">for_reads</option>
+            </select>
+            <p>
+            <label class> <b>New File</b> </label>
+            <input class="w3-input" type='file' placeholder="Default Config" name='config'/>
+            </p>
+
+            <button class="w3-button w3-border" type='submit' method='post'>Modify Upload</button>
+        </form>
+    </div>
+    <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> Generate ID </h2>
+        <select class="w3-select w3-border" id='specimen'>
+            <option value=1 selected='selected'> Specimen 1 </option>
+            <option value=2> Specimen 2 </option>
+            <option value=3> Specimen 3 </option>
+        </select>
+        <button onclick="generate_ID()" class="w3-btn w3-border" >Generate ID</button>
+        <br>
+        <div id="IDcontainer" class="w3-container w3-card-2 w3-padding-16" style="display:none">
+            <table class="w3-table-all ">
+                <thead>
+                    <tr class="w3-light-grey">
+                        <th>New Aliquot ID</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <th id="newID"></th>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="DownloadFiles" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> File to Download </h2>
+        <form action='#' method='post' enctype='multipart/form-data' id='study_form'>
+            <select class="w3-select w3-border" name='file_path' form='study_form'>
+                <option value="/sc/orga/projects/MMEDS/mmeds_server_data/mstapylton_matt_study_0/full_metadata.tsv">metadata</option>
+                <option value="/sc/orga/projects/MMEDS/mmeds_server_data/mstapylton_matt_study_0/barcodes.fastq.gz">barcodes</option>
+                <option value="/sc/orga/projects/MMEDS/mmeds_server_data/mstapylton_matt_study_0/forward_reads.fastq.gz">for_reads</option>
+            </select>
+            <button class="w3-btn w3-border" type='submit' method='post'>Download File</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openStudyAction(evt, cityName) {{{{ var i, x, tablinks;
+    var x = document.getElementsByClassName("study-action");
+    for (i = 0; i < x.length; i++) {{{{
+        x[i].style.display = "none";
+    }}}}
+    document.getElementById(cityName).style.display = "block";
+    tablinks = document.getElementsByClassName("action-link");
+    for (i = 0; i < x.length; i++) {{{{
+        tablinks[i].className = tablinks[i].className.replace(" w3-blue", "");
+    }}}}
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " w3-blue";
+}}}}
+
+var button = document.getElementById("newID");
+var container = document.getElementById("IDcontainer");
+let count = [0, 0, 0];
+function generate_ID() {{{{
+    var specimen = document.getElementById("specimen").value;
+    count[specimen] += 1;
+    button.innerHTML = "Specimen_" + specimen + "_" + count[specimen];
+    container.style.display = "block";
+}}}};
+</script>

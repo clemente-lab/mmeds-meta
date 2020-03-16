@@ -77,9 +77,6 @@ class MMEDSbase:
 
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
-        log('check upload {}'.format(access_code))
-        log(cp.session['processes'])
-        log(cp.session['processes'].get(access_code))
         try:
             log(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
@@ -137,37 +134,47 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
-        path, header = HTML_PAGES[page]
+        try:
+            path, header = HTML_PAGES[page]
 
-        # Handle any user alerts messages
-        kwargs = util.format_alerts(kwargs)
+            # Handle any user alerts messages
+            kwargs = util.format_alerts(kwargs)
 
-        # Predefined arguments to format in
-        args = SafeDict(HTML_ARGS)
+            # Predefined arguments to format in
+            args = SafeDict(HTML_ARGS)
 
-        # Add the arguments included in this format call
-        args.update(kwargs)
+            # Add the arguments included in this format call
+            args.update(kwargs)
 
-        # If a user is logged in, load the side bar
-        if header:
-            template = HTML_PAGES['logged_in_template'].read_text()
-            args['user'] = self.get_user()
-            args['dir'] = self.get_dir()
-        else:
-            template = HTML_PAGES['logged_out_template'].read_text()
+            # If a user is logged in, load the side bar
+            if header:
+                template = HTML_PAGES['logged_in_template'].read_text()
+                args['user'] = self.get_user()
+                args['dir'] = self.get_dir()
+            else:
+                template = HTML_PAGES['logged_out_template'].read_text()
 
-        # Load the body of the requested webpage
-        body = path.read_text()
+            # Load the body of the requested webpage
+            body = path.read_text()
 
-        # Insert the body into the outer template
-        page = template.format_map(SafeDict({'body': body}))
+            # Insert the body into the outer template
+            page = template.format_map(SafeDict({'body': body}))
 
-        # Format all provided arguments
-        page = page.format_map(args)
+            # Format all provided arguments
+            page = page.format_map(args)
+
+        # Log arguments if there is an issue
+        except (ValueError, KeyError):
+            cp.log('Args')
+            cp.log('\n'.join([str(x) for x in args.items()]))
+            cp.log('=================================')
+            cp.log(page)
+            raise
 
         # Check there is nothing missing from the page
         if args.missed:
             raise err.FormatError(args.missed)
+
         return page
 
     def add_process(self, ptype, process):
@@ -183,21 +190,6 @@ class MMEDSdownload(MMEDSbase):
     ########################################
     #            Download Pages            #
     ########################################
-    @cp.expose
-    def select_study(self):
-        """ Allows authorized user accounts to access uploaded studies. """
-        if check_privileges(self.get_user(), self.testing):
-            page = self.format_html('download_select_study', title='Select Study')
-            with Database(path='.', testing=self.testing) as db:
-                studies = db.get_all_studies()
-            for study in studies:
-                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code,
-                                                                                     study.study_name))
-        else:
-            page = self.format_html('welcome',
-                                    title='Welcome to MMEDS',
-                                    error='You do not have permissions to access uploaded studies.')
-        return page
 
     @cp.expose
     def download_study(self, study_code):
@@ -306,6 +298,69 @@ class MMEDSdownload(MMEDSbase):
     def download_file(self, file_name):
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
+
+
+@decorate_all_methods(catch_server_errors)
+class MMEDSstudy(MMEDSbase):
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        kwargs['study_selected'] = 'w3-blue'
+        return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def select_study(self):
+        """ Allows authorized user accounts to access uploaded studies. """
+        study_html = ''' <tr class="w3-hover-blue">
+            <th>
+            <a href="view_study?access_code={access_code}"> {study_name} </a>
+            </th>
+            <th>{date_created}</th>
+            <th>{num_analyses}</th>
+        </tr> '''
+        # If user has elevated privileges show them all uploaded studies
+        if check_privileges(self.get_user(), self.testing):
+            with Database(path='.', testing=self.testing) as db:
+                studies = db.get_all_studies()
+        # Otherwise only show studies they've uploaded
+        else:
+            with Database(path='.', testing=self.testing) as db:
+                studies = db.get_user_studies(self.get_user())
+
+        study_list = []
+        for study in studies:
+            study_list.append(study_html.format(study_name=study.study_name,
+                                                access_code=study.access_code,
+                                                date_created=study.created,
+                                                num_analyses=0))
+
+        page = self.format_html('study_select_page',
+                                title='Select Study',
+                                user_studies='\n'.join(study_list),
+                                public_studies="")
+
+        return page
+
+    @cp.expose
+    def view_study(self, access_code):
+        """ The page for viewing information on a particular study """
+        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+            # Check the study belongs to the user only if the user doesn't have elevated privileges
+            study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+        page = self.format_html('study_view_page',
+                                title=study.study_name,
+                                study_name=study.study_name,
+                                date_created=study.created,
+                                last_accessed=study.last_accessed,
+                                reads_type=study.reads_type,
+                                barcodes_type=study.barcodes_type,
+                                access_code=study.access_code,
+                                owner=study.owner,
+                                email=study.email,
+                                path=study.path)
+        return page
 
 
 @decorate_all_methods(catch_server_errors)
@@ -762,6 +817,7 @@ class MMEDSserver(MMEDSbase):
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
+        self.study = MMEDSstudy(watcher, q, testing)
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
