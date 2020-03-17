@@ -471,6 +471,7 @@ HTML_PAGES = {
     'account_register_page': (HTML_DIR / 'account_register_page.html', False),
     'home': (HTML_DIR / 'home_body.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
+    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', True),
 
     # Upload Pages
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
@@ -486,6 +487,7 @@ HTML_PAGES = {
 
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
+    'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
 
     # TODO below this are outdated
     'analysis_query': (HTML_DIR / 'analysis_query.html', True),
