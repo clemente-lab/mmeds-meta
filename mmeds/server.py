@@ -160,13 +160,6 @@ class MMEDSbase:
             # Insert the body into the outer template
             page = template.format_map(SafeDict({'body': body}))
 
-            # Get stats for MMEDs server
-            with Database(testing=self.testing) as db:
-                args['study_count'] = len(db.get_all_studies())
-                args['analysis_count'] = len(db.get_all_analyses())
-                args['user_count'] = len(db.get_all_usernames())
-
-
             # Format all provided arguments
             page = page.format_map(args)
 
@@ -906,8 +899,15 @@ class MMEDSserver(MMEDSbase):
         self.study = MMEDSstudy(watcher, q, testing)
 
     def format_html(self, page, **kwargs):
-        """ Add the highlighting for this section of the website """
+        """
+        Add the highlighting for this section of the website as well as other relevant arguments
+        """
         kwargs['home_selected'] = 'w3-text-blue'
+        # Get stats for MMEDs server
+        with Database(testing=self.testing) as db:
+            kwargs['study_count'] = len(db.get_all_studies())
+            kwargs['analysis_count'] = len(db.get_all_analyses())
+            kwargs['user_count'] = len(db.get_all_usernames())
         return super().format_html(page, **kwargs)
 
     @cp.expose
