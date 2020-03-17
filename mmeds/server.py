@@ -633,7 +633,7 @@ class MMEDSauthentication(MMEDSbase):
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
-        kwargs['account_selected'] = 'w3-blue'
+        kwargs['account_selected'] = 'w3-text-blue'
         return super().format_html(page, **kwargs)
 
     @cp.expose
