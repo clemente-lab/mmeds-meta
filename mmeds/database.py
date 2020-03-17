@@ -565,6 +565,11 @@ class Database:
         return MMEDSDoc.objects(doc_type='study')
 
     @classmethod
+    def get_all_analyses(cls):
+        """ Return all analyses currently stored in the database. """
+        return MMEDSDoc.objects(doc_type='analysis')
+
+    @classmethod
     def get_user_all_studies(cls, user):
         """ Return all studies currently stored in the database owned by USER. """
         return MMEDSDoc.objects(doc_type='study', owner=user)

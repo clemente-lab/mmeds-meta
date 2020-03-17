@@ -160,6 +160,13 @@ class MMEDSbase:
             # Insert the body into the outer template
             page = template.format_map(SafeDict({'body': body}))
 
+            # Get stats for MMEDs server
+            with Database(testing=self.testing) as db:
+                args['study_count'] = len(db.get_all_studies())
+                args['analysis_count'] = len(db.get_all_analyses())
+                args['user_count'] = len(db.get_all_usernames())
+
+
             # Format all provided arguments
             page = page.format_map(args)
 
