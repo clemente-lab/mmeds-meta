@@ -179,6 +179,7 @@ def catch_server_errors(page_method):
             args['body'] = body.format(**args)
             return fig.HTML_PAGES['logged_out_template'].read_text().format(**args)
         except KeyError as e:
+            logger.error(e)
             return "There was an error, contact server admin with:\n {}".format(e)
     return wrapper
 

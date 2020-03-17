@@ -393,6 +393,29 @@ class MMEDSupload(MMEDSbase):
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
         kwargs['upload_selected'] = 'w3-blue'
+
+        # Handle what input forms should appear based on previous selections
+        if cp.session.get('upload_type') == 'qiime':
+            if cp.session.get('dual_barcodes'):
+                kwargs['dual_barcodes'] = 'required'
+                kwargs['select_barcodes'] = 'style="display:none"'
+            else:
+                kwargs['dual_barcodes'] = 'style="display:none"'
+                kwargs['select_barcodes'] = ''
+        # If it's not qiime (aka fastq) input then don't display the options
+        else:
+            kwargs['dual_barcodes'] = 'style="display:none"'
+            kwargs['select_barcodes'] = 'style="display:none"'
+
+        # Handle if the lefse input options should display when uploading a table
+        if cp.session.get('upload_type') == 'lefse':
+            kwargs['lefse_table'] = ''
+            kwargs['table_type'] = 'Lefse'
+        else:
+            kwargs['lefse_table'] = 'style="display:none"'
+            kwargs['table_type'] = 'OTU'
+        kwargs['table_type_lower'] = kwargs['table_type'].lower()
+
         return super().format_html(page, **kwargs)
 
     @cp.expose
@@ -453,17 +476,16 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def upload_data(self):
-        # If there are no errors or warnings proceed to upload the data files
+        """ The page for uploading data files of any type"""
+
+        # Only arrive here if there are no errors or warnings proceed to upload the data files
         alert = 'Specimen metadata uploaded successfully'
+
+        # The case for handling uploads of fastq files
         if cp.session['upload_type'] == 'qiime':
-            if cp.session['dual_barcodes']:
-                page = self.format_html('upload_data_files_dual', title='Upload Data', success=alert)
-            else:
-                page = self.format_html('upload_data_files', title='Upload Data', success=alert)
-        elif cp.session['upload_type'] == 'sparcc':
+            page = self.format_html('upload_data_files', title='Upload Data', success=alert)
+        else:
             page = self.format_html('upload_otu_data', title='Upload Data', success=alert)
-        elif cp.session['upload_type'] == 'lefse':
-            page = self.format_html('upload_lefse_data', title='Upload Data', success=alert)
         return page
 
     @cp.expose
@@ -493,7 +515,29 @@ class MMEDSupload(MMEDSbase):
                                     title='Upload Metadata',
                                     metadata_type=cp.session['metadata_type'].capitalize(),
                                     version=uploadType)
-            return page
+        return page
+
+    @cp.expose
+    def continue_metadata_upload(self):
+        """ Like Upload metadata, but the continuation if there are warnings in a file """
+        # Only arrive here if there are no errors or warnings proceed to upload the data files
+        alert = '{} metadata uploaded successfully'.format(cp.session['metadata_type'].capitalize())
+
+        # Move on to uploading data files
+        if cp.session['metadata_type'] == 'specimen':
+            # The case for handling uploads of fastq files
+            if cp.session['upload_type'] == 'qiime':
+                page = self.format_html('upload_data_files', title='Upload Data', success=alert)
+            else:
+                page = self.format_html('upload_otu_data', title='Upload Data', success=alert)
+        # Move on to uploading specimen metadata
+        else:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    success='Subject table uploaded successfully',
+                                    metadata_type=cp.session['metadata_type'].capitalize(),
+                                    version=cp.session['upload_type'])
+        return page
 
     @cp.expose
     def validate_metadata(self, myMetaData, barcodes_type, temporary=False):

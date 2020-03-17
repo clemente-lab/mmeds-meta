@@ -5,7 +5,6 @@ from collections import defaultdict
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
-# import mmeds.test_files as test_files
 import mmeds.resources as resources
 import mmeds.CSS as css
 import mmeds
@@ -477,6 +476,7 @@ HTML_PAGES = {
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
 
     # Study Pages
     'study_select_page': (HTML_DIR / 'study_select_page.html', True),
@@ -484,6 +484,7 @@ HTML_PAGES = {
 
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
+
 
     # TODO below this are outdated
     'index': (HTML_DIR / 'index.html', False),
@@ -493,15 +494,7 @@ HTML_PAGES = {
     'analysis_query': (HTML_DIR / 'analysis_query.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
-    'download_study_files': (HTML_DIR / 'download_study_files.html', True),
-    'download_select_file': (HTML_DIR / 'download_select_file.html', True),
-    'download_select_study': (HTML_DIR / 'download_select_study.html', True),
-    'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
-    'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
-    'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
-    'upload_data_files_dual': (HTML_DIR / 'upload_data_files_dual.html', True),
-    'upload_lefse_data': (HTML_DIR / 'upload_lefse_data.html', True),
-    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
+
 }
 
 # Predefined options for formatting webpages are set here
@@ -511,8 +504,10 @@ HTML_ARGS = {
     'user_count': 0,
     'analysis_count': 0,
     'query_count': 0,
+
     # Site Wide
     'title': 'MMEDs Database and Analysis Server',
+
     # Images
     'favicon': IMAGE_PATH + 'favicon.ico',
     'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
@@ -534,6 +529,7 @@ HTML_ARGS = {
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
     'process_data_page': SERVER_PATH + 'upload/process_data',
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
+    'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
     'upload_modify_page': SERVER_PATH + 'upload/upload_page',
 
