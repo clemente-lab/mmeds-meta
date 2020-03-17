@@ -642,28 +642,6 @@ class MMEDSauthentication(MMEDSbase):
         return self.format_html('auth_sign_up_page')
 
     @cp.expose
-    def login(self, username, password):
-        """
-        Opens the page to upload files if the user has been authenticated.
-        Otherwise returns to the login page with an error message.
-        """
-        cp.log('Login attempt for user: {}'.format(username))
-        try:
-            validate_password(username, password, testing=self.testing)
-            cp.session['user'] = username
-            cp.session['temp_dir'] = tempfile.TemporaryDirectory()
-            cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
-            cp.session['processes'] = {}
-            cp.session['download_files'] = {}
-            cp.session['uploaded_files'] = {}
-            cp.session['subject_ids'] = None
-            page = self.format_html('home', title='Welcome to Mmeds')
-            log('Login Successful')
-        except err.InvalidLoginError as e:
-            page = self.format_html('login', error=e.message)
-        return page
-
-    @cp.expose
     def logout(self):
         """ Expires the session and returns to login page """
         cp.log('Logout user {}'.format(self.get_user()))
@@ -880,6 +858,28 @@ class MMEDSserver(MMEDSbase):
         """ Add the highlighting for this section of the website """
         kwargs['home_selected'] = 'w3-text-blue'
         return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def login(self, username, password):
+        """
+        Opens the page to upload files if the user has been authenticated.
+        Otherwise returns to the login page with an error message.
+        """
+        cp.log('Login attempt for user: {}'.format(username))
+        try:
+            validate_password(username, password, testing=self.testing)
+            cp.session['user'] = username
+            cp.session['temp_dir'] = tempfile.TemporaryDirectory()
+            cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
+            cp.session['processes'] = {}
+            cp.session['download_files'] = {}
+            cp.session['uploaded_files'] = {}
+            cp.session['subject_ids'] = None
+            page = self.format_html('home', title='Welcome to Mmeds')
+            log('Login Successful')
+        except err.InvalidLoginError as e:
+            page = self.format_html('login', error=e.message)
+        return page
 
     @cp.expose
     def index(self):

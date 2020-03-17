@@ -522,7 +522,7 @@ HTML_ARGS = {
 
     # Paths to other pages of the website
     'home_page': SERVER_PATH + 'index',
-    'login_page': SERVER_PATH + 'auth/login',
+    'login_page': SERVER_PATH + 'login',
     'logout_page': SERVER_PATH + 'auth/logout',
     'upload_page': SERVER_PATH + 'upload/upload_page',
     'analysis_page': SERVER_PATH + 'analysis/analysis_page',
