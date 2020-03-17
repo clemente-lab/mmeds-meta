@@ -461,10 +461,11 @@ IMAGE_PATH = SERVER_PATH + 'CSS/'
 # Each page returns a tuple
 # (<Path to the page>, <Should the header and topbar be loaded>)
 HTML_PAGES = {
-
-    # Authentication Pages
+    # Templates
     'logged_out_template': HTML_DIR / 'logged_out_template.html',
     'logged_in_template': HTML_DIR / 'logged_in_template.html',
+
+    # Authentication Pages
     'login': (HTML_DIR / 'login_body.html', False),
     'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
     'account_register_page': (HTML_DIR / 'account_register_page.html', False),
@@ -493,7 +494,7 @@ HTML_PAGES = {
 
 # Predefined options for formatting webpages are set here
 HTML_ARGS = {
-    'version': '0.3.0',
+    'version': '0.1.0',
     'study_count': 0,
     'user_count': 0,
     'analysis_count': 0,

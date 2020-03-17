@@ -104,8 +104,9 @@
 </div>
 
 <script>
-function openStudyAction(evt, cityName) {{{{ var i, x, tablinks;
-    var x = document.getElementsByClassName("study-action");
+function openStudyAction(evt, cityName) {{{{
+    let i, x, tablinks;
+    let x = document.getElementsByClassName("study-action");
     for (i = 0; i < x.length; i++) {{{{
         x[i].style.display = "none";
     }}}}
@@ -118,11 +119,11 @@ function openStudyAction(evt, cityName) {{{{ var i, x, tablinks;
     evt.currentTarget.className += " w3-blue";
 }}}}
 
-var button = document.getElementById("newID");
-var container = document.getElementById("IDcontainer");
+let button = document.getElementById("newID");
+let container = document.getElementById("IDcontainer");
 let count = [0, 0, 0];
 function generate_ID() {{{{
-    var specimen = document.getElementById("specimen").value;
+    let specimen = document.getElementById("specimen").value;
     count[specimen] += 1;
     button.innerHTML = "Specimen_" + specimen + "_" + count[specimen];
     container.style.display = "block";
