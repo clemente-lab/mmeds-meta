@@ -466,9 +466,10 @@ HTML_PAGES = {
     'logged_out_template': HTML_DIR / 'logged_out_template.html',
     'logged_in_template': HTML_DIR / 'logged_in_template.html',
     'login': (HTML_DIR / 'login_body.html', False),
-    'home': (HTML_DIR / 'home_body.html', True),
     'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
     'account_register_page': (HTML_DIR / 'account_register_page.html', False),
+    'home': (HTML_DIR / 'home_body.html', True),
+    'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
 
     # Upload Pages
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
@@ -485,15 +486,8 @@ HTML_PAGES = {
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
 
-
     # TODO below this are outdated
-    'index': (HTML_DIR / 'index.html', False),
-    'welcome': (HTML_DIR / 'welcome.html', True),
-    'blank': (HTML_DIR / 'blank.html', True),
-    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
     'analysis_query': (HTML_DIR / 'analysis_query.html', True),
-    'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
-    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
 
 }
 
@@ -522,7 +516,8 @@ HTML_ARGS = {
     'upload_page': SERVER_PATH + 'upload/upload_page',
     'analysis_page': SERVER_PATH + 'analysis/analysis_page',
     'study_page': SERVER_PATH + 'study/select_study',
-    'account_page': SERVER_PATH + 'index',
+    'account_page': SERVER_PATH + 'auth/input_password',
+    'settings_page': '#',
 
     # Upload Pages
     'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
@@ -561,6 +556,7 @@ HTML_ARGS = {
     'query_selected': '',
     'home_selected': '',
     'account_selected': '',
+    'settings_selected': '',
 }
 
 ##########################
