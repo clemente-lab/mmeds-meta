@@ -343,7 +343,8 @@ class MMEDSstudy(MMEDSbase):
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
-        kwargs['study_selected'] = 'w3-blue'
+        if kwargs.get('study_selected') is None:
+            kwargs['study_selected'] = 'w3-blue'
         return super().format_html(page, **kwargs)
 
     @cp.expose
@@ -428,7 +429,8 @@ class MMEDSupload(MMEDSbase):
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
-        kwargs['upload_selected'] = 'w3-blue'
+        if kwargs.get('upload_selected') is None:
+            kwargs['upload_selected'] = 'w3-blue'
 
         # Handle what input forms should appear based on previous selections
         if cp.session.get('upload_type') == 'qiime':
@@ -714,7 +716,8 @@ class MMEDSauthentication(MMEDSbase):
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
-        kwargs['account_selected'] = 'w3-text-blue'
+        if kwargs.get('account_selected') is None:
+            kwargs['account_selected'] = 'w3-text-blue'
         return super().format_html(page, **kwargs)
 
     @cp.expose
@@ -762,7 +765,6 @@ class MMEDSauthentication(MMEDSbase):
         :password1: The new password
         :password2: A second entry of the new password
         """
-        page = self.format_html('auth_change_password', title='Change Password')
 
         # Check the old password matches
         try:
@@ -770,9 +772,9 @@ class MMEDSauthentication(MMEDSbase):
             # Check the two copies of the new password match
             check_password(password1, password2)
             change_password(self.get_user(), password1, testing=self.testing)
-            page = insert_html(page, 9, 'Your password was successfully changed.')
+            page = self.format_html('auth_change_password', success='Your password was successfully changed.')
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
-            page = self.format_html('auth_sign_up_page', error=e.message.split(','))
+            page = self.format_html('auth_change_password', error=e.message.split(','))
         return page
 
     @cp.expose
@@ -813,7 +815,8 @@ class MMEDSanalysis(MMEDSbase):
 
     def format_html(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
-        kwargs['analysis_selected'] = 'w3-blue'
+        if kwargs.get('analysis_selected') is None:
+            kwargs['analysis_selected'] = 'w3-blue'
         return super().format_html(page, **kwargs)
 
     @cp.expose
@@ -943,7 +946,8 @@ class MMEDSserver(MMEDSbase):
         """
         Add the highlighting for this section of the website as well as other relevant arguments
         """
-        kwargs['home_selected'] = 'w3-text-blue'
+        if kwargs.get('home_selected') is None:
+            kwargs['home_selected'] = 'w3-text-blue'
         return super().format_html(page, **kwargs)
 
     @cp.expose

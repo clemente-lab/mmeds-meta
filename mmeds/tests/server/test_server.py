@@ -75,14 +75,14 @@ class TestServer(helper.CPWebCase):
         log('===== Test Server Start =====')
         add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
-    def test_b_index(self):
+    def test_aa_index(self):
         self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
         page_body = self.body.decode('utf-8')
         check_page(page_body)
 
-    def test_c_sign_up(self):
+    def test_ba_sign_up(self):
         logger.debug('Test C')
         self.not_logged_in()
         logger.debug('not_logged_in')
@@ -90,7 +90,7 @@ class TestServer(helper.CPWebCase):
         logger.debug('sign_up')
         self.sign_up_success()
 
-    def test_d_login(self):
+    def test_bc_login(self):
 
         self.login_fail_password()
         logger.debug('login_fail_password')
@@ -101,12 +101,11 @@ class TestServer(helper.CPWebCase):
         self.logout()
         logger.debug('logout')
 
-    def test_e_reset_password(self):
-        self.login()
-        self.tp = self.reset_password()
-        return
-        self.change_password()
+    def test_bd_reset_password(self):
         logger.debug('change_password')
+        self.tp = self.reset_password()
+        self.login(True)
+        self.change_password()
         self.logout()
 
     def test_e_animal_upload(self):
@@ -188,13 +187,13 @@ class TestServer(helper.CPWebCase):
         faddr = addr.format('public', fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS)
         self.getPage(faddr)
         self.assertStatus('200 OK')
-        bad_page = server.format_html('auth_sign_up_page', error='Error: Username is invalid.')
+        bad_page = server.format_html('auth_sign_up_page', error='Username is invalid.')
         self.assertBody(bad_page)
 
         # Test signup with an invalid password
         self.getPage(addr.format(self.server_user, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS + 'xx'))
         self.assertStatus('200 OK')
-        bad_page = server.format_html('auth_sign_up_page', error='Error: Passwords do not match.')
+        bad_page = server.format_html('auth_sign_up_page', error='Passwords do not match.')
         self.assertBody(bad_page)
 
         logger.debug('continuing sign up')
@@ -209,8 +208,15 @@ class TestServer(helper.CPWebCase):
         good_page = server.format_html('login', success='Account created successfully!')
         self.assertBody(good_page)
 
-    def login(self):
-        self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
+    def login(self, alt=False):
+        """ When alt is True use alternate password """
+        account_log = Path(gettempdir()) / 'account_log.txt'
+        if alt:
+            account_log.write_text('{}\t{}\t{}'.format(self.server_user, self.tp, alt))
+            self.getPage('/login?username={}&password={}'.format(self.server_user, self.tp))
+        else:
+            account_log.write_text('{}\t{}\t{}'.format(self.server_user, sec.TEST_PASS, alt))
+            self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
         page = server.format_html('home', user=self.server_user, dir='.')
         self.assertBody(page)
@@ -236,14 +242,12 @@ class TestServer(helper.CPWebCase):
     def reset_password(self):
         logger.debug('reset_password')
         self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user,
-                                                                                  fig.TEST_EMAIL + 'dfa'),
-                     self.cookies)
+                                                                                  fig.TEST_EMAIL + 'dfa'))
         self.assertStatus('200 OK')
         fail_page = server.format_html('login', error='No account exists with the provided username and email.')
         self.assertBody(fail_page)
 
-        self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL),
-                     self.cookies)
+        self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL))
         self.assertStatus('200 OK')
         pass_page = server.format_html('login', success='A new password has been sent to your email.')
         self.assertBody(pass_page)
@@ -263,13 +267,22 @@ class TestServer(helper.CPWebCase):
                                                                                                     new=temp_pass_bad),
                      self.cookies)
         self.assertStatus('200 OK')
-        fail_page = server.format_html('login', error='No account exists with the provided username and email.')
+        fail_page = server.format_html('auth_change_password',
+                                       user=self.server_user,
+                                       account_selected='w3-text-blue',
+                                       home_selected='',
+                                       error=['Passwords must be longer than 10 characters.'])
+
         self.assertBody(fail_page)
         self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
                                                                                                     new=sec.TEST_PASS),
                      self.cookies)
         self.assertStatus('200 OK')
-        pass_page = server.format_html('login', error='Your password was successfully changed.')
+        pass_page = server.format_html('auth_change_password',
+                                       user=self.server_user,
+                                       account_selected='w3-text-blue',
+                                       home_selected='',
+                                       success='Your password was successfully changed.')
         self.assertBody(pass_page)
 
         self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
@@ -446,7 +459,7 @@ class TestServer(helper.CPWebCase):
                          title='Upload Metadata',
                          user=self.server_user,
                          metadata_type='subject')
-        err = 'Error: gz is not a valid filetype.'
+        err = 'gz is not a valid filetype.'
         page = insert_error(page, 22, err)
         self.assertBody(page)
         log('Checked invalid filetype')

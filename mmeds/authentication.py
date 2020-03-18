@@ -58,15 +58,15 @@ def check_password(password1, password2):
     errors = []
 
     if not password1 == password2:
-        errors.append('Error: Passwords do not match.')
+        errors.append('Passwords do not match.')
     if not pas.intersection(nums):
-        errors.append('Error: Passwords must contain at least one number.')
+        errors.append('Passwords must contain at least one number.')
     if not pas.intersection(syms):
-        errors.append('Error: Passwords must contain at least one of the following symbols ' + str(syms) + ' .')
+        errors.append('Passwords must contain at least one of the following symbols ' + str(syms) + ' .')
     if not (pas.intersection(set(ascii_uppercase)) and pas.intersection(set(ascii_lowercase))):
-        errors.append('Error: Passwords must contain a mix of upper and lower case characters.')
+        errors.append('Passwords must contain a mix of upper and lower case characters.')
     if len(password1) <= 10:
-        errors.append('Error: Passwords must be longer than 10 characters.')
+        errors.append('Passwords must be longer than 10 characters.')
 
     if errors:
         raise InvalidPasswordErrors(errors)
@@ -77,19 +77,19 @@ def check_username(username, testing=False):
 
     # Don't allow public as a username
     if username.lower() == 'public':
-        raise InvalidUsernameError('Error: Username is invalid.')
+        raise InvalidUsernameError('Username is invalid.')
 
     # Check the username does not contain invalid characters
     invalid_chars = set('\'\"\\/ ;,!@#$%^&*()|[{}]`~')
     if set(username).intersection(invalid_chars):
-        raise InvalidUsernameError('Error: Username contains invalid characters.')
+        raise InvalidUsernameError('Username contains invalid characters.')
 
     # Check the username has not already been used
     with Database(STORAGE_DIR, testing=testing) as db:
         # Get all existing usernames
         used_names = db.get_all_usernames()
     if username in used_names:
-        raise InvalidUsernameError('Error: Username is already taken.')
+        raise InvalidUsernameError('Username is already taken.')
 
 
 def reset_password(username, email, testing=False):
