@@ -563,8 +563,6 @@ HTML_ARGS = {
     'settings_selected': '',
 }
 
-HTML_ARGS.update(yaml.safe_load(STAT_FILE.read_text()))
-
 ##########################
 # CONFIGURE TOOL GLOBALS #
 ###########################

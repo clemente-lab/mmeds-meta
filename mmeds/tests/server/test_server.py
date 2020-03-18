@@ -107,9 +107,9 @@ class TestServer(helper.CPWebCase):
 
         self.login()
         logger.debug('login')
-        return
         self.logout()
         logger.debug('logout')
+        return
         self.login_fail_password()
         logger.debug('login_fail_password')
         self.login_fail_username()
@@ -226,11 +226,9 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def logout(self):
-        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
+        self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.getPage('/auth/logout', headers=self.cookies)
-        self.assertStatus('200 OK')
-        with open(fig.HTML_DIR / 'index.html') as f:
-            page = f.read()
+        page = server.format_html('login')
         self.assertBody(page)
 
     def login_fail_password(self):

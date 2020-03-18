@@ -271,7 +271,6 @@ class Watcher(Process):
         current_upload = None
         # Continue until it's parent process is killed
         while True:
-            self.update_stats()
             self.check_processes()
             self.write_running_processes()
             self.log_processes()

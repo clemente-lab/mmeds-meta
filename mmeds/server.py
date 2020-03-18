@@ -49,7 +49,6 @@ def catch_server_errors(page_method):
             body = HTML_PAGES['login'][0].read_text()
             args = deepcopy(HTML_ARGS)
             args['body'] = body.format(**args)
-            args.update(util.load_mmeds_stats())
             return HTML_PAGES['logged_out_template'].read_text().format(**args)
 
         except KeyError as e:
@@ -178,6 +177,9 @@ class MMEDSbase:
 
             # Add the arguments included in this format call
             args.update(kwargs)
+
+            # Add the mmeds stats
+            args.update(util.load_mmeds_stats(self.testing))
 
             # If a user is logged in, load the side bar
             if header:
@@ -455,6 +457,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
+        logger.debug('upload/retry_upload')
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'specimen':
             page = self.format_html('upload_metadata_file',
@@ -941,7 +944,6 @@ class MMEDSserver(MMEDSbase):
         Add the highlighting for this section of the website as well as other relevant arguments
         """
         kwargs['home_selected'] = 'w3-text-blue'
-        kwargs.update(util.load_mmeds_stats())
         return super().format_html(page, **kwargs)
 
     @cp.expose

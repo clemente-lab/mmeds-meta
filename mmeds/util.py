@@ -68,8 +68,12 @@ def format_alerts(args):
     return args
 
 
-def load_mmeds_stats():
-    return yaml.safe_load(fig.STAT_FILE.read_text())
+def load_mmeds_stats(testing):
+    if testing:
+        stats = {}
+    else:
+        stats = yaml.safe_load(fig.STAT_FILE.read_text())
+    return stats
 
 
 def load_metadata_template(subject_type):
