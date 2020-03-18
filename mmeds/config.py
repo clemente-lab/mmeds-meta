@@ -11,6 +11,7 @@ import mmeds
 import hashlib
 import os
 import re
+import yaml
 
 
 ############################
@@ -37,6 +38,7 @@ JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
+STAT_FILE = DATABASE_DIR / 'mmeds_stats.yaml'
 PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
 if not PROCESS_LOG_DIR.exists():
     PROCESS_LOG_DIR.mkdir()
@@ -468,10 +470,9 @@ HTML_PAGES = {
     # Authentication Pages
     'login': (HTML_DIR / 'login_body.html', False),
     'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
-    'account_register_page': (HTML_DIR / 'account_register_page.html', False),
     'home': (HTML_DIR / 'home_body.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
-    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', True),
+    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
 
     # Upload Pages
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
@@ -561,6 +562,8 @@ HTML_ARGS = {
     'account_selected': '',
     'settings_selected': '',
 }
+
+HTML_ARGS.update(yaml.safe_load(STAT_FILE.read_text()))
 
 ##########################
 # CONFIGURE TOOL GLOBALS #

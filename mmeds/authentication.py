@@ -58,7 +58,7 @@ def check_password(password1, password2):
     errors = []
 
     if not password1 == password2:
-        errors.append('Error: Passwords do not match')
+        errors.append('Error: Passwords do not match.')
     if not pas.intersection(nums):
         errors.append('Error: Passwords must contain at least one number.')
     if not pas.intersection(syms):

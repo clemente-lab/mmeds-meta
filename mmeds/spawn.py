@@ -178,6 +178,19 @@ class Watcher(Process):
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 
+    def update_stats(self):
+        """ Update the mmeds stats to their most recent values """
+        # Get stats for MMEDs server
+        with Database(testing=self.testing) as db:
+            args = {
+                'study_count': len(db.get_all_studies()),
+                'analysis_count': len(db.get_all_analyses()),
+                'user_count': len(db.get_all_usernames()),
+                'query_count': 42,
+            }
+        with open(fig.STAT_FILE, 'w+') as f:
+            yaml.safe_dump(args, f)
+
     def any_running(self, ptype):
         """ Returns true if there is a process running """
         return bool(self.running_processes['ptype'])
@@ -258,6 +271,7 @@ class Watcher(Process):
         current_upload = None
         # Continue until it's parent process is killed
         while True:
+            self.update_stats()
             self.check_processes()
             self.write_running_processes()
             self.log_processes()

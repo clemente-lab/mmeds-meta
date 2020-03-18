@@ -1,13 +1,11 @@
 from collections import defaultdict, OrderedDict
-from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError, EmailError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, EmailError
 from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
 from pathlib import Path
 from os import environ
 from numpy import nan, int64, float64, datetime64
-from functools import wraps
-from inspect import isfunction
 from tempfile import gettempdir
 from re import sub
 from ppretty import ppretty
@@ -68,6 +66,10 @@ def format_alerts(args):
         except KeyError:
             pass
     return args
+
+
+def load_mmeds_stats():
+    return yaml.safe_load(fig.STAT_FILE.read_text())
 
 
 def load_metadata_template(subject_type):
@@ -165,32 +167,6 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        skiprows=skiprows,
                        na_values=na_values,
                        keep_default_na=keep_default_na)
-
-
-def catch_server_errors(page_method):
-    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
-    @wraps(page_method)
-    def wrapper(*a, **kwargs):
-        try:
-            return page_method(*a, **kwargs)
-        except LoggedOutError:
-            body = fig.HTML_PAGES['login'][0].read_text()
-            args = deepcopy(fig.HTML_ARGS)
-            args['body'] = body.format(**args)
-            return fig.HTML_PAGES['logged_out_template'].read_text().format(**args)
-        except KeyError as e:
-            logger.error(e)
-            return "There was an error, contact server admin with:\n {}".format(e)
-    return wrapper
-
-
-def decorate_all_methods(decorator):
-    def apply_decorator(cls):
-        for k, m in cls.__dict__.items():
-            if isfunction(m):
-                setattr(cls, k, decorator(m))
-        return cls
-    return apply_decorator
 
 
 def load_config(config_file, metadata, ignore_bad_cols=False):

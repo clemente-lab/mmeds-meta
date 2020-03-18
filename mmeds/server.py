@@ -5,6 +5,10 @@ import cherrypy as cp
 from cherrypy.lib import static
 from pathlib import Path
 from subprocess import run
+from functools import wraps
+from inspect import isfunction
+from copy import deepcopy
+from multiprocessing import current_process
 import atexit
 
 
@@ -13,16 +17,17 @@ import mmeds.error as err
 import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
-from mmeds.util import (insert_html, log, MIxS_to_mmeds,
-                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy,
-                        SafeDict)
+from mmeds.util import (insert_html, log, MIxS_to_mmeds, mmeds_to_MIxS, create_local_copy, SafeDict)
 from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
 from mmeds.spawn import handle_modify_data
+from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
+
+logger = MMEDSLog('debug').logger
 
 
 def kill_watcher(monitor):
@@ -32,6 +37,34 @@ def kill_watcher(monitor):
         log('Try to terminate')
         log('Try to kill')
         monitor.kill()
+
+
+def catch_server_errors(page_method):
+    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
+    @wraps(page_method)
+    def wrapper(*a, **kwargs):
+        try:
+            return page_method(*a, **kwargs)
+        except err.LoggedOutError:
+            body = HTML_PAGES['login'][0].read_text()
+            args = deepcopy(HTML_ARGS)
+            args['body'] = body.format(**args)
+            args.update(util.load_mmeds_stats())
+            return HTML_PAGES['logged_out_template'].read_text().format(**args)
+
+        except KeyError as e:
+            logger.error(e)
+            return "There was an error, contact server admin with:\n {}".format(e)
+    return wrapper
+
+
+def decorate_all_methods(decorator):
+    def apply_decorator(cls):
+        for k, m in cls.__dict__.items():
+            if isfunction(m):
+                setattr(cls, k, decorator(m))
+        return cls
+    return apply_decorator
 
 
 # Note: In all of the following classes, if a parameter is named in camel case instead of underscore
@@ -149,8 +182,9 @@ class MMEDSbase:
             # If a user is logged in, load the side bar
             if header:
                 template = HTML_PAGES['logged_in_template'].read_text()
-                args['user'] = self.get_user()
-                args['dir'] = self.get_dir()
+                if args.get('user') is None:
+                    args['user'] = self.get_user()
+                    args['dir'] = self.get_dir()
             else:
                 template = HTML_PAGES['logged_out_template'].read_text()
 
@@ -166,7 +200,7 @@ class MMEDSbase:
         # Log arguments if there is an issue
         except (ValueError, KeyError):
             cp.log('Args')
-            cp.log('\n'.join([str(x) for x in args.items()]))
+            cp.log('\n'.join([str(x) for x in kwargs.items()]))
             cp.log('=================================')
             cp.log(page)
             raise
@@ -699,11 +733,15 @@ class MMEDSauthentication(MMEDSbase):
         """
         try:
             check_password(password1, password2)
+            logger.error('password check passed')
             check_username(username, testing=self.testing)
+            logger.error('username check passed')
             add_user(username, password1, email, testing=self.testing)
-            page = self.format_html('home')
+            logger.error('user added')
+            page = self.format_html('login', success='Account created successfully!')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
-            page = self.format_html('auth_sign_up_page', error=e.message.split(','))
+            logger.error('error, invalid something.\n{}'.format(e.message))
+            page = self.format_html('auth_sign_up_page', error=e.message)
         return page
 
     @cp.expose
@@ -903,11 +941,7 @@ class MMEDSserver(MMEDSbase):
         Add the highlighting for this section of the website as well as other relevant arguments
         """
         kwargs['home_selected'] = 'w3-text-blue'
-        # Get stats for MMEDs server
-        with Database(testing=self.testing) as db:
-            kwargs['study_count'] = len(db.get_all_studies())
-            kwargs['analysis_count'] = len(db.get_all_analyses())
-            kwargs['user_count'] = len(db.get_all_usernames())
+        kwargs.update(util.load_mmeds_stats())
         return super().format_html(page, **kwargs)
 
     @cp.expose
