@@ -796,9 +796,9 @@ class MMEDSauthentication(MMEDSbase):
         """ Page for reseting a user's password. """
         try:
             reset_password(username, email, testing=self.testing)
-            page = self.format_html('index', success='A new password has been sent to your email.')
+            page = self.format_html('login', success='A new password has been sent to your email.')
         except err.NoResultError:
-            page = self.format_html('index', error='No account exists with the provided username and email.')
+            page = self.format_html('login', error='No account exists with the provided username and email.')
         return page
 
 

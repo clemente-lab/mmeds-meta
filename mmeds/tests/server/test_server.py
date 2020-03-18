@@ -1,11 +1,9 @@
-from mmeds.server import MMEDSserver, decorate_all_methods
+from mmeds.server import MMEDSserver
 from time import sleep, time
 from collections import defaultdict
 from pathlib import Path
 from tidylib import tidy_document
 from tempfile import gettempdir
-from functools import wraps
-from inspect import isfunction
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -38,17 +36,7 @@ def check_page(page):
         # Make sure there are only warnings
         assert 'error' not in error
 
-def catch_all_errors(page_method):
-    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
-    @wraps(page_method)
-    def wrapper(*a, **kwargs):
-        try:
-            return page_method(*a, **kwargs)
-        except BaseException as e:
-            quit()
-    return wrapper
 
-# @decorate_all_methods(catch_all_errors)
 class TestServer(helper.CPWebCase):
 
     server_code = 'server_code_' + fig.get_salt(10)
@@ -74,7 +62,6 @@ class TestServer(helper.CPWebCase):
         else:
             good_page.write_bytes(check_body)
         super().assertBody(check_body)
-
 
     @staticmethod
     def setup_server():
@@ -105,20 +92,24 @@ class TestServer(helper.CPWebCase):
 
     def test_d_login(self):
 
-        self.login()
-        logger.debug('login')
-        self.logout()
-        logger.debug('logout')
-        return
         self.login_fail_password()
         logger.debug('login_fail_password')
         self.login_fail_username()
         logger.debug('login_fail_username')
+        self.login()
+        logger.debug('login')
+        self.logout()
+        logger.debug('logout')
+
+    def test_e_reset_password(self):
+        self.login()
         self.tp = self.reset_password()
+        return
         self.change_password()
         logger.debug('change_password')
+        self.logout()
 
-    def test_da_animal_upload(self):
+    def test_e_animal_upload(self):
         return
         self.login()
         self.upload_animal_metadata()
@@ -186,11 +177,11 @@ class TestServer(helper.CPWebCase):
         self.assertBody(home_page)
 
     def sign_up_fail(self):
+        """ Check a unsuccessful sign in """
         # Check the sign up input page
         self.getPage('/auth/register_account')
         self.assertStatus('200 OK')
 
-        page = (fig.HTML_DIR / 'auth_sign_up_page.html').read_text()
         addr = '/auth/sign_up?username={}&email={}&password1={}&password2={}'
 
         # Test signup with an invalid username
@@ -209,8 +200,7 @@ class TestServer(helper.CPWebCase):
         logger.debug('continuing sign up')
 
     def sign_up_success(self):
-
-        page = (fig.HTML_DIR / 'auth_sign_up_page.html').read_text()
+        """ Check a successful sign in """
         addr = '/auth/sign_up?username={}&email={}&password1={}&password2={}'
 
         # Test successful signup
@@ -232,23 +222,39 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def login_fail_password(self):
-        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS + 'garbage'))
+        self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS + 'garbage'))
         self.assertStatus('200 OK')
-        with open(fig.HTML_DIR / 'index.html') as f:
-            page = f.read()
-        page = insert_error(page, 14, err.InvalidLoginError().message)
+        page = server.format_html('login', error=err.InvalidLoginError().message)
         self.assertBody(page)
 
     def login_fail_username(self):
-        self.getPage('/auth/login?username={}&password={}'.format(self.server_user + 'garbage', sec.TEST_PASS))
+        self.getPage('/login?username={}&password={}'.format(self.server_user + 'garbage', sec.TEST_PASS))
         self.assertStatus('200 OK')
-        with open(fig.HTML_DIR / 'index.html') as f:
-            page = f.read()
-        page = insert_error(page, 14, err.InvalidLoginError().message)
+        page = server.format_html('login', error=err.InvalidLoginError().message)
         self.assertBody(page)
 
+    def reset_password(self):
+        logger.debug('reset_password')
+        self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user,
+                                                                                  fig.TEST_EMAIL + 'dfa'),
+                     self.cookies)
+        self.assertStatus('200 OK')
+        fail_page = server.format_html('login', error='No account exists with the provided username and email.')
+        self.assertBody(fail_page)
+
+        self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL),
+                     self.cookies)
+        self.assertStatus('200 OK')
+        pass_page = server.format_html('login', success='A new password has been sent to your email.')
+        self.assertBody(pass_page)
+
+        mail = recieve_email(self.server_user, 'reset', 'Your password has been reset.')
+        new_pass = mail.split('password is:')[1].splitlines()[1].strip()
+        return new_pass
+
     def change_password(self):
-        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, self.tp))
+        logger.debug('change_password')
+        self.getPage('/login?username={}&password={}'.format(self.server_user, self.tp))
         self.assertStatus('200 OK')
         self.getPage('/auth/input_password', self.cookies)
         self.assertStatus('200 OK')
@@ -257,36 +263,17 @@ class TestServer(helper.CPWebCase):
                                                                                                     new=temp_pass_bad),
                      self.cookies)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'auth_change_password.html', title='Change Password')
-        fail_page = insert_error(page, 9, 'Error: Passwords must be longer than 10 characters.')
+        fail_page = server.format_html('login', error='No account exists with the provided username and email.')
         self.assertBody(fail_page)
         self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
                                                                                                     new=sec.TEST_PASS),
                      self.cookies)
         self.assertStatus('200 OK')
-        pass_page = insert_html(page, 9, 'Your password was successfully changed.')
+        pass_page = server.format_html('login', error='Your password was successfully changed.')
         self.assertBody(pass_page)
 
-        self.getPage('/auth/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
+        self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
-
-    def reset_password(self):
-        orig_page = (fig.HTML_DIR / 'index.html').read_text()
-        self.getPage('/auth/password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL + 'dfa'),
-                     self.cookies)
-        self.assertStatus('200 OK')
-        fail_page = insert_error(orig_page, 14, 'No account exists with the provided username and email.')
-        self.assertBody(fail_page)
-
-        self.getPage('/auth/password_recovery?username={}&email={}'.format(self.server_user, fig.TEST_EMAIL),
-                     self.cookies)
-        self.assertStatus('200 OK')
-        pass_page = insert_html(orig_page, 14, 'A new password has been sent to your email.')
-        self.assertBody(pass_page)
-
-        mail = recieve_email(self.server_user, 'reset', 'Your password has been reset.')
-        new_pass = mail.split('password is:')[1].splitlines()[1].strip()
-        return new_pass
 
     ############
     #  Access  #
