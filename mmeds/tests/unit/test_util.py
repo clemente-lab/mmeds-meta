@@ -127,18 +127,6 @@ class UtilTests(TestCase):
         assert df['AdditionalMetaData']['Together'].any()
         assert df['AdditionalMetaData']['Separate'].any()
 
-    def test_load_html(self):
-        page = util.load_html(fig.HTML_DIR / 'welcome.html', title='Welcome', user='David')
-        page = util.insert_error(page, 22, 'There was a problem')
-        page = util.insert_html(page, 22, 'There was a problem')
-        page = util.insert_warning(page, 22, 'There was a problem')
-        # Check that the html is valid
-        document, errors = tidy_document(page)
-        util.log(errors)
-        # Assert no errors, warnings are okay
-        for warn in errors:
-            assert not ('error' in warn or 'Error' in warn)
-
     def test_read_write_mmeds(self):
         tmpdir = Path(gettempdir())
         mdf = util.load_metadata(fig.TEST_METADATA)
