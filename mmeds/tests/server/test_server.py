@@ -108,8 +108,7 @@ class TestServer(helper.CPWebCase):
         self.change_password()
         self.logout()
 
-    def test_e_animal_upload(self):
-        return
+    def test_ca_animal_upload(self):
         self.login()
         self.upload_animal_metadata()
         self.upload_otu()
@@ -343,7 +342,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['otu_table'], [fig.TEST_OTU], ['text/tab-seperated-values'])
-        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         assert recieve_email(self.server_user, 'upload',
@@ -352,6 +351,7 @@ class TestServer(helper.CPWebCase):
     def upload_animal_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
+
         # Check an invalid metadata filetype
         self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_Animal_OTU&subjectType=animal',
                      self.cookies)
@@ -374,7 +374,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['otu_table'], [fig.TEST_OTU], ['text/tab-seperated-values'])
-        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         # Search arguments for retrieving emails with access codes
@@ -404,7 +404,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['lefse_table'], [fig.TEST_LEFSE], ['text/tab-seperated-values'])
-        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         # Search arguments for retrieving emails with access codes
@@ -439,7 +439,7 @@ class TestServer(helper.CPWebCase):
                                            fig.TEST_BARCODES, fig.TEST_BARCODES],
                                           ['application/gzip', 'application/gzip',
                                            'application/gzip', 'application/gzip'])
-        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         assert recieve_email(self.server_user, 'upload',
@@ -538,7 +538,7 @@ class TestServer(helper.CPWebCase):
                                           [fig.TEST_READS, '', fig.TEST_BARCODES, 'single_end'],
                                           ['application/gzip', 'application/octet-stream',
                                            'application/gzip', ''])
-        self.getPage('/analysis/process_data', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
         mail = recieve_email(self.server_user, 'upload',
