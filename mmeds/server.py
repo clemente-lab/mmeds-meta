@@ -8,7 +8,6 @@ from subprocess import run
 from functools import wraps
 from inspect import isfunction
 from copy import deepcopy
-from multiprocessing import current_process
 import atexit
 
 
@@ -124,7 +123,7 @@ class MMEDSbase:
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
-            raise err.MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
+            raise err.MetaDataError('{} is not a valid filetype.'.format(file_extension))
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())

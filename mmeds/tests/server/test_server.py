@@ -9,7 +9,7 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, insert_warning, send_email
+from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, send_email
 from mmeds.spawn import Watcher
 from multiprocessing import current_process, Queue, Pipe
 
@@ -46,6 +46,10 @@ class TestServer(helper.CPWebCase):
     lab_user = 'lab_user_' + str(int(time()))
     tp = None
 
+    ##################
+    # Helper Methods #
+    ##################
+
     def assertBody(self, check_body):
         """
         Override this assert for logging purposes
@@ -62,6 +66,33 @@ class TestServer(helper.CPWebCase):
         else:
             good_page.write_bytes(check_body)
         super().assertBody(check_body)
+
+    def upload_files(self, file_handles, file_paths, file_types):
+        """ Helper method to setup headers and body for uploading a file """
+        boundry = fig.get_salt(10)
+        zipped = zip(file_handles, file_paths, file_types)
+        b = b''
+        for file_handle, file_path, file_type in zipped:
+            # Byte strings
+            b += str.encode('--{}\r\n'.format(boundry) +
+                            'Content-Disposition: form-data; name="{}"; '.format(file_handle))
+            # IF the file_type is '' treat it as a string param
+            if file_type == '':
+                b += str.encode('\r\n\r\n{}\r\n'.format(file_path))
+            # Otherwise load the file
+            else:
+                b += str.encode('filename="{}"\r\n'.format(Path(file_path).name) +
+                                'Content-Type: {}\r\n\r\n'.format(file_type))
+                if not file_path == '':
+                    b += Path(file_path).read_bytes() + str.encode('\r\n')
+            b + str.encode('\r\n')
+        b += str.encode('--{}--\r\n'.format(boundry))
+
+        filesize = len(b)
+        h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
+             ('Content-Length', str(filesize)),
+             ('Connection', 'keep-alive')]
+        return h, b
 
     @staticmethod
     def setup_server():
@@ -111,14 +142,18 @@ class TestServer(helper.CPWebCase):
     def test_ca_animal_upload(self):
         self.login()
         self.upload_animal_metadata()
-        self.upload_otu()
+        self.upload_otu_data()
         self.logout()
 
-    def test_d_upload(self):
-        return
+    def test_cb_upload(self):
         self.login()
         self.upload_metadata()
         self.upload_data()
+        self.logout()
+
+    def test_cc_modify_upload(self):
+        return
+        self.login()
         self.modify_upload()
         self.download_page_fail()
         self.download_block()
@@ -291,64 +326,8 @@ class TestServer(helper.CPWebCase):
     #  Access  #
     ############
 
-    def upload_files(self, file_handles, file_paths, file_types):
-        """ Helper method to setup headers and body for uploading a file """
-        boundry = fig.get_salt(10)
-        zipped = zip(file_handles, file_paths, file_types)
-        b = b''
-        for file_handle, file_path, file_type in zipped:
-            # Byte strings
-            b += str.encode('--{}\r\n'.format(boundry) +
-                            'Content-Disposition: form-data; name="{}"; '.format(file_handle))
-            # IF the file_type is '' treat it as a string param
-            if file_type == '':
-                b += str.encode('\r\n\r\n{}\r\n'.format(file_path))
-            # Otherwise load the file
-            else:
-                b += str.encode('filename="{}"\r\n'.format(Path(file_path).name) +
-                                'Content-Type: {}\r\n\r\n'.format(file_type))
-                if not file_path == '':
-                    b += Path(file_path).read_bytes() + str.encode('\r\n')
-            b + str.encode('\r\n')
-        b += str.encode('--{}--\r\n'.format(boundry))
-
-        filesize = len(b)
-        h = [('Content-Type', 'multipart/form-data; boundary={}'.format(boundry)),
-             ('Content-Length', str(filesize)),
-             ('Connection', 'keep-alive')]
-        return h, b
-
-    def upload_otu(self):
-        self.getPage('/upload/upload_page', self.cookies)
-        self.assertStatus('200 OK')
-        # Check an invalid metadata filetype
-        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_OTU&subjectType=human', self.cookies)
-        self.assertStatus('200 OK')
-
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
-        self.assertStatus('200 OK')
-
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_ALT], ['text/tab-seperated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
-        self.assertStatus('200 OK')
-        page_body = self.body
-        document, errors = tidy_document(page_body)
-        # Assert no errors, warnings are okay
-        for warn in errors:
-            assert not ('error' in warn or 'Error' in warn)
-
-        self.getPage('/upload/upload_data', self.cookies)
-        self.assertStatus('200 OK')
-
-        headers, body = self.upload_files(['otu_table'], [fig.TEST_OTU], ['text/tab-seperated-values'])
-        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
-        self.assertStatus('200 OK')
-
-        assert recieve_email(self.server_user, 'upload',
-                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_OTU'))
-
     def upload_animal_metadata(self):
+        """ Try uploading the two metadata files associated with animal metadata """
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
 
@@ -370,6 +349,8 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
+    def upload_otu_data(self):
+        """ Try uploading an otu data file """
         self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
 
@@ -377,7 +358,6 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        # Search arguments for retrieving emails with access codes
         assert recieve_email(self.server_user, 'upload',
                              'user {} uploaded data for the {}'.format(self.server_user, 'Test_Animal_OTU'))
 
@@ -455,12 +435,13 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_file.html',
-                         title='Upload Metadata',
-                         user=self.server_user,
-                         metadata_type='subject')
-        err = 'gz is not a valid filetype.'
-        page = insert_error(page, 22, err)
+        page = server.format_html('upload_metadata_file',
+                                  user=self.server_user,
+                                  upload_selected='w3-blue',
+                                  home_selected='',
+                                  select_barcodes='',
+                                  metadata_type='subject',
+                                  error='gz is not a valid filetype.')
         self.assertBody(page)
         log('Checked invalid filetype')
 
@@ -480,14 +461,15 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_WARN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
-                         title='Warnings',
-                         user=self.server_user,
-                         next_page='../upload/retry_upload')
-
         warning = '-1\t17\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
             ' may be in error, only 1 found.'
-        page = insert_warning(page, 22, warning)
+        page = server.format_html('upload_metadata_warning',
+                                  user=self.server_user,
+                                  warning=[warning],
+                                  upload_selected='w3-blue',
+                                  home_selected='',
+                                  next_page='{retry_upload_page}')
+
         self.assertBody(page)
         log('Checked metadata that warns')
 
@@ -513,21 +495,28 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_metadata_warning.html',
-                         title='Warnings',
-                         user=self.server_user,
-                         next_page='../upload/upload_data')
 
         warning = '-1\t41\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
             ' may be in error, only 1 found.'
-        page = insert_warning(page, 22, warning)
+
+        page = server.format_html('upload_metadata_warning',
+                                  user=self.server_user,
+                                  warning=[warning],
+                                  upload_selected='w3-blue',
+                                  home_selected='',
+                                  next_page='{upload_data_page}')
         self.assertBody(page)
         log('Checked metadata that warns')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'upload_data_files.html', title='Upload Data', user=self.server_user)
+        page = server.format_html('upload_data_files',
+                                  user=self.server_user,
+                                  upload_selected='w3-blue',
+                                  success='Specimen metadata uploaded successfully',
+                                  dual_barcodes='style="display:none"',
+                                  home_selected='')
         self.assertBody(page)
         log('Checked a metadata file with no problems')
 
