@@ -483,8 +483,7 @@ class MMEDSupload(MMEDSbase):
                                data_type,
                                self.testing)
             # Get the html for the upload page
-            page = self.format_html('welcome')
-            page = insert_html(page, 22, 'Upload modification successful')
+            page = self.format_html('home', success='Upload modification successful')
         except err.MissingUploadError as e:
             page = self.format_html('upload_select_page', title='Upload Type', error=e.message)
         return page

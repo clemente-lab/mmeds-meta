@@ -122,7 +122,6 @@ class TestServer(helper.CPWebCase):
         self.sign_up_success()
 
     def test_bc_login(self):
-
         self.login_fail_password()
         logger.debug('login_fail_password')
         self.login_fail_username()
@@ -149,12 +148,12 @@ class TestServer(helper.CPWebCase):
         self.login()
         self.upload_metadata()
         self.upload_data()
+        self.modify_upload()
         self.logout()
 
-    def test_cc_modify_upload(self):
+    def test_da_download(self):
         return
         self.login()
-        self.modify_upload()
         self.download_page_fail()
         self.download_block()
         self.download()
@@ -432,7 +431,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human', self.cookies)
         self.assertStatus('200 OK')
         # Check an invalid metadata filetype
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_GZ], ['application/gzip'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_CONFIG], ['application/gzip'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = server.format_html('upload_metadata_file',
@@ -441,7 +440,7 @@ class TestServer(helper.CPWebCase):
                                   home_selected='',
                                   select_barcodes='',
                                   metadata_type='subject',
-                                  error='gz is not a valid filetype.')
+                                  error='yaml is not a valid filetype.')
         self.assertBody(page)
         log('Checked invalid filetype')
 
@@ -539,29 +538,37 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/modify_upload?data_type=for_reads&access_code=badcode',
                      headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        orig_page = load_html(fig.HTML_DIR / 'upload_select_page.html', title='Upload Type', user=self.server_user)
-        err_page = insert_error(orig_page, 22, err.MissingUploadError().message)
+        err_page = server.format_html('upload_select_page',
+                                      user=self.server_user,
+                                      upload_selected='w3-blue',
+                                      home_selected='',
+                                      error=err.MissingUploadError().message)
         self.assertBody(err_page)
+
         self.getPage('/upload/modify_upload?data_type=for_reads&access_code={}'.format(self.access_code),
                      headers + self.cookies, 'POST', body)
-        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=self.server_user)
-        page = insert_html(page, 22, 'Upload modification successful')
+        page = server.format_html('home',
+                                  user=self.server_user,
+                                  upload_selected='w3-blue',
+                                  home_selected='',
+                                  success='Upload modification successful')
         self.assertStatus('200 OK')
         self.assertBody(page)
 
     def download_page_fail(self):
-        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
         self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
                      headers=self.cookies)
         self.assertStatus('200 OK')
-        page = load_html(fig.HTML_DIR / 'welcome.html', title='Welcome to MMEDS', user=self.server_user)
-        page = insert_error(page, 22, err.MissingUploadError().message)
+        page = server.format_html('upload_select_page',
+                                  user=self.server_user,
+                                  upload_selected='w3-blue',
+                                  home_selected='',
+                                  error=err.MissingUploadError().message)
+
         self.assertBody(page)
         self.getPage('/auth/logout', headers=self.cookies)
 
     def download_block(self):
-        # Login
-        self.getPage("/auth/login?username={}&password={}".format(self.server_user, sec.TEST_PASS))
         # Start test analysis
         address = '/analysis/run_analysis?access_code={}&tool_type={}&analysis_type={}&config='
         tool, analysis = fig.TEST_TOOL.split('-')
