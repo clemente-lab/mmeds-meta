@@ -27,6 +27,14 @@ absDir = Path(os.getcwd())
 
 logger = MMEDSLog('debug').logger
 
+def kill_watcher(monitor):
+    """ A function to shutdown the Watcher instance when the server exits """
+    monitor.terminate()
+    while monitor.is_alive():
+        log('Try to terminate')
+        log('Try to kill')
+        monitor.kill()
+
 
 def catch_server_errors(page_method):
     """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
@@ -70,7 +78,7 @@ class MMEDSbase:
         self.monitor = watcher
         self.q = q
 
-    def at_exit(self):
+    def exit(self):
         cp.engine.exit()
 
     def get_user(self):
