@@ -136,7 +136,6 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_ca_animal_upload(self):
-        return
         logger.info('ca animal upload')
         self.login()
         self.upload_animal_metadata()
@@ -583,13 +582,8 @@ class TestServer(helper.CPWebCase):
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(code.group(1)), headers=self.cookies)
         self.assertStatus('200 OK')
-        #self.getPage("/study/view_study?access_code={}".format(code.group(2)), headers=self.cookies)
-        #self.assertStatus('200 OK')
-        path = Path('/tmp/select_study.html')
-        document, errors = tidy_document(self.body.decode('utf-8'))
-        errs = errors.split('\n')
-        breakpoint()
-        path.write_bytes(self.body)
+        self.getPage("/study/view_study?access_code={}".format(code.group(2)), headers=self.cookies)
+        self.assertStatus('200 OK')
 
     #############
     # Downloads #
