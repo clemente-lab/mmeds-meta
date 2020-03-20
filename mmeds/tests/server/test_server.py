@@ -582,8 +582,6 @@ class TestServer(helper.CPWebCase):
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(code.group(1)), headers=self.cookies)
         self.assertStatus('200 OK')
-        self.getPage("/study/view_study?access_code={}".format(code.group(2)), headers=self.cookies)
-        self.assertStatus('200 OK')
 
     #############
     # Downloads #
