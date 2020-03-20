@@ -164,7 +164,6 @@ class TestServer(helper.CPWebCase):
         self.download()
         self.logout()
 
-
     def test_db_download(self):
         return
         self.login()

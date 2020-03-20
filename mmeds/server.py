@@ -216,41 +216,6 @@ class MMEDSdownload(MMEDSbase):
                                  'attachment', os.path.basename(file_path))
 
     @cp.expose
-    def download_page(self, access_code):
-        """ Loads the page with the links to download data and metadata. """
-        try:
-            self.check_upload(access_code)
-            # Get the open file handler
-            with Database(path='.', owner=self.get_user(), testing=self.testing) as db:
-                files, path = db.get_mongo_files(access_code)
-
-            page = self.format_html('download_select_file', title='Select Download')
-            for k, f in sorted(files.items(), reverse=True):
-                if f is not None and any(regex.match(k) for regex in USER_FILES):
-                    page = insert_html(page, 24, '<option value="{}">{}</option>'.format(k, k))
-            cp.session['download_access'] = access_code
-        except (err.MissingUploadError, err.UploadInUseError) as e:
-                page = self.format_html('welcome', error=e.message)
-        return page
-
-    @cp.expose
-    def select_download(self, download):
-        cp.log('User{} requests download {}'.format(self.get_user(), download))
-        with Database('.', owner=self.get_user(), testing=self.testing) as db:
-            files, path = db.get_mongo_files(cp.session['download_access'])
-        file_path = str(Path(path) / files[download])
-        if 'dir' in download:
-            cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                 Path(file_path).parent,
-                                                 Path(file_path).name)
-            run(cmd.split(' '), check=True)
-            file_path += '.tar.gz'
-        cp.log('Fetching {}'.format(file_path))
-
-        return static.serve_file(file_path, 'application/x-download',
-                                 'attachment', os.path.basename(file_path))
-
-    @cp.expose
     def download_file(self, file_name):
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
@@ -409,29 +374,6 @@ class MMEDSupload(MMEDSbase):
             page = self.format_html('home', success='Upload modification successful')
         except err.MissingUploadError as e:
             page = self.format_html('upload_select_page', title='Upload Type', error=e.message)
-        return page
-
-    @cp.expose
-    def convert_metadata(self, convertTo, myMetaData, unitCol, skipRows):
-        """
-        Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
-        """
-        log('In convert_metadata')
-        meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-        # Try the conversion
-        try:
-            if convertTo == 'mmeds':
-                file_path = self.get_dir() / 'mmeds_metadata.tsv'
-                # If it is successful return the converted file
-                MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
-            else:
-                file_path = self.get_dir() / 'mixs_metadata.tsv'
-                mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
-            page = static.serve_file(file_path, 'application/x-download',
-                                     'attachment', os.path.basename(file_path))
-        # If there is an issue with the provided unit column display an error
-        except err.MetaDataError as e:
-            page = self.format_html('welcome', title='Welcome to Mmeds', error=e.message)
         return page
 
     @cp.expose
@@ -696,18 +638,6 @@ class MMEDSauthentication(MMEDSbase):
         return page
 
     @cp.expose
-    def reset_code(self, study_name, study_email):
-        """ Skip uploading a file. """
-        # Get the open file handler
-        with Database(self.get_dir(), owner=self.get_user(), testing=self.testing) as db:
-            try:
-                db.reset_access_code(study_name, study_email)
-                page = self.format_html('welcome', success='Upload Successful')
-            except err.MissingUploadError:
-                page = self.format_html('welcome', error='There was an error during the upload')
-        return page
-
-    @cp.expose
     def password_recovery(self):
         return self.format_html('forgot_password')
 
@@ -798,7 +728,7 @@ class MMEDSanalysis(MMEDSbase):
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
-            page = self.format_html('welcome', title='Welcome to MMEDS',
+            page = self.format_html('home', title='Welcome to MMEDS',
                                     success='Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
             page = self.format_html('analysis_page', title='Welcome to MMEDS', error=e.message)
@@ -814,39 +744,6 @@ class MMEDSanalysis(MMEDSbase):
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
         page = self.format_html('analysis_select_tool', title='Select Analysis')
-        return page
-
-    @cp.expose
-    def query_page(self):
-        """ Load the page for executing Queries. """
-        page = self.format_html('analysis_query', title='Execute Query')
-        return page
-
-    @cp.expose
-    def execute_query(self, query):
-        """ Execute the provided query and format the results as an html table """
-        try:
-            # Set the session to use the current user
-            with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
-                data, header = db.execute(query)
-                html_data = db.format_html(data, header)
-
-            # Create a file with the results of the query
-            query_file = self.get_dir() / 'query.tsv'
-            if header is not None:
-                data = [header] + list(data)
-            with open(query_file, 'w') as f:
-                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
-            cp.session['download_files']['query'] = query_file
-
-            # Add the download button
-            html = '<form action="../download/download_file" method="post">\n\
-                    <button type="submit" name="file_name" value="query">Download Results</button>\n\
-                    </form>'
-            page = self.format_html('analysis_query')
-            page = insert_html(page, 29, html_data + html)
-        except (err.InvalidSQLError, err.TableAccessError) as e:
-            page = self.format_html('analysis_query', error=e.message)
         return page
 
 
