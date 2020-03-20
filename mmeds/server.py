@@ -78,9 +78,6 @@ class MMEDSbase:
         self.monitor = watcher
         self.q = q
 
-    def exit(self):
-        cp.engine.exit()
-
     def get_user(self):
         """
         Return the current user. Delete them from the
@@ -797,6 +794,10 @@ class MMEDSserver(MMEDSbase):
         except err.InvalidLoginError as e:
             page = self.format_html('login', error=e.message)
         return page
+
+    def exit(self):
+        kill_watcher(self.monitor)
+        cp.engine.exit()
 
     @cp.expose
     def index(self):
