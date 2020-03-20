@@ -578,10 +578,3 @@ TOOL_FILES = {
     'picrust1': ['otu_table'],
     'test': []
 }
-
-# Load the Java Script
-PAGE_JS = {}
-data = Path(HTML_DIR / 'javascript.txt').read_text().split('\n=====\n')
-for code in data:
-    parts = code.split('<source>\n')
-    PAGE_JS[parts[0]] = parts[1]

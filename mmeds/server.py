@@ -16,7 +16,7 @@ import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (insert_html, log, MIxS_to_mmeds, mmeds_to_MIxS, create_local_copy, SafeDict)
-from mmeds.config import UPLOADED_FP, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH, PAGE_JS
+from mmeds.config import UPLOADED_FP, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
@@ -163,10 +163,6 @@ class MMEDSbase:
 
             # Add the mmeds stats
             args.update(util.load_mmeds_stats(self.testing))
-
-            # Check for any javascript to load
-            if PAGE_JS.get(page) is not None:
-                args['script'] = PAGE_JS.get(page)
 
             # If a user is logged in, load the side bar
             if header:
