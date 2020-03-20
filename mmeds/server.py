@@ -1,6 +1,7 @@
 import os
 import tempfile
 import cherrypy as cp
+import atexit
 
 from cherrypy.lib import static
 from pathlib import Path
@@ -26,6 +27,7 @@ from mmeds.log import MMEDSLog
 absDir = Path(os.getcwd())
 
 logger = MMEDSLog('debug').logger
+
 
 def kill_watcher(monitor):
     """ A function to shutdown the Watcher instance when the server exits """
@@ -77,6 +79,7 @@ class MMEDSbase:
         self.testing = bool(int(testing))
         self.monitor = watcher
         self.q = q
+        atexit.register(kill_watcher, self.monitor)
 
     def get_user(self):
         """
