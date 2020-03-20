@@ -11,7 +11,6 @@ import mmeds
 import hashlib
 import os
 import re
-import yaml
 
 
 ############################
@@ -489,6 +488,7 @@ HTML_PAGES = {
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
     'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
+    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
 
     # TODO below this are outdated
     'analysis_query': (HTML_DIR / 'analysis_query.html', True),
@@ -552,6 +552,7 @@ HTML_ARGS = {
     'error': '',
     'warning': '',
     'success': '',
+    'javascript': IMAGE_PATH + 'mmeds.js',
 
     # Settings for highlighting the section of the web site currently being accessed
     'upload_selected': '',
@@ -577,3 +578,10 @@ TOOL_FILES = {
     'picrust1': ['otu_table'],
     'test': []
 }
+
+# Load the Java Script
+PAGE_JS = {}
+data = Path(HTML_DIR / 'javascript.txt').read_text().split('\n=====\n')
+for code in data:
+    parts = code.split('<source>\n')
+    PAGE_JS[parts[0]] = parts[1]

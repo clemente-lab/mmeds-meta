@@ -16,7 +16,7 @@ import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (insert_html, log, MIxS_to_mmeds, mmeds_to_MIxS, create_local_copy, SafeDict)
-from mmeds.config import UPLOADED_FP, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
+from mmeds.config import UPLOADED_FP, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH, PAGE_JS
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
@@ -164,6 +164,10 @@ class MMEDSbase:
             # Add the mmeds stats
             args.update(util.load_mmeds_stats(self.testing))
 
+            # Check for any javascript to load
+            if PAGE_JS.get(page) is not None:
+                args['script'] = PAGE_JS.get(page)
+
             # If a user is logged in, load the side bar
             if header:
                 template = HTML_PAGES['logged_in_template'].read_text()
@@ -272,7 +276,7 @@ class MMEDSstudy(MMEDSbase):
         """ Allows authorized user accounts to access uploaded studies. """
         study_html = ''' <tr class="w3-hover-blue">
             <th>
-            <a href="view_study?access_code={access_code}"> {study_name} </a>
+            <a href="{view_study_page}?access_code={access_code}"> {study_name} </a>
             </th>
             <th>{date_created}</th>
             <th>{num_analyses}</th>
@@ -284,11 +288,12 @@ class MMEDSstudy(MMEDSbase):
         # Otherwise only show studies they've uploaded
         else:
             with Database(path='.', testing=self.testing) as db:
-                studies = db.get_user_studies(self.get_user())
+                studies = db.get_all_user_studies(self.get_user())
 
         study_list = []
         for study in studies:
             study_list.append(study_html.format(study_name=study.study_name,
+                                                view_study_page=SERVER_PATH + 'study/view_study',
                                                 access_code=study.access_code,
                                                 date_created=study.created,
                                                 num_analyses=0))
@@ -659,11 +664,8 @@ class MMEDSauthentication(MMEDSbase):
         """
         try:
             check_password(password1, password2)
-            logger.error('password check passed')
             check_username(username, testing=self.testing)
-            logger.error('username check passed')
             add_user(username, password1, email, testing=self.testing)
-            logger.error('user added')
             page = self.format_html('login', success='Account created successfully!')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
             logger.error('error, invalid something.\n{}'.format(e.message))

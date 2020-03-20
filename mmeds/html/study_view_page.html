@@ -102,30 +102,3 @@
         </form>
     </div>
 </div>
-
-<script>
-function openStudyAction(evt, cityName) {{{{
-    let i, x, tablinks;
-    let x = document.getElementsByClassName("study-action");
-    for (i = 0; i < x.length; i++) {{{{
-        x[i].style.display = "none";
-    }}}}
-    document.getElementById(cityName).style.display = "block";
-    tablinks = document.getElementsByClassName("action-link");
-    for (i = 0; i < x.length; i++) {{{{
-        tablinks[i].className = tablinks[i].className.replace(" w3-blue", "");
-    }}}}
-    document.getElementById(cityName).style.display = "block";
-    evt.currentTarget.className += " w3-blue";
-}}}}
-
-let button = document.getElementById("newID");
-let container = document.getElementById("IDcontainer");
-let count = [0, 0, 0];
-function generate_ID() {{{{
-    let specimen = document.getElementById("specimen").value;
-    count[specimen] += 1;
-    button.innerHTML = "Specimen_" + specimen + "_" + count[specimen];
-    container.style.display = "block";
-}}}};
-</script>

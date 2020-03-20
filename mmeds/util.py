@@ -10,7 +10,6 @@ from tempfile import gettempdir
 from re import sub
 from ppretty import ppretty
 from time import sleep
-from copy import deepcopy
 
 import yaml
 import mmeds.config as fig
@@ -56,7 +55,6 @@ def format_alerts(args):
     for alert, color in [('error', 'red'), ('warning', 'yellow'), ('success', 'green')]:
         try:
             message = args[alert]
-            logger.error('Message type: {}'.format(type(message)))
             if isinstance(message, list):
                 outline = '<ul class="w3-ul w3-border">{}</ul>'
                 formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
@@ -821,6 +819,17 @@ def debug_log(text, testing=False):
 
 def info_log(text, testing=False):
     log(text, testing=testing, log_type='Info')
+
+def parse_code_blocks(path):
+    # Load the code templates
+    data = Path(path).read_text().split('\n=====\n')
+
+    # Dict for storing all the different code templates
+    code_blocks = {}
+    for code in data:
+        parts = code.split('<source>\n')
+        code_blocks[parts[0]] = parts[1]
+    return code_blocks
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

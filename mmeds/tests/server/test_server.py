@@ -14,6 +14,7 @@ from mmeds.spawn import Watcher
 from multiprocessing import current_process, Queue, Pipe
 
 import cherrypy as cp
+import re
 from cherrypy.test import helper
 from mmeds.log import MMEDSLog
 
@@ -102,11 +103,12 @@ class TestServer(helper.CPWebCase):
         test_config['global']['tools.sessions.name'] = 'cp_session'
         cp.config.update(test_config)
 
-    def test_a_setup(self):
-        log('===== Test Server Start =====')
+    def test_aa_setup(self):
+        logger.info('===== Test Server Start =====')
         add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
-    def test_aa_index(self):
+    def test_ab_index(self):
+        logger.info('ab index')
         self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
@@ -114,41 +116,45 @@ class TestServer(helper.CPWebCase):
         check_page(page_body)
 
     def test_ba_sign_up(self):
-        logger.debug('Test C')
+        logger.info('ba sign up')
         self.not_logged_in()
-        logger.debug('not_logged_in')
         self.sign_up_fail()
-        logger.debug('sign_up')
         self.sign_up_success()
 
     def test_bc_login(self):
+        logger.info('bc login')
         self.login_fail_password()
-        logger.debug('login_fail_password')
         self.login_fail_username()
-        logger.debug('login_fail_username')
         self.login()
-        logger.debug('login')
         self.logout()
-        logger.debug('logout')
 
     def test_bd_reset_password(self):
-        logger.debug('change_password')
+        logger.info('bd reset password')
         self.tp = self.reset_password()
         self.login(True)
         self.change_password()
         self.logout()
 
     def test_ca_animal_upload(self):
+        return
+        logger.info('ca animal upload')
         self.login()
         self.upload_animal_metadata()
         self.upload_otu_data()
         self.logout()
 
     def test_cb_upload(self):
+        logger.info('cb upload')
         self.login()
         self.upload_metadata()
         self.upload_data()
         self.modify_upload()
+        self.logout()
+
+    def test_da_select_study(self):
+        logger.info('da view study')
+        self.login()
+        self.select_study()
         self.logout()
 
     def test_da_download(self):
@@ -157,6 +163,12 @@ class TestServer(helper.CPWebCase):
         self.download_page_fail()
         self.download_block()
         self.download()
+        self.logout()
+
+
+    def test_db_download(self):
+        return
+        self.login()
         self.convert()
         self.lab_download()
         self.user_download()
@@ -340,7 +352,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
@@ -474,7 +486,7 @@ class TestServer(helper.CPWebCase):
         log('Checked metadata that warns')
 
         # Check a subject metadata file that has no issues
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
@@ -555,6 +567,29 @@ class TestServer(helper.CPWebCase):
                                   success='Upload modification successful')
         self.assertStatus('200 OK')
         self.assertBody(page)
+
+    #########
+    # Study #
+    #########
+    def select_study(self):
+        # Check the view study page
+        self.getPage("/study/select_study", headers=self.cookies)
+        self.assertStatus('200 OK')
+
+        # Parse the body of the page
+        body = self.body.decode('utf-8')
+        # Grab the access code
+        code = re.search('access_code=(.+?)">', body)
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(code.group(1)), headers=self.cookies)
+        self.assertStatus('200 OK')
+        #self.getPage("/study/view_study?access_code={}".format(code.group(2)), headers=self.cookies)
+        #self.assertStatus('200 OK')
+        path = Path('/tmp/select_study.html')
+        document, errors = tidy_document(self.body.decode('utf-8'))
+        errs = errors.split('\n')
+        breakpoint()
+        path.write_bytes(self.body)
 
     #############
     # Downloads #
