@@ -172,12 +172,6 @@ class TestServer(helper.CPWebCase):
         self.user_download()
         self.logout()
 
-    def test_e_otu_upload(self):
-        return
-        self.login()
-        self.upload_otu()
-        self.logout()
-
     def test_f_lefse_upload(self):
         return
         self.login()

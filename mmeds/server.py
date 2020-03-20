@@ -70,6 +70,9 @@ class MMEDSbase:
         self.monitor = watcher
         self.q = q
 
+    def at_exit(self):
+        cp.engine.exit()
+
     def get_user(self):
         """
         Return the current user. Delete them from the
