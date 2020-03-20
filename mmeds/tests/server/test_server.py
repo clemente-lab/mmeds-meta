@@ -9,7 +9,7 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import insert_error, insert_html, load_html, log, recieve_email, send_email
+from mmeds.util import log, recieve_email, send_email
 from mmeds.spawn import Watcher
 from multiprocessing import current_process, Queue, Pipe
 
@@ -192,6 +192,7 @@ class TestServer(helper.CPWebCase):
         # Send an email at the end to ensure there aren't issues with
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
+        watcher.terminate()
 
     ####################
     #  Authentication  #
@@ -321,9 +322,9 @@ class TestServer(helper.CPWebCase):
         self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
 
-    ############
-    #  Access  #
-    ############
+    ###########
+    # Uploads #
+    ###########
 
     def upload_animal_metadata(self):
         """ Try uploading the two metadata files associated with animal metadata """
@@ -507,8 +508,8 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
         log('Checked metadata that warns')
 
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
+        # Continue with warnings
+        self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
         self.assertStatus('200 OK')
         page = server.format_html('upload_data_files',
                                   user=self.server_user,
@@ -555,6 +556,10 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         self.assertBody(page)
 
+    #############
+    # Downloads #
+    #############
+
     def download_page_fail(self):
         self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
                      headers=self.cookies)
@@ -580,13 +585,7 @@ class TestServer(helper.CPWebCase):
         # Try to access again
         self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
 
-        page = load_html(fig.HTML_DIR / 'download_select_file.html',
-                         user=self.server_user, title='Select Download')
-        for i, f in enumerate(sorted(fig.TEST_FILES)):
-            page = insert_html(page, 24 + i, '<option value="{}">{}</option>'.format(f, f))
-
         self.assertStatus('200 OK')
-        self.assertBody(page)
         self.getPage('/logout', headers=self.cookies)
 
     def download(self):

@@ -8,7 +8,6 @@ from subprocess import run
 from functools import wraps
 from inspect import isfunction
 from copy import deepcopy
-import atexit
 
 
 import mmeds.secrets as sec
@@ -17,7 +16,7 @@ import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
 from mmeds.util import (insert_html, log, MIxS_to_mmeds, mmeds_to_MIxS, create_local_copy, SafeDict)
-from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
+from mmeds.config import UPLOADED_FP, USER_FILES, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
@@ -27,15 +26,6 @@ from mmeds.log import MMEDSLog
 absDir = Path(os.getcwd())
 
 logger = MMEDSLog('debug').logger
-
-
-def kill_watcher(monitor):
-    """ A function to shutdown the Watcher instance when the server exits """
-    monitor.terminate()
-    while monitor.is_alive():
-        log('Try to terminate')
-        log('Try to kill')
-        monitor.kill()
 
 
 def catch_server_errors(page_method):
@@ -79,12 +69,6 @@ class MMEDSbase:
         self.testing = bool(int(testing))
         self.monitor = watcher
         self.q = q
-        # Set the server to kill the watcher process on exit
-        atexit.register(kill_watcher, self.monitor)
-
-    def exit(self):
-        kill_watcher(self.monitor)
-        cp.engine.exit()
 
     def get_user(self):
         """
@@ -227,72 +211,9 @@ class MMEDSdownload(MMEDSbase):
     ########################################
 
     @cp.expose
-    def download_study(self, study_code):
-        """ Display the information and files of a particular study. """
-        with Database(path='.', testing=self.testing) as db:
-            study = db.get_doc(study_code, check_owner=False)
-            analyses = db.get_all_analyses_from_study(study_code)
-
-        page = self.format_html('download_selected_study',
-                                title='Study: {}'.format(study.study_name),
-                                study=study.study_name,
-                                date_created=study.created,
-                                last_accessed=study.last_accessed,
-                                doc_type=study.doc_type,
-                                reads_type=study.reads_type,
-                                barcodes_type=study.barcodes_type,
-                                access_code=study.access_code,
-                                owner=study.owner,
-                                email=study.email,
-                                path=study.path)
-
-        for filename, filepath in study.files.items():
-            page = insert_html(page, 34, '<option value="{}">{}</option>'.format(filepath, filename))
-
-        for analysis in analyses:
-            page = insert_html(page, 39 + len(study.files.keys()),
-                               '<option value="{}">{}</option>'.format(analysis.access_code,
-                                                                       analysis.name))
-        return page
-
-    @cp.expose
     def download_filepath(self, file_path):
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
-
-    @cp.expose
-    def select_analysis(self, access_code):
-        """ Display the information and files of a particular study. """
-        with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_doc(access_code, check_owner=False)
-
-        page = self.format_html('download_selected_analysis',
-                                title='Analysis: {}'.format(analysis.name),
-                                name=analysis.name,
-                                date_created=analysis.created,
-                                last_accessed=analysis.last_accessed,
-                                doc_type=analysis.doc_type,
-                                reads_type=analysis.reads_type,
-                                barcodes_type=analysis.barcodes_type,
-                                study_code=analysis.study_code,
-                                sub_analysis=analysis.sub_analysis,
-                                access_code=analysis.access_code,
-                                analysis_status=analysis.analysis_status,
-                                owner=analysis.owner,
-                                email=analysis.email,
-                                path=analysis.path)
-
-        for filename, file_path in analysis.files.items():
-            if Path(file_path).exists():
-                if '.' not in file_path:
-                    if not Path(file_path + '.tar.gz').exists():
-                        cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                             Path(file_path).parent,
-                                                             Path(file_path).name)
-                        run(cmd.split(' '), check=True)
-                    file_path += '.tar.gz'
-                page = insert_html(page, 37, '<option value="{}">{}</option>'.format(file_path, filename))
-        return page
 
     @cp.expose
     def download_page(self, access_code):
@@ -395,6 +316,7 @@ class MMEDSstudy(MMEDSbase):
                                                                               doc.created.strftime("%Y-%m-%d")))
                     for doc in docs]
 
+        # TODO pass study params as kwargs
         # Get files downloadable from this study
         study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
 
