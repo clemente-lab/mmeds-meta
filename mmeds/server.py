@@ -799,7 +799,6 @@ class MMEDSserver(MMEDSbase):
         return page
 
     def exit(self):
-        kill_watcher(self.monitor)
         cp.engine.exit()
 
     @cp.expose
