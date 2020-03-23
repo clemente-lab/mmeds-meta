@@ -68,7 +68,7 @@ if not test_root.is_dir():
 # Re-Write sql files using the memory engine
 for sql_file in sql_root.glob('*.sql'):
     sql = sql_file.read_text()
-    test_sql = sql.replace('InnoDB', 'MEMORY')
+    test_sql = sql.replace('InnoDB', 'MEMORY').replace("%", "localhost")
     test_file = test_root / sql_file.name
     test_file.touch()
     test_file.write_text(test_sql)

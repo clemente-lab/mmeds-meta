@@ -6,7 +6,7 @@ BEGIN
     -- Only run this code when in a test database
     IF NOT (SELECT @@HOSTNAME) = 'data1' THEN
         IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmedsadmin') THEN
-            DROP USER 'mmedsadmin';
+            DROP USER 'mmedsadmin'@'%';
             DELETE FROM security_token WHERE username='mmedsadmin';
         END IF;
 
@@ -14,7 +14,7 @@ BEGIN
         CREATE USER 'mmedsadmin'@'%' IDENTIFIED BY 'password';
 
         IF EXISTS(SELECT 1 FROM mysql.user WHERE user = 'mmedsusers') THEN
-            DROP USER 'mmedsusers';
+            DROP USER 'mmedsusers'@'%';
             DELETE FROM security_token WHERE username='mmedsusers';
         END IF;
 
