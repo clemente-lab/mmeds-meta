@@ -344,7 +344,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
