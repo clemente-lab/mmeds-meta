@@ -187,39 +187,39 @@ WITH CHECK OPTION;
 
 GRANT SELECT ON TABLE `mmeds_data1`.`protected_SubjectType` TO 'mmedsusers'@"%";
 
-GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Vendor` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Facility` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`IllnessDetails` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`IllnessCategory` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`IllnessBroadCategory` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Chow` TO 'mmedsusers'@"%";
+GRANT SELECT ON TABLE `mmeds_data1`.`Housing` TO 'mmedsusers'@"%";
 
 GRANT SELECT ON TABLE `mmeds_data1`.`Ethnicity` TO 'mmedsusers'@"%";
 
-GRANT SELECT ON TABLE `mmeds_data1`.`Housing` TO 'mmedsusers'@"%";
+GRANT SELECT ON TABLE `mmeds_data1`.`Interventions` TO 'mmedsusers'@"%";
 
-GRANT SELECT ON TABLE `mmeds_data1`.`SampleProtocols` TO 'mmedsusers'@"%";
+GRANT SELECT ON TABLE `mmeds_data1`.`IllnessCategory` TO 'mmedsusers'@"%";
 
-GRANT SELECT ON TABLE `mmeds_data1`.`ResultsProtocols` TO 'mmedsusers'@"%";
+GRANT SELECT ON TABLE `mmeds_data1`.`Chow` TO 'mmedsusers'@"%";
 
-GRANT SELECT ON TABLE `mmeds_data1`.`Species` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`Strain` TO 'mmedsusers'@"%";
-
-GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmedsusers'@"%";
+GRANT SELECT ON TABLE `mmeds_data1`.`Vendor` TO 'mmedsusers'@"%";
 
 GRANT SELECT ON TABLE `mmeds_data1`.`Genotypes` TO 'mmedsusers'@"%";
 
+GRANT SELECT ON TABLE `mmeds_data1`.`Species` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`BodySite` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`ResultsProtocols` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`Type` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`Facility` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`RawDataProtocols` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`IllnessDetails` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`Strain` TO 'mmedsusers'@"%";
+
 GRANT SELECT ON TABLE `mmeds_data1`.`CollectionSite` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`SampleProtocols` TO 'mmedsusers'@"%";
+
+GRANT SELECT ON TABLE `mmeds_data1`.`IllnessBroadCategory` TO 'mmedsusers'@"%";
 

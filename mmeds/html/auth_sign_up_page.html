@@ -1,22 +1,10 @@
-<!DOCTYPE html>
-<html>
-  <link rel='stylesheet' href='/CSS/stylesheet.css'>
-  <head>
-    <title>Mmeds Login</title>
-    <link rel='shortcut icon' type='image/x-icon' href='/CSS/favicon.ico' />
-  </head>
-  <body>
-    <div class='inner'>
-      <h2>
-        Sign Up
-      </h2>
-      <form action='../auth/sign_up' method='post' enctype='multipart/form-data'>
-        <p> Username <br> <input type="text" placeholder="Enter Username" name="username" required> </p>
-        <p> Email <br> <input type='email' name='email' placeholder='Enter Email' required/> </p>
-        <p> Password <br> <input type="password" placeholder="Enter Password" name="password1" required> </p>
-        <p> Reenter Password <br> <input type="password" placeholder="Enter Password" name="password2" required> </p>
-        <button type="submit">Sign Up</button>
-      </form>
-    </div>
-  </body>
-</html>
+<div class='w3-container w3-card-4 w3-center'>
+    <form class='w3-form w3-padding' action='{sign_up_page}' method='post' enctype='multipart/form-data'>
+        <h4 class="w3-center"> Register Account </h4>
+        <p> <input class='w3-input' type="text" placeholder="Enter Username" name="username" required> </p>
+        <p> <input class='w3-input' type='email' name='email' placeholder='Enter Email' required/> </p>
+        <p> <input class='w3-input' type="password" placeholder="Enter Password" name="password1" required> </p>
+        <p> <input class='w3-input' type="password" placeholder="Enter Password" name="password2" required> </p>
+        <button class="w3-button w3-blue w3-center" type="submit">Sign Up</button>
+    </form>
+</div>

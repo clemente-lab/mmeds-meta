@@ -565,6 +565,16 @@ class Database:
         return MMEDSDoc.objects(doc_type='study')
 
     @classmethod
+    def get_all_analyses(cls):
+        """ Return all analyses currently stored in the database. """
+        return MMEDSDoc.objects(doc_type='analysis')
+
+    @classmethod
+    def get_all_user_studies(cls, user):
+        """ Return all studies currently stored in the database owned by USER. """
+        return MMEDSDoc.objects(doc_type='study', owner=user)
+
+    @classmethod
     def get_all_analyses_from_study(cls, access_code):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(study_code=access_code)
@@ -602,10 +612,9 @@ class Database:
                             shutil.rmtree(mdata.files[key])
 
     @classmethod
-    def get_docs(cls, access_code):
+    def get_docs(cls, **kwargs):
         """ For server use """
-        docs = MMEDSDoc.objects(access_code=access_code)
-        return docs
+        return MMEDSDoc.objects(**kwargs)
 
 
 class SQLBuilder:

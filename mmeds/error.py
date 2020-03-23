@@ -132,3 +132,11 @@ class EmailError(MmedsError):
     def __init__(self, message):
         self.message = message
         super().__init__()
+
+
+class FormatError(MmedsError):
+    """ Exception for missing format options """
+
+    def __init__(self, missed):
+        self.message = 'The following formating variables were not filled: {}'.format(missed)
+        super().__init__()

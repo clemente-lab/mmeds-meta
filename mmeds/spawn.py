@@ -168,7 +168,8 @@ class Watcher(Process):
                 finished += yaml.safe_load(current_log.read_text())
             # TODO Figure out why this is happening
             except TypeError:
-                logger.error('Error loading process log {}'.format(current_log))
+                logger.error('Error loading process log {}. Removing corrupted log.'.format(current_log))
+                current_log.unlink()
 
         # Only create the file if there are processes to log
         if finished:
@@ -176,6 +177,19 @@ class Watcher(Process):
                 yaml.dump(finished, f)
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
+
+    def update_stats(self):
+        """ Update the mmeds stats to their most recent values """
+        # Get stats for MMEDs server
+        with Database(testing=self.testing) as db:
+            args = {
+                'study_count': len(db.get_all_studies()),
+                'analysis_count': len(db.get_all_analyses()),
+                'user_count': len(db.get_all_usernames()),
+                'query_count': 42,
+            }
+        with open(fig.STAT_FILE, 'w+') as f:
+            yaml.safe_dump(args, f)
 
     def any_running(self, ptype):
         """ Returns true if there is a process running """

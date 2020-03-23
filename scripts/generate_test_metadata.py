@@ -72,7 +72,7 @@ def write_error_files(df, file_type):
     write_test_metadata(issue_parsing, '{}/{}_validate_error_issue_parsing.tsv'.format(file_path, file_type))
     # Mess up the file
     with open('{}/{}_validate_error_issue_parsing.tsv'.format(file_path, file_type), 'ab+') as f:
-        f.write(bytearray(getrandbits(8) for _ in range(20)))
+        f.write(bytearray(getrandbits(8) for _ in range(10)))
 
     # Wrong types
     wrong_type = df.copy(deep=True)
@@ -297,19 +297,19 @@ def write_alternate_files(df, file_type):
 
 if __name__ == '__main__':
 
-    file_path = Path('/home/david/Work/mmeds-meta/mmeds/test_files/validation_files/')
+    file_path = fig.TEST_PATH / 'validation_files'
     for test_file in file_path.glob('validate_*'):
         print('Deleting {}'.format(test_file))
         Path(test_file).unlink()
 
     # Create the subjects test files
-    df = pd.read_csv(fig.TEST_SUBJECT, sep='\t', header=[0, 1], na_filter=False)
+    df = pd.read_csv(fig.TEST_SUBJECT_SHORT, sep='\t', header=[0, 1], na_filter=False)
     write_error_files(df, 'subject')
     write_warning_files(df, 'subject')
     write_alternate_files(df, 'subject')
 
     # Create the specimen test files
-    df = pd.read_csv(fig.TEST_SPECIMEN, sep='\t', header=[0, 1], na_filter=False)
+    df = pd.read_csv(fig.TEST_SPECIMEN_SHORT, sep='\t', header=[0, 1], na_filter=False)
     write_error_files(df, 'specimen')
     write_warning_files(df, 'specimen')
     write_alternate_files(df, 'specimen')
@@ -318,10 +318,12 @@ if __name__ == '__main__':
 
     # Create the combined metadata file
     df = join_metadata(load_metadata(test_path / 'test_subject.tsv'),
-                       load_metadata(test_path / 'test_specimen.tsv'))
+                       load_metadata(test_path / 'test_specimen.tsv'),
+                       'human')
     write_metadata(df, test_path / 'test_metadata.tsv')
 
     # Create the alternate combined metadata file
     df_alt = join_metadata(load_metadata(test_path / 'test_subject_alt.tsv'),
-                           load_metadata(test_path / 'test_specimen_alt.tsv'))
+                           load_metadata(test_path / 'test_specimen_alt.tsv'),
+                           'human')
     write_metadata(df_alt, test_path / 'test_metadata_alt.tsv')

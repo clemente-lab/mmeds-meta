@@ -1,13 +1,11 @@
 from collections import defaultdict, OrderedDict
-from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, LoggedOutError, EmailError
+from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, EmailError
 from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
 from pathlib import Path
 from os import environ
 from numpy import nan, int64, float64, datetime64
-from functools import wraps
-from inspect import isfunction
 from tempfile import gettempdir
 from re import sub
 from ppretty import ppretty
@@ -18,6 +16,62 @@ import mmeds.config as fig
 import pandas as pd
 
 logger = MMEDSLog('debug').logger
+
+
+###########
+# Classes #
+###########
+class SafeDict(dict):
+    """ Used with str.format_map() to allow inserting formatting arguments in multiple stages """
+    def __init__(self, dictionary):
+        """ Initialize Safe Dict with a previously created dictionary """
+        super().__init__(dictionary)
+        self.missed = set()  # A set of parsing arguments
+
+    def __getitem__(self, key):
+        """ Update missed if an item is successfully formatted from the SafeDict """
+        if key in self.missed:
+            self.missed.remove(key)
+        return super().__getitem__(key)
+
+    def __missing__(self, key):
+        """ Missing formating options are returned as is and the option is added to the missed set """
+        self.missed.add(key)
+        return '{' + key + '}'
+
+
+#############
+# Functions #
+#############
+
+def format_alerts(args):
+    """ Takes a dictionary and performs formatting on any entries with the keys: 'error', 'warning', or 'success' """
+    template = '''
+    <div class="w3-card-4 w3-padding w3-panel w3-pale-{color} w3-border" >
+    <h3> {alert}! </h3>
+    <p> {message} </p>
+    </div>
+    '''
+    for alert, color in [('error', 'red'), ('warning', 'yellow'), ('success', 'green')]:
+        try:
+            message = args[alert]
+            if isinstance(message, list):
+                outline = '<ul class="w3-ul w3-border">{}</ul>'
+                formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
+                args[alert] = template.format(alert=alert.capitalize(), message=formatted, color=color)
+            else:
+                args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
+        except KeyError:
+            pass
+    return args
+
+
+def load_mmeds_stats(testing):
+    if testing:
+        stats = {}
+    else:
+        stats = yaml.safe_load(fig.STAT_FILE.read_text())
+    return stats
 
 
 def load_metadata_template(subject_type):
@@ -115,28 +169,6 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        skiprows=skiprows,
                        na_values=na_values,
                        keep_default_na=keep_default_na)
-
-
-def catch_server_errors(page_method):
-    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
-    @wraps(page_method)
-    def wrapper(*a, **kwargs):
-        try:
-            return page_method(*a, **kwargs)
-        except LoggedOutError:
-            with open(fig.HTML_DIR / 'index.html') as f:
-                page = f.read()
-            return page
-    return wrapper
-
-
-def decorate_all_methods(decorator):
-    def apply_decorator(cls):
-        for k, m in cls.__dict__.items():
-            if isfunction(m):
-                setattr(cls, k, decorator(m))
-        return cls
-    return apply_decorator
 
 
 def load_config(config_file, metadata, ignore_bad_cols=False):
@@ -393,6 +425,7 @@ def parse_ICD_codes(df):
 
 def load_html(file_path, **kwargs):
     """
+    TODO: DEPRICATED
     Load the specified html file. Inserting the head and topbar
     """
     # Load the html page
@@ -406,7 +439,6 @@ def load_html(file_path, **kwargs):
     # Load the topbar information
     with open(fig.HTML_DIR / 'topbar.html') as f:
         topbar = f.read().split('\n')
-
     new_page = page[:2] + header + topbar + page[2:]
     return '\n'.join(new_page).format(**kwargs)
 
@@ -787,6 +819,17 @@ def debug_log(text, testing=False):
 
 def info_log(text, testing=False):
     log(text, testing=testing, log_type='Info')
+
+def parse_code_blocks(path):
+    # Load the code templates
+    data = Path(path).read_text().split('\n=====\n')
+
+    # Dict for storing all the different code templates
+    code_blocks = {}
+    for code in data:
+        parts = code.split('<source>\n')
+        code_blocks[parts[0]] = parts[1]
+    return code_blocks
 
 
 def send_email(toaddr, user, message='upload', testing=False, **kwargs):

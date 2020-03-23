@@ -1,23 +1,32 @@
-<!DOCTYPE html>
-<html>
-  <body>
-    <div class='inner'>
-      <h2>Welcome {user}</h2>
-      <p>
-        <h3>Upload data files</h3>
-        <form action='../analysis/process_data' method='post' enctype='multipart/form-data' id='upload_form'>
-          <p> Forward Reads (Upload a zip if demultiplexed): <br> <input type='file' name='for_reads'/> </p>
-          <p> Reverse Reads (Optional): <br> <input type='file' name='rev_reads'/> </p>
-          <p> Barcodes (Optional): <br> <input type='file' name='barcodes'/> </p>
-          <p> Reads Type: <br>
-          <select name='reads_type' form='upload_form'>
-              <option value='single_end' selected='selected'>Single End</option>
-              <option value='paired_end'>Paired End</option>
-          </select>
-          <p> Make data public: <br> <input type='checkbox' name='public' /> </p>
-          <p> <button type='submit' method='post'>Submit Upload</button> </p>
-        </form>
-      </p>
-    </div>
-  </body>
-</html>
+<form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+    <p>
+    <label class> Forward Reads (Upload a zip if demultiplexed) </label>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="for_reads" required>
+    </p>
+    <p>
+    <label class> Reverse Reads (Optional) </label>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="rev_reads">
+    </p>
+    <p>
+    <label class> Barcodes (Optional) </label>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="barcodes">
+    </p>
+    <p {dual_barcodes}>
+    <label class> Reverse Barcodes (Optional) </label>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type='file' name='rev_barcodes' />
+    </p>
+    <p>
+    <label class> Reads Type </label>
+    <select class="w3-select w3-border" name='reads_type' form='upload_form'>
+        <option value='single_end' selected='selected'>Single End</option>
+        <option value='paired_end'>Paired End</option>
+    </select>
+    </p>
+    <p>
+    <input class="w3-check" type='checkbox' name='public' />
+    <label class> Make data public </label>
+    </p>
+    <p>
+    <button class="w3-button w3-blue" type='submit' method='post'> Submit Study </button>
+    </p>
+</form>

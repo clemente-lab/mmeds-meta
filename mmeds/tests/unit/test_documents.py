@@ -19,7 +19,7 @@ class DocumentsTests(TestCase):
     def setUpClass(self):
         """ Set up tests """
         with Database(user='root', testing=TESTING) as db:
-            self.test_doc = db.get_docs(fig.TEST_CODE).first()
+            self.test_doc = db.get_docs(access_code=fig.TEST_CODE).first()
 
         self.connection = men.connect('test', alias='test_documents.py')
         self.test_code = fig.TEST_CODE_SHORT

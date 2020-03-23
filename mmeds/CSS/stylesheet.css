@@ -89,6 +89,10 @@ div.inner h3, h4, table {
     text-align: center;
 }
 
+
+/*Hide the dual barcodes dropdown if metadata_type is Subject */
+div.Subject {display: none;}
+
 /* Reset */
 
 html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
@@ -3202,5 +3206,5 @@ button:disabled,
 /* Change the background color of the dropdown button when the dropdown content is shown */
 .dropdown:hover .dropbtn {background-color: #3e8e41;} 
 
-/*Hide the dual barcodes dropdown if metadata_type is Subject */
-div.Subject {display: none;}
+/* Show page once CSS has loaded */
+#loadOverlay{display: none;}

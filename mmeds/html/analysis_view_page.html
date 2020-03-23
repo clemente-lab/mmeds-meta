@@ -1,0 +1,32 @@
+<!-- Header -->
+<header class="w3-container" style="padding-top:22px">
+    <h5><b><i class="fas fa-server"></i> {analysis_name} </b></h5>
+</header>
+
+<div class='w3-container'>
+    <h2> Study Information </h2>
+    <table class="w3-table-all w3-card-4 w3-hoverable">
+        <tr><th> Study Name </th><th> {study_name} </th></tr>
+        <tr><th> Analysis Tool </th><th> {tool_type} </th></tr>
+        <tr><th> Analysis Type </th><th> {analysis_type} </th></tr>
+        <tr><th> Analysis Status </th><th> {analysis_status} </th></tr>
+        <tr><th> Created </th><th> {date_created} </th></tr>
+        <tr><th> Last Accessed </th><th> {last_accessed} </th></tr>
+        <tr><th> Reads Type </th><th> {reads_type} </th></tr>
+        <tr><th> Barcodes Type </th><th> {barcodes_type} </th></tr>
+        <tr><th> Access Code </th><th> {access_code} </th></tr>
+        <tr><th> Owner </th><th> {owner} </th></tr>
+        <tr><th> Email </th><th> {email} </th></tr>
+        <tr><th> Path </th><th> {path} </th></tr>
+    </table>
+    <hr>
+    <div id="DownloadFiles" class="study-action w3-container w3-row-padding w3-margin-bottom w3-padding w3-grey">
+        <h2> File to Download </h2>
+        <form action='{download_page}' method='post' enctype='multipart/form-data' id='download_form'>
+            <select class="w3-select w3-border" name='file_name' form='download_form'>
+                {analysis_files}
+            </select>
+            <button class="w3-btn w3-border" type='submit' method='post'>Download File</button>
+        </form>
+    </div>
+</div>
