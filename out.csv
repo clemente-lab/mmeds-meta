@@ -1,0 +1,2 @@
+user_id,username,password,salt,email,privilege
+1,Public,,,,1

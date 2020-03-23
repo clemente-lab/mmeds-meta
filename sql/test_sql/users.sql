@@ -35,6 +35,8 @@ DELIMITER ;
 -- Create the Public user
 INSERT INTO user VALUES (1, 'Public', '', '', '', 1);
 
+SELECT * FROM user;
+
 -- Grant privileges to the account to be used by the webapp
 GRANT EXECUTE ON FUNCTION `mmeds_data1`.`set_connection_auth` TO 'mmedsusers'@'localhost';
 GRANT EXECUTE ON FUNCTION `mmeds_data1`.`unset_connection_auth` TO 'mmedsusers'@'localhost';
