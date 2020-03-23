@@ -47,6 +47,8 @@ script:
     - bash <(curl -s https://codecov.io/bash) -cF unit
     - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning
         -s ./mmeds/tests/server -x --durations=0
+    - mysql -u root -e "SELECT * FROM mmeds_data1.user;" > new_out.csv
+    - cat new_out.csv
     - bash <(curl -s https://codecov.io/bash) -cF server
     - pip uninstall mmeds -y
     - sudo rm -rf ~/.modules/qiime2/var/cache
