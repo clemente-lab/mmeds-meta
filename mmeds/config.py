@@ -5,7 +5,6 @@ from collections import defaultdict
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
-import mmeds.test_files as test_files
 import mmeds.resources as resources
 import mmeds.CSS as css
 import mmeds
@@ -38,6 +37,7 @@ JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
+STAT_FILE = DATABASE_DIR / 'mmeds_stats.yaml'
 PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
 if not PROCESS_LOG_DIR.exists():
     PROCESS_LOG_DIR.mkdir()
@@ -77,7 +77,8 @@ CONFIG = {
         'tools.sessions.secure': True,
         'tools.sessions.on': True,
         'tools.sessions.httponly': True,
-        'tools.sessions.timeout': 15
+        'tools.sessions.timeout': 15,
+        'tools.compress.gzip': True,
     },
     # Content in this directory will be made directly
     # available on the web server
@@ -98,7 +99,9 @@ CONFIG = {
 # CONFIGURE TEST GLOBALS #
 ##########################
 
-TEST_PATH = Path(test_files.__file__).parent.resolve()
+testing = False
+
+TEST_PATH = DATABASE_DIR / 'test_files'
 TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
 if not TEST_DIR.exists():
     TEST_DIR.mkdir()
@@ -449,32 +452,117 @@ def get_salt(length=10):
 ############################
 
 
+# Load the path to where images are hosted
+SERVER_PATH = 'https://{}:{}/'.format(CONFIG['global']['server.socket_host'],
+                                      CONFIG['global']['server.socket_port'])
+
+# Load the path to where images are hosted
+IMAGE_PATH = SERVER_PATH + 'CSS/'
+
 # Each page returns a tuple
 # (<Path to the page>, <Should the header and topbar be loaded>)
 HTML_PAGES = {
-    'index': (HTML_DIR / 'index.html', False),
-    'welcome': (HTML_DIR / 'welcome.html', True),
-    'blank': (HTML_DIR / 'blank.html', True),
-    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
-    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
+    # Templates
+    'logged_out_template': HTML_DIR / 'logged_out_template.html',
+    'logged_in_template': HTML_DIR / 'logged_in_template.html',
+
+    # Authentication Pages
+    'login': (HTML_DIR / 'login_body.html', False),
+    'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
+    'home': (HTML_DIR / 'home_body.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
-    'download_study_files': (HTML_DIR / 'download_study_files.html', True),
-    'download_select_file': (HTML_DIR / 'download_select_file.html', True),
-    'download_select_study': (HTML_DIR / 'download_select_study.html', True),
-    'download_selected_study': (HTML_DIR / 'download_selected_study.html', True),
-    'download_select_analysis': (HTML_DIR / 'download_select_analysis.html', True),
-    'download_selected_analysis': (HTML_DIR / 'download_selected_analysis.html', True),
-    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
-    'upload_data_files_dual': (HTML_DIR / 'upload_data_files_dual.html', True),
-    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
-    'upload_lefse_data': (HTML_DIR / 'upload_lefse_data.html', True),
+
+    # Upload Pages
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
-    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True)
+    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
+    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
+
+    # Study Pages
+    'study_select_page': (HTML_DIR / 'study_select_page.html', True),
+    'study_view_page': (HTML_DIR / 'study_view_page.html', True),
+
+    # Analysis Pages
+    'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
+    'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
+    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
+
+    # TODO below this are outdated
+    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
+
 }
 
+# Predefined options for formatting webpages are set here
+HTML_ARGS = {
+    'version': '0.1.0',
+    'study_count': 0,
+    'user_count': 0,
+    'analysis_count': 0,
+    'query_count': 0,
+
+    # Site Wide
+    'title': 'MMEDs Database and Analysis Server',
+
+    # Images
+    'favicon': IMAGE_PATH + 'favicon.ico',
+    'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
+    'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
+    'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
+    # 'login_page': SERVER_PATH,
+
+    # Paths to other pages of the website
+    'home_page': SERVER_PATH + 'index',
+    'login_page': SERVER_PATH + 'login',
+    'logout_page': SERVER_PATH + 'auth/logout',
+    'upload_page': SERVER_PATH + 'upload/upload_page',
+    'analysis_page': SERVER_PATH + 'analysis/analysis_page',
+    'study_page': SERVER_PATH + 'study/select_study',
+    'account_page': SERVER_PATH + 'auth/input_password',
+    'settings_page': '#',
+
+    # Upload Pages
+    'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
+    'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
+    'process_data_page': SERVER_PATH + 'upload/process_data',
+    'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
+    'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
+    'upload_data_page': SERVER_PATH + 'upload/upload_data',
+    'upload_modify_page': SERVER_PATH + 'upload/upload_page',
+
+    # Download Pages
+    'download_page': SERVER_PATH + 'download/download_file',
+
+    # Study Pages
+    'study_select_page': SERVER_PATH + 'study/select_study',
+    'study_view_page': SERVER_PATH + 'study/view_study',
+
+    # Analysis Pages
+    'analysis_view_page': SERVER_PATH + 'analysis/view_analysis',
+
+    # Account Pages
+    'register_account_page': SERVER_PATH + 'auth/register_account',
+    'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
+    'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
+    'sign_up_page': SERVER_PATH + 'auth/sign_up',
+
+    # Where to insert errors/warnings on a given page
+    'error': '',
+    'warning': '',
+    'success': '',
+    'javascript': IMAGE_PATH + 'mmeds.js',
+
+    # Settings for highlighting the section of the web site currently being accessed
+    'upload_selected': '',
+    'analysis_selected': '',
+    'study_selected': '',
+    'query_selected': '',
+    'home_selected': '',
+    'account_selected': '',
+    'settings_selected': '',
+}
 
 ##########################
 # CONFIGURE TOOL GLOBALS #

@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from mmeds.config import DOCUMENT_LOG, TOOL_FILES
-from mmeds.util import copy_metadata, log, camel_case, error_log
+from mmeds.util import copy_metadata, log, camel_case
 from mmeds.error import AnalysisError
 from mmeds.log import MMEDSLog
 from ppretty import ppretty
@@ -237,7 +237,6 @@ class MMEDSDoc(men.Document):
                        config=config,
                        files=string_files)
 
-        error_log(ppretty(doc))
         doc.save(check=True)
         with open(DOCUMENT_LOG, 'a') as f:
             f.write('-\t'.join([str(x) for x in [doc.study_name, doc.owner, doc.doc_type, doc.analysis_status,

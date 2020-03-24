@@ -8,7 +8,7 @@ from shutil import copy, rmtree, make_archive
 import nbformat as nbf
 import os
 from mmeds.config import STORAGE_DIR
-from mmeds.util import log, load_config, setup_environment
+from mmeds.util import log, load_config, setup_environment, parse_code_blocks
 
 
 def summarize_qiime(summary_path, tool):
@@ -218,15 +218,7 @@ class MMEDSNotebook():
         }
         copy(self.path / 'revtex.tplx', self.path / 'mod_revtex.tplx')
 
-        # Load the code templates
-        with open(STORAGE_DIR / 'summary_code.txt') as f:
-            data = f.read().split('\n=====\n')
-
-        # Dict for storing all the different code templates
-        self.source = {}
-        for code in data:
-            parts = code.split('<source>\n')
-            self.source[parts[0]] = parts[1]
+        self.source = parse_code_blocks(STORAGE_DIR / 'summary_code.txt')
 
     def add_code(self, text, meta=None):
         """ Add a code cell to the notebook's list of cells. """

@@ -1,24 +1,29 @@
 import os
 import tempfile
 import cherrypy as cp
-import mmeds.secrets as sec
-import mmeds.error as err
+import atexit
 
 from cherrypy.lib import static
 from pathlib import Path
-from subprocess import run
-import atexit
+from functools import wraps
+from inspect import isfunction
+from copy import deepcopy
+
+import mmeds.error as err
+import mmeds.util as util
 
 from mmeds.validate import validate_mapping_file
-from mmeds.util import (load_html, insert_html, insert_error, insert_warning, log, MIxS_to_mmeds,
-                        mmeds_to_MIxS, decorate_all_methods, catch_server_errors, create_local_copy)
-from mmeds.config import UPLOADED_FP, HTML_DIR, USER_FILES, HTML_PAGES, DEFAULT_CONFIG
+from mmeds.util import (log, create_local_copy, SafeDict)
+from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database import Database
 from mmeds.spawn import handle_modify_data
+from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
+
+logger = MMEDSLog('debug').logger
 
 
 def kill_watcher(monitor):
@@ -28,6 +33,33 @@ def kill_watcher(monitor):
         log('Try to terminate')
         log('Try to kill')
         monitor.kill()
+
+
+def catch_server_errors(page_method):
+    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
+    @wraps(page_method)
+    def wrapper(*a, **kwargs):
+        try:
+            return page_method(*a, **kwargs)
+        except err.LoggedOutError:
+            body = HTML_PAGES['login'][0].read_text()
+            args = deepcopy(HTML_ARGS)
+            args['body'] = body.format(**args)
+            return HTML_PAGES['logged_out_template'].read_text().format(**args)
+
+        except KeyError as e:
+            logger.error(e)
+            return "There was an error, contact server admin with:\n {}".format(e)
+    return wrapper
+
+
+def decorate_all_methods(decorator):
+    def apply_decorator(cls):
+        for k, m in cls.__dict__.items():
+            if isfunction(m):
+                setattr(cls, k, decorator(m))
+        return cls
+    return apply_decorator
 
 
 # Note: In all of the following classes, if a parameter is named in camel case instead of underscore
@@ -44,12 +76,7 @@ class MMEDSbase:
         self.testing = bool(int(testing))
         self.monitor = watcher
         self.q = q
-        # Set the server to kill the watcher process on exit
         atexit.register(kill_watcher, self.monitor)
-
-    def exit(self):
-        kill_watcher(self.monitor)
-        cp.engine.exit()
 
     def get_user(self):
         """
@@ -73,9 +100,6 @@ class MMEDSbase:
 
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
-        log('check upload {}'.format(access_code))
-        log(cp.session['processes'])
-        log(cp.session['processes'].get(access_code))
         try:
             log(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
@@ -91,7 +115,7 @@ class MMEDSbase:
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
-            raise err.MetaDataError('Error: {} is not a valid filetype.'.format(file_extension))
+            raise err.MetaDataError('{} is not a valid filetype.'.format(file_extension))
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
@@ -119,46 +143,6 @@ class MMEDSbase:
                 errors.append('-1\t-1\t' + e.message)
         return errors, warnings
 
-    def handle_metadata_errors(self, metadata_copy, errors, warnings):
-        """ Create the page to return when there are errors in the metadata """
-        log('Errors in metadata')
-        log('\n'.join(errors))
-        cp.session['download_files']['error_file'] = self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
-        # Write the errors to a file
-        with open(cp.session['download_files']['error_file'], 'w') as f:
-            f.write('\n'.join(errors + warnings))
-
-        uploaded_output = self.format_html('upload_metadata_error', title='Errors')
-        uploaded_output = insert_error(
-            uploaded_output, 7, '<h3>' + self.get_user() + '</h3>')
-        for i, warning in enumerate(warnings):
-            uploaded_output = insert_warning(uploaded_output, 22 + i, warning)
-        for i, error in enumerate(errors):
-            uploaded_output = insert_error(uploaded_output, 22 + i, error)
-
-        return uploaded_output  # generate_error_html(metadata_copy, errors, warnings)
-
-    def handle_metadata_warnings(self, metadata_copy, errors, warnings):
-        """ Create the page to return when there are errors in the metadata """
-        cp.log('handle_metadata_warnings, type: {}'.format(cp.session['metadata_type']))
-        # Write the errors to a file
-        with open(self.get_dir() / ('warnings_{}'.format(Path(metadata_copy).name)), 'w') as f:
-            f.write('\n'.join(warnings))
-
-        # Get the html for the upload page
-        # Set the proceed button based on current metadata file
-        if cp.session['metadata_type'] == 'subject':
-            page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/retry_upload')
-            cp.session['metadata_type'] = 'specimen'
-        elif cp.session['metadata_type'] == 'specimen':
-            page = self.format_html('upload_metadata_warning', title='Warnings', next_page='../upload/upload_data')
-
-        # Add the warnings
-        for i, warning in enumerate(warnings):
-            page = insert_warning(page, 22 + i, warning)
-
-        return page
-
     def load_data_files(self, **kwargs):
         """ Load the files passed that exist. """
         files = {}
@@ -173,25 +157,52 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
-        path, header = HTML_PAGES[page]
+        try:
+            path, header = HTML_PAGES[page]
 
-        if page in ['welcome', 'index']:
-            title = 'Welcome to MMEDS'
-        else:
-            title = 'MMEDS Analysis Server'
+            # Handle any user alerts messages
+            kwargs = util.format_alerts(kwargs)
 
-        args = {
-            'title': title,
-            'version': 'Unknown'
-        }
-        args.update(kwargs)
-        if header:
-            args['user'] = self.get_user()
-            args['dir'] = self.get_dir()
-            return_page = load_html(path, **args)
-        else:
-            return_page = path.read_text()
-        return return_page
+            # Predefined arguments to format in
+            args = SafeDict(HTML_ARGS)
+
+            # Add the arguments included in this format call
+            args.update(kwargs)
+
+            # Add the mmeds stats
+            args.update(util.load_mmeds_stats(self.testing))
+
+            # If a user is logged in, load the side bar
+            if header:
+                template = HTML_PAGES['logged_in_template'].read_text()
+                if args.get('user') is None:
+                    args['user'] = self.get_user()
+                    args['dir'] = self.get_dir()
+            else:
+                template = HTML_PAGES['logged_out_template'].read_text()
+
+            # Load the body of the requested webpage
+            body = path.read_text()
+
+            # Insert the body into the outer template
+            page = template.format_map(SafeDict({'body': body}))
+
+            # Format all provided arguments
+            page = page.format_map(args)
+
+        # Log arguments if there is an issue
+        except (ValueError, KeyError):
+            cp.log('Args')
+            cp.log('\n'.join([str(x) for x in kwargs.items()]))
+            cp.log('=================================')
+            cp.log(page)
+            raise
+
+        # Check there is nothing missing from the page
+        if args.missed:
+            raise err.FormatError(args.missed)
+
+        return page
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
@@ -208,121 +219,7 @@ class MMEDSdownload(MMEDSbase):
     ########################################
 
     @cp.expose
-    def select_study(self):
-        """ Allows authorized user accounts to access uploaded studies. """
-        if check_privileges(self.get_user(), self.testing):
-            page = self.format_html('download_select_study', title='Select Study')
-            with Database(path='.', testing=self.testing) as db:
-                studies = db.get_all_studies()
-            for study in studies:
-                page = insert_html(page, 24, '<option value="{}">{}</option>'.format(study.access_code,
-                                                                                     study.study_name))
-        else:
-            page = self.format_html('welcome', title='Welcome to MMEDS')
-            page = insert_error(page, 24, 'You do not have permissions to access uploaded studies.')
-        return page
-
-    @cp.expose
-    def download_study(self, study_code):
-        """ Display the information and files of a particular study. """
-        with Database(path='.', testing=self.testing) as db:
-            study = db.get_doc(study_code, check_owner=False)
-            analyses = db.get_all_analyses_from_study(study_code)
-
-        page = self.format_html('download_selected_study',
-                                title='Study: {}'.format(study.study_name),
-                                study=study.study_name,
-                                date_created=study.created,
-                                last_accessed=study.last_accessed,
-                                doc_type=study.doc_type,
-                                reads_type=study.reads_type,
-                                barcodes_type=study.barcodes_type,
-                                access_code=study.access_code,
-                                owner=study.owner,
-                                email=study.email,
-                                path=study.path)
-
-        for filename, filepath in study.files.items():
-            page = insert_html(page, 34, '<option value="{}">{}</option>'.format(filepath, filename))
-
-        for analysis in analyses:
-            page = insert_html(page, 39 + len(study.files.keys()),
-                               '<option value="{}">{}</option>'.format(analysis.access_code,
-                                                                       analysis.name))
-        return page
-
-    @cp.expose
     def download_filepath(self, file_path):
-        return static.serve_file(file_path, 'application/x-download',
-                                 'attachment', os.path.basename(file_path))
-
-    @cp.expose
-    def select_analysis(self, access_code):
-        """ Display the information and files of a particular study. """
-        with Database(path='.', testing=self.testing) as db:
-            analysis = db.get_doc(access_code, check_owner=False)
-
-        page = self.format_html('download_selected_analysis',
-                                title='Analysis: {}'.format(analysis.name),
-                                name=analysis.name,
-                                date_created=analysis.created,
-                                last_accessed=analysis.last_accessed,
-                                doc_type=analysis.doc_type,
-                                reads_type=analysis.reads_type,
-                                barcodes_type=analysis.barcodes_type,
-                                study_code=analysis.study_code,
-                                sub_analysis=analysis.sub_analysis,
-                                access_code=analysis.access_code,
-                                analysis_status=analysis.analysis_status,
-                                owner=analysis.owner,
-                                email=analysis.email,
-                                path=analysis.path)
-
-        for filename, file_path in analysis.files.items():
-            if Path(file_path).exists():
-                if '.' not in file_path:
-                    if not Path(file_path + '.tar.gz').exists():
-                        cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                             Path(file_path).parent,
-                                                             Path(file_path).name)
-                        run(cmd.split(' '), check=True)
-                    file_path += '.tar.gz'
-                page = insert_html(page, 37, '<option value="{}">{}</option>'.format(file_path, filename))
-        return page
-
-    @cp.expose
-    def download_page(self, access_code):
-        """ Loads the page with the links to download data and metadata. """
-        try:
-            self.check_upload(access_code)
-            # Get the open file handler
-            with Database(path='.', owner=self.get_user(), testing=self.testing) as db:
-                files, path = db.get_mongo_files(access_code)
-
-            page = self.format_html('download_select_file', title='Select Download')
-            for k, f in sorted(files.items(), reverse=True):
-                if f is not None and any(regex.match(k) for regex in USER_FILES):
-                    page = insert_html(page, 24, '<option value="{}">{}</option>'.format(k, k))
-            cp.session['download_access'] = access_code
-        except (err.MissingUploadError, err.UploadInUseError) as e:
-                page = self.format_html('welcome')
-                page = insert_error(page, 22, e.message)
-        return page
-
-    @cp.expose
-    def select_download(self, download):
-        cp.log('User{} requests download {}'.format(self.get_user(), download))
-        with Database('.', owner=self.get_user(), testing=self.testing) as db:
-            files, path = db.get_mongo_files(cp.session['download_access'])
-        file_path = str(Path(path) / files[download])
-        if 'dir' in download:
-            cmd = 'tar -czvf {} -C {} {}'.format(file_path + '.tar.gz',
-                                                 Path(file_path).parent,
-                                                 Path(file_path).name)
-            run(cmd.split(' '), check=True)
-            file_path += '.tar.gz'
-        cp.log('Fetching {}'.format(file_path))
-
         return static.serve_file(file_path, 'application/x-download',
                                  'attachment', os.path.basename(file_path))
 
@@ -330,6 +227,90 @@ class MMEDSdownload(MMEDSbase):
     def download_file(self, file_name):
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
+
+
+@decorate_all_methods(catch_server_errors)
+class MMEDSstudy(MMEDSbase):
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        if kwargs.get('study_selected') is None:
+            kwargs['study_selected'] = 'w3-blue'
+        return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def select_study(self):
+        """ Allows authorized user accounts to access uploaded studies. """
+        study_html = ''' <tr class="w3-hover-blue">
+            <th>
+            <a href="{view_study_page}?access_code={access_code}"> {study_name} </a>
+            </th>
+            <th>{date_created}</th>
+            <th>{num_analyses}</th>
+        </tr> '''
+        # If user has elevated privileges show them all uploaded studies
+        if check_privileges(self.get_user(), self.testing):
+            with Database(path='.', testing=self.testing) as db:
+                studies = db.get_all_studies()
+        # Otherwise only show studies they've uploaded
+        else:
+            with Database(path='.', testing=self.testing) as db:
+                studies = db.get_all_user_studies(self.get_user())
+
+        study_list = []
+        for study in studies:
+            study_list.append(study_html.format(study_name=study.study_name,
+                                                view_study_page=SERVER_PATH + 'study/view_study',
+                                                access_code=study.access_code,
+                                                date_created=study.created,
+                                                num_analyses=0))
+
+        page = self.format_html('study_select_page',
+                                title='Select Study',
+                                user_studies='\n'.join(study_list),
+                                public_studies="")
+
+        return page
+
+    @cp.expose
+    def view_study(self, access_code):
+        """ The page for viewing information on a particular study """
+        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+            # Check the study belongs to the user only if the user doesn't have elevated privileges
+            study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+            docs = db.get_docs(study_code=access_code)
+
+        option_template = '<option value="{}">{}</option>'
+
+        # Get analyses related to this study
+        analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
+                                                                              doc.analysis_type,
+                                                                              doc.created.strftime("%Y-%m-%d")))
+                    for doc in docs]
+
+        # TODO pass study params as kwargs
+        # Get files downloadable from this study
+        study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
+
+        for key, path in study.files.items():
+            cp.session['download_files'][key] = path
+
+        page = self.format_html('study_view_page',
+                                title=study.study_name,
+                                study_name=study.study_name,
+                                date_created=study.created,
+                                last_accessed=study.last_accessed,
+                                reads_type=study.reads_type,
+                                barcodes_type=study.barcodes_type,
+                                access_code=study.access_code,
+                                owner=study.owner,
+                                email=study.email,
+                                path=study.path,
+                                study_analyses=analyses,
+                                study_files=study_files)
+        return page
 
 
 @decorate_all_methods(catch_server_errors)
@@ -341,14 +322,49 @@ class MMEDSupload(MMEDSbase):
     #             Upload Pages             #
     ########################################
 
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        if kwargs.get('upload_selected') is None:
+            kwargs['upload_selected'] = 'w3-blue'
+
+        # Handle what input forms should appear based on previous selections
+        if cp.session.get('upload_type') == 'qiime':
+            if cp.session.get('dual_barcodes'):
+                kwargs['dual_barcodes'] = 'required'
+                kwargs['select_barcodes'] = 'style="display:none"'
+            else:
+                kwargs['dual_barcodes'] = 'style="display:none"'
+                kwargs['select_barcodes'] = ''
+        # If it's not qiime (aka fastq) input then don't display the options
+        else:
+            kwargs['dual_barcodes'] = 'style="display:none"'
+            kwargs['select_barcodes'] = 'style="display:none"'
+
+        # Handle if the lefse input options should display when uploading a table
+        if cp.session.get('upload_type') == 'lefse':
+            kwargs['lefse_table'] = ''
+            kwargs['table_type'] = 'Lefse'
+        else:
+            kwargs['lefse_table'] = 'style="display:none"'
+            kwargs['table_type'] = 'OTU'
+        kwargs['table_type_lower'] = kwargs['table_type'].lower()
+
+        return super().format_html(page, **kwargs)
+
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        page = self.format_html('upload_metadata_file',
-                                title='Upload Metadata',
-                                metadata_type=cp.session['metadata_type'].capitalize())
+        logger.debug('upload/retry_upload')
+        # Add the success message if applicable
         if cp.session['metadata_type'] == 'specimen':
-            page = insert_html(page, 26, 'Subject table uploaded successfully')
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    success='Subject table uploaded successfully',
+                                    metadata_type=cp.session['metadata_type'].capitalize())
+        else:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    metadata_type=cp.session['metadata_type'].capitalize())
         return page
 
     @cp.expose
@@ -363,51 +379,23 @@ class MMEDSupload(MMEDSbase):
                                data_type,
                                self.testing)
             # Get the html for the upload page
-            page = self.format_html('welcome')
-            page = insert_html(page, 22, 'Upload modification successful')
+            page = self.format_html('home', success='Upload modification successful')
         except err.MissingUploadError as e:
-            page = self.format_html('upload_select_page', title='Upload Type')
-            page = insert_error(page, 22, e.message)
-        return page
-
-    @cp.expose
-    def convert_metadata(self, convertTo, myMetaData, unitCol, skipRows):
-        """
-        Convert the uploaded MIxS metadata file to a mmeds metadata file and return it.
-        """
-        log('In convert_metadata')
-        meta_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-        # Try the conversion
-        try:
-            if convertTo == 'mmeds':
-                file_path = self.get_dir() / 'mmeds_metadata.tsv'
-                # If it is successful return the converted file
-                MIxS_to_mmeds(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
-            else:
-                file_path = self.get_dir() / 'mixs_metadata.tsv'
-                mmeds_to_MIxS(meta_copy, file_path, skip_rows=skipRows, unit_column=unitCol)
-            page = static.serve_file(file_path, 'application/x-download',
-                                     'attachment', os.path.basename(file_path))
-        # If there is an issue with the provided unit column display an error
-        except err.MetaDataError as e:
-            page = self.format_html('welcome', title='Welcome to Mmeds')
-            page = insert_error(page, 31, e.message)
+            page = self.format_html('upload_select_page', title='Upload Type', error=e.message)
         return page
 
     @cp.expose
     def upload_data(self):
-        log('In upload_data')
-        cp.log('In upload_data')
-        # If there are no errors or warnings proceed to upload the data files
+        """ The page for uploading data files of any type"""
+
+        # Only arrive here if there are no errors or warnings proceed to upload the data files
+        alert = 'Specimen metadata uploaded successfully'
+
+        # The case for handling uploads of fastq files
         if cp.session['upload_type'] == 'qiime':
-            if cp.session['dual_barcodes']:
-                page = self.format_html('upload_data_files_dual', title='Upload Data')
-            else:
-                page = self.format_html('upload_data_files', title='Upload Data')
-        elif cp.session['upload_type'] == 'sparcc':
-            page = self.format_html('upload_otu_data', title='Upload Data')
-        elif cp.session['upload_type'] == 'lefse':
-            page = self.format_html('upload_lefse_data', title='Upload Data')
+            page = self.format_html('upload_data_files', title='Upload Data', success=alert)
+        else:
+            page = self.format_html('upload_otu_data', title='Upload Data', success=alert)
         return page
 
     @cp.expose
@@ -424,10 +412,41 @@ class MMEDSupload(MMEDSbase):
         cp.session['metadata_type'] = 'subject'
         cp.session['subject_type'] = subjectType
         cp.session['upload_type'] = uploadType
-        page = self.format_html('upload_metadata_file',
-                                title='Upload Metadata',
-                                metadata_type=cp.session['metadata_type'].capitalize(),
-                                version=uploadType)
+
+        # Add the success message if applicable
+        if cp.session['metadata_type'] == 'specimen':
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    success='Subject table uploaded successfully',
+                                    metadata_type=cp.session['metadata_type'].capitalize(),
+                                    version=uploadType)
+        else:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    metadata_type=cp.session['metadata_type'].capitalize(),
+                                    version=uploadType)
+        return page
+
+    @cp.expose
+    def continue_metadata_upload(self):
+        """ Like Upload metadata, but the continuation if there are warnings in a file """
+        # Only arrive here if there are no errors or warnings proceed to upload the data files
+        alert = '{} metadata uploaded successfully'.format(cp.session['metadata_type'].capitalize())
+
+        # Move on to uploading data files
+        if cp.session['metadata_type'] == 'specimen':
+            # The case for handling uploads of fastq files
+            if cp.session['upload_type'] == 'qiime':
+                page = self.format_html('upload_data_files', title='Upload Data', success=alert)
+            else:
+                page = self.format_html('upload_otu_data', title='Upload Data', success=alert)
+        # Move on to uploading specimen metadata
+        else:
+            page = self.format_html('upload_metadata_file',
+                                    title='Upload Metadata',
+                                    success='Subject table uploaded successfully',
+                                    metadata_type=cp.session['metadata_type'].capitalize(),
+                                    version=cp.session['upload_type'])
         return page
 
     @cp.expose
@@ -451,18 +470,47 @@ class MMEDSupload(MMEDSbase):
 
             # If there are errors report them and return the error page
             if errors:
-                page = self.handle_metadata_errors(metadata_copy, errors, warnings)
+                cp.log('There are errors')
+                # Write the errors to a file
+                cp.session['download_files']['error_file'] =\
+                    self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
+
+                with open(cp.session['download_files']['error_file'], 'w') as f:
+                    f.write('\n'.join(errors + warnings))
+                cp.log('Created error file at {}'.format(cp.session['download_files']['error_file']))
+
+                if warnings:
+                    page = self.format_html('upload_metadata_error',
+                                            error=errors,
+                                            warning=warnings,
+                                            title='Errors')
+                else:
+                    page = self.format_html('upload_metadata_error',
+                                            error=errors,
+                                            title='Errors')
             elif warnings:
-                page = self.handle_metadata_warnings(metadata_copy, errors, warnings)
+                cp.log('There are warnings')
+                # Set the proceed button based on current metadata file
+                if cp.session['metadata_type'] == 'subject':
+                    page = self.format_html('upload_metadata_warning',
+                                            title='Warnings',
+                                            warning=warnings,
+                                            next_page='{retry_upload_page}')
+                    cp.session['metadata_type'] = 'specimen'
+                elif cp.session['metadata_type'] == 'specimen':
+                    page = self.format_html('upload_metadata_warning',
+                                            title='Warnings',
+                                            warning=warnings,
+                                            next_page='{upload_data_page}')
             else:
-                # If there are no errors or warnings proceed to upload the data files
-                log('No errors or warnings')
                 # If it's the subject metadata file return the page for uploading the specimen metadata
                 if cp.session['metadata_type'] == 'subject':
-                    page = self.format_html('upload_metadata_file', title='Upload Metadata', metadata_type='Specimen')
-                    page = insert_warning(page, 23, 'Subject table uploaded successfully')
+                    page = self.format_html('upload_metadata_file',
+                                            title='Upload Metadata',
+                                            metadata_type='Specimen',
+                                            success='Subject table uploaded successfully')
                     cp.session['metadata_type'] = 'specimen'
-                # Otherwise proceed to uploading data files
+                    # Otherwise proceed to uploading data files
                 elif cp.session['metadata_type'] == 'specimen':
                     # If it's the sspecimen metadata file, save the type of barcodes
                     # And return the page for uploading data files
@@ -471,182 +519,13 @@ class MMEDSupload(MMEDSbase):
         except err.MetaDataError as e:
             page = self.format_html('upload_metadata_file',
                                     title='Upload Metadata',
+                                    error=e.message,
                                     metadata_type=cp.session['metadata_type'])
-            page = insert_error(page, 22, e.message)
         return page
-
-
-@decorate_all_methods(catch_server_errors)
-class MMEDSauthentication(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
-
-    ########################################
-    #           Account Pages              #
-    ########################################
-
-    @cp.expose
-    def sign_up_page(self):
-        """ Return the page for signing up. """
-        return self.format_html('auth_sign_up_page')
-
-    @cp.expose
-    def login(self, username, password):
-        """
-        Opens the page to upload files if the user has been authenticated.
-        Otherwise returns to the login page with an error message.
-        """
-        cp.log('Login attempt for user: {}'.format(username))
-        try:
-            validate_password(username, password, testing=self.testing)
-            cp.session['user'] = username
-            cp.session['temp_dir'] = tempfile.TemporaryDirectory()
-            cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
-            cp.session['processes'] = {}
-            cp.session['download_files'] = {}
-            cp.session['uploaded_files'] = {}
-            cp.session['subject_ids'] = None
-            page = self.format_html('welcome', title='Welcome to Mmeds', user=self.get_user())
-            log('Login Successful')
-        except err.InvalidLoginError as e:
-            page = self.format_html('index')
-            page = insert_error(page, 14, e.message)
-            log(e)
-            log(e.message)
-        return page
-
-    @cp.expose
-    def logout(self):
-        """ Expires the session and returns to login page """
-        cp.log('Logout user {}'.format(self.get_user()))
-        cp.lib.sessions.expire()
-        return open(HTML_DIR / 'index.html')
-
-    @cp.expose
-    def sign_up(self, username, password1, password2, email):
-        """
-        Perform the actions necessary to sign up a new user.
-        """
-        try:
-            check_password(password1, password2)
-            check_username(username, testing=self.testing)
-            add_user(username, password1, email, testing=self.testing)
-            page = self.format_html('index')
-        except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
-            page = self.format_html('auth_sign_up_page')
-            for message in e.message.split(','):
-                page = insert_error(page, 25, message)
-        return page
-
-    @cp.expose
-    def input_password(self):
-        """ Load page for changing the user's password """
-        page = self.format_html('auth_change_password', title='Change Password')
-        return page
-
-    @cp.expose
-    def change_password(self, password0, password1, password2):
-        """
-        Change the user's password
-        ===============================
-        :password0: The old password
-        :password1: The new password
-        :password2: A second entry of the new password
-        """
-        page = self.format_html('auth_change_password', title='Change Password')
-
-        # Check the old password matches
-        try:
-            validate_password(self.get_user(), password0, testing=self.testing)
-            # Check the two copies of the new password match
-            check_password(password1, password2)
-            change_password(self.get_user(), password1, testing=self.testing)
-            page = insert_html(page, 9, 'Your password was successfully changed.')
-        except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
-            for message in e.message.split(','):
-                page = insert_error(page, 9, message)
-        return page
-
-    @cp.expose
-    def reset_code(self, study_name, study_email):
-        """ Skip uploading a file. """
-        # Get the open file handler
-        with Database(self.get_dir(), owner=self.get_user(), testing=self.testing) as db:
-            try:
-                db.reset_access_code(study_name, study_email)
-                page = self.format_html('welcome')
-                page = insert_html(page, 14, 'Upload Successful')
-            except err.MissingUploadError:
-                page = self.format_html('welcome')
-                page = insert_error(page, 14, 'There was an error during the upload')
-        return page
-
-    @cp.expose
-    def password_recovery(self, username, email):
-        """ Page for reseting a user's password. """
-        try:
-            page = self.format_html('index')
-            reset_password(username, email, testing=self.testing)
-            page = insert_html(page, 14, 'A new password has been sent to your email.')
-        except err.NoResultError:
-            page = insert_error(
-                page, 14, 'No account exists with the provided username and email.')
-        return page
-
-
-@decorate_all_methods(catch_server_errors)
-class MMEDSanalysis(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
-
-    ######################################
-    #              Analysis              #
-    ######################################
-
-    @cp.expose
-    def run_analysis(self, access_code, analysis_method, config):
-        """
-        Run analysis on the specified study
-        ----------------------------------------
-        :access_code: The code that identifies the dataset to run the tool on
-        :analysis_method: The tool and analysis to run on the chosen dataset
-        """
-        if '-' in analysis_method:
-            tool_type = analysis_method.split('-')[0]
-            analysis_type = analysis_method.split('-')[1]
-        else:
-            tool_type = analysis_method
-            analysis_type = 'default'
-        try:
-            self.check_upload(access_code)
-            print('config passed is {}'.format(config))
-            if config.file is None:
-                config_path = DEFAULT_CONFIG.read_text()
-            elif isinstance(config, str):
-                config_path = config
-            else:
-                config_path = create_local_copy(config.file, config.name)
-
-            # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
-            page = self.format_html('welcome', title='Welcome to MMEDS')
-            page = insert_warning(page, 22, 'Analysis started you will recieve an email shortly')
-        except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
-            page = self.format_html('analysis_page', title='Welcome to MMEDS')
-            page = insert_error(page, 22, e.message)
-        return page
-
-    @cp.expose
-    def view_corrections(self):
-        """ Page containing the marked up metadata as an html file """
-        log('In view_corrections')
-        return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
     def process_data(self, public=False, **kwargs):
-        print(kwargs)
-        cp.log('Public is {}'.format(public))
-
+        """ The page for loading data files into the database """
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
@@ -694,48 +573,185 @@ class MMEDSanalysis(MMEDSbase):
                     specimen_metadata, username, reads_type, barcodes_type, datafiles,
                     cp.session['metadata_temporary'], public))
 
-        # Get the html for the upload page
-        page = self.format_html('welcome', title='Welcome to MMEDS')
-        page = insert_warning(page, 23, 'Upload Initiated. You will recieve an email when this finishes')
+        return self.format_html('home', success='Upload Initiated. You will recieve an email when this finishes')
+
+
+@decorate_all_methods(catch_server_errors)
+class MMEDSauthentication(MMEDSbase):
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+
+    ########################################
+    #           Account Pages              #
+    ########################################
+
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        if kwargs.get('account_selected') is None:
+            kwargs['account_selected'] = 'w3-text-blue'
+        return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def register_account(self):
+        """ Return the page for signing up. """
+        return self.format_html('auth_sign_up_page')
+
+    @cp.expose
+    def logout(self):
+        """ Expires the session and returns to login page """
+        cp.log('Logout user {}'.format(self.get_user()))
+        cp.lib.sessions.expire()
+        return self.format_html('login')
+
+    @cp.expose
+    def sign_up(self, username, password1, password2, email):
+        """
+        Perform the actions necessary to sign up a new user.
+        """
+        try:
+            check_password(password1, password2)
+            check_username(username, testing=self.testing)
+            add_user(username, password1, email, testing=self.testing)
+            page = self.format_html('login', success='Account created successfully!')
+        except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
+            logger.error('error, invalid something.\n{}'.format(e.message))
+            page = self.format_html('auth_sign_up_page', error=e.message)
         return page
+
+    @cp.expose
+    def input_password(self):
+        """ Load page for changing the user's password """
+        page = self.format_html('auth_change_password', title='Change Password')
+        return page
+
+    @cp.expose
+    def change_password(self, password0, password1, password2):
+        """
+        Change the user's password
+        ===============================
+        :password0: The old password
+        :password1: The new password
+        :password2: A second entry of the new password
+        """
+
+        # Check the old password matches
+        try:
+            validate_password(self.get_user(), password0, testing=self.testing)
+            # Check the two copies of the new password match
+            check_password(password1, password2)
+            change_password(self.get_user(), password1, testing=self.testing)
+            page = self.format_html('auth_change_password', success='Your password was successfully changed.')
+        except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
+            page = self.format_html('auth_change_password', error=e.message.split(','))
+        return page
+
+    @cp.expose
+    def password_recovery(self):
+        return self.format_html('forgot_password')
+
+    @cp.expose
+    def submit_password_recovery(self, username, email):
+        """ Page for reseting a user's password. """
+        try:
+            reset_password(username, email, testing=self.testing)
+            page = self.format_html('login', success='A new password has been sent to your email.')
+        except err.NoResultError:
+            page = self.format_html('login', error='No account exists with the provided username and email.')
+        return page
+
+
+@decorate_all_methods(catch_server_errors)
+class MMEDSanalysis(MMEDSbase):
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+
+    ######################################
+    #              Analysis              #
+    ######################################
+
+    def format_html(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        if kwargs.get('analysis_selected') is None:
+            kwargs['analysis_selected'] = 'w3-blue'
+        return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def view_analysis(self, access_code):
+        """ The page for viewing information on a particular analysis """
+        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+            # Check the study belongs to the user only if the user doesn't have elevated privileges
+            analysis = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+
+        option_template = '<option value="{}">{}</option>'
+
+        # Get files downloadable from this study
+        analysis_files = [option_template.format(key, key.capitalize())
+                          for key, path in analysis.files.items()
+                          if Path(path).exists()]
+
+        for key, path in analysis.files.items():
+            cp.session['download_files'][key] = path
+
+        page = self.format_html('analysis_view_page',
+                                title=analysis.study_name,
+                                study_name=analysis.study_name,
+                                analysis_name='{}-{}'.format(analysis.tool_type, analysis.analysis_type),
+                                date_created=analysis.created,
+                                last_accessed=analysis.last_accessed,
+                                reads_type=analysis.reads_type,
+                                barcodes_type=analysis.barcodes_type,
+                                access_code=analysis.access_code,
+                                owner=analysis.owner,
+                                email=analysis.email,
+                                path=analysis.path,
+                                tool_type=analysis.tool_type,
+                                analysis_type=analysis.analysis_type,
+                                analysis_status=analysis.analysis_status,
+                                analysis_files=analysis_files)
+        return page
+
+    @cp.expose
+    def run_analysis(self, access_code, analysis_method, config):
+        """
+        Run analysis on the specified study
+        ----------------------------------------
+        :access_code: The code that identifies the dataset to run the tool on
+        :analysis_method: The tool and analysis to run on the chosen dataset
+        """
+        if '-' in analysis_method:
+            tool_type = analysis_method.split('-')[0]
+            analysis_type = analysis_method.split('-')[1]
+        else:
+            tool_type = analysis_method
+            analysis_type = 'default'
+        try:
+            self.check_upload(access_code)
+            print('config passed is {}'.format(config))
+            if config.file is None:
+                config_path = DEFAULT_CONFIG.read_text()
+            elif isinstance(config, str):
+                config_path = config
+            else:
+                config_path = create_local_copy(config.file, config.name)
+
+            # -1 is the kill_stage (used when testing)
+            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
+            page = self.format_html('home', title='Welcome to MMEDS',
+                                    success='Analysis started you will recieve an email shortly')
+        except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
+            page = self.format_html('analysis_page', title='Welcome to MMEDS', error=e.message)
+        return page
+
+    @cp.expose
+    def view_corrections(self):
+        """ Page containing the marked up metadata as an html file """
+        log('In view_corrections')
+        return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
         page = self.format_html('analysis_select_tool', title='Select Analysis')
-        return page
-
-    @cp.expose
-    def query_page(self):
-        """ Load the page for executing Queries. """
-        page = self.format_html('analysis_query', title='Execute Query')
-        return page
-
-    @cp.expose
-    def execute_query(self, query):
-        """ Execute the provided query and format the results as an html table """
-        page = self.format_html('analysis_query')
-        try:
-            # Set the session to use the current user
-            with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
-                data, header = db.execute(query)
-                html_data = db.format_html(data, header)
-
-            # Create a file with the results of the query
-            query_file = self.get_dir() / 'query.tsv'
-            if header is not None:
-                data = [header] + list(data)
-            with open(query_file, 'w') as f:
-                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
-            cp.session['download_files']['query'] = query_file
-
-            # Add the download button
-            html = '<form action="../download/download_file" method="post">\n\
-                    <button type="submit" name="file_name" value="query">Download Results</button>\n\
-                    </form>'
-            page = insert_html(page, 29, html_data + html)
-        except (err.InvalidSQLError, err.TableAccessError) as e:
-            page = insert_error(page, 29, e.message)
         return page
 
 
@@ -747,12 +763,47 @@ class MMEDSserver(MMEDSbase):
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
+        self.study = MMEDSstudy(watcher, q, testing)
+
+    def format_html(self, page, **kwargs):
+        """
+        Add the highlighting for this section of the website as well as other relevant arguments
+        """
+        if kwargs.get('home_selected') is None:
+            kwargs['home_selected'] = 'w3-text-blue'
+        return super().format_html(page, **kwargs)
+
+    @cp.expose
+    def login(self, username, password):
+        """
+        Opens the page to upload files if the user has been authenticated.
+        Otherwise returns to the login page with an error message.
+        """
+        cp.log('Login attempt for user: {}'.format(username))
+        try:
+            validate_password(username, password, testing=self.testing)
+            cp.session['user'] = username
+            cp.session['temp_dir'] = tempfile.TemporaryDirectory()
+            cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
+            cp.session['processes'] = {}
+            cp.session['download_files'] = {}
+            cp.session['uploaded_files'] = {}
+            cp.session['subject_ids'] = None
+            page = self.format_html('home', title='Welcome to Mmeds')
+            log('Login Successful')
+        except err.InvalidLoginError as e:
+            page = self.format_html('login', error=e.message)
+        return page
+
+    def exit(self):
+        logger.info('{} exiting'.format(self))
+        cp.engine.exit()
 
     @cp.expose
     def index(self):
         """ Home page of the application """
         if cp.session.get('user'):
-            page = self.format_html('welcome', title='Welcome to MMEDS')
+            page = self.format_html('home')
         else:
-            page = self.format_html('index')
+            page = self.format_html('login')
         return page

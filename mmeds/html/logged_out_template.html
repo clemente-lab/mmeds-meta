@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <!-- Header -->
+    <head>
+        <link rel="shortcut icon" type="image/x-icon" href="{favicon}">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+        <script src="https://kit.fontawesome.com/7e4e0c6c2d.js" crossorigin="anonymous"></script>
+        <title>MMEDS Server</title>
+    </head>
+    <body class="w3-light-grey">
+        <!-- Top container -->
+        <div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
+            <span class="w3-bar-item w3-right">
+                <img src="{mount_sinai_logo}" alt="Mount Sinai Logo" style="height:30px">
+            </span>
+        </div>
+
+        <div class="w3-container w3-row w3-center w3-padding-32">
+            <a href="{home_page}">
+                <img src="{mmeds_logo_big}"
+                     class="w3-rectangle"
+                     style="height:200px; margin-top:30px;"
+                     alt="MMEDs Logo" >
+            </a>
+        </div>
+
+        <!-- !PAGE CONTENT! -->
+        <div class="w3-main">
+            <div class="w3-quarter">
+                <div class="w3-container w3-blue w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-cloud-upload w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{study_count}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>Studies</h4>
+                </div>
+            </div>
+            <div class="w3-quarter">
+                <div class="w3-container w3-purple w3-padding-16">
+                    <div class="w3-left"><i class="fas fa-chart-pie w3-xxxlarge" alt="Analysis Icon"></i></div>
+                    <div class="w3-right">
+                        <h3>{analysis_count}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>Analyses</h4>
+                </div>
+            </div>
+            <div class="w3-quarter">
+                <div class="w3-container w3-pink w3-padding-16">
+                    <div class="w3-left"><i class="fas fa-sitemap w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{query_count}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>Queries</h4>
+                </div>
+            </div>
+            <div class="w3-quarter">
+                <div class="w3-container w3-black w3-text-white w3-padding-16">
+                    <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i></div>
+                    <div class="w3-right">
+                        <h3>{user_count}</h3>
+                    </div>
+                    <div class="w3-clear"></div>
+                    <h4>Users</h4>
+                </div>
+            </div>
+        </div>
+        <hr>
+        {error}
+        {warning}
+        {success}
+        {body}
+        <hr>
+        <!-- Footer -->
+        <footer class="w3-container w3-padding-16 w3-light-grey">
+            <h4> Copyright Clemente Lab 2018-2020</h4>
+            <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
+        </footer>
+        <!-- End page content -->
+    </body>
+</html>
