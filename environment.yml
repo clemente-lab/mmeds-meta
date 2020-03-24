@@ -1,4 +1,4 @@
-name: mmeds
+name: /home/david/.modules/mmeds-stable
 channels:
   - defaults
 dependencies:
@@ -6,11 +6,12 @@ dependencies:
   - _r-mutex=1.0.0=anacondar_1
   - binutils_impl_linux-64=2.31.1=h6176602_1
   - binutils_linux-64=2.31.1=h6176602_8
+  - blas=1.0=mkl
   - bwidget=1.9.11=1
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2019.5.15=1
+  - ca-certificates=2020.1.1=0
   - cairo=1.14.12=h8948797_3
-  - certifi=2019.6.16=py37_1
+  - certifi=2019.11.28=py37_0
   - curl=7.65.3=hbc83047_0
   - cython=0.29.13=py37he6710b0_0
   - fontconfig=2.13.0=h9420a91_0
@@ -21,12 +22,14 @@ dependencies:
   - gfortran_impl_linux-64=7.3.0=hdf63c60_1
   - gfortran_linux-64=7.3.0=h553295d_8
   - glib=2.56.2=hd408876_0
+  - gmp=6.1.2=h6c8ec71_1
   - graphite2=1.3.13=h23475e2_0
   - gsl=2.4=h14c3975_4
   - gxx_impl_linux-64=7.3.0=hdf63c60_1
   - gxx_linux-64=7.3.0=h553295d_8
   - harfbuzz=1.8.8=hffaf4a1_0
   - icu=58.2=h9c2bf20_1
+  - intel-openmp=2019.4=243
   - jpeg=9b=h024ee3a_2
   - krb5=1.16.1=h173b8e3_7
   - libcurl=7.65.3=h20c2e04_0
@@ -42,13 +45,20 @@ dependencies:
   - libxcb=1.13=h1bed415_1
   - libxml2=2.9.9=hea5a465_1
   - make=4.2.1=h1bed415_1
+  - mkl=2019.4=243
+  - mkl-service=2.3.0=py37he904b0f_0
+  - mkl_fft=1.0.14=py37ha843d7b_0
+  - mkl_random=1.0.2=py37hd81dba3_0
   - ncurses=6.1=he6710b0_1
-  - openssl=1.1.1d=h7b6447c_1
+  - numpy-base=1.16.5=py37hde5b4d6_0
+  - openssl=1.1.1d=h7b6447c_4
+  - pandoc=2.2.3.2=0
   - pango=1.42.4=h049681c_0
   - pcre=8.43=he6710b0_0
   - pip=19.2.2=py37_0
   - pixman=0.38.0=h7b6447c_0
   - python=3.7.4=h265db76_1
+  - pyyaml=5.1.2=py37h7b6447c_0
   - r=3.5.1=r351_0
   - r-base=3.5.1=h1e0a451_2
   - r-boot=1.3_20=r351hf348343_0
@@ -68,12 +78,15 @@ dependencies:
   - r-spatial=7.3_11=r351hd10c6a6_4
   - r-survival=2.42_6=r351h96ca727_0
   - readline=7.0=h7b6447c_5
+  - scipy=1.4.1=py37h0b6359f_0
   - setuptools=41.0.1=py37_0
   - sqlite=3.29.0=h7b6447c_0
   - tk=8.6.8=hbc83047_0
   - tktable=2.10=h14c3975_0
   - wheel=0.33.4=py37_0
+  - xlwt=1.3.0=py37_0
   - xz=5.2.4=h14c3975_4
+  - yaml=0.1.7=had09818_2
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
   - pip:
@@ -93,6 +106,7 @@ dependencies:
     - entrypoints==0.3
     - flask==1.1.1
     - gevent==1.5a1
+    - greenlet==0.4.15
     - idna==2.8
     - imapclient==2.1.0
     - importlib-metadata==0.23
@@ -106,14 +120,14 @@ dependencies:
     - jinja2==2.10.1
     - jsonschema==3.0.2
     - jupyter==1.0.0
-    - jupyter-client==5.3.3
+    - jupyter-client==5.3.2
     - jupyter-console==6.0.0
     - jupyter-core==4.5.0
     - locustio==0.11.0
     - markupsafe==1.1.1
     - mistune==0.8.4
-    - mmeds==0.5.0
     - more-itertools==7.2.0
+    - msgpack==0.6.1
     - multiprocessing-logging==0.3.0
     - nbconvert==5.6.0
     - nbformat==4.4.0
@@ -127,10 +141,12 @@ dependencies:
     - pillow==6.1.0
     - pint==0.9
     - pluggy==0.13.0
+    - ply==3.11
     - portend==2.5
     - prompt-toolkit==2.0.9
     - psutil==5.6.3
     - ptyprocess==0.6.0
+    - pudb==2019.2
     - py==1.8.0
     - pycparser==2.19
     - pygments==2.4.2
@@ -140,6 +156,7 @@ dependencies:
     - pyrsistent==0.15.4
     - pytest==5.1.2
     - pytest-cov==2.7.1
+    - pytest-pudb==0.7.0
     - python-dateutil==2.8.0
     - pytz==2019.2
     - pyzmq==18.1.0
@@ -155,6 +172,7 @@ dependencies:
     - traitlets==4.3.2
     - tzlocal==2.0.0
     - urllib3==1.25.3
+    - urwid==2.1.0
     - wcwidth==0.1.7
     - webencodings==0.5.1
     - werkzeug==0.15.6
@@ -162,5 +180,5 @@ dependencies:
     - xlrd==1.2.0
     - zc-lockfile==2.0
     - zipp==0.6.0
-prefix: /home/david/anaconda3/envs/mmeds
+prefix: /home/david/.modules/mmeds-stable
 
