@@ -116,7 +116,7 @@ class Qiime2(Tool):
             # Reverse compliment the barcodes in the mapping file if using paired reads
             if 'paired_end' == self.doc.reads_type:
                 cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
-        else:
+        elif 'dual_barcodes':
             self.add_path('unmatched_demuxed', '.qza')
             self.add_path('demux_log', '.txt')
             cmd = [
