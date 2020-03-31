@@ -12,7 +12,7 @@ class Qiime2(Tool):
     """ A class for qiime 2 analysis of uploaded studies. """
 
     # The default classifier for Q2 analysis
-    classifier = STORAGE_DIR / 'gg-13-8-99-nb-classifier.qza'
+    classifier = DATABASE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
     def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                  analysis=True, restart_stage=0, kill_stage=-1, child=False):
