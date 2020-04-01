@@ -1,5 +1,5 @@
 Ethnicity	Genotypes	Heights	Heights	ICDCode	Illness	Illness	Illness	Illness	Intervention	Intervention	Intervention	Interventions	Interventions	Interventions	Subjects	Subjects	Subjects	Subjects	SubjectType	Weights	Weights	AdditionalMetaData
-Ethnicity	Genotype	Height	HeightDateCollected	ICDCode	IllnessDescription	IllnessEndDate	IllnessInstanceID	IllnessStartDate	InterventionDescription	InterventionEndDate	InterventionStartDate	InterventionCode	InterventionName	InterventionType	BirthYear	HostSubjectId	Nationality	Sex	SubjectType	Weight	WeightDateCollected	SubjectIdCol
+Ethnicity	Genotype	Height	HeightDateCollected	ICDCode	IllnessDescription	IllnessEndDate	IllnessInstanceID	IllnessStartDate	InterventionDescription	InterventionEndDate	InterventionStartDate	InterventionCode	InterventionName	InterventionType	BirthYear	HostSubjectId	Nationality	Sex	SubjectType	Weight	WeightDateCollected	SomeOtherInfo
 Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Required	Optional	Optional	Required	Optional	Optional	Optional
 Text	Text	Number	Date	Text	Text	Date	Date	Date	Text	Date	Date	Text	Text	Text	Number	Text	Text	Text	Text	Number	Date	Text
 Limit 45 Characters	Limit 180 Characters	Meters	Year-Month-Day	Limit 8 Characters	Limit 256 Characters	Year-Month-Day	Limit 256 Characters	Year-Month-Day	Limit 256 characters	Year-Month-Day	Year-Month-Day	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Year	Limit 256 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Kilogram	Year-Month-Day	Limit 256 Characters
@@ -41,6 +41,6 @@ Caucasian	Lucy	63	2018-02-03	V93.24XS	Bad	2018-12-30	35	2017-03-22	Helpful	2018-
 East Asian	Lucy	63	2018-02-04	V93.24XS	Bad	2018-12-31	36	2017-03-23	Helpful	2018-03-24	2018-03-23	Heart Transplant	200	Surgery	1935	31	Polish	M	Human	60	2018-02-04	34
 East Asian	Lucy	63	2018-02-05	V93.24XS	Bad	2018-01-01	37	2017-03-24	Helpful	2018-03-25	2018-03-24	Heart Transplant	200	Surgery	1936	32	Polish	M	Human	61	2018-02-05	34
 East Asian	Lucy	63	2018-02-06	V93.24XS	Bad	2018-01-02	38	2017-03-25	Helpful	2018-03-26	2018-03-25	Heart Transplant	200	Surgery	1937	33	Polish	M	Human	62	2018-02-06	34
-East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	39	2017-03-26	Helpful	2018-03-27	2018-03-26	Heart Transplant	200	Surgery	1938	34	Polish	M	Human	63	2018-02-07	
-East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	40	2017-03-26	Helpful	2010-03-01	2010-03-01	Kidney Transplant	200	Surgery	1938	34	Polish	M	Human	64	2018-02-07	
-East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	41	2017-03-26	Helpful	2007-03-27	2007-03-27	Fecal Transplant	200	Surgery	1938	34	Polish	M	Human	65	2018-02-07	
+East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	39	2017-03-26	Helpful	2018-03-27	2018-03-26	Heart Transplant	200	Surgery	1938	34	Polish	M	Human	63	2018-02-07	35
+East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	40	2017-03-26	Helpful	2010-03-01	2010-03-01	Kidney Transplant	200	Surgery	1938	34	Polish	M	Human	64	2018-02-07	36
+East Asian	Lucy	63	2018-02-07	V93.24XS	Bad	2018-01-03	41	2017-03-26	Helpful	2007-03-27	2007-03-27	Fecal Transplant	200	Surgery	1938	34	Polish	M	Human	65	2018-02-07	37

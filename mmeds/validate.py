@@ -228,11 +228,11 @@ class Validator:
         """ Check the columns of a particular table """
 
         self.col_index = self.columns.index(self.cur_col)
-        if self.cur_col not in fig.TABLE_COLS[self.cur_table]:
+        if not self.cur_table == 'AdditionalMetaData' and self.cur_col not in fig.TABLE_COLS[self.cur_table]:
             # If the column shouldn't be in the table stop checking it
             err_message = '-1\t{}\tIllegal Column Error: Column {} should not be in table {}'
             self.errors.append(err_message.format(self.col_index, self.cur_col, self.cur_table))
-        elif not self.cur_table == 'AdditionalMetaData':
+        else:
             # Check the header
             self.check_header()
 
@@ -288,7 +288,6 @@ class Validator:
             elif self.metadata_type == 'specimen':
                 self.check_matching_subjects()
 
-            # For each table column
             for i, column in enumerate(self.table_df.columns):
                 # Track what column is being validated
                 self.seen_cols.append(column)
@@ -401,28 +400,26 @@ class Validator:
         """ Ensure each column will cast to its specified type """
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
-            ctype = self.header_df[table][column].iloc[1]
-            # Check the type information is valid
-            try:
-                self.col_types[column] = fig.TYPE_MAP[ctype]
-            except KeyError:
-                self.col_types[column] = fig.TYPE_MAP['Text']
-                err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
-                self.errors.append(err.format(self.col_index, column))
-
             # Get the specified types for additional metadata fields
             if table == 'AdditionalMetaData':
                 # Add an error if the column name is one of the columns in the default template
-                if column in self.col_types.keys():
+                if column in fig.ALL_COLS:
                     err = '-1\t-1\tColumn Name Error: Column name {} is part of the default template'
                     self.errors.append(err.format(column))
-            # Otherwise attempt to get the type information
-            else:
+
+            # Check the type information is valid
+            ctype = self.header_df[table][column].iloc[1]
+            try:
+                self.col_types[column] = fig.TYPE_MAP[ctype]
+            except KeyError:
                 # If no type is specified, add and error and default to str
                 if pd.isna(ctype) or ctype == '':
                     err = '-1\t{}\tColumn Missing Type Error: Missing type information for column {}'
                     self.errors.append(err.format(self.col_index, column))
-                    ctype = 'Text'
+                else:
+                    err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
+                    self.errors.append(err.format(self.col_index, column))
+                self.col_types[column] = fig.TYPE_MAP['Text']
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
@@ -448,11 +445,14 @@ class Validator:
     def run(self):
         """ Perform the validation. """
         subjects = pd.DataFrame()
+        # Try loading the metadata to be validated
         try:
             self.load_mapping_file(self.file_fp, self.sep)
             self.setup_tables_columns()
+        # If loading fails the file is invalid and no more checks can be performed
         except InvalidMetaDataFileError as e:
             self.errors.append(e.message)
+        # Otherwise proceed with validation
         else:
             if self.metadata_type == 'subject':
                 if self.subject_type == 'human':
@@ -468,7 +468,13 @@ class Validator:
             elif self.metadata_type == 'specimen':
                 tables = fig.SPECIMEN_TABLES
             self.check_column_types()
-            # For each table (skip missing ones)
+
+            # Check for missing tables
+            missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
+            if missing_tables:
+                self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
+
+            # For each table
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it
                 if table in tables:
