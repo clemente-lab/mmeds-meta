@@ -231,7 +231,7 @@ class TestServer(helper.CPWebCase):
         # Test signup with an invalid password
         self.getPage(addr.format(self.server_user, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS + 'xx'))
         self.assertStatus('200 OK')
-        bad_page = server.load_webpage('auth_sign_up_page', error='Passwords do not match.')
+        bad_page = server.load_webpage('auth_sign_up_page', error=['Passwords do not match.'])
         self.assertBody(bad_page)
 
         logger.debug('continuing sign up')
@@ -306,10 +306,10 @@ class TestServer(helper.CPWebCase):
                      self.cookies)
         self.assertStatus('200 OK')
         fail_page = server.load_webpage('auth_change_password',
-                                       user=self.server_user,
-                                       account_selected='w3-text-blue',
-                                       home_selected='',
-                                       error=['Passwords must be longer than 10 characters.'])
+                                        user=self.server_user,
+                                        account_selected='w3-text-blue',
+                                        home_selected='',
+                                        error=['Passwords must be longer than 10 characters.'])
 
         self.assertBody(fail_page)
         self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
@@ -317,10 +317,10 @@ class TestServer(helper.CPWebCase):
                      self.cookies)
         self.assertStatus('200 OK')
         pass_page = server.load_webpage('auth_change_password',
-                                       user=self.server_user,
-                                       account_selected='w3-text-blue',
-                                       home_selected='',
-                                       success='Your password was successfully changed.')
+                                        user=self.server_user,
+                                        account_selected='w3-text-blue',
+                                        home_selected='',
+                                        success='Your password was successfully changed.')
         self.assertBody(pass_page)
 
         self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
@@ -440,12 +440,12 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = server.load_webpage('upload_metadata_file',
-                                  user=self.server_user,
-                                  upload_selected='w3-blue',
-                                  home_selected='',
-                                  select_barcodes='',
-                                  metadata_type='subject',
-                                  error='yaml is not a valid filetype.')
+                                   user=self.server_user,
+                                   upload_selected='w3-blue',
+                                   home_selected='',
+                                   select_barcodes='',
+                                   metadata_type='subject',
+                                   error='yaml is not a valid filetype.')
         self.assertBody(page)
         log('Checked invalid filetype')
 
@@ -468,17 +468,17 @@ class TestServer(helper.CPWebCase):
         warning = '-1\t17\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
             ' may be in error, only 1 found.'
         page = server.load_webpage('upload_metadata_warning',
-                                  user=self.server_user,
-                                  warning=[warning],
-                                  upload_selected='w3-blue',
-                                  home_selected='',
-                                  next_page='{retry_upload_page}')
+                                   user=self.server_user,
+                                   warning=[warning],
+                                   upload_selected='w3-blue',
+                                   home_selected='',
+                                   next_page='{retry_upload_page}')
 
         self.assertBody(page)
         log('Checked metadata that warns')
 
         # Check a subject metadata file that has no issues
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
@@ -504,11 +504,11 @@ class TestServer(helper.CPWebCase):
             ' may be in error, only 1 found.'
 
         page = server.load_webpage('upload_metadata_warning',
-                                  user=self.server_user,
-                                  warning=[warning],
-                                  upload_selected='w3-blue',
-                                  home_selected='',
-                                  next_page='{upload_data_page}')
+                                   user=self.server_user,
+                                   warning=[warning],
+                                   upload_selected='w3-blue',
+                                   home_selected='',
+                                   next_page='{upload_data_page}')
         self.assertBody(page)
         log('Checked metadata that warns')
 
@@ -516,11 +516,11 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
         self.assertStatus('200 OK')
         page = server.load_webpage('upload_data_files',
-                                  user=self.server_user,
-                                  upload_selected='w3-blue',
-                                  success='Specimen metadata uploaded successfully',
-                                  dual_barcodes='style="display:none"',
-                                  home_selected='')
+                                   user=self.server_user,
+                                   upload_selected='w3-blue',
+                                   success='Specimen metadata uploaded successfully',
+                                   dual_barcodes='style="display:none"',
+                                   home_selected='')
         self.assertBody(page)
         log('Checked a metadata file with no problems')
 
@@ -544,19 +544,19 @@ class TestServer(helper.CPWebCase):
                      headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         err_page = server.load_webpage('upload_select_page',
-                                      user=self.server_user,
-                                      upload_selected='w3-blue',
-                                      home_selected='',
-                                      error=err.MissingUploadError().message)
+                                       user=self.server_user,
+                                       upload_selected='w3-blue',
+                                       home_selected='',
+                                       error=err.MissingUploadError().message)
         self.assertBody(err_page)
 
         self.getPage('/upload/modify_upload?data_type=for_reads&access_code={}'.format(self.access_code),
                      headers + self.cookies, 'POST', body)
         page = server.load_webpage('home',
-                                  user=self.server_user,
-                                  upload_selected='w3-blue',
-                                  home_selected='',
-                                  success='Upload modification successful')
+                                   user=self.server_user,
+                                   upload_selected='w3-blue',
+                                   home_selected='',
+                                   success='Upload modification successful')
         self.assertStatus('200 OK')
         self.assertBody(page)
 
@@ -585,10 +585,10 @@ class TestServer(helper.CPWebCase):
                      headers=self.cookies)
         self.assertStatus('200 OK')
         page = server.load_webpage('upload_select_page',
-                                  user=self.server_user,
-                                  upload_selected='w3-blue',
-                                  home_selected='',
-                                  error=err.MissingUploadError().message)
+                                   user=self.server_user,
+                                   upload_selected='w3-blue',
+                                   home_selected='',
+                                   error=err.MissingUploadError().message)
 
         self.assertBody(page)
         self.getPage('/auth/logout', headers=self.cookies)
