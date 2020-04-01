@@ -49,10 +49,6 @@ def catch_server_errors(page_method):
             args = deepcopy(HTML_ARGS)
             args['body'] = body.format(**args)
             return HTML_PAGES['logged_out_template'].read_text().format(**args)
-
-        #except KeyError as e:
-        #    logger.error('Caught server error {}'.format(e))
-        #    return "There was an error, contact server admin with:\n {}".format(e)
     return wrapper
 
 
@@ -329,16 +325,13 @@ class MMEDSupload(MMEDSbase):
 
         cp.log('before validator creation')
         valid = Validator(metadata_copy,
-                cp.session['metadata_type'],
-                cp.session['subject_ids'],
-                cp.session['subject_type'])
+                          cp.session['metadata_type'],
+                          cp.session['subject_ids'],
+                          cp.session['subject_type'])
         cp.log('before validator run')
 
         # Check the metadata file for errors
         errors, warnings, subjects = valid.run()
-        cp.log("------------- After RUn Validate -------------")
-        cp.log(errors)
-        cp.log(warnings)
 
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:

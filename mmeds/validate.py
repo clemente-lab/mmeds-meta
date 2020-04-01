@@ -4,7 +4,7 @@ import re
 
 from collections import defaultdict
 from numpy import std, mean
-from mmeds.util import log, load_ICD_codes, is_numeric, load_metadata
+from mmeds.util import load_ICD_codes, is_numeric, load_metadata
 from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
 
@@ -41,7 +41,6 @@ class Validator:
 
     def __init__(self, file_fp, metadata_type, subject_ids, subject_type, sep='\t'):
         """ Initialize the validator object. """
-        logger.error('Initialize validator')
         self.metadata_type = metadata_type
         self.subject_type = subject_type
         self.errors = []
@@ -229,37 +228,36 @@ class Validator:
         """ Check the columns of a particular table """
 
         self.col_index = self.columns.index(self.cur_col)
-        if not self.cur_table == 'AdditionalMetaData' and self.cur_col not in fig.TABLE_COLS[self.cur_table]:
+        if self.cur_col not in fig.TABLE_COLS[self.cur_table]:
             # If the column shouldn't be in the table stop checking it
             err_message = '-1\t{}\tIllegal Column Error: Column {} should not be in table {}'
             self.errors.append(err_message.format(self.col_index, self.cur_col, self.cur_table))
-            return
+        elif not self.cur_table == 'AdditionalMetaData':
+            # Check the header
+            self.check_header()
 
-        # Check the header
-        self.check_header()
+            col = self.table_df[self.cur_col]
+            # Check the column itself
+            self.check_column(col)
 
-        col = self.table_df[self.cur_col]
-        # Check the column itself
-        self.check_column(col)
-
-        # Perform column specific checks
-        if self.cur_table == 'RawData':
-            if self.cur_col == 'BarcodeSequence':
-                self.check_duplicates(col)
-                self.check_lengths(col)
-                self.check_barcode_chars(col)
+            # Perform column specific checks
+            if self.cur_table == 'RawData':
+                if self.cur_col == 'BarcodeSequence':
+                    self.check_duplicates(col)
+                    self.check_lengths(col)
+                    self.check_barcode_chars(col)
+                    self.check_NA(col)
+                elif self.cur_col == 'RawDataID':
+                    self.check_duplicates(col)
+                    self.check_NA(col)
+                elif self.cur_col == 'LinkerPrimerSequence':
+                    self.check_lengths(col)
+            elif self.cur_table == 'ICDCode':
+                self.check_ICD_codes(col)
+            elif self.cur_col == 'HostSubjectId':
                 self.check_NA(col)
-            elif self.cur_col == 'RawDataID':
+            elif self.cur_col == 'IllnessInstanceID':
                 self.check_duplicates(col)
-                self.check_NA(col)
-            elif self.cur_col == 'LinkerPrimerSequence':
-                self.check_lengths(col)
-        elif self.cur_table == 'ICDCode':
-            self.check_ICD_codes(col)
-        elif self.cur_col == 'HostSubjectId':
-            self.check_NA(col)
-        elif self.cur_col == 'IllnessInstanceID':
-            self.check_duplicates(col)
 
     def check_table(self):
         """
@@ -267,7 +265,6 @@ class Validator:
         ========================================
         :table_df: A pandas dataframe containing the data for the specified table
         """
-        logger.error('In Check Table')
         start_col = None
         end_col = None
         # Get the table from the metadata being validated
@@ -275,27 +272,21 @@ class Validator:
             self.table_df = self.df[self.cur_table]
         # If it doesn't exist in the metadata
         except KeyError:
-            logger.error('Caught key error')
             # if isn't not a special case table add the appropriate error
-            if not self.cur_table in ({'AdditionalMetaData'} | fig.ICD_TABLES):
+            if self.cur_table not in ({'AdditionalMetaData'} | fig.ICD_TABLES):
                 self.errors.append('-1\t-1\tMissing Table Error: Missing table {}'.format(self.cur_table))
         # If it does exist continue validation
         else:
-            logger.error('no key error')
             # For the built in table, ensure all columns are present
 
             if not self.cur_table == 'AdditionalMetaData':
-                logger.error('Before missing columns')
                 missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
-                logger.error('After missing columns')
                 if missing_cols:
                     text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
                     self.errors.append(text.format(', '.join(missing_cols), self.cur_table))
             # Check that subjects match
             elif self.metadata_type == 'specimen':
                 self.check_matching_subjects()
-
-            logger.error('After type checks')
 
             # For each table column
             for i, column in enumerate(self.table_df.columns):
@@ -308,19 +299,15 @@ class Validator:
                     start_col = column
                 elif re.match(r'\w*EndDate\w*', column):
                     end_col = column
-                logger.error('Check table column')
                 self.check_table_column()
-                logger.error('after Check table column')
 
             # Compare the start and end dates
             if start_col is not None and end_col is not None:
                 self.check_dates(start_col, end_col)
 
-            logger.error('Before StudyName')
             # Get the study name from that table
             if self.cur_table == 'Study':
                 self.study_name = self.table_df['StudyName'][0]
-            logger.error('After StudyName')
 
     def check_header(self):
         """ Check the header field to ensure it complies with MMEDS requirements. """
@@ -387,6 +374,8 @@ class Validator:
             raise InvalidMetaDataFileError('-1\t-1\tThere is an issue parsing your metadata. Please check that it is' +
                                            ' in tab delimited format with no tab or newline characters in any of the' +
                                            ' cells')
+
+    def setup_tables_columns(self):
         # Setup the tables and columns
         for table, column in self.df.columns:
             if table not in self.tables:
@@ -412,6 +401,7 @@ class Validator:
         """ Ensure each column will cast to its specified type """
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
+            ctype = self.header_df[table][column].iloc[1]
             # Check the type information is valid
             try:
                 self.col_types[column] = fig.TYPE_MAP[ctype]
@@ -428,7 +418,6 @@ class Validator:
                     self.errors.append(err.format(column))
             # Otherwise attempt to get the type information
             else:
-                ctype = self.header_df[table][column].iloc[1]
                 # If no type is specified, add and error and default to str
                 if pd.isna(ctype) or ctype == '':
                     err = '-1\t{}\tColumn Missing Type Error: Missing type information for column {}'
@@ -461,8 +450,8 @@ class Validator:
         subjects = pd.DataFrame()
         try:
             self.load_mapping_file(self.file_fp, self.sep)
+            self.setup_tables_columns()
         except InvalidMetaDataFileError as e:
-            logger.error('Issue loading metadata file')
             self.errors.append(e.message)
         else:
             if self.metadata_type == 'subject':
