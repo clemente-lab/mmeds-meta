@@ -99,8 +99,6 @@ CONFIG = {
 # CONFIGURE TEST GLOBALS #
 ##########################
 
-testing = False
-
 TEST_PATH = DATABASE_DIR / 'test_files'
 TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
 if not TEST_DIR.exists():

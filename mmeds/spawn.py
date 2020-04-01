@@ -295,4 +295,7 @@ class Watcher(Process):
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
                     ptype, toaddr, user, message, kwargs = process
+                    logger.error('Sending email with arguments')
+                    logger.error('\t'.join([toaddr, user, message]))
+                    logger.error(kwargs)
                     send_email(toaddr, user, message, self.testing, **kwargs)
