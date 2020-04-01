@@ -100,7 +100,9 @@ class Tool(mp.Process):
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
         email = ('email', self.doc.email, self.owner, 'analysis_start',
-                 dict(code=self.access_code, study=self.doc.study_name))
+                dict(code=self.access_code,
+                    analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                    study=self.doc.study_name))
         self.queue.put(email)
 
     def __str__(self):
@@ -174,7 +176,6 @@ class Tool(mp.Process):
 
     def unzip(self):
         """ Split the libraries and perform quality analysis. """
-        self.logger.debug('unzipping files for code {}'.format(self.doc.access_code))
         self.add_path('for_reads', '')
         command = 'unzip {} -d {}'.format(self.get_file('data'),
                                           self.get_file('for_reads'))
@@ -211,9 +212,6 @@ class Tool(mp.Process):
             # Check bjobs
             jobs = run(['/hpc/lsf/10.1/linux3.10-glibc2.17-x86_64/bin/bjobs'],
                          capture_output=True).stdout.decode('utf-8')
-            self.logger.error(type(jobs))
-            self.logger.error(jobs)
-            self.logger.error('waiting on {}'.format(job_id))
             # If the job is found set it back to true
             if str(job_id) in jobs:
                 running = True
@@ -221,7 +219,6 @@ class Tool(mp.Process):
     def move_user_files(self):
         """ Move all visualization files intended for the user to a set location. """
         try:
-            self.logger.debug('Move analysis files into directory')
             self.add_path('visualizations_dir', '')
             if not self.get_file('visualizations_dir', True).is_dir():
                 self.get_file('visualizations_dir', True).mkdir()
@@ -252,7 +249,7 @@ class Tool(mp.Process):
 
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
-        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.doc_type)
+        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.tool_type)
 
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
@@ -265,7 +262,7 @@ class Tool(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {}'.format(self.doc.doc_type.split('-')[0])
+            '--tool_type {}'.format(self.doc.tool_type)
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -288,7 +285,6 @@ class Tool(mp.Process):
 
         with Database(owner=self.owner, testing=self.testing) as db:
             access_code = db.create_access_code(child.name)
-        self.logger.debug('CHILD ACCESS CODE {}'.format(access_code))
 
         child.doc = self.doc.generate_sub_analysis_doc(category, value, access_code)
         child.path = Path(child.doc.path)
@@ -315,12 +311,10 @@ class Tool(mp.Process):
         else:
             child.add_path(self.get_file('otu_table', True), key='parent_table', full_path=True)
 
-        self.logger.debug('load metadata  {}'.format(self.get_file('metadata', True)))
         # Filter the metadata and write the new file to the childs directory
         mdf = load_metadata(self.get_file('metadata', True))
         new_mdf = mdf.loc[mdf[category] == value]
         write_metadata(new_mdf, child.get_file('metadata', True))
-        self.logger.debug('write to {}'.format(child.get_file('metadata', True)))
 
         # Update child's vars
         child.add_path('{}/{}_{}/'.format(child.doc.name, category[1], file_value), '')
@@ -359,9 +353,6 @@ class Tool(mp.Process):
             parent_doc = db.get_doc(self.parent_code)
             access_code = db.create_access_code(self.name)
 
-        self.logger.debug('My parents code is {}'.format(self.parent_code))
-        self.logger.debug('Im the child and my code is {}'.format(access_code))
-
         self.doc = parent_doc.generate_analysis_doc(self.name, access_code)
         self.path = Path(self.doc.path)
 
@@ -369,7 +360,6 @@ class Tool(mp.Process):
         for parent_file in ['otu_table', 'biom_table', 'rep_seqs_table', 'stats_table', 'params']:
             if parent_doc.files.get(parent_file) is not None:
                 self_file = self.path / Path(parent_doc.files[parent_file]).name
-                self.logger.debug('FOUND PARENT FILE {}'.format(self_file))
                 self_file.symlink_to(self.get_file(parent_file, True))
                 self.add_path(self_file, key=parent_file)
 
@@ -402,11 +392,8 @@ class Tool(mp.Process):
         :category: The column of the metadata to filter by
         :value: The value that :column: must match for a sample to be included
         """
-        self.logger.debug('creating child of {}'.format(atype))
         child = atype(self.owner, self.doc.study_code, atype.__name__.lower(), self.doc.config,
                       self.testing, self.analysis, self.restart_stage, child=True)
-        self.logger.debug('finished child creation')
-        self.logger.debug(child)
         category = None
         value = None
         file_value = None
@@ -417,10 +404,7 @@ class Tool(mp.Process):
 
         with Database(owner=self.owner, testing=self.testing) as db:
             access_code = db.create_access_code(child.name)
-        self.logger.debug('CHILD ACCESS CODE {}'.format(access_code))
 
-        self.logger.debug('MY DOC')
-        self.logger.debug(self.doc)
         # child.doc = self.doc.create_sub_analysis(category, value, access_code)
         child.path = Path(child.doc.path)
 
@@ -654,14 +638,17 @@ class Tool(mp.Process):
             self.logger.debug('{}: finished file cleanup'.format(self.name))
 
             email = ('email', self.doc.email, self.doc.owner, 'error',
-                     dict(code=self.doc.access_code,
-                          stage=self.doc.restart_stage,
-                          study=self.doc.study_name))
+                    dict(code=self.doc.access_code,
+                        analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                        stage=self.doc.restart_stage,
+                        study=self.doc.study_name))
             self.queue.put(email)
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
 
         email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
-                 dict(code=self.doc.access_code, study=self.doc.study_name))
+                dict(code=self.doc.access_code,
+                    analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                    study=self.doc.study_name))
         self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.move_user_files()

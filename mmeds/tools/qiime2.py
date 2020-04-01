@@ -488,9 +488,9 @@ class Qiime2(Tool):
                 self.deblur_visualize()
             elif 'dada2' == self.doc.analysis_type:
                 self.dada2()
+                self.tabulate()
             if self.kill_stage == 1:
                 self.jobtext.append('exit 1')
-            self.tabulate()
         else:
             del self.jobtext[-1]
 

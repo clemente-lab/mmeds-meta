@@ -853,7 +853,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     elif message == 'reset':
         body = 'Hello {user},\nYour password has been reset.\n' +\
                'The new password is:\n{password}\n\nBest,\nMmeds Team\n\n' +\
-               'If you have any issues please email: {contact} with a description of your problem.\n'
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Password Reset'
     elif message == 'change':
         body = 'Hello {user},\nYour password has been changed.\n' +\
@@ -883,11 +883,10 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         user=user,
         cemail=fig.CONTACT_EMAIL,
         email=toaddr,
-        analysis=kwargs.get('doc_type'),
         study=kwargs.get('study'),
         code=kwargs.get('code'),
+        analysis=kwargs.get('analysis'),
         password=kwargs.get('password'),
-        contact=fig.CONTACT_EMAIL
     )
     if testing:
         path = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
@@ -991,7 +990,7 @@ def setup_environment(module):
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file, doc_type):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -1027,7 +1026,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, doc_type):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
-        if 'qiime2' in doc_type:
+        if 'qiime2' == tool_type:
             f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         seen_ids = set()
         seen_bars = set()
