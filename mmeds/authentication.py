@@ -62,7 +62,7 @@ def check_password(password1, password2):
     if not pas.intersection(nums):
         errors.append('Passwords must contain at least one number.')
     if not pas.intersection(syms):
-        errors.append('Passwords must contain at least one of the following symbols ' + str(syms) + ' .')
+        errors.append('Passwords must contain at least one of the following symbols ' + ' '.join(syms))
     if not (pas.intersection(set(ascii_uppercase)) and pas.intersection(set(ascii_lowercase))):
         errors.append('Passwords must contain a mix of upper and lower case characters.')
     if len(password1) <= 10:

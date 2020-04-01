@@ -92,7 +92,7 @@ class InvalidPasswordErrors(MmedsError):
     """ Exception for errors caused by a query returning no result """
 
     def __init__(self, message):
-        self.message = ','.join(message)
+        self.message = message
         super().__init__()
 
 
