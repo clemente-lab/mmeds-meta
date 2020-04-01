@@ -19,6 +19,9 @@ from mmeds.log import MMEDSLog
 import multiprocessing as mp
 import os
 
+import multiprocessing_logging as mpl
+mpl.install_mp_handler()
+
 
 class Tool(mp.Process):
     """

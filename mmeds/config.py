@@ -249,7 +249,8 @@ ANIMAL_SUBJECT_TABLES = {
     'Husbandry',
     'Vendor',
     'AnimalSubjects',
-    'SubjectType'
+    'SubjectType',
+    'AdditionalMetaData'
 }
 
 # Tables that should exist in the specimen metadata
