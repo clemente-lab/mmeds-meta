@@ -12,7 +12,7 @@ from copy import deepcopy
 import mmeds.error as err
 import mmeds.util as util
 
-from mmeds.validate import validate_mapping_file
+from mmeds.validate import Validator
 from mmeds.util import (log, create_local_copy, SafeDict)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
@@ -20,6 +20,9 @@ from mmeds.authentication import (validate_password, check_username, check_passw
 from mmeds.database import Database
 from mmeds.spawn import handle_modify_data
 from mmeds.log import MMEDSLog
+
+import multiprocessing_logging as mpl
+mpl.install_mp_handler()
 
 absDir = Path(os.getcwd())
 
@@ -47,9 +50,9 @@ def catch_server_errors(page_method):
             args['body'] = body.format(**args)
             return HTML_PAGES['logged_out_template'].read_text().format(**args)
 
-        except KeyError as e:
-            logger.error(e)
-            return "There was an error, contact server admin with:\n {}".format(e)
+        #except KeyError as e:
+        #    logger.error('Caught server error {}'.format(e))
+        #    return "There was an error, contact server admin with:\n {}".format(e)
     return wrapper
 
 
@@ -309,6 +312,9 @@ class MMEDSupload(MMEDSbase):
 
     def run_validate(self, myMetaData):
         """ Run validate_mapping_file and return the results """
+        cp.log('In run validate')
+        errors = []
+        warnings = []
         # Check the file that's uploaded
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
@@ -321,11 +327,18 @@ class MMEDSupload(MMEDSbase):
         # Store the copy's location
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
 
+        cp.log('before validator creation')
+        valid = Validator(metadata_copy,
+                cp.session['metadata_type'],
+                cp.session['subject_ids'],
+                cp.session['subject_type'])
+        cp.log('before validator run')
+
         # Check the metadata file for errors
-        errors, warnings, subjects = validate_mapping_file(metadata_copy,
-                                                           cp.session['metadata_type'],
-                                                           cp.session['subject_ids'],
-                                                           cp.session['subject_type'])
+        errors, warnings, subjects = valid.run()
+        cp.log("------------- After RUn Validate -------------")
+        cp.log(errors)
+        cp.log(warnings)
 
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:

@@ -8,6 +8,14 @@ from mmeds.util import log, load_ICD_codes, is_numeric, load_metadata
 from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
 
+from mmeds.log import MMEDSLog
+
+
+import multiprocessing_logging as mpl
+mpl.install_mp_handler()
+
+
+logger = MMEDSLog('error').logger
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
@@ -31,9 +39,9 @@ def validate_mapping_file(file_fp, metadata_type, subject_ids, subject_type, del
 
 class Validator:
 
-    def __init__(self, file_fp, metadata_type, subject_ids, subject_type, sep):
+    def __init__(self, file_fp, metadata_type, subject_ids, subject_type, sep='\t'):
         """ Initialize the validator object. """
-
+        logger.error('Initialize validator')
         self.metadata_type = metadata_type
         self.subject_type = subject_type
         self.errors = []
@@ -259,39 +267,60 @@ class Validator:
         ========================================
         :table_df: A pandas dataframe containing the data for the specified table
         """
+        logger.error('In Check Table')
         start_col = None
         end_col = None
-        self.table_df = self.df[self.cur_table]
-        # For the built in table, ensure all columns are present
+        # Get the table from the metadata being validated
+        try:
+            self.table_df = self.df[self.cur_table]
+        # If it doesn't exist in the metadata
+        except KeyError:
+            logger.error('Caught key error')
+            # if isn't not a special case table add the appropriate error
+            if not self.cur_table in ({'AdditionalMetaData'} | fig.ICD_TABLES):
+                self.errors.append('-1\t-1\tMissing Table Error: Missing table {}'.format(self.cur_table))
+        # If it does exist continue validation
+        else:
+            logger.error('no key error')
+            # For the built in table, ensure all columns are present
 
-        if not self.cur_table == 'AdditionalMetaData':
-            missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
-            if missing_cols:
-                text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
-                self.errors.append(text.format(', '.join(missing_cols), self.cur_table))
-        # Check that subjects match
-        elif self.metadata_type == 'specimen':
-            self.check_matching_subjects()
+            if not self.cur_table == 'AdditionalMetaData':
+                logger.error('Before missing columns')
+                missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
+                logger.error('After missing columns')
+                if missing_cols:
+                    text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
+                    self.errors.append(text.format(', '.join(missing_cols), self.cur_table))
+            # Check that subjects match
+            elif self.metadata_type == 'specimen':
+                self.check_matching_subjects()
 
-        # For each table column
-        for i, column in enumerate(self.table_df.columns):
-            # Track what column is being validated
-            self.seen_cols.append(column)
-            self.cur_col = column
+            logger.error('After type checks')
 
-            # Check that end dates are after start dates
-            if re.match(r'\w*StartDate\w*', column):
-                start_col = column
-            elif re.match(r'\w*EndDate\w*', column):
-                end_col = column
-            self.check_table_column()
+            # For each table column
+            for i, column in enumerate(self.table_df.columns):
+                # Track what column is being validated
+                self.seen_cols.append(column)
+                self.cur_col = column
 
-        # Compare the start and end dates
-        if start_col is not None and end_col is not None:
-            self.check_dates(start_col, end_col)
-        # Get the study name from that table
-        if self.cur_table == 'Study':
-            self.study_name = self.table_df['StudyName'][0]
+                # Check that end dates are after start dates
+                if re.match(r'\w*StartDate\w*', column):
+                    start_col = column
+                elif re.match(r'\w*EndDate\w*', column):
+                    end_col = column
+                logger.error('Check table column')
+                self.check_table_column()
+                logger.error('after Check table column')
+
+            # Compare the start and end dates
+            if start_col is not None and end_col is not None:
+                self.check_dates(start_col, end_col)
+
+            logger.error('Before StudyName')
+            # Get the study name from that table
+            if self.cur_table == 'Study':
+                self.study_name = self.table_df['StudyName'][0]
+            logger.error('After StudyName')
 
     def check_header(self):
         """ Check the header field to ensure it complies with MMEDS requirements. """
@@ -332,7 +361,6 @@ class Validator:
         :file_fp: The path to the mapping file
         :delimiter: The delimiter used in the mapping file
         """
-        log('load_mapping_file')
         try:
             self.df = load_metadata(self.file_fp)
             self.header_df = pd.read_csv(self.file_fp,
@@ -384,6 +412,13 @@ class Validator:
         """ Ensure each column will cast to its specified type """
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
+            # Check the type information is valid
+            try:
+                self.col_types[column] = fig.TYPE_MAP[ctype]
+            except KeyError:
+                self.col_types[column] = fig.TYPE_MAP['Text']
+                err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
+                self.errors.append(err.format(self.col_index, column))
 
             # Get the specified types for additional metadata fields
             if table == 'AdditionalMetaData':
@@ -391,21 +426,14 @@ class Validator:
                 if column in self.col_types.keys():
                     err = '-1\t-1\tColumn Name Error: Column name {} is part of the default template'
                     self.errors.append(err.format(column))
-                    continue
-                # Otherwise attempt to get the type information
-                else:
-                    ctype = self.header_df[table][column].iloc[1]
-                    # If no type is specified, add and error and default to str
-                    if pd.isna(ctype) or ctype == '':
-                        err = '-1\t{}\tColumn Missing Type Error: Missing type information for column {}'
-                        self.errors.append(err.format(self.col_index, column))
-                        ctype = 'Text'
-                    try:
-                        self.col_types[column] = fig.TYPE_MAP[ctype]
-                    except KeyError:
-                        self.col_types[column] = fig.TYPE_MAP['Text']
-                        err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
-                        self.errors.append(err.format(self.col_index, column))
+            # Otherwise attempt to get the type information
+            else:
+                ctype = self.header_df[table][column].iloc[1]
+                # If no type is specified, add and error and default to str
+                if pd.isna(ctype) or ctype == '':
+                    err = '-1\t{}\tColumn Missing Type Error: Missing type information for column {}'
+                    self.errors.append(err.format(self.col_index, column))
+                    ctype = 'Text'
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
@@ -434,7 +462,8 @@ class Validator:
         try:
             self.load_mapping_file(self.file_fp, self.sep)
         except InvalidMetaDataFileError as e:
-                self.errors.append(e.message)
+            logger.error('Issue loading metadata file')
+            self.errors.append(e.message)
         else:
             if self.metadata_type == 'subject':
                 if self.subject_type == 'human':
@@ -449,20 +478,15 @@ class Validator:
                         subjects = self.df['AnimalSubjects']
             elif self.metadata_type == 'specimen':
                 tables = fig.SPECIMEN_TABLES
-            log('In validate_mapping_file')
             self.check_column_types()
-            # For each table
+            # For each table (skip missing ones)
             for table in self.tables:
                 # If the table shouldn't exist add and error and skip checking it
-                if table not in tables:
-                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
-                else:
+                if table in tables:
                     self.cur_table = table
                     self.seen_tables.append(table)
                     self.check_table()
+                else:
+                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
 
-            # Check for missing tables
-            missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
-            if missing_tables:
-                self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
         return self.errors, self.warnings, subjects

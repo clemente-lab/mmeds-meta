@@ -21,6 +21,9 @@ from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_cod
                         debug_log, log, create_local_copy, load_metadata, join_metadata, write_metadata)
 from mmeds.documents import MMEDSDoc
 
+import multiprocessing_logging as mpl
+mpl.install_mp_handler()
+
 DAYS = 13
 
 
