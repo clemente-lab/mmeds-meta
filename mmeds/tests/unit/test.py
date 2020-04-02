@@ -12,8 +12,7 @@ import mmeds.secrets as sec
 - To run all the tests: python test.py
 - To run a specific set of test: python test.py test_name1 test_name2 etc
   - possible test names: authentication, database, documents, spawn, tool, tools, util, validate
-- To run all tests with error log output: python test.py log
-  - gives output as wanted for Travis CI
+- To run all tests with the pudb pytest plugin python test.py pudb
 """
 
 testing = True
@@ -86,8 +85,7 @@ def setup_tests(tests):
                         fig.TEST_USER,
                         'Test_SparCC',
                         fig.TEST_OTU,
-                        fig.TEST_CODE_OTU,
-                        testing)
+                        fig.TEST_CODE_OTU)
             assert 0 == upload_otu(test_otu)
             # Upload Lefse data if running test_tools.py
             test_lefse = (fig.TEST_SUBJECT_SHORT,
@@ -97,8 +95,7 @@ def setup_tests(tests):
                           fig.TEST_USER,
                           'Test_Lefse',
                           fig.TEST_LEFSE,
-                          fig.TEST_CODE_LEFSE,
-                          testing)
+                          fig.TEST_CODE_LEFSE)
             assert 0 == upload_lefse(test_lefse)
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
@@ -144,12 +141,12 @@ def setup_tests(tests):
         assert 0 == upload_metadata(setup)
 
 
-def run_tests(tests, log):
+def run_tests(tests, pudb):
     test_class = []
     for test in tests:
         test_class.append(test.capitalize() + 'Test')
     test_directory = Path(__file__).parent.resolve()
-    if log:
+    if pudb:
         run(['pytest', '--cov=mmeds', '--pudb', '-W', 'ignore::DeprecationWarning', '-W', 'ignore::FutureWarning',
              '-s', test_directory, '-x', '-k', ' or '.join(test_class), '--durations=0'], check=True)
     else:
@@ -168,8 +165,8 @@ def remove_users(users_added):
 def main():
     # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
-    log = 'log' in tests
-    if log:
+    pudb = 'log' in tests
+    if pudb:
         tests.remove('log')
 
     setup = 'setup' in tests
@@ -190,7 +187,7 @@ def main():
         setup_tests(tests)
     if not setup:
         if not cleanup:
-            run_tests(tests, log)
+            run_tests(tests, pudb)
         remove_users(users_added)
 
 

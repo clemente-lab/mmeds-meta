@@ -678,9 +678,9 @@ class Tool(mp.Process):
 class TestTool(Tool):
     """ A class for running tool methods during testing """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, on_node,
                  analysis=True, restart_stage=0, kill_stage=-1, time=20):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, on_node,
                          analysis=analysis, restart_stage=restart_stage)
         print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))
         self.time = time
