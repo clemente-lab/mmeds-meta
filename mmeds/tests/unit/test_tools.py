@@ -92,5 +92,5 @@ class ToolsTests(TestCase):
         process = item
         self.assertSequenceEqual(process,
                                  ('analysis', q2.owner, q2.doc.access_code, 'sparcc',
-                                  q2.config['type'], q2.doc.config, q2.kill_stage))
+                                  q2.config['type'], q2.doc.config, True, q2.kill_stage))
         rmtree(q2.path)
