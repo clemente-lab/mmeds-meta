@@ -68,7 +68,7 @@ class SpawnTests(TestCase):
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, -1))
+            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
 
         sys.stderr.write('Waiting on analysis')
         # Check the analyses are started and running simultainiously

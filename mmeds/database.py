@@ -30,7 +30,7 @@ DAYS = 13
 # Used in test_cases
 def upload_metadata(args):
     (subject_metadata, subject_type, specimen_metadata, path, owner, study_name,
-     reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code) = args
+     reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code, testing) = args
     if for_reads is not None and 'zip' in for_reads:
         datafiles = {'data': for_reads,
                      'barcodes': barcodes}
@@ -39,10 +39,8 @@ def upload_metadata(args):
                      'rev_reads': rev_reads,
                      'barcodes': barcodes}
     p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime', reads_type,
-                         barcodes_type, study_name, False, datafiles,
-                         False, True, access_code)
-    p.run()
-    return 0
+                         barcodes_type, study_name, False, datafiles, False, testing, access_code)
+    return p.run()
 
 
 def upload_otu(args):
@@ -985,6 +983,7 @@ class MetaDataUploader(Process):
         # Update the doc to reflect the successful upload
         self.mdata.update(is_alive=False, exit_code=0)
         self.mdata.save()
+        return 0
 
     def import_metadata(self, **kwargs):
         """

@@ -558,8 +558,9 @@ class Tool(mp.Process):
                 self.logger.debug([child.name for child in self.children])
 
             self.update_doc(analysis_status='started')
-            if self.testing or self.config['run_on_node']:
+            if self.testing or self.run_on_node:
                 self.logger.debug('I {} am about to run'.format(self.name))
+                jobfile.chmod(0o770)
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command

@@ -16,7 +16,7 @@ import mmeds.secrets as sec
   - gives output as wanted for Travis CI
 """
 
-testing = True
+testing = False
 
 
 def add_users(tests):
@@ -49,7 +49,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE_SHORT))
+                           fig.TEST_CODE_SHORT,
+                           testing))
         if 'tools' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
@@ -62,7 +63,8 @@ def setup_tests(tests):
                                fig.TEST_READS,
                                fig.TEST_REV_READS,
                                fig.TEST_BARCODES,
-                               fig.TEST_CODE_PAIRED))
+                               fig.TEST_CODE_PAIRED,
+                               testing))
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
                                fig.TEST_SPECIMEN_SHORT,
@@ -74,7 +76,8 @@ def setup_tests(tests):
                                fig.TEST_DEMUXED,
                                None,
                                fig.TEST_BARCODES,
-                               fig.TEST_CODE_DEMUX))
+                               fig.TEST_CODE_DEMUX,
+                               testing))
             # Upload OTU if running test_tools.py
             test_otu = (fig.TEST_SUBJECT_SHORT,
                         'human',
@@ -83,7 +86,8 @@ def setup_tests(tests):
                         fig.TEST_USER,
                         'Test_SparCC',
                         fig.TEST_OTU,
-                        fig.TEST_CODE_OTU)
+                        fig.TEST_CODE_OTU,
+                        testing)
             assert 0 == upload_otu(test_otu)
             # Upload Lefse data if running test_tools.py
             test_lefse = (fig.TEST_SUBJECT_SHORT,
@@ -93,7 +97,8 @@ def setup_tests(tests):
                           fig.TEST_USER,
                           'Test_Lefse',
                           fig.TEST_LEFSE,
-                          fig.TEST_CODE_LEFSE)
+                          fig.TEST_CODE_LEFSE,
+                          testing)
             assert 0 == upload_lefse(test_lefse)
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
@@ -107,7 +112,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE))
+                           fig.TEST_CODE,
+                           testing))
         test_setup.append((fig.TEST_ANIMAL_SUBJECT,
                            'animal',
                            fig.TEST_SPECIMEN,
@@ -119,7 +125,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE))
+                           fig.TEST_CODE,
+                           testing))
         test_setup.append((fig.TEST_SUBJECT_ALT,
                            'human',
                            fig.TEST_SPECIMEN_ALT,
@@ -131,7 +138,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE + '0'))
+                           fig.TEST_CODE + '0',
+                           testing))
     for setup in test_setup:
         assert 0 == upload_metadata(setup)
 

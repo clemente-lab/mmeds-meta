@@ -20,7 +20,7 @@ are relevant to the current code section being modified.
 
 
 class AnalysisTests(TestCase):
-    testing = True
+    testing = False
     count = 0
 
     @classmethod
@@ -46,7 +46,6 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1(self):
-        return
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG), True, -1))
         got = self.pipe.recv()
         print(got)
@@ -55,13 +54,12 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime1_with_children(self):
-        return
         log('after data modification')
         with Database('.', owner=fig.TEST_USER, testing=self.testing) as db:
             files, path = db.get_mongo_files(self.code)
         config = load_config(Path(fig.TEST_CONFIG_SUB), files['metadata'])
 
-        p = Qiime1(fig.TEST_USER, self.code, 'qiime1', 'closed', config, self.testing)
+        p = Qiime1(fig.TEST_USER, self.code, 'qiime1', 'closed', config, self.testing, True)
         p.start()
 
         while p.is_alive():
