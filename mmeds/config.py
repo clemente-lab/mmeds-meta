@@ -552,6 +552,7 @@ HTML_ARGS = {
     'warning': '',
     'success': '',
     'javascript': IMAGE_PATH + 'mmeds.js',
+    'privilege': 'display:none',
 
     # Settings for highlighting the section of the web site currently being accessed
     'upload_selected': '',

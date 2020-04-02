@@ -5,10 +5,11 @@ from mmeds.tools.tool import Tool
 class SparCC(Tool):
     """ A class for SparCC analysis of uploaded studies. """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, on_node,
                  analysis=True, restart_stage=0, kill_stage=-1, child=False):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
-                         analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage, child=child)
+                         on_node=on_node, analysis=analysis, restart_stage=restart_stage,
+                         kill_stage=kill_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         self.jobtext.append(load)
         self.module = load

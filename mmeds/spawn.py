@@ -62,7 +62,7 @@ class Watcher(Process):
         self.started = []
         super().__init__()
 
-    def spawn_analysis(self, tool_type, analysis_type, user, parent_code, config_file, testing, kill_stage=-1):
+    def spawn_analysis(self, tool_type, analysis_type, user, parent_code, config_file, testing, on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
         # Load the config for this analysis
         with Database('.', owner=user, testing=testing) as db:
@@ -70,7 +70,8 @@ class Watcher(Process):
             access_code = db.create_access_code()
         config = load_config(config_file, files['metadata'])
         try:
-            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type, analysis_type, config, testing,
+            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type,
+                                    analysis_type, config, testing, on_node,
                                     kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
@@ -204,8 +205,9 @@ class Watcher(Process):
         ====================================================================
         Handles the creation of analysis processes
         """
-        ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
-        p = self.spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
+        ptype, user, access_code, tool_type, analysis_type, config, kill_stage, on_node = process
+        p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
+                                config, self.testing, kill_stage, on_node)
         # Start the analysis running
         p.start()
         sleep(1)

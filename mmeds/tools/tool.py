@@ -31,7 +31,7 @@ class Tool(mp.Process):
     """
 
     def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
-                 threads=10, analysis=True, child=False, restart_stage=0, kill_stage=-1):
+                 on_node, threads=10, analysis=True, child=False, restart_stage=0, kill_stage=-1):
         """
         Setup the Tool class
         ====================
@@ -58,6 +58,7 @@ class Tool(mp.Process):
         self.owner = owner
         self.analysis = analysis
         self.module = None
+        self.run_on_node = on_node
         self.restart_stage = restart_stage
         self.current_stage = -2
         self.stage_files = defaultdict(list)
@@ -103,9 +104,9 @@ class Tool(mp.Process):
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
         email = ('email', self.doc.email, self.owner, 'analysis_start',
-                dict(code=self.access_code,
-                    analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
-                    study=self.doc.study_name))
+                 dict(code=self.access_code,
+                      analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                      study=self.doc.study_name))
         self.queue.put(email)
 
     def __str__(self):
@@ -214,7 +215,7 @@ class Tool(mp.Process):
             sleep(30)
             # Check bjobs
             jobs = run(['/hpc/lsf/10.1/linux3.10-glibc2.17-x86_64/bin/bjobs'],
-                         capture_output=True).stdout.decode('utf-8')
+                       capture_output=True).stdout.decode('utf-8')
             # If the job is found set it back to true
             if str(job_id) in jobs:
                 running = True
@@ -346,7 +347,7 @@ class Tool(mp.Process):
         :tool_type: The type of tool to spawn
         """
         self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
-                        self.config['type'], self.doc.config, self.kill_stage))
+                        self.config['type'], self.doc.config, self.on_node, self.kill_stage))
 
     def child_setup(self):
         # Update process name and children
@@ -404,9 +405,6 @@ class Tool(mp.Process):
         # Update process name and children
         child.name = child.name + '-{}'.format(atype.name)
         child.children = []
-
-        with Database(owner=self.owner, testing=self.testing) as db:
-            access_code = db.create_access_code(child.name)
 
         # child.doc = self.doc.create_sub_analysis(category, value, access_code)
         child.path = Path(child.doc.path)
@@ -512,7 +510,6 @@ class Tool(mp.Process):
             count += 1
         self.add_path(jobfile, key='jobfile')
 
-
         if self.testing:
             # Setup the error log in a testing environment
             count = 0
@@ -561,7 +558,7 @@ class Tool(mp.Process):
                 self.logger.debug([child.name for child in self.children])
 
             self.update_doc(analysis_status='started')
-            if self.testing:
+            if self.testing or self.config['run_on_node']:
                 self.logger.debug('I {} am about to run'.format(self.name))
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
@@ -641,17 +638,17 @@ class Tool(mp.Process):
             self.logger.debug('{}: finished file cleanup'.format(self.name))
 
             email = ('email', self.doc.email, self.doc.owner, 'error',
-                    dict(code=self.doc.access_code,
-                        analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
-                        stage=self.doc.restart_stage,
-                        study=self.doc.study_name))
+                     dict(code=self.doc.access_code,
+                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          stage=self.doc.restart_stage,
+                          study=self.doc.study_name))
             self.queue.put(email)
             raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
 
         email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
-                dict(code=self.doc.access_code,
-                    analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
-                    study=self.doc.study_name))
+                 dict(code=self.doc.access_code,
+                      analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                      study=self.doc.study_name))
         self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.move_user_files()

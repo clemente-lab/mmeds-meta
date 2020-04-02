@@ -17,9 +17,13 @@
             <option value="picrust1">PiCRUSt1</option>
         </select>
         </p>
+        <p style="{privilege}">
+        <input class="w3-check" type='checkbox' name='onNode' form='analysis_form'/>
+        <label> Run analysis on Node </label>
+        </p>
         <p>
         <label> If you do not upload a custom config the default will be used. </label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="config" required>
+        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="config">
         </p>
         <p> <button class="w3-btn w3-blue" type='submit' method='post'>Run</button> </p>
     </form>
