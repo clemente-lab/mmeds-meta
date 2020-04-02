@@ -36,6 +36,7 @@ class AnalysisTests(TestCase):
         self.watcher = spawn.Watcher(self.q, pipe_ends[1], mp.current_process(), self.testing)
         self.watcher.start()
         self.code = fig.TEST_CODE_SHORT
+        self.long_code = fig.TEST_CODE
 
     @classmethod
     def tearDownClass(self):
@@ -59,7 +60,7 @@ class AnalysisTests(TestCase):
             files, path = db.get_mongo_files(self.code)
         config = load_config(Path(fig.TEST_CONFIG_SUB), files['metadata'])
 
-        p = Qiime1(fig.TEST_USER, self.code, 'qiime1', 'closed', config, self.testing, True)
+        p = Qiime1(fig.TEST_USER, self.long_code, 'qiime1', 'closed', config, self.testing, True)
         p.start()
 
         while p.is_alive():

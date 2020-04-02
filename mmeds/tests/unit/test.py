@@ -16,7 +16,7 @@ import mmeds.secrets as sec
   - gives output as wanted for Travis CI
 """
 
-testing = False
+testing = True
 
 
 def add_users(tests):
