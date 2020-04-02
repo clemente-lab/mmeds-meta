@@ -347,7 +347,7 @@ class Tool(mp.Process):
         :tool_type: The type of tool to spawn
         """
         self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
-                        self.config['type'], self.doc.config, self.on_node, self.kill_stage))
+                        self.config['type'], self.doc.config, self.run_on_node, self.kill_stage))
 
     def child_setup(self):
         # Update process name and children
