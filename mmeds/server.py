@@ -130,9 +130,6 @@ class MMEDSbase:
 
             # If a user is logged in, load the side bar
             if header:
-                # Add unhide any privileged options
-                if check_privileges(self.get_user(), self.testing):
-                    args['privilege'] = ''
                 template = HTML_PAGES['logged_in_template'].read_text()
                 if args.get('user') is None:
                     args['user'] = self.get_user()
@@ -777,7 +774,11 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
-        page = self.load_webpage('analysis_select_tool', title='Select Analysis')
+        # Add unhide any privileged options
+        if check_privileges(self.get_user(), self.testing):
+            page = self.load_webpage('analysis_select_tool', title='Select Analysis', privilege='')
+        else:
+            page = self.load_webpage('analysis_select_tool', title='Select Analysis')
         return page
 
 
