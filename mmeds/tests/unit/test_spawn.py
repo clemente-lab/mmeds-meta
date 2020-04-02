@@ -91,7 +91,7 @@ class SpawnTests(TestCase):
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
-            self.q.put(('restart', proc['owner'], proc['access_code'], 1, -1))
+            self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
             # Get the test tool
             self.pipe.recv()
         self.assertEqual(self.pipe.recv(), 0)

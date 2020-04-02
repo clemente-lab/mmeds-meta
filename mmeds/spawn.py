@@ -77,7 +77,7 @@ class Watcher(Process):
             raise AnalysisError('Tool type did not match any')
         return tool
 
-    def restart_analysis(self, user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
+    def restart_analysis(self, user, analysis_code, restart_stage, testing, on_node, kill_stage=-1, run_analysis=True):
         """ Restart the specified analysis. """
         with Database('.', owner=user, testing=testing) as db:
             ad = db.get_doc(analysis_code)
@@ -91,7 +91,7 @@ class Watcher(Process):
         # Create the appropriate tool
         try:
             tool = TOOLS[ad.tool_type](self.q, ad.owner, analysis_code, ad.study_code, ad.tool_type, ad.analysis_type,
-                                       ad.config, testing, analysis=run_analysis, restart_stage=restart_stage,
+                                       ad.config, testing, on_node, analysis=run_analysis, restart_stage=restart_stage,
                                        kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
@@ -256,9 +256,9 @@ class Watcher(Process):
         ====================================================================
         Handles creating new processes to restart previous analyses.
         """
-        ptype, user, analysis_code, restart_stage, kill_stage = process
+        ptype, user, analysis_code, on_node, restart_stage, kill_stage = process
         p = self.restart_analysis(user, analysis_code, restart_stage, self.testing,
-                                  kill_stage=kill_stage, run_analysis=True)
+                                  on_node, kill_stage=kill_stage, run_analysis=True)
         # Start the analysis running
         p.start()
         sleep(1)

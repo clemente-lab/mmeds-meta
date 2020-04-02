@@ -35,11 +35,10 @@ class AnalysisTests(TestCase):
         self.pipe = pipe_ends[0]
         self.watcher = spawn.Watcher(self.q, pipe_ends[1], mp.current_process(), self.testing)
         self.watcher.start()
-        self.code = fig.TEST_CODE
+        self.code = fig.TEST_CODE_SHORT
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=self.testing)
         self.watcher.terminate()
 
     def summarize(self, count, tool):
@@ -90,8 +89,6 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime2_with_restarts(self):
-        return
-        print('start initial analysis')
         self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), True, 1))
 
         # Get the info on the analysis
@@ -104,7 +101,7 @@ class AnalysisTests(TestCase):
         print('Initial analysis finished')
         # Test restarting from each checkpoint
         for i in range(1, 5):
-            self.q.put(('restart', fig.TEST_USER, code, i, i + 1))
+            self.q.put(('restart', fig.TEST_USER, code, True, i, i + 1))
             print('restart {} queued'.format(i))
             analysis = self.pipe.recv()
             exitcode = self.pipe.recv()
