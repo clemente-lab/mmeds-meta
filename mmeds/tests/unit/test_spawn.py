@@ -99,6 +99,6 @@ class SpawnTests(TestCase):
 
     def test_d_node_analysis(self):
         for i in range(5):
-            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
+            self.q.put(('analysis', fig.TEST_USER, 'test_spawn', 'test', '20', None, True, -1))
             result = self.pipe.recv()
         self.assertEqual(result, 'Analysis Not Started')
