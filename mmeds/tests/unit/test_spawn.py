@@ -7,11 +7,18 @@ from mmeds.log import MMEDSLog
 import mmeds.config as fig
 import mmeds.spawn as sp
 import multiprocessing as mp
-import sys
+
+import multiprocessing_logging as mpl
+mpl.install_mp_handler()
 
 testing = True
 
-logger = MMEDSLog('debug').logger
+logger = MMEDSLog('test_spawn-debug').logger
+
+q = mp.Queue()
+pipe_ends = mp.Pipe()
+watcher = sp.Watcher(q, pipe_ends[1], mp.current_process(), testing)
+watcher.start()
 
 
 class SpawnTests(TestCase):
@@ -19,30 +26,22 @@ class SpawnTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.q = mp.Queue()
         self.manager = mp.Manager()
         self.current_processes = self.manager.list()
-        pipe_ends = mp.Pipe()
         self.pipe = pipe_ends[0]
-        self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
-        self.watcher.start()
         self.infos = []
         self.analyses = []
-
-    @classmethod
-    def tearDownClass(self):
-        self.watcher.terminate()
 
     def test_a_upload_data(self):
         """ Test uploading data through the queue """
         test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
 
         # Add multiple uploads from different users
-        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
+        q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
+               fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
 
-        self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
+        q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
+               fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
 
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time
@@ -63,14 +62,14 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([], procs)
-        sys.stderr.write('Upload data finished')
+        logger.info('Upload data finished')
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
+            q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
 
-        sys.stderr.write('Waiting on analysis')
+        logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
@@ -91,14 +90,21 @@ class SpawnTests(TestCase):
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
-            self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
+            q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
             # Get the test tool
             self.pipe.recv()
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_d_node_analysis(self):
-        for i in range(5):
-            self.q.put(('analysis', fig.TEST_USER, 'test_spawn', 'test', '20', None, True, -1))
+        return
+        for i in range(3):
+            q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
+        for i in range(3):
             result = self.pipe.recv()
+            logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
+
+    def test_z_exit(self):
+        q.put(('terminate'))
+        self.assertEqual(self.pipe.recv(), 'Watcher exiting')

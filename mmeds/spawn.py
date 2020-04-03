@@ -1,5 +1,5 @@
 from time import sleep
-from multiprocessing import Process
+from multiprocessing import Process, current_process
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
@@ -18,7 +18,8 @@ from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
 
-logger = MMEDSLog('debug').logger
+import multiprocessing_logging as mpl
+mpl.install_mp_handler()
 
 TOOLS = {
     'qiime1': Qiime1,
@@ -44,6 +45,8 @@ def killall(processes):
 
 
 class Watcher(Process):
+
+    logger = MMEDSLog('spawn-debug').logger
 
     def __init__(self, queue, pipe, parent_pid, testing=False):
         """
@@ -170,7 +173,7 @@ class Watcher(Process):
                 finished += yaml.safe_load(current_log.read_text())
             # TODO Figure out why this is happening
             except TypeError:
-                logger.error('Error loading process log {}. Removing corrupted log.'.format(current_log))
+                self.logger.error('Error loading process log {}. Removing corrupted log.'.format(current_log))
                 current_log.unlink()
 
         # Only create the file if there are processes to log
@@ -293,6 +296,9 @@ class Watcher(Process):
             self.check_processes()
             self.write_running_processes()
             self.log_processes()
+            self.logger.error('I am process {} named {}'.format(current_process(), self.name))
+            self.logger.error('In Watcher, current processes on node')
+            self.logger.error(self.running_on_node)
 
             # If there is nothing in the process queue, sleep
             if self.q.empty():
@@ -301,7 +307,7 @@ class Watcher(Process):
                 # Otherwise get the queued item
                 process = self.q.get()
                 # Retrieve the info
-                logger.debug(process)
+                self.logger.debug(process)
 
                 # If it's an analysis
                 if process[0] == 'analysis':
@@ -314,11 +320,20 @@ class Watcher(Process):
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
                     ptype, toaddr, user, message, kwargs = process
-                    logger.error('Sending email with arguments')
-                    logger.error('\t'.join([toaddr, user, message]))
-                    logger.error(kwargs)
                     # If the analysis that finished was running directly on the node remove it from the set
                     if kwargs.get('access_code') in self.running_on_node:
                         self.running_on_node.remove(kwargs.get('access_code'))
 
                     send_email(toaddr, user, message, self.testing, **kwargs)
+                # If the watcher needs to shut down
+                elif process[0] == 'terminate':
+                    # Kill all the processes currently running
+                    for process in self.processes:
+                        while process.is_alive():
+                            process.kill()
+                    # Clear the pipe
+                    while not self.pipe.empty():
+                        self.pipe.recv()
+                    # Notify other processes the watcher is exiting
+                    self.pipe.send('Watcher exiting')
+                    exit()
