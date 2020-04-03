@@ -172,6 +172,16 @@ class TestServer(helper.CPWebCase):
         self.user_download()
         self.logout()
 
+    def test_ea_analysis_no_privileges(self):
+        self.login()
+        self.check_analysis_no_privileges()
+        self.logout()
+
+    def test_eb_analysis_has_privileges(self):
+        self.login(lab=True)
+        self.check_analysis_has_privileges()
+        self.logout()
+
     def test_f_lefse_upload(self):
         return
         self.login()
@@ -246,17 +256,23 @@ class TestServer(helper.CPWebCase):
         good_page = server.load_webpage('login', success='Account created successfully!')
         self.assertBody(good_page)
 
-    def login(self, alt=False):
+    def login(self, alt=False, lab=False):
         """ When alt is True use alternate password """
         account_log = Path(gettempdir()) / 'account_log.txt'
-        if alt:
+        if lab:
+            account_log.write_text('{}\t{}\t{}'.format(self.lab_user, sec.TEST_PASS, alt))
+            self.getPage('/login?username={}&password={}'.format(self.lab_user, sec.TEST_PASS))
+            user = self.lab_user
+        elif alt:
             account_log.write_text('{}\t{}\t{}'.format(self.server_user, self.tp, alt))
             self.getPage('/login?username={}&password={}'.format(self.server_user, self.tp))
+            user = self.server_user
         else:
             account_log.write_text('{}\t{}\t{}'.format(self.server_user, sec.TEST_PASS, alt))
             self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
+            user = self.server_user
         self.assertStatus('200 OK')
-        page = server.load_webpage('home', user=self.server_user, dir='.')
+        page = server.load_webpage('home', user=user, dir='.')
         self.assertBody(page)
 
     def logout(self):
@@ -575,6 +591,30 @@ class TestServer(helper.CPWebCase):
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(code.group(1)), headers=self.cookies)
         self.assertStatus('200 OK')
+
+    ############
+    # Analysis #
+    ############
+    def check_analysis_no_privileges(self):
+        self.getPage("/analysis/analysis_page", headers=self.cookies)
+        self.assertStatus('200 OK')
+        page = server.load_webpage('analysis_select_tool',
+                                   analysis_selected='w3-blue',
+                                   home_selected='',
+                                   title='Select Analysis',
+                                   user=self.server_user)
+        self.assertBody(page)
+
+    def check_analysis_has_privileges(self):
+        self.getPage("/analysis/analysis_page", headers=self.cookies)
+        self.assertStatus('200 OK')
+        page = server.load_webpage('analysis_select_tool',
+                                   title='Select Analysis',
+                                   analysis_selected='w3-blue',
+                                   home_selected='',
+                                   privilege='',
+                                   user=self.lab_user)
+        self.assertBody(page)
 
     #############
     # Downloads #

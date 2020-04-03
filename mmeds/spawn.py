@@ -60,6 +60,7 @@ class Watcher(Process):
         self.pipe = pipe
         self.parent_pid = parent_pid
         self.started = []
+        self.running_on_node = 0
         super().__init__()
 
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code, config_file, testing, on_node, kill_stage=-1):
