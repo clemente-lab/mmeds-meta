@@ -212,9 +212,10 @@ class Watcher(Process):
         if on_node:
             # Inform the user if there are too many processes already running
             if len(self.running_on_node) > 3:
-                with Database(testing=self.testing, owner=user) as db:
-                    toaddr = db.get_email()
+                with Database(testing=self.testing) as db:
+                    toaddr = db.get_email(user)
                 send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=tool_type)
+                self.pipe.send('Analysis Not Started')
                 return
 
         # Otherwise continue
