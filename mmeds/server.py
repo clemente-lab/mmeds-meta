@@ -725,7 +725,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def run_analysis(self, access_code, analysis_method, config, onNode):
+    def run_analysis(self, access_code, analysis_method, config, runOnNode):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -742,7 +742,7 @@ class MMEDSanalysis(MMEDSbase):
             # The run on node option shouldn't appear for users without
             # elevated privileges but they could get around that by editting
             # the page html directly
-            if onNode and not check_privileges(self.get_user(), self.testing):
+            if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
             # Check that the requested upload exists
@@ -757,7 +757,7 @@ class MMEDSanalysis(MMEDSbase):
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
-                        analysis_type, config_path, -1, onNode))
+                        analysis_type, config_path, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
                                      success='Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,
