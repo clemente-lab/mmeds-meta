@@ -60,7 +60,7 @@ class Watcher(Process):
         self.pipe = pipe
         self.parent_pid = parent_pid
         self.started = []
-        self.running_on_node = 0
+        self.running_on_node = set()
         super().__init__()
 
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code, config_file, testing, on_node, kill_stage=-1):
@@ -207,6 +207,17 @@ class Watcher(Process):
         Handles the creation of analysis processes
         """
         ptype, user, access_code, tool_type, analysis_type, config, kill_stage, on_node = process
+
+        # If running directly on the server node
+        if on_node:
+            # Inform the user if there are too many processes already running
+            if len(self.running_on_node) > 3:
+                with Database(testing=self.testing, owner=user) as db:
+                    toaddr = db.get_email()
+                send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=tool_type)
+                return
+
+        # Otherwise continue
         p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
                                 config, self.testing, kill_stage, on_node)
         # Start the analysis running
@@ -214,6 +225,10 @@ class Watcher(Process):
         sleep(1)
         with Database(testing=self.testing, owner=user) as db:
             doc = db.get_doc(p.access_code)
+
+        # Store the access code
+        if on_node:
+            self.running_on_node.add(p.access_code)
         self.pipe.send(doc.get_info())
         # Add it to the list of analysis processes
         self.add_process(ptype, p.access_code)
@@ -290,7 +305,7 @@ class Watcher(Process):
                 # If it's an analysis
                 if process[0] == 'analysis':
                     self.handle_analysis(process)
-                # IF it's a restart of an analysis
+                # If it's a restart of an analysis
                 elif process[0] == 'restart':
                     self.handle_restart(process)
                 # If it's an upload
@@ -301,4 +316,8 @@ class Watcher(Process):
                     logger.error('Sending email with arguments')
                     logger.error('\t'.join([toaddr, user, message]))
                     logger.error(kwargs)
+                    # If the analysis that finished was running directly on the node remove it from the set
+                    if kwargs.get('access_code') in self.running_on_node:
+                        self.running_on_node.remove(kwargs.get('access_code'))
+
                     send_email(toaddr, user, message, self.testing, **kwargs)
