@@ -35,22 +35,11 @@ class AnalysisTests(TestCase):
         self.pipe = pipe_ends[0]
         self.watcher = spawn.Watcher(self.q, pipe_ends[1], mp.current_process(), self.testing)
         self.watcher.start()
-        test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
-        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT, 'human', fig.TEST_SPECIMEN,
-                    fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
-
-        # Assert upload has started
-        upload = self.pipe.recv()
-        self.code = upload['access_code']
-        sleep(120)
-
-        # Wait for upload to complete succesfully
-        self.pipe.recv()
-        print('data uploaded')
+        self.code = fig.TEST_CODE_SHORT
+        self.long_code = fig.TEST_CODE
 
     @classmethod
     def tearDownClass(self):
-        remove_user(fig.TEST_USER, testing=self.testing)
         self.watcher.terminate()
 
     def summarize(self, count, tool):
@@ -58,8 +47,7 @@ class AnalysisTests(TestCase):
         self.assertTrue((tool.path / 'summary').is_dir())
 
     def test_qiime1(self):
-        return
-        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG), -1))
+        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime1', 'closed', Path(fig.TEST_CONFIG), True, -1))
         got = self.pipe.recv()
         print(got)
 
@@ -67,13 +55,12 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime1_with_children(self):
-        return
         log('after data modification')
         with Database('.', owner=fig.TEST_USER, testing=self.testing) as db:
             files, path = db.get_mongo_files(self.code)
         config = load_config(Path(fig.TEST_CONFIG_SUB), files['metadata'])
 
-        p = Qiime1(fig.TEST_USER, self.code, 'qiime1', 'closed', config, self.testing)
+        p = Qiime1(fig.TEST_USER, self.long_code, 'qiime1', 'closed', config, self.testing, True)
         p.start()
 
         while p.is_alive():
@@ -93,7 +80,7 @@ class AnalysisTests(TestCase):
         self.summarize(0, p)
 
     def test_qiime2(self):
-        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), -1))
+        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), True, -1))
         # Get the info on the analysis
         self.pipe.recv()
 
@@ -101,9 +88,7 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime2_with_restarts(self):
-        return
-        print('start initial analysis')
-        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), 1))
+        self.q.put(('analysis', fig.TEST_USER, self.code, 'qiime2', 'dada2', Path(fig.TEST_CONFIG), True, 1))
 
         # Get the info on the analysis
         analysis = self.pipe.recv()
@@ -115,7 +100,7 @@ class AnalysisTests(TestCase):
         print('Initial analysis finished')
         # Test restarting from each checkpoint
         for i in range(1, 5):
-            self.q.put(('restart', fig.TEST_USER, code, i, i + 1))
+            self.q.put(('restart', fig.TEST_USER, code, True, i, i + 1))
             print('restart {} queued'.format(i))
             analysis = self.pipe.recv()
             exitcode = self.pipe.recv()

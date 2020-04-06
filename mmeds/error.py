@@ -140,3 +140,11 @@ class FormatError(MmedsError):
     def __init__(self, missed):
         self.message = 'The following formating variables were not filled: {}'.format(missed)
         super().__init__()
+
+
+class PrivilegeError(MmedsError):
+    """ Exception for attempts to use privileged features by non-privileged users"""
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__()

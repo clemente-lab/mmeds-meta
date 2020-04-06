@@ -12,8 +12,7 @@ import mmeds.secrets as sec
 - To run all the tests: python test.py
 - To run a specific set of test: python test.py test_name1 test_name2 etc
   - possible test names: authentication, database, documents, spawn, tool, tools, util, validate
-- To run all tests with error log output: python test.py log
-  - gives output as wanted for Travis CI
+- To run all tests with the pudb pytest plugin python test.py pudb
 """
 
 testing = True
@@ -49,7 +48,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE_SHORT))
+                           fig.TEST_CODE_SHORT,
+                           testing))
         if 'tools' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
@@ -62,7 +62,8 @@ def setup_tests(tests):
                                fig.TEST_READS,
                                fig.TEST_REV_READS,
                                fig.TEST_BARCODES,
-                               fig.TEST_CODE_PAIRED))
+                               fig.TEST_CODE_PAIRED,
+                               testing))
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
                                fig.TEST_SPECIMEN_SHORT,
@@ -74,7 +75,8 @@ def setup_tests(tests):
                                fig.TEST_DEMUXED,
                                None,
                                fig.TEST_BARCODES,
-                               fig.TEST_CODE_DEMUX))
+                               fig.TEST_CODE_DEMUX,
+                               testing))
             # Upload OTU if running test_tools.py
             test_otu = (fig.TEST_SUBJECT_SHORT,
                         'human',
@@ -107,7 +109,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE))
+                           fig.TEST_CODE,
+                           testing))
         test_setup.append((fig.TEST_ANIMAL_SUBJECT,
                            'animal',
                            fig.TEST_SPECIMEN,
@@ -119,7 +122,8 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE))
+                           fig.TEST_CODE,
+                           testing))
         test_setup.append((fig.TEST_SUBJECT_ALT,
                            'human',
                            fig.TEST_SPECIMEN_ALT,
@@ -131,17 +135,18 @@ def setup_tests(tests):
                            fig.TEST_READS,
                            None,
                            fig.TEST_BARCODES,
-                           fig.TEST_CODE + '0'))
+                           fig.TEST_CODE + '0',
+                           testing))
     for setup in test_setup:
         assert 0 == upload_metadata(setup)
 
 
-def run_tests(tests, log):
+def run_tests(tests, pudb):
     test_class = []
     for test in tests:
         test_class.append(test.capitalize() + 'Test')
     test_directory = Path(__file__).parent.resolve()
-    if log:
+    if pudb:
         run(['pytest', '--cov=mmeds', '--pudb', '-W', 'ignore::DeprecationWarning', '-W', 'ignore::FutureWarning',
              '-s', test_directory, '-x', '-k', ' or '.join(test_class), '--durations=0'], check=True)
     else:
@@ -160,8 +165,8 @@ def remove_users(users_added):
 def main():
     # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
-    log = 'log' in tests
-    if log:
+    pudb = 'log' in tests
+    if pudb:
         tests.remove('log')
 
     setup = 'setup' in tests
@@ -182,7 +187,7 @@ def main():
         setup_tests(tests)
     if not setup:
         if not cleanup:
-            run_tests(tests, log)
+            run_tests(tests, pudb)
         remove_users(users_added)
 
 

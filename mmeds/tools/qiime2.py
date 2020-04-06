@@ -2,7 +2,7 @@ from subprocess import run
 from shutil import rmtree
 from pandas import read_csv
 
-from mmeds.config import STORAGE_DIR, DATABASE_DIR
+from mmeds.config import DATABASE_DIR
 from mmeds.util import log, setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tools.tool import Tool
@@ -15,9 +15,9 @@ class Qiime2(Tool):
     classifier = DATABASE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
     def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
-                 analysis=True, restart_stage=0, kill_stage=-1, child=False):
+                 run_on_node=False, analysis=True, restart_stage=0, kill_stage=-1, child=False):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
-                         analysis=analysis, restart_stage=restart_stage,
+                         run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
                          kill_stage=kill_stage, child=child)
         load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         self.module = load

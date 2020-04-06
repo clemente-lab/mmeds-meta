@@ -26,7 +26,7 @@ class ToolsTests(TestCase):
 
     def run_qiime(self, code, tool_type, analysis_type, data_type, Qiime):
         qiime = Qiime(self.q, fig.TEST_USER, 'random_code', code, tool_type, analysis_type, self.config,
-                      testing=self.testing, analysis=False)
+                      self.testing, True, analysis=False)
         logger.debug('Starting {}, id is {}'.format(qiime.name, id(qiime)))
         qiime.run()
         logger.debug('Ran {}'.format(qiime.name, id(qiime)))
@@ -59,7 +59,7 @@ class ToolsTests(TestCase):
     def test_qiime2_child_setup_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
-                    'dada2', config, testing=self.testing, analysis=False)
+                    'dada2', config, self.testing, True, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
         q2.create_children()
@@ -73,7 +73,7 @@ class ToolsTests(TestCase):
         return
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'SomeCodeHere', fig.TEST_CODE_SHORT, 'qiime2', 'dada2',
-                    config, testing=self.testing, analysis=False)
+                    config, self.testing, True, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
         q2.create_analysis(Lefse)
@@ -82,7 +82,7 @@ class ToolsTests(TestCase):
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
-                    'dada2', config, testing=self.testing, analysis=False)
+                    'dada2', config, self.testing, True, analysis=False)
         q2.initial_setup()
         q2.setup_analysis()
         q2.queue_analysis('sparcc')
@@ -92,5 +92,5 @@ class ToolsTests(TestCase):
         process = item
         self.assertSequenceEqual(process,
                                  ('analysis', q2.owner, q2.doc.access_code, 'sparcc',
-                                  q2.config['type'], q2.doc.config, q2.kill_stage))
+                                  q2.config['type'], q2.doc.config, True, q2.kill_stage))
         rmtree(q2.path)

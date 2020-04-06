@@ -15,7 +15,7 @@ import yaml
 import mmeds.config as fig
 import pandas as pd
 
-logger = MMEDSLog('debug').logger
+logger = MMEDSLog('util-debug').logger
 
 
 ###########
@@ -820,6 +820,7 @@ def debug_log(text, testing=False):
 def info_log(text, testing=False):
     log(text, testing=testing, log_type='Info')
 
+
 def parse_code_blocks(path):
     # Load the code templates
     data = Path(path).read_text().split('\n=====\n')
@@ -878,6 +879,12 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Error During Analysis'
+    elif message == 'too_many_on_node':
+        body = 'Hello {user},\nThere was an issue starting requested {analysis} analysis.\n' +\
+               'There are too many analyses already running on the main node.\n' +\
+               'Either submit a new analysis to the queue or wait until others finish.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Analysis Not Started'
 
     email_body = body.format(
         user=user,

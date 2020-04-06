@@ -7,11 +7,13 @@ from mmeds.log import MMEDSLog
 import mmeds.config as fig
 import mmeds.spawn as sp
 import multiprocessing as mp
-import sys
+
+# import multiprocessing_logging as mpl
+# mpl.install_mp_handler()
 
 testing = True
 
-logger = MMEDSLog('debug').logger
+logger = MMEDSLog('test_spawn-debug').logger
 
 
 class SpawnTests(TestCase):
@@ -20,18 +22,12 @@ class SpawnTests(TestCase):
     @classmethod
     def setUpClass(self):
         self.q = mp.Queue()
-        self.manager = mp.Manager()
-        self.current_processes = self.manager.list()
         pipe_ends = mp.Pipe()
-        self.pipe = pipe_ends[0]
         self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
         self.watcher.start()
+        self.pipe = pipe_ends[0]
         self.infos = []
         self.analyses = []
-
-    @classmethod
-    def tearDownClass(self):
-        self.watcher.terminate()
 
     def test_a_upload_data(self):
         """ Test uploading data through the queue """
@@ -63,14 +59,14 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([], procs)
-        sys.stderr.write('Upload data finished')
+        logger.info('Upload data finished')
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, -1))
+            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
 
-        sys.stderr.write('Waiting on analysis')
+        logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
@@ -91,8 +87,24 @@ class SpawnTests(TestCase):
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
-            self.q.put(('restart', proc['owner'], proc['access_code'], 1, -1))
+            self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
             # Get the test tool
             self.pipe.recv()
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
+
+    def test_d_node_analysis(self):
+        for i in range(3):
+            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
+        for i in range(3):
+            result = self.pipe.recv()
+            logger.error('{} result"{}"'.format(i, result))
+        self.assertEqual(result, 'Analysis Not Started')
+
+    def test_z_exit(self):
+        logger.error('Putting Terminate')
+        self.q.put(('terminate'))
+        logger.error('Waiting on pipe')
+        result = self.pipe.recv()
+        logger.error('Got {} from pipe'.format(result))
+        self.assertEqual(result, 'Watcher exiting')

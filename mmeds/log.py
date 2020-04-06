@@ -1,10 +1,8 @@
 import logging
 import mmeds.config as fig
-import multiprocessing_logging as mpl
 from multiprocessing import current_process
 
 loggers = {}
-mpl.install_mp_handler()
 
 
 class MMEDSLog():
@@ -12,18 +10,18 @@ class MMEDSLog():
     global loggers
 
     def __init__(self, name, testing=True):
+        # If the logger already exists grab it
         if loggers.get(name):
             self.logger = loggers.get(name)
         else:
+            self.logger = logging.getLogger(name)
             if 'error' in name.lower():
-                self.logger = logging.getLogger('Error')
                 self.logger.setLevel(logging.ERROR)
             elif 'info' in name.lower() or 'sql' in name.lower():
-                self.logger = logging.getLogger('Info')
                 self.logger.setLevel(logging.INFO)
             elif 'debug' in name.lower():
-                self.logger = logging.getLogger('Debug')
                 self.logger.setLevel(logging.DEBUG)
+
             if 'SQL' in name:
                 fh = logging.FileHandler(fig.SQL_LOG)
             else:
@@ -37,7 +35,12 @@ class MMEDSLog():
             self.logger.setLevel(logging.DEBUG)
             fh.setLevel(logging.DEBUG)
 
-            formatter = logging.Formatter('%(asctime)s -%(levelname)s - %(message)s')
+            #  logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+            #                          datefmt='%Y-%m-%d:%H:%M:%S',
+            #                          level=logging.DEBUG)
+
+            fmt_str = 'h[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s'
+            formatter = logging.Formatter(fmt_str, '%m-%d %H:%M:%S')
             fh.setFormatter(formatter)
 
             ch = logging.StreamHandler()

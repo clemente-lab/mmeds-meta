@@ -1,5 +1,5 @@
 from time import sleep
-from multiprocessing import Process
+from multiprocessing import Process, current_process
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
@@ -17,8 +17,6 @@ from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
-
-logger = MMEDSLog('debug').logger
 
 TOOLS = {
     'qiime1': Qiime1,
@@ -45,6 +43,8 @@ def killall(processes):
 
 class Watcher(Process):
 
+    logger = MMEDSLog('spawn-debug').logger
+
     def __init__(self, queue, pipe, parent_pid, testing=False):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
@@ -60,9 +60,11 @@ class Watcher(Process):
         self.pipe = pipe
         self.parent_pid = parent_pid
         self.started = []
+        self.running_on_node = set()
         super().__init__()
 
-    def spawn_analysis(self, tool_type, analysis_type, user, parent_code, config_file, testing, kill_stage=-1):
+    def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
+                       config_file, testing, run_on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
         # Load the config for this analysis
         with Database('.', owner=user, testing=testing) as db:
@@ -70,13 +72,15 @@ class Watcher(Process):
             access_code = db.create_access_code()
         config = load_config(config_file, files['metadata'])
         try:
-            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type, analysis_type, config, testing,
+            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type,
+                                    analysis_type, config, testing, run_on_node,
                                     kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
         return tool
 
-    def restart_analysis(self, user, analysis_code, restart_stage, testing, kill_stage=-1, run_analysis=True):
+    def restart_analysis(self, user, analysis_code, restart_stage, testing,
+                         run_on_node, kill_stage=-1, run_analysis=True):
         """ Restart the specified analysis. """
         with Database('.', owner=user, testing=testing) as db:
             ad = db.get_doc(analysis_code)
@@ -89,9 +93,9 @@ class Watcher(Process):
                 rmtree(ad.path)
         # Create the appropriate tool
         try:
-            tool = TOOLS[ad.tool_type](self.q, ad.owner, analysis_code, ad.study_code, ad.tool_type, ad.analysis_type,
-                                       ad.config, testing, analysis=run_analysis, restart_stage=restart_stage,
-                                       kill_stage=kill_stage)
+            tool = TOOLS[ad.tool_type](self.q, ad.owner, analysis_code, ad.study_code, ad.tool_type,
+                                       ad.analysis_type, ad.config, testing, run_on_node,
+                                       analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
         return tool
@@ -168,7 +172,7 @@ class Watcher(Process):
                 finished += yaml.safe_load(current_log.read_text())
             # TODO Figure out why this is happening
             except TypeError:
-                logger.error('Error loading process log {}. Removing corrupted log.'.format(current_log))
+                self.logger.error('Error loading process log {}. Removing corrupted log.'.format(current_log))
                 current_log.unlink()
 
         # Only create the file if there are processes to log
@@ -204,13 +208,30 @@ class Watcher(Process):
         ====================================================================
         Handles the creation of analysis processes
         """
-        ptype, user, access_code, tool_type, analysis_type, config, kill_stage = process
-        p = self.spawn_analysis(tool_type, analysis_type, user, access_code, config, self.testing, kill_stage)
+        ptype, user, access_code, tool_type, analysis_type, config, kill_stage, run_on_node = process
+
+        # If running directly on the server node
+        if run_on_node:
+            # Inform the user if there are too many processes already running
+            if len(self.running_on_node) > 3:
+                with Database(testing=self.testing) as db:
+                    toaddr = db.get_email(user)
+                send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=tool_type)
+                self.pipe.send('Analysis Not Started')
+                return
+
+        # Otherwise continue
+        p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
+                                config, self.testing, kill_stage, run_on_node)
         # Start the analysis running
         p.start()
         sleep(1)
         with Database(testing=self.testing, owner=user) as db:
             doc = db.get_doc(p.access_code)
+
+        # Store the access code
+        if run_on_node:
+            self.running_on_node.add(p.access_code)
         self.pipe.send(doc.get_info())
         # Add it to the list of analysis processes
         self.add_process(ptype, p.access_code)
@@ -254,9 +275,9 @@ class Watcher(Process):
         ====================================================================
         Handles creating new processes to restart previous analyses.
         """
-        ptype, user, analysis_code, restart_stage, kill_stage = process
+        ptype, user, analysis_code, run_on_node, restart_stage, kill_stage = process
         p = self.restart_analysis(user, analysis_code, restart_stage, self.testing,
-                                  kill_stage=kill_stage, run_analysis=True)
+                                  run_on_node, kill_stage=kill_stage, run_analysis=True)
         # Start the analysis running
         p.start()
         sleep(1)
@@ -281,21 +302,33 @@ class Watcher(Process):
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
-                # Retrieve the info
-                logger.debug(process)
-
+                self.logger.error('Got process requirements')
+                self.logger.error(process)
+                # If the watcher needs to shut down
+                if process == 'terminate':
+                    self.logger.error('Terminating')
+                    # Kill all the processes currently running
+                    for process in self.processes:
+                        self.logger.error('Killing process {}'.format(process))
+                        while process.is_alive():
+                            process.kill()
+                    # Notify other processes the watcher is exiting
+                    self.pipe.send('Watcher exiting')
+                    exit()
                 # If it's an analysis
-                if process[0] == 'analysis':
+                elif process[0] == 'analysis':
                     self.handle_analysis(process)
-                # IF it's a restart of an analysis
+                # If it's a restart of an analysis
                 elif process[0] == 'restart':
                     self.handle_restart(process)
                 # If it's an upload
                 elif process[0] == 'upload':
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
+                    self.logger.error('Sending email')
                     ptype, toaddr, user, message, kwargs = process
-                    logger.error('Sending email with arguments')
-                    logger.error('\t'.join([toaddr, user, message]))
-                    logger.error(kwargs)
+                    # If the analysis that finished was running directly on the node remove it from the set
+                    if kwargs.get('access_code') in self.running_on_node:
+                        self.running_on_node.remove(kwargs.get('access_code'))
+
                     send_email(toaddr, user, message, self.testing, **kwargs)

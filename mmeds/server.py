@@ -21,12 +21,9 @@ from mmeds.database import Database
 from mmeds.spawn import handle_modify_data
 from mmeds.log import MMEDSLog
 
-import multiprocessing_logging as mpl
-mpl.install_mp_handler()
-
 absDir = Path(os.getcwd())
 
-logger = MMEDSLog('debug').logger
+logger = MMEDSLog('server-debug').logger
 
 
 def kill_watcher(monitor):
@@ -725,7 +722,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def run_analysis(self, access_code, analysis_method, config):
+    def run_analysis(self, access_code, analysis_method, config, runOnNode):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -739,8 +736,15 @@ class MMEDSanalysis(MMEDSbase):
             tool_type = analysis_method
             analysis_type = 'default'
         try:
+            # The run on node option shouldn't appear for users without
+            # elevated privileges but they could get around that by editting
+            # the page html directly
+            if runOnNode and not check_privileges(self.get_user(), self.testing):
+                raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
+
+            # Check that the requested upload exists
             self.check_upload(access_code)
-            print('config passed is {}'.format(config))
+
             if config.file is None:
                 config_path = DEFAULT_CONFIG.read_text()
             elif isinstance(config, str):
@@ -749,10 +753,12 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name)
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool_type, analysis_type, config_path, -1))
+            self.q.put(('analysis', self.get_user(), access_code, tool_type,
+                        analysis_type, config_path, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
                                      success='Analysis started you will recieve an email shortly')
-        except (err.InvalidConfigError, err.MissingUploadError, err.UploadInUseError) as e:
+        except (err.InvalidConfigError, err.MissingUploadError,
+                err.UploadInUseError, err.PrivilegeError) as e:
             page = self.load_webpage('analysis_page', title='Welcome to MMEDS', error=e.message)
         return page
 
@@ -765,7 +771,11 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
-        page = self.load_webpage('analysis_select_tool', title='Select Analysis')
+        # Add unhide any privileged options
+        if check_privileges(self.get_user(), self.testing):
+            page = self.load_webpage('analysis_select_tool', title='Select Analysis', privilege='')
+        else:
+            page = self.load_webpage('analysis_select_tool', title='Select Analysis')
         return page
 
 
