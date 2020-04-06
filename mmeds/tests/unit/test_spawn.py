@@ -8,17 +8,12 @@ import mmeds.config as fig
 import mmeds.spawn as sp
 import multiprocessing as mp
 
-import multiprocessing_logging as mpl
-mpl.install_mp_handler()
+# import multiprocessing_logging as mpl
+# mpl.install_mp_handler()
 
 testing = True
 
 logger = MMEDSLog('test_spawn-debug').logger
-
-q = mp.Queue()
-pipe_ends = mp.Pipe()
-watcher = sp.Watcher(q, pipe_ends[1], mp.current_process(), testing)
-watcher.start()
 
 
 class SpawnTests(TestCase):
@@ -26,8 +21,10 @@ class SpawnTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.manager = mp.Manager()
-        self.current_processes = self.manager.list()
+        self.q = mp.Queue()
+        pipe_ends = mp.Pipe()
+        self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
+        self.watcher.start()
         self.pipe = pipe_ends[0]
         self.infos = []
         self.analyses = []
@@ -37,11 +34,11 @@ class SpawnTests(TestCase):
         test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
 
         # Add multiple uploads from different users
-        q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-               fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
+        self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
+                    fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
 
-        q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-               fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
+        self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
+                    fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
 
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time
@@ -67,7 +64,7 @@ class SpawnTests(TestCase):
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
+            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
 
         logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
@@ -90,21 +87,24 @@ class SpawnTests(TestCase):
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
-            q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
+            self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
             # Get the test tool
             self.pipe.recv()
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_d_node_analysis(self):
-        return
         for i in range(3):
-            q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
+            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
         for i in range(3):
             result = self.pipe.recv()
             logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
 
     def test_z_exit(self):
-        q.put(('terminate'))
-        self.assertEqual(self.pipe.recv(), 'Watcher exiting')
+        logger.error('Putting Terminate')
+        self.q.put(('terminate'))
+        logger.error('Waiting on pipe')
+        result = self.pipe.recv()
+        logger.error('Got {} from pipe'.format(result))
+        self.assertEqual(result, 'Watcher exiting')

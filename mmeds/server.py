@@ -21,12 +21,9 @@ from mmeds.database import Database
 from mmeds.spawn import handle_modify_data
 from mmeds.log import MMEDSLog
 
-import multiprocessing_logging as mpl
-mpl.install_mp_handler()
-
 absDir = Path(os.getcwd())
 
-logger = MMEDSLog('debug').logger
+logger = MMEDSLog('server-debug').logger
 
 
 def kill_watcher(monitor):

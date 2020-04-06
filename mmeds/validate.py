@@ -11,11 +11,7 @@ from datetime import datetime
 from mmeds.log import MMEDSLog
 
 
-import multiprocessing_logging as mpl
-mpl.install_mp_handler()
-
-
-logger = MMEDSLog('error').logger
+logger = MMEDSLog('validate-error').logger
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 

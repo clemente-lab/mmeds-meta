@@ -15,7 +15,7 @@ import yaml
 import mmeds.config as fig
 import pandas as pd
 
-logger = MMEDSLog('debug').logger
+logger = MMEDSLog('util-debug').logger
 
 
 ###########
