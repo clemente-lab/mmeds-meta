@@ -14,8 +14,8 @@ class Qiime2(Tool):
     # The default classifier for Q2 analysis
     classifier = DATABASE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
-                 analysis=True, restart_stage=0, kill_stage=-1, child=False):
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+                 run_on_node=False, analysis=True, restart_stage=0, kill_stage=-1, child=False):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
                          kill_stage=kill_stage, child=child)
