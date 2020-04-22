@@ -29,10 +29,13 @@ if [ ! ~/.modules/modulefiles ]; then
 fi
 sudo chown -R travis:travis $TRAVIS_HOME/.modules
 
+sudo rm -rf $TRAVIS_HOME/.modules
+sudo rm -rf $TRAVIS_HOME/.local
+
 # Create the necessary conda environments
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds-stable environment";
-    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy &>/dev/null;
+    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy;
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 fi
 
