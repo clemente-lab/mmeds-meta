@@ -32,7 +32,7 @@ sudo chown -R travis:travis $TRAVIS_HOME/.modules
 # Create the necessary conda environments
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds-stable environment";
-    conda env create -f $REPO_DIR/environment.yml -p ~/.modules/mmeds-stable --yes --quiet --copy;
+    conda env create -f $REPO_DIR/environment.yml -p ~/.modules/mmeds-stable --quiet;
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 fi
 
