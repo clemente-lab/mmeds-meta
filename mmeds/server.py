@@ -17,7 +17,7 @@ from mmeds.util import (log, create_local_copy, SafeDict)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
-from mmeds.database import Database
+from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data
 from mmeds.log import MMEDSLog
 

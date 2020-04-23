@@ -9,7 +9,7 @@ from ppretty import ppretty
 from collections import defaultdict
 from datetime import datetime
 
-from mmeds.database import Database
+from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError

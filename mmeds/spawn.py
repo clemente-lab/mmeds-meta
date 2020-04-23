@@ -8,7 +8,8 @@ import mmeds.config as fig
 import yaml
 
 from mmeds.util import create_local_copy, load_config, send_email
-from mmeds.database import MetaDataUploader, Database
+from mmeds.database.database import Database
+from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2

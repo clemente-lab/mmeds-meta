@@ -24,7 +24,8 @@ setup(name='mmeds',
       license=__license__,
       packages=[
           'mmeds',
-          'mmeds.tools'
+          'mmeds.tools',
+          'mmeds.database'
       ],
       include_package_data=True,
       scripts=glob('scripts/*.py'),
