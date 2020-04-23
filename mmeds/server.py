@@ -11,6 +11,7 @@ from copy import deepcopy
 
 import mmeds.error as err
 import mmeds.util as util
+import mmeds.secrets as sec
 
 from mmeds.validate import Validator
 from mmeds.util import (create_local_copy, SafeDict)
@@ -19,7 +20,7 @@ from mmeds.authentication import (validate_password, check_username, check_passw
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data
-from mmeds.logger.debug import MMEDSLog
+from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
 
@@ -40,10 +41,10 @@ def catch_server_errors(page_method):
         try:
             return page_method(*a, **kwargs)
         except err.LoggedOutError:
-            body = HTML_PAGES['logger.debugin'][0].read_text()
+            body = HTML_PAGES['login'][0].read_text()
             args = deepcopy(HTML_ARGS)
             args['body'] = body.format(**args)
-            return HTML_PAGES['logger.debugged_out_template'].read_text().format(**args)
+            return HTML_PAGES['logged_out_template'].read_text().format(**args)
     return wrapper
 
 
@@ -80,7 +81,7 @@ class MMEDSbase:
         try:
             return cp.session['user']
         except KeyError:
-            raise err.LoggedOutError('No user logger.debugged in')
+            raise err.LoggedOutError('No user logged in')
 
     def get_dir(self):
         """
@@ -90,7 +91,7 @@ class MMEDSbase:
         try:
             return cp.session['working_dir']
         except KeyError:
-            raise err.LoggedOutError('No user logger.debugged in')
+            raise err.LoggedOutError('No user logged in')
 
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
@@ -123,14 +124,14 @@ class MMEDSbase:
             # Add the mmeds stats
             args.update(util.load_mmeds_stats(self.testing))
 
-            # If a user is logger.debugged in, load the side bar
+            # If a user is logged in, load the side bar
             if header:
-                template = HTML_PAGES['logger.debugged_in_template'].read_text()
+                template = HTML_PAGES['logged_in_template'].read_text()
                 if args.get('user') is None:
                     args['user'] = self.get_user()
                     args['dir'] = self.get_dir()
             else:
-                template = HTML_PAGES['logger.debugged_out_template'].read_text()
+                template = HTML_PAGES['logged_out_template'].read_text()
 
             # Load the body of the requested webpage
             body = path.read_text()
@@ -143,10 +144,10 @@ class MMEDSbase:
 
         # Log arguments if there is an issue
         except (ValueError, KeyError):
-            cp.logger.debug('Args')
-            cp.logger.debug('\n'.join([str(x) for x in kwargs.items()]))
-            cp.logger.debug('=================================')
-            cp.logger.debug(page)
+            cp.log('Args')
+            cp.log('\n'.join([str(x) for x in kwargs.items()]))
+            cp.log('=================================')
+            cp.log(page)
             raise
 
         # Check there is nothing missing from the page
@@ -303,7 +304,7 @@ class MMEDSupload(MMEDSbase):
 
     def run_validate(self, myMetaData):
         """ Run validate_mapping_file and return the results """
-        cp.logger.debug('In run validate')
+        cp.log('In run validate')
         errors = []
         warnings = []
         # Check the file that's uploaded
@@ -318,12 +319,12 @@ class MMEDSupload(MMEDSbase):
         # Store the copy's location
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
 
-        cp.logger.debug('before validator creation')
+        cp.log('before validator creation')
         valid = Validator(metadata_copy,
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
                           cp.session['subject_type'])
-        cp.logger.debug('before validator run')
+        cp.log('before validator run')
 
         # Check the metadata file for errors
         errors, warnings, subjects = valid.run()
@@ -355,14 +356,14 @@ class MMEDSupload(MMEDSbase):
         """ Handle loading different pages depending if there are metadata errors, warnings, or neither """
         # If there are errors report them and return the error page
         if errors:
-            cp.logger.debug('There are errors')
+            cp.log('There are errors')
             # Write the errors to a file
             cp.session['download_files']['error_file'] =\
                 self.get_dir() / ('errors_{}'.format(Path(metadata_copy).name))
 
             with open(cp.session['download_files']['error_file'], 'w') as f:
                 f.write('\n'.join(errors + warnings))
-            cp.logger.debug('Created error file at {}'.format(cp.session['download_files']['error_file']))
+            cp.log('Created error file at {}'.format(cp.session['download_files']['error_file']))
 
             if warnings:
                 page = self.load_webpage('upload_metadata_error',
@@ -374,7 +375,7 @@ class MMEDSupload(MMEDSbase):
                                          error=errors,
                                          title='Errors')
         elif warnings:
-            cp.logger.debug('There are warnings')
+            cp.log('There are warnings')
             # Set the proceed button based on current metadata file
             if cp.session['metadata_type'] == 'subject':
                 page = self.load_webpage('upload_metadata_warning',
@@ -455,7 +456,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def upload_page(self):
         """ Page for selecting upload type or modifying upload. """
-        cp.logger.debug('Access upload page')
+        cp.log('Access upload page')
         page = self.load_webpage('upload_select_page', title='Upload Type')
         return page
 
@@ -508,7 +509,7 @@ class MMEDSupload(MMEDSbase):
     def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
         """ The page returned after a file is uploaded. """
         try:
-            cp.logger.debug('in validate, current metadata {}'.format(cp.session['metadata_type']))
+            cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
             # If the metadata is temporary don't perform validation
             if temporary:
                 cp.session['metadata_temporary'] = True
@@ -608,7 +609,7 @@ class MMEDSauthentication(MMEDSbase):
     @cp.expose
     def logout(self):
         """ Expires the session and returns to logger.debugin page """
-        cp.logger.debug('Logout user {}'.format(self.get_user()))
+        cp.log('Logout user {}'.format(self.get_user()))
         cp.lib.sessions.expire()
         return self.load_webpage('logger.debugin')
 
@@ -778,6 +779,50 @@ class MMEDSanalysis(MMEDSbase):
 
 
 @decorate_all_methods(catch_server_errors)
+class MMEDSquery(MMEDSbase):
+    def __init__(self, watcher, q, testing=False):
+        super().__init__(watcher, q, testing)
+
+    def load_webpage(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        if kwargs.get('query_selected') is None:
+            kwargs['query_selected'] = 'w3-blue'
+        return super().load_webpage(page, **kwargs)
+
+    @cp.expose
+    def query_select(self):
+        return self.load_webpage('query_select_page')
+
+    @cp.expose
+    def execute_query(self, query):
+        """ Execute the provided query and format the results as an html table """
+        try:
+            # Set the session to use the current user
+            with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
+                data, header = db.execute(query)
+                html_data = db.format_html(data, header)
+
+            # Create a file with the results of the query
+            query_file = self.get_dir() / 'query.tsv'
+            if header is not None:
+                data = [header] + list(data)
+            with open(query_file, 'w') as f:
+                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
+            cp.session['download_files']['query'] = query_file
+            page = self.load_webpage('query_result_page', query_result_table=html_data)
+
+        except (err.InvalidSQLError, err.TableAccessError) as e:
+            page = self.load_webpage('query_result_page', error=e.message)
+        return page
+
+    @cp.expose
+    def generate_id(self, study_code):
+        """ Display the page for generating new Aliquot IDs for a particular study """
+        page = self.load_webpage('generate_id_page')
+        return page
+
+
+@decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
     def __init__(self, watcher, q, testing=False):
         super().__init__(watcher, q, testing)
@@ -786,6 +831,7 @@ class MMEDSserver(MMEDSbase):
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
         self.study = MMEDSstudy(watcher, q, testing)
+        self.query = MMEDSquery(watcher, q, testing)
 
     def load_webpage(self, page, **kwargs):
         """
@@ -799,9 +845,9 @@ class MMEDSserver(MMEDSbase):
     def login(self, username, password):
         """
         Opens the page to upload files if the user has been authenticated.
-        Otherwise returns to the logger.debugin page with an error message.
+        Otherwise returns to the login page with an error message.
         """
-        cp.logger.debug('Login attempt for user: {}'.format(username))
+        cp.log('Login attempt for user: {}'.format(username))
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
@@ -814,7 +860,7 @@ class MMEDSserver(MMEDSbase):
             page = self.load_webpage('home', title='Welcome to Mmeds')
             logger.debug('Login Successful')
         except err.InvalidLoginError as e:
-            page = self.load_webpage('logger.debugin', error=e.message)
+            page = self.load_webpage('login', error=e.message)
         return page
 
     def exit(self):
@@ -827,5 +873,5 @@ class MMEDSserver(MMEDSbase):
         if cp.session.get('user'):
             page = self.load_webpage('home')
         else:
-            page = self.load_webpage('logger.debugin')
+            page = self.load_webpage('login')
         return page

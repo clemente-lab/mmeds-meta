@@ -1,0 +1,19 @@
+<!-- Header -->
+<header class="w3-container" style="padding-top:22px">
+    <h5><b><i class="fas fa-server"></i> Query Results </b></h5>
+</header>
+<div class="w3-container">
+    <div class="w3-card-4 w3-padding">
+        <h2> Submit Query </h2>
+        <form action="{query_result_page}" method="post" enctype="multipart/form-data" id="analysis_form">
+            <input class="w3-input w3-border" type="text" name="query" required/>
+            <button class="w3-btn w3-border" type="submit" method="post">Submit Query</button>
+        </form>
+    </div>
+    <div class="w3-card-4 w3-padding">
+        {query_result_table}
+        <form action="{download_page}" method="post">
+            <button class="w3-btn w3-border" type="submit" name="file_name" value="query">Download Results</button>
+        </form>
+    </div>
+</div>

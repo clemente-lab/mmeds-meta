@@ -489,9 +489,10 @@ HTML_PAGES = {
     'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
     'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
 
-    # TODO below this are outdated
-    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
-
+    # Query Pages
+    'query_select_page': (HTML_DIR / 'query_select_page.html', True),
+    'query_result_page': (HTML_DIR / 'query_result_page.html', True),
+    'generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
 }
 
 # Predefined options for formatting webpages are set here
@@ -520,6 +521,7 @@ HTML_ARGS = {
     'analysis_page': SERVER_PATH + 'analysis/analysis_page',
     'study_page': SERVER_PATH + 'study/select_study',
     'account_page': SERVER_PATH + 'auth/input_password',
+    'query_page': SERVER_PATH + 'query/query_select',
     'settings_page': '#',
 
     # Upload Pages
@@ -546,6 +548,12 @@ HTML_ARGS = {
     'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
     'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
     'sign_up_page': SERVER_PATH + 'auth/sign_up',
+
+    # Query Pages
+    'query_result_page': SERVER_PATH + 'query/execute_query',
+    'generate_id_page': SERVER_PATH + 'query/generate_id',
+    'query_result_table': '',
+
 
     # Where to insert errors/warnings on a given page
     'error': '',
