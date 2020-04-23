@@ -276,12 +276,18 @@ class Database:
                 formatted[column].append(value)
         return formatted
 
-    def execute(self, sql):
-        """ Execute the provided sql code """
+    def execute(self, sql, filter_ids=True):
+        """
+        Execute the provided sql code
+        ====================================
+        :sql: A string, Contains a SQL query
+        :filter_ids: A Boolean, when true remove all primary and foreign keys from the results
+        """
         header = None
         # If the user is not an admin automatically map tables in the query
         # to their protected views
         if not self.user == sec.SQL_ADMIN_NAME:
+            # Replace references to protected tables to their view counterparts
             for table in fig.PROTECTED_TABLES:
                 if table in sql:
                     sql = sql.replace(' ' + table, ' protected_' + table)
@@ -289,14 +295,21 @@ class Database:
                     sql = sql.replace('=`' + table, '=`protected_' + table)
                     sql = sql.replace('=' + table, '=protected_' + table)
         try:
-            self.cursor.execute(sql)
-            data = self.cursor.fetchall()
+            # Get the table column headers
             if 'from' in sql.casefold():
                 parsed = sql.split(' ')
                 index = list(map(lambda x: x.casefold(), parsed)).index('from')
                 table = parsed[index + 1]
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
+                if filter_ids:
+                    # Remove foreign keys
+                    header = [col for col in header if 'id' not in col]
+                    # Expand * to limit results
+                    sql = sql.replace('*', ', '.join(header))
+
+            self.cursor.execute(sql)
+            data = self.cursor.fetchall()
         except pms.err.OperationalError as e:
             cp.log('OperationalError')
             cp.log(str(e))
