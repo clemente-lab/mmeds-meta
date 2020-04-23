@@ -244,12 +244,44 @@ class Database:
             new_text.add_row(list(map(str, line)))
         return new_text.get_html_string()
 
+    def build_html_table(self, header, data):
+        """
+        Return an HTML formatted table containing the results of the provided query
+        :header: List, The column names
+        :data: List of Tuples, The rows of the columns
+        """
+
+        # Add the table column labels
+        html = '<table class="w3-table-all w3-hoverable">\n<thead>\n <tr class="w3-light-grey">\n'
+        for column in header:
+            html += '<th><b>{}</b></th>\n'.format(column)
+        html += '</tr></thead>'
+
+        # Add each row
+        for row in data:
+            html += '<tr class="w3-hover-blue">'
+            for value in row:
+                html += '<th> <a href="#"> {} </a></th>'.format(value)
+            html += '</tr>'
+
+        html += '</table>'
+        return html
+
+    @classmethod
+    def format_results(cls, header, data):
+        """ Takes the results from a query and formats them into a python dict """
+        formatted = defaultdict(list)
+        for row in data:
+            for column, value in zip(header, row):
+                formatted[column].append(value)
+        return formatted
+
     def execute(self, sql):
         """ Execute the provided sql code """
         header = None
         # If the user is not an admin automatically map tables in the query
         # to their protected views
-        if not self.user == 'root':
+        if not self.user == sec.SQL_ADMIN_NAME:
             for table in fig.PROTECTED_TABLES:
                 if table in sql:
                     sql = sql.replace(' ' + table, ' protected_' + table)
@@ -278,7 +310,7 @@ class Database:
             raise InvalidSQLError(e.args[1])
         return data, header
 
-    def purge(self):
+    def delete_sql_rows(self):
         """
         Deletes every row from every table in the currently connected database.
         """
@@ -379,9 +411,6 @@ class Database:
         return code
 
     def mongo_clean(self, access_code):
-        obs = MMEDSDoc.objects(access_code=access_code)
-        for ob in obs:
-            ob.delete()
         obs = MMEDSDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
@@ -586,26 +615,11 @@ class Database:
         return empty_files
 
     @classmethod
-    def clear_mongo_data(cls, username):
+    def delete_mongo_documents(cls):
         """ Clear all metadata documents associated with the provided username. """
-        data = list(MMEDSDoc.objects(owner=username))
-        data2 = list(MMEDSDoc.objects(owner=username))
-        for doc in data + data2:
+        data = list(MMEDSDoc.objects())
+        for doc in data:
             doc.delete()
-
-    def clean(self):
-        """ Remove all temporary and intermediate files. """
-        docs = MMEDSDoc.objects().first()
-        if docs is None:
-            return
-        for mdata in docs:
-            if (datetime.utcnow() - mdata.last_accessed).days > DAYS:
-                for key in mdata.files.keys():
-                    if key not in fig.USER_FILES:
-                        if os.path.isfile(mdata.files[key]):
-                            os.remove(mdata.files[key])
-                        elif os.path.exists(mdata.files[key]):
-                            shutil.rmtree(mdata.files[key])
 
     @classmethod
     def get_docs(cls, **kwargs):

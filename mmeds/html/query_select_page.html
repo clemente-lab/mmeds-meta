@@ -30,13 +30,15 @@
     </div>
     <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> Select Study for ID Generation </h2>
-        <form action="{generate_id_page}" method="post" enctype="multipart/form-data" id="analysis_form">
-            <select class="w3-select w3-border" id='study'>
-                <option value=1 selected='selected'> Study 1 </option>
-                <option value=2> Study 2 </option>
-                <option value=3> Study 3 </option>
-            </select>
-            <button class="w3-btn w3-border" type="submit" method="post"> Select Study</button>
+        <table class="w3-table-all w3-card-4 w3-hoverable">
+            <thead>
+                <tr class="w3-light-grey">
+                    <th><b>Study Name</b></th>
+                    <th><b>Upload Date</b></th>
+                </tr>
+            </thead>
+            {user_studies}
+        </table>
         </form>
     </div>
 </div>

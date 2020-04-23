@@ -18,7 +18,7 @@ from mmeds.documents import MMEDSDoc
 from mmeds.log import MMEDSLog
 
 logger = MMEDSLog('metadata-uploader-debug').logger
-sql_logger = MMEDSLog('metadata-uploader-info').info
+sql_logger = MMEDSLog('metadata-uploader-info').logger
 
 
 class MetaDataUploader(Process):

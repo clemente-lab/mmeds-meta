@@ -409,7 +409,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        logger.debugger.debug('upload/retry_upload')
+        logger.debug('upload/retry_upload')
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'subject':
             page = self.load_webpage('upload_metadata_file',
@@ -608,10 +608,10 @@ class MMEDSauthentication(MMEDSbase):
 
     @cp.expose
     def logout(self):
-        """ Expires the session and returns to logger.debugin page """
+        """ Expires the session and returns to login page """
         cp.log('Logout user {}'.format(self.get_user()))
         cp.lib.sessions.expire()
-        return self.load_webpage('logger.debugin')
+        return self.load_webpage('login')
 
     @cp.expose
     def sign_up(self, username, password1, password2, email):
@@ -622,9 +622,9 @@ class MMEDSauthentication(MMEDSbase):
             check_password(password1, password2)
             check_username(username, testing=self.testing)
             add_user(username, password1, email, testing=self.testing)
-            page = self.load_webpage('logger.debugin', success='Account created successfully!')
+            page = self.load_webpage('login', success='Account created successfully!')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
-            logger.debugger.error('error, invalid something.\n{}'.format(e.message))
+            logger.error('error, invalid something.\n{}'.format(e.message))
             page = self.load_webpage('auth_sign_up_page', error=e.message)
         return page
 
@@ -664,9 +664,9 @@ class MMEDSauthentication(MMEDSbase):
         """ Page for reseting a user's password. """
         try:
             reset_password(username, email, testing=self.testing)
-            page = self.load_webpage('logger.debugin', success='A new password has been sent to your email.')
+            page = self.load_webpage('login', success='A new password has been sent to your email.')
         except err.NoResultError:
-            page = self.load_webpage('logger.debugin', error='No account exists with the provided username and email.')
+            page = self.load_webpage('login', error='No account exists with the provided username and email.')
         return page
 
 
@@ -791,16 +791,38 @@ class MMEDSquery(MMEDSbase):
 
     @cp.expose
     def query_select(self):
-        return self.load_webpage('query_select_page')
+        study_html = ''' <tr class="w3-hover-blue">
+            <th>
+            <a href="{generate_id_page}?access_code={access_code}"> {study_name} </a>
+            </th>
+            <th>{date_created}</th>
+        </tr> '''
+
+        with Database(path='.', testing=self.testing) as db:
+            studies = db.get_all_studies()
+
+        study_list = []
+        for study in studies:
+            study_list.append(study_html.format(study_name=study.study_name,
+                                                generate_id_page=SERVER_PATH + 'query/generate_id',
+                                                access_code=study.access_code,
+                                                date_created=study.created,
+                                                ))
+
+        page = self.load_webpage('query_select_page',
+                                 title='Select Study',
+                                 user_studies='\n'.join(study_list))
+
+        return page
 
     @cp.expose
     def execute_query(self, query):
         """ Execute the provided query and format the results as an html table """
         try:
             # Set the session to use the current user
-            with Database(self.get_dir(), user=sec.SQL_USER_NAME, owner=self.get_user(), testing=self.testing) as db:
+            with Database(testing=self.testing) as db:
                 data, header = db.execute(query)
-                html_data = db.format_html(data, header)
+                html_data = db.build_html_table(header, data)
 
             # Create a file with the results of the query
             query_file = self.get_dir() / 'query.tsv'
@@ -816,9 +838,12 @@ class MMEDSquery(MMEDSbase):
         return page
 
     @cp.expose
-    def generate_id(self, study_code):
+    def generate_id(self, access_code):
         """ Display the page for generating new Aliquot IDs for a particular study """
-        page = self.load_webpage('generate_id_page')
+        with Database(testing=self.testing) as db:
+            data, header = db.execute('SELECT * FROM Specimen')
+            specimen_table = db.build_html_table(header, data)
+        page = self.load_webpage('generate_id_page', specimen_table=specimen_table)
         return page
 
 
@@ -864,7 +889,7 @@ class MMEDSserver(MMEDSbase):
         return page
 
     def exit(self):
-        logger.debugger.info('{} exiting'.format(self))
+        logger.info('{} exiting'.format(self))
         cp.engine.exit()
 
     @cp.expose
