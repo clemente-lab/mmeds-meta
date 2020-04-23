@@ -4,7 +4,11 @@ import mmeds.config as fig
 import pandas as pd
 
 from mmeds.error import NoResultError, InvalidSQLError
-from mmeds.util import sql_log, quote_sql, pyformat_translate
+from mmeds.util import quote_sql, pyformat_translate
+from mmeds.log import MMEDSLog
+
+
+sql_logger = MMEDSLog("sql-builder-info").logger
 
 
 class SQLBuilder:
@@ -146,9 +150,9 @@ class SQLBuilder:
                 # Get the resulting foreign key
                 fresult = self.cursor.fetchone()[0]
             except TypeError:
-                sql_log('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
-                sql_log(fsql)
-                sql_log(fargs)
+                sql_logger.info('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
+                sql_logger.info(fsql)
+                sql_logger.info(fargs)
                 raise InvalidSQLError('No key found for SQL: {} with args: {}'.format(fsql, fargs))
 
             # Add it to the original query

@@ -15,11 +15,15 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
                          MetaDataError, NoResultError, InvalidSQLError)
-from mmeds.util import (send_email, pyformat_translate, quote_sql, sql_log, debug_log, log)
+from mmeds.util import (send_email, pyformat_translate, quote_sql)
 from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.documents import MMEDSDoc
+from mmeds.log import MMEDSLog
 
 DAYS = 13
+
+logger = MMEDSLog('database-debug').logger
+sql_logger = MMEDSLog('database-info').logger
 
 
 # Used in test_cases
@@ -68,8 +72,8 @@ class Database:
             :owner: A string. The mmeds user account uploading or retrieving files.
             :testing: A boolean. Changes the connection parameters for testing.
         """
-        debug_log('Database created with params')
-        debug_log({
+        logger.debug('Database created with params')
+        logger.debug({
             'path': path,
             'user': user,
             'owner': owner,
@@ -348,8 +352,8 @@ class Database:
                 self.cursor.execute(sql, {'id': user_id})
             except pms.err.IntegrityError as e:
                 # If there is a dependency remaining
-                sql_log(e)
-                sql_log('Failed on table {}'.format(table))
+                sql_logger.info(e)
+                sql_logger.info('Failed on table {}'.format(table))
                 raise MetaDataError(e.args[0])
 
         # Commit the changes
@@ -448,7 +452,7 @@ class Database:
         :value: Either a path to a file or a dictionary containing
                 file locations in a subdirectory
         """
-        sql_log('Update metadata with {}: {}'.format(filekey, value))
+        sql_logger.info('Update metadata with {}: {}'.format(filekey, value))
         mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
@@ -492,8 +496,8 @@ class Database:
                 except pms.err.InternalError as e:
                     raise MetaDataError(e.args[1])
                 if found >= 1:
-                    sql_log(sql)
-                    sql_log(args)
+                    sql_logger.info(sql)
+                    sql_logger.info(args)
                     warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
                     warnings.append(warning.format(row=j, col=subject_col))
         return warnings
@@ -502,11 +506,7 @@ class Database:
         """ Checks if the current user has uploaded a study with the same name. """
 
         sql = 'SELECT * FROM Study WHERE user_id = %(id)s and Study.StudyName = %(study)s'
-        log('Checking on user study')
-        log('id: {}, studyName: {}'.format(self.user_id, study_name))
-        log(sql)
         found = self.cursor.execute(sql, {'id': self.user_id, 'study': study_name})
-        log(found)
 
         # Ensure multiple studies aren't uploaded with the same name
         if found >= 1 and not self.testing:
