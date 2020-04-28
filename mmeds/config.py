@@ -2,6 +2,7 @@ from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
 from collections import defaultdict
+from socket import gethostname
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -16,18 +17,24 @@ import re
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
+TESTING = not (gethostname() == 'web01')
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
-ROOT = Path(mmeds.__file__).parent.resolve()
-HTML_DIR = Path(html.__file__).parent.resolve()
-CSS_DIR = Path(css.__file__).parent.resolve()
-STORAGE_DIR = Path(resources.__file__).parent.resolve()
-if os.environ.get('MMEDS'):
-    DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
-else:
+if TESTING:
+    ROOT = Path(mmeds.__file__).parent.resolve()
+    HTML_DIR = Path(html.__file__).parent.resolve()
+    CSS_DIR = Path(css.__file__).parent.resolve()
+    STORAGE_DIR = Path(resources.__file__).parent.resolve()
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
+else:
+    ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
+    HTML_DIR = ROOT / 'mmeds/html'
+    CSS_DIR = ROOT / 'CSS'
+    STORAGE_DIR = ROOT / 'resources'
+    DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
+
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
 if not DATABASE_DIR.exists():

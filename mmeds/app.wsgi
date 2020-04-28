@@ -1,12 +1,3 @@
-import importlib.util
-import sys
-
-MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
-spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
-mmeds = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = mmeds
-spec.loader.exec_module(mmeds)
-
 from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
 from mmeds.spawn import Watcher
@@ -27,7 +18,7 @@ def secureheaders():
         headers['Strict-Transport-Security'] = 'max-age=315360000'  # One Year
 
 
-def application(environ, start_response):
+def application():
     # Not testing if running on Web01
     testing = not (gethostname() == 'web01')
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
@@ -35,8 +26,7 @@ def application(environ, start_response):
     q = Queue()
     pipe_ends = Pipe()
     pipe = pipe_ends[0]
-    watcher = mmeds.spawn.Watcher(q, pipe, current_process(), testing)
+    watcher = Watcher(q, pipe, current_process(), testing)
     watcher.start()
-    cp.config.update(mmeds.config.CONFIG)
-    return cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), '/', config=mmeds.config.CONFIG)
-
+    cp.config.update(CONFIG)
+    return cp.Application(MMEDSserver(watcher, q, testing), '/', config=CONFIG)

@@ -1,7 +1,7 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from shutil import copy, rmtree
-from psutil import pid_exists
+# from psutil import pid_exists
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
@@ -537,7 +537,8 @@ class Tool(mp.Process):
                 self.logger.debug('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
-                    if not pid_exists(self._parent_pid):
+                    # TODO Temporary fix for testing with web services
+                    if False:  # not pid_exists(self._parent_pid):
                         self.logger.debug('Parent died prior to completion, self destructing')
                         self.terminate()
                     self.logger.debug('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))

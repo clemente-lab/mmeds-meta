@@ -27,7 +27,7 @@ def secureheaders():
         headers['Strict-Transport-Security'] = 'max-age=315360000'  # One Year
 
 
-def application(environ, start_response):
+def application():
     # Not testing if running on Web01
     testing = not (gethostname() == 'web01')
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
