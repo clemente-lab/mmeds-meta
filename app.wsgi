@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+import os
 
 MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
 spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
@@ -11,7 +12,13 @@ from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
 from mmeds.spawn import Watcher
 from multiprocessing.dummy import current_process, Queue, Pipe
+from pathlib import Path
 from socket import gethostname
+from mmeds.log import MMEDSLog
+
+absDir = Path(os.getcwd())
+
+logger = MMEDSLog('wsgi-debug').logger
 
 
 from sys import argv
@@ -27,16 +34,18 @@ def secureheaders():
         headers['Strict-Transport-Security'] = 'max-age=315360000'  # One Year
 
 
-def application(environ, start_response):
+if application is None:
     # Not testing if running on Web01
     testing = not (gethostname() == 'web01')
-    cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
-
+    logger.error('Reloading Cherrypy config')
+    # cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
     q = Queue()
     pipe_ends = Pipe()
     pipe = pipe_ends[0]
     watcher = mmeds.spawn.Watcher(q, pipe, current_process(), testing)
     watcher.start()
+    # modname = 'cherrypy.test.' + environ['testmod']
+    # mod = __import__(modname, globals(), locals(), [''])
+    # mod.setup_server()
     cp.config.update(mmeds.config.CONFIG)
-    return cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), '/', config=mmeds.config.CONFIG)
-
+    application = cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), '/~wallad07/mmeds-meta/app.wsgi', config=mmeds.config.CONFIG)

@@ -68,6 +68,7 @@ class MMEDSbase:
     """
 
     def __init__(self, watcher, q, testing=False):
+        cp.log('Initializing MMEDS Base')
         self.db = None
         self.testing = bool(int(testing))
         self.monitor = watcher
@@ -82,6 +83,7 @@ class MMEDSbase:
         try:
             return cp.session['user']
         except KeyError:
+            cp.log('Get user failed')
             raise err.LoggedOutError('No user logged in')
 
     def get_dir(self):
@@ -783,6 +785,7 @@ class MMEDSanalysis(MMEDSbase):
 class MMEDSserver(MMEDSbase):
     def __init__(self, watcher, q, testing=False):
         super().__init__(watcher, q, testing)
+        cp.log('Initializing MMEDS Server')
         self.download = MMEDSdownload(watcher, q, testing)
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)

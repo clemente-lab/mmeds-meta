@@ -36,4 +36,9 @@
 ### Disadvantages
 - Slow
 - Inelegant
-- ore likely to encounter race conditions as I'm manually controlling locks
+- ore likely to encounter race conditions as I am manually controlling locks
+
+## Additional notes
+Possibly still need to reload apache on each MMEDs update
+https://modwsgi.readthedocs.io/en/develop/user-guides/reloading-source-code.html
+
