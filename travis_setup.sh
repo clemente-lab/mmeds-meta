@@ -3,6 +3,7 @@ echo "In $(pwd)"
 export REPO_DIR=$(pwd)
 echo "Running setup from ${REPO_DIR}"
 
+TRAVIS_HOME=$HOME
 full_install=false
 
 # For RedHat
@@ -26,12 +27,12 @@ fi
 if [ ! ~/.modules/modulefiles ]; then
     mkdir ~/.modules/modulefiles;
 fi
-sudo chown -R travis:travis ~/.modules
+sudo chown -R travis:travis $TRAVIS_HOME/.modules
 
 # Create the necessary conda environments
 if [ ! -d ~/.modules/mmeds-stable ]; then
     echo "Create mmeds-stable environment";
-    conda create --file spec-file.txt -p ~/.modules/mmeds-stable --yes --quiet --copy &>/dev/null;
+    conda env create -f $REPO_DIR/environment.yml -p ~/.modules/mmeds-stable --quiet;
     ln -sf ~/.modules/mmeds-stable ~/miniconda2/envs/mmeds-stable;
 fi
 
@@ -54,6 +55,7 @@ fi
 
 if [ ! -f ~/.local/init/profile.sh ]; then
     # Configure and install environment modules
+    sudo chown -R travis:travis $TRAVIS_HOME/.local
     mkdir ~/.local
     echo "Install environment-modules";
     wget https://sourceforge.net/projects/modules/files/Modules/modules-4.2.1/modules-4.2.1.tar.gz -O modules-4.2.1.tar.gz &>/dev/null;

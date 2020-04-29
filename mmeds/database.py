@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from multiprocessing import Process
+from multiprocessing.dummy import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
                          MetaDataError, NoResultError, InvalidSQLError)

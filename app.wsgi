@@ -10,7 +10,7 @@ spec.loader.exec_module(mmeds)
 from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
 from mmeds.spawn import Watcher
-from multiprocessing import current_process, Queue, Pipe
+from multiprocessing.dummy import current_process, Queue, Pipe
 from socket import gethostname
 
 
