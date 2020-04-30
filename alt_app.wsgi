@@ -13,7 +13,9 @@ from mmeds.config import CONFIG
 from mmeds.spawn import Watcher
 from multiprocessing.dummy import current_process, Queue, Pipe
 from socket import gethostname
+from mmeds.log import MMEDSLog
 
+logger = MMEDSLog('wsgi-debug').logger
 
 from sys import argv
 
@@ -36,6 +38,7 @@ def application(environ, start_response):
     global loaded
     if not loaded:
         loaded = True
+        logger.error('Loading')
         # Not testing if running on Web01
         testing = not (gethostname() == 'web01')
         # cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
@@ -44,9 +47,9 @@ def application(environ, start_response):
         pipe = pipe_ends[0]
         watcher = mmeds.spawn.Watcher(q, pipe, current_process(), testing)
         watcher.start()
-        # modname = 'cherrypy.test.' + environ['testmod']
-        # mod = __import__(modname, globals(), locals(), [''])
-        # mod.setup_server()
         cp.config.update(mmeds.config.CONFIG)
-        app = cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), '/~wallad07/mmeds-meta/app.wsgi/', config=mmeds.config.CONFIG)
-    return app(environ, start_response)
+        cp.server.unsubscribe()
+        app = cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), '/~wallad07/mmeds-meta/alt_app.wsgi', config=mmeds.config.CONFIG)
+        logger.error('Recreating application')
+        cp.tree.graft(app, '/~wallad07/mmeds-meta/alt_app.wsgi')
+    return cp.tree(environ, start_response)

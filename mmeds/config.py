@@ -37,7 +37,7 @@ else:
 # SERVER_PATH = 'https://{}:{}/'.format(CONFIG['global']['server.socket_host'],
 #                                       CONFIG['global']['server.socket_port'])
 # Replace the old version
-SERVER_PATH = 'https://users.hpc.mssm.edu/~wallad07/mmeds-meta/app.wsgi/'
+SERVER_PATH = 'https://users.hpc.mssm.edu/~wallad07/mmeds_app/alt_app.wsgi/'
 
 # Load the path to where images are hosted
 IMAGE_PATH = SERVER_PATH + 'mmeds/CSS/'
@@ -235,6 +235,7 @@ MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
+cp.config.update(CONFIG)
 
 
 ##########################
