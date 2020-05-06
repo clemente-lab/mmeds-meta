@@ -2,7 +2,8 @@ import importlib.util
 import sys
 import os
 
-MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
+# MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
+MODULE_PATH = "/home/david/Work/mmeds-meta/mmeds/__init__.py"
 spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
 mmeds = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = mmeds
@@ -49,7 +50,10 @@ def application(environ, start_response):
         watcher.start()
         cp.config.update(mmeds.config.CONFIG)
         cp.server.unsubscribe()
-        app = cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), '/~wallad07/mmeds-meta/alt_app.wsgi', config=mmeds.config.CONFIG)
+
+        web_path = '/~wallad07/mmeds-meta/alt_app.wsgi'
+        web_path = '/myapp'
+        app = cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), web_path, config=mmeds.config.CONFIG)
         logger.error('Recreating application')
-        cp.tree.graft(app, '/~wallad07/mmeds-meta/alt_app.wsgi')
+        cp.tree.graft(app, web_path)
     return cp.tree(environ, start_response)

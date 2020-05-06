@@ -21,7 +21,8 @@ if TESTING:
     HTML_DIR = Path(html.__file__).parent.resolve()
     CSS_DIR = Path(css.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    DATABASE_DIR = Path().home() / 'mmeds_server_data'
+    # DATABASE_DIR = Path().home() / 'mmeds_server_data'
+    DATABASE_DIR = Path('/home/david/apache_server_data')
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
@@ -37,7 +38,8 @@ else:
 # SERVER_PATH = 'https://{}:{}/'.format(CONFIG['global']['server.socket_host'],
 #                                       CONFIG['global']['server.socket_port'])
 # Replace the old version
-SERVER_PATH = 'https://users.hpc.mssm.edu/~wallad07/mmeds_app/alt_app.wsgi/'
+# SERVER_PATH = 'https://users.hpc.mssm.edu/~wallad07/mmeds_app/alt_app.wsgi/'
+SERVER_PATH = 'http://localhost/myapp/'
 
 # Load the path to where images are hosted
 IMAGE_PATH = SERVER_PATH + 'mmeds/CSS/'
