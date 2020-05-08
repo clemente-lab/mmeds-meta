@@ -23,20 +23,21 @@ if TESTING:
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
     # DATABASE_DIR = Path().home() / 'mmeds_server_data'
     DATABASE_DIR = Path('/home/david/apache_server_data')
+    SESSION_PATH = '/home/david/apache_server_data/CherryPySession'
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
+    SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
 
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
 
 # Load the path to where images are hosted
-# SERVER_PATH = 'https://{}:{}/'.format(CONFIG['global']['server.socket_host'],
-#                                       CONFIG['global']['server.socket_port'])
+# SERVER_PATH = 'https://{}:{}/'.format(sec.SERVER_HOST, sec.SERVER_PORT)
 # Replace the old version
 # SERVER_PATH = 'https://users.hpc.mssm.edu/~wallad07/mmeds_app/alt_app.wsgi/'
 SERVER_PATH = 'http://localhost/myapp/'
@@ -50,21 +51,22 @@ CONFIG = {
         'server.socket_host': sec.SERVER_HOST,
         'server.socket_port': sec.SERVER_PORT,
         'server.socket_timeout': 1000000000,
-        'server.max_request_body_size': 10000000000,
+        'server.max_request_body_size': 10_000_000_000,
         'server.ssl_module': 'builtin',
         'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
         'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'log.error_file': str(DATABASE_DIR / 'site.log'),
-        # 'request.scheme': 'https',
-        # 'secureheaders.on': True,
-        # 'tools.sessions.secure': True,
-        # 'tools.sessions.httponly': True,
-        # 'tools.sessions.storage_class': cp.lib.sessions.FileSession,
-        # 'tools.sessions.storage_path': "/hpc/users/wallad07/CherryPySessions",
+        'request.scheme': 'https',
+        'secureheaders.on': True,
+        'tools.sessions.secure': True,
+        'tools.sessions.httponly': True,
+        'tools.sessions.storage_class': cp.lib.sessions.FileSession,
+        'tools.sessions.storage_path': SESSION_PATH,
+        'tools.sessions.name': 'latest_sessions',
         'tools.sessions.on': True,
         'tools.sessions.timeout': 15,
         'tools.compress.gzip': True,
-        'environment' : 'production'
+        # 'environment' : 'production'
     },
     # Content in this directory will be made directly
     # available on the web server

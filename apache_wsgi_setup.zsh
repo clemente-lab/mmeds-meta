@@ -26,7 +26,20 @@ if [ $0 == "fedora" ];
     # Add virtual environment setup
     sudo $(cat $MMEDS/vhost.conf &> /etc/httpd/conf.d/wsgi.conf)
 
+    # Set apache to run as me (david/user account)
+    #
+    # Modify cherrypy to use File System based sessions
+    #
+    # To set SELinux to allow apache to do things with files
+    # chcon -R -t httpd_sys_rw_content_t /path/to/dir
+    #
+    # With one daemon thread I'm not seeing the session logout issues. I think that is why the resets are happening
+    # But why is that an issue for the non-daemon version. It wasn't working even with the filesystem sessions
+
 
     apachectl restart
+
+    # Fix SELinux
+    setsebool -P httpd_read_user_content 1
 
 fi

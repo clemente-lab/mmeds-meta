@@ -2,6 +2,7 @@ import os
 import tempfile
 import cherrypy as cp
 import atexit
+import getpass
 
 from cherrypy.lib import static
 from pathlib import Path
@@ -11,6 +12,7 @@ from copy import deepcopy
 
 import mmeds.error as err
 import mmeds.util as util
+import mmeds.config as fig
 
 from mmeds.validate import Validator
 from mmeds.util import (log, create_local_copy, SafeDict)
@@ -649,6 +651,7 @@ class MMEDSauthentication(MMEDSbase):
 
         # Check the old password matches
         try:
+            cp.lib.sessions.expire()
             validate_password(self.get_user(), password0, testing=self.testing)
             # Check the two copies of the new password match
             check_password(password1, password2)
@@ -786,11 +789,13 @@ class MMEDSserver(MMEDSbase):
     def __init__(self, watcher, q, testing=False):
         super().__init__(watcher, q, testing)
         cp.log('Initializing MMEDS Server')
+        print('Creating server')
         self.download = MMEDSdownload(watcher, q, testing)
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
         self.study = MMEDSstudy(watcher, q, testing)
+        print('setup childs')
 
     def load_webpage(self, page, **kwargs):
         """
@@ -810,8 +815,22 @@ class MMEDSserver(MMEDSbase):
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
-            cp.session['temp_dir'] = tempfile.TemporaryDirectory()
-            cp.session['working_dir'] = Path(cp.session['temp_dir'].name)
+
+            # TODO: TEmporary for figuring this out
+
+            path = fig.DATABASE_DIR
+            filename = cp.session['user']
+            # Create the filename
+            temp_dir = Path(path) / Path(filename).name
+
+            # Ensure there is not already a file with the same name
+            while temp_dir.is_dir():
+                temp_dir = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
+            temp_dir.mkdir()
+            cp.session['temp_dir'] = temp_dir # tempfile.TemporaryDirectory()
+            cp.session['working_dir'] = Path(cp.session['temp_dir'])
+
+
             cp.session['processes'] = {}
             cp.session['download_files'] = {}
             cp.session['uploaded_files'] = {}
@@ -829,6 +848,7 @@ class MMEDSserver(MMEDSbase):
     @cp.expose
     def index(self):
         """ Home page of the application """
+        cp.log("loading page as", getpass.getuser())
         if cp.session.get('user'):
             page = self.load_webpage('home')
         else:
