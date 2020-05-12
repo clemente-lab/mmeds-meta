@@ -24,7 +24,7 @@ if TESTING:
     DATABASE_DIR = Path('/home/david/apache_server_data')
     SESSION_PATH = '/home/david/apache_server_data/CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
-    IMAGE_PATH = CSS_DIR
+    IMAGE_PATH = str(CSS_DIR) + '/'
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
