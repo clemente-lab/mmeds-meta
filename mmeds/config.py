@@ -21,7 +21,7 @@ if TESTING:
     HTML_DIR = Path(html.__file__).parent.resolve()
     CSS_DIR = Path(css.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    DATABASE_DIR = Path('/home/david/mmeds_server_data')
+    DATABASE_DIR = Path().home() / 'mmeds_server_data'
     SESSION_PATH = DATABASE_DIR / '/CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     IMAGE_PATH = str(CSS_DIR) + '/'
