@@ -789,13 +789,13 @@ class MMEDSserver(MMEDSbase):
     def __init__(self, watcher, q, testing=False):
         super().__init__(watcher, q, testing)
         cp.log('Initializing MMEDS Server')
-        print('Creating server')
+        cp.log('Creating server')
         self.download = MMEDSdownload(watcher, q, testing)
         self.analysis = MMEDSanalysis(watcher, q, testing)
         self.upload = MMEDSupload(watcher, q, testing)
         self.auth = MMEDSauthentication(watcher, q, testing)
         self.study = MMEDSstudy(watcher, q, testing)
-        print('setup childs')
+        cp.log('setup childs')
 
     def load_webpage(self, page, **kwargs):
         """

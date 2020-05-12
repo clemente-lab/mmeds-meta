@@ -2,8 +2,8 @@ import importlib.util
 import sys
 import os
 
-# MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
-MODULE_PATH = "/home/david/Work/mmeds-meta/mmeds/__init__.py"
+MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
+# MODULE_PATH = "/home/david/Work/mmeds-meta/mmeds/__init__.py"
 spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
 mmeds = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = mmeds
