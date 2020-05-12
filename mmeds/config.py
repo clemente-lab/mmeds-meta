@@ -24,6 +24,7 @@ if TESTING:
     DATABASE_DIR = Path('/home/david/apache_server_data')
     SESSION_PATH = '/home/david/apache_server_data/CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
+    IMAGE_PATH = CSS_DIR
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
@@ -32,33 +33,21 @@ else:
     DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
     SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
     SERVER_ROOT = "https://wallad07.u.hpc.mssm.edu/mmeds_app/"
+    # Replace the old version
+    SERVER_PATH = SERVER_ROOT + 'alt_app.wsgi/'
+    # Load the path to where images are hosted
+    IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
 
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
 
 
-# Replace the old version
-SERVER_PATH = SERVER_ROOT + 'alt_app.wsgi/'
-
-# Load the path to where images are hosted
-IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
 
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        #'server.socket_host': sec.SERVER_HOST,
-        #'server.socket_port': sec.SERVER_PORT,
-        #'server.socket_timeout': 1000000000,
-        #'server.max_request_body_size': 10_000_000_000,
-        #'server.ssl_module': 'builtin',
-        #'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
-        #'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'log.error_file': str(DATABASE_DIR / 'site.log'),
-        #'request.scheme': 'https',
-        #'Secureheaders.on': True,
-        #'tools.sessions.secure': True,
-        #'tools.sessions.httponly': True,
         'tools.sessions.storage_class': cp.lib.sessions.FileSession,
         'tools.sessions.storage_path': SESSION_PATH,
         'tools.sessions.name': 'latest_sessions',
@@ -81,6 +70,22 @@ CONFIG = {
     }
 }
 
+# Additional settings for when testing
+TESTING_CONFIG = {
+    'server.socket_host': sec.SERVER_HOST,
+    'server.socket_port': sec.SERVER_PORT,
+    'server.socket_timeout': 1000000000,
+    'server.max_request_body_size': 10_000_000_000,
+    'server.ssl_module': 'builtin',
+    'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
+    'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
+    'request.scheme': 'https',
+    'Secureheaders.on': True,
+    'tools.sessions.secure': True,
+    'tools.sessions.httponly': True,
+}
+if TESTING:
+    CONFIG['global'].update(TESTING_CONFIG)
 
 
 # Each page returns a tuple
