@@ -86,7 +86,7 @@ class Tool(mp.Process):
             else:
                 self.doc = db.get_doc(self.access_code)
 
-        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.pid)
+        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.ident)
         self.doc.save()
 
         self.path = Path(self.doc.path)
@@ -118,7 +118,7 @@ class Tool(mp.Process):
             'study_code': self.doc.study_code,
             'analysis_code': self.doc.access_code,
             'type': self.analysis,
-            'pid': self.pid,
+            'pid': self.ident,
             'path': self.doc.path,
             'name': self.name,
             'is_alive': self.is_alive()
@@ -334,7 +334,7 @@ class Tool(mp.Process):
         write_config(child.doc.config, child.path)
 
         # Set the parent pid
-        child._parent_pid = self.pid
+        child._parent_pid = self.ident
         return child
 
     def queue_analysis(self, tool_type):
@@ -456,7 +456,7 @@ class Tool(mp.Process):
         child.write_config()
 
         # Set the parent pid
-        child._parent_pid = self.pid
+        child._parent_pid = self.get_indent()
         return child
 
     def create_children(self):
@@ -481,7 +481,7 @@ class Tool(mp.Process):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
         for child in self.children:
             self.logger.debug('I am {}, this tool is {}, my childs parent is {}'.format(os.getpid(),
-                                                                                        self.pid,
+                                                                                        self.ident,
                                                                                         child._parent_pid))
             child.start()
 
