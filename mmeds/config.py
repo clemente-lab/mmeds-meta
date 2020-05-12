@@ -21,9 +21,9 @@ if TESTING:
     HTML_DIR = Path(html.__file__).parent.resolve()
     CSS_DIR = Path(css.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    # DATABASE_DIR = Path().home() / 'mmeds_server_data'
     DATABASE_DIR = Path('/home/david/apache_server_data')
     SESSION_PATH = '/home/david/apache_server_data/CherryPySession'
+    SERVER_PATH = 'http://localhost/myapp/'
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
@@ -31,35 +31,34 @@ else:
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
     SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
+    SERVER_ROOT = "https://wallad07.u.hpc.mssm.edu/mmeds_app/"
 
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
 
-# Load the path to where images are hosted
-# SERVER_PATH = 'https://{}:{}/'.format(sec.SERVER_HOST, sec.SERVER_PORT)
+
 # Replace the old version
-# SERVER_PATH = 'https://users.hpc.mssm.edu/~wallad07/mmeds_app/alt_app.wsgi/'
-SERVER_PATH = 'http://localhost/myapp/'
+SERVER_PATH = SERVER_ROOT + 'alt_app.wsgi/'
 
 # Load the path to where images are hosted
-IMAGE_PATH = SERVER_PATH + 'mmeds/CSS/'
+IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
 
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        'server.socket_host': sec.SERVER_HOST,
-        'server.socket_port': sec.SERVER_PORT,
-        'server.socket_timeout': 1000000000,
-        'server.max_request_body_size': 10_000_000_000,
-        'server.ssl_module': 'builtin',
-        'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
-        'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
+        #'server.socket_host': sec.SERVER_HOST,
+        #'server.socket_port': sec.SERVER_PORT,
+        #'server.socket_timeout': 1000000000,
+        #'server.max_request_body_size': 10_000_000_000,
+        #'server.ssl_module': 'builtin',
+        #'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
+        #'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
         'log.error_file': str(DATABASE_DIR / 'site.log'),
-        'request.scheme': 'https',
-        'secureheaders.on': True,
-        'tools.sessions.secure': True,
-        'tools.sessions.httponly': True,
+        #'request.scheme': 'https',
+        #'Secureheaders.on': True,
+        #'tools.sessions.secure': True,
+        #'tools.sessions.httponly': True,
         'tools.sessions.storage_class': cp.lib.sessions.FileSession,
         'tools.sessions.storage_path': SESSION_PATH,
         'tools.sessions.name': 'latest_sessions',
@@ -136,7 +135,6 @@ HTML_ARGS = {
     'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
     'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
     'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
-    # 'login_page': SERVER_PATH,
 
     # Paths to other pages of the website
     'home_page': SERVER_PATH + 'index',
