@@ -1,5 +1,5 @@
 from time import sleep
-from multiprocessing.dummy import Process, current_process
+from multiprocessing import Process, current_process
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime

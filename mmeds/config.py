@@ -74,7 +74,7 @@ CONFIG = {
 TESTING_CONFIG = {
     'server.socket_host': sec.SERVER_HOST,
     'server.socket_port': sec.SERVER_PORT,
-    'server.socket_timeout': 1000000000,
+    'server.socket_timeout': 1_000_000_000,
     'server.max_request_body_size': 10_000_000_000,
     'server.ssl_module': 'builtin',
     'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
@@ -82,7 +82,7 @@ TESTING_CONFIG = {
     'request.scheme': 'https',
     'Secureheaders.on': True,
     'tools.sessions.secure': True,
-    'tools.sessions.httponly': True,
+    #'tools.sessions.httponly': True,
 }
 if TESTING:
     CONFIG['global'].update(TESTING_CONFIG)

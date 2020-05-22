@@ -101,7 +101,7 @@ class TestServer(helper.CPWebCase):
         test_config = defaultdict(dict)
         test_config['global']['tools.sessions.on'] = True
         test_config['global']['tools.sessions.name'] = 'cp_session'
-        cp.config.update(test_config)
+        cp.config.update(fig.CONFIG)
 
     def test_aa_setup(self):
         logger.info('===== Test Server Start =====')
