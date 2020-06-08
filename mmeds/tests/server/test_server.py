@@ -97,11 +97,11 @@ class TestServer(helper.CPWebCase):
 
     @staticmethod
     def setup_server():
-        cp.tree.mount(server)
         test_config = defaultdict(dict)
         test_config['global']['tools.sessions.on'] = True
         test_config['global']['tools.sessions.name'] = 'cp_session'
-        cp.config.update(fig.CONFIG)
+        cp.config.update(test_config)
+        cp.tree.mount(server)
 
     def test_aa_setup(self):
         logger.info('===== Test Server Start =====')
@@ -115,7 +115,6 @@ class TestServer(helper.CPWebCase):
         page_body = self.body.decode('utf-8')
         check_page(page_body)
 
-    """
     def test_ba_sign_up(self):
         logger.info('ba sign up')
         self.not_logged_in()
@@ -208,7 +207,6 @@ class TestServer(helper.CPWebCase):
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
         watcher.kill()
-"""
 
     ####################
     #  Authentication  #

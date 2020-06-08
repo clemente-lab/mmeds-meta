@@ -242,7 +242,8 @@ MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
-cp.config.update(CONFIG)
+if not TESTING:
+    cp.config.update(CONFIG)
 
 
 ##########################

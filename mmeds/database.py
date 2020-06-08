@@ -1,6 +1,7 @@
 import os
 import shutil
 import warnings
+from socket import gethostname
 
 import mmeds.secrets as sec
 import mmeds.config as fig
@@ -13,7 +14,12 @@ from datetime import datetime
 from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from multiprocessing.dummy import Process
+
+TESTING = not (gethostname() == 'web01')
+if TESTING:
+    from multiprocessing import Process
+else:
+    from multiprocessing.dummy import Process
 from mmeds.config import TABLE_ORDER, MMEDS_EMAIL, USER_FILES, SQL_DATABASE, get_salt
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
                          MetaDataError, NoResultError, InvalidSQLError)
