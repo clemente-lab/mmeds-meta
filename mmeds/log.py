@@ -1,6 +1,6 @@
 import logging
 import mmeds.config as fig
-from multiprocessing import current_process
+from multiprocessing.dummy import current_process
 
 loggers = {}
 

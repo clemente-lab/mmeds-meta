@@ -2,6 +2,8 @@ from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
 from collections import defaultdict
+from socket import gethostname
+import cherrypy as cp
 import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
@@ -13,21 +15,202 @@ import os
 import re
 
 
+TESTING = not (gethostname() == 'web01')
+if TESTING:
+    ROOT = Path(mmeds.__file__).parent.resolve()
+    HTML_DIR = Path(html.__file__).parent.resolve()
+    CSS_DIR = Path(css.__file__).parent.resolve()
+    STORAGE_DIR = Path(resources.__file__).parent.resolve()
+    DATABASE_DIR = Path().home() / 'mmeds_server_data'
+    SESSION_PATH = DATABASE_DIR / '/CherryPySession'
+    SERVER_PATH = 'http://localhost/myapp/'
+    IMAGE_PATH = str(CSS_DIR) + '/'
+else:
+    ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
+    HTML_DIR = ROOT / 'mmeds/html'
+    CSS_DIR = ROOT / 'mmeds/CSS'
+    STORAGE_DIR = ROOT / 'mmeds/resources'
+    DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
+    SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
+    SERVER_ROOT = "https://wallad07.u.hpc.mssm.edu/mmeds_app/"
+    # Replace the old version
+    SERVER_PATH = SERVER_ROOT + 'alt_app.wsgi/'
+    # Load the path to where images are hosted
+    IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
+
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
 
+
+
+# Configuration for the CherryPy server
+CONFIG = {
+    'global': {
+        'log.error_file': str(DATABASE_DIR / 'site.log'),
+        'tools.sessions.storage_class': cp.lib.sessions.FileSession,
+        'tools.sessions.storage_path': SESSION_PATH,
+        'tools.sessions.name': 'latest_sessions',
+        'tools.sessions.on': True,
+        'tools.sessions.timeout': 15,
+        'tools.compress.gzip': True,
+        # 'environment' : 'production'
+    },
+    # Content in this directory will be made directly
+    # available on the web server
+    'mmeds/CSS': {
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': IMAGE_PATH
+    },
+    # This sets up the https security
+    '/protected/area': {
+        'tools.auth_digest': True,
+        'tools.auth_digest.realm': sec.SERVER_HOST,
+        'tools.auth_digest.key': sec.DIGEST_KEY,
+    }
+}
+
+# Additional settings for when testing
+TESTING_CONFIG = {
+    'server.socket_host': sec.SERVER_HOST,
+    'server.socket_port': sec.SERVER_PORT,
+    'server.socket_timeout': 1_000_000_000,
+    'server.max_request_body_size': 10_000_000_000,
+    'server.ssl_module': 'builtin',
+    'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
+    'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
+    'request.scheme': 'https',
+    'Secureheaders.on': True,
+    'tools.sessions.secure': True,
+    #'tools.sessions.httponly': True,
+}
+if TESTING:
+    CONFIG['global'].update(TESTING_CONFIG)
+
+
+# Each page returns a tuple
+# (<Path to the page>, <Should the header and topbar be loaded>)
+HTML_PAGES = {
+    # Templates
+    'logged_out_template': HTML_DIR / 'logged_out_template.html',
+    'logged_in_template': HTML_DIR / 'logged_in_template.html',
+
+    # Authentication Pages
+    'login': (HTML_DIR / 'login_body.html', False),
+    'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
+    'home': (HTML_DIR / 'home_body.html', True),
+    'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
+    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
+
+    # Upload Pages
+    'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
+    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
+    'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
+    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
+    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
+    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
+
+    # Study Pages
+    'study_select_page': (HTML_DIR / 'study_select_page.html', True),
+    'study_view_page': (HTML_DIR / 'study_view_page.html', True),
+
+    # Analysis Pages
+    'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
+    'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
+    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
+
+    # TODO below this are outdated
+    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
+
+}
+
+# Predefined options for formatting webpages are set here
+HTML_ARGS = {
+    'version': '0.1.0',
+    'study_count': 0,
+    'user_count': 0,
+    'analysis_count': 0,
+    'query_count': 0,
+
+    # Site Wide
+    'title': 'MMEDs Database and Analysis Server',
+
+    # Images
+    'favicon': IMAGE_PATH + 'favicon.ico',
+    'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
+    'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
+    'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
+
+    # Paths to other pages of the website
+    'home_page': SERVER_PATH + 'index',
+    'login_page': SERVER_PATH + 'login',
+    'logout_page': SERVER_PATH + 'auth/logout',
+    'upload_page': SERVER_PATH + 'upload/upload_page',
+    'analysis_page': SERVER_PATH + 'analysis/analysis_page',
+    'study_page': SERVER_PATH + 'study/select_study',
+    'account_page': SERVER_PATH + 'auth/input_password',
+    'settings_page': '#',
+
+    # Upload Pages
+    'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
+    'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
+    'process_data_page': SERVER_PATH + 'upload/process_data',
+    'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
+    'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
+    'upload_data_page': SERVER_PATH + 'upload/upload_data',
+    'upload_modify_page': SERVER_PATH + 'upload/upload_page',
+
+    # Download Pages
+    'download_page': SERVER_PATH + 'download/download_file',
+
+    # Study Pages
+    'study_select_page': SERVER_PATH + 'study/select_study',
+    'study_view_page': SERVER_PATH + 'study/view_study',
+
+    # Analysis Pages
+    'analysis_view_page': SERVER_PATH + 'analysis/view_analysis',
+
+    # Account Pages
+    'register_account_page': SERVER_PATH + 'auth/register_account',
+    'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
+    'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
+    'sign_up_page': SERVER_PATH + 'auth/sign_up',
+
+    # Where to insert errors/warnings on a given page
+    'error': '',
+    'warning': '',
+    'success': '',
+    'javascript': IMAGE_PATH + 'mmeds.js',
+    'privilege': 'display:none',
+
+    # Settings for highlighting the section of the web site currently being accessed
+    'upload_selected': '',
+    'analysis_selected': '',
+    'study_selected': '',
+    'query_selected': '',
+    'home_selected': '',
+    'account_selected': '',
+    'settings_selected': '',
+}
+
+##########################
+# CONFIGURE TOOL GLOBALS #
+###########################
+
+
+TOOL_FILES = {
+    'child_analysis': ['otu_table'],
+    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'sparcc': ['otu_table'],
+    'lefse': ['lefse_table'],
+    'picrust1': ['otu_table'],
+    'test': []
+}
+
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
 
-ROOT = Path(mmeds.__file__).parent.resolve()
-HTML_DIR = Path(html.__file__).parent.resolve()
-CSS_DIR = Path(css.__file__).parent.resolve()
-STORAGE_DIR = Path(resources.__file__).parent.resolve()
-if os.environ.get('MMEDS'):
-    DATABASE_DIR = Path(os.environ.get('MMEDS')) / 'mmeds_server_data'
-else:
-    DATABASE_DIR = Path().home() / 'mmeds_server_data'
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
 if not DATABASE_DIR.exists():
@@ -59,40 +242,8 @@ MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
-
-
-# Configuration for the CherryPy server
-CONFIG = {
-    'global': {
-        'server.socket_host': sec.SERVER_HOST,
-        'server.socket_port': sec.SERVER_PORT,
-        'server.socket_timeout': 1000000000,
-        'server.max_request_body_size': 10000000000,
-        'server.ssl_module': 'builtin',
-        'server.ssl_certificate': str(STORAGE_DIR / 'cert.pem'),
-        'server.ssl_private_key': str(STORAGE_DIR / 'key.pem'),
-        'log.error_file': str(DATABASE_DIR / 'site.log'),
-        'request.scheme': 'https',
-        'secureheaders.on': True,
-        'tools.sessions.secure': True,
-        'tools.sessions.on': True,
-        'tools.sessions.httponly': True,
-        'tools.sessions.timeout': 15,
-        'tools.compress.gzip': True,
-    },
-    # Content in this directory will be made directly
-    # available on the web server
-    '/CSS': {
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': str(CSS_DIR)
-    },
-    # This sets up the https security
-    '/protected/area': {
-        'tools.auth_digest': True,
-        'tools.auth_digest.realm': sec.SERVER_HOST,
-        'tools.auth_digest.key': sec.DIGEST_KEY,
-    }
-}
+if not TESTING:
+    cp.config.update(CONFIG)
 
 
 ##########################
@@ -444,137 +595,3 @@ MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 def get_salt(length=10):
     listy = 'abcdefghijklmnopqrzsuvwxyz'
     return ''.join(choice(listy) for i in range(length))
-
-
-############################
-# CONFIGURE SERVER GLOBALS #
-############################
-
-
-# Load the path to where images are hosted
-SERVER_PATH = 'https://{}:{}/'.format(CONFIG['global']['server.socket_host'],
-                                      CONFIG['global']['server.socket_port'])
-
-# Load the path to where images are hosted
-IMAGE_PATH = SERVER_PATH + 'CSS/'
-
-# Each page returns a tuple
-# (<Path to the page>, <Should the header and topbar be loaded>)
-HTML_PAGES = {
-    # Templates
-    'logged_out_template': HTML_DIR / 'logged_out_template.html',
-    'logged_in_template': HTML_DIR / 'logged_in_template.html',
-
-    # Authentication Pages
-    'login': (HTML_DIR / 'login_body.html', False),
-    'forgot_password': (HTML_DIR / 'forgot_password_page.html', False),
-    'home': (HTML_DIR / 'home_body.html', True),
-    'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
-    'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
-
-    # Upload Pages
-    'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
-    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
-    'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
-    'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
-    'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
-    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
-
-    # Study Pages
-    'study_select_page': (HTML_DIR / 'study_select_page.html', True),
-    'study_view_page': (HTML_DIR / 'study_view_page.html', True),
-
-    # Analysis Pages
-    'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
-    'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
-    'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
-
-    # TODO below this are outdated
-    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
-
-}
-
-# Predefined options for formatting webpages are set here
-HTML_ARGS = {
-    'version': '0.1.0',
-    'study_count': 0,
-    'user_count': 0,
-    'analysis_count': 0,
-    'query_count': 0,
-
-    # Site Wide
-    'title': 'MMEDs Database and Analysis Server',
-
-    # Images
-    'favicon': IMAGE_PATH + 'favicon.ico',
-    'mount_sinai_logo': IMAGE_PATH + 'Mount_Sinai_Logo.png',
-    'mmeds_logo': IMAGE_PATH + 'MMeds_Logo.png',
-    'mmeds_logo_big': IMAGE_PATH + 'MMeds_Logo_Big_Transparent.png',
-    # 'login_page': SERVER_PATH,
-
-    # Paths to other pages of the website
-    'home_page': SERVER_PATH + 'index',
-    'login_page': SERVER_PATH + 'login',
-    'logout_page': SERVER_PATH + 'auth/logout',
-    'upload_page': SERVER_PATH + 'upload/upload_page',
-    'analysis_page': SERVER_PATH + 'analysis/analysis_page',
-    'study_page': SERVER_PATH + 'study/select_study',
-    'account_page': SERVER_PATH + 'auth/input_password',
-    'settings_page': '#',
-
-    # Upload Pages
-    'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
-    'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
-    'process_data_page': SERVER_PATH + 'upload/process_data',
-    'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
-    'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
-    'upload_data_page': SERVER_PATH + 'upload/upload_data',
-    'upload_modify_page': SERVER_PATH + 'upload/upload_page',
-
-    # Download Pages
-    'download_page': SERVER_PATH + 'download/download_file',
-
-    # Study Pages
-    'study_select_page': SERVER_PATH + 'study/select_study',
-    'study_view_page': SERVER_PATH + 'study/view_study',
-
-    # Analysis Pages
-    'analysis_view_page': SERVER_PATH + 'analysis/view_analysis',
-
-    # Account Pages
-    'register_account_page': SERVER_PATH + 'auth/register_account',
-    'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
-    'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
-    'sign_up_page': SERVER_PATH + 'auth/sign_up',
-
-    # Where to insert errors/warnings on a given page
-    'error': '',
-    'warning': '',
-    'success': '',
-    'javascript': IMAGE_PATH + 'mmeds.js',
-    'privilege': 'display:none',
-
-    # Settings for highlighting the section of the web site currently being accessed
-    'upload_selected': '',
-    'analysis_selected': '',
-    'study_selected': '',
-    'query_selected': '',
-    'home_selected': '',
-    'account_selected': '',
-    'settings_selected': '',
-}
-
-##########################
-# CONFIGURE TOOL GLOBALS #
-###########################
-
-
-TOOL_FILES = {
-    'child_analysis': ['otu_table'],
-    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
-    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
-    'sparcc': ['otu_table'],
-    'lefse': ['lefse_table'],
-    'picrust1': ['otu_table'],
-    'test': []
-}

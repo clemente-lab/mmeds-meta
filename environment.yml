@@ -1,4 +1,4 @@
-name: /home/david/.modules/mmeds-stable
+name: mmeds-stable
 channels:
   - defaults
 dependencies:
