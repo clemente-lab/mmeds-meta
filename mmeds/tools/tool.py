@@ -1,7 +1,6 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from shutil import copy, rmtree
-# from psutil import pid_exists
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
