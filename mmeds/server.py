@@ -1,5 +1,5 @@
 import os
-import tempfile
+#  import tempfile
 import cherrypy as cp
 import atexit
 import getpass
@@ -70,7 +70,6 @@ class MMEDSbase:
     """
 
     def __init__(self, watcher, q, testing=False):
-        cp.log('Initializing MMEDS Base')
         self.db = None
         self.testing = bool(int(testing))
         self.monitor = watcher
@@ -827,9 +826,8 @@ class MMEDSserver(MMEDSbase):
             while temp_dir.is_dir():
                 temp_dir = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
             temp_dir.mkdir()
-            cp.session['temp_dir'] = temp_dir # tempfile.TemporaryDirectory()
+            cp.session['temp_dir'] = temp_dir  # tempfile.TemporaryDirectory()
             cp.session['working_dir'] = Path(cp.session['temp_dir'])
-
 
             cp.session['processes'] = {}
             cp.session['download_files'] = {}

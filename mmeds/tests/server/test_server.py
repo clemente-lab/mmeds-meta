@@ -115,6 +115,7 @@ class TestServer(helper.CPWebCase):
         page_body = self.body.decode('utf-8')
         check_page(page_body)
 
+    """
     def test_ba_sign_up(self):
         logger.info('ba sign up')
         self.not_logged_in()
@@ -207,6 +208,7 @@ class TestServer(helper.CPWebCase):
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
         watcher.kill()
+"""
 
     ####################
     #  Authentication  #
