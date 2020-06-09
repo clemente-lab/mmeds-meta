@@ -15,6 +15,9 @@ cache:
         - "~/.modules"
         - "~/.local"
     apt: true
+after_cache:
+    - sudo chown -R travis:travis $HOME
+    - sudo chown -R travis:travis $TRAVIS_BUILD_DIR
 git:
     depth: 1
 services:

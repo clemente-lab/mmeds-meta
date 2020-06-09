@@ -97,11 +97,11 @@ class TestServer(helper.CPWebCase):
 
     @staticmethod
     def setup_server():
-        cp.tree.mount(server)
         test_config = defaultdict(dict)
         test_config['global']['tools.sessions.on'] = True
         test_config['global']['tools.sessions.name'] = 'cp_session'
         cp.config.update(test_config)
+        cp.tree.mount(server)
 
     def test_aa_setup(self):
         logger.info('===== Test Server Start =====')
