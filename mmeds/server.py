@@ -14,7 +14,7 @@ import mmeds.util as util
 import mmeds.config as fig
 
 from mmeds.validate import Validator
-from mmeds.util import (create_local_copy, SafeDict)
+from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
@@ -123,7 +123,7 @@ class MMEDSbase:
             args.update(kwargs)
 
             # Add the mmeds stats
-            args.update(util.load_mmeds_stats(self.testing))
+            args.update(load_mmeds_stats(self.testing))
 
             # If a user is logged in, load the side bar
             if header:
