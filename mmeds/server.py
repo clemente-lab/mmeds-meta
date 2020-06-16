@@ -795,7 +795,7 @@ class MMEDSquery(MMEDSbase):
     def query_select(self):
         study_html = ''' <tr class="w3-hover-blue">
             <th>
-            <a href="{generate_id_page}?access_code={access_code}"> {study_name} </a>
+            <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>
             </th>
             <th>{date_created}</th>
         </tr> '''
@@ -806,7 +806,7 @@ class MMEDSquery(MMEDSbase):
         study_list = []
         for study in studies:
             study_list.append(study_html.format(study_name=study.study_name,
-                                                generate_id_page=SERVER_PATH + 'query/generate_id',
+                                                select_specimen_page=SERVER_PATH + 'query/select_specimen',
                                                 access_code=study.access_code,
                                                 date_created=study.created,
                                                 ))
@@ -840,12 +840,21 @@ class MMEDSquery(MMEDSbase):
         return page
 
     @cp.expose
-    def generate_id(self, access_code):
+    def select_specimen(self, access_code):
         """ Display the page for generating new Aliquot IDs for a particular study """
         with Database(testing=self.testing) as db:
-            data, header = db.execute('SELECT * FROM Specimen')
+            doc = db.get_docs(study_code=access_code).first()
+
+            sql = """
+SELECT SpecimenID, StudyName FROM Specimen INNER JOIN
+Experiment INNER JOIN
+Study ON Study_idStudy = idStudy
+ON Experiment_idExperiment = idExperiment
+where StudyName = "{}"
+"""
+            data, header = db.execute(sql.format(doc.study_name))
             specimen_table = db.build_html_table(header, data)
-        page = self.load_webpage('generate_id_page', specimen_table=specimen_table)
+        page = self.load_webpage('select_specimen_page', specimen_table=specimen_table)
         return page
 
 

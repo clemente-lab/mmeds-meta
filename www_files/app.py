@@ -9,15 +9,14 @@ testing = not (gethostname() == 'web01')
 # Setup the path to mmeds (since it isn't being installed)
 if testing:
     MODULE_PATH = "/home/david/Work/mmeds-meta/mmeds/__init__.py"
-    import mmeds
 else:
     MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
 
-    # Loading mmeds as a module without installation
-    spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
-    mmeds = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mmeds
-    spec.loader.exec_module(mmeds)
+# Loading mmeds as a module without installation
+spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
+mmeds = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = mmeds
+spec.loader.exec_module(mmeds)
 
 # Imports
 from mmeds.server import MMEDSserver
