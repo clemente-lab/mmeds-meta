@@ -15,8 +15,7 @@ from pathlib import WindowsPath, Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
 
-TESTING = not (gethostname() == 'web01')
-if TESTING:
+if fig.TESTING:
     from multiprocessing import Process
 else:
     from multiprocessing.dummy import Process

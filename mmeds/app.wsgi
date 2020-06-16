@@ -1,7 +1,10 @@
 from mmeds.server import MMEDSserver
-from mmeds.config import CONFIG
+from mmeds.config import CONFIG, TESTING
 from mmeds.spawn import Watcher
-from multiprocessing import current_process, Queue, Pipe
+if TESTING:
+    from multiprocessing import current_process, Queue, Pipe
+else:
+    from multiprocessing.dummy import current_process, Queue, Pipe
 from socket import gethostname
 
 
