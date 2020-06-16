@@ -1,7 +1,11 @@
 from mmeds.server import MMEDSserver
-from mmeds.config import CONFIG
+from mmeds.config import CONFIG, TESTING
 from mmeds.spawn import Watcher
-from multiprocessing import current_process, Queue, Pipe
+if TESTING:
+    from multiprocessing import current_process, Queue, Pipe
+else:
+    from multiprocessing.dummy import current_process, Queue, Pipe
+from socket import gethostname
 
 
 from sys import argv
@@ -17,11 +21,9 @@ def secureheaders():
         headers['Strict-Transport-Security'] = 'max-age=315360000'  # One Year
 
 
-if __name__ == '__main__':
-    try:
-        testing = argv[1]
-    except IndexError:
-        testing = False
+def application():
+    # Not testing if running on Web01
+    testing = not (gethostname() == 'web01')
     cp.tools.secureheaders = cp.Tool('before_finalize', secureheaders, priority=60)
 
     q = Queue()
@@ -29,4 +31,5 @@ if __name__ == '__main__':
     pipe = pipe_ends[0]
     watcher = Watcher(q, pipe, current_process(), testing)
     watcher.start()
-    cp.quickstart(MMEDSserver(watcher, q, testing), config=CONFIG)
+    cp.config.update(CONFIG)
+    return cp.Application(MMEDSserver(watcher, q, testing), '/', config=CONFIG)

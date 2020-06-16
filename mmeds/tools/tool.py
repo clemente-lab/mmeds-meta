@@ -1,7 +1,6 @@
 from pathlib import Path
 from subprocess import run, CalledProcessError
 from shutil import copy, rmtree
-from psutil import pid_exists
 from time import sleep
 from copy import copy as classcopy
 from copy import deepcopy
@@ -13,10 +12,14 @@ from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, TESTING
 from mmeds.log import MMEDSLog
 
-import multiprocessing as mp
+if TESTING:
+    import multiprocessing as mp
+else:
+    import multiprocessing.dummy as mp
+
 import os
 
 
@@ -86,7 +89,7 @@ class Tool(mp.Process):
             else:
                 self.doc = db.get_doc(self.access_code)
 
-        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.pid)
+        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.ident)
         self.doc.save()
 
         self.path = Path(self.doc.path)
@@ -118,7 +121,7 @@ class Tool(mp.Process):
             'study_code': self.doc.study_code,
             'analysis_code': self.doc.access_code,
             'type': self.analysis,
-            'pid': self.pid,
+            'pid': self.ident,
             'path': self.doc.path,
             'name': self.name,
             'is_alive': self.is_alive()
@@ -334,7 +337,7 @@ class Tool(mp.Process):
         write_config(child.doc.config, child.path)
 
         # Set the parent pid
-        child._parent_pid = self.pid
+        child._parent_pid = self.ident
         return child
 
     def queue_analysis(self, tool_type):
@@ -456,7 +459,7 @@ class Tool(mp.Process):
         child.write_config()
 
         # Set the parent pid
-        child._parent_pid = self.pid
+        child._parent_pid = self.get_indent()
         return child
 
     def create_children(self):
@@ -481,7 +484,7 @@ class Tool(mp.Process):
         """ Start running the child processes. Limiting the concurrent processes to self.num_jobs """
         for child in self.children:
             self.logger.debug('I am {}, this tool is {}, my childs parent is {}'.format(os.getpid(),
-                                                                                        self.pid,
+                                                                                        self.ident,
                                                                                         child._parent_pid))
             child.start()
 
@@ -537,7 +540,8 @@ class Tool(mp.Process):
                 self.logger.debug('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
-                    if not pid_exists(self._parent_pid):
+                    # TODO Temporary fix for testing with web services
+                    if False:  # not pid_exists(self._parent_pid):
                         self.logger.debug('Parent died prior to completion, self destructing')
                         self.terminate()
                     self.logger.debug('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))

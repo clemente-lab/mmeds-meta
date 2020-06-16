@@ -1,5 +1,4 @@
 from time import sleep
-from multiprocessing import Process, current_process
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
@@ -18,6 +17,10 @@ from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
+if fig.TESTING:
+    from multiprocessing import Process, current_process
+else:
+    from multiprocessing.dummy import Process, current_process
 
 TOOLS = {
     'qiime1': Qiime1,
