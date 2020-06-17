@@ -54,6 +54,7 @@ def create_app():
     pipe = pipe_ends[0]
     watcher = mmeds.spawn.Watcher(q, pipe, current_process(), testing)
     watcher.start()
+    print("Watcher started")
 
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()

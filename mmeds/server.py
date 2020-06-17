@@ -110,6 +110,7 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
+        logger.error("My queue has id {}".format(id(self.q)))
         try:
             path, header = HTML_PAGES[page]
 
@@ -578,6 +579,7 @@ class MMEDSupload(MMEDSbase):
                 reads_type = 'class_only'
             barcodes_type = None
 
+        logger.error("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],

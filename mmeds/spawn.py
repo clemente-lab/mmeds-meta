@@ -30,6 +30,7 @@ TOOLS = {
     'picrust1': PiCRUSt1,
     'test': TestTool
 }
+logger = MMEDSLog('spawn-error').logger
 
 
 def handle_modify_data(access_code, myData, user, data_type, testing):
@@ -47,8 +48,6 @@ def killall(processes):
 
 class Watcher(Process):
 
-    logger = MMEDSLog('spawn-debug').logger
-
     def __init__(self, queue, pipe, parent_pid, testing=False):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
@@ -65,7 +64,9 @@ class Watcher(Process):
         self.parent_pid = parent_pid
         self.started = []
         self.running_on_node = set()
+        self.logger = logger
         super().__init__()
+        logger.error("Watcher created")
 
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
                        config_file, testing, run_on_node, kill_stage=-1):
@@ -302,10 +303,12 @@ class Watcher(Process):
 
             # If there is nothing in the process queue, sleep
             if self.q.empty():
+                self.logger.error("empty queue, id {}".format(id(self.q)))
                 sleep(3)
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
+                self.logger.error("got somethin {}".format(process))
                 self.logger.error('Got process requirements')
                 self.logger.error(process)
                 # If the watcher needs to shut down
@@ -327,6 +330,7 @@ class Watcher(Process):
                     self.handle_restart(process)
                 # If it's an upload
                 elif process[0] == 'upload':
+                    logger.error("Got an upload, processing")
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
                     self.logger.error('Sending email')
