@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 import mmeds.config as fig
+import mmeds.secrets as sec
 import yaml
 
 from mmeds.util import create_local_copy, load_config, send_email
@@ -18,7 +19,8 @@ from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
 if fig.TESTING:
-    from multiprocessing import Process, current_process
+    from multiprocessing import Process, current_process, Queue
+    from multiprocessing.managers import BaseManager
 else:
     from multiprocessing.dummy import Process, current_process
 
@@ -46,9 +48,9 @@ def killall(processes):
         p.kill()
 
 
-class Watcher(Process):
+class Watcher(BaseManager):
 
-    def __init__(self, queue, pipe, parent_pid, testing=False):
+    def __init__(self, address=("", sec.WATCHER_PORT), authkey=sec.AUTH_KEY):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
         =====================================================================================
@@ -56,17 +58,30 @@ class Watcher(Process):
             the necessary information will be added to this queue.
         :testing: A boolean. If true run in testing configuration, otherwise run in deployment configuration.
         """
-        self.testing = testing
-        self.q = queue
+        super().__init__(address, authkey)
+        self.testing = fig.TESTING
         self.processes = []
         self.running_processes = []
-        self.pipe = pipe
-        self.parent_pid = parent_pid
         self.started = []
         self.running_on_node = set()
         self.logger = logger
-        super().__init__()
+        queue = Queue()
+        self.register('get_queue', callable=lambda: queue)
         logger.error("Watcher created")
+
+    def start(self):
+        super().start()
+        self.set_queue()
+        self.print_queue()
+
+    def set_queue(self):
+        self.q = self.get_queue()
+
+    def print_queue(self):
+        print('My queue is {}'.format(self.q))
+        while True:
+            print(self.q.get())
+            sleep(1)
 
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
                        config_file, testing, run_on_node, kill_stage=-1):
