@@ -19,7 +19,7 @@ from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SER
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
-from mmeds.spawn import handle_modify_data
+from mmeds.spawn import handle_modify_data, Watcher
 from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
@@ -66,11 +66,12 @@ class MMEDSbase:
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
 
-    def __init__(self, watcher, q, testing=False):
+    def __init__(self):
         self.db = None
-        self.testing = bool(int(testing))
-        self.monitor = watcher
-        self.q = q
+        self.testing = fig.TESTING
+        self.monitor = Watcher()
+        self.monitor.connect()
+        self.q = self.monitor.get_queue()
         atexit.register(kill_watcher, self.monitor)
 
     def get_user(self):
@@ -165,8 +166,8 @@ class MMEDSbase:
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     ########################################
     #            Download Pages            #
@@ -185,8 +186,8 @@ class MMEDSdownload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSstudy(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     def load_webpage(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
@@ -269,8 +270,8 @@ class MMEDSstudy(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSupload(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
     ########################################
     #         Upload Functionality         #
     ########################################
@@ -591,8 +592,8 @@ class MMEDSupload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     ########################################
     #           Account Pages              #
@@ -676,8 +677,8 @@ class MMEDSauthentication(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     ######################################
     #              Analysis              #
@@ -784,8 +785,8 @@ class MMEDSanalysis(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSquery(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     def load_webpage(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
@@ -862,14 +863,14 @@ where StudyName = "{}"
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
-        self.download = MMEDSdownload(watcher, q, testing)
-        self.analysis = MMEDSanalysis(watcher, q, testing)
-        self.upload = MMEDSupload(watcher, q, testing)
-        self.auth = MMEDSauthentication(watcher, q, testing)
-        self.study = MMEDSstudy(watcher, q, testing)
-        self.query = MMEDSquery(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
+        self.download = MMEDSdownload()
+        self.analysis = MMEDSanalysis()
+        self.upload = MMEDSupload()
+        self.auth = MMEDSauthentication()
+        self.study = MMEDSstudy()
+        self.query = MMEDSquery()
 
     def load_webpage(self, page, **kwargs):
         """

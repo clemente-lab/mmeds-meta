@@ -19,7 +19,7 @@ from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
 if fig.TESTING:
-    from multiprocessing import Process, current_process, Queue
+    from multiprocessing import Process, current_process, Queue, Pipe
     from multiprocessing.managers import BaseManager
 else:
     from multiprocessing.dummy import Process, current_process
@@ -67,12 +67,15 @@ class Watcher(BaseManager):
         self.logger = logger
         queue = Queue()
         self.register('get_queue', callable=lambda: queue)
+        pipe_ends = Pipe()
+        self.pipe = pipe_ends[0]
+        self.register('get_pipe', callable=lambda: pipe_ends)
         logger.error("Watcher created")
 
     def start(self):
         super().start()
         self.set_queue()
-        self.print_queue()
+        self.run()
 
     def set_queue(self):
         self.q = self.get_queue()

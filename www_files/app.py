@@ -33,29 +33,12 @@ from sys import argv
 import cherrypy as cp
 curdir = os.path.abspath(os.path.dirname(__file__))
 
-# Setup for HTTPS
-def secureheaders():
-    headers = cp.response.headers
-    headers['X-Frame-Options'] = 'DENY'
-    headers['X-XSS-Protection'] = '1; mode=block'
-    headers['Content-Security-Policy'] = 'default-src=self'
-    if cp.server.ssl_certificate and cp.server.ssl_private_key:
-        headers['Strict-Transport-Security'] = 'max-age=315360000'  # One Year
-
 
 # Using a global to prevent the app from being generated multiple times
 loaded = False
 
 
 def create_app():
-    # Create the queue and watch processes (threads)
-    q = Queue()
-    pipe_ends = Pipe()
-    pipe = pipe_ends[0]
-    watcher = mmeds.spawn.Watcher(q, pipe, current_process(), testing)
-    watcher.start()
-    print("Watcher started")
-
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
 
@@ -63,7 +46,7 @@ def create_app():
         web_path = '/myapp'
     else:
         web_path = '/~wallad07/mmeds-meta/alt_app.wsgi'
-    app = cp.Application(mmeds.server.MMEDSserver(watcher, q, testing), web_path, config=mmeds.config.CONFIG)
+    app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
     return app, web_path
 
 
