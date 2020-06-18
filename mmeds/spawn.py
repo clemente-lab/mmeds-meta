@@ -22,7 +22,8 @@ if fig.TESTING:
     from multiprocessing import Process, current_process, Queue, Pipe
     from multiprocessing.managers import BaseManager
 else:
-    from multiprocessing.dummy import Process, current_process
+    from multiprocessing.dummy import Process, current_process, Queue, Pipe
+    from multiprocessing.managers import BaseManager
 
 TOOLS = {
     'qiime1': Qiime1,

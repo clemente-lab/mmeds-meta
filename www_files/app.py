@@ -26,6 +26,7 @@ from mmeds.spawn import Watcher
 from multiprocessing.dummy import current_process, Queue, Pipe
 from mmeds.log import MMEDSLog
 
+
 logger = MMEDSLog('wsgi-debug').logger
 
 from sys import argv

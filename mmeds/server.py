@@ -70,8 +70,11 @@ class MMEDSbase:
         self.db = None
         self.testing = fig.TESTING
         self.monitor = Watcher()
+        cp.log("{} Connecting to monitor".format(id(self)))
         self.monitor.connect()
+        cp.log("{} Connected to monitor".format(id(self)))
         self.q = self.monitor.get_queue()
+        cp.log("{} Got Queue".format(id(self)))
         atexit.register(kill_watcher, self.monitor)
 
     def get_user(self):
@@ -871,6 +874,7 @@ class MMEDSserver(MMEDSbase):
         self.auth = MMEDSauthentication()
         self.study = MMEDSstudy()
         self.query = MMEDSquery()
+        cp.log("Created sub servers")
 
     def load_webpage(self, page, **kwargs):
         """
