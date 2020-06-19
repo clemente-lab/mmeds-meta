@@ -577,7 +577,6 @@ class Database:
         """ Return all studies currently stored in the database owned by USER. """
         return MMEDSDoc.objects(doc_type='study', owner=user)
 
-    @classmethod
     def get_all_analyses_from_study(cls, access_code):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(study_code=access_code)
@@ -592,8 +591,7 @@ class Database:
                 del mdata.files[key]
         return empty_files
 
-    @classmethod
-    def clear_mongo_data(cls, username):
+    def clear_mongo_data(self, username):
         """ Clear all metadata documents associated with the provided username. """
         data = list(MMEDSDoc.objects(owner=username))
         data2 = list(MMEDSDoc.objects(owner=username))
