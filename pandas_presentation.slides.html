@@ -13232,24 +13232,28 @@ a.anchor-link {
 <h1 id="Prologue">Prologue<a class="anchor-link" href="#Prologue">&#182;</a></h1><h2 id="DataTypes">DataTypes<a class="anchor-link" href="#DataTypes">&#182;</a></h2><h3 id="Basic-Types">Basic Types<a class="anchor-link" href="#Basic-Types">&#182;</a></h3><ul>
 <li>Int<ul>
 <li>1</li>
-<li>2</li>
-<li>3</li>
+<li>42</li>
 </ul>
 </li>
 <li>Float<ul>
 <li>2.2222</li>
-<li>3.2333</li>
 <li>3.14359</li>
 </ul>
 </li>
 <li>Char<ul>
 <li>'2'</li>
 <li>'a'</li>
-<li>'b'</li>
 <li>'"'</li>
 </ul>
 </li>
 </ul>
+
+</div>
+</div>
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Structured-Types">Structured Types<a class="anchor-link" href="#Structured-Types">&#182;</a></h3><ul>
 <li>List<ul>
 <li><code>(a -&gt; (b -&gt; (c -&gt; ...)))</code></li>
@@ -13295,20 +13299,21 @@ a.anchor-link {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="A-bunch-of-hashtables">A bunch of hashtables<a class="anchor-link" href="#A-bunch-of-hashtables">&#182;</a></h1>
+<p>A bunch of hashtables</p>
+
 </div>
 </div>
-</div></div></section><section>
+</div></div></section></section><section><section>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="What-is-special-about-them?">What is special about them?<a class="anchor-link" href="#What-is-special-about-them?">&#182;</a></h1>
 </div>
 </div>
-</div></section></section><section><section>
+</div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="prompt input_prompt">In&nbsp;[70]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -13339,7 +13344,7 @@ a.anchor-link {
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[14]:</div>
+    <div class="prompt output_prompt">Out[70]:</div>
 
 
 
@@ -13357,10 +13362,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div></section><section>
+</div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[71]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># We also want to know the high tempurature</span>
@@ -13384,7 +13389,7 @@ a.anchor-link {
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[15]:</div>
+    <div class="prompt output_prompt">Out[71]:</div>
 
 
 
@@ -13405,7 +13410,7 @@ a.anchor-link {
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[72]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># And the low tempurature </span>
@@ -13429,7 +13434,7 @@ a.anchor-link {
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[16]:</div>
+    <div class="prompt output_prompt">Out[72]:</div>
 
 
 
@@ -13450,7 +13455,7 @@ a.anchor-link {
 </div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="prompt input_prompt">In&nbsp;[73]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># This quickly gets difficult to work with</span>
@@ -13504,7 +13509,7 @@ Weekday average 49.0
 </div></section></section><section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="prompt input_prompt">In&nbsp;[74]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">## You want to access the data all in the same place</span>
@@ -13524,7 +13529,7 @@ Weekday average 49.0
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[21]:</div>
+    <div class="prompt output_prompt">Out[74]:</div>
 
 
 
@@ -13554,31 +13559,31 @@ Weekday average 49.0
   </thead>
   <tbody>
     <tr>
-      <td>2020-01-01</td>
+      <th>2020-01-01</th>
       <td>Wednesday</td>
       <td>48</td>
       <td>30</td>
     </tr>
     <tr>
-      <td>2020-01-02</td>
+      <th>2020-01-02</th>
       <td>Thursday</td>
       <td>54</td>
       <td>38</td>
     </tr>
     <tr>
-      <td>2020-01-03</td>
+      <th>2020-01-03</th>
       <td>Friday</td>
       <td>45</td>
       <td>33</td>
     </tr>
     <tr>
-      <td>2020-01-04</td>
+      <th>2020-01-04</th>
       <td>Saturday</td>
       <td>61</td>
       <td>45</td>
     </tr>
     <tr>
-      <td>2020-01-05</td>
+      <th>2020-01-05</th>
       <td>Sunday</td>
       <td>55</td>
       <td>30</td>
@@ -13596,7 +13601,7 @@ Weekday average 49.0
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="prompt input_prompt">In&nbsp;[75]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># How do you access it?</span>
@@ -13633,12 +13638,12 @@ Index([&#39;day_of_week&#39;, &#39;high_temp&#39;, &#39;low_temp&#39;], dtype=&#
 </div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[56]:</div>
+<div class="prompt input_prompt">In&nbsp;[76]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># So how would we find the weekday/weekend temps?</span>
-<span class="n">weekends</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Saturday&#39;</span><span class="p">,</span> <span class="s1">&#39;Sunday&#39;</span><span class="p">]</span>
-<span class="n">weekend_data</span><span class="p">,</span> <span class="n">weekday_data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">day_of_week</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">weekends</span><span class="p">))</span>
+<span class="n">weekend_days</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Saturday&#39;</span><span class="p">,</span> <span class="s1">&#39;Sunday&#39;</span><span class="p">]</span>
+<span class="n">weekend_data</span><span class="p">,</span> <span class="n">weekday_data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">day_of_week</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">weekend_days</span><span class="p">))</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Weekend average </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">weekend_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">high_temp</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Weekday average </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">weekday_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">high_temp</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
@@ -13670,7 +13675,7 @@ Weekday average 58.0
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="prompt input_prompt">In&nbsp;[77]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Step 1: Accessing the day_of_week information</span>
@@ -13688,7 +13693,7 @@ Weekday average 58.0
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[47]:</div>
+    <div class="prompt output_prompt">Out[77]:</div>
 
 
 
@@ -13710,11 +13715,11 @@ Name: day_of_week, dtype: object</pre>
 </div></div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[50]:</div>
+<div class="prompt input_prompt">In&nbsp;[78]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Step 2: Determining if it&#39;s a weekend</span>
-<span class="n">is_weekend</span> <span class="o">=</span> <span class="n">day_of_week</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">weekends</span><span class="p">)</span>
+<span class="n">is_weekend</span> <span class="o">=</span> <span class="n">day_of_week</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">weekend_days</span><span class="p">)</span>
 <span class="n">is_weekend</span>
 </pre></div>
 
@@ -13728,7 +13733,7 @@ Name: day_of_week, dtype: object</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[50]:</div>
+    <div class="prompt output_prompt">Out[78]:</div>
 
 
 
@@ -13750,7 +13755,7 @@ Name: day_of_week, dtype: bool</pre>
 </div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[59]:</div>
+<div class="prompt input_prompt">In&nbsp;[79]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Step 3: Group the data based on those True/False values</span>
@@ -13792,7 +13797,7 @@ Name: day_of_week, dtype: bool</pre>
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[61]:</div>
+<div class="prompt input_prompt">In&nbsp;[80]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Step 4: Get the high_temp from the group</span>
@@ -13810,7 +13815,7 @@ Name: day_of_week, dtype: bool</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[61]:</div>
+    <div class="prompt output_prompt">Out[80]:</div>
 
 
 
@@ -13830,7 +13835,7 @@ Name: high_temp, dtype: int64</pre>
 </div></div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[63]:</div>
+<div class="prompt input_prompt">In&nbsp;[81]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Step 5: Calculate the average</span>
@@ -13847,7 +13852,7 @@ Name: high_temp, dtype: int64</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[63]:</div>
+    <div class="prompt output_prompt">Out[81]:</div>
 
 
 
@@ -13856,6 +13861,202 @@ Name: high_temp, dtype: int64</pre>
 <pre>49.0</pre>
 </div>
 
+</div>
+
+</div>
+</div>
+
+</div></div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Multi-Indexes">Multi Indexes<a class="anchor-link" href="#Multi-Indexes">&#182;</a></h1><ul>
+<li>The best way to handle hierarchical categories </li>
+</ul>
+
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[82]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># What is a MutliIndex</span>
+<span class="n">weekday_days</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Monday&#39;</span><span class="p">,</span> <span class="s1">&#39;Tuesday&#39;</span><span class="p">,</span> <span class="s1">&#39;Wednesday&#39;</span><span class="p">,</span> <span class="s1">&#39;Thursday&#39;</span><span class="p">,</span> <span class="s1">&#39;Friday&#39;</span><span class="p">]</span>
+<span class="n">tups</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;weekend&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">weekend_days</span><span class="p">]</span> <span class="o">+</span> <span class="p">[(</span><span class="s1">&#39;weekday&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">weekday_days</span><span class="p">]</span> 
+<span class="n">idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">tups</span><span class="p">)</span>
+<span class="n">idx</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[82]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>MultiIndex([(&#39;weekend&#39;,  &#39;Saturday&#39;),
+            (&#39;weekend&#39;,    &#39;Sunday&#39;),
+            (&#39;weekday&#39;,    &#39;Monday&#39;),
+            (&#39;weekday&#39;,   &#39;Tuesday&#39;),
+            (&#39;weekday&#39;, &#39;Wednesday&#39;),
+            (&#39;weekday&#39;,  &#39;Thursday&#39;),
+            (&#39;weekday&#39;,    &#39;Friday&#39;)],
+           )</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></div></section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[83]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># How to add it to a dataframe</span>
+<span class="c1"># Requires a column for each level of the index</span>
+<span class="n">new_col</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tups</span><span class="p">},</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;type_of_day&quot;</span><span class="p">)</span>
+<span class="c1"># Add a column. We&#39;ll cover what&#39;s happening here later</span>
+<span class="n">mdf</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;day_of_week&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_col</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s1">&#39;index&#39;</span><span class="p">:</span>  <span class="s1">&#39;day_of_week&#39;</span><span class="p">},</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Now set the new index</span>
+<span class="n">mdf</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s1">&#39;type_of_day&#39;</span><span class="p">,</span> <span class="s1">&#39;day_of_week&#39;</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[83]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+    </tr>
+    <tr>
+      <th>type_of_day</th>
+      <th>day_of_week</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="3" valign="top">weekday</th>
+      <th>Wednesday</th>
+      <td>48</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <th>Thursday</th>
+      <td>54</td>
+      <td>38</td>
+    </tr>
+    <tr>
+      <th>Friday</th>
+      <td>45</td>
+      <td>33</td>
+    </tr>
+    <tr>
+      <th rowspan="2" valign="top">weekend</th>
+      <th>Saturday</th>
+      <td>61</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th>Sunday</th>
+      <td>55</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <th rowspan="2" valign="top">weekday</th>
+      <th>Monday</th>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Tuesday</th>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[84]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># So NOW how would we find the weekday/weekend temps?</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Weekday average </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mdf</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;type_of_day == &quot;weekday&quot;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">high_temp</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Weekend average </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mdf</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;type_of_day == &quot;weekend&quot;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">high_temp</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Weekday average 49.0
+Weekend average 58.0
+</pre>
+</div>
 </div>
 
 </div>
@@ -13880,7 +14081,7 @@ Name: high_temp, dtype: int64</pre>
 </div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[66]:</div>
+<div class="prompt input_prompt">In&nbsp;[85]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">for_whom</span> <span class="o">=</span> <span class="p">{</span>
@@ -13905,7 +14106,7 @@ Name: high_temp, dtype: int64</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[66]:</div>
+    <div class="prompt output_prompt">Out[85]:</div>
 
 
 
@@ -13928,7 +14129,7 @@ Name: high_temp, dtype: int64</pre>
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[78]:</div>
+<div class="prompt input_prompt">In&nbsp;[86]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">for_whom</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">for_whom</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;for_whom&#39;</span><span class="p">)</span>
@@ -13945,7 +14146,7 @@ Name: high_temp, dtype: int64</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[78]:</div>
+    <div class="prompt output_prompt">Out[86]:</div>
 
 
 
@@ -13969,7 +14170,7 @@ Name: for_whom, dtype: object</pre>
 </div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[81]:</div>
+<div class="prompt input_prompt">In&nbsp;[87]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">for_whom</span><span class="p">)</span>
@@ -13985,7 +14186,7 @@ Name: for_whom, dtype: object</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[81]:</div>
+    <div class="prompt output_prompt">Out[87]:</div>
 
 
 
@@ -14022,7 +14223,7 @@ Name: for_whom, dtype: object</pre>
   </thead>
   <tbody>
     <tr>
-      <td>2020-01-01 00:00:00</td>
+      <th>2020-01-01 00:00:00</th>
       <td>Wednesday</td>
       <td>48.0</td>
       <td>30.0</td>
@@ -14035,7 +14236,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>2020-01-02 00:00:00</td>
+      <th>2020-01-02 00:00:00</th>
       <td>Thursday</td>
       <td>54.0</td>
       <td>38.0</td>
@@ -14048,7 +14249,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>2020-01-03 00:00:00</td>
+      <th>2020-01-03 00:00:00</th>
       <td>Friday</td>
       <td>45.0</td>
       <td>33.0</td>
@@ -14061,7 +14262,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>2020-01-04 00:00:00</td>
+      <th>2020-01-04 00:00:00</th>
       <td>Saturday</td>
       <td>61.0</td>
       <td>45.0</td>
@@ -14074,7 +14275,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>2020-01-05 00:00:00</td>
+      <th>2020-01-05 00:00:00</th>
       <td>Sunday</td>
       <td>55.0</td>
       <td>30.0</td>
@@ -14087,7 +14288,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>for_whom</td>
+      <th>for_whom</th>
       <td>NaN</td>
       <td>NaN</td>
       <td>NaN</td>
@@ -14120,7 +14321,7 @@ Name: for_whom, dtype: object</pre>
 </div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[86]:</div>
+<div class="prompt input_prompt">In&nbsp;[88]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># We need to transform the data frame so pandas can match the new data to the original</span>
@@ -14138,7 +14339,7 @@ Name: for_whom, dtype: object</pre>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[86]:</div>
+    <div class="prompt output_prompt">Out[88]:</div>
 
 
 
@@ -14172,27 +14373,27 @@ Name: for_whom, dtype: object</pre>
   </thead>
   <tbody>
     <tr>
-      <td>Wednesday</td>
+      <th>Wednesday</th>
       <td>48</td>
       <td>30</td>
     </tr>
     <tr>
-      <td>Thursday</td>
+      <th>Thursday</th>
       <td>54</td>
       <td>38</td>
     </tr>
     <tr>
-      <td>Friday</td>
+      <th>Friday</th>
       <td>45</td>
       <td>33</td>
     </tr>
     <tr>
-      <td>Saturday</td>
+      <th>Saturday</th>
       <td>61</td>
       <td>45</td>
     </tr>
     <tr>
-      <td>Sunday</td>
+      <th>Sunday</th>
       <td>55</td>
       <td>30</td>
     </tr>
@@ -14273,7 +14474,7 @@ Name: for_whom, dtype: object</pre>
   </thead>
   <tbody>
     <tr>
-      <td>Wednesday</td>
+      <th>Wednesday</th>
       <td>48.0</td>
       <td>30.0</td>
       <td>NaN</td>
@@ -14285,7 +14486,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>Thursday</td>
+      <th>Thursday</th>
       <td>54.0</td>
       <td>38.0</td>
       <td>NaN</td>
@@ -14297,7 +14498,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>Friday</td>
+      <th>Friday</th>
       <td>45.0</td>
       <td>33.0</td>
       <td>NaN</td>
@@ -14309,7 +14510,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>Saturday</td>
+      <th>Saturday</th>
       <td>61.0</td>
       <td>45.0</td>
       <td>NaN</td>
@@ -14321,7 +14522,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>Sunday</td>
+      <th>Sunday</th>
       <td>55.0</td>
       <td>30.0</td>
       <td>NaN</td>
@@ -14333,7 +14534,7 @@ Name: for_whom, dtype: object</pre>
       <td>NaN</td>
     </tr>
     <tr>
-      <td>for_whom</td>
+      <th>for_whom</th>
       <td>NaN</td>
       <td>NaN</td>
       <td>The cats</td>
@@ -14365,11 +14566,313 @@ Name: for_whom, dtype: object</pre>
 </div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[93]:</div>
+<div class="prompt input_prompt">In&nbsp;[90]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">idft</span> <span class="o">=</span> <span class="n">idf</span><span class="o">.</span><span class="n">T</span>
 <span class="n">idft</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[90]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>day_of_week</th>
+      <th>Wednesday</th>
+      <th>Thursday</th>
+      <th>Friday</th>
+      <th>Saturday</th>
+      <th>Sunday</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>high_temp</th>
+      <td>48</td>
+      <td>54</td>
+      <td>45</td>
+      <td>61</td>
+      <td>55</td>
+    </tr>
+    <tr>
+      <th>low_temp</th>
+      <td>30</td>
+      <td>38</td>
+      <td>33</td>
+      <td>45</td>
+      <td>30</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[91]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">idft</span> <span class="o">=</span> <span class="n">idft</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">for_whom</span><span class="p">)</span>
+<span class="n">idft</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[91]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Wednesday</th>
+      <th>Thursday</th>
+      <th>Friday</th>
+      <th>Saturday</th>
+      <th>Sunday</th>
+      <th>Monday</th>
+      <th>Tuesday</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>high_temp</th>
+      <td>48</td>
+      <td>54</td>
+      <td>45</td>
+      <td>61</td>
+      <td>55</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>low_temp</th>
+      <td>30</td>
+      <td>38</td>
+      <td>33</td>
+      <td>45</td>
+      <td>30</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>for_whom</th>
+      <td>The camels</td>
+      <td>The dogs</td>
+      <td>The cats</td>
+      <td>The boys</td>
+      <td>The girls</td>
+      <td>The birds</td>
+      <td>The non-binary</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></div><div class="fragment">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>That's better</p>
+
+</div>
+</div>
+</div></div></section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[92]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># To get it back to the previous format we undo to the transformations</span>
+<span class="n">idf</span> <span class="o">=</span> <span class="n">idft</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">idf</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[92]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>index</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>for_whom</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Wednesday</td>
+      <td>48</td>
+      <td>30</td>
+      <td>The camels</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>The dogs</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>The cats</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>The boys</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>The girls</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>The birds</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>The non-binary</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div><div class="fragment">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Notice">Notice<a class="anchor-link" href="#Notice">&#182;</a></h1><ul>
+<li>The Week days now have the column label 'index'</li>
+<li>The original label was lost when we set them to be the index.</li>
+<li>We lost the original index values. </li>
+<li>We didn't have temps for Monday or Tuesday so those have been filled with NaNs</li>
+</ul>
+
+</div>
+</div>
+</div></div></section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[93]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># To retain the original index we need to save it in a column before setting the new index</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span>
+<span class="n">df</span>
 </pre></div>
 
     </div>
@@ -14404,30 +14907,48 @@ Name: for_whom, dtype: object</pre>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
+      <th></th>
       <th>day_of_week</th>
-      <th>Wednesday</th>
-      <th>Thursday</th>
-      <th>Friday</th>
-      <th>Saturday</th>
-      <th>Sunday</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>date</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>high_temp</td>
+      <th>2020-01-01</th>
+      <td>Wednesday</td>
       <td>48</td>
-      <td>54</td>
-      <td>45</td>
-      <td>61</td>
-      <td>55</td>
+      <td>30</td>
+      <td>2020-01-01</td>
     </tr>
     <tr>
-      <td>low_temp</td>
-      <td>30</td>
+      <th>2020-01-02</th>
+      <td>Thursday</td>
+      <td>54</td>
       <td>38</td>
-      <td>33</td>
+      <td>2020-01-02</td>
+    </tr>
+    <tr>
+      <th>2020-01-03</th>
+      <td>Friday</td>
       <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
+    </tr>
+    <tr>
+      <th>2020-01-04</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
+    </tr>
+    <tr>
+      <th>2020-01-05</th>
+      <td>Sunday</td>
+      <td>55</td>
       <td>30</td>
+      <td>2020-01-05</td>
     </tr>
   </tbody>
 </table>
@@ -14442,11 +14963,652 @@ Name: for_whom, dtype: object</pre>
 </div><div class="fragment">
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
+<div class="prompt input_prompt">In&nbsp;[94]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Then proceed as before</span>
+<span class="n">sdf</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;day_of_week&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">for_whom</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">sdf</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[94]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>index</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>date</th>
+      <th>for_whom</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Wednesday</td>
+      <td>48</td>
+      <td>30</td>
+      <td>2020-01-01</td>
+      <td>The camels</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>2020-01-02</td>
+      <td>The dogs</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
+      <td>The cats</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
+      <td>The boys</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>2020-01-05</td>
+      <td>The girls</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The birds</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The non-binary</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Joining-a-Dataframe-to-a-Dataframe">Joining a Dataframe to a Dataframe<a class="anchor-link" href="#Joining-a-Dataframe-to-a-Dataframe">&#182;</a></h1>
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[95]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># In the last section we joined a 1-dimensional series to our dataframe, but what if we have a second dataframe</span>
+<span class="n">df2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+   <span class="s1">&#39;day_of_week&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Sunday&#39;</span><span class="p">,</span> <span class="s1">&#39;Monday&#39;</span><span class="p">,</span> <span class="s1">&#39;Tuesday&#39;</span><span class="p">,</span> <span class="s1">&#39;Wednesday&#39;</span><span class="p">,</span> <span class="s1">&#39;Thursday&#39;</span><span class="p">,</span> <span class="s1">&#39;Friday&#39;</span><span class="p">,</span> <span class="s1">&#39;Saturday&#39;</span><span class="p">],</span>
+   <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="p">[</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200621&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200622&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200623&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200624&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200625&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200626&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20200627&#39;</span><span class="p">),</span>
+   <span class="p">],</span>
+    <span class="s1">&#39;high_temp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">81</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">82</span><span class="p">,</span> <span class="mi">82</span><span class="p">,</span> <span class="mi">82</span><span class="p">,</span> <span class="mi">83</span><span class="p">],</span>
+    <span class="s1">&#39;low_temp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">66</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">68</span><span class="p">]</span>
+<span class="p">})</span>
+<span class="n">df2</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[95]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_week</th>
+      <th>date</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Sunday</td>
+      <td>2020-06-21</td>
+      <td>81</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Monday</td>
+      <td>2020-06-22</td>
+      <td>81</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Tuesday</td>
+      <td>2020-06-23</td>
+      <td>81</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Wednesday</td>
+      <td>2020-06-24</td>
+      <td>82</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Thursday</td>
+      <td>2020-06-25</td>
+      <td>82</td>
+      <td>67</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Friday</td>
+      <td>2020-06-26</td>
+      <td>82</td>
+      <td>67</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Saturday</td>
+      <td>2020-06-27</td>
+      <td>83</td>
+      <td>68</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></div></section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[96]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+   <span class="s1">&#39;day_of_week&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Sunday&#39;</span><span class="p">,</span> <span class="s1">&#39;Monday&#39;</span><span class="p">,</span> <span class="s1">&#39;Tuesday&#39;</span><span class="p">,</span> <span class="s1">&#39;Wednesday&#39;</span><span class="p">,</span> <span class="s1">&#39;Thursday&#39;</span><span class="p">,</span> <span class="s1">&#39;Friday&#39;</span><span class="p">,</span> <span class="s1">&#39;Saturday&#39;</span><span class="p">],</span>
+   <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="p">[</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201101&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201102&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201103&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201104&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201105&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201106&#39;</span><span class="p">),</span>
+       <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="s1">&#39;20201107&#39;</span><span class="p">),</span>
+   <span class="p">],</span>
+    <span class="s1">&#39;high_temp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">59</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">56</span><span class="p">],</span>
+    <span class="s1">&#39;low_temp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">46</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">44</span><span class="p">]</span>
+<span class="p">})</span>
+<span class="n">df3</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[96]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_week</th>
+      <th>date</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Sunday</td>
+      <td>2020-11-01</td>
+      <td>59</td>
+      <td>46</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Monday</td>
+      <td>2020-11-02</td>
+      <td>58</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Tuesday</td>
+      <td>2020-11-03</td>
+      <td>58</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Wednesday</td>
+      <td>2020-11-04</td>
+      <td>57</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Thursday</td>
+      <td>2020-11-05</td>
+      <td>57</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Friday</td>
+      <td>2020-11-06</td>
+      <td>57</td>
+      <td>44</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Saturday</td>
+      <td>2020-11-07</td>
+      <td>56</td>
+      <td>44</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div><div class="fragment">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="How-do-we-combine-these-datasets?">How do we combine these datasets?<a class="anchor-link" href="#How-do-we-combine-these-datasets?">&#182;</a></h1>
+</div>
+</div>
+</div></div></section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[97]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># The simplest is concat</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sdf</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">df3</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[97]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>index</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>date</th>
+      <th>for_whom</th>
+      <th>day_of_week</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Wednesday</td>
+      <td>48</td>
+      <td>30</td>
+      <td>2020-01-01</td>
+      <td>The camels</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>2020-01-02</td>
+      <td>The dogs</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
+      <td>The cats</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
+      <td>The boys</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>2020-01-05</td>
+      <td>The girls</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The birds</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The non-binary</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>NaN</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-21</td>
+      <td>NaN</td>
+      <td>Sunday</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>NaN</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-22</td>
+      <td>NaN</td>
+      <td>Monday</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>NaN</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-23</td>
+      <td>NaN</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>NaN</td>
+      <td>82</td>
+      <td>66</td>
+      <td>2020-06-24</td>
+      <td>NaN</td>
+      <td>Wednesday</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>NaN</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-25</td>
+      <td>NaN</td>
+      <td>Thursday</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>NaN</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-26</td>
+      <td>NaN</td>
+      <td>Friday</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>NaN</td>
+      <td>83</td>
+      <td>68</td>
+      <td>2020-06-27</td>
+      <td>NaN</td>
+      <td>Saturday</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>NaN</td>
+      <td>59</td>
+      <td>46</td>
+      <td>2020-11-01</td>
+      <td>NaN</td>
+      <td>Sunday</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>NaN</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-02</td>
+      <td>NaN</td>
+      <td>Monday</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>NaN</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-03</td>
+      <td>NaN</td>
+      <td>Tuesday</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>NaN</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-04</td>
+      <td>NaN</td>
+      <td>Wednesday</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>NaN</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-05</td>
+      <td>NaN</td>
+      <td>Thursday</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>NaN</td>
+      <td>57</td>
+      <td>44</td>
+      <td>2020-11-06</td>
+      <td>NaN</td>
+      <td>Friday</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>NaN</td>
+      <td>56</td>
+      <td>44</td>
+      <td>2020-11-07</td>
+      <td>NaN</td>
+      <td>Saturday</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>Stick one dataframe onto the end of another.</li>
+<li>Notice that the data isn't perfectly aligned. 'day_of_week' and 'index' should be the same column</li>
+</ul>
+
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
 <div class="prompt input_prompt">In&nbsp;[98]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">idft</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">for_whom</span><span class="p">)</span>
-<span class="n">df</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># To fix this rename &#39;index&#39;</span>
+<span class="n">sdf</span> <span class="o">=</span> <span class="n">sdf</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="s1">&#39;day_of_week&#39;</span><span class="p">},</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Axis 1 indicates to operate on &#39;columns&#39;. The default is &#39;index&#39;</span>
+<span class="n">sdf</span>
 </pre></div>
 
     </div>
@@ -14482,44 +15644,68 @@ Name: for_whom, dtype: object</pre>
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>Wednesday</th>
-      <th>Thursday</th>
-      <th>Friday</th>
-      <th>Saturday</th>
-      <th>Sunday</th>
-      <th>Monday</th>
-      <th>Tuesday</th>
+      <th>day_of_week</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>date</th>
+      <th>for_whom</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>high_temp</td>
+      <th>0</th>
+      <td>Wednesday</td>
       <td>48</td>
-      <td>54</td>
-      <td>45</td>
-      <td>61</td>
-      <td>55</td>
-      <td>NaN</td>
-      <td>NaN</td>
-    </tr>
-    <tr>
-      <td>low_temp</td>
       <td>30</td>
-      <td>38</td>
-      <td>33</td>
-      <td>45</td>
-      <td>30</td>
-      <td>NaN</td>
-      <td>NaN</td>
-    </tr>
-    <tr>
-      <td>for_whom</td>
+      <td>2020-01-01</td>
       <td>The camels</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>2020-01-02</td>
       <td>The dogs</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
       <td>The cats</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
       <td>The boys</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>2020-01-05</td>
       <td>The girls</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
       <td>The birds</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
       <td>The non-binary</td>
     </tr>
   </tbody>
@@ -14538,9 +15724,7 @@ Name: for_whom, dtype: object</pre>
 <div class="prompt input_prompt">In&nbsp;[99]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># To get it back to the previous format we undo to the transformations</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">T</span>
-<span class="n">df</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sdf</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">df3</span><span class="p">])</span>
 </pre></div>
 
     </div>
@@ -14576,53 +15760,181 @@ Name: for_whom, dtype: object</pre>
   <thead>
     <tr style="text-align: right;">
       <th></th>
+      <th>day_of_week</th>
       <th>high_temp</th>
       <th>low_temp</th>
+      <th>date</th>
       <th>for_whom</th>
     </tr>
   </thead>
   <tbody>
     <tr>
+      <th>0</th>
       <td>Wednesday</td>
       <td>48</td>
       <td>30</td>
+      <td>2020-01-01</td>
       <td>The camels</td>
     </tr>
     <tr>
+      <th>1</th>
       <td>Thursday</td>
       <td>54</td>
       <td>38</td>
+      <td>2020-01-02</td>
       <td>The dogs</td>
     </tr>
     <tr>
+      <th>2</th>
       <td>Friday</td>
       <td>45</td>
       <td>33</td>
+      <td>2020-01-03</td>
       <td>The cats</td>
     </tr>
     <tr>
+      <th>3</th>
       <td>Saturday</td>
       <td>61</td>
       <td>45</td>
+      <td>2020-01-04</td>
       <td>The boys</td>
     </tr>
     <tr>
+      <th>4</th>
       <td>Sunday</td>
       <td>55</td>
       <td>30</td>
+      <td>2020-01-05</td>
       <td>The girls</td>
     </tr>
     <tr>
+      <th>5</th>
       <td>Monday</td>
       <td>NaN</td>
       <td>NaN</td>
+      <td>NaT</td>
       <td>The birds</td>
     </tr>
     <tr>
+      <th>6</th>
       <td>Tuesday</td>
       <td>NaN</td>
       <td>NaN</td>
+      <td>NaT</td>
       <td>The non-binary</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>Sunday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-21</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Monday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-22</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Tuesday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-23</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Wednesday</td>
+      <td>82</td>
+      <td>66</td>
+      <td>2020-06-24</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Thursday</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-25</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Friday</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-26</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Saturday</td>
+      <td>83</td>
+      <td>68</td>
+      <td>2020-06-27</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>Sunday</td>
+      <td>59</td>
+      <td>46</td>
+      <td>2020-11-01</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Monday</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-02</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Tuesday</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-03</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Wednesday</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-04</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Thursday</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-05</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Friday</td>
+      <td>57</td>
+      <td>44</td>
+      <td>2020-11-06</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Saturday</td>
+      <td>56</td>
+      <td>44</td>
+      <td>2020-11-07</td>
+      <td>NaN</td>
     </tr>
   </tbody>
 </table>
@@ -14635,13 +15947,616 @@ Name: for_whom, dtype: object</pre>
 </div>
 
 </div><div class="fragment">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>Better but still not perfect</li>
+<li>The values of 'for_whom' have a one-to-one correspondance to the values in 'day_of_week' so we can infer them</li>
+</ul>
+
+</div>
+</div>
+</div></div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="We-drop-columns-that-aren't-in-all-the-dataframes">We drop columns that aren't in all the dataframes<a class="anchor-link" href="#We-drop-columns-that-aren't-in-all-the-dataframes">&#182;</a></h1>
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[100]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">big_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sdf</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">df3</span><span class="p">],</span> <span class="n">join</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">)</span> <span class="c1"># Default value for `join` is &#39;outer&#39;</span>
+<span class="n">big_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[100]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_week</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Wednesday</td>
+      <td>48</td>
+      <td>30</td>
+      <td>2020-01-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>2020-01-02</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>2020-01-05</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>Sunday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-21</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Monday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-22</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Tuesday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-23</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Wednesday</td>
+      <td>82</td>
+      <td>66</td>
+      <td>2020-06-24</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Thursday</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-25</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Friday</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-26</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Saturday</td>
+      <td>83</td>
+      <td>68</td>
+      <td>2020-06-27</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>Sunday</td>
+      <td>59</td>
+      <td>46</td>
+      <td>2020-11-01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Monday</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-02</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Tuesday</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-03</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Wednesday</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-04</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Thursday</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-05</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Friday</td>
+      <td>57</td>
+      <td>44</td>
+      <td>2020-11-06</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Saturday</td>
+      <td>56</td>
+      <td>44</td>
+      <td>2020-11-07</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></div></section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[101]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Then add the &#39;for_whom&#39; information like we did before</span>
+<span class="n">big_df</span> <span class="o">=</span> <span class="n">big_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;day_of_week&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">for_whom</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">big_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[101]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_week</th>
+      <th>high_temp</th>
+      <th>low_temp</th>
+      <th>date</th>
+      <th>for_whom</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Wednesday</td>
+      <td>48</td>
+      <td>30</td>
+      <td>2020-01-01</td>
+      <td>The camels</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>2020-01-02</td>
+      <td>The dogs</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
+      <td>The cats</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
+      <td>The boys</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>2020-01-05</td>
+      <td>The girls</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The birds</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The non-binary</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Sunday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-21</td>
+      <td>The girls</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Monday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-22</td>
+      <td>The birds</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Tuesday</td>
+      <td>81</td>
+      <td>66</td>
+      <td>2020-06-23</td>
+      <td>The non-binary</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Wednesday</td>
+      <td>82</td>
+      <td>66</td>
+      <td>2020-06-24</td>
+      <td>The camels</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Thursday</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-25</td>
+      <td>The dogs</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>Friday</td>
+      <td>82</td>
+      <td>67</td>
+      <td>2020-06-26</td>
+      <td>The cats</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Saturday</td>
+      <td>83</td>
+      <td>68</td>
+      <td>2020-06-27</td>
+      <td>The boys</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Sunday</td>
+      <td>59</td>
+      <td>46</td>
+      <td>2020-11-01</td>
+      <td>The girls</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Monday</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-02</td>
+      <td>The birds</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>Tuesday</td>
+      <td>58</td>
+      <td>45</td>
+      <td>2020-11-03</td>
+      <td>The non-binary</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>Wednesday</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-04</td>
+      <td>The camels</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>Thursday</td>
+      <td>57</td>
+      <td>45</td>
+      <td>2020-11-05</td>
+      <td>The dogs</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Friday</td>
+      <td>57</td>
+      <td>44</td>
+      <td>2020-11-06</td>
+      <td>The cats</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Saturday</td>
+      <td>56</td>
+      <td>44</td>
+      <td>2020-11-07</td>
+      <td>The boys</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Or-we-could-perform-database-style-merging">Or we could perform database style merging<a class="anchor-link" href="#Or-we-could-perform-database-style-merging">&#182;</a></h1>
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[102]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># You can &#39;merge&#39;</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">sdf</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;day_of_week&#39;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[102]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>day_of_week</th>
+      <th>high_temp_x</th>
+      <th>low_temp_x</th>
+      <th>date_x</th>
+      <th>for_whom</th>
+      <th>date_y</th>
+      <th>high_temp_y</th>
+      <th>low_temp_y</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Wednesday</td>
+      <td>48</td>
+      <td>30</td>
+      <td>2020-01-01</td>
+      <td>The camels</td>
+      <td>2020-06-24</td>
+      <td>82</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Thursday</td>
+      <td>54</td>
+      <td>38</td>
+      <td>2020-01-02</td>
+      <td>The dogs</td>
+      <td>2020-06-25</td>
+      <td>82</td>
+      <td>67</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Friday</td>
+      <td>45</td>
+      <td>33</td>
+      <td>2020-01-03</td>
+      <td>The cats</td>
+      <td>2020-06-26</td>
+      <td>82</td>
+      <td>67</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Saturday</td>
+      <td>61</td>
+      <td>45</td>
+      <td>2020-01-04</td>
+      <td>The boys</td>
+      <td>2020-06-27</td>
+      <td>83</td>
+      <td>68</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Sunday</td>
+      <td>55</td>
+      <td>30</td>
+      <td>2020-01-05</td>
+      <td>The girls</td>
+      <td>2020-06-21</td>
+      <td>81</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Monday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The birds</td>
+      <td>2020-06-22</td>
+      <td>81</td>
+      <td>66</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Tuesday</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaT</td>
+      <td>The non-binary</td>
+      <td>2020-06-23</td>
+      <td>81</td>
+      <td>66</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></div></section><section>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[103]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-<span class="n">df</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Or you could join</span>
+<span class="n">sdf</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;day_of_week&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df2</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;day_of_week&#39;</span><span class="p">),</span> <span class="n">lsuffix</span><span class="o">=</span><span class="s1">&#39;_left&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14677,69 +16592,95 @@ Name: for_whom, dtype: object</pre>
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>level_0</th>
-      <th>index</th>
+      <th>high_temp_left</th>
+      <th>low_temp_left</th>
+      <th>date_left</th>
+      <th>for_whom</th>
+      <th>date</th>
       <th>high_temp</th>
       <th>low_temp</th>
-      <th>for_whom</th>
+    </tr>
+    <tr>
+      <th>day_of_week</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>0</td>
-      <td>0</td>
-      <td>Wednesday</td>
+      <th>Wednesday</th>
       <td>48</td>
       <td>30</td>
+      <td>2020-01-01</td>
       <td>The camels</td>
+      <td>2020-06-24</td>
+      <td>82</td>
+      <td>66</td>
     </tr>
     <tr>
-      <td>1</td>
-      <td>1</td>
-      <td>Thursday</td>
+      <th>Thursday</th>
       <td>54</td>
       <td>38</td>
+      <td>2020-01-02</td>
       <td>The dogs</td>
+      <td>2020-06-25</td>
+      <td>82</td>
+      <td>67</td>
     </tr>
     <tr>
-      <td>2</td>
-      <td>2</td>
-      <td>Friday</td>
+      <th>Friday</th>
       <td>45</td>
       <td>33</td>
+      <td>2020-01-03</td>
       <td>The cats</td>
+      <td>2020-06-26</td>
+      <td>82</td>
+      <td>67</td>
     </tr>
     <tr>
-      <td>3</td>
-      <td>3</td>
-      <td>Saturday</td>
+      <th>Saturday</th>
       <td>61</td>
       <td>45</td>
+      <td>2020-01-04</td>
       <td>The boys</td>
+      <td>2020-06-27</td>
+      <td>83</td>
+      <td>68</td>
     </tr>
     <tr>
-      <td>4</td>
-      <td>4</td>
-      <td>Sunday</td>
+      <th>Sunday</th>
       <td>55</td>
       <td>30</td>
+      <td>2020-01-05</td>
       <td>The girls</td>
+      <td>2020-06-21</td>
+      <td>81</td>
+      <td>66</td>
     </tr>
     <tr>
-      <td>5</td>
-      <td>5</td>
-      <td>Monday</td>
+      <th>Monday</th>
       <td>NaN</td>
       <td>NaN</td>
+      <td>NaT</td>
       <td>The birds</td>
+      <td>2020-06-22</td>
+      <td>81</td>
+      <td>66</td>
     </tr>
     <tr>
-      <td>6</td>
-      <td>6</td>
-      <td>Tuesday</td>
+      <th>Tuesday</th>
       <td>NaN</td>
       <td>NaN</td>
+      <td>NaT</td>
       <td>The non-binary</td>
+      <td>2020-06-23</td>
+      <td>81</td>
+      <td>66</td>
     </tr>
   </tbody>
 </table>
@@ -14751,15 +16692,27 @@ Name: for_whom, dtype: object</pre>
 </div>
 </div>
 
-</div></div><div class="fragment">
+</div><div class="fragment">
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Notice the Week days now have the column label 'index'. The original label was lost when we set them to be the index</p>
+<h1 id="Notice:">Notice:<a class="anchor-link" href="#Notice:">&#182;</a></h1><ul>
+<li>Columns other than 'day_of_week' and 'for_whom' each column has a duplicate entry</li>
+<li>One for the 'left' dataframe (x)</li>
+<li>One for the 'right' dataframe (y)</li>
+<li>'merge' and 'join' are largely equivalent. Join operates on the 'index' where as merge operates on a specified column</li>
+</ul>
 
 </div>
 </div>
-</div></div></section></section>
+</div></div></section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="That's-all-folks">That's all folks<a class="anchor-link" href="#That's-all-folks">&#182;</a></h1>
+</div>
+</div>
+</div></section></section>
 </div>
 </div>
 
