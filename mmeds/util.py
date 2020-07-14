@@ -901,7 +901,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
-            script += ' -A {summary}'.format(kwargs['summary'])
+            script += ' -A {summary}'.format(summary=kwargs['summary'])
         cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
         run(['/bin/bash', '-c', cmd], check=True)
 
@@ -1003,8 +1003,12 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
     ===================================================
     :mmeds_file: The path to the mmeds metadata.
     :qiime_file: The path where the qiime mapping file should be written.
+    :tool_type: Either qiime1 or qiime2
     """
-    mdata = pd.read_csv(mmeds_file, header=1, skiprows=[2, 3, 4], sep='\t')
+    if isinstance(mmeds_file, pd.DataFrame):
+        mdata = mmeds_file
+    else:
+        mdata = pd.read_csv(mmeds_file, header=1, skiprows=[2, 3, 4], sep='\t')
 
     headers = list(mdata.columns)
 
