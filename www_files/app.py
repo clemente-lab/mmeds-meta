@@ -46,7 +46,7 @@ def create_app():
     if testing:
         web_path = '/myapp'
     else:
-        web_path = '/~wallad07/mmeds-meta/alt_app.wsgi'
+        web_path = '/mmeds-meta/app.wsgi'
     app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
     return app, web_path
 
@@ -55,8 +55,8 @@ def application(environ, start_response):
     global loaded
     if not loaded:
         loaded = True
-        logger.error('Loading')
+        logger.debug('Loading')
         app, web_path = create_app()
-        logger.error('Recreating application')
+        logger.debug('Recreating application')
         cp.tree.graft(app, web_path)
     return cp.tree(environ, start_response)

@@ -34,7 +34,7 @@ else:
     SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
     SERVER_ROOT = "https://wallad07.u.hpc.mssm.edu/mmeds_app/"
     # Replace the old version
-    SERVER_PATH = SERVER_ROOT + 'alt_app.wsgi/'
+    SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
     IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
 
