@@ -40,14 +40,18 @@ loaded = False
 
 
 def create_app():
+    logger.info("Running create_app")
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
 
+    logger.info("Unsubscribed from the old server")
     if testing:
         web_path = '/myapp'
     else:
         web_path = '/~wallad07/mmeds-meta/alt_app.wsgi'
+    logger.info("Creating the WSGI app")
     app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
+    logger.info("Returning the WSGI app")
     return app, web_path
 
 
@@ -55,8 +59,9 @@ def application(environ, start_response):
     global loaded
     if not loaded:
         loaded = True
-        logger.error('Loading')
+        logger.info('Loading')
         app, web_path = create_app()
-        logger.error('Recreating application')
+        logger.info('Recreating application')
         cp.tree.graft(app, web_path)
+    logger.info("Return tree with app mounted")
     return cp.tree(environ, start_response)

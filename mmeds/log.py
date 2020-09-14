@@ -53,15 +53,13 @@ class MMEDSLog():
             self.logger.addHandler(fh)
             self.logger.addHandler(ch)
             loggers[name] = self.logger
+        self.logger.setLevel(logging.ERROR)
 
     def debug(self, message):
-        self.logger.setLevel(logging.DEBUG)
         self.logger.debug(str(current_process()) + ' - ' + message)
 
     def error(self, message):
-        self.logger.setLevel(logging.ERROR)
         self.logger.error(str(current_process()) + ' - ' + message)
 
     def info(self, message):
-        self.logger.setLevel(logging.INFO)
         self.logger.info(str(current_process()) + ' - ' + message)
