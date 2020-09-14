@@ -409,11 +409,11 @@ def parse_ICD_codes(df):
             else:
                 raise e
         # If the value is null it will error
-        except AttributeError:
-            IBC.append(null)
-            IC.append(null)
-            ID.append(null)
-            IDe.append(null)
+        except (AttributeError, IndexError):
+            IBC.append('NA')
+            IC.append('NA')
+            ID.append('NA')
+            IDe.append('NA')
 
     # Add the parsed values to the dataframe
     df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC

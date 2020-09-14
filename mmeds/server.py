@@ -114,7 +114,7 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
-        logger.error("My queue has id {}".format(id(self.q)))
+        cp.log("Loading webpage")
         try:
             path, header = HTML_PAGES[page]
 
@@ -147,9 +147,11 @@ class MMEDSbase:
 
             # Format all provided arguments
             page = page.format_map(args)
+            cp.log("Finished loading arguments for web page")
 
         # Log arguments if there is an issue
         except (ValueError, KeyError):
+            cp.log('Exception, arguments not found')
             cp.log('Args')
             cp.log('\n'.join([str(x) for x in kwargs.items()]))
             cp.log('=================================')
@@ -164,6 +166,7 @@ class MMEDSbase:
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
+        cp.log(f"Adding analysis process {process}")
         self.monitor.add_process(ptype, process)
 
 
@@ -583,7 +586,7 @@ class MMEDSupload(MMEDSbase):
                 reads_type = 'class_only'
             barcodes_type = None
 
-        logger.error("Server putting upload in queue {}".format(id(self.q)))
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
@@ -631,7 +634,7 @@ class MMEDSauthentication(MMEDSbase):
             add_user(username, password1, email, testing=self.testing)
             page = self.load_webpage('login', success='Account created successfully!')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
-            logger.error('error, invalid something.\n{}'.format(e.message))
+            cp.log('error, invalid something.\n{}'.format(e.message))
             page = self.load_webpage('auth_sign_up_page', error=e.message)
         return page
 
@@ -920,7 +923,7 @@ class MMEDSserver(MMEDSbase):
         return page
 
     def exit(self):
-        logger.info('{} exiting'.format(self))
+        cp.log('{} exiting'.format(self))
         cp.engine.exit()
 
     @cp.expose
