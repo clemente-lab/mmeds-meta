@@ -13,6 +13,7 @@ if testing:
 else:
     MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
 
+    # import mmeds
     # Loading mmeds as a module without installation
     spec = importlib.util.spec_from_file_location("mmeds", MODULE_PATH)
     mmeds = importlib.util.module_from_spec(spec)
@@ -48,7 +49,7 @@ def create_app():
     if testing:
         web_path = '/myapp'
     else:
-        web_path = '/mmeds-meta/app.wsgi'
+        web_path = '/mmeds_app/app.wsgi'
     logger.info("Creating the WSGI app")
     app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
     logger.info("Returning the WSGI app")

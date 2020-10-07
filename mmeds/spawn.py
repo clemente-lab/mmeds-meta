@@ -359,3 +359,5 @@ class Watcher(BaseManager):
                         self.running_on_node.remove(kwargs.get('access_code'))
 
                     send_email(toaddr, user, message, self.testing, **kwargs)
+                elif process[0] == 'connected':
+                    self.logger.error('Someone connected')
