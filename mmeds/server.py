@@ -732,7 +732,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def run_analysis(self, access_code, analysis_method, config, runOnNode):
+    def run_analysis(self, access_code, analysis_method, config, runOnNode=None):
         """
         Run analysis on the specified study
         ----------------------------------------

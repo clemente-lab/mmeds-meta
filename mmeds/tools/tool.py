@@ -15,10 +15,7 @@ from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, TESTING
 from mmeds.log import MMEDSLog
 
-if TESTING:
-    import multiprocessing as mp
-else:
-    import multiprocessing.dummy as mp
+import multiprocessing as mp
 
 import os
 

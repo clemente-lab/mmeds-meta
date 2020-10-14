@@ -32,11 +32,12 @@ else:
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
     SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
-    SERVER_ROOT = "https://wallad07.u.hpc.mssm.edu/mmeds_app/"
+    WWW_ROOT = "https://wallad07.u.hpc.mssm.edu/"
+    SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
-    IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
+    IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
 
 ############################
 # CONFIGURE SERVER GLOBALS #

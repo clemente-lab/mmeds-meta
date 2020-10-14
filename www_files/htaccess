@@ -1,0 +1,10 @@
+SetHandler wsgi-script
+<Files .htaccess>
+  Order allow,deny
+  Deny from all
+</Files>
+Options +Indexes
+DirectoryIndex /hpc/users/wallad07/www/mmeds/CSS
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ app.wsgi/$1 [QSA,PT,L]

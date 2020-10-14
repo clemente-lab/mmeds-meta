@@ -28,6 +28,7 @@ from multiprocessing.dummy import current_process, Queue, Pipe
 from mmeds.log import MMEDSLog
 
 
+print("forcing reload")
 logger = MMEDSLog('wsgi-debug').logger
 
 from sys import argv
@@ -39,6 +40,7 @@ curdir = os.path.abspath(os.path.dirname(__file__))
 # Using a global to prevent the app from being generated multiple times
 loaded = False
 
+print('saaaa')
 
 def create_app():
     logger.info("Running create_app")

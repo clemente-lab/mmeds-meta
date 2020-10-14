@@ -61,6 +61,7 @@ class Watcher(BaseManager):
         """
         super().__init__(address, authkey)
         self.testing = fig.TESTING
+        self.count = 0
         self.processes = []
         self.running_processes = []
         self.started = []
@@ -319,10 +320,12 @@ class Watcher(BaseManager):
             self.check_processes()
             self.write_running_processes()
             self.log_processes()
-
+            self.count += 1
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                self.logger.error("empty queue, id {}".format(id(self.q)))
+                if self.count == 20:
+                    self.logger.error("empty queue, id {}".format(id(self.q)))
+                    self.count = 0
                 sleep(3)
             else:
                 # Otherwise get the queued item
