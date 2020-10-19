@@ -634,6 +634,12 @@ class Database:
         for doc in data:
             doc.delete()
 
+    def clear_mongo_data(self, username):
+        """ Clear all metadata documents associated with the provided username. """
+        data = list(MMEDSDoc.objects(owner=username))
+        for doc in data:
+            doc.delete()
+
     @classmethod
     def get_docs(cls, **kwargs):
         """ For server use """
