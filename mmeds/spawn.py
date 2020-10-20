@@ -71,7 +71,7 @@ class Watcher(BaseManager):
         self.register('get_queue', callable=lambda: queue)
         pipe_ends = Pipe()
         self.pipe = pipe_ends[0]
-        self.register('get_pipe', callable=lambda: pipe_ends)
+        self.register('get_pipe', callable=lambda: pipe_ends[1])
         logger.error("Watcher created")
 
     def start(self):

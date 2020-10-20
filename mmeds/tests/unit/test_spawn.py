@@ -24,7 +24,7 @@ class SpawnTests(TestCase):
         self.monitor = sp.Watcher()
         self.monitor.connect()
         self.q = self.monitor.get_queue()
-        # self.pipe = pipe_ends[0]
+        self.pipe = self.monitor.get_pipe()
         self.infos = []
         self.analyses = []
 
