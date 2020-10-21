@@ -11,7 +11,6 @@ import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
 from mmeds.util import log, recieve_email, send_email
 from mmeds.spawn import Watcher
-from multiprocessing import current_process, Queue, Pipe
 
 import cherrypy as cp
 import re
