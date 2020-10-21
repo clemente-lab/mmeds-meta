@@ -222,7 +222,10 @@ ERROR_FP = 'error_log.tsv'
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
 if not DATABASE_DIR.exists():
-    DATABASE_DIR.mkdir()
+    try:
+        DATABASE_DIR.mkdir()
+    except FileExistsError:
+        pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
@@ -231,7 +234,10 @@ DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
 STAT_FILE = DATABASE_DIR / 'mmeds_stats.yaml'
 PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
 if not PROCESS_LOG_DIR.exists():
-    PROCESS_LOG_DIR.mkdir()
+    try:
+        PROCESS_LOG_DIR.mkdir()
+    except FileExistsError:
+        pass
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',
@@ -261,10 +267,16 @@ if not TESTING:
 TEST_PATH = DATABASE_DIR / 'test_files'
 TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
 if not TEST_DIR.exists():
-    TEST_DIR.mkdir()
+    try:
+        TEST_DIR.mkdir()
+    except FileExistsError:
+        pass
 TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
 if not TEST_DIR_0.exists():
-    TEST_DIR_0.mkdir()
+    try:
+        TEST_DIR_0.mkdir()
+    except FileExistsError:
+        pass
 
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
