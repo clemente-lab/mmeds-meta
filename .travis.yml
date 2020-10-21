@@ -48,6 +48,7 @@ script:
 - python ./host/manager.py&
 - python ./mmeds/tests/unit/test.py
 - bash <(curl -s https://codecov.io/bash) -cF unit
+- python ./host/manager.py&
 - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server
   -x --durations=0
 - mysql -u root -e "SELECT * FROM mmeds_data1.user;" > new_out.csv

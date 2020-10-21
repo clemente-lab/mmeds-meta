@@ -20,13 +20,12 @@ from mmeds.log import MMEDSLog
 
 
 testing = True
-q = Queue()
-pipe_ends = Pipe()
-pipe = pipe_ends[0]
-watcher = Watcher(q, pipe_ends[1], current_process(), testing)
-watcher.start()
-server = MMEDSserver(watcher, q, testing)
 logger = MMEDSLog('debug').logger
+monitor = Watcher()
+monitor.connect()
+server = MMEDSserver()
+pipe = monitor.get_pipe()
+queue = monitor.get_queue()
 
 
 def check_page(page):
@@ -206,7 +205,13 @@ class TestServer(helper.CPWebCase):
         # Send an email at the end to ensure there aren't issues with
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
-        watcher.kill()
+        queue.put(('terminate'))
+        logger.error('Waiting on pipe')
+        result = pipe.recv()
+        while not result == 'Watcher exiting':
+            result = pipe.recv()
+        logger.error('Got {} from pipe'.format(result))
+        self.assertEqual(result, 'Watcher exiting')
 
     ####################
     #  Authentication  #
