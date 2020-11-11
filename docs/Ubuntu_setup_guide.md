@@ -34,6 +34,7 @@ copy files to /var/www/:
 ```
 sudo cp [install-dir]/test* /var/www/mmeds_server_data/test_files
 sudo cp [install-dir]/*.gz /var/www/mmeds_server_data/test_files
+sudo cp -R [install-dir]/mmeds/CSS /var/www/html
 ```
 
 Create symbolic link:\
