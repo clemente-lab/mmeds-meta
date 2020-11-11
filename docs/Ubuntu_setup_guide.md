@@ -1,6 +1,6 @@
 # MMEDS Ubuntu Setup Guide
 ## Clone MMEDS
-Pick an install directory for MMEDS and clone it. Will be referred to as [install-dir]
+Pick an install directory for MMEDS and clone it. Will be referred to as [install-dir]\
 `git clone https://github.com/clemente-lab/mmeds-meta/tree/master/mmeds`
 
 Get mmeds secrets unencoded file from David and place in install-dir:\
@@ -37,7 +37,8 @@ sudo cp [install-dir]/*.gz /var/www/mmeds_server_data/test_files
 ```
 
 Create symbolic link:\
-`ln -s [install-dir]/www_files/app.py /var/www/html/myapp.wsgi`
+`ln -s [install-dir]/www_files/app.py /var/www/html/myapp.wsgi`\
+
 Test symbolic link:\
 `readlink -f myapp.wsgi`
 
