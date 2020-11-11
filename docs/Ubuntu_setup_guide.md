@@ -87,13 +87,13 @@ sudo systemctl start mongod
 sudo systemctl start mysql
 ```
 
-In MMEDs install directory:\
+In MMEDs install directory:
 ```
 sudo python host/manager.py
 ```
 
 Get your IP address and load the MMEDs webpage in your browser of preference:\
-`ip addr show`
+`ip addr show`\
 [ip-address]/myapp/
 
 ## Troubleshooting:
