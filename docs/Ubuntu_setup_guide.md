@@ -37,7 +37,7 @@ sudo cp [install-dir]/*.gz /var/www/mmeds_server_data/test_files
 ```
 
 Create symbolic link:\
-`ln -s [install-dir]/www_files/app.py /var/www/html/myapp.wsgi`\
+`ln -s [install-dir]/www_files/app.py /var/www/html/myapp.wsgi`
 
 Test symbolic link:\
 `readlink -f myapp.wsgi`
@@ -46,8 +46,8 @@ Finally, grant general permissions to /var/www\
 `sudo chmod -R 777 ./`
 
 ## mysql setup:
-[Follow install instructions](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/)
-Run the following command:
+[Follow install instructions](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/)\
+Then, run the following commands:
 ```
 mysql
 source [install-dir]/setup.sql
@@ -58,7 +58,7 @@ Create a root user with no password:\
 [instructions here](https://www.digitalocean.com/community/tutorials/how-to-create-a-new-user-and-grant-permissions-in-mysql)
 
 ## MongoDB setup:
-[follow install instructinos here](https://docs.mongodb.com/manual/installation/)
+[follow install instuctions here](https://docs.mongodb.com/manual/installation/)
 
 ## Other installs:
 Run the following commands to install necessary requirements:\
@@ -82,6 +82,7 @@ sudo apt-get install apache2 apache2-utils ssl-cert
 ```
 
 ## Start MMEDs
+Run the following commands:
 ```
 sudo systemctl start apache2
 sudo systemctl start mongod
