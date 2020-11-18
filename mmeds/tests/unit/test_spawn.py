@@ -21,11 +21,10 @@ class SpawnTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.q = mp.Queue()
-        pipe_ends = mp.Pipe()
-        self.watcher = sp.Watcher(self.q, pipe_ends[1], mp.current_process(), testing)
-        self.watcher.start()
-        self.pipe = pipe_ends[0]
+        self.monitor = sp.Watcher()
+        self.monitor.connect()
+        self.q = self.monitor.get_queue()
+        self.pipe = self.monitor.get_pipe()
         self.infos = []
         self.analyses = []
 

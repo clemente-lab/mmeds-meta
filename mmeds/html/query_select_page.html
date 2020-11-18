@@ -1,0 +1,44 @@
+<!-- Header -->
+<header class="w3-container" style="padding-top:22px">
+    <h5><b><i class="fas fa-server" aria-hidden="true"></i> Select Database Operation </b></h5>
+</header>
+
+<div class="w3-container w3-grey">
+    <h2> Study Options </h2>
+    <div class="w3-bar w3-card-4 w3-dark-grey">
+        <button onclick="openStudyAction(event, 'QueryDatabase')" class="action-link w3-half w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Query Database</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'GenerateID')" class="action-link w3-half w3-button">
+            <i class="fa fa-clipboard-check w3-xxxlarge"></i>
+            <div class="w3-clear"></div>
+            <h4>Generate ID</h4>
+        </button>
+    </div>
+
+    <hr>
+
+    <!-- Sections of the page that only appear upon selection -->
+    <div id="QueryDatabase" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> Submit Query </h2>
+        <form action="{query_result_page}" method="post" enctype="multipart/form-data" id="analysis_form">
+            <input class="w3-input w3-border" type="text" name="query" required/>
+            <button class="w3-btn w3-border" type="submit" method="post">Submit Query</button>
+        </form>
+    </div>
+    <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> Select Study for ID Generation </h2>
+        <table class="w3-table-all w3-card-4 w3-hoverable">
+            <thead>
+                <tr class="w3-light-grey">
+                    <th><b>Study Name</b></th>
+                    <th><b>Upload Date</b></th>
+                </tr>
+            </thead>
+            {user_studies}
+        </table>
+        </form>
+    </div>
+</div>

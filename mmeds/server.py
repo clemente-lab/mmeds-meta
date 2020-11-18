@@ -14,26 +14,17 @@ import mmeds.util as util
 import mmeds.config as fig
 
 from mmeds.validate import Validator
-from mmeds.util import (log, create_local_copy, SafeDict)
+from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
-from mmeds.database import Database
-from mmeds.spawn import handle_modify_data
+from mmeds.database.database import Database
+from mmeds.spawn import handle_modify_data, Watcher
 from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
 
 logger = MMEDSLog('server-debug').logger
-
-
-def kill_watcher(monitor):
-    """ A function to shutdown the Watcher instance when the server exits """
-    monitor.terminate()
-    while monitor.is_alive():
-        log('Try to terminate')
-        log('Try to kill')
-        monitor.kill()
 
 
 def catch_server_errors(page_method):
@@ -68,12 +59,15 @@ class MMEDSbase:
     Contains no exposed webpages, only internal functionality used by mutliple pages.
     """
 
-    def __init__(self, watcher, q, testing=False):
+    def __init__(self):
         self.db = None
-        self.testing = bool(int(testing))
-        self.monitor = watcher
-        self.q = q
-        atexit.register(kill_watcher, self.monitor)
+        self.testing = fig.TESTING
+        self.monitor = Watcher()
+        cp.log("{} Connecting to monitor".format(id(self)))
+        self.monitor.connect()
+        cp.log("{} Connected to monitor".format(id(self)))
+        self.q = self.monitor.get_queue()
+        cp.log("{} Got Queue".format(id(self)))
 
     def get_user(self):
         """
@@ -99,12 +93,12 @@ class MMEDSbase:
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
         try:
-            log(cp.session['processes'].get(access_code).exitcode)
+            logger.debug(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
             pass
         if cp.session['processes'].get(access_code) is not None and\
                 cp.session['processes'][access_code].exitcode is None:
-            log('Upload {} in use'.format(access_code))
+            logger.debug('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
 
     def load_webpage(self, page, **kwargs):
@@ -112,6 +106,7 @@ class MMEDSbase:
         Load the requested HTML page, adding the header and topbar
         if necessary as well as any formatting arguments.
         """
+        cp.log("Loading webpage")
         try:
             path, header = HTML_PAGES[page]
 
@@ -125,7 +120,7 @@ class MMEDSbase:
             args.update(kwargs)
 
             # Add the mmeds stats
-            args.update(util.load_mmeds_stats(self.testing))
+            args.update(load_mmeds_stats(self.testing))
 
             # If a user is logged in, load the side bar
             if header:
@@ -144,9 +139,11 @@ class MMEDSbase:
 
             # Format all provided arguments
             page = page.format_map(args)
+            cp.log("Finished loading arguments for web page")
 
         # Log arguments if there is an issue
         except (ValueError, KeyError):
+            cp.log('Exception, arguments not found')
             cp.log('Args')
             cp.log('\n'.join([str(x) for x in kwargs.items()]))
             cp.log('=================================')
@@ -161,13 +158,14 @@ class MMEDSbase:
 
     def add_process(self, ptype, process):
         """ Add an analysis process to the list of processes. """
+        cp.log(f"Adding analysis process {process}")
         self.monitor.add_process(ptype, process)
 
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     ########################################
     #            Download Pages            #
@@ -186,8 +184,8 @@ class MMEDSdownload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSstudy(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     def load_webpage(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
@@ -270,8 +268,8 @@ class MMEDSstudy(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSupload(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
     ########################################
     #         Upload Functionality         #
     ########################################
@@ -428,7 +426,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def modify_upload(self, myData, data_type, access_code):
         """ Modify the data of an existing upload. """
-        log('In modify_upload')
+        logger.debug('In modify_upload')
         try:
             # Handle modifying the uploaded data
             handle_modify_data(access_code,
@@ -580,6 +578,7 @@ class MMEDSupload(MMEDSbase):
                 reads_type = 'class_only'
             barcodes_type = None
 
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
@@ -591,8 +590,8 @@ class MMEDSupload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     ########################################
     #           Account Pages              #
@@ -627,7 +626,7 @@ class MMEDSauthentication(MMEDSbase):
             add_user(username, password1, email, testing=self.testing)
             page = self.load_webpage('login', success='Account created successfully!')
         except (err.InvalidPasswordErrors, err.InvalidUsernameError) as e:
-            logger.error('error, invalid something.\n{}'.format(e.message))
+            cp.log('error, invalid something.\n{}'.format(e.message))
             page = self.load_webpage('auth_sign_up_page', error=e.message)
         return page
 
@@ -676,8 +675,8 @@ class MMEDSauthentication(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
 
     ######################################
     #              Analysis              #
@@ -725,7 +724,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def run_analysis(self, access_code, analysis_method, config, runOnNode):
+    def run_analysis(self, access_code, analysis_method, config, runOnNode=None):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -768,7 +767,7 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
-        log('In view_corrections')
+        logger.debug('In view_corrections')
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
@@ -783,14 +782,94 @@ class MMEDSanalysis(MMEDSbase):
 
 
 @decorate_all_methods(catch_server_errors)
+class MMEDSquery(MMEDSbase):
+    def __init__(self):
+        super().__init__()
+
+    def load_webpage(self, page, **kwargs):
+        """ Add the highlighting for this section of the website """
+        if kwargs.get('query_selected') is None:
+            kwargs['query_selected'] = 'w3-blue'
+        return super().load_webpage(page, **kwargs)
+
+    @cp.expose
+    def query_select(self):
+        study_html = ''' <tr class="w3-hover-blue">
+            <th>
+            <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>
+            </th>
+            <th>{date_created}</th>
+        </tr> '''
+
+        with Database(path='.', testing=self.testing) as db:
+            studies = db.get_all_studies()
+
+        study_list = []
+        for study in studies:
+            study_list.append(study_html.format(study_name=study.study_name,
+                                                select_specimen_page=SERVER_PATH + 'query/select_specimen',
+                                                access_code=study.access_code,
+                                                date_created=study.created,
+                                                ))
+
+        page = self.load_webpage('query_select_page',
+                                 title='Select Study',
+                                 user_studies='\n'.join(study_list))
+
+        return page
+
+    @cp.expose
+    def execute_query(self, query):
+        """ Execute the provided query and format the results as an html table """
+        try:
+            # Set the session to use the current user
+            with Database(testing=self.testing) as db:
+                data, header = db.execute(query)
+                html_data = db.build_html_table(header, data)
+
+            # Create a file with the results of the query
+            query_file = self.get_dir() / 'query.tsv'
+            if header is not None:
+                data = [header] + list(data)
+            with open(query_file, 'w') as f:
+                f.write('\n'.join(list(map(lambda x: '\t'.join(list(map(str, x))), data))))
+            cp.session['download_files']['query'] = query_file
+            page = self.load_webpage('query_result_page', query_result_table=html_data)
+
+        except (err.InvalidSQLError, err.TableAccessError) as e:
+            page = self.load_webpage('query_result_page', error=e.message)
+        return page
+
+    @cp.expose
+    def select_specimen(self, access_code):
+        """ Display the page for generating new Aliquot IDs for a particular study """
+        with Database(testing=self.testing) as db:
+            doc = db.get_docs(study_code=access_code).first()
+
+            sql = """
+SELECT SpecimenID, StudyName FROM Specimen INNER JOIN
+Experiment INNER JOIN
+Study ON Study_idStudy = idStudy
+ON Experiment_idExperiment = idExperiment
+where StudyName = "{}"
+"""
+            data, header = db.execute(sql.format(doc.study_name))
+            specimen_table = db.build_html_table(header, data)
+        page = self.load_webpage('select_specimen_page', specimen_table=specimen_table)
+        return page
+
+
+@decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
-    def __init__(self, watcher, q, testing=False):
-        super().__init__(watcher, q, testing)
-        self.download = MMEDSdownload(watcher, q, testing)
-        self.analysis = MMEDSanalysis(watcher, q, testing)
-        self.upload = MMEDSupload(watcher, q, testing)
-        self.auth = MMEDSauthentication(watcher, q, testing)
-        self.study = MMEDSstudy(watcher, q, testing)
+    def __init__(self):
+        super().__init__()
+        self.download = MMEDSdownload()
+        self.analysis = MMEDSanalysis()
+        self.upload = MMEDSupload()
+        self.auth = MMEDSauthentication()
+        self.study = MMEDSstudy()
+        self.query = MMEDSquery()
+        cp.log("Created sub servers")
 
     def load_webpage(self, page, **kwargs):
         """
@@ -830,13 +909,13 @@ class MMEDSserver(MMEDSbase):
             cp.session['uploaded_files'] = {}
             cp.session['subject_ids'] = None
             page = self.load_webpage('home', title='Welcome to Mmeds')
-            log('Login Successful')
+            logger.debug('Login Successful')
         except err.InvalidLoginError as e:
             page = self.load_webpage('login', error=e.message)
         return page
 
     def exit(self):
-        logger.info('{} exiting'.format(self))
+        cp.log('{} exiting'.format(self))
         cp.engine.exit()
 
     @cp.expose

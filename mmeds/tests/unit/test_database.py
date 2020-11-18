@@ -1,4 +1,5 @@
-from mmeds.database import Database, SQLBuilder
+from mmeds.database.database import Database
+from mmeds.database.sql_builder import SQLBuilder
 from mmeds.error import TableAccessError
 from mmeds.util import sql_log, parse_ICD_codes, load_metadata
 from prettytable import PrettyTable, ALL

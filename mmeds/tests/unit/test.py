@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.database import upload_metadata, upload_otu, upload_lefse
+from mmeds.database.database import upload_metadata, upload_otu, upload_lefse
 
 import mmeds.config as fig
 import mmeds.secrets as sec

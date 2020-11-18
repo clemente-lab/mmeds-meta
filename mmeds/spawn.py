@@ -4,10 +4,12 @@ from pathlib import Path
 from datetime import datetime
 
 import mmeds.config as fig
+import mmeds.secrets as sec
 import yaml
 
 from mmeds.util import create_local_copy, load_config, send_email
-from mmeds.database import MetaDataUploader, Database
+from mmeds.database.database import Database
+from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
@@ -17,9 +19,11 @@ from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
 if fig.TESTING:
-    from multiprocessing import Process, current_process
+    from multiprocessing import Process, current_process, Queue, Pipe
+    from multiprocessing.managers import BaseManager
 else:
-    from multiprocessing.dummy import Process, current_process
+    from multiprocessing.dummy import Process, current_process, Queue, Pipe
+    from multiprocessing.managers import BaseManager
 
 TOOLS = {
     'qiime1': Qiime1,
@@ -29,6 +33,7 @@ TOOLS = {
     'picrust1': PiCRUSt1,
     'test': TestTool
 }
+logger = MMEDSLog('spawn-error').logger
 
 
 def handle_modify_data(access_code, myData, user, data_type, testing):
@@ -44,11 +49,9 @@ def killall(processes):
         p.kill()
 
 
-class Watcher(Process):
+class Watcher(BaseManager):
 
-    logger = MMEDSLog('spawn-debug').logger
-
-    def __init__(self, queue, pipe, parent_pid, testing=False):
+    def __init__(self, address=("", sec.WATCHER_PORT), authkey=sec.AUTH_KEY):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
         =====================================================================================
@@ -56,15 +59,34 @@ class Watcher(Process):
             the necessary information will be added to this queue.
         :testing: A boolean. If true run in testing configuration, otherwise run in deployment configuration.
         """
-        self.testing = testing
-        self.q = queue
+        super().__init__(address, authkey)
+        self.testing = fig.TESTING
+        self.count = 0
         self.processes = []
         self.running_processes = []
-        self.pipe = pipe
-        self.parent_pid = parent_pid
         self.started = []
         self.running_on_node = set()
-        super().__init__()
+        self.logger = logger
+        queue = Queue()
+        self.register('get_queue', callable=lambda: queue)
+        pipe_ends = Pipe()
+        self.pipe = pipe_ends[0]
+        self.register('get_pipe', callable=lambda: pipe_ends[1])
+        logger.error("Watcher created")
+
+    def start(self):
+        super().start()
+        self.set_queue()
+        self.run()
+
+    def set_queue(self):
+        self.q = self.get_queue()
+
+    def print_queue(self):
+        print('My queue is {}'.format(self.q))
+        while True:
+            print(self.q.get())
+            sleep(1)
 
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
                        config_file, testing, run_on_node, kill_stage=-1):
@@ -298,13 +320,17 @@ class Watcher(Process):
             self.check_processes()
             self.write_running_processes()
             self.log_processes()
-
+            self.count += 1
             # If there is nothing in the process queue, sleep
             if self.q.empty():
+                if self.count == 20:
+                    self.logger.error("empty queue, id {}".format(id(self.q)))
+                    self.count = 0
                 sleep(3)
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
+                self.logger.error("got somethin {}".format(process))
                 self.logger.error('Got process requirements')
                 self.logger.error(process)
                 # If the watcher needs to shut down
@@ -326,6 +352,7 @@ class Watcher(Process):
                     self.handle_restart(process)
                 # If it's an upload
                 elif process[0] == 'upload':
+                    logger.error("Got an upload, processing")
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
                     self.logger.error('Sending email')
@@ -335,3 +362,5 @@ class Watcher(Process):
                         self.running_on_node.remove(kwargs.get('access_code'))
 
                     send_email(toaddr, user, message, self.testing, **kwargs)
+                elif process[0] == 'connected':
+                    self.logger.error('Someone connected')

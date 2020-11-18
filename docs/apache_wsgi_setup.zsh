@@ -42,4 +42,7 @@ if [ $0 == "fedora" ];
     # Fix SELinux
     setsebool -P httpd_read_user_content 1
 
+    # Disable selinux
+    sudo setenforce 0
+
 fi

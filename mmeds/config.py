@@ -11,7 +11,6 @@ import mmeds.resources as resources
 import mmeds.CSS as css
 import mmeds
 import hashlib
-import os
 import re
 
 
@@ -19,12 +18,13 @@ TESTING = not (gethostname() == 'web01')
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
-    CSS_DIR = Path(css.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
     DATABASE_DIR = Path().home() / 'mmeds_server_data'
-    SESSION_PATH = DATABASE_DIR / '/CherryPySession'
+    SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
+    CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
+    # SERVER_PATH = '{}:{}/'.format(sec.SERVER_HOST, sec.SERVER_PORT)
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
@@ -32,16 +32,16 @@ else:
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/hydra/projects/MMEDS/mmeds_server_data')
     SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
-    SERVER_ROOT = "https://wallad07.u.hpc.mssm.edu/mmeds_app/"
+    WWW_ROOT = "https://wallad07.u.hpc.mssm.edu/"
+    SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
-    SERVER_PATH = SERVER_ROOT + 'alt_app.wsgi/'
+    SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
-    IMAGE_PATH = SERVER_ROOT + '/mmeds/CSS/'
+    IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
 
 ############################
 # CONFIGURE SERVER GLOBALS #
 ############################
-
 
 
 # Configuration for the CherryPy server
@@ -82,7 +82,7 @@ TESTING_CONFIG = {
     'request.scheme': 'https',
     'Secureheaders.on': True,
     'tools.sessions.secure': True,
-    #'tools.sessions.httponly': True,
+    #  'tools.sessions.httponly': True,
 }
 if TESTING:
     CONFIG['global'].update(TESTING_CONFIG)
@@ -119,9 +119,11 @@ HTML_PAGES = {
     'analysis_select_page': (HTML_DIR / 'analysis_select_page.html', True),
     'analysis_select_tool': (HTML_DIR / 'analysis_select_tool.html', True),
 
-    # TODO below this are outdated
-    'analysis_query': (HTML_DIR / 'analysis_query.html', True),
-
+    # Query Pages
+    'query_select_page': (HTML_DIR / 'query_select_page.html', True),
+    'query_result_page': (HTML_DIR / 'query_result_page.html', True),
+    'select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
+    'generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
 }
 
 # Predefined options for formatting webpages are set here
@@ -149,6 +151,7 @@ HTML_ARGS = {
     'analysis_page': SERVER_PATH + 'analysis/analysis_page',
     'study_page': SERVER_PATH + 'study/select_study',
     'account_page': SERVER_PATH + 'auth/input_password',
+    'query_page': SERVER_PATH + 'query/query_select',
     'settings_page': '#',
 
     # Upload Pages
@@ -175,6 +178,11 @@ HTML_ARGS = {
     'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
     'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
     'sign_up_page': SERVER_PATH + 'auth/sign_up',
+
+    # Query Pages
+    'query_result_page': SERVER_PATH + 'query/execute_query',
+    'generate_id_page': SERVER_PATH + 'query/generate_id',
+    'query_result_table': '',
 
     # Where to insert errors/warnings on a given page
     'error': '',
@@ -214,7 +222,10 @@ ERROR_FP = 'error_log.tsv'
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
 if not DATABASE_DIR.exists():
-    DATABASE_DIR.mkdir()
+    try:
+        DATABASE_DIR.mkdir()
+    except FileExistsError:
+        pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
@@ -223,7 +234,10 @@ DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
 STAT_FILE = DATABASE_DIR / 'mmeds_stats.yaml'
 PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
 if not PROCESS_LOG_DIR.exists():
-    PROCESS_LOG_DIR.mkdir()
+    try:
+        PROCESS_LOG_DIR.mkdir()
+    except FileExistsError:
+        pass
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = [
     'sampling_depth',
@@ -253,10 +267,16 @@ if not TESTING:
 TEST_PATH = DATABASE_DIR / 'test_files'
 TEST_DIR = DATABASE_DIR / 'mmeds_test_dir'
 if not TEST_DIR.exists():
-    TEST_DIR.mkdir()
+    try:
+        TEST_DIR.mkdir()
+    except FileExistsError:
+        pass
 TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
 if not TEST_DIR_0.exists():
-    TEST_DIR_0.mkdir()
+    try:
+        TEST_DIR_0.mkdir()
+    except FileExistsError:
+        pass
 
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
