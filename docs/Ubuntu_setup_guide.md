@@ -71,13 +71,7 @@ Install pip if you haven't already:\
 
 ```
 sudo apt-get install libapache2-mod-wsgi-py3
-sudo pip install psutil==5.7.3
-sudo pip install more-itertools
-sudo pip install jaraco.collections
-sudo pip install zc.lockfile
-sudo pip install cheroot
-sudo pip install portend
-sudo pip install CherryPy
+sudo pip install psutil==5.7.3 more-itertools jaraco.collections zc.lockfile cheroot portend CherryPy
 sudo apt-get install python libexpat1
 sudo apt-get install apache2 apache2-utils ssl-cert
 ```
