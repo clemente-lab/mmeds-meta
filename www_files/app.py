@@ -2,6 +2,7 @@ import importlib.util
 import sys
 import os
 from socket import gethostname
+import cherrypy as cp
 
 # Not testing if running on Web01
 testing = not (gethostname() == 'web01')
@@ -23,24 +24,18 @@ else:
 # Imports
 from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
-from mmeds.spawn import Watcher
-from multiprocessing.dummy import current_process, Queue, Pipe
 from mmeds.log import MMEDSLog
-
 
 print("forcing reload")
 logger = MMEDSLog('wsgi-debug').logger
 
-from sys import argv
 
-import cherrypy as cp
 curdir = os.path.abspath(os.path.dirname(__file__))
 
 
 # Using a global to prevent the app from being generated multiple times
 loaded = False
 
-print('saaaa')
 
 def create_app():
     logger.info("Running create_app")

@@ -8,7 +8,6 @@ import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
 import mmeds.resources as resources
-import mmeds.CSS as css
 import mmeds
 import hashlib
 import re
@@ -24,7 +23,6 @@ if TESTING:
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
-    # SERVER_PATH = '{}:{}/'.format(sec.SERVER_HOST, sec.SERVER_PORT)
 else:
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
@@ -82,7 +80,6 @@ TESTING_CONFIG = {
     'request.scheme': 'https',
     'Secureheaders.on': True,
     'tools.sessions.secure': True,
-    #  'tools.sessions.httponly': True,
 }
 if TESTING:
     CONFIG['global'].update(TESTING_CONFIG)
