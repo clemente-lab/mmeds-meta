@@ -8,7 +8,7 @@ import cherrypy
 if __name__ == '__main__':
 
     # Mount the application
-    cherrypy.tree.graft(application(), "/")
+    cherrypy.tree.graft(application, "/")
 
     # Unsubscribe the default server
     cherrypy.server.unsubscribe()

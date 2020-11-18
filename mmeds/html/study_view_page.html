@@ -22,22 +22,17 @@
 <div class='w3-container w3-grey'>
     <h2> Study Options </h2>
     <div class="w3-bar w3-card-4 w3-dark-grey">
-        <button onclick="openStudyAction(event, 'SelectAnalysis')" class="action-link w3-quarter w3-button">
+        <button onclick="openStudyAction(event, 'SelectAnalysis')" class="action-link w3-third w3-button">
             <i class="fa fa-eye w3-xxxlarge"></i>
             <div class="w3-clear"></div>
             <h4>View Analyses</h4>
         </button>
-        <button onclick="openStudyAction(event, 'ModifyUpload')" class="action-link w3-quarter w3-button">
+        <button onclick="openStudyAction(event, 'ModifyUpload')" class="action-link w3-third w3-button">
             <i class="fa fa-redo w3-xxxlarge"></i>
             <div class="w3-clear"></div>
             <h4>Modify Study</h4>
         </button>
-        <button onclick="openStudyAction(event, 'GenerateID')" class="action-link w3-quarter w3-button">
-            <i class="fa fa-clipboard-check w3-xxxlarge"></i>
-            <div class="w3-clear"></div>
-            <h4>Generate ID</h4>
-        </button>
-        <button onclick="openStudyAction(event, 'DownloadFiles')" class="action-link w3-quarter w3-button">
+        <button onclick="openStudyAction(event, 'DownloadFiles')" class="action-link w3-third w3-button">
             <i class="fa fa-cloud-download w3-xxxlarge"></i>
             <div class="w3-clear"></div>
             <h4>Download Files</h4>
@@ -69,28 +64,6 @@
 
             <button class="w3-button w3-border" type='submit' method='post'>Modify Upload</button>
         </form>
-    </div>
-    <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
-        <h2> Generate ID </h2>
-        <select class="w3-select w3-border" id='specimen'>
-            <option value=1 selected='selected'> Specimen 1 </option>
-            <option value=2> Specimen 2 </option>
-            <option value=3> Specimen 3 </option>
-        </select>
-        <button onclick="generateID()" class="w3-btn w3-border" >Generate ID</button>
-        <br>
-        <div id="IDcontainer" class="w3-container w3-card-2 w3-padding-16" style="display:none">
-            <table class="w3-table-all ">
-                <thead>
-                    <tr class="w3-light-grey">
-                        <th>New Aliquot ID</th>
-                    </tr>
-                </thead>
-                <tr>
-                    <th id="newID"></th>
-                </tr>
-            </table>
-        </div>
     </div>
     <div id="DownloadFiles" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> File to Download </h2>

@@ -409,11 +409,11 @@ def parse_ICD_codes(df):
             else:
                 raise e
         # If the value is null it will error
-        except AttributeError:
-            IBC.append(null)
-            IC.append(null)
-            ID.append(null)
-            IDe.append(null)
+        except (AttributeError, IndexError):
+            IBC.append('NA')
+            IC.append('NA')
+            ID.append('NA')
+            IDe.append('NA')
 
     # Add the parsed values to the dataframe
     df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
@@ -1083,9 +1083,9 @@ def quote_sql(sql, quote='`', **kwargs):
         if len(item) > 66:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, '_', and '*'
-        if not item.replace('_', '').replace('`', '').replace('*', '').isalnum():
+        if not item.replace('_', '').replace('`', '').replace('*', '').replace('.','').isalnum():
             raise InvalidSQLError('Illegal characters in identifier {}.'.format(item) +
-                                  ' Only letters, numbers, "`", "_", and "*" are permitted')
+                                  ' Only letters, numbers, "`", "_", ".", and "*" are permitted')
 
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = sql.format(**quoted_args)

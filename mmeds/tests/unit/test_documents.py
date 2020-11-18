@@ -1,6 +1,6 @@
 from unittest import TestCase
 import mmeds.config as fig
-from mmeds.database import Database
+from mmeds.database.database import Database
 
 from pathlib import Path
 
