@@ -70,10 +70,8 @@ Install pip if you haven't already:\
 [pip](https://linuxize.com/post/how-to-install-pip-on-ubuntu-20.04/)
 
 ```
-sudo apt-get install libapache2-mod-wsgi-py3
+sudo apt-get install libapache2-mod-wsgi-py3 python libexpat1 apache2 apache2-utils ssl-cert
 sudo pip install psutil==5.7.3 more-itertools jaraco.collections zc.lockfile cheroot portend CherryPy
-sudo apt-get install python libexpat1
-sudo apt-get install apache2 apache2-utils ssl-cert
 ```
 
 ## Start MMEDs
@@ -89,16 +87,16 @@ In MMEDs install directory:
 sudo python host/manager.py
 ```
 
-Get your IP address and load the MMEDs webpage in your browser of preference:\
-`ip addr show`\
-[ip-address]/myapp/
+Load the MMEDs webpage in your browser of preference:\
+localhost/myapp/
+
 
 ## Troubleshooting:
 If the webpage isn't loading and/or an error is showing, check Apache2's error log for clues:\
 `vi /var/log/apache2/error.log`
 
-If you get permissions issues connecting to mysql, try adding the skip-grant-tables setting:\
-[skip-grant-tables](https://superuser.com/questions/1127299/how-to-restart-mysql-with-skip-grant-tables-if-you-cant-use-the-root-password)
+If you get permissions issues connecting to mysql, try restarting mysql and supply the skip-grant-tables setting:\
+[skip-grant-tables](https://www.oreilly.com/library/view/mysql-8-cookbook/9781788395809/6ea03335-6ff2-4d4f-a008-48c8cf88fd01.xhtml)
 
 Make sure python3 is the default for your system:\
 `python --version`\
