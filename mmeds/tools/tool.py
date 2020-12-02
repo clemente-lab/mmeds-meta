@@ -258,8 +258,11 @@ class Tool(mp.Process):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append(self.module.replace('load', 'unload'))
-        self.jobtext.append('module load mmeds-stable;')
+        self.jobtext.append('module purge; module load latex; module load anaconda3;')
+        if testing:
+            self.jobtext.append('module load mmeds-stable;')
+        else:
+            self.jobtext.append('source activate mmeds-stable;')
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),

@@ -19,7 +19,10 @@ class Qiime2(Tool):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
                          kill_stage=kill_stage, child=child)
-        load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
+        if testing:
+            load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
+        else:
+            load = ' ml anaconda3; source activate qiime2-2020.8.0'
         self.module = load
         self.jobtext.append(load)
 
