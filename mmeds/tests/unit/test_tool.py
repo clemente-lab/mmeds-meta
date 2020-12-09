@@ -16,7 +16,7 @@ class ToolTests(TestCase):
     @classmethod
     def setUpClass(self):
         self.q = Queue()
-        self.config = load_config(None, fig.TEST_METADATA_SHORTEST)
+        self.config = load_config('', fig.TEST_METADATA_SHORTEST)
         self.tool = Tool(self.q, fig.TEST_USER, 'some new code', fig.TEST_CODE_SHORT,
                          'test', '1', self.config, True, 2, True)
         self.tool.initial_setup()
