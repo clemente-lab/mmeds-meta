@@ -86,12 +86,12 @@ class UtilTests(TestCase):
         config = util.load_config(Path(fig.TEST_CONFIG_ALL), fig.TEST_METADATA)
         assert len(config['taxa_levels']) == 7
 
-        config = util.load_config(Path(fig.TEST_CONFIG_SUB)), fig.TEST_METADATA)
+        config = util.load_config(Path(fig.TEST_CONFIG_SUB), fig.TEST_METADATA)
         assert config['sub_analysis'] == ['SpecimenBodySite']
 
         # Check the config file fail states
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_1)), fig.TEST_METADATA)
+            config = util.load_config(Path(fig.TEST_CONFIG_1), fig.TEST_METADATA)
         assert 'Missing parameter' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
@@ -99,7 +99,7 @@ class UtilTests(TestCase):
         assert 'Invalid metadata column' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_3)), fig.TEST_METADATA)
+            config = util.load_config(Path(fig.TEST_CONFIG_3), fig.TEST_METADATA)
         assert 'Invalid parameter' in e_info.value.message
 
     def test_mmeds_to_MIxS(self):
