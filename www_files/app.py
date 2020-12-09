@@ -27,7 +27,6 @@ from mmeds.config import CONFIG
 from mmeds.log import MMEDSLog
 
 logger = MMEDSLog('wsgi-debug').logger
-logger.debug("forcing reload")
 
 
 curdir = os.path.abspath(os.path.dirname(__file__))

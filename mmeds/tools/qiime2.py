@@ -303,7 +303,7 @@ class Qiime2(Tool):
             '--i-table {}'.format(self.get_file('filtered_table')),
             '--p-sampling-depth {}'.format(self.doc.config['sampling_depth']),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
-            '--p-n-jobs {} '.format(self.num_jobs),
+            '--p-n-jobs-or-threads {} '.format(self.num_jobs),
             '--output-dir {};'.format(self.get_file('core_metrics_results'))
         ]
         self.jobtext.append(' '.join(cmd))

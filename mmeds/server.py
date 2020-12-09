@@ -741,6 +741,7 @@ class MMEDSanalysis(MMEDSbase):
             # The run on node option shouldn't appear for users without
             # elevated privileges but they could get around that by editting
             # the page html directly
+            cp.log(f"runOnNode is ${runOnNode}")
             if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 

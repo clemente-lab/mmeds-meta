@@ -45,7 +45,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         self.queue = queue
-        self.logger = MMEDSLog('debug-{}'.format(self.name)).logger
+        self.logger = MMEDSLog('error-{}'.format(self.name)).logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
         self.tool_type = tool_type
@@ -559,7 +559,7 @@ class Tool(mp.Process):
                 self.logger.debug([child.name for child in self.children])
 
             self.update_doc(analysis_status='started')
-            breakpoint()
+            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node}')
             if self.testing or self.run_on_node:
                 self.logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)
