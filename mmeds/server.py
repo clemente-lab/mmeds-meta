@@ -748,11 +748,11 @@ class MMEDSanalysis(MMEDSbase):
             self.check_upload(access_code)
 
             if config.file is None:
-                config_path = DEFAULT_CONFIG.read_text()
+                config_path = ''
             elif isinstance(config, str):
                 config_path = config
             else:
-                config_path = create_local_copy(config.file, config.name)
+                config_path = create_local_copy(config.file, config.name, self.get_dir())
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
