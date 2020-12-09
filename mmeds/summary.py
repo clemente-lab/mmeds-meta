@@ -45,7 +45,7 @@ def summarize_qiime(summary_path, tool):
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config((path / 'config_file.yaml').read_text(), files['metadata'], True)
+    config = load_config(path / 'config_file.yaml', files['metadata'], True)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
@@ -117,7 +117,7 @@ def summarize_qiime2(path, files, config, study_name):
     log('Start Qiime2 summary')
 
     # Get the environment
-    new_env = setup_environment('qiime2/2019.7')
+    new_env = setup_environment('qiime2/2020.8')
 
     # Setup the summary directory
     summary_files = defaultdict(list)
@@ -151,7 +151,7 @@ def summarize_qiime2(path, files, config, study_name):
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]
     run(cmd, env=new_env, check=True)
-    for metric in ['shannon', 'faith_pd', 'observed_otus']:
+    for metric in ['shannon', 'faith_pd', 'observed_features']:
 
         metric_file = path / 'temp/{}.csv'.format(metric)
         copy(metric_file, files['summary'])
@@ -429,6 +429,7 @@ class MMEDSNotebook():
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
                 cmd += ' --execute --ExecutePreprocessor.timeout=0'
+                cmd += ' --ExecutePreprocessor.kernel_name="mmeds-stable"'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             log('Convert notebook to latex')

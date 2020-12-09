@@ -258,7 +258,7 @@ class Tool(mp.Process):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append('module purge; module load latex; module load anaconda3;')
+        self.jobtext.append('module purge; module load texlive/2018; module load anaconda3;')
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
