@@ -259,7 +259,7 @@ class Tool(mp.Process):
         """ Setup script to create summary. """
         self.add_path('summary')
         self.jobtext.append('module purge; module load latex; module load anaconda3;')
-        if testing:
+        if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
             self.jobtext.append('source activate mmeds-stable;')
