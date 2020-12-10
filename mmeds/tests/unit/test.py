@@ -1,6 +1,7 @@
 from subprocess import run
 from pathlib import Path
 import sys
+import coverage
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.database.database import upload_metadata, upload_otu, upload_lefse
@@ -16,6 +17,7 @@ import mmeds.secrets as sec
 """
 
 testing = True
+coverage.process_startup()
 
 
 def add_users(tests):

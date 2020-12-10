@@ -45,16 +45,14 @@ install:
 - mkdir ~/mmeds_server_data
 - cp -r ./test_files ~/mmeds_server_data/.
 script:
-- coverage run ./host/manager.py&
-- python ./mmeds/tests/unit/test.py
+- coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+- coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py
 - sleep 2 # Wait for manager to terminate
-- coverage combine
 - bash <(curl -s https://codecov.io/bash) -cF unit
-- coverage run ./host/manager.py&
+- coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
 - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server
   -x --durations=0
 - sleep 2 # Wait for manager to terminate
-- coverage combine
 - mysql -u root -e "SELECT * FROM mmeds_data1.user;" > new_out.csv
 - cat new_out.csv
 - bash <(curl -s https://codecov.io/bash) -cF server

@@ -12,7 +12,7 @@ from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, TESTING
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 from mmeds.log import MMEDSLog
 
 import multiprocessing as mp
@@ -540,10 +540,6 @@ class Tool(mp.Process):
                 self.logger.debug('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
-                    # TODO Temporary fix for testing with web services
-                    if False:  # not pid_exists(self._parent_pid):
-                        self.logger.debug('Parent died prior to completion, self destructing')
-                        self.terminate()
                     self.logger.debug('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))
                     sleep(20)
                 self.logger.debug('I {} have awoken'.format(self.name))
