@@ -1,5 +1,7 @@
 from mmeds.spawn import Watcher
-import coverage; coverage.process_startup()
+import coverage;
+
+coverage.process_startup()
 
 
 def main():
