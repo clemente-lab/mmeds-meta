@@ -10,3 +10,5 @@ omit =
     ~/.modules/**
     **/modules/**
     **/bad**
+source =
+    mmeds/

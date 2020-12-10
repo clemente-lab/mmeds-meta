@@ -26,7 +26,6 @@ from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
 from mmeds.log import MMEDSLog
 
-print("forcing reload")
 logger = MMEDSLog('wsgi-debug').logger
 
 

@@ -57,7 +57,7 @@ class ToolsTests(TestCase):
                 self.run_qiime(code, tool_type, analysis_type, data_type, Qiime2)
 
     def test_qiime2_child_setup_analysis(self):
-        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        config = load_config(Path(fig.TEST_CONFIG), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
                     'dada2', config, self.testing, True, analysis=False)
         q2.initial_setup()
@@ -71,7 +71,7 @@ class ToolsTests(TestCase):
     def test_lefse_sub_analysis(self):
         # TODO: Implement conversion from otu table to lefse table so Lefse can be run as a sub analysis
         return
-        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        config = load_config(Path(fig.TEST_CONFIG), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'SomeCodeHere', fig.TEST_CODE_SHORT, 'qiime2', 'dada2',
                     config, self.testing, True, analysis=False)
         q2.initial_setup()
@@ -80,7 +80,7 @@ class ToolsTests(TestCase):
         rmtree(q2.path)
 
     def test_sparcc_sub_analysis(self):
-        config = load_config(Path(fig.TEST_CONFIG).read_text(), fig.TEST_METADATA)
+        config = load_config(Path(fig.TEST_CONFIG), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
                     'dada2', config, self.testing, True, analysis=False)
         q2.initial_setup()

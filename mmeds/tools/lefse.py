@@ -9,7 +9,10 @@ class Lefse(Tool):
                  run_on_node, analysis=True, child=False, restart_stage=0, kill_stage=-1):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
                          analysis=analysis, child=child, restart_stage=restart_stage, kill_stage=kill_stage)
-        load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
+        if testing:
+            load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
+        else:
+            load = 'ml lefse;'
         self.jobtext.append(load)
         self.module = load
 

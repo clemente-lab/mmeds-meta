@@ -12,7 +12,7 @@ from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, TESTING
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 from mmeds.log import MMEDSLog
 
 import multiprocessing as mp
@@ -45,7 +45,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         self.queue = queue
-        self.logger = MMEDSLog('debug-{}'.format(self.name)).logger
+        self.logger = MMEDSLog('error-{}'.format(self.name)).logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
         self.tool_type = tool_type
@@ -258,8 +258,11 @@ class Tool(mp.Process):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append(self.module.replace('load', 'unload'))
-        self.jobtext.append('module load mmeds-stable;')
+        self.jobtext.append('module purge; module load texlive/2018; module load anaconda3;')
+        if self.testing:
+            self.jobtext.append('module load mmeds-stable;')
+        else:
+            self.jobtext.append('source activate mmeds-stable;')
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
@@ -537,10 +540,6 @@ class Tool(mp.Process):
                 self.logger.debug('I am a sub analysis {}'.format(self.name))
                 # Wait for the otu table to show up
                 while not self.get_file('parent_table', True).exists():
-                    # TODO Temporary fix for testing with web services
-                    if False:  # not pid_exists(self._parent_pid):
-                        self.logger.debug('Parent died prior to completion, self destructing')
-                        self.terminate()
                     self.logger.debug('I {} wait on {} to exist'.format(self.name, self.get_file('parent_table', True)))
                     sleep(20)
                 self.logger.debug('I {} have awoken'.format(self.name))
@@ -556,6 +555,7 @@ class Tool(mp.Process):
                 self.logger.debug([child.name for child in self.children])
 
             self.update_doc(analysis_status='started')
+            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node}')
             if self.testing or self.run_on_node:
                 self.logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)

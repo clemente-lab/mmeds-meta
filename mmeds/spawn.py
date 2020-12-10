@@ -18,12 +18,9 @@ from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.log import MMEDSLog
-if fig.TESTING:
-    from multiprocessing import Process, current_process, Queue, Pipe
-    from multiprocessing.managers import BaseManager
-else:
-    from multiprocessing.dummy import Process, current_process, Queue, Pipe
-    from multiprocessing.managers import BaseManager
+
+from multiprocessing import Process, current_process, Queue, Pipe
+from multiprocessing.managers import BaseManager
 
 TOOLS = {
     'qiime1': Qiime1,
@@ -91,7 +88,7 @@ class Watcher(BaseManager):
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
                        config_file, testing, run_on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
-        # Load the config for this analysis
+        # Create access code for this analysis
         with Database('.', owner=user, testing=testing) as db:
             files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
