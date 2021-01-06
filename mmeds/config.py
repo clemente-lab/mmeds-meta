@@ -230,9 +230,16 @@ SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
 STAT_FILE = DATABASE_DIR / 'mmeds_stats.yaml'
 PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
+LOG_CONFIG = STORAGE_DIR / 'log_config.yaml'
 if not PROCESS_LOG_DIR.exists():
     try:
         PROCESS_LOG_DIR.mkdir()
+    except FileExistsError:
+        pass
+LOG_DIR = DATABASE_DIR / 'log_dir'
+if not LOG_DIR.exists():
+    try:
+        LOG_DIR.mkdir()
     except FileExistsError:
         pass
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'

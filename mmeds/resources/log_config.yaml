@@ -1,0 +1,26 @@
+version: 1
+formatters:
+    default:
+        format: '%(levelname)s - %(message)s'
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: default
+        level: DEBUG
+    file:
+        class: logging.handlers.RotatingFileHandler
+        level: DEBUG
+        formatter: default
+        filename: /home/david/Work/ensemble/logging/ensemble_debug.log
+        maxBytes: 10485760
+        backupCount: 20
+        encoding: utf8
+loggers:
+    ensemble_logger:
+        level: DEBUG
+        handlers:
+        - file
+root:
+    handlers:
+    - console
+    level: DEBUG

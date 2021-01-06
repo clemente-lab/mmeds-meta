@@ -2,8 +2,11 @@ import hashlib
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
-from mmeds.util import send_email, log
+from mmeds.util import send_email, load_log_config
+from mmeds.logging import Logger
 from mmeds.error import NoResultError, InvalidLoginError, InvalidPasswordErrors, InvalidUsernameError
+
+Logger('auth', load_log_config())
 
 
 def add_user(username, password, email, privilege_level=0, testing=False):
@@ -35,7 +38,7 @@ def validate_password(username, password, testing=False):
             hashed_password, salt = db.get_hash_and_salt(username)
         # An index error means that the username did not exist
         except NoResultError:
-            log('No user with name: {}'.format(username))
+            Logger.debug('No user with name: {}'.format(username))
             raise InvalidLoginError()
 
     # Hash the password
@@ -46,7 +49,7 @@ def validate_password(username, password, testing=False):
 
     # Check that it matches the stored hash of the password
     if not hashed_password == password_hash:
-        log('No user with name: {} and password_hash: {}'.format(username, password_hash))
+        Logger.debug('No user with name: {} and password_hash: {}'.format(username, password_hash))
         raise InvalidLoginError()
 
 

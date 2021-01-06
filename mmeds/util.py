@@ -43,6 +43,13 @@ class SafeDict(dict):
 #############
 # Functions #
 #############
+def load_log_config():
+    """ Loads the standard MMEDS logging configuration """
+    with open(fig.LOG_CONFIG) as f:
+        log_config = yaml.safe_load(f)
+    log_config['handlers']['file']['filename'] = fig.LOG_DIR / 'MMEDS_log.txt'
+    return log_config
+
 
 def format_alerts(args):
     """ Takes a dictionary and performs formatting on any entries with the keys: 'error', 'warning', or 'success' """

@@ -1,9 +1,6 @@
 import logging
 import mmeds.config as fig
-if fig.TESTING:
-    from multiprocessing import current_process
-else:
-    from multiprocessing.dummy import current_process
+from multiprocessing import current_process
 
 loggers = {}
 
