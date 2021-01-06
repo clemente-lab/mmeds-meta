@@ -2,6 +2,8 @@ import logging
 import inspect
 
 from logging.config import dictConfig
+from yaml import safe_load
+from mmeds.config import LOG_DIR, LOG_CONFIG
 
 __author__ = "Matthew Stapylton"
 __copyright__ = "Copyright 2020, The Clemente Lab"
@@ -11,13 +13,26 @@ __maintainer__ = "David Wallach"
 __email__ = "david.wallach@mssm.edu"
 
 
+def load_log_config():
+    """ Loads the standard MMEDS logging configuration """
+    with open(LOG_CONFIG) as f:
+        log_config = safe_load(f)
+    log_config['handlers']['file']['filename'] = LOG_DIR / 'MMEDS_log.txt'
+    return log_config
+
+
 def format_log_message(log_message):
     """ Performs formatting of lists and dicts passed in as log messages """
+    """
     if isinstance(log_message, list):
         log_message = '[ ' + ',\n'.join([str(x) for x in log_message]) + ' ]'
     elif isinstance(log_message, dict):
         joined_message = ['{}: {}'.format(key, value) for key, value in log_message.items()]
-        log_message = ('{ ' + ',\n'.join(joined_message) + ' }').replace('{', '{{').replace('}', '}}')
+        log_message = ('{ ' + ',\n'.join(joined_message) + ' }')
+    elif isinstance(log_message, int) or isinstance(log_message, float):
+        log_message = str(log_message)
+        """
+    log_message = str(log_message).replace('{', '{{').replace('}', '}}')
     return '{} - {}'.format(inspect.stack()[2][3], log_message)
 
 
@@ -74,3 +89,6 @@ class Logger:
     def error(log_message, *log_args):
         """Logs a message at error level"""
         return Logger._log('error', format_log_message(log_message), *log_args)
+
+
+Logger(load_log_config())

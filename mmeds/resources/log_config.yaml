@@ -24,7 +24,3 @@ loggers:
         level: DEBUG
         handlers:
         - file
-root:
-    handlers:
-    - console
-    level: DEBUG

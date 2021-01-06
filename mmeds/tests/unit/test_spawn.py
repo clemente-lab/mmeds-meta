@@ -3,17 +3,11 @@ from time import sleep
 
 from yaml import safe_load
 
-from mmeds.log import MMEDSLog
+from mmeds.logging import Logger
 import mmeds.config as fig
 import mmeds.spawn as sp
-import multiprocessing as mp
-
-# import multiprocessing_logging as mpl
-# mpl.install_mp_handler()
 
 testing = True
-
-logger = MMEDSLog('test_spawn-debug').logger
 
 
 class SpawnTests(TestCase):
@@ -58,14 +52,14 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([], procs)
-        logger.info('Upload data finished')
+        Logger.info('Upload data finished')
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
             self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
 
-        logger.info('Waiting on analysis')
+        Logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
         info = self.pipe.recv()
         info_0 = self.pipe.recv()
@@ -97,13 +91,13 @@ class SpawnTests(TestCase):
             self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
         for i in range(3):
             result = self.pipe.recv()
-            logger.error('{} result"{}"'.format(i, result))
+            Logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
 
     def test_z_exit(self):
-        logger.error('Putting Terminate')
+        Logger.error('Putting Terminate')
         self.q.put(('terminate'))
-        logger.error('Waiting on pipe')
+        Logger.error('Waiting on pipe')
         result = self.pipe.recv()
-        logger.error('Got {} from pipe'.format(result))
+        Logger.error('Got {} from pipe'.format(result))
         self.assertEqual(result, 'Watcher exiting')

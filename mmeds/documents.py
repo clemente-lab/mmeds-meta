@@ -127,7 +127,6 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        Logger.debug(child)
         return child
 
     def generate_sub_analysis_doc(self, category, value, analysis_code):
@@ -171,7 +170,6 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        Logger.debug(child)
         Logger.debug('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 

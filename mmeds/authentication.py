@@ -2,11 +2,9 @@ import hashlib
 from string import ascii_uppercase, ascii_lowercase
 from mmeds.database.database import Database
 from mmeds.config import STORAGE_DIR, get_salt
-from mmeds.util import send_email, load_log_config
+from mmeds.util import send_email
 from mmeds.logging import Logger
 from mmeds.error import NoResultError, InvalidLoginError, InvalidPasswordErrors, InvalidUsernameError
-
-Logger(load_log_config())
 
 
 def add_user(username, password, email, privilege_level=0, testing=False):
