@@ -16,8 +16,13 @@ handlers:
         backupCount: 20
         encoding: utf8
 loggers:
-    ensemble_logger:
+    mmeds_logger:
         level: DEBUG
+        handlers:
+        - file
+        - console
+    sql_logger:
+        level: INFO
         handlers:
         - file
 root:

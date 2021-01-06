@@ -3,8 +3,6 @@ import inspect
 
 from logging.config import dictConfig
 
-from mmeds.config import LOG_DIR
-
 __author__ = "Matthew Stapylton"
 __copyright__ = "Copyright 2020, The Clemente Lab"
 __credits__ = ["David Wallach", "Matthew Stapylton", "Jose Clemente"]
@@ -15,25 +13,22 @@ __email__ = "david.wallach@mssm.edu"
 
 class Logger:
 
-    def __init__(self, logger_name, log_config):
+    def __init__(self, log_config):
         """
         Initializes python's logger object
         Requires the log_config section of ensemble_yaml.config
         """
-        self.logger_name = logger_name
         dictConfig(log_config)
-        breakpoint()
 
     def _log(log_level, log_message, *log_args):
         """
         Logs the string passed to this method.
         log_args is are optional arguments that are formatted to the log message.
         """
-        breakpoint()
 
         # Retrieve the logger.
         # TODO: Logic to handle multiple loggers.
-        logger = logging.getLogger('new_logger')
+        logger = logging.getLogger('mmeds_logger')
 
         if logger is None:
             print('No logger initialized')
