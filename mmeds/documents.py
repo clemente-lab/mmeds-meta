@@ -2,13 +2,11 @@ import mongoengine as men
 from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
-from mmeds.config import DOCUMENT_LOG, TOOL_FILES
-from mmeds.util import copy_metadata, log, camel_case
-from mmeds.error import AnalysisError
-from mmeds.log import MMEDSLog
 from ppretty import ppretty
-
-logger = MMEDSLog('debug').logger
+from mmeds.config import DOCUMENT_LOG, TOOL_FILES
+from mmeds.util import copy_metadata, camel_case
+from mmeds.error import AnalysisError
+from mmeds.logging import Logger
 
 
 class MMEDSDoc(men.Document):
@@ -129,12 +127,12 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        logger.debug(child)
+        Logger.debug(child)
         return child
 
     def generate_sub_analysis_doc(self, category, value, analysis_code):
         """ Creates a new AnalysisDoc for a child analysis """
-        log('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
+        Logger.debug('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
 
         count = 0
         child_path = Path(self.path) / camel_case('{}_{}_{}'.format(category[1], value, count))
@@ -173,8 +171,8 @@ class MMEDSDoc(men.Document):
 
         # Update the child's attributes
         child.save()
-        logger.debug(child)
-        logger.debug('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
+        Logger.debug(child)
+        Logger.debug('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 
     def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code):
@@ -198,13 +196,13 @@ class MMEDSDoc(men.Document):
         new_dir.mkdir()
 
         files = {}
-        logger.debug('Creating analysis {}'.format(name))
+        Logger.debug('Creating analysis {}'.format(name))
 
         try:
             for file_key in TOOL_FILES[tool_type]:
                 # Create links to the files if they exist
                 if self.files.get(file_key) is not None:
-                    logger.debug('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
+                    Logger.debug('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
                     (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
                     files[file_key] = new_dir / Path(self.files[file_key]).name
         except KeyError:
@@ -241,5 +239,5 @@ class MMEDSDoc(men.Document):
         with open(DOCUMENT_LOG, 'a') as f:
             f.write('-\t'.join([str(x) for x in [doc.study_name, doc.owner, doc.doc_type, doc.analysis_status,
                                                  datetime.now(), doc.path, doc.access_code]]) + '\n')
-            log('saved analysis doc')
+            Logger.debug('saved analysis doc')
         return doc

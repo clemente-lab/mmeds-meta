@@ -46,23 +46,31 @@ class Logger:
     @staticmethod
     def info(log_message, *log_args):
         """Logs a message at info level"""
+        if isinstance(log_message, list):
+            log_message = ', '.join([str(x) for x in log_message])
         log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
         return Logger._log('info', log_message, *log_args)
 
     @staticmethod
     def debug(log_message, *log_args):
         """Logs a message at debug level"""
+        if isinstance(log_message, list):
+            log_message = ', '.join([str(x) for x in log_message])
         log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
         return Logger._log('debug', log_message, *log_args)
 
     @staticmethod
     def warn(log_message, *log_args):
         """Logs a message at warning level"""
+        if isinstance(log_message, list):
+            log_message = ', '.join([str(x) for x in log_message])
         log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
         return Logger._log('warn', log_message, *log_args)
 
     @staticmethod
     def error(log_message, *log_args):
         """Logs a message at error level"""
+        if isinstance(log_message, list):
+            log_message = ', '.join([str(x) for x in log_message])
         log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
         return Logger._log('error', log_message, *log_args)

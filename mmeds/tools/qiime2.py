@@ -3,9 +3,10 @@ from shutil import rmtree
 from pandas import read_csv
 
 from mmeds.config import DATABASE_DIR
-from mmeds.util import log, setup_environment
+from mmeds.util import setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tools.tool import Tool
+from mmeds.logging import Logger
 
 
 class Qiime2(Tool):
@@ -409,7 +410,7 @@ class Qiime2(Tool):
             'qiime composition ancom',
             '--i-table {}'.format(self.get_file(infile)),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
-            '--p-transform-function log',
+            '--p-transform-function Logger.debug',
             '--m-metadata-column {}'.format(category),
             '--o-visualization {}'.format(self.get_file(new_file))
         ]
@@ -437,8 +438,8 @@ class Qiime2(Tool):
 
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
-        log('Run sanity check on qiime2')
-        log(self.doc.keys())
+        Logger.debug('Run sanity check on qiime2')
+        Logger.debug(self.doc.keys())
         new_env = setup_environment('qiime2/2019.1')
         # Check the counts at the beginning of the analysis
         cmd = ['qiime', 'tools', 'export',
@@ -455,7 +456,7 @@ class Qiime2(Tool):
                '--input-path', str(self.get_file('filtered_table', True)),
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
-        log(cmd)
+        Logger.debug(cmd)
 
         cmd = ['biom', 'summarize-table', '-i', str(self.path / 'temp' / 'feature-table.biom')]
         result = run(cmd, capture_output=True, check=True, env=new_env)
@@ -467,8 +468,8 @@ class Qiime2(Tool):
             message = 'Large difference ({}%) between initial and final counts'
             message = message.format(int(100 * (initial_count - final_count) /
                                          (initial_count + final_count)))
-            log('Sanity check result')
-            log(message)
+            Logger.debug('Sanity check result')
+            Logger.debug(message)
             raise AnalysisError(message)
 
     def setup_stage_0(self):

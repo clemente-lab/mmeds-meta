@@ -15,10 +15,7 @@ from mmeds.util import (quote_sql, parse_ICD_codes, send_email, create_local_cop
                         load_metadata, join_metadata, write_metadata)
 from mmeds.database.sql_builder import SQLBuilder
 from mmeds.documents import MMEDSDoc
-from mmeds.log import MMEDSLog
-
-logger = MMEDSLog('metadata-uploader-debug').logger
-sql_logger = MMEDSLog('metadata-uploader-info').logger
+from mmeds.logging import Logger
 
 
 class MetaDataUploader(Process):
@@ -37,8 +34,8 @@ class MetaDataUploader(Process):
         """
         warnings.simplefilter('ignore')
         super().__init__()
-        logger.debug('MetadataUploader created with params')
-        logger.debug({
+        Logger.debug('MetadataUploader created with params')
+        Logger.debug({
             'subject_metadata': subject_metadata,
             'specimen_metadata': specimen_metadata,
             'owner': owner,
@@ -149,7 +146,7 @@ class MetaDataUploader(Process):
         :testing: True if the server is running locally.
         :datafiles: A list of datafiles to be uploaded
         """
-        logger.debug('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
+        Logger.debug('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
 
         # Create a copy of the MetaData
         with open(self.subject_metadata, 'rb') as f:
@@ -281,8 +278,8 @@ class MetaDataUploader(Process):
         # Go through each row
         for row in range(len(self.df.index)):
             sql, args = self.builder.build_sql(table, row)
-            sql_logger.info(sql)
-            sql_logger.info(args)
+            Logger.info(sql)
+            Logger.info(args)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
             # Create the entry

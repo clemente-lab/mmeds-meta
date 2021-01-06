@@ -1,13 +1,15 @@
-from mmeds.database.database import Database
-from mmeds.database.sql_builder import SQLBuilder
-from mmeds.error import TableAccessError
-from mmeds.util import sql_log, parse_ICD_codes, load_metadata
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
-import mmeds.config as fig
 import pymysql as pms
 import pandas as pd
 import pytest
+
+import mmeds.config as fig
+from mmeds.database.database import Database
+from mmeds.database.sql_builder import SQLBuilder
+from mmeds.error import TableAccessError
+from mmeds.util import parse_ICD_codes, load_metadata
+from mmeds.logging import Logger
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
 # Validating each value if it is successfully saved to the database.
@@ -65,18 +67,18 @@ class DatabaseTests(TestCase):
     #   Test SQL   #
     ################
     def test_a_tables(self):
-        sql_log('====== Test Database Start ======')
+        Logger.info('====== Test Database Start ======')
         tables = self.df.columns.levels[0].tolist()
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
         del tables[tables.index('ICDCode')]
         for row in range(len(self.df)):
             for table in tables:
-                sql_log('Query table {}'.format(table))
+                Logger.info('Query table {}'.format(table))
                 # Create the query
                 sql, args = self.builder.build_sql(table, row)
-                sql_log(sql)
-                sql_log(args)
+                Logger.info(sql)
+                Logger.info(args)
                 self.c = self.db.cursor()
                 found = self.c.execute(sql, args)
                 # Assert there exists at least one entry matching this description
@@ -84,24 +86,24 @@ class DatabaseTests(TestCase):
                     assert found > 0
                     self.c.close()
                 except AssertionError as e:
-                    sql_log(self.df.iloc[row])
-                    sql_log(sql)
-                    sql_log("Didn't find entry {}:{}".format(table, row))
-                    sql_log(self.c.fetchall())
+                    Logger.info(self.df.iloc[row])
+                    Logger.info(sql)
+                    Logger.info("Didn't find entry {}:{}".format(table, row))
+                    Logger.info(self.c.fetchall())
                     self.c.close()
                     raise e
 
     def test_b_junction_tables(self):
-        sql_log('TEST_B_JUNCTION_TABLES')
+        Logger.info('TEST_B_JUNCTION_TABLES')
         self.c = self.db.cursor()
         self.c.execute('SHOW TABLES')
         # Get the junction tables
         jtables = [x[0] for x in self.c.fetchall() if 'has' in x[0]]
         for row in range(len(self.df)):
             for jtable in jtables:
-                sql_log('Check table: {}'.format(jtable))
+                Logger.info('Check table: {}'.format(jtable))
                 sql, args = self.builder.build_sql(jtable, row)
-                sql_log(sql)
+                Logger.info(sql)
                 self.c = self.db.cursor()
                 jresult = self.c.execute(sql, args)
                 self.c.close()
@@ -169,7 +171,7 @@ class DatabaseTests(TestCase):
         self.c.execute(sql.format(fig.SQL_DATABASE, fig.TEST_USER_0))
         user_id = int(self.c.fetchone()[0])
         self.c.close()
-        sql_log(user_id)
+        Logger.info(user_id)
         table_counts = {}
         user_counts = {}
 

@@ -117,7 +117,6 @@ class UtilTests(TestCase):
         html = util.generate_error_html(fig.TEST_SUBJECT_ERROR, errors, warnings)
         # Check that the html is valid
         document, errors = tidy_document(html)
-        util.log(errors)
         assert not errors
 
     def test_copy_metadata(self):
