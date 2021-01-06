@@ -45,7 +45,8 @@ else:
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        'log.error_file': str(DATABASE_DIR / 'site.log'),
+        'log.access_file': str(DATABASE_DIR / 'site_access.log'),
+        'log.error_file': str(DATABASE_DIR / 'site_error.log'),
         'tools.sessions.storage_class': cp.lib.sessions.FileSession,
         'tools.sessions.storage_path': SESSION_PATH,
         'tools.sessions.name': 'latest_sessions',

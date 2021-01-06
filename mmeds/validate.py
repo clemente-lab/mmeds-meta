@@ -8,10 +8,8 @@ from mmeds.util import load_ICD_codes, is_numeric, load_metadata
 from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
 
-from mmeds.log import MMEDSLog
+from mmeds.logging import Logger
 
-
-logger = MMEDSLog('validate-error').logger
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
 
@@ -440,6 +438,7 @@ class Validator:
 
     def run(self):
         """ Perform the validation. """
+        Logger.debug("Running metadata validation")
         subjects = pd.DataFrame()
         # Try loading the metadata to be validated
         try:

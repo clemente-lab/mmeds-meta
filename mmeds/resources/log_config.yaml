@@ -20,9 +20,8 @@ loggers:
         level: DEBUG
         handlers:
         - file
-        - console
     sql_logger:
-        level: INFO
+        level: DEBUG
         handlers:
         - file
 root:

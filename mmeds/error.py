@@ -1,11 +1,10 @@
-from mmeds.log import MMEDSLog
+from mmeds.logging import Logger
 
 
 class MmedsError(Exception):
     """ Base class for errors in this module. """
     def __init__(self):
-        log = MMEDSLog('Info')
-        log.error('A {} was raised. Message {}'.format(type(self), self.message))
+        Logger.error('A {} was raised. Message {}'.format(type(self), self.message))
 
 
 class MissingUploadError(MmedsError):

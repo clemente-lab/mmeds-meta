@@ -11,6 +11,16 @@ __maintainer__ = "David Wallach"
 __email__ = "david.wallach@mssm.edu"
 
 
+def format_log_message(log_message):
+    """ Performs formatting of lists and dicts passed in as log messages """
+    if isinstance(log_message, list):
+        log_message = '[ ' + ',\n'.join([str(x) for x in log_message]) + ' ]'
+    elif isinstance(log_message, dict):
+        joined_message = ['{}: {}'.format(key, value) for key, value in log_message.items()]
+        log_message = ('{ ' + ',\n'.join(joined_message) + ' }').replace('{', '{{').replace('}', '}}')
+    return '{} - {}'.format(inspect.stack()[2][3], log_message)
+
+
 class Logger:
 
     def __init__(self, log_config):
@@ -29,48 +39,38 @@ class Logger:
         # Retrieve the logger.
         # TODO: Logic to handle multiple loggers.
         logger = logging.getLogger('mmeds_logger')
-
-        if logger is None:
-            print('No logger initialized')
-        elif log_level.lower() == 'info':
-            logger.info(log_message.format(*log_args))
-        elif log_level.lower() == 'debug':
-            logger.debug(log_message.format(*log_args))
-        elif log_level.lower() == 'warn':
-            logger.warning(log_message.format(*log_args))
-        elif log_level.lower() == 'error':
-            logger.error(log_message.format(*log_args))
-        else:
-            logger.error('Incorrect logging level')
+        try:
+            if logger is None:
+                print('No logger initialized')
+            elif log_level.lower() == 'info':
+                logger.info(log_message.format(*log_args))
+            elif log_level.lower() == 'debug':
+                logger.debug(log_message.format(*log_args))
+            elif log_level.lower() == 'warn':
+                logger.warning(log_message.format(*log_args))
+            elif log_level.lower() == 'error':
+                logger.error(log_message.format(*log_args))
+            else:
+                logger.error('Incorrect logging level')
+        except KeyError:
+            breakpoint()
 
     @staticmethod
     def info(log_message, *log_args):
         """Logs a message at info level"""
-        if isinstance(log_message, list):
-            log_message = ', '.join([str(x) for x in log_message])
-        log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
-        return Logger._log('info', log_message, *log_args)
+        return Logger._log('info', format_log_message(log_message), *log_args)
 
     @staticmethod
     def debug(log_message, *log_args):
         """Logs a message at debug level"""
-        if isinstance(log_message, list):
-            log_message = ', '.join([str(x) for x in log_message])
-        log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
-        return Logger._log('debug', log_message, *log_args)
+        return Logger._log('debug', format_log_message(log_message), *log_args)
 
     @staticmethod
     def warn(log_message, *log_args):
         """Logs a message at warning level"""
-        if isinstance(log_message, list):
-            log_message = ', '.join([str(x) for x in log_message])
-        log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
-        return Logger._log('warn', log_message, *log_args)
+        return Logger._log('warn', format_log_message(log_message), *log_args)
 
     @staticmethod
     def error(log_message, *log_args):
         """Logs a message at error level"""
-        if isinstance(log_message, list):
-            log_message = ', '.join([str(x) for x in log_message])
-        log_message = str(inspect.stack()[2][3]) + ' - ' + log_message
-        return Logger._log('error', log_message, *log_args)
+        return Logger._log('error', format_log_message(log_message), *log_args)

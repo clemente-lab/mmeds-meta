@@ -9,10 +9,8 @@ from mmeds.tools.sparcc import SparCC
 from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.util import load_config
-from mmeds.log import MMEDSLog
+from mmeds.logging import Logger
 import mmeds.config as fig
-
-logger = MMEDSLog('debug').logger
 
 
 class ToolsTests(TestCase):
@@ -27,9 +25,8 @@ class ToolsTests(TestCase):
     def run_qiime(self, code, tool_type, analysis_type, data_type, Qiime):
         qiime = Qiime(self.q, fig.TEST_USER, 'random_code', code, tool_type, analysis_type, self.config,
                       self.testing, True, analysis=False)
-        logger.debug('Starting {}, id is {}'.format(qiime.name, id(qiime)))
+        Logger.debug('Starting {}, id is {}'.format(qiime.name, id(qiime)))
         qiime.run()
-        logger.debug('Ran {}'.format(qiime.name, id(qiime)))
         self.assertEqual(qiime.doc.reads_type, data_type)
         rmtree(qiime.path)
 

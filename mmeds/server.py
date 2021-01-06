@@ -1,6 +1,5 @@
 import os
 import cherrypy as cp
-import atexit
 import getpass
 
 from cherrypy.lib import static
@@ -15,16 +14,13 @@ import mmeds.config as fig
 
 from mmeds.validate import Validator
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
-from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
+from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data, Watcher
-from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
-
-logger = MMEDSLog('server-debug').logger
 
 
 def catch_server_errors(page_method):
@@ -93,12 +89,12 @@ class MMEDSbase:
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
         try:
-            logger.debug(cp.session['processes'].get(access_code).exitcode)
+            cp.log(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
             pass
         if cp.session['processes'].get(access_code) is not None and\
                 cp.session['processes'][access_code].exitcode is None:
-            logger.debug('Upload {} in use'.format(access_code))
+            cp.log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
 
     def load_webpage(self, page, **kwargs):
@@ -410,7 +406,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        logger.debug('upload/retry_upload')
+        cp.log('upload/retry_upload')
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'subject':
             page = self.load_webpage('upload_metadata_file',
@@ -426,7 +422,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def modify_upload(self, myData, data_type, access_code):
         """ Modify the data of an existing upload. """
-        logger.debug('In modify_upload')
+        cp.log('In modify_upload')
         try:
             # Handle modifying the uploaded data
             handle_modify_data(access_code,
@@ -768,7 +764,7 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
-        logger.debug('In view_corrections')
+        cp.log('In view_corrections')
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
@@ -910,7 +906,7 @@ class MMEDSserver(MMEDSbase):
             cp.session['uploaded_files'] = {}
             cp.session['subject_ids'] = None
             page = self.load_webpage('home', title='Welcome to Mmeds')
-            logger.debug('Login Successful')
+            cp.log('Login Successful')
         except err.InvalidLoginError as e:
             page = self.load_webpage('login', error=e.message)
         return page
