@@ -154,11 +154,10 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_da_download(self):
-        return
+        Logger.info('da download')
         self.login()
         self.download_page_fail()
-        self.download_block()
-        self.download()
+        # self.download()
         self.logout()
 
     def test_db_download(self):
@@ -624,36 +623,33 @@ class TestServer(helper.CPWebCase):
     #############
 
     def download_page_fail(self):
-        self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
+        self.getPage("/study/view_study?access_code={}".format(self.server_code),
                      headers=self.cookies)
         self.assertStatus('200 OK')
-        page = server.load_webpage('upload_select_page',
-                                   user=self.server_user,
-                                   upload_selected='w3-blue',
+        page = server.load_webpage('home',
+                                   error=err.MissingUploadError().message,
+                                   title='Welcome to Mmeds',
+                                   analysis_selected='',
+                                   study_selected='w3-blue',
                                    home_selected='',
-                                   error=err.MissingUploadError().message)
-
+                                   privilege='',
+                                   user=self.server_user)
         self.assertBody(page)
-        self.getPage('/auth/logout', headers=self.cookies)
-
-    def download_block(self):
-        # Start test analysis
-        address = '/analysis/run_analysis?access_code={}&tool_type={}&analysis_type={}&config='
-        tool, analysis = fig.TEST_TOOL.split('-')
-        self.getPage(address.format(self.access_code, tool, analysis), headers=self.cookies)
-
-        # Wait for analysis to finish
-        sleep(int(fig.TEST_TOOL.split('-')[-1]))
-
-        # Try to access again
-        self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
-
-        self.assertStatus('200 OK')
-        self.getPage('/logout', headers=self.cookies)
 
     def download(self):
+
+        self.getPage("/study/select_study", headers=self.cookies)
+        # Parse the body of the page
+        body = self.body.decode('utf-8')
+        # Grab the access code
+        code = re.findall('access_code=(.+?)">', body)
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(code[1]), headers=self.cookies)
+        self.assertStatus('200 OK')
+        breakpoint()
+
         for download in fig.TEST_FILES:
-            address = '/download/select_download?download={}'.format(download)
+            address = '/download/download_file?file_name={}'.format(download)
             self.getPage(address, headers=self.cookies)
             self.assertStatus('200 OK')
 

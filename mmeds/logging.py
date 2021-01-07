@@ -23,15 +23,6 @@ def load_log_config():
 
 def format_log_message(log_message):
     """ Performs formatting of lists and dicts passed in as log messages """
-    """
-    if isinstance(log_message, list):
-        log_message = '[ ' + ',\n'.join([str(x) for x in log_message]) + ' ]'
-    elif isinstance(log_message, dict):
-        joined_message = ['{}: {}'.format(key, value) for key, value in log_message.items()]
-        log_message = ('{ ' + ',\n'.join(joined_message) + ' }')
-    elif isinstance(log_message, int) or isinstance(log_message, float):
-        log_message = str(log_message)
-        """
     log_message = str(log_message).replace('{', '{{').replace('}', '}}')
     return '{} - {}'.format(inspect.stack()[2][3], log_message)
 
@@ -52,7 +43,6 @@ class Logger:
         """
 
         # Retrieve the logger.
-        # TODO: Logic to handle multiple loggers.
         logger = logging.getLogger('mmeds_logger')
         try:
             if logger is None:

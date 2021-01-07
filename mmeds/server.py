@@ -226,39 +226,43 @@ class MMEDSstudy(MMEDSbase):
     @cp.expose
     def view_study(self, access_code):
         """ The page for viewing information on a particular study """
-        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
-            # Check the study belongs to the user only if the user doesn't have elevated privileges
-            study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
-            docs = db.get_docs(study_code=access_code)
+        try:
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                # Check the study belongs to the user only if the user doesn't have elevated privileges
+                study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+                docs = db.get_docs(study_code=access_code)
 
-        option_template = '<option value="{}">{}</option>'
+            option_template = '<option value="{}">{}</option>'
 
-        # Get analyses related to this study
-        analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
-                                                                              doc.analysis_type,
-                                                                              doc.created.strftime("%Y-%m-%d")))
-                    for doc in docs]
+            # Get analyses related to this study
+            analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
+                                                                                  doc.analysis_type,
+                                                                                  doc.created.strftime("%Y-%m-%d")))
+                        for doc in docs]
 
-        # TODO pass study params as kwargs
-        # Get files downloadable from this study
-        study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
+            # TODO pass study params as kwargs
+            # Get files downloadable from this study
+            study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
 
-        for key, path in study.files.items():
-            cp.session['download_files'][key] = path
+            for key, path in study.files.items():
+                cp.session['download_files'][key] = path
 
-        page = self.load_webpage('study_view_page',
-                                 title=study.study_name,
-                                 study_name=study.study_name,
-                                 date_created=study.created,
-                                 last_accessed=study.last_accessed,
-                                 reads_type=study.reads_type,
-                                 barcodes_type=study.barcodes_type,
-                                 access_code=study.access_code,
-                                 owner=study.owner,
-                                 email=study.email,
-                                 path=study.path,
-                                 study_analyses=analyses,
-                                 study_files=study_files)
+            page = self.load_webpage('study_view_page',
+                                     title=study.study_name,
+                                     study_name=study.study_name,
+                                     date_created=study.created,
+                                     last_accessed=study.last_accessed,
+                                     reads_type=study.reads_type,
+                                     barcodes_type=study.barcodes_type,
+                                     access_code=study.access_code,
+                                     owner=study.owner,
+                                     email=study.email,
+                                     path=study.path,
+                                     study_analyses=analyses,
+                                     study_files=study_files)
+        except err.MissingUploadError:
+            page = self.load_webpage('home', error=err.MissingUploadError().message, title='Welcome to Mmeds')
+
         return page
 
 

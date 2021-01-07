@@ -168,3 +168,21 @@ class UtilTests(TestCase):
 
         self.assertEquals('select `HostSubjectId` from `Subjects`',
                           util.quote_sql('select {col} from {table}', col='HostSubjectId', table='Subjects'))
+
+    def test_safe_dict(self):
+        test_dict = util.SafeDict({
+            'val1': 1,
+            'val2': 2
+        })
+
+        # Assert the missing item is handled
+        to_format = '{val1} is less than {val2} is less than {val3}'
+        formatted = '1 is less than 2 is less than {val3}'
+        self.assertEqual(to_format.format_map(test_dict), formatted)
+        self.assertIn('val3', test_dict.missed)
+
+        # Assert the missed set is updated
+        test_dict['val3'] = 3
+        all_formatted = '1 is less than 2 is less than 3'
+        self.assertEqual(to_format.format_map(test_dict), all_formatted)
+        self.assertNotIn('val3', test_dict.missed)
