@@ -9,7 +9,7 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import log, recieve_email, send_email
+from mmeds.util import recieve_email, send_email
 from mmeds.spawn import Watcher
 from mmeds.logging import Logger
 
@@ -466,7 +466,7 @@ class TestServer(helper.CPWebCase):
                                    metadata_type='subject',
                                    error='yaml is not a valid filetype.')
         self.assertBody(page)
-        log('Checked invalid filetype')
+        Logger.debug('Checked invalid filetype')
 
         # Check a subject metadata file that errors
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ERROR], ['text/tab-seperated-values'])
@@ -478,7 +478,7 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
-        log('Checked metadata that errors')
+        Logger.debug('Checked metadata that errors')
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_WARN], ['text/tab-seperated-values'])
@@ -494,7 +494,7 @@ class TestServer(helper.CPWebCase):
                                    next_page='{retry_upload_page}')
 
         self.assertBody(page)
-        log('Checked metadata that warns')
+        Logger.debug('Checked metadata that warns')
 
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
@@ -512,7 +512,7 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
-        log('Checked metadata that errors')
+        Logger.debug('Checked metadata that errors')
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
@@ -529,7 +529,7 @@ class TestServer(helper.CPWebCase):
                                    home_selected='',
                                    next_page='{upload_data_page}')
         self.assertBody(page)
-        log('Checked metadata that warns')
+        Logger.debug('Checked metadata that warns')
 
         # Continue with warnings
         self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
@@ -541,7 +541,7 @@ class TestServer(helper.CPWebCase):
                                    dual_barcodes='style="display:none"',
                                    home_selected='')
         self.assertBody(page)
-        log('Checked a metadata file with no problems')
+        Logger.debug('Checked a metadata file with no problems')
 
     def upload_data(self):
         self.getPage('/upload/upload_data', self.cookies)
