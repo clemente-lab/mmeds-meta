@@ -11,15 +11,14 @@ import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
 from mmeds.util import log, recieve_email, send_email
 from mmeds.spawn import Watcher
+from mmeds.logging import Logger
 
 import cherrypy as cp
 import re
 from cherrypy.test import helper
-from mmeds.log import MMEDSLog
 
 
 testing = True
-logger = MMEDSLog('debug').logger
 monitor = Watcher()
 monitor.connect()
 server = MMEDSserver()
@@ -102,11 +101,11 @@ class TestServer(helper.CPWebCase):
         cp.tree.mount(server)
 
     def test_aa_setup(self):
-        logger.info('===== Test Server Start =====')
+        Logger.info('===== Test Server Start =====')
         add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
     def test_ab_index(self):
-        logger.info('ab index')
+        Logger.info('ab index')
         self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
@@ -114,34 +113,34 @@ class TestServer(helper.CPWebCase):
         check_page(page_body)
 
     def test_ba_sign_up(self):
-        logger.info('ba sign up')
+        Logger.info('ba sign up')
         self.not_logged_in()
         self.sign_up_fail()
         self.sign_up_success()
 
     def test_bc_login(self):
-        logger.info('bc login')
+        Logger.info('bc login')
         self.login_fail_password()
         self.login_fail_username()
         self.login()
         self.logout()
 
     def test_bd_reset_password(self):
-        logger.info('bd reset password')
+        Logger.info('bd reset password')
         self.tp = self.reset_password()
         self.login(True)
         self.change_password()
         self.logout()
 
     def test_ca_animal_upload(self):
-        logger.info('ca animal upload')
+        Logger.info('ca animal upload')
         self.login()
         self.upload_animal_metadata()
         self.upload_otu_data()
         self.logout()
 
     def test_cb_upload(self):
-        logger.info('cb upload')
+        Logger.info('cb upload')
         self.login()
         self.upload_metadata()
         self.upload_data()
@@ -149,7 +148,7 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_da_select_study(self):
-        logger.info('da view study')
+        Logger.info('da view study')
         self.login()
         self.select_study()
         self.logout()
@@ -205,11 +204,11 @@ class TestServer(helper.CPWebCase):
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
         queue.put(('terminate'))
-        logger.error('Waiting on pipe')
+        Logger.error('Waiting on pipe')
         result = pipe.recv()
         while not result == 'Watcher exiting':
             result = pipe.recv()
-        logger.error('Got {} from pipe'.format(result))
+        Logger.error('Got {} from pipe'.format(result))
         self.assertEqual(result, 'Watcher exiting')
 
     ####################
@@ -248,7 +247,7 @@ class TestServer(helper.CPWebCase):
         bad_page = server.load_webpage('auth_sign_up_page', error=['Passwords do not match.'])
         self.assertBody(bad_page)
 
-        logger.debug('continuing sign up')
+        Logger.debug('continuing sign up')
 
     def sign_up_success(self):
         """ Check a successful sign in """
@@ -298,7 +297,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def reset_password(self):
-        logger.debug('reset_password')
+        Logger.debug('reset_password')
         self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user,
                                                                                   fig.TEST_EMAIL + 'dfa'))
         self.assertStatus('200 OK')
@@ -315,7 +314,7 @@ class TestServer(helper.CPWebCase):
         return new_pass
 
     def change_password(self):
-        logger.debug('change_password')
+        Logger.debug('change_password')
         self.getPage('/login?username={}&password={}'.format(self.server_user, self.tp))
         self.assertStatus('200 OK')
         self.getPage('/auth/input_password', self.cookies)
