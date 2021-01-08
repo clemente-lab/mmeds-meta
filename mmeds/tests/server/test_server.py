@@ -1,5 +1,5 @@
 from mmeds.server import MMEDSserver
-from time import sleep, time
+from time import time
 from collections import defaultdict
 from pathlib import Path
 from tidylib import tidy_document
@@ -646,7 +646,6 @@ class TestServer(helper.CPWebCase):
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(code[1]), headers=self.cookies)
         self.assertStatus('200 OK')
-        breakpoint()
 
         for download in fig.TEST_FILES:
             address = '/download/download_file?file_name={}'.format(download)
