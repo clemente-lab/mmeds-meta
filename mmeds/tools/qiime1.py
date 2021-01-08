@@ -4,9 +4,7 @@ from mmeds.config import DATABASE_DIR
 from mmeds.util import setup_environment
 from mmeds.error import AnalysisError
 from mmeds.tools.tool import Tool
-from mmeds.log import MMEDSLog
-
-logger = MMEDSLog('debug').logger
+from mmeds.logging import Logger
 
 
 class Qiime1(Tool):
@@ -23,7 +21,7 @@ class Qiime1(Tool):
 
     def initial_setup(self):
         super().initial_setup()
-        logger.debug('Running Qiime1 initial setup')
+        Logger.debug('Running Qiime1 initial setup')
         if self.testing:
             settings = [
                 'alpha_diversity:metrics	shannon',
@@ -143,24 +141,24 @@ class Qiime1(Tool):
             output = run(cmd, check=True, env=new_env)
 
             out = output.stdout.decode('utf-8')
-            logger.debug('Output: {}'.format(out))
+            Logger.debug('Output: {}'.format(out))
             initial_count = int(out.split('\n')[1].split(' ')[0])
 
             # Count the sequences in the output of the diversity analysis
             with open(self.get_file('diversity_output', True) / 'biom_table_summary.txt') as f:
                 lines = f.readlines()
-                logger.debug('Check lines: {}'.format(lines))
+                Logger.debug('Check lines: {}'.format(lines))
                 final_count = int(lines[2].split(':')[-1].strip().replace(',', ''))
 
             # Check that the counts are approximately equal
             if abs(initial_count - final_count) > 0.30 * (initial_count + final_count):
                 message = 'Large difference ({}) between initial and final counts'
-                logger.debug('Raise analysis error')
+                Logger.debug('Raise analysis error')
                 raise AnalysisError(message.format(initial_count - final_count))
-            logger.debug('Sanity check completed successfully')
+            Logger.debug('Sanity check completed successfully')
 
         except ValueError as e:
-            logger.debug(str(e))
+            Logger.debug(str(e))
             raise AnalysisError(e.args[0])
 
     def setup_analysis(self, summary=True):

@@ -1,5 +1,4 @@
 import os
-import shutil
 import warnings
 
 import mmeds.secrets as sec
@@ -18,12 +17,9 @@ from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
 from mmeds.util import (send_email, pyformat_translate, quote_sql)
 from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.documents import MMEDSDoc
-from mmeds.log import MMEDSLog
+from mmeds.logging import Logger
 
 DAYS = 13
-
-logger = MMEDSLog('database-debug').logger
-sql_logger = MMEDSLog('database-info').logger
 
 
 # Used in test_cases
@@ -72,8 +68,8 @@ class Database:
             :owner: A string. The mmeds user account uploading or retrieving files.
             :testing: A boolean. Changes the connection parameters for testing.
         """
-        logger.debug('Database created with params')
-        logger.debug({
+        Logger.debug('Database created with params')
+        Logger.debug({
             'path': path,
             'user': user,
             'owner': owner,
@@ -397,8 +393,8 @@ class Database:
                 self.cursor.execute(sql, {'id': user_id})
             except pms.err.IntegrityError as e:
                 # If there is a dependency remaining
-                sql_logger.info(e)
-                sql_logger.info('Failed on table {}'.format(table))
+                Logger.info(e)
+                Logger.info('Failed on table {}'.format(table))
                 raise MetaDataError(e.args[0])
 
         # Commit the changes
@@ -494,7 +490,7 @@ class Database:
         :value: Either a path to a file or a dictionary containing
                 file locations in a subdirectory
         """
-        sql_logger.info('Update metadata with {}: {}'.format(filekey, value))
+        Logger.info('Update metadata with {}: {}'.format(filekey, value))
         mdata = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         mdata.last_accessed = datetime.utcnow()
         mdata.files[filekey] = value
@@ -538,8 +534,8 @@ class Database:
                 except pms.err.InternalError as e:
                     raise MetaDataError(e.args[1])
                 if found >= 1:
-                    sql_logger.info(sql)
-                    sql_logger.info(args)
+                    Logger.info(sql)
+                    Logger.info(args)
                     warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
                     warnings.append(warning.format(row=j, col=subject_col))
         return warnings

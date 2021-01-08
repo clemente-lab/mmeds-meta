@@ -1,6 +1,5 @@
 import os
 import cherrypy as cp
-import atexit
 import getpass
 
 from cherrypy.lib import static
@@ -15,16 +14,13 @@ import mmeds.config as fig
 
 from mmeds.validate import Validator
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
-from mmeds.config import UPLOADED_FP, HTML_PAGES, DEFAULT_CONFIG, HTML_ARGS, SERVER_PATH
+from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data, Watcher
-from mmeds.log import MMEDSLog
 
 absDir = Path(os.getcwd())
-
-logger = MMEDSLog('server-debug').logger
 
 
 def catch_server_errors(page_method):
@@ -93,12 +89,12 @@ class MMEDSbase:
     def check_upload(self, access_code):
         """ Raise an error if the upload is currently in use. """
         try:
-            logger.debug(cp.session['processes'].get(access_code).exitcode)
+            cp.log(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
             pass
         if cp.session['processes'].get(access_code) is not None and\
                 cp.session['processes'][access_code].exitcode is None:
-            logger.debug('Upload {} in use'.format(access_code))
+            cp.log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
 
     def load_webpage(self, page, **kwargs):
@@ -230,39 +226,43 @@ class MMEDSstudy(MMEDSbase):
     @cp.expose
     def view_study(self, access_code):
         """ The page for viewing information on a particular study """
-        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
-            # Check the study belongs to the user only if the user doesn't have elevated privileges
-            study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
-            docs = db.get_docs(study_code=access_code)
+        try:
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                # Check the study belongs to the user only if the user doesn't have elevated privileges
+                study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+                docs = db.get_docs(study_code=access_code)
 
-        option_template = '<option value="{}">{}</option>'
+            option_template = '<option value="{}">{}</option>'
 
-        # Get analyses related to this study
-        analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
-                                                                              doc.analysis_type,
-                                                                              doc.created.strftime("%Y-%m-%d")))
-                    for doc in docs]
+            # Get analyses related to this study
+            analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
+                                                                                  doc.analysis_type,
+                                                                                  doc.created.strftime("%Y-%m-%d")))
+                        for doc in docs]
 
-        # TODO pass study params as kwargs
-        # Get files downloadable from this study
-        study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
+            # TODO pass study params as kwargs
+            # Get files downloadable from this study
+            study_files = [option_template.format(key, key.capitalize()) for key in study.files.keys()]
 
-        for key, path in study.files.items():
-            cp.session['download_files'][key] = path
+            for key, path in study.files.items():
+                cp.session['download_files'][key] = path
 
-        page = self.load_webpage('study_view_page',
-                                 title=study.study_name,
-                                 study_name=study.study_name,
-                                 date_created=study.created,
-                                 last_accessed=study.last_accessed,
-                                 reads_type=study.reads_type,
-                                 barcodes_type=study.barcodes_type,
-                                 access_code=study.access_code,
-                                 owner=study.owner,
-                                 email=study.email,
-                                 path=study.path,
-                                 study_analyses=analyses,
-                                 study_files=study_files)
+            page = self.load_webpage('study_view_page',
+                                     title=study.study_name,
+                                     study_name=study.study_name,
+                                     date_created=study.created,
+                                     last_accessed=study.last_accessed,
+                                     reads_type=study.reads_type,
+                                     barcodes_type=study.barcodes_type,
+                                     access_code=study.access_code,
+                                     owner=study.owner,
+                                     email=study.email,
+                                     path=study.path,
+                                     study_analyses=analyses,
+                                     study_files=study_files)
+        except err.MissingUploadError:
+            page = self.load_webpage('home', error=err.MissingUploadError().message, title='Welcome to Mmeds')
+
         return page
 
 
@@ -410,7 +410,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
-        logger.debug('upload/retry_upload')
+        cp.log('upload/retry_upload')
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'subject':
             page = self.load_webpage('upload_metadata_file',
@@ -426,7 +426,7 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def modify_upload(self, myData, data_type, access_code):
         """ Modify the data of an existing upload. """
-        logger.debug('In modify_upload')
+        cp.log('In modify_upload')
         try:
             # Handle modifying the uploaded data
             handle_modify_data(access_code,
@@ -768,7 +768,7 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def view_corrections(self):
         """ Page containing the marked up metadata as an html file """
-        logger.debug('In view_corrections')
+        cp.log('In view_corrections')
         return open(self.get_dir() / (UPLOADED_FP + '.html'))
 
     @cp.expose
@@ -910,7 +910,7 @@ class MMEDSserver(MMEDSbase):
             cp.session['uploaded_files'] = {}
             cp.session['subject_ids'] = None
             page = self.load_webpage('home', title='Welcome to Mmeds')
-            logger.debug('Login Successful')
+            cp.log('Login Successful')
         except err.InvalidLoginError as e:
             page = self.load_webpage('login', error=e.message)
         return page

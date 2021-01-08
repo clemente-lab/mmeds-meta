@@ -13,7 +13,7 @@ from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
-from mmeds.log import MMEDSLog
+from mmeds.logging import Logger
 
 import multiprocessing as mp
 
@@ -45,7 +45,7 @@ class Tool(mp.Process):
         """
         super().__init__()
         self.queue = queue
-        self.logger = MMEDSLog('error-{}'.format(self.name)).logger
+        self.logger = Logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
         self.tool_type = tool_type

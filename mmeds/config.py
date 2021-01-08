@@ -45,7 +45,8 @@ else:
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
-        'log.error_file': str(DATABASE_DIR / 'site.log'),
+        'log.access_file': str(DATABASE_DIR / 'site_access.log'),
+        'log.error_file': str(DATABASE_DIR / 'site_error.log'),
         'tools.sessions.storage_class': cp.lib.sessions.FileSession,
         'tools.sessions.storage_path': SESSION_PATH,
         'tools.sessions.name': 'latest_sessions',
@@ -230,9 +231,16 @@ SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
 STAT_FILE = DATABASE_DIR / 'mmeds_stats.yaml'
 PROCESS_LOG_DIR = DATABASE_DIR / 'process_log_dir'
+LOG_CONFIG = STORAGE_DIR / 'log_config.yaml'
 if not PROCESS_LOG_DIR.exists():
     try:
         PROCESS_LOG_DIR.mkdir()
+    except FileExistsError:
+        pass
+LOG_DIR = DATABASE_DIR / 'log_dir'
+if not LOG_DIR.exists():
+    try:
+        LOG_DIR.mkdir()
     except FileExistsError:
         pass
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'

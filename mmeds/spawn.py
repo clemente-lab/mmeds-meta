@@ -1,11 +1,14 @@
+import yaml
+
 from time import sleep
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
+from multiprocessing import Queue, Pipe
+from multiprocessing.managers import BaseManager
 
 import mmeds.config as fig
 import mmeds.secrets as sec
-import yaml
 
 from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database.database import Database
@@ -17,10 +20,7 @@ from mmeds.tools.sparcc import SparCC
 from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
-from mmeds.log import MMEDSLog
-
-from multiprocessing import Process, current_process, Queue, Pipe
-from multiprocessing.managers import BaseManager
+from mmeds.logging import Logger
 
 TOOLS = {
     'qiime1': Qiime1,
@@ -30,7 +30,6 @@ TOOLS = {
     'picrust1': PiCRUSt1,
     'test': TestTool
 }
-logger = MMEDSLog('spawn-error').logger
 
 
 def handle_modify_data(access_code, myData, user, data_type, testing):
@@ -63,13 +62,13 @@ class Watcher(BaseManager):
         self.running_processes = []
         self.started = []
         self.running_on_node = set()
-        self.logger = logger
+        self.logger = Logger
         queue = Queue()
         self.register('get_queue', callable=lambda: queue)
         pipe_ends = Pipe()
         self.pipe = pipe_ends[0]
         self.register('get_pipe', callable=lambda: pipe_ends[1])
-        logger.error("Watcher created")
+        Logger.error("Watcher created")
 
     def start(self):
         super().start()
@@ -349,7 +348,7 @@ class Watcher(BaseManager):
                     self.handle_restart(process)
                 # If it's an upload
                 elif process[0] == 'upload':
-                    logger.error("Got an upload, processing")
+                    Logger.error("Got an upload, processing")
                     current_upload = self.handle_upload(process, current_upload)
                 elif process[0] == 'email':
                     self.logger.error('Sending email')

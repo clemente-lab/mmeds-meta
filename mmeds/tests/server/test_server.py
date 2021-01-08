@@ -1,5 +1,5 @@
 from mmeds.server import MMEDSserver
-from time import sleep, time
+from time import time
 from collections import defaultdict
 from pathlib import Path
 from tidylib import tidy_document
@@ -9,17 +9,16 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import log, recieve_email, send_email
+from mmeds.util import recieve_email, send_email
 from mmeds.spawn import Watcher
+from mmeds.logging import Logger
 
 import cherrypy as cp
 import re
 from cherrypy.test import helper
-from mmeds.log import MMEDSLog
 
 
 testing = True
-logger = MMEDSLog('debug').logger
 monitor = Watcher()
 monitor.connect()
 server = MMEDSserver()
@@ -102,11 +101,11 @@ class TestServer(helper.CPWebCase):
         cp.tree.mount(server)
 
     def test_aa_setup(self):
-        logger.info('===== Test Server Start =====')
+        Logger.info('===== Test Server Start =====')
         add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
     def test_ab_index(self):
-        logger.info('ab index')
+        Logger.info('ab index')
         self.getPage('/index')
         self.assertStatus('200 OK')
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
@@ -114,34 +113,34 @@ class TestServer(helper.CPWebCase):
         check_page(page_body)
 
     def test_ba_sign_up(self):
-        logger.info('ba sign up')
+        Logger.info('ba sign up')
         self.not_logged_in()
         self.sign_up_fail()
         self.sign_up_success()
 
     def test_bc_login(self):
-        logger.info('bc login')
+        Logger.info('bc login')
         self.login_fail_password()
         self.login_fail_username()
         self.login()
         self.logout()
 
     def test_bd_reset_password(self):
-        logger.info('bd reset password')
+        Logger.info('bd reset password')
         self.tp = self.reset_password()
         self.login(True)
         self.change_password()
         self.logout()
 
     def test_ca_animal_upload(self):
-        logger.info('ca animal upload')
+        Logger.info('ca animal upload')
         self.login()
         self.upload_animal_metadata()
         self.upload_otu_data()
         self.logout()
 
     def test_cb_upload(self):
-        logger.info('cb upload')
+        Logger.info('cb upload')
         self.login()
         self.upload_metadata()
         self.upload_data()
@@ -149,17 +148,16 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_da_select_study(self):
-        logger.info('da view study')
+        Logger.info('da view study')
         self.login()
         self.select_study()
         self.logout()
 
     def test_da_download(self):
-        return
+        Logger.info('da download')
         self.login()
         self.download_page_fail()
-        self.download_block()
-        self.download()
+        # self.download()
         self.logout()
 
     def test_db_download(self):
@@ -205,11 +203,11 @@ class TestServer(helper.CPWebCase):
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
         queue.put(('terminate'))
-        logger.error('Waiting on pipe')
+        Logger.error('Waiting on pipe')
         result = pipe.recv()
         while not result == 'Watcher exiting':
             result = pipe.recv()
-        logger.error('Got {} from pipe'.format(result))
+        Logger.error('Got {} from pipe'.format(result))
         self.assertEqual(result, 'Watcher exiting')
 
     ####################
@@ -248,7 +246,7 @@ class TestServer(helper.CPWebCase):
         bad_page = server.load_webpage('auth_sign_up_page', error=['Passwords do not match.'])
         self.assertBody(bad_page)
 
-        logger.debug('continuing sign up')
+        Logger.debug('continuing sign up')
 
     def sign_up_success(self):
         """ Check a successful sign in """
@@ -298,7 +296,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def reset_password(self):
-        logger.debug('reset_password')
+        Logger.debug('reset_password')
         self.getPage('/auth/submit_password_recovery?username={}&email={}'.format(self.server_user,
                                                                                   fig.TEST_EMAIL + 'dfa'))
         self.assertStatus('200 OK')
@@ -315,7 +313,7 @@ class TestServer(helper.CPWebCase):
         return new_pass
 
     def change_password(self):
-        logger.debug('change_password')
+        Logger.debug('change_password')
         self.getPage('/login?username={}&password={}'.format(self.server_user, self.tp))
         self.assertStatus('200 OK')
         self.getPage('/auth/input_password', self.cookies)
@@ -467,7 +465,7 @@ class TestServer(helper.CPWebCase):
                                    metadata_type='subject',
                                    error='yaml is not a valid filetype.')
         self.assertBody(page)
-        log('Checked invalid filetype')
+        Logger.debug('Checked invalid filetype')
 
         # Check a subject metadata file that errors
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ERROR], ['text/tab-seperated-values'])
@@ -479,7 +477,7 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
-        log('Checked metadata that errors')
+        Logger.debug('Checked metadata that errors')
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_WARN], ['text/tab-seperated-values'])
@@ -495,7 +493,7 @@ class TestServer(helper.CPWebCase):
                                    next_page='{retry_upload_page}')
 
         self.assertBody(page)
-        log('Checked metadata that warns')
+        Logger.debug('Checked metadata that warns')
 
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
@@ -513,7 +511,7 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
-        log('Checked metadata that errors')
+        Logger.debug('Checked metadata that errors')
 
         # Check a subject metadata file that produces warnings
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
@@ -530,7 +528,7 @@ class TestServer(helper.CPWebCase):
                                    home_selected='',
                                    next_page='{upload_data_page}')
         self.assertBody(page)
-        log('Checked metadata that warns')
+        Logger.debug('Checked metadata that warns')
 
         # Continue with warnings
         self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
@@ -542,7 +540,7 @@ class TestServer(helper.CPWebCase):
                                    dual_barcodes='style="display:none"',
                                    home_selected='')
         self.assertBody(page)
-        log('Checked a metadata file with no problems')
+        Logger.debug('Checked a metadata file with no problems')
 
     def upload_data(self):
         self.getPage('/upload/upload_data', self.cookies)
@@ -625,36 +623,32 @@ class TestServer(helper.CPWebCase):
     #############
 
     def download_page_fail(self):
-        self.getPage("/download/download_page?access_code={}".format(self.server_code + 'garbage'),
+        self.getPage("/study/view_study?access_code={}".format(self.server_code),
                      headers=self.cookies)
         self.assertStatus('200 OK')
-        page = server.load_webpage('upload_select_page',
-                                   user=self.server_user,
-                                   upload_selected='w3-blue',
+        page = server.load_webpage('home',
+                                   error=err.MissingUploadError().message,
+                                   title='Welcome to Mmeds',
+                                   analysis_selected='',
+                                   study_selected='w3-blue',
                                    home_selected='',
-                                   error=err.MissingUploadError().message)
-
+                                   privilege='',
+                                   user=self.server_user)
         self.assertBody(page)
-        self.getPage('/auth/logout', headers=self.cookies)
-
-    def download_block(self):
-        # Start test analysis
-        address = '/analysis/run_analysis?access_code={}&tool_type={}&analysis_type={}&config='
-        tool, analysis = fig.TEST_TOOL.split('-')
-        self.getPage(address.format(self.access_code, tool, analysis), headers=self.cookies)
-
-        # Wait for analysis to finish
-        sleep(int(fig.TEST_TOOL.split('-')[-1]))
-
-        # Try to access again
-        self.getPage("/download/download_page?access_code={}".format(self.access_code), headers=self.cookies)
-
-        self.assertStatus('200 OK')
-        self.getPage('/logout', headers=self.cookies)
 
     def download(self):
+
+        self.getPage("/study/select_study", headers=self.cookies)
+        # Parse the body of the page
+        body = self.body.decode('utf-8')
+        # Grab the access code
+        code = re.findall('access_code=(.+?)">', body)
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(code[1]), headers=self.cookies)
+        self.assertStatus('200 OK')
+
         for download in fig.TEST_FILES:
-            address = '/download/select_download?download={}'.format(download)
+            address = '/download/download_file?file_name={}'.format(download)
             self.getPage(address, headers=self.cookies)
             self.assertStatus('200 OK')
 

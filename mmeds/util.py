@@ -1,6 +1,5 @@
 from collections import defaultdict, OrderedDict
 from mmeds.error import InvalidConfigError, InvalidSQLError, InvalidModuleError, EmailError
-from mmeds.log import MMEDSLog
 from operator import itemgetter
 from subprocess import run
 from pathlib import Path
@@ -8,14 +7,12 @@ from os import environ
 from numpy import nan, int64, float64, datetime64
 from tempfile import gettempdir
 from re import sub
-from ppretty import ppretty
 from time import sleep
 
 import yaml
-import mmeds.config as fig
 import pandas as pd
-
-logger = MMEDSLog('util-debug').logger
+import mmeds.config as fig
+from mmeds.logging import Logger
 
 
 ###########
@@ -43,7 +40,6 @@ class SafeDict(dict):
 #############
 # Functions #
 #############
-
 def format_alerts(args):
     """ Takes a dictionary and performs formatting on any entries with the keys: 'error', 'warning', or 'success' """
     template = '''
@@ -180,7 +176,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
         page = config_file.read_text()
     # If no config was provided load the default
     elif config_file is None or config_file == '':
-        log('Using default config')
+        Logger.debug('Using default config')
         page = fig.DEFAULT_CONFIG.read_text()
     elif isinstance(config_file, str):
         print('path to config {}'.format(config_file))
@@ -206,7 +202,7 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     try:
         # Parse the values/levels to be included in the analysis
         for option in fig.CONFIG_PARAMETERS:
-            debug_log('checking {}'.format(option))
+            Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata' or option == 'sub_analysis':
                 config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
@@ -284,7 +280,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
             True indicates that the column contains continuous values.
             False indicates that it contains discrete value.
     """
-    log('get valid columns with ignore = {}'.format(ignore_bad_cols))
+    Logger.debug('get valid columns with ignore = {}'.format(ignore_bad_cols))
     summary_cols = []
     col_types = {}
     if not option == 'none':
@@ -589,8 +585,8 @@ def generate_error_html(file_fp, errors, warnings):
     markup = defaultdict(dict)
     top = []
 
-    log('generate errors')
-    log(errors)
+    Logger.debug('generate errors')
+    Logger.debug(errors)
     # Add Errors to markup table
     for error in errors:
         row, col, item = error.split('\t')
@@ -652,11 +648,11 @@ def split_data(column):
     """
     result = defaultdict(list)
     if column.name == 'lat_lon':
-        log("name: {}, vals: {}".format(column.name, column))
+        Logger.debug("name: {}, vals: {}".format(column.name, column))
         # Skip the header
         for value in column[1:]:
             parsed = value.strip('+').split('-')
-            log('Parsed: {}'.format(parsed))
+            Logger.debug('Parsed: {}'.format(parsed))
             result['Latitude'].append(parsed[0])
             result['Longitude'].append(parsed[1])
     elif column.name == 'assembly_name':
@@ -709,7 +705,7 @@ def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
     for col in df.columns:
         (table, column) = fig.MMEDS_MAP[col]
         if ':' in column:
-            log('Table: {}, Column: {}'.format(table, column))
+            Logger.debug('Table: {}, Column: {}'.format(table, column))
             cols = column.split(':')
             data = split_data(df[col])
             for new_col in cols:
@@ -790,41 +786,6 @@ def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
                 f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
-def log(text, testing=False, log_type='Debug'):
-    """ Pass provided text to the MmedsLogger. If given a dictionary, format it into a string. """
-    if isinstance(text, dict):
-        log_text = ppretty(text)
-    elif isinstance(text, list):
-        log_text = '\n'.join(list(map(str, text)))
-    else:
-        log_text = str(text)
-
-    logger = MMEDSLog(log_type, testing)
-    if 'debug' in log_type.lower():
-        logger.debug(log_text)
-    elif 'info' in log_type.lower():
-        logger.info(log_text)
-    elif 'error' in log_type.lower():
-        logger.info(log_text)
-
-
-def sql_log(text):
-    """  Pass provided text to the SQL Logger """
-    log(text, log_type='SQL')
-
-
-def error_log(text, testing=False):
-    log(text, testing=testing, log_type='Error')
-
-
-def debug_log(text, testing=False):
-    log(text, testing=testing, log_type='Debug')
-
-
-def info_log(text, testing=False):
-    log(text, testing=testing, log_type='Info')
-
-
 def parse_code_blocks(path):
     # Load the code templates
     data = Path(path).read_text().split('\n=====\n')
@@ -846,7 +807,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     :message: The type of message to send
     :kwargs: Any information that is specific to a paricular message type
     """
-    logger.error('Send email of type: {} to: {} on behalf of {}'.format(message, toaddr, user))
+    Logger.debug('Send email of type: {} to: {} on behalf of {}'.format(message, toaddr, user))
 
     # Templates for the different emails mmeds sends
     if message == 'upload':
@@ -996,8 +957,8 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
-    log("Created environment for module {}".format(module))
-    log(new_env)
+    Logger.debug("Created environment for module {}".format(module))
+    Logger.debug(new_env)
     return new_env
 
 
@@ -1087,7 +1048,7 @@ def quote_sql(sql, quote='`', **kwargs):
         if len(item) > 66:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, '_', and '*'
-        if not item.replace('_', '').replace('`', '').replace('*', '').replace('.','').isalnum():
+        if not item.replace('_', '').replace('`', '').replace('*', '').replace('.', '').isalnum():
             raise InvalidSQLError('Illegal characters in identifier {}.'.format(item) +
                                   ' Only letters, numbers, "`", "_", ".", and "*" are permitted')
 
