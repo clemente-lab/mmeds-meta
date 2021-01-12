@@ -257,6 +257,7 @@ CONFIG_PARAMETERS = [
     'type'
 ]
 CONTACT_EMAIL = 'david.wallach@mssm.edu'
+AMIN_EMAIL = 'd.s.t.wallach@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'

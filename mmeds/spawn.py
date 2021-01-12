@@ -13,7 +13,7 @@ import mmeds.secrets as sec
 from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
-from mmeds.error import AnalysisError, MissingUploadError
+from mmeds.error import AnalysisError, MissingUploadError, WatcherDownError
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
 from mmeds.tools.sparcc import SparCC
@@ -55,20 +55,22 @@ class Watcher(BaseManager):
             the necessary information will be added to this queue.
         :testing: A boolean. If true run in testing configuration, otherwise run in deployment configuration.
         """
-        super().__init__(address, authkey)
-        self.testing = fig.TESTING
-        self.count = 0
-        self.processes = []
-        self.running_processes = []
-        self.started = []
-        self.running_on_node = set()
-        self.logger = Logger
-        queue = Queue()
-        self.register('get_queue', callable=lambda: queue)
-        pipe_ends = Pipe()
-        self.pipe = pipe_ends[0]
-        self.register('get_pipe', callable=lambda: pipe_ends[1])
-        Logger.error("Watcher created")
+        try:
+            super().__init__(address, authkey)
+            self.testing = fig.TESTING
+            self.count = 0
+            self.processes = []
+            self.running_processes = []
+            self.started = []
+            self.running_on_node = set()
+            self.logger = Logger
+            queue = Queue()
+            self.register('get_queue', callable=lambda: queue)
+            pipe_ends = Pipe()
+            self.pipe = pipe_ends[0]
+            self.register('get_pipe', callable=lambda: pipe_ends[1])
+        except ConnectionRefusedError:
+            raise WatcherDownError()
 
     def start(self):
         super().start()

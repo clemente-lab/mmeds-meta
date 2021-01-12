@@ -147,3 +147,11 @@ class PrivilegeError(MmedsError):
     def __init__(self, message):
         self.message = message
         super().__init__()
+
+
+class WatcherDownError(MmedsError):
+    """ Exception for attempts to use privileged features by non-privileged users"""
+
+    def __init__(self, message):
+        self.message = "The watcher is down"
+        super().__init__()

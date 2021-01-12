@@ -850,6 +850,9 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'Either submit a new analysis to the queue or wait until others finish.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Not Started'
+    elif message == 'watcher_down':
+        body = 'The watcher is down. Go fix it'
+        subject = 'Watcher Down'
 
     email_body = body.format(
         user=user,
@@ -861,7 +864,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         password=kwargs.get('password'),
     )
     if testing:
-        path = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
+        #path = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
+        path = Path('/tmp') / '{user}_{message}.mail'.format(user=user, message=message)
         path.write_text(email_body)
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'

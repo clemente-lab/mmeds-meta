@@ -13,12 +13,13 @@ import mmeds.util as util
 import mmeds.config as fig
 
 from mmeds.validate import Validator
-from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
+from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats, send_email)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data, Watcher
+from mmeds.logging import Logger
 
 absDir = Path(os.getcwd())
 
@@ -34,6 +35,16 @@ def catch_server_errors(page_method):
             args = deepcopy(HTML_ARGS)
             args['body'] = body.format(**args)
             return HTML_PAGES['logged_out_template'].read_text().format(**args)
+        except err.WatcherDownError:
+            cp.log("Watcher is down")
+            body = HTML_PAGES['login'][0].read_text()
+            args = deepcopy(HTML_ARGS)
+            args['body'] = body.format(**args)
+            args['errors'] = 'Part of the server is down. We are working to fix it. Thank you for your patience'
+            Logger.error("Sending error email")
+            send_email(fig.ADMIN_EMAIL, "ERROR!", "watcher_down")
+            return HTML_PAGES['logged_out_template'].read_text().format(**args)
+
     return wrapper
 
 
@@ -58,12 +69,15 @@ class MMEDSbase:
     def __init__(self):
         self.db = None
         self.testing = fig.TESTING
-        self.monitor = Watcher()
         cp.log("{} Connecting to monitor".format(id(self)))
-        self.monitor.connect()
-        cp.log("{} Connected to monitor".format(id(self)))
-        self.q = self.monitor.get_queue()
-        cp.log("{} Got Queue".format(id(self)))
+        try:
+            self.monitor = Watcher()
+            self.monitor.connect()
+            cp.log("{} Connected to monitor".format(id(self)))
+            self.q = self.monitor.get_queue()
+            cp.log("{} Got Queue".format(id(self)))
+        except ConnectionRefusedError:
+            raise err.WatcherDownError()
 
     def get_user(self):
         """
