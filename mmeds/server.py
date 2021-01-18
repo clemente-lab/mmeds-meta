@@ -19,6 +19,7 @@ from mmeds.authentication import (validate_password, check_username, check_passw
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data, Watcher
+from mmeds.logging import Logger
 
 absDir = Path(os.getcwd())
 
@@ -192,6 +193,7 @@ class MMEDSstudy(MMEDSbase):
     @cp.expose
     def select_study(self):
         """ Allows authorized user accounts to access uploaded studies. """
+        cp.log("In select study")
         study_html = ''' <tr class="w3-hover-blue">
             <th>
             <a href="{view_study_page}?access_code={access_code}"> {study_name} </a>
@@ -207,6 +209,7 @@ class MMEDSstudy(MMEDSbase):
         else:
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
+        cp.log("Found {} studies".format(len(studies)))
 
         study_list = []
         for study in studies:
@@ -216,11 +219,13 @@ class MMEDSstudy(MMEDSbase):
                                                 date_created=study.created,
                                                 num_analyses=0))
 
+        cp.log("Build out study list")
         page = self.load_webpage('study_select_page',
                                  title='Select Study',
                                  user_studies='\n'.join(study_list),
                                  public_studies="")
 
+        cp.log("Built out page")
         return page
 
     @cp.expose
@@ -231,6 +236,7 @@ class MMEDSstudy(MMEDSbase):
                 # Check the study belongs to the user only if the user doesn't have elevated privileges
                 study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
                 docs = db.get_docs(study_code=access_code)
+
 
             option_template = '<option value="{}">{}</option>'
 
@@ -261,6 +267,7 @@ class MMEDSstudy(MMEDSbase):
                                      study_analyses=analyses,
                                      study_files=study_files)
         except err.MissingUploadError:
+            Logger.error(err.MissingUploadError().message)
             page = self.load_webpage('home', error=err.MissingUploadError().message, title='Welcome to Mmeds')
 
         return page

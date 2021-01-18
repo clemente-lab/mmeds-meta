@@ -1,10 +1,17 @@
+# Basic config options
 SetHandler wsgi-script
 <Files .htaccess>
   Order allow,deny
   Deny from all
 </Files>
+
+# Allow access to the CSS directory
 Options +Indexes
 DirectoryIndex /hpc/users/wallad07/www/mmeds/CSS
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.*)$ app.wsgi/$1 [QSA,PT,L]
+
+# Prevent browsers from caching webpages for more than a few seconds
+ExpiresActive On
+ExpiresDefault A1

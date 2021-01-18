@@ -555,8 +555,9 @@ class Tool(mp.Process):
                 self.logger.debug([child.name for child in self.children])
 
             self.update_doc(analysis_status='started')
-            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node}')
-            if self.testing or self.run_on_node:
+            type_ron = type(self.run_on_node)
+            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node} (type) {type_ron}')
+            if self.testing or not (self.run_on_node == -1):
                 self.logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)
                 # Send the output to the error log
@@ -591,6 +592,7 @@ class Tool(mp.Process):
         log_text = self.get_file('errorlog', True).read_text()
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
+            """
             self.update_doc(exit_code=1)
             self.logger.debug('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
@@ -633,6 +635,7 @@ class Tool(mp.Process):
             for key in deleted:
                 del finished_files[key]
             self.update_doc(files=finished_files)
+            """
 
             self.logger.debug('{}: finished file cleanup'.format(self.name))
 

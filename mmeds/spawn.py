@@ -68,7 +68,6 @@ class Watcher(BaseManager):
         pipe_ends = Pipe()
         self.pipe = pipe_ends[0]
         self.register('get_pipe', callable=lambda: pipe_ends[1])
-        Logger.error("Watcher created")
 
     def start(self):
         super().start()

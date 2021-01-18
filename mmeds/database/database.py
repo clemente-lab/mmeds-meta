@@ -68,13 +68,6 @@ class Database:
             :owner: A string. The mmeds user account uploading or retrieving files.
             :testing: A boolean. Changes the connection parameters for testing.
         """
-        Logger.debug('Database created with params')
-        Logger.debug({
-            'path': path,
-            'user': user,
-            'owner': owner,
-            'testing': testing
-        })
         warnings.simplefilter('ignore')
 
         self.path = Path(path) / 'database_files'

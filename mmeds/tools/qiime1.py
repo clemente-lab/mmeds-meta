@@ -15,7 +15,8 @@ class Qiime1(Tool):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage,
                          child=child)
-        load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
+        #load = 'module use {}/.modules/modulefiles; module load qiime/1.9.1;'.format(DATABASE_DIR.parent)
+        load = 'module purge; module load anaconda2; source activate qiime1.9.1; module load R; module load python/2.7.16'
         self.jobtext.append(load)
         self.module = load
 

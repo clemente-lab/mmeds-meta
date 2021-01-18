@@ -24,9 +24,7 @@ else:
 # Imports
 from mmeds.server import MMEDSserver
 from mmeds.config import CONFIG
-from mmeds.log import MMEDSLog
-
-logger = MMEDSLog('wsgi-debug').logger
+from mmeds.logging import Logger
 
 
 curdir = os.path.abspath(os.path.dirname(__file__))
@@ -37,28 +35,22 @@ loaded = False
 
 
 def create_app():
-    logger.info("Running create_app")
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
 
-    logger.info("Unsubscribed from the old server")
     if testing:
         web_path = '/myapp'
     else:
         web_path = '/mmeds_app/app.wsgi'
-    logger.info("Creating the WSGI app")
     app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
-    logger.info("Returning the WSGI app")
     return app, web_path
 
 
 def application(environ, start_response):
     global loaded
     if not loaded:
+        Logger.info("Reload this")
         loaded = True
-        logger.debug('Loading')
         app, web_path = create_app()
-        logger.debug('Recreating application')
         cp.tree.graft(app, web_path)
-    logger.info("Return tree with app mounted")
     return cp.tree(environ, start_response)

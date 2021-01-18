@@ -23,7 +23,7 @@ class Qiime2(Tool):
         if testing:
             load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
         else:
-            load = ' ml anaconda3; source activate qiime2-2020.8.0'
+            load = 'export LC_ALL=en_US.UTF-8;\nml anaconda3;\nsource activate qiime2-2020.8.0;'
         self.module = load
         self.jobtext.append(load)
 
@@ -410,7 +410,7 @@ class Qiime2(Tool):
             'qiime composition ancom',
             '--i-table {}'.format(self.get_file(infile)),
             '--m-metadata-file {}'.format(self.get_file('mapping')),
-            '--p-transform-function Logger.debug',
+            '--p-transform-function log',
             '--m-metadata-column {}'.format(category),
             '--o-visualization {}'.format(self.get_file(new_file))
         ]
