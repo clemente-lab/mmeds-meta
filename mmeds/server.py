@@ -101,6 +101,8 @@ class MMEDSbase:
         # Check that the upload does exist for the given user
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             db.check_upload(access_code)
+            files, path = db.get_mongo_files(access_code)
+        return files
 
     def load_webpage(self, page, **kwargs):
         """
@@ -759,7 +761,8 @@ class MMEDSanalysis(MMEDSbase):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
             # Check that the requested upload exists
-            self.check_upload(access_code)
+            # Getting the files to check the config options match the provided metadata
+            files = self.check_upload(access_code)
 
             if config.file is None:
                 config_path = ''
@@ -767,6 +770,10 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = config
             else:
                 config_path = create_local_copy(config.file, config.name, self.get_dir())
+
+            # Check that the config file is valid
+            util.load_config(config_path, files['metadata'])
+
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,

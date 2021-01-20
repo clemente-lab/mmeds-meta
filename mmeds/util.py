@@ -169,23 +169,26 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
 
 def load_config(config_file, metadata, ignore_bad_cols=False):
     """ Read the provided config file to determine settings for the analysis. """
-    config = {}
-    # If a Path was passed (as is the case during testing)
-    if isinstance(config_file, Path):
-        print('path to config {}'.format(config_file))
-        page = config_file.read_text()
-    # If no config was provided load the default
-    elif config_file is None or config_file == '':
-        Logger.debug('Using default config')
-        page = fig.DEFAULT_CONFIG.read_text()
-    elif isinstance(config_file, str):
-        print('path to config {}'.format(config_file))
-        page = Path(config_file).read_text()
-    else:
-        # Load the file contents
-        page = config_file
+    try:
+        config = {}
+        # If a Path was passed (as is the case during testing)
+        if isinstance(config_file, Path):
+            print('path to config {}'.format(config_file))
+            page = config_file.read_text()
+        # If no config was provided load the default
+        elif config_file is None or config_file == '':
+            Logger.debug('Using default config')
+            page = fig.DEFAULT_CONFIG.read_text()
+        elif isinstance(config_file, str):
+            print('path to config {}'.format(config_file))
+            page = Path(config_file).read_text()
+        else:
+            # Load the file contents
+            page = config_file
 
-    config = yaml.safe_load(page)
+        config = yaml.safe_load(page)
+    except (yaml.YAMLError, yaml.scanner.ScannerError):
+        raise InvalidConfigError('There was an error loading your config. Config files must be in YAML format.')
 
     # Check if columns == 'all'
     for param in ['metadata', 'taxa_levels', 'sub_analysis']:
