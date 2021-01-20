@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
+from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError, StudyNameError,
                          MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql)
 from mmeds.database.metadata_uploader import MetaDataUploader
@@ -590,6 +590,13 @@ class Database:
         obs = MMEDSDoc.objects(access_code=access_code, owner=self.owner)
         if not obs:
             raise MissingUploadError()
+
+    def check_study_name(self, study_name):
+        """ Verifies the provided study name is valid and not already in use. """
+        if not study_name.replace('_', '').isalnum():
+            raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
+        elif MMEDSDoc.objects(study_name=study_name):
+            raise StudyNameError(f"Study name {study_name} already in use")
 
     @classmethod
     def get_all_studies(cls):

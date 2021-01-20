@@ -477,23 +477,30 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def upload_metadata(self, uploadType, subjectType, studyName):
         """ Page for uploading Qiime data """
-        cp.session['study_name'] = studyName
-        cp.session['metadata_type'] = 'subject'
-        cp.session['subject_type'] = subjectType
-        cp.session['upload_type'] = uploadType
+        try:
+            cp.session['study_name'] = studyName
+            cp.session['metadata_type'] = 'subject'
+            cp.session['subject_type'] = subjectType
+            cp.session['upload_type'] = uploadType
 
-        # Add the success message if applicable
-        if cp.session['metadata_type'] == 'specimen':
-            page = self.load_webpage('upload_metadata_file',
-                                     title='Upload Metadata',
-                                     success='Subject table uploaded successfully',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=uploadType)
-        else:
-            page = self.load_webpage('upload_metadata_file',
-                                     title='Upload Metadata',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=uploadType)
+
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                db.check_study_name(studyName)
+
+            # Add the success message if applicable
+            if cp.session['metadata_type'] == 'specimen':
+                page = self.load_webpage('upload_metadata_file',
+                                         title='Upload Metadata',
+                                         success='Subject table uploaded successfully',
+                                         metadata_type=cp.session['metadata_type'].capitalize(),
+                                         version=uploadType)
+            else:
+                page = self.load_webpage('upload_metadata_file',
+                                         title='Upload Metadata',
+                                         metadata_type=cp.session['metadata_type'].capitalize(),
+                                         version=uploadType)
+        except(err.StudyNameError) as e:
+            page = self.load_webpage('upload_select_page', title='Upload Type', error=e.message)
         return page
 
     @cp.expose
