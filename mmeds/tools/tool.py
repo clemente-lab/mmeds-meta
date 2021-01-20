@@ -591,7 +591,6 @@ class Tool(mp.Process):
         log_text = self.get_file('errorlog', True).read_text()
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
-            """
             self.update_doc(exit_code=1)
             self.logger.debug('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
@@ -634,7 +633,6 @@ class Tool(mp.Process):
             for key in deleted:
                 del finished_files[key]
             self.update_doc(files=finished_files)
-            """
 
             self.logger.debug('{}: finished file cleanup'.format(self.name))
 
