@@ -529,7 +529,7 @@ class Database:
                 if found >= 1:
                     Logger.info(sql)
                     Logger.info(args)
-                    warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
+                    warning = '{row}\t{col}\tSubject in row {row} already exists in the database.'
                     warnings.append(warning.format(row=j, col=subject_col))
         return warnings
 
