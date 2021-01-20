@@ -2,7 +2,7 @@ from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
 from collections import defaultdict
-from socket import gethostname
+from socket import getfqdn
 import cherrypy as cp
 import pymysql as pms
 import mmeds.secrets as sec
@@ -13,7 +13,8 @@ import hashlib
 import re
 
 
-TESTING = False # not (gethostname() == 'web01')
+# Check where this code is being run
+TESTING = not ('chimera' in getfqdn().split('.'))
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
