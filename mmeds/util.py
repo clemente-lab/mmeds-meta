@@ -426,26 +426,6 @@ def parse_ICD_codes(df):
     return df
 
 
-def load_html(file_path, **kwargs):
-    """
-    TODO: DEPRICATED
-    Load the specified html file. Inserting the head and topbar
-    """
-    # Load the html page
-    with open(file_path) as f:
-        page = f.read().split('\n')
-
-    # Load the head information
-    with open(fig.HTML_DIR / 'header.html') as f:
-        header = f.read().split('\n')
-
-    # Load the topbar information
-    with open(fig.HTML_DIR / 'topbar.html') as f:
-        topbar = f.read().split('\n')
-    new_page = page[:2] + header + topbar + page[2:]
-    return '\n'.join(new_page).format(**kwargs)
-
-
 def load_MIxS_metadata(file_fp, skip_rows, unit_column):
     """
     A function for load and transforming the MIxS data in a pandas dataframe.
@@ -470,38 +450,6 @@ def load_MIxS_metadata(file_fp, skip_rows, unit_column):
     # Replace np.nans with "NA"s
     df.fillna('"NA"', inplace=True)
     return df, units
-
-
-def insert_error(page, line_number, error_message):
-    """ Inserts an error message in the provided HTML page at the specified line number. """
-    lines = page.split('\n')
-    new_lines = lines[:line_number] + ['<h4><font color="red">' + error_message + '</font></h4>'] + lines[line_number:]
-    new_page = '\n'.join(new_lines)
-    return new_page
-
-
-def insert_warning(page, line_number, error_message):
-    """ Inserts an error message in the provided HTML page at the specified line number. """
-    lines = page.split('\n')
-    new_lines = lines[:line_number] +\
-        ['<div><font color="orange">' + error_message + '</font></div>'] +\
-        lines[line_number:]
-    new_page = '\n'.join(new_lines)
-    return new_page
-
-
-def insert_html(page, line_number, html):
-    """
-    Inserts additional HTML into the provided HTML page at the specified line number.
-    =================================================================================
-    :page: The page (a string) to insert the new HTML into
-    :line_number: The line to insert the HTML
-    :html: The HTML to insert
-    """
-    lines = page.split('\n')
-    new_lines = lines[:line_number] + [html] + lines[line_number:]
-    new_page = '\n'.join(new_lines)
-    return new_page
 
 
 def is_numeric(s):

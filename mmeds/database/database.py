@@ -595,7 +595,7 @@ class Database:
         """ Verifies the provided study name is valid and not already in use. """
         if not study_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
-        elif MMEDSDoc.objects(study_name=study_name):
+        if MMEDSDoc.objects(study_name=study_name):
             raise StudyNameError(f"Study name {study_name} already in use")
 
     @classmethod
