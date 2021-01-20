@@ -12,7 +12,7 @@ from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, DATABASE_DIR
 from mmeds.logging import Logger
 
 import multiprocessing as mp
@@ -258,11 +258,10 @@ class Tool(mp.Process):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append('module purge; module load texlive/2018; module load anaconda3;')
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('source activate mmeds-stable;')
+            self.jobtext.append('module use {}/.modules/modulefiles; module load mmeds-stable;'.format(DATABASE_DIR.parent))
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),

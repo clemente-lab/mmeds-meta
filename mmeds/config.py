@@ -13,7 +13,7 @@ import hashlib
 import re
 
 
-TESTING = not (gethostname() == 'web01')
+TESTING = False # not (gethostname() == 'web01')
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()

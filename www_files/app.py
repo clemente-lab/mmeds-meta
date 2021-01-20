@@ -49,8 +49,8 @@ def create_app():
 def application(environ, start_response):
     global loaded
     if not loaded:
-        Logger.info("Reload this")
         loaded = True
+        Logger.info("Reload this")
         app, web_path = create_app()
         cp.tree.graft(app, web_path)
     return cp.tree(environ, start_response)

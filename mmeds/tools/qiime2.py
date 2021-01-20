@@ -501,8 +501,6 @@ class Qiime2(Tool):
     def setup_stage_2(self):
         self.set_stage(2)
         # Run these commands sequentially
-        print('files prior to stage 2 setup')
-        print(self.doc.files.keys())
         self.filter_by_metadata()
         self.alignment_mafft()
         self.alignment_mask()

@@ -319,13 +319,13 @@ class Watcher(BaseManager):
             # If there is nothing in the process queue, sleep
             if self.q.empty():
                 if self.count == 20:
-                    self.logger.error("empty queue, id {}".format(id(self.q)))
                     self.count = 0
                 sleep(3)
             else:
                 # Otherwise get the queued item
                 process = self.q.get()
-                self.logger.error("got somethin {}".format(process))
+                self.logger.error("got something {}".format(process))
+                print("Got something {}".format(process))
                 self.logger.error('Got process requirements')
                 self.logger.error(process)
                 # If the watcher needs to shut down

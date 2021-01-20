@@ -586,6 +586,11 @@ class Database:
             raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
         return doc
 
+    def check_upload(self, access_code):
+        obs = MMEDSDoc.objects(access_code=access_code, owner=self.owner)
+        if not obs:
+            raise MissingUploadError()
+
     @classmethod
     def get_all_studies(cls):
         """ Return all studies currently stored in the database. """

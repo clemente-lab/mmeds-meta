@@ -88,7 +88,7 @@ class MMEDSbase:
             raise err.LoggedOutError('No user logged in')
 
     def check_upload(self, access_code):
-        """ Raise an error if the upload is currently in use. """
+        """ Raise an error if the upload does not exist or is currently in use. """
         try:
             cp.log(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
@@ -97,6 +97,10 @@ class MMEDSbase:
                 cp.session['processes'][access_code].exitcode is None:
             cp.log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
+
+        # Check that the upload does exist for the given user
+        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+            db.check_upload(access_code)
 
     def load_webpage(self, page, **kwargs):
         """
@@ -710,6 +714,8 @@ class MMEDSanalysis(MMEDSbase):
                           if Path(path).exists()]
 
         for key, path in analysis.files.items():
+            if key == 'summary':
+                path = path + '.zip'
             cp.session['download_files'][key] = path
 
         page = self.load_webpage('analysis_view_page',
@@ -769,7 +775,7 @@ class MMEDSanalysis(MMEDSbase):
                                      success='Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,
                 err.UploadInUseError, err.PrivilegeError) as e:
-            page = self.load_webpage('analysis_page', title='Welcome to MMEDS', error=e.message)
+            page = self.load_webpage('analysis_select_tool', title='Select Analysis', error=e.message)
         return page
 
     @cp.expose
