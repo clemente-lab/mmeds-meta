@@ -23,9 +23,9 @@ class UtilTests(TestCase):
                 'success': 'This is an success',
                 }
         formatted = util.format_alerts(args)
-        assert 'error' not in formatted
-        assert 'warning' not in formatted
-        assert 'success' not in formatted
+        assert 'w3-pale-red' in formatted['error']
+        assert 'w3-pale-yellow' in formatted['warning']
+        assert 'w3-pale-green' in formatted['success']
 
     def test_load_metadata_template(self):
         util.load_metadata_template('human')
