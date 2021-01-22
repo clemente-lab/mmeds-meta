@@ -12,7 +12,7 @@ from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, DATABASE_DIR
 from mmeds.logging import Logger
 
 import multiprocessing as mp
@@ -258,11 +258,10 @@ class Tool(mp.Process):
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
-        self.jobtext.append('module purge; module load texlive/2018; module load anaconda3;')
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('source activate mmeds-stable;')
+            self.jobtext.append('module use {}/.modules/modulefiles; module load mmeds-stable;'.format(DATABASE_DIR.parent))
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
@@ -555,8 +554,9 @@ class Tool(mp.Process):
                 self.logger.debug([child.name for child in self.children])
 
             self.update_doc(analysis_status='started')
-            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node}')
-            if self.testing or self.run_on_node:
+            type_ron = type(self.run_on_node)
+            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node} (type) {type_ron}')
+            if self.testing or not (self.run_on_node == -1):
                 self.logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)
                 # Send the output to the error log

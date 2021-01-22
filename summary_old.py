@@ -8,8 +8,7 @@ from shutil import copy, rmtree, make_archive
 import nbformat as nbf
 import os
 from mmeds.config import STORAGE_DIR
-from mmeds.util import load_config, setup_environment, parse_code_blocks
-from mmeds.logging import Logger
+from mmeds.util import log, load_config, setup_environment, parse_code_blocks
 
 
 def summarize_qiime(summary_path, tool):
@@ -60,13 +59,13 @@ def summarize_qiime1(path, files, config, study_name):
     """
     def move_files(move_path, category):
         """ Collect the contents of all files match the regex in path """
-        Logger.debug('Move files {}'.format(category))
+        log('Move files {}'.format(category))
         data_files = diversity.glob(move_path.format(depth=config['sampling_depth']))
         for data in data_files:
             copy(data, files['summary'])
             summary_files[category].append(data.name)
 
-    Logger.debug('In summarize_qiime1')
+    log('In summarize_qiime1')
     diversity = files['diversity_output']
     summary_files = defaultdict(list)
 
@@ -85,16 +84,16 @@ def summarize_qiime1(path, files, config, study_name):
     try:
         run(cmd, capture_output=True, env=new_env, check=True)
     except CalledProcessError as e:
-        Logger.debug(e)
+        log(e)
         raise e
-    Logger.debug('biom convert Finished')
+    log('biom convert Finished')
 
     # Add the text OTU table to the summary
     copy(path / 'otu_table.tsv', files['summary'])
     summary_files['otu'].append('otu_table.tsv')
 
-    Logger.debug('Summary path')
-    Logger.debug(path / 'summary')
+    log('Summary path')
+    log(path / 'summary')
     mnb = MMEDSNotebook(config=config,
                         analysis_type='qiime1',
                         files=summary_files,
@@ -103,19 +102,19 @@ def summarize_qiime1(path, files, config, study_name):
                         path=path / 'summary')
 
     mnb.create_notebook()
-    Logger.debug('Make archive')
+    log('Make archive')
     result = make_archive(path / 'summary',
                           format='zip',
                           root_dir=path,
                           base_dir='summary')
-    Logger.debug(result)
-    Logger.debug('Summary completed successfully')
+    log(result)
+    log('Summary completed successfully')
     return path / 'summary/analysis.pdf'
 
 
 def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
-    Logger.debug('Start Qiime2 summary')
+    log('Start Qiime2 summary')
 
     # Get the environment
     new_env = setup_environment('qiime2/2020.8')
@@ -143,7 +142,7 @@ def summarize_qiime2(path, files, config, study_name):
         run(cmd, env=new_env, check=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
-        Logger.debug(dest_file)
+        log(dest_file)
         summary_files['beta'].append(dest_file.name)
     rmtree(path / 'temp')
 
@@ -173,10 +172,10 @@ def summarize_qiime2(path, files, config, study_name):
                           format='zip',
                           root_dir=path,
                           base_dir='summary')
-    Logger.debug('Create archive of summary')
-    Logger.debug(result)
+    log('Create archive of summary')
+    log(result)
 
-    Logger.debug('Summary completed succesfully')
+    log('Summary completed succesfully')
     return path / 'summary/analysis.pdf'
 
 
@@ -259,10 +258,10 @@ class MMEDSNotebook():
         if location == 'packages':
             new_lines = lines[:packages_end] + [text + '\n'] + lines[packages_end:]
         elif location == 'output':
-            Logger.debug('Update output')
+            log('Update output')
             new_lines = lines[:output_start] + [text + '\n'] + lines[output_start:]
         elif location == 'input':
-            Logger.debug('Update output')
+            log('Update output')
             new_lines = lines[:input_start] + [text + '\n'] + lines[input_start:]
 
         with open(self.path / 'mod_revtex.tplx', 'w') as f:
@@ -312,7 +311,7 @@ class MMEDSNotebook():
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
-        Logger.debug('Alpha plots for file {}'.format(data_file))
+        log('Alpha plots for file {}'.format(data_file))
         if self.analysis_type == 'qiime1':
             xaxis = 'SequencesPerSample'
         elif self.analysis_type == 'qiime2':
@@ -324,7 +323,7 @@ class MMEDSNotebook():
         self.add_code('Image("{plot}")'.format(plot=filename),
                       meta={column: True for column in self.config['metadata']})
         self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
-        Logger.debug('Added markdown')
+        log('Added markdown')
         self.add_markdown(self.source['page_break'])
 
     def beta_plots(self, data_file):
@@ -333,7 +332,7 @@ class MMEDSNotebook():
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
-        Logger.debug('Beta plots for file {}'.format(data_file))
+        log('Beta plots for file {}'.format(data_file))
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
@@ -353,6 +352,7 @@ class MMEDSNotebook():
                 self.add_code('Image("{plot}")'.format(plot=subplot % (x, y)), meta={column: True})
             self.add_markdown(self.source['page_break'])
 
+
     def summarize(self):
         """
         Create the python notebook containing the summary of analysis results.
@@ -361,8 +361,8 @@ class MMEDSNotebook():
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
         """
 
-        Logger.debug('in notebook')
-        Logger.debug(self.files)
+        log('in notebook')
+        log(self.files)
         # Add cells for setting up the notebook
         self.add_code(self.source['py_setup'].format(font='font_file.otf',
                                                      analysis_type=self.analysis_type,
@@ -408,12 +408,12 @@ class MMEDSNotebook():
                 'title': 'MMEDS Analysis Summary'
             }
         }
-        Logger.debug('check cells')
+        log('check cells')
         for notebook_cell in self.cells:
             if notebook_cell.cell_type == 'code':
                 notebook_cell.metadata['hide_input'] = True
             if len(notebook_cell.metadata.keys()) > 1:
-                Logger.debug(notebook_cell)
+                log(notebook_cell)
         nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
         return nn
 
@@ -433,11 +433,11 @@ class MMEDSNotebook():
                 cmd += ' --ExecutePreprocessor.kernel_name="mmeds-stable"'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-            Logger.debug('Convert notebook to latex')
+            log('Convert notebook to latex')
             output = run(cmd.split(' '), check=True, env=self.env, capture_output=True)
-            Logger.debug(output)
+            log(output)
 
-            Logger.debug('Convert latex to pdf')
+            log('Convert latex to pdf')
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
@@ -446,10 +446,10 @@ class MMEDSNotebook():
             output = run(cmd.split(' '), check=True, capture_output=True)
 
         except RuntimeError:
-            Logger.debug(output)
+            log(output)
 
     def create_notebook(self):
-        Logger.debug('Start summary notebook')
+        log('Start summary notebook')
         original_path = Path.cwd()
         os.chdir(self.path)
         nn = self.summarize()

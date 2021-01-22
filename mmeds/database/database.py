@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
-from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
+from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError, StudyNameError,
                          MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql)
 from mmeds.database.metadata_uploader import MetaDataUploader
@@ -68,13 +68,6 @@ class Database:
             :owner: A string. The mmeds user account uploading or retrieving files.
             :testing: A boolean. Changes the connection parameters for testing.
         """
-        Logger.debug('Database created with params')
-        Logger.debug({
-            'path': path,
-            'user': user,
-            'owner': owner,
-            'testing': testing
-        })
         warnings.simplefilter('ignore')
 
         self.path = Path(path) / 'database_files'
@@ -536,7 +529,7 @@ class Database:
                 if found >= 1:
                     Logger.info(sql)
                     Logger.info(args)
-                    warning = '{row}\t{col}\tSubect in row {row} already exists in the database.'
+                    warning = '{row}\t{col}\tSubject in row {row} already exists in the database.'
                     warnings.append(warning.format(row=j, col=subject_col))
         return warnings
 
@@ -592,6 +585,18 @@ class Database:
         if doc is None:
             raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
         return doc
+
+    def check_upload(self, access_code):
+        obs = MMEDSDoc.objects(access_code=access_code, owner=self.owner)
+        if not obs:
+            raise MissingUploadError()
+
+    def check_study_name(self, study_name):
+        """ Verifies the provided study name is valid and not already in use. """
+        if not study_name.replace('_', '').isalnum():
+            raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
+        if MMEDSDoc.objects(study_name=study_name):
+            raise StudyNameError(f"Study name {study_name} already in use")
 
     @classmethod
     def get_all_studies(cls):

@@ -13,6 +13,24 @@ import os
 
 
 class UtilTests(TestCase):
+    def test_load_stats(self):
+        util.load_mmeds_stats(True)
+
+    def test_format_alerts(self):
+        args = {
+                'error': 'This is an error',
+                'warning': 'This is an warning',
+                'success': 'This is an success',
+                }
+        formatted = util.format_alerts(args)
+        assert 'w3-pale-red' in formatted['error']
+        assert 'w3-pale-yellow' in formatted['warning']
+        assert 'w3-pale-green' in formatted['success']
+
+    def test_load_metadata_template(self):
+        util.load_metadata_template('human')
+        util.load_metadata_template('animal')
+
     def test_is_numeric(self):
         assert util.is_numeric('45') is True
         assert util.is_numeric('4.5') is True

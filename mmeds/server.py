@@ -19,6 +19,7 @@ from mmeds.authentication import (validate_password, check_username, check_passw
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data, Watcher
+from mmeds.logging import Logger
 
 absDir = Path(os.getcwd())
 
@@ -87,7 +88,7 @@ class MMEDSbase:
             raise err.LoggedOutError('No user logged in')
 
     def check_upload(self, access_code):
-        """ Raise an error if the upload is currently in use. """
+        """ Raise an error if the upload does not exist or is currently in use. """
         try:
             cp.log(cp.session['processes'].get(access_code).exitcode)
         except AttributeError:
@@ -96,6 +97,12 @@ class MMEDSbase:
                 cp.session['processes'][access_code].exitcode is None:
             cp.log('Upload {} in use'.format(access_code))
             raise err.UploadInUseError()
+
+        # Check that the upload does exist for the given user
+        with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+            db.check_upload(access_code)
+            files, path = db.get_mongo_files(access_code)
+        return files
 
     def load_webpage(self, page, **kwargs):
         """
@@ -192,6 +199,7 @@ class MMEDSstudy(MMEDSbase):
     @cp.expose
     def select_study(self):
         """ Allows authorized user accounts to access uploaded studies. """
+        cp.log("In select study")
         study_html = ''' <tr class="w3-hover-blue">
             <th>
             <a href="{view_study_page}?access_code={access_code}"> {study_name} </a>
@@ -207,6 +215,7 @@ class MMEDSstudy(MMEDSbase):
         else:
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
+        cp.log("Found {} studies".format(len(studies)))
 
         study_list = []
         for study in studies:
@@ -216,11 +225,13 @@ class MMEDSstudy(MMEDSbase):
                                                 date_created=study.created,
                                                 num_analyses=0))
 
+        cp.log("Build out study list")
         page = self.load_webpage('study_select_page',
                                  title='Select Study',
                                  user_studies='\n'.join(study_list),
                                  public_studies="")
 
+        cp.log("Built out page")
         return page
 
     @cp.expose
@@ -231,6 +242,7 @@ class MMEDSstudy(MMEDSbase):
                 # Check the study belongs to the user only if the user doesn't have elevated privileges
                 study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
                 docs = db.get_docs(study_code=access_code)
+
 
             option_template = '<option value="{}">{}</option>'
 
@@ -261,6 +273,7 @@ class MMEDSstudy(MMEDSbase):
                                      study_analyses=analyses,
                                      study_files=study_files)
         except err.MissingUploadError:
+            Logger.error(err.MissingUploadError().message)
             page = self.load_webpage('home', error=err.MissingUploadError().message, title='Welcome to Mmeds')
 
         return page
@@ -464,23 +477,30 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def upload_metadata(self, uploadType, subjectType, studyName):
         """ Page for uploading Qiime data """
-        cp.session['study_name'] = studyName
-        cp.session['metadata_type'] = 'subject'
-        cp.session['subject_type'] = subjectType
-        cp.session['upload_type'] = uploadType
+        try:
+            cp.session['study_name'] = studyName
+            cp.session['metadata_type'] = 'subject'
+            cp.session['subject_type'] = subjectType
+            cp.session['upload_type'] = uploadType
 
-        # Add the success message if applicable
-        if cp.session['metadata_type'] == 'specimen':
-            page = self.load_webpage('upload_metadata_file',
-                                     title='Upload Metadata',
-                                     success='Subject table uploaded successfully',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=uploadType)
-        else:
-            page = self.load_webpage('upload_metadata_file',
-                                     title='Upload Metadata',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=uploadType)
+
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                db.check_study_name(studyName)
+
+            # Add the success message if applicable
+            if cp.session['metadata_type'] == 'specimen':
+                page = self.load_webpage('upload_metadata_file',
+                                         title='Upload Metadata',
+                                         success='Subject table uploaded successfully',
+                                         metadata_type=cp.session['metadata_type'].capitalize(),
+                                         version=uploadType)
+            else:
+                page = self.load_webpage('upload_metadata_file',
+                                         title='Upload Metadata',
+                                         metadata_type=cp.session['metadata_type'].capitalize(),
+                                         version=uploadType)
+        except(err.StudyNameError) as e:
+            page = self.load_webpage('upload_select_page', title='Upload Type', error=e.message)
         return page
 
     @cp.expose
@@ -703,6 +723,8 @@ class MMEDSanalysis(MMEDSbase):
                           if Path(path).exists()]
 
         for key, path in analysis.files.items():
+            if key == 'summary':
+                path = path + '.zip'
             cp.session['download_files'][key] = path
 
         page = self.load_webpage('analysis_view_page',
@@ -746,7 +768,8 @@ class MMEDSanalysis(MMEDSbase):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
             # Check that the requested upload exists
-            self.check_upload(access_code)
+            # Getting the files to check the config options match the provided metadata
+            files = self.check_upload(access_code)
 
             if config.file is None:
                 config_path = ''
@@ -755,6 +778,10 @@ class MMEDSanalysis(MMEDSbase):
             else:
                 config_path = create_local_copy(config.file, config.name, self.get_dir())
 
+            # Check that the config file is valid
+            util.load_config(config_path, files['metadata'])
+
+
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
                         analysis_type, config_path, -1, runOnNode))
@@ -762,7 +789,7 @@ class MMEDSanalysis(MMEDSbase):
                                      success='Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,
                 err.UploadInUseError, err.PrivilegeError) as e:
-            page = self.load_webpage('analysis_page', title='Welcome to MMEDS', error=e.message)
+            page = self.load_webpage('analysis_select_tool', title='Select Analysis', error=e.message)
         return page
 
     @cp.expose

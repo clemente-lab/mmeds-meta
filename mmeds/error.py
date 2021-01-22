@@ -147,3 +147,11 @@ class PrivilegeError(MmedsError):
     def __init__(self, message):
         self.message = message
         super().__init__()
+
+
+class StudyNameError(MmedsError):
+    """ Exception for issues with the provided study name """
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__()
