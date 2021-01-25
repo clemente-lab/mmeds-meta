@@ -59,3 +59,11 @@ apachectl restart
 
 ## App Root
 `/usr/local/www/wsgi-scripts`
+
+# Troubleshooting
+
+## Run on directories that need access
+find /usr/local/www -type d -exec chmod 755 {} \;
+find /usr/local/www -type f -exec chmod 644 {} \;
+
+sudo chown "$USER":apache {....}
