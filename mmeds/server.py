@@ -711,6 +711,8 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def view_analysis(self, access_code):
         """ The page for viewing information on a particular analysis """
+
+        cp.log("viewing analysis with code: {}".format(access_code))
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             # Check the study belongs to the user only if the user doesn't have elevated privileges
             analysis = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
@@ -722,10 +724,23 @@ class MMEDSanalysis(MMEDSbase):
                           for key, path in analysis.files.items()
                           if Path(path).exists()]
 
+        # Get analyses performed on this study
         for key, path in analysis.files.items():
             if key == 'summary':
                 path = path + '.zip'
             cp.session['download_files'][key] = path
+
+        # Check that a zip of the analysis exists for download
+        # If not (e.g. if the analysis failed part way through
+        # do not display the button to download all files
+        cp.log('bout to zip')
+        download_all_display = ''
+        if Path(analysis.path + '.zip').exists():
+            cp.log("zip found")
+            cp.session['download_files']['all'] = analysis.path + '.zip'
+        else:
+            cp.log("no zip found")
+            download_all_display = 'display:none'
 
         page = self.load_webpage('analysis_view_page',
                                  title=analysis.study_name,
@@ -740,6 +755,7 @@ class MMEDSanalysis(MMEDSbase):
                                  email=analysis.email,
                                  path=analysis.path,
                                  tool_type=analysis.tool_type,
+                                 download_all_display=download_all_display,
                                  analysis_type=analysis.analysis_type,
                                  analysis_status=analysis.analysis_status,
                                  analysis_files=analysis_files)

@@ -60,6 +60,9 @@ apachectl restart
 ## App Root
 `/usr/local/www/wsgi-scripts`
 
+## Copy CSS directory to app root
+`cp -r /path/to/CSS /usr/local/www/wsgi-scripts/.`
+
 # Troubleshooting
 
 ## Run on directories that need access

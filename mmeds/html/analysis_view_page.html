@@ -28,5 +28,11 @@
             </select>
             <button class="w3-btn w3-border" type='submit' method='post'>Download File</button>
         </form>
+        <div id="DownloadAll" style="{download_all_display}">
+        <h2> Download All Files </h2>
+        <form action='{download_page}' method='post' enctype='multipart/form-data' id='download_analysis'>
+            <button class="w3-btn w3-border" type='submit' method='post' name='file_name' value='all'>All Download Files</button>
+        </form>
+        </div>
     </div>
 </div>

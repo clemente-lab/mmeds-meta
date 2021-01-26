@@ -265,9 +265,13 @@ class Tool(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {}'.format(self.doc.tool_type)
+            '--tool_type {};'.format(self.doc.tool_type)
         ]
         self.jobtext.append(' '.join(cmd))
+
+    def zip(self):
+        cmd = f'zip -r {self.run_dir}.zip {self.run_dir};'
+        self.jobtext.append(cmd)
 
     def create_sub_analysis(self, category, value):
         """
@@ -496,6 +500,7 @@ class Tool(mp.Process):
         """ Create the summary of the analysis """
         if summary:
             self.summary()
+        self.zip()
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
         submitfile = self.path / 'submitfile'
