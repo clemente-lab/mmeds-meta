@@ -733,13 +733,10 @@ class MMEDSanalysis(MMEDSbase):
         # Check that a zip of the analysis exists for download
         # If not (e.g. if the analysis failed part way through
         # do not display the button to download all files
-        cp.log('bout to zip')
         download_all_display = ''
         if Path(analysis.path + '.zip').exists():
-            cp.log("zip found")
             cp.session['download_files']['all'] = analysis.path + '.zip'
         else:
-            cp.log("no zip found")
             download_all_display = 'display:none'
 
         page = self.load_webpage('analysis_view_page',

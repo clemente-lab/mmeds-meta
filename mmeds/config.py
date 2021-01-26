@@ -19,9 +19,7 @@ if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    # DATABASE_DIR = Path().home() / 'mmeds_server_data'
-    DATABASE_DIR = Path('/home/david/mmeds_server_data')
-    #DATABASE_DIR = Path('/usr/local/www/mmeds_server_data')
+    DATABASE_DIR = Path().home() / 'mmeds_server_data'
     SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
