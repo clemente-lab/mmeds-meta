@@ -38,6 +38,5 @@ def application(environ, start_response):
     else:
         web_path = '/mmeds_app/app.wsgi'
     app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
-    return app, web_path
     cp.tree.graft(app, web_path)
     return cp.tree(environ, start_response)

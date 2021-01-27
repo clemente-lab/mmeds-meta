@@ -157,7 +157,7 @@ class TestServer(helper.CPWebCase):
         Logger.info('da download')
         self.login()
         self.download_page_fail()
-        # self.download()
+        self.download()
         self.logout()
 
     def test_db_download(self):
@@ -644,13 +644,12 @@ class TestServer(helper.CPWebCase):
         # Grab the access code
         code = re.findall('access_code=(.+?)">', body)
         # Check that it works to access the view_study page
-        self.getPage("/study/view_study?access_code={}".format(code[1]), headers=self.cookies)
+        self.getPage("/study/view_study?access_code={}".format(code[0]), headers=self.cookies)
         self.assertStatus('200 OK')
 
-        for download in fig.TEST_FILES:
-            address = '/download/download_file?file_name={}'.format(download)
-            self.getPage(address, headers=self.cookies)
-            self.assertStatus('200 OK')
+        address = '/download/download_file?file_name=otu_table'
+        self.getPage(address, headers=self.cookies)
+        self.assertStatus('200 OK')
 
     def convert(self):
         headers, body = self.upload_files(['myMetaData'],
