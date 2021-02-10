@@ -784,10 +784,10 @@ class MMEDSanalysis(MMEDSbase):
             # Getting the files to check the config options match the provided metadata
             files = self.check_upload(access_code)
 
-            if config.file is None:
-                config_path = ''
-            elif isinstance(config, str):
+            if isinstance(config, str):
                 config_path = config
+            elif config.file is None:
+                config_path = ''
             else:
                 config_path = create_local_copy(config.file, config.name, self.get_dir())
 
