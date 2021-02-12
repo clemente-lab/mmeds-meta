@@ -182,6 +182,7 @@ class TestServer(helper.CPWebCase):
     def test_ec_run_analysis(self):
         self.login()
         self.run_test_analysis()
+        self.view_analysis()
         self.logout()
 
     def test_f_lefse_upload(self):
@@ -630,6 +631,7 @@ class TestServer(helper.CPWebCase):
         body = self.body.decode('utf-8')
         # Grab the access code
         code = re.findall('access_code=(.+?)">', body)
+        self.analyzed_study_code = code
 
         # Load the test config for animal subjects
         headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
@@ -647,6 +649,29 @@ class TestServer(helper.CPWebCase):
                                    success='Analysis started you will recieve an email shortly')
         self.assertBody(page)
         sleep(30)
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(code[0]), headers=self.cookies)
+        self.assertStatus('200 OK')
+        body = self.body.decode('utf-8')
+        Path('/tmp/analy_page.html').write_text(body)
+        # Grab the access code
+        analysis_code = re.findall('option value="(.+?)">', body)
+        self.getPage("/analysis/view_analysis?access_code={}".format(analysis_code[0]), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    def view_analysis(self):
+        return
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(self.analyzed_study_code), headers=self.cookies)
+        self.assertStatus('200 OK')
+        body = self.body.decode('utf-8')
+        Path('/tmp/analy_page.html').write_text(body)
+        # Grab the access code
+        code = re.findall('option value=(.+?)">', body)
+        self.getPage("/analysis/view_analysis?access_code={}".format(code[0]), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+
     #############
     # Downloads #
     #############
