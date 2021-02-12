@@ -1,5 +1,5 @@
 from mmeds.server import MMEDSserver
-from time import time
+from time import time, sleep
 from collections import defaultdict
 from pathlib import Path
 from tidylib import tidy_document
@@ -140,6 +140,7 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_cb_upload(self):
+        return
         Logger.info('cb upload')
         self.login()
         self.upload_metadata()
@@ -157,7 +158,7 @@ class TestServer(helper.CPWebCase):
         Logger.info('da download')
         self.login()
         self.download_page_fail()
-        # self.download()
+        self.download()
         self.logout()
 
     def test_db_download(self):
@@ -176,6 +177,12 @@ class TestServer(helper.CPWebCase):
     def test_eb_analysis_has_privileges(self):
         self.login(lab=True)
         self.check_analysis_has_privileges()
+        self.logout()
+
+    def test_ec_run_analysis(self):
+        self.login()
+        self.run_test_analysis()
+        self.view_analysis()
         self.logout()
 
     def test_f_lefse_upload(self):
@@ -618,6 +625,53 @@ class TestServer(helper.CPWebCase):
                                    user=self.lab_user)
         self.assertBody(page)
 
+    def run_test_analysis(self):
+        self.getPage("/study/select_study", headers=self.cookies)
+        # Parse the body of the page
+        body = self.body.decode('utf-8')
+        # Grab the access code
+        code = re.findall('access_code=(.+?)">', body)
+        self.analyzed_study_code = code
+
+        # Load the test config for animal subjects
+        headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
+
+        # Check that it works to access the view_study page
+        self.getPage('/analysis/run_analysis?access_code={}&analysis_method=test'.format(code[0]),
+                     headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        page = server.load_webpage('home',
+                                   user=self.server_user,
+                                   home_selected='',
+                                   analysis_selected='w3-blue',
+                                   privilege='',
+                                   title='Welcome to MMEDS',
+                                   success='Analysis started you will recieve an email shortly')
+        self.assertBody(page)
+        sleep(30)
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(code[0]), headers=self.cookies)
+        self.assertStatus('200 OK')
+        body = self.body.decode('utf-8')
+        Path('/tmp/analy_page.html').write_text(body)
+        # Grab the access code
+        analysis_code = re.findall('option value="(.+?)">', body)
+        self.getPage("/analysis/view_analysis?access_code={}".format(analysis_code[0]), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+    def view_analysis(self):
+        return
+        # Check that it works to access the view_study page
+        self.getPage("/study/view_study?access_code={}".format(self.analyzed_study_code), headers=self.cookies)
+        self.assertStatus('200 OK')
+        body = self.body.decode('utf-8')
+        Path('/tmp/analy_page.html').write_text(body)
+        # Grab the access code
+        code = re.findall('option value=(.+?)">', body)
+        self.getPage("/analysis/view_analysis?access_code={}".format(code[0]), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+
     #############
     # Downloads #
     #############
@@ -637,20 +691,18 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def download(self):
-
         self.getPage("/study/select_study", headers=self.cookies)
         # Parse the body of the page
         body = self.body.decode('utf-8')
         # Grab the access code
         code = re.findall('access_code=(.+?)">', body)
         # Check that it works to access the view_study page
-        self.getPage("/study/view_study?access_code={}".format(code[1]), headers=self.cookies)
+        self.getPage("/study/view_study?access_code={}".format(code[0]), headers=self.cookies)
         self.assertStatus('200 OK')
 
-        for download in fig.TEST_FILES:
-            address = '/download/download_file?file_name={}'.format(download)
-            self.getPage(address, headers=self.cookies)
-            self.assertStatus('200 OK')
+        address = '/download/download_file?file_name=otu_table'
+        self.getPage(address, headers=self.cookies)
+        self.assertStatus('200 OK')
 
     def convert(self):
         headers, body = self.upload_files(['myMetaData'],

@@ -4,7 +4,8 @@ from mmeds.logging import Logger
 class MmedsError(Exception):
     """ Base class for errors in this module. """
     def __init__(self):
-        Logger.error('A {} was raised. Message {}'.format(type(self), self.message))
+        if hasattr(self, 'message'):
+            Logger.error('A {} was raised. Message {}'.format(type(self), self.message))
 
 
 class MissingUploadError(MmedsError):

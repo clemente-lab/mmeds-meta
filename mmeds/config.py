@@ -303,6 +303,7 @@ TEST_CONFIG_1 = str(TEST_PATH / 'test_config_file_fail1.yaml')
 TEST_CONFIG_2 = str(TEST_PATH / 'test_config_file_fail2.yaml')
 TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.yaml')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
+TEST_ANIMAL_CONFIG = str(TEST_PATH / 'test_config_animal.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
@@ -492,10 +493,10 @@ COL_SIZES = {}
 
 # Try connecting via the testing setup
 try:
-    db = pms.connect('localhost',
-                     'root',
-                     '',
-                     SQL_DATABASE,
+    db = pms.connect(host='localhost',
+                     user='root',
+                     password='',
+                     db=SQL_DATABASE,
                      max_allowed_packet=2048000000,
                      local_infile=True)
 # Otherwise connect via secured credentials

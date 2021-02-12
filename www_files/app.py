@@ -29,12 +29,7 @@ from mmeds.logging import Logger
 
 curdir = os.path.abspath(os.path.dirname(__file__))
 
-
-# Using a global to prevent the app from being generated multiple times
-loaded = False
-
-
-def create_app():
+def application(environ, start_response):
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
 
@@ -43,14 +38,5 @@ def create_app():
     else:
         web_path = '/mmeds_app/app.wsgi'
     app = cp.Application(MMEDSserver(), web_path, config=CONFIG)
-    return app, web_path
-
-
-def application(environ, start_response):
-    global loaded
-    if not loaded:
-        loaded = True
-        Logger.info("Reload this")
-        app, web_path = create_app()
-        cp.tree.graft(app, web_path)
+    cp.tree.graft(app, web_path)
     return cp.tree(environ, start_response)
