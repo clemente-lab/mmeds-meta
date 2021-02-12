@@ -4,6 +4,7 @@ from mmeds.logging import Logger
 class MmedsError(Exception):
     """ Base class for errors in this module. """
     def __init__(self):
+        self.message = "This is the base error class. It should not be used directly."
         Logger.error('A {} was raised. Message {}'.format(type(self), self.message))
 
 
