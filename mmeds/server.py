@@ -87,6 +87,11 @@ class MMEDSbase:
         except KeyError:
             raise err.LoggedOutError('No user logged in')
 
+    def get_privilege(self):
+        if not cp.session.get('privilege'):
+            cp.session['privilege'] = check_privileges(self.get_user(), self.testing)
+        return cp.session['privilege']
+
     def check_upload(self, access_code):
         """ Raise an error if the upload does not exist or is currently in use. """
         try:
@@ -133,6 +138,9 @@ class MMEDSbase:
                     args['dir'] = self.get_dir()
             else:
                 template = HTML_PAGES['logged_out_template'].read_text()
+
+            # Get the user's privilege level
+            args['privilege'] = self.get_privilege()
 
             # Load the body of the requested webpage
             body = path.read_text()
@@ -243,7 +251,6 @@ class MMEDSstudy(MMEDSbase):
                 study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
                 docs = db.get_docs(study_code=access_code)
 
-
             option_template = '<option value="{}">{}</option>'
 
             # Get analyses related to this study
@@ -259,6 +266,21 @@ class MMEDSstudy(MMEDSbase):
             for key, path in study.files.items():
                 cp.session['download_files'][key] = path
 
+            # Get the user's privilege
+            if self.get_privilege():
+                privileged_section = """
+                <!-- Sections only appear for authorized users -->
+                <div id="GenerateID" class="w3-bar w3-card-4 w3-light-grey">
+                <h2>
+                <a href="{generate_id_page}?access_code={access_code}">Generate ID</a>
+                </h2>
+                </div>
+                <hr>
+                """.format(generate_id_page=HTML_ARGS['generate_id_page'],
+                           access_code=access_code)
+            else:
+                privileged_section = ''
+
             page = self.load_webpage('study_view_page',
                                      title=study.study_name,
                                      study_name=study.study_name,
@@ -267,6 +289,7 @@ class MMEDSstudy(MMEDSbase):
                                      reads_type=study.reads_type,
                                      barcodes_type=study.barcodes_type,
                                      access_code=study.access_code,
+                                     privileged_section=privileged_section,
                                      owner=study.owner,
                                      email=study.email,
                                      path=study.path,

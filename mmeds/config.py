@@ -112,6 +112,7 @@ HTML_PAGES = {
     # Study Pages
     'study_select_page': (HTML_DIR / 'study_select_page.html', True),
     'study_view_page': (HTML_DIR / 'study_view_page.html', True),
+    # 'generate_id_page': (HTML_DIR / 'generate_id_page.htmlt', True),
 
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
@@ -168,6 +169,7 @@ HTML_ARGS = {
     # Study Pages
     'study_select_page': SERVER_PATH + 'study/select_study',
     'study_view_page': SERVER_PATH + 'study/view_study',
+    # 'generate_id_page': SERVER_PATH + 'study/generate_id_page',
 
     # Analysis Pages
     'analysis_view_page': SERVER_PATH + 'analysis/view_analysis',
