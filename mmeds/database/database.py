@@ -3,6 +3,7 @@ import warnings
 
 import mmeds.secrets as sec
 import mmeds.config as fig
+import mmeds.formatter as fmt
 import mongoengine as men
 import pymysql as pms
 import cherrypy as cp
@@ -398,6 +399,26 @@ class Database:
 
         # Clear the mongo files
         self.clear_mongo_data(username)
+
+    def generate_id(self, access_code, study_name, specimen_id, aliquot_weight):
+        """ Generate a new id for the aliquot with the given weight """
+        Logger.error('gottum')
+        #TODO Why is this returning 1
+        idAliquot = self.cursor.execute("SELECT MAX(idAliquot) from Aliquot")
+
+        Logger.error(idAliquot)
+        idAliquot = idAliquot + 1
+
+        data, header = self.execute(fmt.GET_SPECIMEN_ID_QUERY.format(study_name), False)
+        Logger.error(data[0][0])
+        AliquotID = "ThisIsANewID"
+        # TODO Hard Coded user ID
+        row_string = f'({idAliquot}, {data[0][0]}, 10, "{AliquotID}", {aliquot_weight})'
+        sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
+        Logger.error('Returning data from generate_id')
+        Logger.error(sql)
+        self.cursor.execute(sql)
+        return AliquotID
 
     ########################################
     #               MongoDB                #

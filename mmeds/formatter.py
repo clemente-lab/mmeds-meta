@@ -10,6 +10,20 @@ ON Experiment_idExperiment = idExperiment
 WHERE StudyName = "{}"
 """
 
+GET_SPECIMEN_ID_QUERY = """
+SELECT idSpecimen FROM Specimen INNER JOIN
+Experiment INNER JOIN
+Study ON Study_idStudy = idStudy
+ON Experiment_idExperiment = idExperiment
+WHERE StudyName = "{}"
+"""
+
+INSERT_ALIQUOT_QUERY = """
+INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`)
+VALUES
+{}
+"""
+
 def build_html_table(header, data):
     """
     Return an HTML formatted table containing the results of the provided query

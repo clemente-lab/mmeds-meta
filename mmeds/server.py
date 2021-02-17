@@ -916,9 +916,27 @@ class MMEDSquery(MMEDSbase):
         return page
 
     @cp.expose
-    def generate_id(self, AccessCode, SpecimenID):
+    def generate_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
         """ Page for handling generation of new access codes for a given study """
-        page = self.load_webpage('query_generate_id_page')
+        # Load args from the last time this page was loaded
+        if AccessCode is None:
+            (AccessCode, SpecimenID) = cp.session['generate_id']
+
+        # Create the new ID and add it to the database
+        if AliquotWeight is not None:
+            cp.log("Got weight ", AliquotWeight)
+            with Database(testing=self.testing) as db:
+                doc = db.get_docs(access_code=AccessCode).first()
+                new_id = db.generate_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
+            page = self.load_webpage('query_generate_id_page',
+                                     success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
+                                     SpecimenID=SpecimenID)
+        else:
+            page = self.load_webpage('query_generate_id_page',
+                                     SpecimenID=SpecimenID)
+
+        # Store the args for the next page loading
+        cp.session['generate_id'] = (AccessCode, SpecimenID)
         return page
 
 
