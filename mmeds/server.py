@@ -11,6 +11,7 @@ from copy import deepcopy
 import mmeds.error as err
 import mmeds.util as util
 import mmeds.config as fig
+import mmeds.formatter as fmt
 
 from mmeds.validate import Validator
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
@@ -270,13 +271,15 @@ class MMEDSstudy(MMEDSbase):
             if self.get_privilege():
                 privileged_section = """
                 <!-- Sections only appear for authorized users -->
-                <div id="GenerateID" class="w3-bar w3-card-4 w3-light-grey">
-                <h2>
-                <a href="{generate_id_page}?access_code={access_code}">Generate ID</a>
-                </h2>
-                </div>
-                <hr>
-                """.format(generate_id_page=HTML_ARGS['generate_id_page'],
+                <form
+                    class="w3-bar w3-card-4 w3-grey w3-center"
+                    method="post"
+                    action="{query_specimen_select_page}?access_code={access_code}">
+                <button class="w3-button w3-center" type="submit">
+                <h4> Generate ID </h4>
+                </button>
+                </form>
+                """.format(query_specimen_select_page=HTML_ARGS['query_specimen_select_page'],
                            access_code=access_code)
             else:
                 privileged_section = ''
@@ -505,7 +508,6 @@ class MMEDSupload(MMEDSbase):
             cp.session['metadata_type'] = 'subject'
             cp.session['subject_type'] = subjectType
             cp.session['upload_type'] = uploadType
-
 
             with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
                 db.check_study_name(studyName)
@@ -817,7 +819,6 @@ class MMEDSanalysis(MMEDSbase):
             # Check that the config file is valid
             util.load_config(config_path, files['metadata'])
 
-
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
                         analysis_type, config_path, -1, runOnNode))
@@ -908,18 +909,16 @@ class MMEDSquery(MMEDSbase):
     def select_specimen(self, access_code):
         """ Display the page for generating new Aliquot IDs for a particular study """
         with Database(testing=self.testing) as db:
-            doc = db.get_docs(study_code=access_code).first()
+            doc = db.get_docs(access_code=access_code).first()
+            data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(doc.study_name))
+        specimen_table = fmt.build_specimen_table(access_code, header, data)
+        page = self.load_webpage('query_select_specimen_page', specimen_table=specimen_table)
+        return page
 
-            sql = """
-SELECT SpecimenID, StudyName FROM Specimen INNER JOIN
-Experiment INNER JOIN
-Study ON Study_idStudy = idStudy
-ON Experiment_idExperiment = idExperiment
-where StudyName = "{}"
-"""
-            data, header = db.execute(sql.format(doc.study_name))
-            specimen_table = db.build_html_table(header, data)
-        page = self.load_webpage('select_specimen_page', specimen_table=specimen_table)
+    @cp.expose
+    def generate_id(self, AccessCode, SpecimenID):
+        """ Page for handling generation of new access codes for a given study """
+        page = self.load_webpage('query_generate_id_page')
         return page
 
 

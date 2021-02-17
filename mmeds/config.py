@@ -19,7 +19,8 @@ if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    DATABASE_DIR = Path().home() / 'mmeds_server_data'
+    # DATABASE_DIR = Path().home() / 'mmeds_server_data'
+    DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
     SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
@@ -122,8 +123,8 @@ HTML_PAGES = {
     # Query Pages
     'query_select_page': (HTML_DIR / 'query_select_page.html', True),
     'query_result_page': (HTML_DIR / 'query_result_page.html', True),
-    'select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
-    'generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
+    'query_select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
+    'query_generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
 }
 
 # Predefined options for formatting webpages are set here
@@ -182,6 +183,7 @@ HTML_ARGS = {
 
     # Query Pages
     'query_result_page': SERVER_PATH + 'query/execute_query',
+    'query_specimen_select_page': SERVER_PATH + 'query/select_specimen',
     'generate_id_page': SERVER_PATH + 'query/generate_id',
     'query_result_table': '',
 
