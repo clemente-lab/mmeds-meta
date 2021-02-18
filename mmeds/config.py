@@ -2,7 +2,7 @@ from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
 from collections import defaultdict
-from socket import getfqdn
+from socket import getfqdn, gethostname
 import cherrypy as cp
 import pymysql as pms
 import mmeds.secrets as sec
@@ -19,8 +19,11 @@ if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    # DATABASE_DIR = Path().home() / 'mmeds_server_data'
-    DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
+    # For some reason my laptop can't find Path().home()
+    if gethostname() == 'fedora-y70':
+        DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
+    else:
+        DATABASE_DIR = Path().home() / 'mmeds_server_data'
     SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'

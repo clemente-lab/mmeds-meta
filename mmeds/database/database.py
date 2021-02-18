@@ -408,12 +408,20 @@ class Database:
         idAliquot = self.cursor.fetchone()[0] + 1
 
         # Get the SQL id of the Specimen this should be associated with
-        data, header = self.execute(fmt.GET_SPECIMEN_ID_QUERY.format(study_name, specimen_id), False)
+        data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
+                                                                  study_name=study_name,
+                                                                  specimen_id=specimen_id), False)
 
         # Create the human readable ID
         AliquotID = '{}-{}'.format(specimen_id, datetime.now().strftime("%Y-%m-%d-%H-%M"))
-        # TODO Hard Coded user ID
-        row_string = f'({idAliquot}, {data[0][0]}, 10, "{AliquotID}", {aliquot_weight})'
+
+        # Get the user ID
+        self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Specimen.user_id',
+                                                          study_name=study_name,
+                                                          specimen_id=specimen_id))
+        user_id = self.cursor.fetchone()[0]
+
+        row_string = f'({idAliquot}, {data[0][0]}, {user_id}, "{AliquotID}", {aliquot_weight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
         Logger.error('Returning data from generate_id')
         Logger.error(sql)

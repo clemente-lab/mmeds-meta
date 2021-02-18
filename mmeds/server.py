@@ -137,11 +137,11 @@ class MMEDSbase:
                 if args.get('user') is None:
                     args['user'] = self.get_user()
                     args['dir'] = self.get_dir()
+                # Get the user's privilege level
+                args['privilege'] = self.get_privilege()
             else:
                 template = HTML_PAGES['logged_out_template'].read_text()
 
-            # Get the user's privilege level
-            args['privilege'] = self.get_privilege()
 
             # Load the body of the requested webpage
             body = path.read_text()
@@ -361,6 +361,7 @@ class MMEDSupload(MMEDSbase):
 
         cp.log('before validator creation')
         valid = Validator(metadata_copy,
+                          cp.session['study_name'],
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
                           cp.session['subject_type'])

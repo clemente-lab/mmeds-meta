@@ -10,13 +10,13 @@ ON Experiment_idExperiment = idExperiment
 WHERE StudyName = "{}"
 """
 
-GET_SPECIMEN_ID_QUERY = """
-SELECT idSpecimen FROM Specimen INNER JOIN
+GET_SPECIMEN_QUERY = """
+SELECT {column} FROM Specimen INNER JOIN
 Experiment INNER JOIN
 Study ON Study_idStudy = idStudy
 ON Experiment_idExperiment = idExperiment
-WHERE StudyName = "{}"
-AND SpecimenID = "{}"
+WHERE StudyName = "{study_name}"
+AND SpecimenID = "{specimen_id}"
 """
 
 INSERT_ALIQUOT_QUERY = """
