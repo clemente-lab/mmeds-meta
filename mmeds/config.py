@@ -19,7 +19,8 @@ if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    # For some reason my laptop can't find Path().home()
+    # If apache is trying to access apache's home directory for `mmeds_server_data` rather than your user account's home
+    # you may need to hardcode the path here
     if gethostname() == 'fedora-y70':
         DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
     else:
