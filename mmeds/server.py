@@ -140,8 +140,6 @@ class MMEDSbase:
                 if args.get('user') is None:
                     args['user'] = self.get_user()
                     args['dir'] = self.get_dir()
-                # Get the user's privilege level
-                args['privilege'] = self.get_privilege()
             else:
                 template = HTML_PAGES['logged_out_template'].read_text()
 
