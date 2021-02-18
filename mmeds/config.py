@@ -173,7 +173,6 @@ HTML_ARGS = {
     # Study Pages
     'study_select_page': SERVER_PATH + 'study/select_study',
     'study_view_page': SERVER_PATH + 'study/view_study',
-    # 'generate_id_page': SERVER_PATH + 'study/generate_id_page',
 
     # Analysis Pages
     'analysis_view_page': SERVER_PATH + 'analysis/view_analysis',
