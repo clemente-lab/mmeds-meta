@@ -413,7 +413,8 @@ class Database:
                                                                   specimen_id=specimen_id), False)
         idSpecimen = data[0][0]
         # Get the number of Aliquots previously created from this Specimen
-        self.cursor.execute(f'SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = "{idSpecimen}"')
+        self.cursor.execute('SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = "{idSpecimen}"',
+                                     idSpecimen=idSpecimen)
         aliquot_count = self.cursor.fetchone()[0]
 
         # Create the human readable ID
