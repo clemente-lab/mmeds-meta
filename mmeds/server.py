@@ -910,7 +910,7 @@ class MMEDSquery(MMEDSbase):
             cp.log("Got weight ", AliquotWeight)
             with Database(testing=self.testing) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
-                new_id = db.generate_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
+                new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
             page = self.load_webpage('query_generate_id_page',
                                      success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
                                      access_code=AccessCode,

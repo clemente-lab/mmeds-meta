@@ -400,7 +400,7 @@ class Database:
         # Clear the mongo files
         self.clear_mongo_data(username)
 
-    def generate_id(self, access_code, study_name, specimen_id, aliquot_weight):
+    def generate_aliquot_id(self, access_code, study_name, specimen_id, aliquot_weight):
         """ Generate a new id for the aliquot with the given weight """
 
         # Get a new unique SQL id for this aliquot
@@ -605,20 +605,6 @@ class Database:
         Any modifications should be done through the Database class.
         """
         return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
-
-    def get_study(self, access_code, check_owner=True):
-        """
-        Return the MMEDSDoc object.
-        This object should be treated as read only.
-        Any modifications should be done through the Database class.
-        """
-        if check_owner:
-            doc = MMEDSDoc.objects(study_code=str(access_code), owner=self.owner).first()
-        else:
-            doc = MMEDSDoc.objects(access_code=str(access_code)).first()
-        if doc is None:
-            raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
-        return doc
 
     def get_doc(self, access_code, check_owner=True):
         """
