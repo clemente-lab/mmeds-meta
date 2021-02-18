@@ -183,8 +183,8 @@ HTML_ARGS = {
 
     # Query Pages
     'query_result_page': SERVER_PATH + 'query/execute_query',
-    'query_specimen_select_page': SERVER_PATH + 'query/select_specimen',
-    'generate_id_page': SERVER_PATH + 'query/generate_id',
+    'query_select_specimen_page': SERVER_PATH + 'query/select_specimen',
+    'query_generate_id_page': SERVER_PATH + 'query/generate_id',
     'query_result_table': '',
 
     # Where to insert errors/warnings on a given page

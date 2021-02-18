@@ -930,9 +930,11 @@ class MMEDSquery(MMEDSbase):
                 new_id = db.generate_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
             page = self.load_webpage('query_generate_id_page',
                                      success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
+                                     access_code=AccessCode,
                                      SpecimenID=SpecimenID)
         else:
             page = self.load_webpage('query_generate_id_page',
+                                     access_code=AccessCode,
                                      SpecimenID=SpecimenID)
 
         # Store the args for the next page loading

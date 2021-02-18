@@ -402,16 +402,16 @@ class Database:
 
     def generate_id(self, access_code, study_name, specimen_id, aliquot_weight):
         """ Generate a new id for the aliquot with the given weight """
-        Logger.error('gottum')
-        #TODO Why is this returning 1
-        idAliquot = self.cursor.execute("SELECT MAX(idAliquot) from Aliquot")
 
-        Logger.error(idAliquot)
-        idAliquot = idAliquot + 1
+        # Get a new unique SQL id for this aliquot
+        self.cursor.execute("SELECT MAX(idAliquot) from Aliquot")
+        idAliquot = self.cursor.fetchone()[0] + 1
 
-        data, header = self.execute(fmt.GET_SPECIMEN_ID_QUERY.format(study_name), False)
-        Logger.error(data[0][0])
-        AliquotID = "ThisIsANewID"
+        # Get the SQL id of the Specimen this should be associated with
+        data, header = self.execute(fmt.GET_SPECIMEN_ID_QUERY.format(study_name, specimen_id), False)
+
+        # Create the human readable ID
+        AliquotID = '{}-{}'.format(specimen_id, datetime.now().strftime("%Y-%m-%d-%H-%M"))
         # TODO Hard Coded user ID
         row_string = f'({idAliquot}, {data[0][0]}, 10, "{AliquotID}", {aliquot_weight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)

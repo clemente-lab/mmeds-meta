@@ -16,6 +16,7 @@ Experiment INNER JOIN
 Study ON Study_idStudy = idStudy
 ON Experiment_idExperiment = idExperiment
 WHERE StudyName = "{}"
+AND SpecimenID = "{}"
 """
 
 INSERT_ALIQUOT_QUERY = """
