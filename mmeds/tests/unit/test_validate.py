@@ -47,7 +47,11 @@ class ValidateTests(TestCase):
             for test_file in error_files:
                 name = Path(test_file).name
                 error = ' '.join(name.split('.')[0].split('_')[3:])
-                errors, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type, subject_ids, 'human')
+                errors, warnings, subjects = valid.validate_mapping_file(test_file,
+                                                                         'Good_Study',
+                                                                         metadata_type,
+                                                                         subject_ids,
+                                                                         'human')
                 if subject_ids is None:
                     subject_ids = subjects
 
@@ -68,8 +72,11 @@ class ValidateTests(TestCase):
             for test_file in warning_files:
                 name = Path(test_file).name
                 warning = ' '.join(name.split('.')[0].split('_')[3:])
-                warnings, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type,
-                                                                           subject_ids, 'human')
+                warnings, warnings, subjects = valid.validate_mapping_file(test_file,
+                                                                           'Good_Study',
+                                                                           metadata_type,
+                                                                           subject_ids,
+                                                                           'human')
                 if subject_ids is None:
                     subject_ids = subjects
 
