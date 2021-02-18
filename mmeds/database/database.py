@@ -411,9 +411,13 @@ class Database:
         data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
                                                                   study_name=study_name,
                                                                   specimen_id=specimen_id), False)
+        idSpecimen = data[0][0]
+        # Get the number of Aliquots previously created from this Specimen
+        self.cursor.execute(f'SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = "{idSpecimen}"')
+        aliquot_count = self.cursor.fetchone()[0]
 
         # Create the human readable ID
-        AliquotID = '{}-{}'.format(specimen_id, datetime.now().strftime("%Y-%m-%d-%H-%M"))
+        AliquotID = '{}-Aliquot{}'.format(specimen_id, aliquot_count)
 
         # Get the user ID
         self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Specimen.user_id',
@@ -421,10 +425,8 @@ class Database:
                                                           specimen_id=specimen_id))
         user_id = self.cursor.fetchone()[0]
 
-        row_string = f'({idAliquot}, {data[0][0]}, {user_id}, "{AliquotID}", {aliquot_weight})'
+        row_string = f'({idAliquot}, {idSpecimen}, {user_id}, "{AliquotID}", {aliquot_weight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
-        Logger.error('Returning data from generate_id')
-        Logger.error(sql)
         self.cursor.execute(sql)
         return AliquotID
 

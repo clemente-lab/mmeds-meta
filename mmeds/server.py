@@ -267,23 +267,6 @@ class MMEDSstudy(MMEDSbase):
             for key, path in study.files.items():
                 cp.session['download_files'][key] = path
 
-            # Get the user's privilege
-            if self.get_privilege():
-                privileged_section = """
-                <!-- Sections only appear for authorized users -->
-                <form
-                    class="w3-bar w3-card-4 w3-grey w3-center"
-                    method="post"
-                    action="{query_specimen_select_page}?access_code={access_code}">
-                <button class="w3-button w3-center" type="submit">
-                <h4> Generate ID </h4>
-                </button>
-                </form>
-                """.format(query_specimen_select_page=HTML_ARGS['query_specimen_select_page'],
-                           access_code=access_code)
-            else:
-                privileged_section = ''
-
             page = self.load_webpage('study_view_page',
                                      title=study.study_name,
                                      study_name=study.study_name,
@@ -292,7 +275,6 @@ class MMEDSstudy(MMEDSbase):
                                      reads_type=study.reads_type,
                                      barcodes_type=study.barcodes_type,
                                      access_code=study.access_code,
-                                     privileged_section=privileged_section,
                                      owner=study.owner,
                                      email=study.email,
                                      path=study.path,

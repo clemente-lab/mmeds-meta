@@ -1,4 +1,3 @@
-import mmeds.config as fig
 from mmeds.logging import Logger
 
 
@@ -20,10 +19,9 @@ AND SpecimenID = "{specimen_id}"
 """
 
 INSERT_ALIQUOT_QUERY = """
-INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`)
-VALUES
-{}
+INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`) VALUES {}
 """
+
 
 def build_html_table(header, data):
     """
@@ -72,10 +70,9 @@ def build_specimen_table(access_code, header, data):
     for row in data:
         html += '<tr class="w3-hover-blue">'
         for i, value in enumerate(row):
-            html +=  ''.format(access_code, row[0])
             html += '<th><a href="../query/generate_id?AccessCode={}&SpecimenID={}">{}</a></th>'.format(access_code,
-                                                                                                     row[0],
-                                                                                                     value)
+                                                                                                        row[0],
+                                                                                                        value)
         html += '</tr>\n'
     html += '</table>'
     return html
