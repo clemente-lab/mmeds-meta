@@ -89,9 +89,12 @@ class MMEDSbase:
             raise err.LoggedOutError('No user logged in')
 
     def get_privilege(self):
-        if not cp.session.get('privilege'):
-            cp.session['privilege'] = check_privileges(self.get_user(), self.testing)
-        return cp.session['privilege']
+        try:
+            privilege = cp.session['privilege']
+        except KeyError:
+            privilege = check_privileges(self.get_user(), self.testing)
+            cp.session['privilege'] = privilege
+        return privilege
 
     def check_upload(self, access_code):
         """ Raise an error if the upload does not exist or is currently in use. """
@@ -141,7 +144,6 @@ class MMEDSbase:
                 args['privilege'] = self.get_privilege()
             else:
                 template = HTML_PAGES['logged_out_template'].read_text()
-
 
             # Load the body of the requested webpage
             body = path.read_text()

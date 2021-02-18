@@ -7,19 +7,35 @@ from pathlib import Path
 class ValidateTests(TestCase):
     def test_a_validate_mapping_files(self):
         """ Checks that the primary testing metadata files of each type validate without error """
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_ANIMAL_SUBJECT, 'subject', None, 'animal')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_ANIMAL_SUBJECT,
+                                                                 'Good_Study',
+                                                                 'subject',
+                                                                 None,
+                                                                 'animal')
         assert not errors
         assert not warnings
 
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN, 'specimen', subjects, 'animal')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN,
+                                                                 'Good_Study',
+                                                                 'specimen',
+                                                                 subjects,
+                                                                 'animal')
         assert not errors
         assert not warnings
 
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SUBJECT, 'subject', None, 'human')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SUBJECT,
+                                                                 'Good_Study',
+                                                                 'subject',
+                                                                 None,
+                                                                 'human')
         assert not errors
         assert not warnings
 
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN, 'specimen', subjects, 'human')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN,
+                                                                 'Good_Study',
+                                                                 'specimen',
+                                                                 subjects,
+                                                                 'human')
         assert not errors
         assert not warnings
 

@@ -131,7 +131,11 @@ class UtilTests(TestCase):
         assert (tempdir / 'new_mmeds.tsv').is_file()
 
     def test_generate_error_html(self):
-        errors, warnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_ERROR, 'subject', None, 'human')
+        errors, warnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_ERROR,
+                                                           'Good_Study',
+                                                           'subject',
+                                                           None,
+                                                           'human')
         html = util.generate_error_html(fig.TEST_SUBJECT_ERROR, errors, warnings)
         # Check that the html is valid
         document, errors = tidy_document(html)

@@ -21,13 +21,13 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, metadata_type, subject_ids, subject_type, delimiter='\t'):
+def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subject_type, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, metadata_type, subject_ids, subject_type, sep=delimiter)
+    valid = Validator(file_fp, study_name, metadata_type, subject_ids, subject_type, sep=delimiter)
     return valid.run()
 
 
