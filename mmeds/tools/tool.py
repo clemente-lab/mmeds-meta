@@ -261,7 +261,7 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('module use {}/.modules/modulefiles; module load mmeds-stable;'.format(DATABASE_DIR.parent))
+            self.jobtext.append(f'module use {DATABASE_DIR.parent}/.modules/modulefiles; module load mmeds-stable;')
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
@@ -682,7 +682,7 @@ class TestTool(Tool):
     """ A class for running tool methods during testing """
 
     def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
-                 analysis=True, restart_stage=0, kill_stage=-1, time=20):
+                 analysis=True, restart_stage=0, kill_stage=-1, time=10):
         super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
                          analysis=analysis, restart_stage=restart_stage)
         print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))

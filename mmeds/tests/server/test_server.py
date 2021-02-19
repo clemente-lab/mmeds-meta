@@ -193,6 +193,7 @@ class TestServer(helper.CPWebCase):
     def test_ec_run_analysis(self):
         self.login()
         self.run_test_analysis()
+        self.view_analysis()
         self.logout()
 
     def test_y_query(self):
@@ -684,6 +685,8 @@ class TestServer(helper.CPWebCase):
                                    success='Analysis started you will recieve an email shortly')
         self.assertBody(page)
         sleep(30)
+
+    def view_analysis(self):
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(self.analyzed_study_code), headers=self.cookies)
         self.assertStatus('200 OK')
