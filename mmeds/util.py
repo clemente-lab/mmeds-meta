@@ -179,7 +179,6 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
             Logger.debug('Using default config')
             page = fig.DEFAULT_CONFIG.read_text()
         elif isinstance(config_file, str):
-            print('path to config {}'.format(config_file))
             page = Path(config_file).read_text()
         else:
             # Load the file contents

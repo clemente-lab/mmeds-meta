@@ -209,7 +209,6 @@ class TestServer(helper.CPWebCase):
         # Send an email at the end to ensure there aren't issues with
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
-        return
         queue.put(('terminate'))
         Logger.error('Waiting on pipe')
         result = pipe.recv()
