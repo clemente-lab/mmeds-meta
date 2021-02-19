@@ -723,7 +723,7 @@ class MMEDSanalysis(MMEDSbase):
         cp.log("viewing analysis with code: {}".format(access_code))
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             # Check the study belongs to the user only if the user doesn't have elevated privileges
-            analysis = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+            analysis = db.get_doc(access_code, not self.get_privilege())
 
         option_template = '<option value="{}">{}</option>'
 

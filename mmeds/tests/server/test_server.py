@@ -684,7 +684,7 @@ class TestServer(helper.CPWebCase):
                                    title='Welcome to MMEDS',
                                    success='Analysis started you will recieve an email shortly')
         self.assertBody(page)
-        sleep(30)
+        sleep(15)
 
     def view_analysis(self):
         # Check that it works to access the view_study page
