@@ -173,7 +173,6 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
         config = {}
         # If a Path was passed (as is the case during testing)
         if isinstance(config_file, Path):
-            print('path to config {}'.format(config_file))
             page = config_file.read_text()
         # If no config was provided load the default
         elif config_file is None or config_file == '':

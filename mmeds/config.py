@@ -318,6 +318,7 @@ TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv'
 TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
 TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
 TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
+TEST_SPECIMEN_SHORT_WARN = str(TEST_PATH / 'validation_files/test_specimen_short_warn.tsv')
 TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
 TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
