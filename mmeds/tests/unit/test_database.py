@@ -46,10 +46,10 @@ class DatabaseTests(TestCase):
         self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA))
         self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
-        self.db = pms.connect('localhost',
-                              'root',
-                              sec.TEST_ROOT_PASS,
-                              fig.SQL_DATABASE,
+        self.db = pms.connect(host='localhost',
+                              user='root',
+                              password=sec.TEST_ROOT_PASS,
+                              database=fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
                               autocommit=True,
                               local_infile=True)
