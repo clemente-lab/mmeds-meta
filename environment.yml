@@ -140,7 +140,6 @@ dependencies:
     - locustio==0.11.0
     - markupsafe==1.1.1
     - mistune==0.8.4
-    - mmeds==0.5.0
     - more-itertools==7.2.0
     - msgpack==0.6.1
     - multiprocessing-logging==0.3.0
