@@ -338,10 +338,6 @@ class Database:
                 tables = r_tables
                 r_tables = []
 
-    def select_db(self, db):
-        """ set the current DB """
-        self.db.select_db(db)
-
     def get_col_values_from_table(self, column, table):
         sql = quote_sql('SELECT {column} FROM {table}', column=column, table=table)
         self.cursor.execute(sql, {'column': column, 'table': table})

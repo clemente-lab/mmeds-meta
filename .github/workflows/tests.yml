@@ -44,13 +44,13 @@ jobs:
         run: mkdir ~/mmeds_server_data; cp -r ./test_files ~/mmeds_server_data/.
       - name: Unit Tests
         run: |
-          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;
       - name: Server Tests
         run: |
-          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server -x --durations=0
       - name: Upload Server Coverage
         run: bash <(curl -s https://codecov.io/bash) -cF server;
