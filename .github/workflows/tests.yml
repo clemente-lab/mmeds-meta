@@ -10,8 +10,8 @@ jobs:
 
     steps:
     - name: Install packages
-      run: |
-        - sudo apt-get install libtidy5 environment-modules xvfb
+      run:
+        - sudo apt-get install libtidy5 environment-modules xvfb -y
         - sudo systemctl start mysql.service
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -24,11 +24,11 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
-        conda env update --file environment.yml --name base
+        conda env update --file environment.yml
 
     - name: Do MMEDs setup
 
-      run: |
+      run:
         - source activate mmeds-stable
         - pip install .
         - mysql --version
@@ -44,7 +44,7 @@ jobs:
           #    # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      run: |
+      run:
         - coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
         - coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py
         - sleep 2 # Wait for manager to terminate
