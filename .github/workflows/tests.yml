@@ -1,0 +1,61 @@
+name: Python Package using Conda
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - name: Install packages
+      run: sudo apt-get install libtidy5 environment-modules mysql mongodb xvfb -y
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        conda env update --file environment.yml --name base
+
+    - name: Do MMEDs setup
+
+      run: |
+        - source activate mmeds-stable
+        - pip install .
+        - mysql --version
+        - mysql -u root < setup.sql | sed 's/\t/,/g' > out.csv
+        - cat out.csv
+        - mkdir ~/mmeds_server_data
+        - cp -r ./test_files ~/mmeds_server_data/.
+          #- name: Lint with flake8
+          #  run: |
+          #    conda install flake8
+          #    # stop the build if there are Python syntax errors or undefined names
+          #    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          #    # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        - coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+        - coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py
+        - sleep 2 # Wait for manager to terminate
+        - bash <(curl -s https://codecov.io/bash) -cF unit
+        - coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+        - pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server
+          -x --durations=0
+        - sleep 2 # Wait for manager to terminate
+        - mysql -u root -e "SELECT * FROM mmeds_data1.user;" > new_out.csv
+        - cat new_out.csv
+        - bash <(curl -s https://codecov.io/bash) -cF server
+        - pip uninstall mmeds -y
+        - sudo rm -rf ~/.modules/qiime2/var/cache
+        - sudo rm -rf ~/.modules/qiime1/var/cache
+        - sudo rm -rf ~/.modules/mmeds-stable/var/cache
+        - sudo find ~/.modules/ -type f -name *.pyc -delete
