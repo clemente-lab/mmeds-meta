@@ -10,7 +10,9 @@ jobs:
 
     steps:
     - name: Install packages
-      run: sudo apt-get install libtidy5 environment-modules mysql-server mongodb xvfb -y
+      run: |
+        - sudo apt-get install libtidy5 environment-modules xvfb -y
+        - sudo systemctl start mysql.service
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
