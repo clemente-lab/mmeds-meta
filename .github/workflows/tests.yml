@@ -32,7 +32,7 @@ jobs:
           pip install .
       - name: Mysql Setup
         run: |
-          mysql -u root < setup.sql | sed 's/\t/,/g' > out.csv
+          mysql -u root -proot < setup.sql | sed 's/\t/,/g' > out.csv
       - name: Server data setup
         run: |
           mkdir ~/mmeds_server_data; cp -r ./test_files ~/mmeds_server_data/.
