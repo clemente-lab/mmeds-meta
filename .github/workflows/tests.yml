@@ -7,12 +7,12 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       max-parallel: 5
-
     steps:
     - name: Install packages
-      run:
-        - sudo apt-get install libtidy5 environment-modules xvfb -y
-        - sudo systemctl start mysql.service
+      run: |
+        sudo apt-get install libtidy5 environment-modules xvfb -y
+    - name: Start Services
+      sudo systemctl start mysql.service; sudo systemctl start mongod.service;
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
@@ -27,12 +27,13 @@ jobs:
         conda env update --file environment.yml
 
     - name: Do MMEDs setup
-
-      run:
-        - source activate mmeds-stable
-        - pip install .
-        - mysql --version
-        - mysql -u root < setup.sql | sed 's/\t/,/g' > out.csv
+      run: |
+        source activate mmeds-stable
+    - name: Python install
+      run: |
+        pip install .
+    - name: Mysql Setup
+    mysql -u root < setup.sql | sed 's/\t/,/g' > out.csv
         - cat out.csv
         - mkdir ~/mmeds_server_data
         - cp -r ./test_files ~/mmeds_server_data/.
