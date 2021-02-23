@@ -503,7 +503,7 @@ COL_SIZES = {}
 try:
     db = pms.connect(host='localhost',
                      user='root',
-                     password='',
+                     password='root',
                      db=SQL_DATABASE,
                      max_allowed_packet=2048000000,
                      local_infile=True)
