@@ -1,3 +1,5 @@
+SET GLOBAL log_bin_trust_function_creators = 1;
+
 DELIMITER //
 
 DROP FUNCTION IF EXISTS `mmeds_data1`.`set_connection_auth` //

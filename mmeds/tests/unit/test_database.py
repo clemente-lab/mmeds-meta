@@ -4,12 +4,14 @@ import pymysql as pms
 import pandas as pd
 import pytest
 
+import mmeds.secrets as sec
 import mmeds.config as fig
 from mmeds.database.database import Database
 from mmeds.database.sql_builder import SQLBuilder
 from mmeds.error import TableAccessError
 from mmeds.util import parse_ICD_codes, load_metadata
 from mmeds.logging import Logger
+
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
 # Validating each value if it is successfully saved to the database.
@@ -45,8 +47,8 @@ class DatabaseTests(TestCase):
         self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
         self.db = pms.connect('localhost',
-                              user,
-                              '',
+                              'root',
+                              sec.TEST_ROOT_PASS,
                               fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
                               autocommit=True,
