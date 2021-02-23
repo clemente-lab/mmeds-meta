@@ -122,10 +122,13 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
+
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
+            db0.select_db('mysql')
             # Confirm that trying to access admin tables raises an error
             with pytest.raises(TableAccessError):
                 db0.execute('SELECT * FROM mysql.user')
+            db0.select_db('mmeds_data1')
 
             # Test that automatically adding 'protected_' works when joining tables
             sql = 'SELECT Subjects.HostSubjectId, Heights.Height FROM Subjects ' +\
