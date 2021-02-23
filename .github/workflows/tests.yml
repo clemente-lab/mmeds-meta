@@ -35,17 +35,11 @@ jobs:
       run: |
         pip install .
     - name: Mysql Setup
-    mysql -u root < setup.sql | sed 's/\t/,/g' > out.csv
-        - cat out.csv
-        - mkdir ~/mmeds_server_data
-        - cp -r ./test_files ~/mmeds_server_data/.
-          #- name: Lint with flake8
-          #  run: |
-          #    conda install flake8
-          #    # stop the build if there are Python syntax errors or undefined names
-          #    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          #    # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          #    flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      run: |
+        mysql -u root < setup.sql | sed 's/\t/,/g' > out.csv
+    - name: Server data setup
+      run: |
+        mkdir ~/mmeds_server_data; cp -r ./test_files ~/mmeds_server_data/.
     - name: Test with pytest
       run:
         - coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
