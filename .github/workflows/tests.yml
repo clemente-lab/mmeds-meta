@@ -9,6 +9,18 @@ jobs:
       max-parallel: 5
     steps:
       - uses: actions/checkout@v2
+
+      - name: cache Python modules
+        uses: actions/cache@v2
+        env:
+          cache-name: python-cache
+        with:
+          path: $CONDA
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.pyc') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
