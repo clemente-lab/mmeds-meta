@@ -128,7 +128,8 @@ HTML_PAGES = {
     'query_select_page': (HTML_DIR / 'query_select_page.html', True),
     'query_result_page': (HTML_DIR / 'query_result_page.html', True),
     'query_select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
-    'query_generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
+    'query_generate_aliquot_id_page': (HTML_DIR / 'query_generate_aliquot_id_page.html', True),
+    'query_generate_sample_id_page': (HTML_DIR / 'query_generate_sample_id_page.html', True),
 }
 
 # Predefined options for formatting webpages are set here
@@ -187,7 +188,8 @@ HTML_ARGS = {
     # Query Pages
     'query_result_page': SERVER_PATH + 'query/execute_query',
     'query_select_specimen_page': SERVER_PATH + 'query/select_specimen',
-    'query_generate_id_page': SERVER_PATH + 'query/generate_id',
+    'query_generate_aliquot_id_page': SERVER_PATH + 'query/generate_aliquot_id',
+    'query_generate_sample_id_page': SERVER_PATH + 'query/generate_sample_id',
     'query_result_table': '',
 
     # Where to insert errors/warnings on a given page

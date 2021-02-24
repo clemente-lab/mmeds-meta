@@ -49,7 +49,7 @@ def decorate_all_methods(decorator):
 
 
 # Note: In all of the following classes, if a parameter is named in camel case instead of underscore
-# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML forum
+# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML form
 
 class MMEDSbase:
     """
@@ -899,11 +899,22 @@ class MMEDSquery(MMEDSbase):
         return page
 
     @cp.expose
-    def generate_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
+    def generate_aliquot_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
         """ Page for handling generation of new access codes for a given study """
         # Load args from the last time this page was loaded
         if AccessCode is None:
-            (AccessCode, SpecimenID) = cp.session['generate_id']
+            (AccessCode, SpecimenID) = cp.session['generate_aliquot_id']
+
+        # Build the table of aliquots
+        with Database(testing=self.testing) as db:
+            doc = db.get_docs(access_code=AccessCode).first()
+            # Get the SQL id of the Specimen this should be associated with
+            data, header = db.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
+                                                                    study_name=doc.study_name,
+                                                                    specimen_id=SpecimenID), False)
+            idSpecimen = data[0][0]
+            data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen))
+        aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
 
         # Create the new ID and add it to the database
         if AliquotWeight is not None:
@@ -911,17 +922,19 @@ class MMEDSquery(MMEDSbase):
             with Database(testing=self.testing) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
                 new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
-            page = self.load_webpage('query_generate_id_page',
+            page = self.load_webpage('query_generate_aliquot_id_page',
                                      success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
                                      access_code=AccessCode,
+                                     aliquot_table=aliquot_table,
                                      SpecimenID=SpecimenID)
         else:
-            page = self.load_webpage('query_generate_id_page',
+            page = self.load_webpage('query_generate_aliquot_id_page',
                                      access_code=AccessCode,
+                                     aliquot_table=aliquot_table,
                                      SpecimenID=SpecimenID)
 
         # Store the args for the next page loading
-        cp.session['generate_id'] = (AccessCode, SpecimenID)
+        cp.session['generate_aliquot_id'] = (AccessCode, SpecimenID)
         return page
 
 

@@ -18,8 +18,12 @@ SELECT {column} FROM Specimen INNER JOIN\
  AND SpecimenID = "{specimen_id}"\
 """
 
-INSERT_ALIQUOT_QUERY = """
-INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`) VALUES {}
+INSERT_ALIQUOT_QUERY = """\
+INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`) VALUES {}\
+"""
+
+SELECT_ALIQUOT_QUERY = """\
+SELECT AliquotID, AliquotWeight FROM Aliquot WHERE Specimen_idSpecimen = {}
 """
 
 
@@ -65,14 +69,42 @@ def build_specimen_table(access_code, header, data):
 
     Logger.error("Table contents")
     Logger.error(data)
+    row_html = '<th><a href="../query/generate_aliquot_id?AccessCode={}&SpecimenID={}">{}</a></th>'
 
     # Add each row
     for row in data:
         html += '<tr class="w3-hover-blue">'
+        # TODO fix hardcoded web path here
         for i, value in enumerate(row):
-            html += '<th><a href="../query/generate_id?AccessCode={}&SpecimenID={}">{}</a></th>'.format(access_code,
-                                                                                                        row[0],
-                                                                                                        value)
+            html += row_html.format(access_code, row[0], value)
+        html += '</tr>\n'
+    html += '</table>'
+    return html
+
+
+def build_aliquot_table(access_code, header, data):
+    """
+    Return a table formatted for the specimen select page
+    :header: List, The column names
+    :data: List of Tuples, The rows of the columns
+    """
+
+    # Add the table column labels
+    html = '<table class="w3-table-all w3-hoverable">\n<thead>\n <tr class="w3-light-grey">\n'
+    for column in header:
+        html += '<th><b>{}</b></th>\n'.format(column)
+    html += '</tr></thead>'
+
+    Logger.error("Table contents")
+    Logger.error(data)
+
+    row_html = '<th><a href="../query/generate_sample_id?AccessCode={}&SpecimenID={}">{}</a></th>'
+    # Add each row
+    for row in data:
+        html += '<tr class="w3-hover-blue">'
+        # TODO fix hardcoded web path here
+        for i, value in enumerate(row):
+            html += row_html.format(access_code, row[0], value)
         html += '</tr>\n'
     html += '</table>'
     return html
