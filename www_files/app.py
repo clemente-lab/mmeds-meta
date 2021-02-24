@@ -32,6 +32,7 @@ curdir = os.path.abspath(os.path.dirname(__file__))
 def application(environ, start_response):
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
+    print('register a change')
 
     if testing:
         web_path = '/myapp'

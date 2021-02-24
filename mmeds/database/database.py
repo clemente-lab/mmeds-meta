@@ -3,6 +3,7 @@ import warnings
 
 import mmeds.secrets as sec
 import mmeds.config as fig
+import mmeds.formatter as fmt
 import mongoengine as men
 import pymysql as pms
 import cherrypy as cp
@@ -246,11 +247,14 @@ class Database:
             html += '<th><b>{}</b></th>\n'.format(column)
         html += '</tr></thead>'
 
+        Logger.error("Table contents")
+        Logger.error(data)
+
         # Add each row
         for row in data:
             html += '<tr class="w3-hover-blue">'
-            for value in row:
-                html += '<th> <a href="#"> {} </a></th>'.format(value)
+            for i, value in enumerate(row):
+                html += '<th> <a href="#{' + str(i) + '}' + '"> {} </a></th>'.format(value)
             html += '</tr>'
 
         html += '</table>'
@@ -395,6 +399,37 @@ class Database:
 
         # Clear the mongo files
         self.clear_mongo_data(username)
+
+    def generate_aliquot_id(self, access_code, study_name, specimen_id, aliquot_weight):
+        """ Generate a new id for the aliquot with the given weight """
+
+        # Get a new unique SQL id for this aliquot
+        self.cursor.execute("SELECT MAX(idAliquot) from Aliquot")
+        idAliquot = self.cursor.fetchone()[0] + 1
+
+        # Get the SQL id of the Specimen this should be associated with
+        data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
+                                                                  study_name=study_name,
+                                                                  specimen_id=specimen_id), False)
+        idSpecimen = data[0][0]
+        # Get the number of Aliquots previously created from this Specimen
+        self.cursor.execute('SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = "{idSpecimen}"',
+                            {'idSpecimen': idSpecimen})
+        aliquot_count = self.cursor.fetchone()[0]
+
+        # Create the human readable ID
+        AliquotID = '{}-Aliquot{}'.format(specimen_id, aliquot_count)
+
+        # Get the user ID
+        self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Specimen.user_id',
+                                                          study_name=study_name,
+                                                          specimen_id=specimen_id))
+        user_id = self.cursor.fetchone()[0]
+
+        row_string = f'({idAliquot}, {idSpecimen}, {user_id}, "{AliquotID}", {aliquot_weight})'
+        sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
+        self.cursor.execute(sql)
+        return AliquotID
 
     ########################################
     #               MongoDB                #

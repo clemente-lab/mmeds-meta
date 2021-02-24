@@ -2,7 +2,7 @@ from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
 from collections import defaultdict
-from socket import getfqdn
+from socket import getfqdn, gethostname
 import cherrypy as cp
 import pymysql as pms
 import mmeds.secrets as sec
@@ -19,7 +19,12 @@ if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    DATABASE_DIR = Path().home() / 'mmeds_server_data'
+    # If apache is trying to access apache's home directory for `mmeds_server_data` rather than your user account's home
+    # you may need to hardcode the path here
+    if gethostname() == 'fedora-y70':
+        DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
+    else:
+        DATABASE_DIR = Path().home() / 'mmeds_server_data'
     SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
@@ -112,6 +117,7 @@ HTML_PAGES = {
     # Study Pages
     'study_select_page': (HTML_DIR / 'study_select_page.html', True),
     'study_view_page': (HTML_DIR / 'study_view_page.html', True),
+    # 'generate_id_page': (HTML_DIR / 'generate_id_page.htmlt', True),
 
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
@@ -121,8 +127,8 @@ HTML_PAGES = {
     # Query Pages
     'query_select_page': (HTML_DIR / 'query_select_page.html', True),
     'query_result_page': (HTML_DIR / 'query_result_page.html', True),
-    'select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
-    'generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
+    'query_select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
+    'query_generate_id_page': (HTML_DIR / 'query_generate_id_page.html', True),
 }
 
 # Predefined options for formatting webpages are set here
@@ -180,7 +186,8 @@ HTML_ARGS = {
 
     # Query Pages
     'query_result_page': SERVER_PATH + 'query/execute_query',
-    'generate_id_page': SERVER_PATH + 'query/generate_id',
+    'query_select_specimen_page': SERVER_PATH + 'query/select_specimen',
+    'query_generate_id_page': SERVER_PATH + 'query/generate_id',
     'query_result_table': '',
 
     # Where to insert errors/warnings on a given page
@@ -311,6 +318,7 @@ TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv'
 TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
 TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
 TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
+TEST_SPECIMEN_SHORT_WARN = str(TEST_PATH / 'validation_files/test_specimen_short_warn.tsv')
 TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
 TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
@@ -495,7 +503,7 @@ COL_SIZES = {}
 try:
     db = pms.connect(host='localhost',
                      user='root',
-                     password='',
+                     password='root',
                      db=SQL_DATABASE,
                      max_allowed_packet=2048000000,
                      local_infile=True)

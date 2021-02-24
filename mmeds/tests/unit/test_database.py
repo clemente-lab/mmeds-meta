@@ -4,12 +4,14 @@ import pymysql as pms
 import pandas as pd
 import pytest
 
+import mmeds.secrets as sec
 import mmeds.config as fig
 from mmeds.database.database import Database
 from mmeds.database.sql_builder import SQLBuilder
 from mmeds.error import TableAccessError
 from mmeds.util import parse_ICD_codes, load_metadata
 from mmeds.logging import Logger
+
 
 # Checking whether or NOT a blank value or default value can be retrieved from the database.
 # Validating each value if it is successfully saved to the database.
@@ -44,10 +46,10 @@ class DatabaseTests(TestCase):
         self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA))
         self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
-        self.db = pms.connect('localhost',
-                              user,
-                              '',
-                              fig.SQL_DATABASE,
+        self.db = pms.connect(host='localhost',
+                              user='root',
+                              password=sec.TEST_ROOT_PASS,
+                              database=fig.SQL_DATABASE,
                               max_allowed_packet=2048000000,
                               autocommit=True,
                               local_infile=True)
@@ -120,11 +122,8 @@ class DatabaseTests(TestCase):
         uploaded by testuser0. There are other rows in these table as we know
         from previous test cases.
         """
-        with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
-            # Confirm that trying to access admin tables raises an error
-            with pytest.raises(TableAccessError):
-                db0.execute('SELECT * FROM mysql.user')
 
+        with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
             # Test that automatically adding 'protected_' works when joining tables
             sql = 'SELECT Subjects.HostSubjectId, Heights.Height FROM Subjects ' +\
                 'INNER JOIN Heights ON Subjects.idSubjects=Heights.Subjects_idSubjects'

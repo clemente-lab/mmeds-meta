@@ -140,13 +140,24 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_cb_upload(self):
-        return
         Logger.info('cb upload')
         self.login()
+        self.upload_metadata_fail()
         self.upload_metadata()
         self.upload_data()
         self.modify_upload()
         self.logout()
+
+    def test_cc_lefse_upload(self):
+        return
+        self.login()
+        self.upload_lefse()
+        self.logout()
+
+    def test_cd_dual_upload(self):
+        return
+        self.login()
+        self.upload_dualBarcode_metadata()
 
     def test_da_select_study(self):
         Logger.info('da view study')
@@ -184,17 +195,6 @@ class TestServer(helper.CPWebCase):
         self.run_test_analysis()
         self.view_analysis()
         self.logout()
-
-    def test_f_lefse_upload(self):
-        return
-        self.login()
-        self.upload_lefse()
-        self.logout()
-
-    def test_g_dual_upload(self):
-        return
-        self.login()
-        self.upload_dualBarcode_metadata()
 
     def test_y_query(self):
         return
@@ -361,7 +361,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype
-        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Test_Animal_OTU&subjectType=animal',
+        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Good_Study&subjectType=animal',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -388,7 +388,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         assert recieve_email(self.server_user, 'upload',
-                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_Animal_OTU'))
+                             'user {} uploaded data for the {}'.format(self.server_user, 'Good_Study'))
 
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)
@@ -454,12 +454,14 @@ class TestServer(helper.CPWebCase):
         assert recieve_email(self.server_user, 'upload',
                              'user {} uploaded data for the {}'.format(self.server_user, 'Test_DualBarcodes'))
 
-    def upload_metadata(self):
+    def upload_metadata_fail(self):
+
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
         self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human', self.cookies)
         self.assertStatus('200 OK')
+
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_CONFIG], ['application/gzip'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
@@ -473,6 +475,10 @@ class TestServer(helper.CPWebCase):
                                    error='yaml is not a valid filetype.')
         self.assertBody(page)
         Logger.debug('Checked invalid filetype')
+
+        ##################
+        # Subject Errors #
+        ##################
 
         # Check a subject metadata file that errors
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ERROR], ['text/tab-seperated-values'])
@@ -502,6 +508,10 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
         Logger.debug('Checked metadata that warns')
 
+        ###################
+        # Specimen Errors #
+        ###################
+
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
@@ -520,8 +530,34 @@ class TestServer(helper.CPWebCase):
 
         Logger.debug('Checked metadata that errors')
 
+        #####################
+        # Specimen Warnings #
+        #####################
+
         # Check a subject metadata file that produces warnings
-        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_WARN], ['text/tab-seperated-values'])
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        error_message = ('-1\t-1\tStudy Name Error: The study name in the metadata (Good_Study)' +
+                         ' does not match the name provided for this upload (Test_Server)')
+        page = server.load_webpage('upload_metadata_error',
+                                   user=self.server_user,
+                                   upload_selected='w3-blue',
+                                   error=[error_message],
+                                   dual_barcodes='style="display:none"',
+                                   home_selected='')
+        self.assertBody(page)
+
+    def upload_metadata(self):
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human', self.cookies)
+
+        # Check a subject metadata file that has no issues
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        # Check a subject metadata file that produces warnings
+        headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT_WARN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
@@ -560,7 +596,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         mail = recieve_email(self.server_user, 'upload',
-                             'user {} uploaded data for the {}'.format(self.server_user, 'Test_Server'))
+                             'user {} uploaded data for the Short_Study'.format(self.server_user))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
 
     def modify_upload(self):
@@ -631,7 +667,7 @@ class TestServer(helper.CPWebCase):
         body = self.body.decode('utf-8')
         # Grab the access code
         code = re.findall('access_code=(.+?)">', body)
-        self.analyzed_study_code = code
+        self.analyzed_study_code = code[0].strip('"')
 
         # Load the test config for animal subjects
         headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
@@ -648,29 +684,17 @@ class TestServer(helper.CPWebCase):
                                    title='Welcome to MMEDS',
                                    success='Analysis started you will recieve an email shortly')
         self.assertBody(page)
-        sleep(30)
-        # Check that it works to access the view_study page
-        self.getPage("/study/view_study?access_code={}".format(code[0]), headers=self.cookies)
-        self.assertStatus('200 OK')
-        body = self.body.decode('utf-8')
-        Path('/tmp/analy_page.html').write_text(body)
-        # Grab the access code
-        analysis_code = re.findall('option value="(.+?)">', body)
-        self.getPage("/analysis/view_analysis?access_code={}".format(analysis_code[0]), headers=self.cookies)
-        self.assertStatus('200 OK')
+        sleep(15)
 
     def view_analysis(self):
-        return
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(self.analyzed_study_code), headers=self.cookies)
         self.assertStatus('200 OK')
         body = self.body.decode('utf-8')
-        Path('/tmp/analy_page.html').write_text(body)
         # Grab the access code
-        code = re.findall('option value=(.+?)">', body)
-        self.getPage("/analysis/view_analysis?access_code={}".format(code[0]), headers=self.cookies)
+        analysis_code = re.findall('option value="(.+?)">', body)
+        self.getPage("/analysis/view_analysis?access_code={}".format(analysis_code[0]), headers=self.cookies)
         self.assertStatus('200 OK')
-
 
     #############
     # Downloads #
@@ -759,4 +783,30 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/query_page', headers=self.cookies)
         self.assertStatus('200 OK')
         self.getPage('/analysis/execute_query?query={}'.format('Select+*+from+Subjects'), self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
+    def test_fa_generate_aliquot_id(self):
+        self.login(False, True)
+        self.generate_aliquot_id()
+
+    def generate_aliquot_id(self):
+        self.getPage('/query/query_select', headers=self.cookies)
+        self.assertStatus('200 OK')
+        # Grab all the access codes on the page
+        body = self.body.decode('utf-8')
+        code = re.findall('access_code=(.+?)">', body)
+
+        self.getPage('/query/select_specimen?access_code={}'.format(code[-1]), headers=self.cookies)
+        self.assertStatus('200 OK')
+
+        # Grab link to the first Specimen
+        body = self.body.decode('utf-8')
+        code = re.findall('\<th\>\<a href="..(.+?)">', body)
+
+        # Open the weight entry page
+        self.getPage(code[0], headers=self.cookies)
+        self.assertStatus('200 OK')
+
+        # Submit the new aliquot id
+        self.getPage('/query/generate_id?AliquotWeight=0.05', headers=self.cookies)
         self.assertStatus('200 OK')

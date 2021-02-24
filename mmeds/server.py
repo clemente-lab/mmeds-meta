@@ -11,6 +11,7 @@ from copy import deepcopy
 import mmeds.error as err
 import mmeds.util as util
 import mmeds.config as fig
+import mmeds.formatter as fmt
 
 from mmeds.validate import Validator
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
@@ -86,6 +87,14 @@ class MMEDSbase:
             return cp.session['working_dir']
         except KeyError:
             raise err.LoggedOutError('No user logged in')
+
+    def get_privilege(self):
+        try:
+            privilege = cp.session['privilege']
+        except KeyError:
+            privilege = check_privileges(self.get_user(), self.testing)
+            cp.session['privilege'] = privilege
+        return privilege
 
     def check_upload(self, access_code):
         """ Raise an error if the upload does not exist or is currently in use. """
@@ -243,7 +252,6 @@ class MMEDSstudy(MMEDSbase):
                 study = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
                 docs = db.get_docs(study_code=access_code)
 
-
             option_template = '<option value="{}">{}</option>'
 
             # Get analyses related to this study
@@ -335,6 +343,7 @@ class MMEDSupload(MMEDSbase):
 
         cp.log('before validator creation')
         valid = Validator(metadata_copy,
+                          cp.session['study_name'],
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
                           cp.session['subject_type'])
@@ -482,7 +491,6 @@ class MMEDSupload(MMEDSbase):
             cp.session['metadata_type'] = 'subject'
             cp.session['subject_type'] = subjectType
             cp.session['upload_type'] = uploadType
-
 
             with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
                 db.check_study_name(studyName)
@@ -715,7 +723,7 @@ class MMEDSanalysis(MMEDSbase):
         cp.log("viewing analysis with code: {}".format(access_code))
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             # Check the study belongs to the user only if the user doesn't have elevated privileges
-            analysis = db.get_doc(access_code, not check_privileges(self.get_user(), self.testing))
+            analysis = db.get_doc(access_code, not self.get_privilege())
 
         option_template = '<option value="{}">{}</option>'
 
@@ -793,7 +801,6 @@ class MMEDSanalysis(MMEDSbase):
 
             # Check that the config file is valid
             util.load_config(config_path, files['metadata'])
-
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
@@ -885,18 +892,36 @@ class MMEDSquery(MMEDSbase):
     def select_specimen(self, access_code):
         """ Display the page for generating new Aliquot IDs for a particular study """
         with Database(testing=self.testing) as db:
-            doc = db.get_docs(study_code=access_code).first()
+            doc = db.get_docs(access_code=access_code).first()
+            data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(doc.study_name))
+        specimen_table = fmt.build_specimen_table(access_code, header, data)
+        page = self.load_webpage('query_select_specimen_page', specimen_table=specimen_table)
+        return page
 
-            sql = """
-SELECT SpecimenID, StudyName FROM Specimen INNER JOIN
-Experiment INNER JOIN
-Study ON Study_idStudy = idStudy
-ON Experiment_idExperiment = idExperiment
-where StudyName = "{}"
-"""
-            data, header = db.execute(sql.format(doc.study_name))
-            specimen_table = db.build_html_table(header, data)
-        page = self.load_webpage('select_specimen_page', specimen_table=specimen_table)
+    @cp.expose
+    def generate_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
+        """ Page for handling generation of new access codes for a given study """
+        # Load args from the last time this page was loaded
+        if AccessCode is None:
+            (AccessCode, SpecimenID) = cp.session['generate_id']
+
+        # Create the new ID and add it to the database
+        if AliquotWeight is not None:
+            cp.log("Got weight ", AliquotWeight)
+            with Database(testing=self.testing) as db:
+                doc = db.get_docs(access_code=AccessCode).first()
+                new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
+            page = self.load_webpage('query_generate_id_page',
+                                     success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
+                                     access_code=AccessCode,
+                                     SpecimenID=SpecimenID)
+        else:
+            page = self.load_webpage('query_generate_id_page',
+                                     access_code=AccessCode,
+                                     SpecimenID=SpecimenID)
+
+        # Store the args for the next page loading
+        cp.session['generate_id'] = (AccessCode, SpecimenID)
         return page
 
 

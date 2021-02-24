@@ -7,19 +7,35 @@ from pathlib import Path
 class ValidateTests(TestCase):
     def test_a_validate_mapping_files(self):
         """ Checks that the primary testing metadata files of each type validate without error """
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_ANIMAL_SUBJECT, 'subject', None, 'animal')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_ANIMAL_SUBJECT,
+                                                                 'Good_Study',
+                                                                 'subject',
+                                                                 None,
+                                                                 'animal')
         assert not errors
         assert not warnings
 
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN, 'specimen', subjects, 'animal')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN,
+                                                                 'Good_Study',
+                                                                 'specimen',
+                                                                 subjects,
+                                                                 'animal')
         assert not errors
         assert not warnings
 
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SUBJECT, 'subject', None, 'human')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SUBJECT,
+                                                                 'Good_Study',
+                                                                 'subject',
+                                                                 None,
+                                                                 'human')
         assert not errors
         assert not warnings
 
-        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN, 'specimen', subjects, 'human')
+        errors, warnings, subjects = valid.validate_mapping_file(fig.TEST_SPECIMEN,
+                                                                 'Good_Study',
+                                                                 'specimen',
+                                                                 subjects,
+                                                                 'human')
         assert not errors
         assert not warnings
 
@@ -31,7 +47,11 @@ class ValidateTests(TestCase):
             for test_file in error_files:
                 name = Path(test_file).name
                 error = ' '.join(name.split('.')[0].split('_')[3:])
-                errors, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type, subject_ids, 'human')
+                errors, warnings, subjects = valid.validate_mapping_file(test_file,
+                                                                         'Good_Study',
+                                                                         metadata_type,
+                                                                         subject_ids,
+                                                                         'human')
                 if subject_ids is None:
                     subject_ids = subjects
 
@@ -52,8 +72,11 @@ class ValidateTests(TestCase):
             for test_file in warning_files:
                 name = Path(test_file).name
                 warning = ' '.join(name.split('.')[0].split('_')[3:])
-                warnings, warnings, subjects = valid.validate_mapping_file(test_file, metadata_type,
-                                                                           subject_ids, 'human')
+                warnings, warnings, subjects = valid.validate_mapping_file(test_file,
+                                                                           'Good_Study',
+                                                                           metadata_type,
+                                                                           subject_ids,
+                                                                           'human')
                 if subject_ids is None:
                     subject_ids = subjects
 

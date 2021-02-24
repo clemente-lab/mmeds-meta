@@ -21,20 +21,21 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, metadata_type, subject_ids, subject_type, delimiter='\t'):
+def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subject_type, delimiter='\t'):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, metadata_type, subject_ids, subject_type, sep=delimiter)
+    valid = Validator(file_fp, study_name, metadata_type, subject_ids, subject_type, sep=delimiter)
     return valid.run()
 
 
 class Validator:
 
-    def __init__(self, file_fp, metadata_type, subject_ids, subject_type, sep='\t'):
+    def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, sep='\t'):
         """ Initialize the validator object. """
+        self.study_name = study_name
         self.metadata_type = metadata_type
         self.subject_type = subject_type
         self.errors = []
@@ -436,6 +437,13 @@ class Validator:
                 other = 'specimen'
             self.errors.append(err.format(row_index, self.col_index, sub, found, other))
 
+    def check_study_name(self):
+        """ Check that the study name input by the user matches that in the metadata """
+        df_study_name = self.df['Study']['StudyName'][0]
+        if not self.study_name == df_study_name:
+            self.errors.append(f'-1\t-1\tStudy Name Error: The study name in the metadata ({df_study_name})' +
+                               f' does not match the name provided for this upload ({self.study_name})')
+
     def run(self):
         """ Perform the validation. """
         Logger.debug("Running metadata validation")
@@ -461,6 +469,7 @@ class Validator:
                         # Only define subjects if subject table is correctly uploaded
                         subjects = self.df['AnimalSubjects']
             elif self.metadata_type == 'specimen':
+                self.check_study_name()
                 tables = fig.SPECIMEN_TABLES
             self.check_column_types()
 
