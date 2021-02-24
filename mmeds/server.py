@@ -934,6 +934,47 @@ class MMEDSquery(MMEDSbase):
         cp.session['generate_aliquot_id'] = (AccessCode, SpecimenID)
         return page
 
+    @cp.expose
+    def generate_sample_id(self, AccessCode=None, AliquotID=None,
+                           SampleToolVersion=None, SampleTool=None,
+                           SampleConditions=None, SampleDatePerformed=None,
+                           SampleProcessor=None, SampleProtocolInformation=None):
+        """ Page for handling generation of new access codes for a given study """
+        # Load args from the last time this page was loaded
+        if AccessCode is None:
+            (AccessCode, SampleID) = cp.session['generate_sample_id']
+
+        # Create the new ID and add it to the database
+        success = ''
+        if SampleToolVersion is not None:
+            with Database(testing=self.testing) as db:
+                doc = db.get_docs(access_code=AccessCode).first()
+                new_id = db.generate_sample_id(AccessCode, doc.study_name,
+                                               AliquotID, SampleToolVersion,
+                                               SampleConditions, SampleDatePerformed,
+                                               SampleProcessor, SampleProtocolInformation)
+            success = f'New ID is {new_id} for Sample with processor {SampleProcessor}'
+
+        # Build the table of aliquots
+        with Database(testing=self.testing) as db:
+            doc = db.get_docs(access_code=AccessCode).first()
+            # Get the SQL id of the Aliquot this should be associated with
+            data, header = db.execute(fmt.GET_SPECIMEN_QUERY.format(column='idAliquot',
+                                                                    study_name=doc.study_name,
+                                                                    specimen_id=AliquotID), False)
+            idAliquot = data[0][0]
+            data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idAliquot))
+        aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
+
+        page = self.load_webpage('query_generate_aliquot_id_page',
+                                 success=success,
+                                 access_code=AccessCode,
+                                 aliquot_table=aliquot_table,
+                                 AliquotID=AliquotID)
+        # Store the args for the next page loading
+        cp.session['generate_aliquot_id'] = (AccessCode, AliquotID)
+        return page
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):

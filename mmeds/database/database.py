@@ -433,6 +433,39 @@ class Database:
         self.db.commit()
         return AliquotID
 
+    def generate_sample_id(self, access_code, study_name, specimen_id, aliquot_weight):
+        """ Generate a new id for the aliquot with the given weight """
+
+        # Get a new unique SQL id for this aliquot
+        self.cursor.execute("SELECT MAX(idSample) from Sample")
+        idSample = self.cursor.fetchone()[0] + 1
+
+        # Get the SQL id of the Aliquot this should be associated with
+        data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idAliquot',
+                                                                  study_name=study_name,
+                                                                  specimen_id=specimen_id), False)
+        idAliquot = int(data[0][0])
+        # Get the number of Samples previously created from this Aliquot
+        self.cursor.execute('SELECT COUNT(SampleID) FROM Sample WHERE Aliquot_idAliquot = %(idAliquot)s',
+                            {'idAliquot': idAliquot})
+
+        aliquot_count = self.cursor.fetchone()[0]
+
+        # Create the human readable ID
+        SampleID = '{}-Sample{}'.format(specimen_id, aliquot_count)
+
+        # Get the user ID
+        self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Aliquot.user_id',
+                                                          study_name=study_name,
+                                                          specimen_id=specimen_id))
+        user_id = self.cursor.fetchone()[0]
+
+        row_string = f'({idSample}, {idAliquot}, {user_id}, "{SampleID}")'
+        sql = fmt.INSERT_SAMPLE_QUERY.format(row_string)
+        self.cursor.execute(sql)
+        self.db.commit()
+        return SampleID
+
     ########################################
     #               MongoDB                #
     ########################################

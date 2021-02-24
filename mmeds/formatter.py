@@ -84,7 +84,7 @@ def build_specimen_table(access_code, header, data):
 
 def build_aliquot_table(access_code, header, data):
     """
-    Return a table formatted for the specimen select page
+    Return a table formatted for Samples
     :header: List, The column names
     :data: List of Tuples, The rows of the columns
     """
@@ -98,7 +98,7 @@ def build_aliquot_table(access_code, header, data):
     Logger.error("Table contents")
     Logger.error(data)
 
-    row_html = '<th><a href="../query/generate_sample_id?AccessCode={}&SpecimenID={}">{}</a></th>'
+    row_html = '<th><a href="../query/generate_sample_id?AccessCode={}&AliquotID={}">{}</a></th>'
     # Add each row
     for row in data:
         html += '<tr class="w3-hover-blue">'
