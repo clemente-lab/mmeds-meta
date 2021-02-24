@@ -905,6 +905,15 @@ class MMEDSquery(MMEDSbase):
         if AccessCode is None:
             (AccessCode, SpecimenID) = cp.session['generate_aliquot_id']
 
+        # Create the new ID and add it to the database
+        success = ''
+        if AliquotWeight is not None:
+            cp.log("Got weight ", AliquotWeight)
+            with Database(testing=self.testing) as db:
+                doc = db.get_docs(access_code=AccessCode).first()
+                new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
+            success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+
         # Build the table of aliquots
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=AccessCode).first()
@@ -916,23 +925,11 @@ class MMEDSquery(MMEDSbase):
             data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen))
         aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
 
-        # Create the new ID and add it to the database
-        if AliquotWeight is not None:
-            cp.log("Got weight ", AliquotWeight)
-            with Database(testing=self.testing) as db:
-                doc = db.get_docs(access_code=AccessCode).first()
-                new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
-            page = self.load_webpage('query_generate_aliquot_id_page',
-                                     success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
-                                     access_code=AccessCode,
-                                     aliquot_table=aliquot_table,
-                                     SpecimenID=SpecimenID)
-        else:
-            page = self.load_webpage('query_generate_aliquot_id_page',
-                                     access_code=AccessCode,
-                                     aliquot_table=aliquot_table,
-                                     SpecimenID=SpecimenID)
-
+        page = self.load_webpage('query_generate_aliquot_id_page',
+                                 success=success,
+                                 access_code=AccessCode,
+                                 aliquot_table=aliquot_table,
+                                 SpecimenID=SpecimenID)
         # Store the args for the next page loading
         cp.session['generate_aliquot_id'] = (AccessCode, SpecimenID)
         return page

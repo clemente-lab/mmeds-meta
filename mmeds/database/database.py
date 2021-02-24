@@ -411,10 +411,11 @@ class Database:
         data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
                                                                   study_name=study_name,
                                                                   specimen_id=specimen_id), False)
-        idSpecimen = data[0][0]
+        idSpecimen = int(data[0][0])
         # Get the number of Aliquots previously created from this Specimen
-        self.cursor.execute('SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = "{idSpecimen}"',
+        self.cursor.execute('SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = %(idSpecimen)s',
                             {'idSpecimen': idSpecimen})
+
         aliquot_count = self.cursor.fetchone()[0]
 
         # Create the human readable ID
@@ -429,6 +430,7 @@ class Database:
         row_string = f'({idAliquot}, {idSpecimen}, {user_id}, "{AliquotID}", {aliquot_weight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
         self.cursor.execute(sql)
+        self.db.commit()
         return AliquotID
 
     ########################################
