@@ -1,5 +1,6 @@
 import os
 import warnings
+import re
 
 import mmeds.secrets as sec
 import mmeds.config as fig
@@ -290,9 +291,16 @@ class Database:
         try:
             # Get the table column headers
             if 'from' in sql.casefold():
-                parsed = sql.split(' ')
-                index = list(map(lambda x: x.casefold(), parsed)).index('from')
-                table = parsed[index + 1]
+                parts = sql.split('from')
+                if '(' in sql:
+                    matches = re.findall(r'([^`]*)`', sql)
+                    Logger.error(f'Matches {matches}')
+                    table = re.match(r'^`*$`', sql)
+                    # table = matches[0]
+                else:
+                    parsed = sql.split(' ')
+                    index = list(map(lambda x: x.casefold(), parsed)).index('from')
+                    table = parsed[index + 1]
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
                 if filter_ids:
