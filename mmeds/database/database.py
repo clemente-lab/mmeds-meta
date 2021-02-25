@@ -290,17 +290,12 @@ class Database:
                     sql = sql.replace('=' + table, '=protected_' + table)
         try:
             # Get the table column headers
+            # To work properly this requires the table names to be in back ticks e.g. `TableName`
             if 'from' in sql.casefold():
-                parts = sql.split('from')
-                if '(' in sql:
-                    matches = re.findall(r'([^`]*)`', sql)
-                    Logger.error(f'Matches {matches}')
-                    table = re.match(r'^`*$`', sql)
-                    # table = matches[0]
-                else:
-                    parsed = sql.split(' ')
-                    index = list(map(lambda x: x.casefold(), parsed)).index('from')
-                    table = parsed[index + 1]
+                # \S is a pattern that matches any non-whitespace character
+                # * matches any number of repititions of the preciding match pattern
+                matches = re.findall(r'`\S*`', sql)
+                table = re.search(r'`\S*`', sql)[0].strip('`')
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
                 if filter_ids:
@@ -312,16 +307,16 @@ class Database:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
         except pms.err.OperationalError as e:
-            cp.log('OperationalError')
-            cp.log(str(e))
+            Logger.error('OperationalError')
+            Logger.error(str(e))
             # If it's a select command denied error
             if e.args[0] == 1142:
-                raise TableAccessError(e.args[1])
+                raise TableAccessError(e.args[1] + f'\nOriginal Query\n{sql}')
             raise e
         except (pms.err.ProgrammingError, pms.err.InternalError) as e:
-            cp.log(str(e))
+            Logger.error(str(e))
             data = str(e)
-            raise InvalidSQLError(e.args[1])
+            raise InvalidSQLError(e.args[1] + f'\nOriginal Query\n{sql}')
         return data, header
 
     def delete_sql_rows(self):
