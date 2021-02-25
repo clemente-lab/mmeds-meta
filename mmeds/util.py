@@ -977,7 +977,7 @@ def quote_sql(sql, quote='`', **kwargs):
         Returns the sql query with the identifiers properly qouted using QUOTE
         '`' AKA backtick is generally accepted as the quote character to use
         for table and column names. Any other characters within it will be treated
-        as part of the variable namel.
+        as part of the variable name.
         https://dev.mysql.com/doc/refman/8.0/en/identifiers.html
     """
     # There are only two quote characters allowed
@@ -987,7 +987,7 @@ def quote_sql(sql, quote='`', **kwargs):
         raise InvalidSQLError('Provided SQL {} is not a string'.format(sql))
 
     # Clear any  existing quotes before adding the new ones
-    sql = sql.replace(quote, '')
+    cleaned_sql = sql.replace(quote, '')
     quoted_args = {}
     for key, item in kwargs.items():
         # Check the entry is a string
@@ -1002,5 +1002,5 @@ def quote_sql(sql, quote='`', **kwargs):
                                   ' Only letters, numbers, "`", "_", ".", and "*" are permitted')
 
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
-    formatted = sql.format(**quoted_args)
+    formatted = cleaned_sql.format(**quoted_args)
     return formatted

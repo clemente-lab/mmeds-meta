@@ -125,15 +125,15 @@ class DatabaseTests(TestCase):
 
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
             # Test that automatically adding 'protected_' works when joining tables
-            sql = 'SELECT Subjects.HostSubjectId, Heights.Height FROM Subjects ' +\
-                'INNER JOIN Heights ON Subjects.idSubjects=Heights.Subjects_idSubjects'
+            sql = 'SELECT `Subjects`.`HostSubjectId`, `Heights`.`Height` FROM `Subjects` ' +\
+                'INNER JOIN `Heights` ON `Subjects`.`idSubjects`=`Heights`.`Subjects_idSubjects`'
             result = db0.execute(sql)
             print(result)
 
             # Check that the row level security works
             for table in fig.PROTECTED_TABLES:
                 # Get the columns from the view
-                results, header = db0.execute('SELECT * FROM {}'.format(table))
+                results, header = db0.execute('SELECT * FROM `{}`'.format(table))
                 for result in results[1:]:
                     for i, col in enumerate(header):
                         if 'id' not in col:
@@ -165,7 +165,7 @@ class DatabaseTests(TestCase):
         empty all rows belonging exclusively to user
         and only those rows.
         """
-        sql = 'SELECT user_id FROM {}.user WHERE username = "{}"'
+        sql = 'SELECT `user_id` FROM `{}`.`user` WHERE `username` = "{}"'
         self.c = self.db.cursor()
         self.c.execute(sql.format(fig.SQL_DATABASE, fig.TEST_USER_0))
         user_id = int(self.c.fetchone()[0])
@@ -178,11 +178,11 @@ class DatabaseTests(TestCase):
         for table in fig.PROTECTED_TABLES + fig.JUNCTION_TABLES:
             self.c = self.db.cursor()
             # Get the total number of entries
-            sql = 'SELECT COUNT(*) FROM {}'.format(table)
+            sql = 'SELECT COUNT(*) FROM `{}`'.format(table)
             self.c.execute(sql)
             table_counts[table] = int(self.c.fetchone()[0])
             # Get the number of entries belonging to the test user to be cleared
-            sql = 'SELECT COUNT(*) FROM {} WHERE user_id = {}'.format(table, user_id)
+            sql = 'SELECT COUNT(*) FROM `{}` WHERE `user_id` = {}'.format(table, user_id)
             self.c.execute(sql)
             user_counts[table] = int(self.c.fetchone()[0])
             self.c.close()
@@ -194,7 +194,7 @@ class DatabaseTests(TestCase):
         # Get the new table counts
         for table in fig.PROTECTED_TABLES + fig.JUNCTION_TABLES:
             # Get the new total number of entries
-            sql = 'SELECT COUNT(*) FROM {}'.format(table)
+            sql = 'SELECT COUNT(*) FROM `{}`'.format(table)
             self.c = self.db.cursor()
             self.c.execute(sql)
             # Check that the difference is equal to the rows belonging to the cleared user

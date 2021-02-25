@@ -1,12 +1,12 @@
 import os
 import warnings
+import re
 
 import mmeds.secrets as sec
 import mmeds.config as fig
 import mmeds.formatter as fmt
 import mongoengine as men
 import pymysql as pms
-import cherrypy as cp
 import pandas as pd
 
 from datetime import datetime
@@ -131,7 +131,7 @@ class Database:
             self.email = fig.MMEDS_EMAIL
         # Otherwise get the user id for the owner from the database
         else:
-            sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
+            sql = 'SELECT `user_id`, `email` FROM `user` WHERE `user`.`username`=%(uname)s'
             self.cursor.execute(sql, {'uname': owner})
             result = self.cursor.fetchone()
             # Ensure the user exists
@@ -165,7 +165,7 @@ class Database:
 
     def get_table_contents(self, table):
         """ Return all the entries from the selected table """
-        sql = 'SELECT * FROM {table};'
+        sql = 'SELECT * FROM `{table}`;'
         self.cursor.execute(quote_sql(sql, table=table))
         result = self.cursor.fetchall()
         table_text = '\n'.join(['\t'.join(['"{}"'.format(cell) for cell in row]) for row in result])
@@ -289,10 +289,12 @@ class Database:
                     sql = sql.replace('=' + table, '=protected_' + table)
         try:
             # Get the table column headers
+            # To work properly this requires the table names to be in back ticks e.g. `TableName`
             if 'from' in sql.casefold():
-                parsed = sql.split(' ')
-                index = list(map(lambda x: x.casefold(), parsed)).index('from')
-                table = parsed[index + 1]
+                match_sql = sql.split('FROM')[1]
+                # \S is a pattern that matches any non-whitespace character
+                # * matches any number of repititions of the preciding match pattern
+                table = re.search(r'`\S*`', match_sql)[0].strip('`')
                 self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
                 header = [x[0] for x in self.cursor.fetchall()]
                 if filter_ids:
@@ -304,16 +306,16 @@ class Database:
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
         except pms.err.OperationalError as e:
-            cp.log('OperationalError')
-            cp.log(str(e))
+            Logger.error('OperationalError')
+            Logger.error(str(e))
             # If it's a select command denied error
             if e.args[0] == 1142:
-                raise TableAccessError(e.args[1])
+                raise TableAccessError(e.args[1] + f'\nOriginal Query\n{sql}')
             raise e
         except (pms.err.ProgrammingError, pms.err.InternalError) as e:
-            cp.log(str(e))
+            Logger.error(str(e))
             data = str(e)
-            raise InvalidSQLError(e.args[1])
+            raise InvalidSQLError(e.args[1] + f'\nOriginal Query\n{sql}')
         return data, header
 
     def delete_sql_rows(self):
@@ -363,7 +365,7 @@ class Database:
 
     def remove_user(self, username):
         """ Remove a user from the database. """
-        sql = 'DELETE FROM `user` WHERE username=%(uname)s'
+        sql = 'DELETE FROM `user` WHERE `username`=%(uname)s'
         self.cursor.execute(sql, {'uname': username})
         self.db.commit()
 
@@ -374,7 +376,7 @@ class Database:
         :username: The name of the user to remove files for
         """
         # Get the user_id for the provided username
-        sql = 'SELECT user_id FROM `user` where username=%(uname)s'
+        sql = 'SELECT `user_id` FROM `user` where `username`=%(uname)s'
         self.cursor.execute(sql, {'uname': username})
         user_id = int(self.cursor.fetchone()[0])
 
@@ -413,7 +415,7 @@ class Database:
                                                                   specimen_id=specimen_id), False)
         idSpecimen = data[0][0]
         # Get the number of Aliquots previously created from this Specimen
-        self.cursor.execute('SELECT COUNT(AliquotID) FROM Aliquot WHERE Specimen_idSpecimen = "{idSpecimen}"',
+        self.cursor.execute('SELECT COUNT(AliquotID) FROM `Aliquot` WHERE `Specimen_idSpecimen` = "{idSpecimen}"',
                             {'idSpecimen': idSpecimen})
         aliquot_count = self.cursor.fetchone()[0]
 
@@ -488,12 +490,12 @@ class Database:
         if self.owner == 'Public' or self.owner == 'public':
             raise NoResultError('No account exists with the providied username and email.')
         # Get the user's information from the user table
-        sql = 'SELECT * FROM user WHERE username = %(uname)s'
+        sql = 'SELECT * FROM `user` WHERE `username` = %(uname)s'
         self.cursor.execute(sql, {'uname': self.owner})
         result = self.cursor.fetchone()
 
         # Delete the old entry for the user
-        sql = 'DELETE FROM user WHERE user_id = %(id)s'
+        sql = 'DELETE FROM `user` WHERE `user_id` = %(id)s'
         self.cursor.execute(sql, {'id': result[0]})
 
         # Insert the user with the updated password
@@ -535,9 +537,9 @@ class Database:
         # empty list
         if not df.empty:
             if subject_type == 'human':
-                initial_sql = """SELECT * FROM Subjects WHERE"""
+                initial_sql = """SELECT * FROM `Subjects` WHERE"""
             elif subject_type == 'animal':
-                initial_sql = """SELECT * FROM AnimalSubjects WHERE"""
+                initial_sql = """SELECT * FROM `AnimalSubjects` WHERE"""
             # Go through each row
             for j in range(len(df.index)):
                 sql = initial_sql
@@ -571,7 +573,7 @@ class Database:
     def check_user_study_name(self, study_name):
         """ Checks if the current user has uploaded a study with the same name. """
 
-        sql = 'SELECT * FROM Study WHERE user_id = %(id)s and Study.StudyName = %(study)s'
+        sql = 'SELECT * FROM `Study` WHERE `user_id` = %(id)s and `Study`.`StudyName` = %(study)s'
         found = self.cursor.execute(sql, {'id': self.user_id, 'study': study_name})
 
         # Ensure multiple studies aren't uploaded with the same name
