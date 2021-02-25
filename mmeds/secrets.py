@@ -2,7 +2,7 @@ from socket import gethostname
 
 SECURITY_TOKEN = ''
 DIGEST_KEY = ''
-SQL_ADMIN_NAME = 'mmedsadmin'
+SQL_ADMIN_NAME = ''
 SQL_ADMIN_PASS = ''
 SQL_USER_NAME = 'mmedsusers'
 SQL_USER_PASS = ''
