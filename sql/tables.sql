@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Lab` (
   `ContactEmail` VARCHAR(45) NULL DEFAULT NULL,
   `ContactName` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idLab`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Study` (
     REFERENCES `mmeds_data1`.`Lab` (`idLab`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects` (
   `Sex` VARCHAR(10) NULL DEFAULT NULL,
   `BirthYear` INT NULL DEFAULT NULL,
   PRIMARY KEY (`idSubjects`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Type` (
   `SpecimenType` VARCHAR(45) NULL DEFAULT NULL,
   `UberonCodeType` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idType`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`CollectionSite` (
   `Environment` VARCHAR(45) NULL DEFAULT NULL,
   `CollectionSiteName` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idCollectionSite`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`BodySite` (
   `SpecimenBodySite` VARCHAR(45) NULL DEFAULT NULL,
   `UberonCodeBodySite` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idBodySite`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Experiment` (
     REFERENCES `mmeds_data1`.`Study` (`idStudy`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Chow` (
   `ProductName` VARCHAR(45) NULL DEFAULT NULL,
   `ProductCode` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idChow`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`ChowDates` (
     REFERENCES `mmeds_data1`.`Chow` (`idChow`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Species` (
   `idSpecies` INT NOT NULL,
   `SpeciesName` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idSpecies`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Strain` (
     REFERENCES `mmeds_data1`.`Species` (`idSpecies`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Facility` (
   `FacilityName` VARCHAR(45) NULL DEFAULT NULL,
   `FacilityLocation` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idFacility`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -234,7 +234,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Husbandry` (
   `Temperature` VARCHAR(45) NULL DEFAULT NULL,
   `EnvironmentalEnrichment` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idHusbandry`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Vendor` (
   `VendorLocation` VARCHAR(45) NULL DEFAULT NULL,
   `VendorStrainInfo` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idVendor`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -299,7 +299,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`AnimalSubjects` (
     REFERENCES `mmeds_data1`.`Vendor` (`idVendor`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`SubjectType` (
     REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -378,7 +378,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Specimen` (
     REFERENCES `mmeds_data1`.`SubjectType` (`idSubjectType`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -390,7 +390,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Ethnicity` (
   `idEthnicity` INT NOT NULL,
   `Ethnicity` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idEthnicity`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -414,7 +414,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects_has_Ethnicity` (
     REFERENCES `mmeds_data1`.`Ethnicity` (`idEthnicity`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -426,7 +426,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`IllnessBroadCategory` (
   `idIllnessBroadCategory` INT NOT NULL,
   `ICDFirstCharacter` VARCHAR(1) NULL DEFAULT NULL,
   PRIMARY KEY (`idIllnessBroadCategory`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -445,7 +445,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`IllnessCategory` (
     REFERENCES `mmeds_data1`.`IllnessBroadCategory` (`idIllnessBroadCategory`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -465,7 +465,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`IllnessDetails` (
     REFERENCES `mmeds_data1`.`IllnessCategory` (`idIllnessCategory`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -495,7 +495,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Illness` (
     REFERENCES `mmeds_data1`.`IllnessDetails` (`idIllnessDetails`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -509,7 +509,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Interventions` (
   `InterventionType` VARCHAR(45) NULL DEFAULT NULL,
   `InterventionCode` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idInterventions`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -538,7 +538,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Intervention` (
     REFERENCES `mmeds_data1`.`Interventions` (`idInterventions`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -559,7 +559,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Aliquot` (
     REFERENCES `mmeds_data1`.`Specimen` (`idSpecimen`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -573,7 +573,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`SampleProtocols` (
   `SampleTool` VARCHAR(256) NULL DEFAULT NULL,
   `SampleToolVersion` VARCHAR(256) NULL DEFAULT NULL,
   PRIMARY KEY (`idSampleProtocols`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -596,7 +596,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`SampleProtocol` (
     REFERENCES `mmeds_data1`.`SampleProtocols` (`idSampleProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -623,7 +623,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Sample` (
     REFERENCES `mmeds_data1`.`SampleProtocol` (`idSampleProtocol`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -641,7 +641,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`RawDataProtocols` (
   `FinishingStrategyCoverage` VARCHAR(256) NULL DEFAULT NULL,
   `NumberOfContigs` INT NULL DEFAULT NULL,
   PRIMARY KEY (`idRawDataProtocols`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -663,7 +663,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`RawDataProtocol` (
     REFERENCES `mmeds_data1`.`RawDataProtocols` (`idRawDataProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -694,7 +694,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`RawData` (
     REFERENCES `mmeds_data1`.`RawDataProtocol` (`idRawDataProtocol`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -708,7 +708,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`ResultsProtocols` (
   `ResultsTool` VARCHAR(256) NULL DEFAULT NULL,
   `ResultsToolVersion` VARCHAR(256) NULL DEFAULT NULL,
   PRIMARY KEY (`idResultsProtocols`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -730,7 +730,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`ResultsProtocol` (
     REFERENCES `mmeds_data1`.`ResultsProtocols` (`idResultsProtocols`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -758,7 +758,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Results` (
     REFERENCES `mmeds_data1`.`ResultsProtocol` (`idResultsProtocol`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -770,7 +770,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Genotypes` (
   `idGenotypes` INT NOT NULL,
   `Genotype` VARCHAR(180) NULL DEFAULT NULL,
   PRIMARY KEY (`idGenotypes`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -794,7 +794,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Subjects_has_Genotypes` (
     REFERENCES `mmeds_data1`.`Genotypes` (`idGenotypes`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -815,7 +815,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Weights` (
     REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -836,7 +836,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Heights` (
     REFERENCES `mmeds_data1`.`Subjects` (`idSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -855,7 +855,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Housing` (
   `TankShape` VARCHAR(45) NULL DEFAULT NULL,
   `TankMaterial` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`idHousing`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -880,7 +880,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`SubjectType_has_Experiment` (
     REFERENCES `mmeds_data1`.`Experiment` (`idExperiment`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
@@ -908,7 +908,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`HousingDates` (
     REFERENCES `mmeds_data1`.`AnimalSubjects` (`idAnimalSubjects`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;

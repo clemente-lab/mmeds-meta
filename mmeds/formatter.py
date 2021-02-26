@@ -2,23 +2,21 @@ from mmeds.logging import Logger
 
 
 SELECT_SPECIMEN_QUERY = """\
-SELECT * FROM\
- ( `Specimen` INNER JOIN\
- ( `Experiment` INNER JOIN\
- `Study` ON `Study_idStudy` = `idStudy` )\
- ON `Experiment_idExperiment` = `idExperiment` )\
- WHERE `StudyName` = "{}"\
+SELECT\
+ `SpecimenID`,\
+ `SpecimenCollectionDate`,\
+ `SpecimenInformation`,\
+ `SpecimenCollectionTime`,\
+ `SpecimenWeight`,\
+ `StudyName`\
+ FROM `SpecimenView` WHERE StudyName = "{StudyName}"\
 """
 
-GET_SPECIMEN_QUERY = """\
-SELECT {column} FROM\
-( `Specimen` INNER JOIN\
- ( `Experiment` INNER JOIN\
- `Study` ON `Study_idStudy` = `idStudy` )\
- ON `Experiment_idExperiment` = `idExperiment` )\
- WHERE\
- ( `StudyName` = "{study_name}"\
- AND `SpecimenID` = "{specimen_id}" )\
+SELECT_ID_SPECIMEN_QUERY = """\
+    SELECT `idSpecimen` FROM\
+ `SpecimenView` WHERE\
+ `StudyName` = "{StudyName}" AND\
+ `SpecimenID` = "{SpecimenID}"\
 """
 
 INSERT_ALIQUOT_QUERY = """\
@@ -26,7 +24,7 @@ INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, 
 """
 
 SELECT_ALIQUOT_QUERY = """\
-SELECT `AliquotID`, `AliquotWeight` FROM `Aliquot` WHERE `Specimen_idSpecimen` = {}\
+SELECT `AliquotID`, `AliquotWeight` FROM `Aliquot` WHERE `Specimen_idSpecimen` = "{idSpecimen}"\
 """
 
 GET_ALIQUOT_QUERY = """\
@@ -35,6 +33,15 @@ SELECT {column} FROM `Aliquot` WHERE AliquotID = "{aliquot_id}"\
 
 SELECT_SAMPLE_QUERY = """\
 SELECT * FROM `Sample` WHERE `Aliquot_idAliquot` = {idAliquot}\
+"""
+
+GET_SAMPLE_QUERY = """\
+SELECT * FROM\
+ ( `Sample` INNER JOIN\
+ ( `SampleProtocol INNER JOIN\
+ `SampleProtocols ON `SampleProtocols_idSampleProtocols` = `idSampleProtocols` )\
+ ON `SampleProtocol_idSampleProtocol` = `idSampleProtocol`) WHERE\
+ `Aliquot_idAliquot` = {idAliquot}
 """
 
 

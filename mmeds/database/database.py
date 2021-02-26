@@ -269,6 +269,36 @@ class Database:
                 formatted[column].append(value)
         return formatted
 
+    def get_table_headers(self, sql, filter_ids):
+        """
+        Get the headers for the columns requested in the provided query
+        =====================================
+        :sql: A String, The query in question
+        """
+        match_sql = sql.split('FROM')[1]
+        try:
+            # Get headers from a joined table
+            if 'JOIN' in sql:
+                table = sql[sql.find('('):sql.rfind(')')+1]
+            else:  # Otherwise get headers from a single table
+                # \S is a pattern that matches any non-whitespace character
+                # * matches any number of repititions of the preciding match pattern
+                table = re.search(r'`\S*`', match_sql)[0].strip('`')
+            Logger.error(f'Getting headers for table {table}')
+            self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
+        except pms.err.ProgrammingError as e:
+            Logger.error(str(e))
+            data = str(e)
+            raise InvalidSQLError(e.args[1] + f'\nOriginal Query\nDESCRIBE {table}')
+        result = self.cursor.fetchall()
+        Logger.error(f'result {result}')
+        header = [x[0] for x in result]
+        Logger.error(f'header {header}')
+        if filter_ids:
+            # Remove foreign keys
+            header = [col for col in header if 'id' not in col]
+        return header
+
     def execute(self, sql, filter_ids=True):
         """
         Execute the provided sql code
@@ -291,17 +321,9 @@ class Database:
             # Get the table column headers
             # To work properly this requires the table names to be in back ticks e.g. `TableName`
             if 'from' in sql.casefold():
-                match_sql = sql.split('FROM')[1]
-                # \S is a pattern that matches any non-whitespace character
-                # * matches any number of repititions of the preciding match pattern
-                table = re.search(r'`\S*`', match_sql)[0].strip('`')
-                self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
-                header = [x[0] for x in self.cursor.fetchall()]
-                if filter_ids:
-                    # Remove foreign keys
-                    header = [col for col in header if 'id' not in col]
-                    # Expand * to limit results
-                    sql = sql.replace('*', ', '.join(header))
+                header = self.get_table_headers(sql, filter_ids)
+                # Expand * to limit results
+                sql = sql.replace('*', ', '.join(header))
 
             self.cursor.execute(sql)
             data = self.cursor.fetchall()

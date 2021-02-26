@@ -918,11 +918,15 @@ class MMEDSquery(MMEDSbase):
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Specimen this should be associated with
-            data, header = db.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
-                                                                    study_name=doc.study_name,
-                                                                    specimen_id=SpecimenID), False)
+            data, header = db.execute(fmt.SELECT_ID_SPECIMEN_QUERY.format(StudyName=doc.study_name,
+                                                                          SpecimenID=SpecimenID),
+                                      False)
+            Logger.error("ali data")
+            Logger.error(data)
+            Logger.error('ali header')
+            Logger.error(header)
             idSpecimen = data[0][0]
-            data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen))
+            data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=idSpecimen))
         aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
 
         page = self.load_webpage('query_generate_aliquot_id_page',
@@ -964,6 +968,11 @@ class MMEDSquery(MMEDSbase):
                                                                    aliquot_id=AliquotID), False)
             idAliquot = data[0][0]
             data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))
+            Logger.error("Header")
+            Logger.error(header)
+            Logger.error("Data")
+            Logger.error(data)
+
         sample_table = fmt.build_aliquot_table(AccessCode, header, data)
 
         page = self.load_webpage('query_generate_sample_id_page',
@@ -972,7 +981,7 @@ class MMEDSquery(MMEDSbase):
                                  sample_table=sample_table,
                                  AliquotID=AliquotID)
         # Store the args for the next page loading
-        cp.session['generate_aliquot_id'] = (AccessCode, AliquotID)
+        cp.session['generate_sample_id'] = (AccessCode, AliquotID)
         return page
 
 

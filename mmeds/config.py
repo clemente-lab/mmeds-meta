@@ -117,7 +117,6 @@ HTML_PAGES = {
     # Study Pages
     'study_select_page': (HTML_DIR / 'study_select_page.html', True),
     'study_view_page': (HTML_DIR / 'study_view_page.html', True),
-    # 'generate_id_page': (HTML_DIR / 'generate_id_page.htmlt', True),
 
     # Analysis Pages
     'analysis_view_page': (HTML_DIR / 'analysis_view_page.html', True),
