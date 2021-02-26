@@ -940,6 +940,7 @@ class MMEDSquery(MMEDSbase):
                            SampleConditions=None, SampleDatePerformed=None,
                            SampleProcessor=None, SampleProtocolInformation=None):
         """ Page for handling generation of new access codes for a given study """
+
         # Load args from the last time this page was loaded
         if AccessCode is None:
             (AccessCode, SampleID) = cp.session['generate_sample_id']
@@ -959,17 +960,16 @@ class MMEDSquery(MMEDSbase):
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Aliquot this should be associated with
-            data, header = db.execute(fmt.GET_SPECIMEN_QUERY.format(column='idAliquot',
-                                                                    study_name=doc.study_name,
-                                                                    specimen_id=AliquotID), False)
+            data, header = db.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
+                                                                   aliquot_id=AliquotID), False)
             idAliquot = data[0][0]
-            data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idAliquot))
-        aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
+            data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))
+        sample_table = fmt.build_aliquot_table(AccessCode, header, data)
 
-        page = self.load_webpage('query_generate_aliquot_id_page',
+        page = self.load_webpage('query_generate_sample_id_page',
                                  success=success,
                                  access_code=AccessCode,
-                                 aliquot_table=aliquot_table,
+                                 sample_table=sample_table,
                                  AliquotID=AliquotID)
         # Store the args for the next page loading
         cp.session['generate_aliquot_id'] = (AccessCode, AliquotID)

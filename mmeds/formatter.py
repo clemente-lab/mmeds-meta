@@ -29,6 +29,14 @@ SELECT_ALIQUOT_QUERY = """\
 SELECT `AliquotID`, `AliquotWeight` FROM `Aliquot` WHERE `Specimen_idSpecimen` = {}\
 """
 
+GET_ALIQUOT_QUERY = """\
+SELECT {column} FROM `Aliquot` WHERE AliquotID = "{aliquot_id}"\
+"""
+
+SELECT_SAMPLE_QUERY = """\
+SELECT * FROM `Sample` WHERE `Aliquot_idAliquot` = {idAliquot}\
+"""
+
 
 def build_html_table(header, data):
     """
