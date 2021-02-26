@@ -893,7 +893,7 @@ class MMEDSquery(MMEDSbase):
         """ Display the page for generating new Aliquot IDs for a particular study """
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=access_code).first()
-            data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(doc.study_name))
+            data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(StudyName=doc.study_name))
         specimen_table = fmt.build_specimen_table(access_code, header, data)
         page = self.load_webpage('query_select_specimen_page', specimen_table=specimen_table)
         return page
@@ -921,10 +921,6 @@ class MMEDSquery(MMEDSbase):
             data, header = db.execute(fmt.SELECT_ID_SPECIMEN_QUERY.format(StudyName=doc.study_name,
                                                                           SpecimenID=SpecimenID),
                                       False)
-            Logger.error("ali data")
-            Logger.error(data)
-            Logger.error('ali header')
-            Logger.error(header)
             idSpecimen = data[0][0]
             data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=idSpecimen))
         aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
@@ -965,7 +961,8 @@ class MMEDSquery(MMEDSbase):
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Aliquot this should be associated with
             data, header = db.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
-                                                                   aliquot_id=AliquotID), False)
+                                                                   aliquot_id=AliquotID),
+                                      False)
             idAliquot = data[0][0]
             data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))
             Logger.error("Header")

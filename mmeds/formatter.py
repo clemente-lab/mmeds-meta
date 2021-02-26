@@ -9,7 +9,7 @@ SELECT\
  `SpecimenCollectionTime`,\
  `SpecimenWeight`,\
  `StudyName`\
- FROM `SpecimenView` WHERE StudyName = "{StudyName}"\
+ FROM `SpecimenView` WHERE `StudyName` = "{StudyName}"\
 """
 
 SELECT_ID_SPECIMEN_QUERY = """\
@@ -32,15 +32,19 @@ SELECT {column} FROM `Aliquot` WHERE AliquotID = "{aliquot_id}"\
 """
 
 SELECT_SAMPLE_QUERY = """\
-SELECT * FROM `Sample` WHERE `Aliquot_idAliquot` = {idAliquot}\
+SELECT\
+`SampleDatePerformed`,\
+`SampleProcessor`,\
+`SampleProtocolInformation`,\
+`SampleProtocolID`,\
+`SampleConditions`,\
+`SampleTool`,\
+`SampleToolVersion`\
+FROM `SampleView` WHERE `Aliquot_idAliquot` = "{idAliquot}"
 """
 
 GET_SAMPLE_QUERY = """\
-SELECT * FROM\
- ( `Sample` INNER JOIN\
- ( `SampleProtocol INNER JOIN\
- `SampleProtocols ON `SampleProtocols_idSampleProtocols` = `idSampleProtocols` )\
- ON `SampleProtocol_idSampleProtocol` = `idSampleProtocol`) WHERE\
+SELECT * FROM SampleView WHERE\
  `Aliquot_idAliquot` = {idAliquot}
 """
 

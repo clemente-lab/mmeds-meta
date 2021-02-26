@@ -12,9 +12,11 @@
         <button class="w3-btn w3-border" type='submit' method='post'>Generate ID</button>
     </form>
     <br>
-    <h2> Current Aliquots </h2>
-    {aliquot_table}
-    <br>
+    <div class="w3-card-4 w3-light-grey w3-center" style="overflow-x:auto;">
+        <h2> Current Aliquots </h2>
+        {aliquot_table}
+        <br>
+    </div>
     <h2> Select a different Specimen </h2>
     <form action='{query_select_specimen_page}?access_code={access_code}' method='post' enctype='multipart/form-data' id='specimen_form'>
         <button class="w3-btn w3-border" type="submit" method="post"> Go Back </button>

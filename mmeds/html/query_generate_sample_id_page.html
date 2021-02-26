@@ -29,8 +29,10 @@
         <button class="w3-btn w3-border" type='submit' method='post'>Generate ID</button>
     </form>
     <br>
-    <h2> Current Samples </h2>
-    {sample_table}
+    <div class="w3-card-4 w3-light-grey w3-center" style="overflow-x:auto;">
+        <h2> Current Samples </h2>
+        {sample_table}
+    </div>
     <br>
     <h2> Select a different Aliquot </h2>
     <form action='{query_generate_aliquot_id_page}' method='post' enctype='multipart/form-data' id='specimen_form'>
