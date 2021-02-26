@@ -29,7 +29,7 @@ host/*
 .*
 *.bak
 /mmeds/resources/privkey.pem
-#/mmeds/secrets.py
+/mmeds/secrets.py
 
 # Coverage reports
 htmlcov/

@@ -2,20 +2,23 @@ from mmeds.logging import Logger
 
 
 SELECT_SPECIMEN_QUERY = """\
-SELECT * FROM Specimen INNER JOIN\
- Experiment INNER JOIN\
- Study ON Study_idStudy = idStudy\
- ON Experiment_idExperiment = idExperiment\
- WHERE StudyName = "{}"\
+SELECT * FROM\
+ ( `Specimen` INNER JOIN\
+ ( `Experiment` INNER JOIN\
+ `Study` ON `Study_idStudy` = `idStudy` )\
+ ON `Experiment_idExperiment` = `idExperiment` )\
+ WHERE `StudyName` = "{}"\
 """
 
 GET_SPECIMEN_QUERY = """\
-SELECT {column} FROM Specimen INNER JOIN\
- Experiment INNER JOIN\
- Study ON Study_idStudy = idStudy\
- ON Experiment_idExperiment = idExperiment\
- WHERE StudyName = "{study_name}"\
- AND SpecimenID = "{specimen_id}"\
+SELECT {column} FROM\
+( `Specimen` INNER JOIN\
+ ( `Experiment` INNER JOIN\
+ `Study` ON `Study_idStudy` = `idStudy` )\
+ ON `Experiment_idExperiment` = `idExperiment` )\
+ WHERE\
+ ( `StudyName` = "{study_name}"\
+ AND `SpecimenID` = "{specimen_id}" )\
 """
 
 INSERT_ALIQUOT_QUERY = """\
