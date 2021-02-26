@@ -26,7 +26,7 @@ INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, 
 """
 
 SELECT_ALIQUOT_QUERY = """\
-SELECT AliquotID, AliquotWeight FROM Aliquot WHERE Specimen_idSpecimen = {}
+SELECT `AliquotID`, `AliquotWeight` FROM `Aliquot` WHERE `Specimen_idSpecimen` = {}\
 """
 
 
