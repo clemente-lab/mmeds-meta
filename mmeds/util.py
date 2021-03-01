@@ -51,12 +51,14 @@ def format_alerts(args):
     for alert, color in [('error', 'red'), ('warning', 'yellow'), ('success', 'green')]:
         try:
             message = args[alert]
-            if isinstance(message, list):
-                outline = '<ul class="w3-ul w3-border">{}</ul>'
-                formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
-                args[alert] = template.format(alert=alert.capitalize(), message=formatted, color=color)
-            else:
-                args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
+            # Ignore empty strings. They are sometimes passed to simplify logic in the webpages.
+            if message:
+                if isinstance(message, list):
+                    outline = '<ul class="w3-ul w3-border">{}</ul>'
+                    formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
+                    args[alert] = template.format(alert=alert.capitalize(), message=formatted, color=color)
+                else:
+                    args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
         except KeyError:
             pass
     return args
@@ -815,7 +817,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
-            script += ' -A {summary}'.format(kwargs['summary'])
+            script += ' -A {summary}'.format(summary=kwargs['summary'])
         cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
         run(['/bin/bash', '-c', cmd], check=True)
 

@@ -894,7 +894,10 @@ class MMEDSquery(MMEDSbase):
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=access_code).first()
             data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(StudyName=doc.study_name))
-        specimen_table = fmt.build_specimen_table(access_code, header, data)
+        specimen_table = fmt.build_clickable_table(header, data, 'query_generate_aliquot_id_page',
+                                                   {'AccessCode': access_code},
+                                                   {'SpecimenID': 0})
+        #specimen_table = fmt.build_specimen_table(access_code, header, data)
         page = self.load_webpage('query_select_specimen_page', specimen_table=specimen_table)
         return page
 
@@ -918,8 +921,9 @@ class MMEDSquery(MMEDSbase):
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Specimen this should be associated with
-            data, header = db.execute(fmt.SELECT_ID_SPECIMEN_QUERY.format(StudyName=doc.study_name,
-                                                                          SpecimenID=SpecimenID),
+            data, header = db.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
+                                                                              StudyName=doc.study_name,
+                                                                              SpecimenID=SpecimenID),
                                       False)
             idSpecimen = data[0][0]
             data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=idSpecimen))

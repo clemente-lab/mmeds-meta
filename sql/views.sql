@@ -9,6 +9,7 @@ CREATE VIEW IF NOT EXISTS `mmeds_data1`.`SpecimenView` AS
 SELECT
 `idSpecimen`,
 `SpecimenID`,
+`Specimen`.`user_id`,
 `SpecimenCollectionDate`,
 `SpecimenInformation`,
 `SpecimenCollectionTime`,

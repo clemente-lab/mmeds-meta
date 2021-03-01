@@ -288,7 +288,6 @@ class Database:
             self.cursor.execute(quote_sql('DESCRIBE {table}', table=table))
         except pms.err.ProgrammingError as e:
             Logger.error(str(e))
-            data = str(e)
             raise InvalidSQLError(e.args[1] + f'\nOriginal Query\nDESCRIBE {table}')
         result = self.cursor.fetchall()
         Logger.error(f'result {result}')
@@ -432,9 +431,9 @@ class Database:
         idAliquot = self.cursor.fetchone()[0] + 1
 
         # Get the SQL id of the Specimen this should be associated with
-        data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idSpecimen',
-                                                                  study_name=study_name,
-                                                                  specimen_id=specimen_id), False)
+        data, header = self.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
+                                                                            StudyName=study_name,
+                                                                            SpecimenID=specimen_id), False)
         idSpecimen = int(data[0][0])
         # Get the number of Aliquots previously created from this Specimen
         self.cursor.execute('SELECT COUNT(AliquotID) FROM `Aliquot` WHERE `Specimen_idSpecimen` = %(idSpecimen)s',
@@ -446,9 +445,9 @@ class Database:
         AliquotID = '{}-Aliquot{}'.format(specimen_id, aliquot_count)
 
         # Get the user ID
-        self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Specimen.user_id',
-                                                          study_name=study_name,
-                                                          specimen_id=specimen_id))
+        self.cursor.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`user_id`',
+                                                                    StudyName=study_name,
+                                                                    SpecimenID=specimen_id))
         user_id = self.cursor.fetchone()[0]
 
         row_string = f'({idAliquot}, {idSpecimen}, {user_id}, "{AliquotID}", {aliquot_weight})'

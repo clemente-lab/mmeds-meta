@@ -1,4 +1,6 @@
 from mmeds.logging import Logger
+import mmeds.config as fig
+from pathlib import Path
 
 
 SELECT_SPECIMEN_QUERY = """\
@@ -12,8 +14,8 @@ SELECT\
  FROM `SpecimenView` WHERE `StudyName` = "{StudyName}"\
 """
 
-SELECT_ID_SPECIMEN_QUERY = """\
-    SELECT `idSpecimen` FROM\
+SELECT_COLUMN_SPECIMEN_QUERY = """\
+    SELECT {column} FROM\
  `SpecimenView` WHERE\
  `StudyName` = "{StudyName}" AND\
  `SpecimenID` = "{SpecimenID}"\
@@ -67,12 +69,58 @@ def build_html_table(header, data):
 
     # Add each row
     for row in data:
-        html += '<tr class="w3-hover-blue">'
+        html += '<tr class="w3-hover-blue">\n'
         for i, value in enumerate(row):
             html += '<th> <a href="#{' + str(i) + '}' + '"> {} </a></th>'.format(value)
         html += '</tr>'
 
     html += '</table>'
+    return html
+
+
+def build_clickable_table(header, data, page, common_args, row_args):
+    """
+    Return a table formatted from SQL results. Each row is a clickable link
+    :header: List, The column names
+    :data: List of Tuples, The rows of the columns
+    :page: A string, Key to the webpage the rows will link to
+    :common_args: A dict, Arguments that are the same for every row in the table
+    :row_args: A dict, Argument That are specific to each row in the table. They're pulled from table.
+    ==========================================================================================
+    E.G.
+    Building the specimen table for server.query.select_specimen
+
+    header = '
+    """
+
+    # Add the table column labels
+    html = '<table class="w3-table-all w3-hoverable">\n<thead>\n <tr class="w3-light-grey">\n'
+    for column in header:
+        html += '<th><b>{}</b></th>\n'.format(column)
+    html += '</tr></thead>'
+
+    Logger.error("Table contents")
+    Logger.error(data)
+
+    # Add each row
+    for row in data:
+        html += '<tr class="w3-hover-blue">\n'
+        for i, value in enumerate(row):
+            row_html = '<td><a style="display:block" href="{page}?{args}"'
+            if i == 0:
+                row_html += ' class="row-link"'
+            else:
+                row_html += ' tabindex="-1"'
+            row_html += '>{value}</a></td>\n'
+
+            html += row_html.format(
+                value=value,
+                page=fig.HTML_ARGS[page],
+                args='&'.join(['{}={}'.format(key, item) for key, item in common_args.items()] +
+                              ['{}={}'.format(key, row[item]) for key, item in row_args.items()]))
+        html += '</tr>\n'
+    html += '</table>'
+    Path('/tmp/test_page.html').write_text(html)
     return html
 
 
@@ -91,7 +139,7 @@ def build_specimen_table(access_code, header, data):
 
     Logger.error("Table contents")
     Logger.error(data)
-    row_html = '<th><a href="../query/generate_aliquot_id?AccessCode={}&SpecimenID={}">{}</a></th>'
+    row_html = '<td><a style="display:block" href="../query/generate_aliquot_id?AccessCode={}&SpecimenID={}">{}</a></td>'
 
     # Add each row
     for row in data:

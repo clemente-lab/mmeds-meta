@@ -69,30 +69,6 @@ class MetaDataUploader(Process):
         else:
             self.access_code = access_code
 
-        # Create the document
-        self.mdata = MMEDSDoc(created=datetime.utcnow(),
-                              last_accessed=datetime.utcnow(),
-                              testing=self.testing,
-                              doc_type='study',
-                              tool_type=self.study_type,
-                              reads_type=self.reads_type,
-                              barcodes_type=self.barcodes_type,
-                              study_name=self.study_name,
-                              access_code=self.access_code,
-                              owner=self.owner,
-                              public=self.public)
-
-        self.mdata.save()
-
-        count = 0
-        new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
-        while new_dir.is_dir():
-            count += 1
-            new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
-        new_dir.mkdir()
-
-        self.path = Path(new_dir) / 'database_files'
-
         # If testing connect to test server
         if testing:
             self.db = pms.connect(host='localhost',
@@ -119,6 +95,30 @@ class MetaDataUploader(Process):
                                      port=sec.MONGO_PORT,
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
+
+        # Create the document
+        self.mdata = MMEDSDoc(created=datetime.utcnow(),
+                              last_accessed=datetime.utcnow(),
+                              testing=self.testing,
+                              doc_type='study',
+                              tool_type=self.study_type,
+                              reads_type=self.reads_type,
+                              barcodes_type=self.barcodes_type,
+                              study_name=self.study_name,
+                              access_code=self.access_code,
+                              owner=self.owner,
+                              public=self.public)
+
+        self.mdata.save()
+
+        count = 0
+        new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
+        while new_dir.is_dir():
+            count += 1
+            new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
+        new_dir.mkdir()
+
+        self.path = Path(new_dir) / 'database_files'
         MMEDSDoc.objects.timeout(False)
 
     def get_info(self):
