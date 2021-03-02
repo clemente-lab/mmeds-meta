@@ -209,12 +209,13 @@ class MMEDSstudy(MMEDSbase):
     def select_study(self):
         """ Allows authorized user accounts to access uploaded studies. """
         cp.log("In select study")
+        # TODO Convert to a clickable table from formatter
         study_html = ''' <tr class="w3-hover-blue">
-            <th>
+            <td>
             <a href="{view_study_page}?access_code={access_code}"> {study_name} </a>
-            </th>
-            <th>{date_created}</th>
-            <th>{num_analyses}</th>
+            </td>
+            <td>{date_created}</td>
+            <td>{num_analyses}</td>
         </tr> '''
         # If user has elevated privileges show them all uploaded studies
         if check_privileges(self.get_user(), self.testing):
@@ -897,7 +898,6 @@ class MMEDSquery(MMEDSbase):
         specimen_table = fmt.build_clickable_table(header, data, 'query_generate_aliquot_id_page',
                                                    {'AccessCode': access_code},
                                                    {'SpecimenID': 0})
-        #specimen_table = fmt.build_specimen_table(access_code, header, data)
         page = self.load_webpage('query_select_specimen_page', specimen_table=specimen_table)
         return page
 
@@ -927,7 +927,9 @@ class MMEDSquery(MMEDSbase):
                                       False)
             idSpecimen = data[0][0]
             data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=idSpecimen))
-        aliquot_table = fmt.build_aliquot_table(AccessCode, header, data)
+        aliquot_table = fmt.build_clickable_table(header, data, 'query_generate_sample_id_page',
+                                                  {'AccessCode': AccessCode},
+                                                  {'AliquotID': 0})
 
         page = self.load_webpage('query_generate_aliquot_id_page',
                                  success=success,
@@ -974,7 +976,7 @@ class MMEDSquery(MMEDSbase):
             Logger.error("Data")
             Logger.error(data)
 
-        sample_table = fmt.build_aliquot_table(AccessCode, header, data)
+        sample_table = fmt.build_clickable_table(header, data, '#')
 
         page = self.load_webpage('query_generate_sample_id_page',
                                  success=success,

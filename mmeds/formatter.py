@@ -78,7 +78,7 @@ def build_html_table(header, data):
     return html
 
 
-def build_clickable_table(header, data, page, common_args, row_args):
+def build_clickable_table(header, data, page, common_args={}, row_args={}):
     """
     Return a table formatted from SQL results. Each row is a clickable link
     :header: List, The column names
@@ -90,7 +90,32 @@ def build_clickable_table(header, data, page, common_args, row_args):
     E.G.
     Building the specimen table for server.query.select_specimen
 
-    header = '
+    Call looks like:
+
+    build_clickable_table(header, data, 'query_generate_aliquot_id_page',
+                          {'AccessCode': access_code},
+                          {'SpecimenID': 0})
+
+    header = [
+    'SpecimenID',
+    'SpecimenCollectionDate',
+    'SpecimenInformation',
+    'SpecimenCollectionTime',
+    'SpecimenWeight',
+    'StudyName'
+    ]
+    data = [
+    ('L6S93',
+     datetime.date(2018, 1, 2),
+     'Alot',
+     datetime.timedelta(seconds=45180),
+     Decimal('0.000100000'),
+     'Short_Study'),
+    ('L6S93',
+     datetime.date(2018, 1, 2),
+     ...)
+    ...
+    ]
     """
 
     # Add the table column labels
@@ -121,60 +146,4 @@ def build_clickable_table(header, data, page, common_args, row_args):
         html += '</tr>\n'
     html += '</table>'
     Path('/tmp/test_page.html').write_text(html)
-    return html
-
-
-def build_specimen_table(access_code, header, data):
-    """
-    Return a table formatted for the specimen select page
-    :header: List, The column names
-    :data: List of Tuples, The rows of the columns
-    """
-
-    # Add the table column labels
-    html = '<table class="w3-table-all w3-hoverable">\n<thead>\n <tr class="w3-light-grey">\n'
-    for column in header:
-        html += '<th><b>{}</b></th>\n'.format(column)
-    html += '</tr></thead>'
-
-    Logger.error("Table contents")
-    Logger.error(data)
-    row_html = '<td><a style="display:block" href="../query/generate_aliquot_id?AccessCode={}&SpecimenID={}">{}</a></td>'
-
-    # Add each row
-    for row in data:
-        html += '<tr class="w3-hover-blue">'
-        # TODO fix hardcoded web path here
-        for i, value in enumerate(row):
-            html += row_html.format(access_code, row[0], value)
-        html += '</tr>\n'
-    html += '</table>'
-    return html
-
-
-def build_aliquot_table(access_code, header, data):
-    """
-    Return a table formatted for Samples
-    :header: List, The column names
-    :data: List of Tuples, The rows of the columns
-    """
-
-    # Add the table column labels
-    html = '<table class="w3-table-all w3-hoverable">\n<thead>\n <tr class="w3-light-grey">\n'
-    for column in header:
-        html += '<th><b>{}</b></th>\n'.format(column)
-    html += '</tr></thead>'
-
-    Logger.error("Table contents")
-    Logger.error(data)
-
-    row_html = '<th><a href="../query/generate_sample_id?AccessCode={}&AliquotID={}">{}</a></th>'
-    # Add each row
-    for row in data:
-        html += '<tr class="w3-hover-blue">'
-        # TODO fix hardcoded web path here
-        for i, value in enumerate(row):
-            html += row_html.format(access_code, row[0], value)
-        html += '</tr>\n'
-    html += '</table>'
     return html

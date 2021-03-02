@@ -206,6 +206,9 @@ HTML_ARGS = {
     'home_selected': '',
     'account_selected': '',
     'settings_selected': '',
+
+    # Link to nowhere
+    '#': '#',
 }
 
 ##########################
