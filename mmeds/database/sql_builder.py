@@ -24,6 +24,7 @@ class SQLBuilder:
         self.row = None
         self.db = db
         self.cursor = self.db.cursor()
+        self.known_fkeys = {}
 
         # If the owner is None set user_id to 0
         if owner is None:
@@ -40,14 +41,15 @@ class SQLBuilder:
 
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-    def build_sql(self, table, row):
+    def build_sql(self, table, row, known_fkeys={}):
         """
-            This function does the hard work of determining what a paticular table's
+            This class does the hard work of determining what a paticular table's
             entry should look like for a given row of the metadata file.
             ========================================================================
             :df: The dataframe containing the metadata to upload
-            :table: The name of the table for which to build the query
-            :row: The row of the metadata file to check againt :table:
+            :table: A String. The name of the table for which to build the query
+            :row: An int. The row of the metadata file to check againt :table:
+            :known_fkeys: A dict. Contains already known foreign keys, if there are any
             ========================================================================
             The basic idea is that for each row of the input metadata file there exists
             a matching row in each table. The row in each table only contains part of
@@ -92,6 +94,7 @@ class SQLBuilder:
         """
         # Initialize the builder properties
         self.row = row
+        self.known_fkeys = known_fkeys
         return self.build_table_sql(table)
 
     def change_df(self, new_df):
@@ -139,18 +142,23 @@ class SQLBuilder:
         # Collect the matching foreign keys based on the information
         # in the current row of the data frame
         for fkey in foreign_keys:
-            ftable = fkey.split('_id')[1]
-            # Recursively build the sql call
-            fsql, fargs = self.build_table_sql(ftable)
-            self.cursor.execute(fsql, fargs)
-            try:
-                # Get the resulting foreign key
-                fresult = self.cursor.fetchone()[0]
-            except TypeError:
-                Logger.info('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
-                Logger.info(fsql)
-                Logger.info(fargs)
-                raise InvalidSQLError('No key found for SQL: {} with args: {}'.format(fsql, fargs))
+            if fkey.strip('`') in self.known_fkeys.keys():
+                fresult = self.known_fkeys[fkey.strip('`')]
+            else:
+                ftable = fkey.split('_id')[1]
+                # Recursively build the sql call
+                fsql, fargs = self.build_table_sql(ftable)
+                self.cursor.execute(fsql, fargs)
+                try:
+                    # Get the resulting foreign key
+                    fresult = self.cursor.fetchone()[0]
+                except TypeError:
+                    Logger.info('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
+                    Logger.info(fsql)
+                    Logger.info(fargs)
+                    formatted = fsql.replace('%(', '{').replace(')s', '}').format(**fargs)
+                    Logger.error(formatted)
+                    raise InvalidSQLError('No key found for SQL: {}'.format(formatted))
 
             # Add it to the original query
             if '=' in sql or 'ISNULL' in sql:

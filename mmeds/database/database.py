@@ -461,10 +461,6 @@ class Database:
     def generate_sample_id(self, study_name, aliquot_id, **kwargs):
         """ Generate a new id for the aliquot with the given weight """
 
-        # Get a new unique SQL id for this aliquot
-        self.cursor.execute("SELECT MAX(idSample) from Sample")
-        idSample = self.cursor.fetchone()[0] + 1
-
         # Get the SQL id of the Aliquot this should be associated with
         data, header = self.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
                                                                  study_name=study_name,
@@ -482,31 +478,58 @@ class Database:
         tables = list(set([index[0] for index in multi_index]))
 
         entry_frame = pd.DataFrame([kwargs.values()], columns=multi_index)
-        entry_frame.to_csv('/tmp/temp_frame.tsv', sep='\t')
 
         builder = SQLBuilder(entry_frame, self.db, self.owner)
 
-        for table in sorted(tables, key=lambda x: fig.TABLE_ORDER.index(x)):
+        # Create a dict for storing the already known fkeys
+        known_fkeys = {'Aliquot_idAliquot': idAliquot}
+        entry_frame[('Sample', 'Aliquot_idAliquot')] = idAliquot
+
+        tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
+        for i, table in enumerate(tables):
             Logger.info('Query table {}'.format(table))
-            # Create the query
-            sql, args = builder.build_sql(table, 0)
-            self.cursor.execute(sql, args)
-            result = self.cursor.fetchall()
-            breakpoint()
+            row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
+            fkey = self.insert_into_table(row_data, table, builder, known_fkeys)
+            if i < len(tables) - 1:
+                entry_frame[(tables[i + 1], f'{table}_id{table}')] = fkey
+                known_fkeys[f'{table}_id{table}'] = fkey
 
-        return
-
-        # Get the user ID
-        self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Aliquot.user_id',
-                                                          study_name=study_name,
-                                                          aliquot_id=aliquot_id))
-        user_id = self.cursor.fetchone()[0]
-
-        row_string = f'({idSample}, {idAliquot}, {user_id}, "{SampleID}")'
-        sql = fmt.INSERT_SAMPLE_QUERY.format(row_string)
-        self.cursor.execute(sql)
-        self.db.commit()
         return SampleID
+
+    def insert_into_table(self, data, table, builder, known_fkeys):
+        """
+        Insert the provided data into the specified table.
+        --------------------------------------------------
+        :data: A dict containing the data for this row
+        :table: A string. The name of the table to add data to.
+        :builder: A SQLBuilder instance
+        """
+        # Create the query
+        sql, args = builder.build_sql(table, 0, known_fkeys)
+        self.cursor.execute(sql, args)
+        result = self.cursor.fetchone()
+        # If there is no matching row
+        if not result:
+            # Create a new key for that table
+            sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable=f'id{table}', table=table)
+            self.cursor.execute(sql)
+            result = self.cursor.fetchone()
+
+            # Add the new id
+            data[f'id{table}'] = result[0] + 1
+
+            # Get the user id if necessary
+            if table in fig.PROTECTED_TABLES:
+                data['user_id'] = self.user_id
+
+            # Build the insertion query
+            sql = fmt.INSERT_QUERY.format(columns=', '.join([f'`{col}`' for col in data.keys()]),
+                                          values=', '.join([f'%({col})s' for col in data.keys()]),
+                                          table=table)
+            # Insert the new row into the table
+            self.cursor.execute(sql, data)
+        # Return the key
+        return int(result[0])
 
     ########################################
     #               MongoDB                #

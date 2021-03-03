@@ -50,6 +50,8 @@ SELECT * FROM SampleView WHERE\
  `Aliquot_idAliquot` = {idAliquot}
 """
 
+INSERT_QUERY = """INSERT INTO {table} ({columns}) VALUES ({values})"""
+
 
 def build_html_table(header, data):
     """
