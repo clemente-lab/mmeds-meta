@@ -941,28 +941,20 @@ class MMEDSquery(MMEDSbase):
         return page
 
     @cp.expose
-    def generate_sample_id(self, AccessCode=None, AliquotID=None,
-                           SampleToolVersion=None, SampleTool=None,
-                           SampleConditions=None, SampleDatePerformed=None,
-                           SampleProcessor=None, SampleProtocolInformation=None):
+    def generate_sample_id(self, AccessCode=None, AliquotID=None, **kwargs):
         """ Page for handling generation of new access codes for a given study """
 
         # Load args from the last time this page was loaded
         if AccessCode is None:
-            (AccessCode, SampleID) = cp.session['generate_sample_id']
+            (AccessCode, AliquotID) = cp.session['generate_sample_id']
 
         # Create the new ID and add it to the database
         success = ''
-        if SampleToolVersion is not None:
+        if kwargs.get('SampleToolVersion') is not None:
             with Database(testing=self.testing, owner=self.get_user()) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
-                new_id = db.generate_sample_id(doc.study_name, AliquotID,
-                                               SampleToolVersion=SampleToolVersion,
-                                               SampleConditions=SampleConditions,
-                                               SampleDatePerformed=SampleDatePerformed,
-                                               SampleProcessor=SampleProcessor,
-                                               SampleProtocolInformation=SampleProtocolInformation)
-            success = f'New ID is {new_id} for Sample with processor {SampleProcessor}'
+                new_id = db.generate_sample_id(doc.study_name, AliquotID, **kwargs)
+            success = f'New ID is {new_id} for Sample with processor {kwargs["SampleProcessor"]}'
 
         # Build the table of aliquots
         with Database(testing=self.testing) as db:

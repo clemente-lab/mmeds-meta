@@ -156,9 +156,8 @@ class SQLBuilder:
                     Logger.info('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
                     Logger.info(fsql)
                     Logger.info(fargs)
-                    formatted = fsql.replace('%(', '{').replace(')s', '}').format(**fargs)
-                    Logger.error(formatted)
-                    raise InvalidSQLError('No key found for SQL: {}'.format(formatted))
+                    Logger.sql_debug(fsql, fargs)
+                    raise InvalidSQLError('No key found for SQL')
 
             # Add it to the original query
             if '=' in sql or 'ISNULL' in sql:

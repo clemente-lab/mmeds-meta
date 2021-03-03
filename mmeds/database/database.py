@@ -474,6 +474,7 @@ class Database:
 
         # Create the human readable ID
         SampleID = '{}-Sample{}'.format(aliquot_id, aliquot_count)
+        kwargs['SampleID'] = SampleID
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
         tables = list(set([index[0] for index in multi_index]))
 
@@ -482,13 +483,13 @@ class Database:
         builder = SQLBuilder(entry_frame, self.db, self.owner)
 
         # Create a dict for storing the already known fkeys
-        known_fkeys = {'Aliquot_idAliquot': idAliquot}
         entry_frame[('Sample', 'Aliquot_idAliquot')] = idAliquot
 
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         for i, table in enumerate(tables):
             Logger.info('Query table {}'.format(table))
             row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
+            known_fkeys = {'Aliquot_idAliquot': idAliquot}
             fkey = self.insert_into_table(row_data, table, builder, known_fkeys)
             if i < len(tables) - 1:
                 entry_frame[(tables[i + 1], f'{table}_id{table}')] = fkey
@@ -507,7 +508,10 @@ class Database:
         # Create the query
         sql, args = builder.build_sql(table, 0, known_fkeys)
         self.cursor.execute(sql, args)
+        Logger.sql_debug(sql, args)
         result = self.cursor.fetchone()
+        Logger.debug(f"Result is {result}")
+
         # If there is no matching row
         if not result:
             # Create a new key for that table
@@ -526,8 +530,10 @@ class Database:
             sql = fmt.INSERT_QUERY.format(columns=', '.join([f'`{col}`' for col in data.keys()]),
                                           values=', '.join([f'%({col})s' for col in data.keys()]),
                                           table=table)
+            Logger.sql_debug(sql, data)
             # Insert the new row into the table
             self.cursor.execute(sql, data)
+
         # Return the key
         return int(result[0])
 
