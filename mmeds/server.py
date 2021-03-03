@@ -956,7 +956,7 @@ class MMEDSquery(MMEDSbase):
                 new_id = db.generate_sample_id(doc.study_name, AliquotID, **kwargs)
             success = f'New ID is {new_id} for Sample with processor {kwargs["SampleProcessor"]}'
 
-        # Build the table of aliquots
+        # Build the table of Samples
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Aliquot this should be associated with
@@ -965,11 +965,8 @@ class MMEDSquery(MMEDSbase):
                                       False)
             idAliquot = data[0][0]
             data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))
-            Logger.error("Header")
-            Logger.error(header)
-            Logger.error("Data")
-            Logger.error(data)
 
+        # There is not ID generation for RawData currently so the table links go nowhere
         sample_table = fmt.build_clickable_table(header, data, '#')
 
         page = self.load_webpage('query_generate_sample_id_page',

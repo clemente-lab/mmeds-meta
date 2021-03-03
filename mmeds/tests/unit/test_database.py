@@ -70,7 +70,6 @@ class DatabaseTests(TestCase):
     ################
     #   Test SQL   #
     ################
-    @unittest.skip("Testing a different part")
     def test_a_tables(self):
         Logger.info('====== Test Database Start ======')
         tables = self.df.columns.levels[0].tolist()
@@ -98,7 +97,6 @@ class DatabaseTests(TestCase):
                     self.c.close()
                     raise e
 
-    @unittest.skip("Testing a different part")
     def test_b_junction_tables(self):
         Logger.info('TEST_B_JUNCTION_TABLES')
         self.c = self.db.cursor()
@@ -117,7 +115,6 @@ class DatabaseTests(TestCase):
                 assert jresult > 0
         self.c.close()
 
-    @unittest.skip("Testing a different part")
     def test_c_table_protection(self):
         """
         The purpose of this test is to ensure that a user can only access data
@@ -129,12 +126,6 @@ class DatabaseTests(TestCase):
         """
 
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
-            # Test that automatically adding 'protected_' works when joining tables
-            sql = 'SELECT `Subjects`.`HostSubjectId`, `Heights`.`Height` FROM `Subjects` ' +\
-                'INNER JOIN `Heights` ON `Subjects`.`idSubjects`=`Heights`.`Subjects_idSubjects`'
-            result = db0.execute(sql)
-            print(result)
-
             # Check that the row level security works
             for table in fig.PROTECTED_TABLES:
                 # Get the columns from the view
@@ -152,7 +143,6 @@ class DatabaseTests(TestCase):
                                 else:
                                     assert result[i] in self.df0[table][col].tolist()
 
-    @unittest.skip("Testing a different part")
     def test_d_metadata_checks(self):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             warnings = db.check_repeated_subjects(self.df['Subjects'], 'human')
@@ -165,7 +155,6 @@ class DatabaseTests(TestCase):
         assert not warnings
         assert not errors
 
-    @unittest.skip("Testing a different part")
     def test_e_clear_user_data(self):
         """
         Test that Database.clear_user_data('user') will
@@ -208,7 +197,6 @@ class DatabaseTests(TestCase):
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
             self.c.close()
 
-    @unittest.skip("Testing a different part")
     def test_e_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():

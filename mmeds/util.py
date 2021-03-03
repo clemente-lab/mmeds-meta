@@ -996,12 +996,14 @@ def quote_sql(sql, quote='`', **kwargs):
         if not isinstance(item, str):
             raise InvalidSQLError('SQL Identifier {} is not a string'.format(item))
         # Check the entry isn't too long
-        if len(item) > 66:
+        if len(item) > 66 and 'JOIN' not in item:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, '_', and '*'
-        if not item.replace('_', '').replace('`', '').replace('*', '').replace('.', '').isalnum():
+        good_set = {'_', '`', '*', '.', '(', ')', '=', ' '}
+        result = ''.join(set(item).difference(good_set))
+        if not result.isalnum():
             raise InvalidSQLError('Illegal characters in identifier {}.'.format(item) +
-                                  ' Only letters, numbers, "`", "_", ".", and "*" are permitted')
+                                  ' Only letters, numbers, and {good_set} are permitted')
 
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = cleaned_sql.format(**quoted_args)

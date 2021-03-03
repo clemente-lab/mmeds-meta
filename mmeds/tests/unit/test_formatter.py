@@ -18,7 +18,6 @@ class FormatterTests(TestCase):
         with Database(testing=True) as db:
             doc = db.get_docs(access_code=fig.TEST_CODE_SHORT).first()
             data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(StudyName='Short_Study'))
-        breakpoint()
         fmt.build_clickable_table(header, data, 'query_generate_aliquot_id_page',
                                   {'AccessCode': doc.access_code},
                                   {'SpecimenID': 0}

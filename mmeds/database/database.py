@@ -446,13 +446,7 @@ class Database:
         # Create the human readable ID
         AliquotID = '{}-Aliquot{}'.format(specimen_id, aliquot_count)
 
-        # Get the user ID
-        self.cursor.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`user_id`',
-                                                                    StudyName=study_name,
-                                                                    SpecimenID=specimen_id))
-        user_id = self.cursor.fetchone()[0]
-
-        row_string = f'({idAliquot}, {idSpecimen}, {user_id}, "{AliquotID}", {aliquot_weight})'
+        row_string = f'({idAliquot}, {idSpecimen}, {self.user_id}, "{AliquotID}", {aliquot_weight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
         self.cursor.execute(sql)
         self.db.commit()
