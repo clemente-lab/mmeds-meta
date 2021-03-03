@@ -914,7 +914,7 @@ class MMEDSquery(MMEDSbase):
             cp.log("Got weight ", AliquotWeight)
             with Database(testing=self.testing) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
-                new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
+                new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
             success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
 
         # Build the table of aliquots
@@ -954,12 +954,14 @@ class MMEDSquery(MMEDSbase):
         # Create the new ID and add it to the database
         success = ''
         if SampleToolVersion is not None:
-            with Database(testing=self.testing) as db:
+            with Database(testing=self.testing, owner=self.get_user()) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
-                new_id = db.generate_sample_id(AccessCode, doc.study_name,
-                                               AliquotID, SampleToolVersion,
-                                               SampleConditions, SampleDatePerformed,
-                                               SampleProcessor, SampleProtocolInformation)
+                new_id = db.generate_sample_id(doc.study_name, AliquotID,
+                                               SampleToolVersion=SampleToolVersion,
+                                               SampleConditions=SampleConditions,
+                                               SampleDatePerformed=SampleDatePerformed,
+                                               SampleProcessor=SampleProcessor,
+                                               SampleProtocolInformation=SampleProtocolInformation)
             success = f'New ID is {new_id} for Sample with processor {SampleProcessor}'
 
         # Build the table of aliquots

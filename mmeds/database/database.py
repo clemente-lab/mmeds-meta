@@ -17,6 +17,7 @@ from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
                          MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql)
 from mmeds.database.metadata_uploader import MetaDataUploader
+from mmeds.database.sql_builder import SQLBuilder
 from mmeds.documents import MMEDSDoc
 from mmeds.logging import Logger
 
@@ -308,7 +309,7 @@ class Database:
         header = None
         # If the user is not an admin automatically map tables in the query
         # to their protected views
-        if not self.user == sec.SQL_ADMIN_NAME:
+        if self.user not in {sec.SQL_ADMIN_NAME, 'root'}:
             # Replace references to protected tables to their view counterparts
             for table in fig.PROTECTED_TABLES:
                 if table in sql:
@@ -350,11 +351,12 @@ class Database:
         r_tables = []
         while True:
             for table in tables:
-                try:
-                    self.cursor.execute(quote_sql('DELETE FROM {table}', table=table))
-                    self.db.commit()
-                except pms.err.IntegrityError:
-                    r_tables.append(table)
+                if 'View' not in table:
+                    try:
+                        self.cursor.execute(quote_sql('DELETE FROM {table}', table=table))
+                        self.db.commit()
+                    except pms.err.IntegrityError:
+                        r_tables.append(table)
             if not r_tables:
                 break
             else:
@@ -423,7 +425,7 @@ class Database:
         # Clear the mongo files
         self.clear_mongo_data(username)
 
-    def generate_aliquot_id(self, access_code, study_name, specimen_id, aliquot_weight):
+    def generate_aliquot_id(self, study_name, specimen_id, aliquot_weight):
         """ Generate a new id for the aliquot with the given weight """
 
         # Get a new unique SQL id for this aliquot
@@ -456,7 +458,7 @@ class Database:
         self.db.commit()
         return AliquotID
 
-    def generate_sample_id(self, access_code, study_name, specimen_id, aliquot_weight):
+    def generate_sample_id(self, study_name, aliquot_id, **kwargs):
         """ Generate a new id for the aliquot with the given weight """
 
         # Get a new unique SQL id for this aliquot
@@ -464,9 +466,9 @@ class Database:
         idSample = self.cursor.fetchone()[0] + 1
 
         # Get the SQL id of the Aliquot this should be associated with
-        data, header = self.execute(fmt.GET_SPECIMEN_QUERY.format(column='idAliquot',
-                                                                  study_name=study_name,
-                                                                  specimen_id=specimen_id), False)
+        data, header = self.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
+                                                                 study_name=study_name,
+                                                                 aliquot_id=aliquot_id), False)
         idAliquot = int(data[0][0])
         # Get the number of Samples previously created from this Aliquot
         self.cursor.execute('SELECT COUNT(SampleID) FROM Sample WHERE Aliquot_idAliquot = %(idAliquot)s',
@@ -475,12 +477,29 @@ class Database:
         aliquot_count = self.cursor.fetchone()[0]
 
         # Create the human readable ID
-        SampleID = '{}-Sample{}'.format(specimen_id, aliquot_count)
+        SampleID = '{}-Sample{}'.format(aliquot_id, aliquot_count)
+        multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
+        tables = list(set([index[0] for index in multi_index]))
+
+        entry_frame = pd.DataFrame([kwargs.values()], columns=multi_index)
+        entry_frame.to_csv('/tmp/temp_frame.tsv', sep='\t')
+
+        builder = SQLBuilder(entry_frame, self.db, self.owner)
+
+        for table in sorted(tables, key=lambda x: fig.TABLE_ORDER.index(x)):
+            Logger.info('Query table {}'.format(table))
+            # Create the query
+            sql, args = builder.build_sql(table, 0)
+            self.cursor.execute(sql, args)
+            result = self.cursor.fetchall()
+            breakpoint()
+
+        return
 
         # Get the user ID
         self.cursor.execute(fmt.GET_SPECIMEN_QUERY.format(column='Aliquot.user_id',
                                                           study_name=study_name,
-                                                          specimen_id=specimen_id))
+                                                          aliquot_id=aliquot_id))
         user_id = self.cursor.fetchone()[0]
 
         row_string = f'({idSample}, {idAliquot}, {user_id}, "{SampleID}")'

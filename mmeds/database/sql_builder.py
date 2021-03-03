@@ -66,13 +66,13 @@ class SQLBuilder:
 
             Table1
             ------------------------------
-            Table1_key	ColA	ColB
-            0		DataA	Datab
+            Table1_key ColA    ColB
+            0          DataA   Datab
 
             Table2
             ------------------------------
-            Table2_key	Table1_fkey	ColC	ColD
-            2		0		DataC	DataD
+            Table2_key   Table1_fkey   ColC   ColD
+            2            0             DataC  DataD
 
             Checking Table1 is straight forward, just check that there is a row of Table1
             where ColA == DataA and ColB == DataB. The primary key (Table1_key) doesn't
