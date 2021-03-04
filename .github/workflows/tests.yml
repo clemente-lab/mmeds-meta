@@ -5,11 +5,6 @@ on: [push]
 jobs:
   run-tests:
     runs-on: ubuntu-20.04
-    services:
-      mysql:
-        image: mysql:15.1
-        env:
-          MYSQL_ROOT_PASSWORD: root
     strategy:
       max-parallel: 5
     steps:
@@ -26,6 +21,15 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
+
+      - name: Shutdown default
+        run: sudo service mysql stop
+      - uses: mirromutth/mysql-action@v1.1
+        with:
+          character set server: 'utf8'
+          mysql version: '15.1'
+          mysql database: 'mmeds_data1'
+          mysql root password: 'root'
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
