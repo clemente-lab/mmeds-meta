@@ -2,6 +2,7 @@ import warnings
 
 import mmeds.config as fig
 import pandas as pd
+import pymysql as pms
 
 from mmeds.error import NoResultError, InvalidSQLError
 from mmeds.util import quote_sql, pyformat_translate
@@ -9,7 +10,7 @@ from mmeds.logging import Logger
 
 
 class SQLBuilder:
-    def __init__(self, df, db, owner=None):
+    def __init__(self, df, db, owner=None, db_info=None):
         """
         Handles creating an appropriate SQL query based on the information in df
         ---------------------------------------
@@ -22,7 +23,10 @@ class SQLBuilder:
         self.owner = owner
         self.df = df
         self.row = None
-        self.db = db
+        if db is None:
+            self.db = pms.connect(**db_info)
+        else:
+            self.db = db
         self.db.autocommit(True)
         self.known_fkeys = {}
 
@@ -107,7 +111,7 @@ class SQLBuilder:
         # Get the columns for the specified table
         sql = 'DESCRIBE {}'.format(table)
 
-        with self.db as cursor:
+        with self.db.cursor() as cursor:
             cursor.execute(sql)
             result = cursor.fetchall()
         all_cols = [res[0] for res in result]
