@@ -23,7 +23,7 @@ class SQLBuilder:
         self.df = df
         self.row = None
         self.db = db
-        self.cursor = self.db.cursor()
+        self.db.autocommit(True)
         self.known_fkeys = {}
 
         # If the owner is None set user_id to 0
@@ -32,8 +32,9 @@ class SQLBuilder:
         # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
-            self.cursor.execute(sql, {'uname': owner})
-            result = self.cursor.fetchone()
+            with self.db.cursor() as cursor:
+                cursor.execute(sql, {'uname': owner})
+                result = cursor.fetchone()
             # Ensure the user exists
             if result is None:
                 raise NoResultError('No account exists with the provided username and email.')
@@ -105,8 +106,10 @@ class SQLBuilder:
 
         # Get the columns for the specified table
         sql = 'DESCRIBE {}'.format(table)
-        self.cursor.execute(sql)
-        result = self.cursor.fetchall()
+
+        with self.db.cursor() as cursor:
+            cursor.execute(sql)
+            result = cursor.fetchall()
         all_cols = [res[0] for res in result]
 
         # Get all foreign keys present
@@ -148,16 +151,18 @@ class SQLBuilder:
                 ftable = fkey.split('_id')[1]
                 # Recursively build the sql call
                 fsql, fargs = self.build_table_sql(ftable)
-                self.cursor.execute(fsql, fargs)
-                try:
-                    # Get the resulting foreign key
-                    fresult = self.cursor.fetchone()[0]
-                except TypeError:
-                    Logger.info('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
-                    Logger.info(fsql)
-                    Logger.info(fargs)
-                    Logger.sql_debug(fsql, fargs)
-                    raise InvalidSQLError('No key found for SQL')
+
+                with self.db.cursor() as cursor:
+                    cursor.execute(fsql, fargs)
+                    try:
+                        # Get the resulting foreign key
+                        fresult = cursor.fetchone()[0]
+                    except TypeError:
+                        Logger.info('ACCEPTED TYPE ERROR FINDING FOREIGN KEYS')
+                        Logger.info(fsql)
+                        Logger.info(fargs)
+                        Logger.sql_debug(fsql, fargs)
+                        raise InvalidSQLError('No key found for SQL')
 
             # Add it to the original query
             if '=' in sql or 'ISNULL' in sql:

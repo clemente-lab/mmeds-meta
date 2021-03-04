@@ -327,6 +327,7 @@ class Database:
 
             self.cursor.execute(sql)
             data = self.cursor.fetchall()
+            self.db.commit()
         except pms.err.OperationalError as e:
             Logger.error('OperationalError')
             Logger.error(str(e))
@@ -526,7 +527,7 @@ class Database:
                                           table=table)
             Logger.sql_debug(sql, data)
             # Insert the new row into the table
-            self.db.cursor().execute(sql, data)
+            self.cursor.execute(sql, data)
             self.db.commit()
 
         # Return the key
