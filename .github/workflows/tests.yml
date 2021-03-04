@@ -38,6 +38,8 @@ jobs:
         run: source activate mmeds-stable
       - name: Python install
         run: pip install .
+      - name: Check Verion
+        run: mysql --version
       - name: Mysql Setup
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
