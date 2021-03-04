@@ -210,7 +210,6 @@ class DatabaseTests(TestCase):
         """ Test the generation of various IDs """
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             db.generate_sample_id('Good_Study', 'here1',
-                                  SampleID=None,
                                   SampleTool="Illumina",
                                   SampleToolVersion='1.0.1',
                                   SampleConditions="Standard",
