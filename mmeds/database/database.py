@@ -526,7 +526,8 @@ class Database:
                                           table=table)
             Logger.sql_debug(sql, data)
             # Insert the new row into the table
-            self.cursor.execute(sql, data)
+            self.db.cursor().execute(sql, data)
+            self.db.commit()
 
         # Return the key
         return int(result[0])
