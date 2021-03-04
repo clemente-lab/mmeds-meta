@@ -27,7 +27,6 @@ jobs:
       - uses: mirromutth/mysql-action@v1.1
         with:
           character set server: 'utf8'
-          mysql version: '15.1'
           mysql database: 'mmeds_data1'
           mysql root password: 'root'
       - name: Set up Python 3.8
