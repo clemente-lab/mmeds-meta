@@ -32,7 +32,7 @@ class SQLBuilder:
         # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
-            with self.db.cursor() as cursor:
+            with self.db as cursor:
                 cursor.execute(sql, {'uname': owner})
                 result = cursor.fetchone()
             # Ensure the user exists
@@ -107,7 +107,7 @@ class SQLBuilder:
         # Get the columns for the specified table
         sql = 'DESCRIBE {}'.format(table)
 
-        with self.db.cursor() as cursor:
+        with self.db as cursor:
             cursor.execute(sql)
             result = cursor.fetchall()
         all_cols = [res[0] for res in result]
@@ -152,7 +152,7 @@ class SQLBuilder:
                 # Recursively build the sql call
                 fsql, fargs = self.build_table_sql(ftable)
 
-                with self.db.cursor() as cursor:
+                with self.db as cursor:
                     cursor.execute(fsql, fargs)
                     try:
                         # Get the resulting foreign key
