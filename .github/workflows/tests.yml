@@ -39,7 +39,7 @@ jobs:
       - name: Python install
         run: pip install .
       - name: Mysql Setup
-        run: mysql -u root -proot < setup.sql | sed 's/\t/,/g' > out.csv
+        run: mysql -u root -proot < setup.sql
       - name: Server data setup
         run: mkdir ~/mmeds_server_data; cp -r ./test_files ~/mmeds_server_data/.
       - name: Unit Tests
