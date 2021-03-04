@@ -2,7 +2,6 @@ import warnings
 
 import mmeds.config as fig
 import pandas as pd
-import pymysql as pms
 
 from mmeds.error import NoResultError, InvalidSQLError
 from mmeds.util import quote_sql, pyformat_translate
@@ -10,7 +9,7 @@ from mmeds.logging import Logger
 
 
 class SQLBuilder:
-    def __init__(self, df, db, owner=None, db_info=None):
+    def __init__(self, df, db, owner=None):
         """
         Handles creating an appropriate SQL query based on the information in df
         ---------------------------------------
@@ -23,10 +22,7 @@ class SQLBuilder:
         self.owner = owner
         self.df = df
         self.row = None
-        if db is None:
-            self.db = pms.connect(**db_info)
-        else:
-            self.db = db
+        self.db = db
         self.db.autocommit(True)
         self.known_fkeys = {}
 
@@ -36,7 +32,7 @@ class SQLBuilder:
         # Otherwise get the user id for the owner from the database
         else:
             sql = 'SELECT user_id, email FROM user WHERE user.username=%(uname)s'
-            with self.db as cursor:
+            with self.db.cursor() as cursor:
                 cursor.execute(sql, {'uname': owner})
                 result = cursor.fetchone()
             # Ensure the user exists
@@ -156,7 +152,7 @@ class SQLBuilder:
                 # Recursively build the sql call
                 fsql, fargs = self.build_table_sql(ftable)
 
-                with self.db as cursor:
+                with self.db.cursor() as cursor:
                     cursor.execute(fsql, fargs)
                     try:
                         # Get the resulting foreign key
