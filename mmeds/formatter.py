@@ -1,6 +1,5 @@
 from mmeds.logging import Logger
 import mmeds.config as fig
-from pathlib import Path
 
 
 SELECT_SPECIMEN_QUERY = """\
@@ -147,5 +146,4 @@ def build_clickable_table(header, data, page, common_args={}, row_args={}):
                               ['{}={}'.format(key, row[item]) for key, item in row_args.items()]))
         html += '</tr>\n'
     html += '</table>'
-    Path('/tmp/test_page.html').write_text(html)
     return html

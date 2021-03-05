@@ -288,6 +288,7 @@ class Database:
         Get the headers for the columns requested in the provided query
         =====================================
         :sql: A String, The query in question
+        :filter_ids: A Boolean, If true filter out foreign keys from the result
         """
         match_sql = sql.split('FROM')[1]
         try:
@@ -505,7 +506,7 @@ class Database:
         # Create a dict for storing the already known fkeys
         entry_frame[('Sample', 'Aliquot_idAliquot')] = idAliquot
 
-        tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
+        tables.sort(key=fig.TABLE_ORDER.index)
         for i, table in enumerate(tables):
             Logger.info('Query table {}'.format(table))
             row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}

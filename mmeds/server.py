@@ -904,7 +904,18 @@ class MMEDSquery(MMEDSbase):
 
     @cp.expose
     def generate_aliquot_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
-        """ Page for handling generation of new access codes for a given study """
+        """
+        Page for handling generation of new AliquotIDs for a given study
+        ==================================================================
+        :AccessCode: The access_code for the study the new id is to be associated with
+        :SpecimenID: The ID string of the specimen the new aliquot is taken from
+        :AliquotWeight: The weight of the new aliquot to generate an ID for
+
+        Depending on how a user is getting to this page the arguments vary. When initially
+        reaching it from `select_specimen`, :AccessCode: and :SpecimenID: are passed in.
+        When generate ID is clicked it reloads this page but this time with only AliquotID as
+        an argument. This it to make it more convenient to generate mutliple IDs in a row.
+        """
         # Load args from the last time this page was loaded
         if AccessCode is None:
             (AccessCode, SpecimenID) = cp.session['generate_aliquot_id']
@@ -945,7 +956,26 @@ class MMEDSquery(MMEDSbase):
 
     @cp.expose
     def generate_sample_id(self, AccessCode=None, AliquotID=None, **kwargs):
-        """ Page for handling generation of new access codes for a given study """
+        """
+        Page for handling generation of new SpecimenIDs for a given study
+        ==================================================================
+        :AccessCode: The access_code for the study the new id is to be associated with
+        :SpecimenID: The ID string of the specimen the new aliquot is taken from
+        :kwargs: Contains mutliple arguments relating to a new sample. There are a lot
+        so it's neater to take them in and pass them to `Database.generate_sample_id`
+        as a dict.
+        The required columns are:
+            - SampleToolVersion
+            - SampleTool
+            - SampleConditions
+            - DatePerformed
+            - SampleProcessor
+            - SampleProtocolInformation
+            - SampleProtocolID
+
+        The way this page functions is largely the same as generate_aliquot_id.
+        The only difference is all the above arguments are passed rather than just AliquotWeight
+        """
 
         # Load args from the last time this page was loaded
         if AccessCode is None:
