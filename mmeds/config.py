@@ -167,6 +167,7 @@ HTML_ARGS = {
     'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
     'upload_modify_page': SERVER_PATH + 'upload/upload_page',
+    'upload_multiple_aliquots_page': SERVER_PATH + 'upload/generate_multiple_aliquots',
 
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',
@@ -344,6 +345,7 @@ TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
+TEST_ALIQUOT_UPLOAD = str(TEST_PATH / 'test_aliquot_upload.tsv')
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,

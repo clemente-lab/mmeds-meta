@@ -570,9 +570,6 @@ class MMEDSupload(MMEDSbase):
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
-        # Get the username
-        username = self.get_user()
-
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
@@ -611,10 +608,18 @@ class MMEDSupload(MMEDSbase):
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, username, reads_type, barcodes_type, datafiles,
+                    specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
                     cp.session['metadata_temporary'], public))
 
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+
+    @cp.expose
+    def generate_multiple_aliquots(self, accessCode, AliquotFile):
+        """ Takes a file specifying the Aliquots to generate IDs for and passes it to the watcher """
+        aliquot_file = self.load_data_files(AliquotFile=AliquotFile)
+        self.q.put(('upload-aliquots', self.get_user(), accessCode, aliquot_file['AliquotFile']))
+        message = 'Aliquot Upload Initiated. You will recieve an email when this finishes'
+        return self.load_webpage('home', success=message)
 
 
 @decorate_all_methods(catch_server_errors)
@@ -932,7 +937,7 @@ class MMEDSquery(MMEDSbase):
 
         # Build the table of aliquots
         with Database(testing=self.testing) as db:
-            doc = db.get_docs(access_code=AccessCode).first()
+            doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
             # Get the SQL id of the Specimen this should be associated with
             data, header = db.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
                                                                               StudyName=doc.study_name,

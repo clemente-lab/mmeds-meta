@@ -64,11 +64,6 @@ class MetaDataUploader(Process):
         self.datafiles = data_files
         self.created = datetime.now()
 
-        if access_code is None:
-            self.access_code = fig.get_salt(50)
-        else:
-            self.access_code = access_code
-
         # If testing connect to test server
         if testing:
             self.db = pms.connect(host='localhost',
@@ -95,6 +90,14 @@ class MetaDataUploader(Process):
                                      port=sec.MONGO_PORT,
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
+
+        if access_code is None:
+            self.access_code = fig.get_salt(50)
+            # Ensure a unique access code
+            while list(MMEDSDoc.objects(access_code=self.access_code)):
+                self.access_code = fig.get_salt(50)
+        else:
+            self.access_code = access_code
 
         # Create the document
         self.mdata = MMEDSDoc(created=datetime.utcnow(),
@@ -146,6 +149,8 @@ class MetaDataUploader(Process):
         :testing: True if the server is running locally.
         :datafiles: A list of datafiles to be uploaded
         """
+        self.mdata.update(is_alive=True)
+        self.mdata.save()
         Logger.debug('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
 
         # Create a copy of the MetaData
