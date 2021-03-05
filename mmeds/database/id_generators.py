@@ -7,8 +7,8 @@ from mmeds.logging import Logger
 from mmeds.database.database import Database
 
 
-class AliquotUploader(Process):
-    def __init__(self, owner, access_code, aliquot_table, testing):
+class IDGenerator(Process):
+    def __init__(self, owner, access_code, id_table, id_type, testing):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -20,9 +20,10 @@ class AliquotUploader(Process):
         super().__init__()
         Logger.info(f'Creating an Aliquot ID Generator for user {owner}')
         self.owner = owner
-        self.aliquot_table = aliquot_table
+        self.id_table = id_table
         self.testing = testing
         self.access_code = access_code
+        self.id_type = id_type
 
     def run(self):
         """ Perform the uploads """
@@ -31,9 +32,17 @@ class AliquotUploader(Process):
             mdata = db.get_doc(access_code=self.access_code)
             mdata.update(is_alive=True, exit_code=None)
             mdata.save()
-            df = pd.read_csv(self.aliquot_table, sep='\t')
+
+            # Keep logic outside the loop
+            if self.id_type == 'aliquot':
+                generate_method = db.generate_aliquot_id
+            elif self.id_type == 'sample':
+                generate_method = db.generate_sample_id
+            df = pd.read_csv(self.id_table, sep='\t')
+
+            # Insert the values for every row
             for index, row in df.iterrows():
-                db.generate_aliquot_id(row['StudyName'], row['SpecimenID'], row['AliquotWeight'])
+                generate_method(**row.to_dict())
 
             email = db.get_email(self.owner)
             # Update the doc to reflect the successful upload
@@ -44,7 +53,7 @@ class AliquotUploader(Process):
         send_email(email, self.owner,
                    message='ids_generated',
                    testing=self.testing,
-                   id_type='aliquot',
+                   id_type=self.id_type,
                    study=df['StudyName'][0])
 
         return 0

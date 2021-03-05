@@ -614,11 +614,12 @@ class MMEDSupload(MMEDSbase):
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 
     @cp.expose
-    def generate_multiple_aliquots(self, accessCode, AliquotFile):
+    def generate_multiple_ids(self, accessCode, idType, dataFile):
         """ Takes a file specifying the Aliquots to generate IDs for and passes it to the watcher """
-        aliquot_file = self.load_data_files(AliquotFile=AliquotFile)
-        self.q.put(('upload-aliquots', self.get_user(), accessCode, aliquot_file['AliquotFile']))
-        message = 'Aliquot Upload Initiated. You will recieve an email when this finishes'
+        data_file = self.load_data_files(idFile=dataFile)
+        self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
+        message = f'{idType.capitalize()} ID Generation Initiated.' +\
+            'You will recieve an email when the ID generation finishes'
         return self.load_webpage('home', success=message)
 
 
@@ -928,7 +929,7 @@ class MMEDSquery(MMEDSbase):
         success = ''
         if AliquotWeight is not None:
             cp.log("Got weight ", AliquotWeight)
-            with Database(testing=self.testing) as db:
+            with Database(testing=self.testing, owner=self.get_user()) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
                 self.monitor.get_db_lock().acquire()
                 new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)

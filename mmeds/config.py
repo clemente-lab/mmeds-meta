@@ -167,7 +167,7 @@ HTML_ARGS = {
     'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
     'upload_modify_page': SERVER_PATH + 'upload/upload_page',
-    'upload_multiple_aliquots_page': SERVER_PATH + 'upload/generate_multiple_aliquots',
+    'upload_multiple_ids_page': SERVER_PATH + 'upload/generate_multiple_ids',
 
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',

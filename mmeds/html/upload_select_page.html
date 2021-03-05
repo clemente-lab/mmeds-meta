@@ -34,16 +34,23 @@
 <div class="w3-container w3-card-4">
     <!-- Header -->
     <header class="w3-container" style="padding-top:22px">
-        <h5><b> <i class="fa fa-cloud-upload "></i> Upload Aliquots</b></h5>
+        <h5><b> <i class="fa fa-cloud-upload "></i> Generate IDs From File </b></h5>
     </header>
-    <form class="w3-container w3-padding" action='{upload_multiple_aliquots_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+    <form class="w3-container w3-padding" action='{upload_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
         <p>
         <label><b>Access Code</b></label>
         <input class="w3-input w3-border" type="text" name="accessCode" required>
         </p>
         <p>
-        <label><b>Aliquot File</b></label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="AliquotFile" required>
+        <label><b>ID Type</b></label>
+        <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
+            <option value="aliquot" selected="selected">Aliquot</option>
+            <option value="sample">Sample</option>
+        </select>
+        </p>
+        <p>
+        <label><b>Data File</b></label>
+        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="dataFile" required>
         </p>
         <br>
         <button class="w3-btn w3-blue" type='submit' method='post'>Submit Upload</button> </p>
