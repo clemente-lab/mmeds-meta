@@ -66,7 +66,6 @@ class MMEDSbase:
         cp.log("{} Connected to monitor".format(id(self)))
         self.q = self.monitor.get_queue()
         cp.log("{} Got Queue".format(id(self)))
-        #self.db_lock = self.monitor.get_db_lock()
 
     def get_user(self):
         """

@@ -63,13 +63,14 @@ class Watcher(BaseManager):
         self.started = []
         self.running_on_node = set()
         self.logger = Logger
+        self.current_upload = None
         queue = Queue()
         self.register('get_queue', callable=lambda: queue)
         pipe_ends = Pipe()
         self.pipe = pipe_ends[0]
         self.register('get_pipe', callable=lambda: pipe_ends[1])
-        db_lock = Lock()
-        self.register('get_db_lock', callable=lambda: db_lock)
+        self.db_lock = Lock()
+        self.register('get_db_lock', callable=lambda: self.db_lock)
 
     def start(self):
         super().start()
@@ -160,6 +161,16 @@ class Watcher(BaseManager):
                     self.pipe.send(process_doc.exit_code)
         for process in still_running:
             self.running_processes.append(process)
+
+    def check_upload(self):
+        """ Check the status of the current upload. Release the lock if it's finished """
+        # Check that there isn't another process currently uploading
+        if self.current_upload is None or not self.current_upload.is_alive():
+            self.current_upload = None
+            try:
+                self.db_lock.release()
+            except ValueError:
+                pass
 
     def write_running_processes(self):
         """
@@ -264,21 +275,16 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of uploader processes
         """
-        # Check that there isn't another process currently uploading
-        if current_upload is not None and current_upload.is_alive():
-            # If there is another upload return the process info to the queue
-            self.q.put(process)
-            sleep(3)
-        else:
-            current_upload = None
+        self.check_upload()
 
         # If there is nothing uploading currently start the new upload process
-        if current_upload is None:
+        if self.current_upload is None:
             (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
              username, reads_type, barcodes_type, datafiles, temporary, public) = process
             # Start a process to handle loading the data
             p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', reads_type,
                                  barcodes_type, study_name, temporary, datafiles, public, self.testing)
+            self.db_lock.acquire()
             p.start()
             self.add_process('upload', p.access_code)
 
@@ -289,7 +295,9 @@ class Watcher(BaseManager):
             current_upload = p
             if self.testing:
                 p.join()
-        return current_upload
+        else:
+            # If there is another upload return the process info to the queue
+            self.q.put(process)
 
     def handle_restart(self, process):
         """
@@ -315,6 +323,7 @@ class Watcher(BaseManager):
         # Continue until it's parent process is killed
         while True:
             self.check_processes()
+            self.check_upload()
             self.write_running_processes()
             self.log_processes()
             self.count += 1

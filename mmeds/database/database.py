@@ -475,6 +475,7 @@ class Database:
 
         row_string = f'({idAliquot}, {idSpecimen}, {self.user_id}, "{AliquotID}", {aliquot_weight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
+
         with self.db.cursor() as cursor:
             cursor.execute(sql)
         self.db.commit()
@@ -506,12 +507,17 @@ class Database:
         # Create a dict for storing the already known fkeys
         entry_frame[('Sample', 'Aliquot_idAliquot')] = idAliquot
 
+        # Sort the tables into the correct order to fill them
         tables.sort(key=fig.TABLE_ORDER.index)
         for i, table in enumerate(tables):
+
             Logger.info('Query table {}'.format(table))
             row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
+
+            # Create a new known keys dict
             known_fkeys = {'Aliquot_idAliquot': idAliquot}
             fkey = self.insert_into_table(row_data, table, entry_frame, known_fkeys)
+            # Don't update these if it's the final table, they'll index error
             if i < len(tables) - 1:
                 entry_frame[(tables[i + 1], f'{table}_id{table}')] = fkey
                 known_fkeys[f'{table}_id{table}'] = fkey
@@ -560,7 +566,6 @@ class Database:
             # Insert the new row into the table
             with self.db.cursor() as cursor:
                 cursor.execute(sql, data)
-                stuff = cursor.fetchone()
             self.db.commit()
 
         # Return the key

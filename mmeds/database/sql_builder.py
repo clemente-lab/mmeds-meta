@@ -23,7 +23,6 @@ class SQLBuilder:
         self.df = df
         self.row = None
         self.db = db
-        self.db.autocommit(True)
         self.known_fkeys = {}
 
         # If the owner is None set user_id to 0
