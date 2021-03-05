@@ -66,6 +66,7 @@ class MMEDSbase:
         cp.log("{} Connected to monitor".format(id(self)))
         self.q = self.monitor.get_queue()
         cp.log("{} Got Queue".format(id(self)))
+        #self.db_lock = self.monitor.get_db_lock()
 
     def get_user(self):
         """
@@ -914,7 +915,9 @@ class MMEDSquery(MMEDSbase):
             cp.log("Got weight ", AliquotWeight)
             with Database(testing=self.testing) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
+                self.monitor.get_db_lock().acquire()
                 new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
+                self.monitor.get_db_lock().release()
             success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
 
         # Build the table of aliquots
@@ -953,7 +956,9 @@ class MMEDSquery(MMEDSbase):
         if kwargs.get('SampleToolVersion') is not None:
             with Database(testing=self.testing, owner=self.get_user()) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
+                self.monitor.get_db_lock().acquire()
                 new_id = db.generate_sample_id(doc.study_name, AliquotID, **kwargs)
+                self.monitor.get_db_lock().release()
             success = f'New ID is {new_id} for Sample with processor {kwargs["SampleProcessor"]}'
 
         # Build the table of Samples

@@ -4,8 +4,8 @@ from time import sleep
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
-from multiprocessing import Queue, Pipe
-from multiprocessing.managers import BaseManager
+from multiprocessing import Queue, Pipe, Lock
+from multiprocessing.managers import BaseManager, AcquirerProxy
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -68,6 +68,8 @@ class Watcher(BaseManager):
         pipe_ends = Pipe()
         self.pipe = pipe_ends[0]
         self.register('get_pipe', callable=lambda: pipe_ends[1])
+        db_lock = Lock()
+        self.register('get_db_lock', callable=lambda: db_lock)
 
     def start(self):
         super().start()
