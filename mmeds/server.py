@@ -49,7 +49,7 @@ def decorate_all_methods(decorator):
 
 
 # Note: In all of the following classes, if a parameter is named in camel case instead of underscore
-# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML forum
+# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML form
 
 class MMEDSbase:
     """
@@ -209,12 +209,13 @@ class MMEDSstudy(MMEDSbase):
     def select_study(self):
         """ Allows authorized user accounts to access uploaded studies. """
         cp.log("In select study")
+        # TODO Convert to a clickable table from formatter
         study_html = ''' <tr class="w3-hover-blue">
-            <th>
+            <td>
             <a href="{view_study_page}?access_code={access_code}"> {study_name} </a>
-            </th>
-            <th>{date_created}</th>
-            <th>{num_analyses}</th>
+            </td>
+            <td>{date_created}</td>
+            <td>{num_analyses}</td>
         </tr> '''
         # If user has elevated privileges show them all uploaded studies
         if check_privileges(self.get_user(), self.testing):
@@ -893,35 +894,122 @@ class MMEDSquery(MMEDSbase):
         """ Display the page for generating new Aliquot IDs for a particular study """
         with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=access_code).first()
-            data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(doc.study_name))
-        specimen_table = fmt.build_specimen_table(access_code, header, data)
+            data, header = db.execute(fmt.SELECT_SPECIMEN_QUERY.format(StudyName=doc.study_name))
+        specimen_table = fmt.build_clickable_table(header, data, 'query_generate_aliquot_id_page',
+                                                   {'AccessCode': access_code},
+                                                   {'SpecimenID': 0})
         page = self.load_webpage('query_select_specimen_page', specimen_table=specimen_table)
         return page
 
     @cp.expose
-    def generate_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
-        """ Page for handling generation of new access codes for a given study """
+    def generate_aliquot_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
+        """
+        Page for handling generation of new AliquotIDs for a given study
+        ==================================================================
+        :AccessCode: The access_code for the study the new id is to be associated with
+        :SpecimenID: The ID string of the specimen the new aliquot is taken from
+        :AliquotWeight: The weight of the new aliquot to generate an ID for
+
+        Depending on how a user is getting to this page the arguments vary. When initially
+        reaching it from `select_specimen`, :AccessCode: and :SpecimenID: are passed in.
+        When generate ID is clicked it reloads this page but this time with only AliquotID as
+        an argument. This it to make it more convenient to generate mutliple IDs in a row.
+        """
         # Load args from the last time this page was loaded
         if AccessCode is None:
-            (AccessCode, SpecimenID) = cp.session['generate_id']
+            (AccessCode, SpecimenID) = cp.session['generate_aliquot_id']
 
         # Create the new ID and add it to the database
+        success = ''
         if AliquotWeight is not None:
             cp.log("Got weight ", AliquotWeight)
             with Database(testing=self.testing) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
-                new_id = db.generate_aliquot_id(AccessCode, doc.study_name, SpecimenID, AliquotWeight)
-            page = self.load_webpage('query_generate_id_page',
-                                     success=f'New ID is {new_id} for Aliquot with weight {AliquotWeight}',
-                                     access_code=AccessCode,
-                                     SpecimenID=SpecimenID)
-        else:
-            page = self.load_webpage('query_generate_id_page',
-                                     access_code=AccessCode,
-                                     SpecimenID=SpecimenID)
+                self.monitor.get_db_lock().acquire()
+                new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
+                self.monitor.get_db_lock().release()
+            success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
 
+        # Build the table of aliquots
+        with Database(testing=self.testing) as db:
+            doc = db.get_docs(access_code=AccessCode).first()
+            # Get the SQL id of the Specimen this should be associated with
+            data, header = db.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
+                                                                              StudyName=doc.study_name,
+                                                                              SpecimenID=SpecimenID),
+                                      False)
+            idSpecimen = data[0][0]
+            data, header = db.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=idSpecimen))
+        aliquot_table = fmt.build_clickable_table(header, data, 'query_generate_sample_id_page',
+                                                  {'AccessCode': AccessCode},
+                                                  {'AliquotID': 0})
+
+        page = self.load_webpage('query_generate_aliquot_id_page',
+                                 success=success,
+                                 access_code=AccessCode,
+                                 aliquot_table=aliquot_table,
+                                 SpecimenID=SpecimenID)
         # Store the args for the next page loading
-        cp.session['generate_id'] = (AccessCode, SpecimenID)
+        cp.session['generate_aliquot_id'] = (AccessCode, SpecimenID)
+        return page
+
+    @cp.expose
+    def generate_sample_id(self, AccessCode=None, AliquotID=None, **kwargs):
+        """
+        Page for handling generation of new SpecimenIDs for a given study
+        ==================================================================
+        :AccessCode: The access_code for the study the new id is to be associated with
+        :SpecimenID: The ID string of the specimen the new aliquot is taken from
+        :kwargs: Contains mutliple arguments relating to a new sample. There are a lot
+        so it's neater to take them in and pass them to `Database.generate_sample_id`
+        as a dict.
+        The required columns are:
+            - SampleToolVersion
+            - SampleTool
+            - SampleConditions
+            - DatePerformed
+            - SampleProcessor
+            - SampleProtocolInformation
+            - SampleProtocolID
+
+        The way this page functions is largely the same as generate_aliquot_id.
+        The only difference is all the above arguments are passed rather than just AliquotWeight
+        """
+
+        # Load args from the last time this page was loaded
+        if AccessCode is None:
+            (AccessCode, AliquotID) = cp.session['generate_sample_id']
+
+        # Create the new ID and add it to the database
+        success = ''
+        if kwargs.get('SampleToolVersion') is not None:
+            with Database(testing=self.testing, owner=self.get_user()) as db:
+                doc = db.get_docs(access_code=AccessCode).first()
+                self.monitor.get_db_lock().acquire()
+                new_id = db.generate_sample_id(doc.study_name, AliquotID, **kwargs)
+                self.monitor.get_db_lock().release()
+            success = f'New ID is {new_id} for Sample with processor {kwargs["SampleProcessor"]}'
+
+        # Build the table of Samples
+        with Database(testing=self.testing) as db:
+            doc = db.get_docs(access_code=AccessCode).first()
+            # Get the SQL id of the Aliquot this should be associated with
+            data, header = db.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
+                                                                   aliquot_id=AliquotID),
+                                      False)
+            idAliquot = data[0][0]
+            data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))
+
+        # There is not ID generation for RawData currently so the table links go nowhere
+        sample_table = fmt.build_clickable_table(header, data, '#')
+
+        page = self.load_webpage('query_generate_sample_id_page',
+                                 success=success,
+                                 access_code=AccessCode,
+                                 sample_table=sample_table,
+                                 AliquotID=AliquotID)
+        # Store the args for the next page loading
+        cp.session['generate_sample_id'] = (AccessCode, AliquotID)
         return page
 
 

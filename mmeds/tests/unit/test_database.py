@@ -1,5 +1,7 @@
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
+import unittest
+import datetime
 import pymysql as pms
 import pandas as pd
 import pytest
@@ -124,12 +126,6 @@ class DatabaseTests(TestCase):
         """
 
         with Database(fig.TEST_DIR_0, user='mmedsusers', owner=fig.TEST_USER_0, testing=testing) as db0:
-            # Test that automatically adding 'protected_' works when joining tables
-            sql = 'SELECT `Subjects`.`HostSubjectId`, `Heights`.`Height` FROM `Subjects` ' +\
-                'INNER JOIN `Heights` ON `Subjects`.`idSubjects`=`Heights`.`Subjects_idSubjects`'
-            result = db0.execute(sql)
-            print(result)
-
             # Check that the row level security works
             for table in fig.PROTECTED_TABLES:
                 # Get the columns from the view
@@ -209,3 +205,15 @@ class DatabaseTests(TestCase):
             assert int(code.split('.')[0][1:]) == self.df['IllnessCategory']['ICDCategory'].iloc[i]
             assert code.split('.')[1][:-1] == self.df['IllnessDetails']['ICDDetails'].iloc[i]
             assert code.split('.')[1][-1] == self.df['IllnessDetails']['ICDExtension'].iloc[i]
+
+    def test_g_generate_ids(self):
+        """ Test the generation of various IDs """
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
+            db.generate_sample_id('Good_Study', 'here1',
+                                  SampleTool="Illumina",
+                                  SampleToolVersion='1.0.1',
+                                  SampleConditions="Standard",
+                                  SampleDatePerformed=datetime.date.today(),
+                                  SampleProcessor="Alba",
+                                  SampleProtocolInformation="Nothing",
+                                  SampleProtocolID="Proto3")

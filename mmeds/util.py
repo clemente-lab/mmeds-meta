@@ -51,12 +51,14 @@ def format_alerts(args):
     for alert, color in [('error', 'red'), ('warning', 'yellow'), ('success', 'green')]:
         try:
             message = args[alert]
-            if isinstance(message, list):
-                outline = '<ul class="w3-ul w3-border">{}</ul>'
-                formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
-                args[alert] = template.format(alert=alert.capitalize(), message=formatted, color=color)
-            else:
-                args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
+            # Ignore empty strings. They are sometimes passed to simplify logic in the webpages.
+            if message:
+                if isinstance(message, list):
+                    outline = '<ul class="w3-ul w3-border">{}</ul>'
+                    formatted = outline.format('\n'.join(['<li>{}</li>'.format(x) for x in message]))
+                    args[alert] = template.format(alert=alert.capitalize(), message=formatted, color=color)
+                else:
+                    args[alert] = template.format(alert=alert.capitalize(), message=message, color=color)
         except KeyError:
             pass
     return args
@@ -815,7 +817,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
-            script += ' -A {summary}'.format(kwargs['summary'])
+            script += ' -A {summary}'.format(summary=kwargs['summary'])
         cmd = script.format(body=email_body, subject=subject, toaddr=toaddr)
         run(['/bin/bash', '-c', cmd], check=True)
 
@@ -994,12 +996,14 @@ def quote_sql(sql, quote='`', **kwargs):
         if not isinstance(item, str):
             raise InvalidSQLError('SQL Identifier {} is not a string'.format(item))
         # Check the entry isn't too long
-        if len(item) > 66:
+        if len(item) > 66 and 'JOIN' not in item:
             raise InvalidSQLError('SQL Identifier {} is too long ( > 66 characters)'.format(item))
         # Check that there are only allowed characters: Letters, Numbers, '_', and '*'
-        if not item.replace('_', '').replace('`', '').replace('*', '').replace('.', '').isalnum():
+        good_set = {'_', '`', '*', '.', '(', ')', '=', ' '}
+        result = ''.join(set(item).difference(good_set))
+        if not result.isalnum():
             raise InvalidSQLError('Illegal characters in identifier {}.'.format(item) +
-                                  ' Only letters, numbers, "`", "_", ".", and "*" are permitted')
+                                  ' Only letters, numbers, and {good_set} are permitted')
 
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = cleaned_sql.format(**quoted_args)

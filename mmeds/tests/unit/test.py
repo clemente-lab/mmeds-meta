@@ -24,8 +24,7 @@ def add_users(tests):
     # Add users as needed
     # users_added keeps track of the number of users added so they can all be removed at the end
     users_added = 0
-    if 'database' in tests or 'documents' in tests or 'spawn' in tests or\
-            'tool' in tests or 'tools' in tests:
+    if {'database', 'documents', 'spawn', 'tool', 'tools', 'formatter'}.intersection(tests):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     # database and spawn tests require a second user
@@ -38,7 +37,7 @@ def add_users(tests):
 def setup_tests(tests):
     # Add test setups as needed:
     test_setup = []
-    if 'documents' in tests or 'tool' in tests or 'tools' in tests:
+    if {'documents', 'tool', 'tools', 'formatter'}.intersection(tests):
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            'human',
                            fig.TEST_SPECIMEN_SHORT,
@@ -180,7 +179,7 @@ def main():
         tests.remove('cleanup')
 
     if not tests:
-        tests = ['authentication', 'database', 'documents', 'spawn', 'tool', 'tools', 'util', 'validate']
+        tests = ['authentication', 'database', 'documents', 'spawn', 'tool', 'tools', 'util', 'validate', 'formatter']
 
     users_added = add_users(tests)
 

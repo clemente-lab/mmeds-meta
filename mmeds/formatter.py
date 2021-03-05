@@ -1,29 +1,55 @@
 from mmeds.logging import Logger
+import mmeds.config as fig
 
 
 SELECT_SPECIMEN_QUERY = """\
-SELECT * FROM\
- ( `Specimen` INNER JOIN\
- ( `Experiment` INNER JOIN\
- `Study` ON `Study_idStudy` = `idStudy` )\
- ON `Experiment_idExperiment` = `idExperiment` )\
- WHERE `StudyName` = "{}"\
+SELECT\
+ `SpecimenID`,\
+ `SpecimenCollectionDate`,\
+ `SpecimenInformation`,\
+ `SpecimenCollectionTime`,\
+ `SpecimenWeight`,\
+ `StudyName`\
+ FROM `SpecimenView` WHERE `StudyName` = "{StudyName}"\
 """
 
-GET_SPECIMEN_QUERY = """\
-SELECT {column} FROM\
-( `Specimen` INNER JOIN\
- ( `Experiment` INNER JOIN\
- `Study` ON `Study_idStudy` = `idStudy` )\
- ON `Experiment_idExperiment` = `idExperiment` )\
- WHERE\
- ( `StudyName` = "{study_name}"\
- AND `SpecimenID` = "{specimen_id}" )\
+SELECT_COLUMN_SPECIMEN_QUERY = """\
+    SELECT {column} FROM\
+ `SpecimenView` WHERE\
+ `StudyName` = "{StudyName}" AND\
+ `SpecimenID` = "{SpecimenID}"\
 """
 
-INSERT_ALIQUOT_QUERY = """
-INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`) VALUES {}
+INSERT_ALIQUOT_QUERY = """\
+INSERT INTO `Aliquot` (`idAliquot`, `Specimen_idSpecimen`, `Aliquot`.`user_id`, `AliquotID`, `AliquotWeight`) VALUES {}\
 """
+
+SELECT_ALIQUOT_QUERY = """\
+SELECT `AliquotID`, `AliquotWeight` FROM `Aliquot` WHERE `Specimen_idSpecimen` = "{idSpecimen}"\
+"""
+
+GET_ALIQUOT_QUERY = """\
+SELECT {column} FROM `Aliquot` WHERE AliquotID = "{aliquot_id}"\
+"""
+
+SELECT_SAMPLE_QUERY = """\
+SELECT\
+`SampleDatePerformed`,\
+`SampleProcessor`,\
+`SampleProtocolInformation`,\
+`SampleProtocolID`,\
+`SampleConditions`,\
+`SampleTool`,\
+`SampleToolVersion`\
+FROM `SampleView` WHERE `Aliquot_idAliquot` = "{idAliquot}"
+"""
+
+GET_SAMPLE_QUERY = """\
+SELECT * FROM SampleView WHERE\
+ `Aliquot_idAliquot` = {idAliquot}
+"""
+
+INSERT_QUERY = """INSERT INTO {table} ({columns}) VALUES ({values})"""
 
 
 def build_html_table(header, data):
@@ -44,7 +70,7 @@ def build_html_table(header, data):
 
     # Add each row
     for row in data:
-        html += '<tr class="w3-hover-blue">'
+        html += '<tr class="w3-hover-blue">\n'
         for i, value in enumerate(row):
             html += '<th> <a href="#{' + str(i) + '}' + '"> {} </a></th>'.format(value)
         html += '</tr>'
@@ -53,11 +79,44 @@ def build_html_table(header, data):
     return html
 
 
-def build_specimen_table(access_code, header, data):
+def build_clickable_table(header, data, page, common_args={}, row_args={}):
     """
-    Return a table formatted for the specimen select page
+    Return a table formatted from SQL results. Each row is a clickable link
     :header: List, The column names
     :data: List of Tuples, The rows of the columns
+    :page: A string, Key to the webpage the rows will link to
+    :common_args: A dict, Arguments that are the same for every row in the table
+    :row_args: A dict, Argument That are specific to each row in the table. They're pulled from table.
+    ==========================================================================================
+    E.G.
+    Building the specimen table for server.query.select_specimen
+
+    Call looks like:
+
+    build_clickable_table(header, data, 'query_generate_aliquot_id_page',
+                          {'AccessCode': access_code},
+                          {'SpecimenID': 0})
+
+    header = [
+    'SpecimenID',
+    'SpecimenCollectionDate',
+    'SpecimenInformation',
+    'SpecimenCollectionTime',
+    'SpecimenWeight',
+    'StudyName'
+    ]
+    data = [
+    ('L6S93',
+     datetime.date(2018, 1, 2),
+     'Alot',
+     datetime.timedelta(seconds=45180),
+     Decimal('0.000100000'),
+     'Short_Study'),
+    ('L6S93',
+     datetime.date(2018, 1, 2),
+     ...)
+    ...
+    ]
     """
 
     # Add the table column labels
@@ -71,11 +130,20 @@ def build_specimen_table(access_code, header, data):
 
     # Add each row
     for row in data:
-        html += '<tr class="w3-hover-blue">'
+        html += '<tr class="w3-hover-blue">\n'
         for i, value in enumerate(row):
-            html += '<th><a href="../query/generate_id?AccessCode={}&SpecimenID={}">{}</a></th>'.format(access_code,
-                                                                                                        row[0],
-                                                                                                        value)
+            row_html = '<td><a style="display:block" href="{page}?{args}"'
+            if i == 0:
+                row_html += ' class="row-link"'
+            else:
+                row_html += ' tabindex="-1"'
+            row_html += '>{value}</a></td>\n'
+
+            html += row_html.format(
+                value=value,
+                page=fig.HTML_ARGS[page],
+                args='&'.join(['{}={}'.format(key, item) for key, item in common_args.items()] +
+                              ['{}={}'.format(key, row[item]) for key, item in row_args.items()]))
         html += '</tr>\n'
     html += '</table>'
     return html

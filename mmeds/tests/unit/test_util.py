@@ -186,7 +186,7 @@ class UtilTests(TestCase):
         with self.assertRaises(InvalidSQLError):
             util.quote_sql('{house}', house=100 * 'asdf')
         with self.assertRaises(InvalidSQLError):
-            util.quote_sql('{house}', house='asdf *** ')
+            util.quote_sql('{house}', house='asdf *$** ')
 
         self.assertEquals('select `HostSubjectId` from `Subjects`',
                           util.quote_sql('select {col} from {table}', col='HostSubjectId', table='Subjects'))

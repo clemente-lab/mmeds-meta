@@ -1,0 +1,45 @@
+<!-- Header -->
+<header class="w3-container" style="padding-top:22px">
+    <h5><b><i class="fas fa-server"></i> Generate Sample ID </b></h5>
+    <h6><b> Aliquot {AliquotID} </b></h6>
+</header>
+
+<div class='w3-container w3-grey w3-card-4'>
+    <h2> ID Generation </h2>
+    <form action='{query_generate_sample_id_page}' method='post' enctype='multipart/form-data' id='id_form'>
+
+        <label><b>Sample Tool Version</b></label>
+        <input class="w3-input w3-border" type="text" name="SampleToolVersion" required>
+
+        <label><b>Sample Tool</b></label>
+        <input class="w3-input w3-border" type="text" name="SampleTool" required>
+
+        <label><b>Sample Conditions</b></label>
+        <input class="w3-input w3-border" type="text" name="SampleConditions" required>
+
+        <label><b>Date Performed</b></label>
+        <input class="w3-input w3-border" type="date" name="SampleDatePerformed" required>
+
+        <label><b>Sample Processor</b></label>
+        <input class="w3-input w3-border" type="text" name="SampleProcessor" required>
+
+        <label><b>Sample Protocol Information</b></label>
+        <input class="w3-input w3-border" type="text" name="SampleProtocolInformation" required>
+
+        <label><b>Sample Protocol ID</b></label>
+        <input class="w3-input w3-border" type="text" name="SampleProtocolID" required>
+
+        <button class="w3-btn w3-border" type='submit' method='post'>Generate ID</button>
+    </form>
+    <br>
+    <div class="w3-card-4 w3-light-grey w3-center" style="overflow-x:auto;">
+        <h2> Current Samples </h2>
+        {sample_table}
+    </div>
+    <br>
+    <h2> Select a different Aliquot </h2>
+    <form action='{query_generate_aliquot_id_page}' method='post' enctype='multipart/form-data' id='specimen_form'>
+        <button class="w3-btn w3-border" type="submit" method="post"> Go Back </button>
+    </form>
+    <br>
+</div>

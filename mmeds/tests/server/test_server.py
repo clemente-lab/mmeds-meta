@@ -801,12 +801,12 @@ class TestServer(helper.CPWebCase):
 
         # Grab link to the first Specimen
         body = self.body.decode('utf-8')
-        code = re.findall('\<th\>\<a href="..(.+?)">', body)
+        code = re.findall('http:\/\/localhost\/myapp(.+?)" class="row-link">', body)
 
         # Open the weight entry page
         self.getPage(code[0], headers=self.cookies)
         self.assertStatus('200 OK')
 
         # Submit the new aliquot id
-        self.getPage('/query/generate_id?AliquotWeight=0.05', headers=self.cookies)
+        self.getPage('/query/generate_aliquot_id?AliquotWeight=0.05', headers=self.cookies)
         self.assertStatus('200 OK')

@@ -80,5 +80,9 @@ class Logger:
         """Logs a message at error level"""
         return Logger._log('error', format_log_message(log_message), *log_args)
 
+    @staticmethod
+    def sql_debug(sql, args, *log_args):
+        log_message = sql.replace('%(', '{').replace(')s', '}').format(**args)
+        return Logger._log('debug', format_log_message(log_message), *log_args)
 
 Logger(load_log_config())
