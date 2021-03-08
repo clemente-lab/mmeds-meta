@@ -856,8 +856,8 @@ class MMEDSquery(MMEDSbase):
             <th>{date_created}</th>
         </tr> '''
 
-        with Database(owner=self.get_user(), testing=self.testing) as db:
-            studies = db.get_all_studies()
+        with Database(testing=self.testing) as db:
+            studies = db.get_all_user_studies(self.get_user())
 
         study_list = []
         for study in studies:

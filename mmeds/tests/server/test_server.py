@@ -786,7 +786,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
     def test_fa_generate_aliquot_id(self):
-        self.login(False, True)
+        self.login(False, False)
         self.generate_aliquot_id()
 
     def generate_aliquot_id(self):
