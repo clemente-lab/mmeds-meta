@@ -856,7 +856,7 @@ class MMEDSquery(MMEDSbase):
             <th>{date_created}</th>
         </tr> '''
 
-        with Database(path='.', testing=self.testing) as db:
+        with Database(owner=self.get_user(), testing=self.testing) as db:
             studies = db.get_all_studies()
 
         study_list = []
@@ -927,18 +927,17 @@ class MMEDSquery(MMEDSbase):
 
         # Create the new ID and add it to the database
         success = ''
-        if AliquotWeight is not None:
-            cp.log("Got weight ", AliquotWeight)
-            with Database(testing=self.testing, owner=self.get_user()) as db:
-                doc = db.get_docs(access_code=AccessCode).first()
+        with Database(testing=self.testing, owner=self.get_user()) as db:
+            if AliquotWeight is not None:
+                cp.log("Got weight ", AliquotWeight)
+                doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
                 self.monitor.get_db_lock().acquire()
                 new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
                 self.monitor.get_db_lock().release()
-            success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+                success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
 
-        # Build the table of aliquots
-        with Database(testing=self.testing) as db:
             doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
+            cp.log(AccessCode)
             # Get the SQL id of the Specimen this should be associated with
             data, header = db.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
                                                                               StudyName=doc.study_name,
