@@ -88,3 +88,9 @@ class ValidateTests(TestCase):
                 assert len(parts) == 3
                 assert parts[0].strip('-').isnumeric()
                 assert parts[1].strip('-').isnumeric()
+
+    def test_d_valid_file(self):
+        assert valid.valid_file(fig.TEST_ALIQUOT_UPLOAD, 'aliquot')
+        assert not valid.valid_file(fig.TEST_ALIQUOT_UPLOAD, 'sample')
+        assert valid.valid_file(fig.TEST_SAMPLE_UPLOAD, 'sample')
+        assert not valid.valid_file(fig.TEST_SAMPLE_UPLOAD, 'aliquot')

@@ -31,6 +31,41 @@ def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subje
     return valid.run()
 
 
+def valid_file(file_fp, id_type):
+    """ Checks that the provided file is valid for the specified ID type """
+    valid = True
+
+    if id_type == 'aliquot':
+        cols = fig.ALIQUOT_ID_COLUMNS
+    elif id_type == 'sample':
+        cols = fig.SAMPLE_ID_COLUMNS
+
+    try:  # Check the file can actually be parsed
+        df = pd.read_csv(file_fp, sep='\t')
+    except pd.errors.ParserError:
+        valid = False
+    else:
+        diff = set(cols.keys()).symmetric_difference(df.columns)
+        # Check that all the correct columns and only the correct columns are included
+        if diff:
+            Logger.error(f"Invalid columns in ID file as {file_fp}")
+            valid = False
+        else:
+            for column in df.columns:
+                try:
+                    # Date objects need a special cast
+                    if column == 'SampleDatePerformed':
+                        pd.to_datetime(df[column])
+                    else:
+                        df[column].astype(cols[column])
+                except ValueError:
+                    Logger.error(f"Invalid types in ID file at {file_fp}")
+                    valid = False
+                    break
+
+    return valid
+
+
 class Validator:
 
     def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, sep='\t'):

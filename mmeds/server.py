@@ -13,7 +13,7 @@ import mmeds.util as util
 import mmeds.config as fig
 import mmeds.formatter as fmt
 
-from mmeds.validate import Validator
+from mmeds.validate import Validator, valid_file
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
@@ -625,11 +625,25 @@ class MMEDSupload(MMEDSbase):
     @cp.expose
     def generate_multiple_ids(self, accessCode, idType, dataFile):
         """ Takes a file specifying the Aliquots to generate IDs for and passes it to the watcher """
-        data_file = self.load_data_files(idFile=dataFile)
-        self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
-        message = f'{idType.capitalize()} ID Generation Initiated.' +\
-            'You will recieve an email when the ID generation finishes'
-        return self.load_webpage('home', success=message)
+        success = ''
+        error = ''
+        # Ensure that the access code is valid for a particular user
+        try:
+            self.check_upload(accessCode)
+        except err.MissingUploadError as e:
+            error = e.message
+        else:
+            data_file = self.load_data_files(idFile=dataFile)
+
+            if valid_file(data_file['idFile'], idType):
+
+                # Pass it to the watcher
+                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
+                success = f'{idType.capitalize()} ID Generation Initiated.' +\
+                    'You will recieve an email when the ID generation finishes'
+            else:
+                error = 'There was an issue with your ID file. Please check the example.'
+        return self.load_webpage('home', success=success, error=error)
 
 
 @decorate_all_methods(catch_server_errors)
@@ -942,14 +956,19 @@ class MMEDSquery(MMEDSbase):
 
         # Create the new ID and add it to the database
         success = ''
+        error = ''
         with Database(testing=self.testing, owner=self.get_user()) as db:
             if AliquotWeight is not None:
-                cp.log("Got weight ", AliquotWeight)
-                doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
-                self.monitor.get_db_lock().acquire()
-                new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
-                self.monitor.get_db_lock().release()
-                success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+                # Check that the value provided is numeric
+                if AliquotWeight.replace('.', '').isnumeric():
+                    cp.log("Got weight ", AliquotWeight)
+                    doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
+                    self.monitor.get_db_lock().acquire()
+                    new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
+                    self.monitor.get_db_lock().release()
+                    success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+                else:
+                    error = f'Weight {AliquotWeight} is not a number'
 
             doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
             cp.log(AccessCode)
@@ -966,6 +985,7 @@ class MMEDSquery(MMEDSbase):
 
         page = self.load_webpage('query_generate_aliquot_id_page',
                                  success=success,
+                                 error=error,
                                  access_code=AccessCode,
                                  aliquot_table=aliquot_table,
                                  SpecimenID=SpecimenID)

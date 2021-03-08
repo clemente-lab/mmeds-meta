@@ -771,7 +771,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         body = 'Hello {email},\nthe user {user} uploaded {id_type}s for the study {study}. \n' +\
                'The aliquots are added and the IDs have been generated.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
-        subject = f'{id_type.capitalize()} IDs Generated'
+        subject = f'{kwargs["id_type"].capitalize()} IDs Generated'
     elif message == 'reset':
         body = 'Hello {user},\nYour password has been reset.\n' +\
                'The new password is:\n{password}\n\nBest,\nMmeds Team\n\n' +\
