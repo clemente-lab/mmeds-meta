@@ -1015,7 +1015,7 @@ class MMEDSquery(MMEDSbase):
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Aliquot this should be associated with
             data, header = db.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
-                                                                   aliquot_id=AliquotID),
+                                                                   AliquotID=AliquotID),
                                       False)
             idAliquot = data[0][0]
             data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))
