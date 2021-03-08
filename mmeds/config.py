@@ -171,6 +171,7 @@ HTML_ARGS = {
 
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',
+    'download_mulitple_ids_page': SERVER_PATH + 'download/download_multiple_ids',
 
     # Study Pages
     'study_select_page': SERVER_PATH + 'study/select_study',

@@ -50,6 +50,7 @@ def decorate_all_methods(decorator):
 
 # Note: In all of the following classes, if a parameter is named in camel case instead of underscore
 # (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML form
+# Update 2021-03-08: This is not as consistant as it should be
 
 class MMEDSbase:
     """
@@ -193,6 +194,13 @@ class MMEDSdownload(MMEDSbase):
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
 
+    @cp.expose
+    def download_multiple_ids(self, studyName, idType):
+        """ Generate a file containing the requested IDs and return it for download """
+        with Database(path=self.get_dir(), testing=self.testing, owner=self.get_user()) as db:
+            id_file = db.create_ids_file(studyName, idType)
+
+        return static.serve_file(id_file, 'application/x-download', 'attachment', id_file.name)
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSstudy(MMEDSbase):

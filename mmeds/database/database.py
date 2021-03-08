@@ -571,6 +571,27 @@ class Database:
         # Return the key
         return fkey
 
+    def create_ids_file(self, study_name, id_type):
+        """ Create a file containing the requested ID information and return the path to it """
+        id_list = []
+        with self.db.cursor() as cursor:
+            cursor.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(study_name))
+            specimen = cursor.fetchall()
+            for speciman in specimen:
+                cursor.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='idSpecimen',
+                                                                       StudyName=study_name,
+                                                                       SpecimenID=speciman[0]))
+                id_specimen = cursor.fetchone()
+
+                cursor.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=id_specimen))
+                aliquot_data = cursor.fetchall()
+                if id_type == 'aliquot':
+                    [id_list.append(row) for row in aliquot_data]
+
+        id_table = self.path / f'{id_type}_id_table.tsv'
+        id_table.write_text('\n'.join(['\t'.join(row) for row in id_list]))
+        return id_table
+
     ########################################
     #               MongoDB                #
     ########################################

@@ -6,12 +6,17 @@
 <div class="w3-container w3-grey">
     <h2> Study Options </h2>
     <div class="w3-bar w3-card-4 w3-dark-grey">
-        <button onclick="openStudyAction(event, 'QueryDatabase')" class="action-link w3-half w3-button">
+        <button onclick="openStudyAction(event, 'QueryDatabase')" class="action-link w3-third w3-button">
             <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
             <div class="w3-clear"></div>
             <h4>Query Database</h4>
         </button>
-        <button onclick="openStudyAction(event, 'GenerateID')" class="action-link w3-half w3-button">
+        <button onclick="openStudyAction(event, 'DownloadIDs')" class="action-link w3-third w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Download IDs</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'GenerateID')" class="action-link w3-third w3-button">
             <i class="fa fa-clipboard-check w3-xxxlarge"></i>
             <div class="w3-clear"></div>
             <h4>Generate ID</h4>
@@ -26,6 +31,19 @@
         <form action="{query_result_page}" method="post" enctype="multipart/form-data" id="analysis_form">
             <input class="w3-input w3-border" type="text" name="query" required/>
             <button class="w3-btn w3-border" type="submit" method="post">Submit Query</button>
+        </form>
+    </div>
+    <div id="DownloadIDs" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <h2> Select Study to Download IDs from </h2>
+        <form class="w3-container w3-padding" action='{download_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
+        <p>
+        <label><b>ID Type</b></label>
+        <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
+            <option value="aliquot" selected="selected">Aliquot</option>
+            <option value="sample">Sample</option>
+        </select>
+        </p>
+
         </form>
     </div>
     <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
