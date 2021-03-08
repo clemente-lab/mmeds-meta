@@ -36,14 +36,20 @@
     <div id="DownloadIDs" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> Select Study to Download IDs from </h2>
         <form class="w3-container w3-padding" action='{download_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
-        <p>
-        <label><b>ID Type</b></label>
-        <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
-            <option value="aliquot" selected="selected">Aliquot</option>
-            <option value="sample">Sample</option>
-        </select>
-        </p>
-
+            <p>
+            <label><b>Study Name</b></label>
+            <select class="w3-select w3-border" name="studyName" form="id_form" placeholder="Study Name" required>
+                {id_user_studies}
+            </select>
+            </p>
+            <p>
+            <label><b>ID Type</b></label>
+            <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
+                <option value="aliquot" selected="selected">Aliquot</option>
+                <option value="sample">Sample</option>
+            </select>
+            </p>
+            <button class="w3-btn w3-border" type="submit" method="post">Download IDs</button>
         </form>
     </div>
     <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">

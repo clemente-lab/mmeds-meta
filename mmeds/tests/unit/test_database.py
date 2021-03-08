@@ -70,6 +70,7 @@ class DatabaseTests(TestCase):
     ################
     #   Test SQL   #
     ################
+    @unittest.skip
     def test_a_tables(self):
         Logger.info('====== Test Database Start ======')
         tables = self.df.columns.levels[0].tolist()
@@ -97,6 +98,7 @@ class DatabaseTests(TestCase):
                     self.c.close()
                     raise e
 
+    @unittest.skip
     def test_b_junction_tables(self):
         Logger.info('TEST_B_JUNCTION_TABLES')
         self.c = self.db.cursor()
@@ -115,6 +117,7 @@ class DatabaseTests(TestCase):
                 assert jresult > 0
         self.c.close()
 
+    @unittest.skip
     def test_c_table_protection(self):
         """
         The purpose of this test is to ensure that a user can only access data
@@ -143,6 +146,7 @@ class DatabaseTests(TestCase):
                                 else:
                                     assert result[i] in self.df0[table][col].tolist()
 
+    @unittest.skip
     def test_d_metadata_checks(self):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             warnings = db.check_repeated_subjects(self.df['Subjects'], 'human')
@@ -155,6 +159,7 @@ class DatabaseTests(TestCase):
         assert not warnings
         assert not errors
 
+    @unittest.skip
     def test_e_clear_user_data(self):
         """
         Test that Database.clear_user_data('user') will
@@ -197,6 +202,7 @@ class DatabaseTests(TestCase):
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
             self.c.close()
 
+    @unittest.skip
     def test_e_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():
@@ -217,3 +223,9 @@ class DatabaseTests(TestCase):
                                   SampleProcessor="Alba",
                                   SampleProtocolInformation="Nothing",
                                   SampleProtocolID="Proto3")
+
+    def test_h_download_ids(self):
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
+            result = db.create_ids_file('Good_Study', 'aliquot')
+        print(result)
+

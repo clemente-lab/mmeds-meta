@@ -202,6 +202,7 @@ class MMEDSdownload(MMEDSbase):
 
         return static.serve_file(id_file, 'application/x-download', 'attachment', id_file.name)
 
+
 @decorate_all_methods(catch_server_errors)
 class MMEDSstudy(MMEDSbase):
     def __init__(self):
@@ -864,20 +865,26 @@ class MMEDSquery(MMEDSbase):
             <th>{date_created}</th>
         </tr> '''
 
+        id_study_html = '<option value="{study_name}">{study_name}</option>'
+
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
 
         study_list = []
+        id_study_list = []
         for study in studies:
             study_list.append(study_html.format(study_name=study.study_name,
                                                 select_specimen_page=SERVER_PATH + 'query/select_specimen',
                                                 access_code=study.access_code,
                                                 date_created=study.created,
                                                 ))
+            id_study_list.append(id_study_html.format(study_name=study.study_name))
 
         page = self.load_webpage('query_select_page',
                                  title='Select Study',
-                                 user_studies='\n'.join(study_list))
+                                 user_studies='\n'.join(study_list),
+                                 id_user_studies='\n'.join(id_study_list)
+                                 )
 
         return page
 
