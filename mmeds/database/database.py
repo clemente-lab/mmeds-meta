@@ -486,8 +486,7 @@ class Database:
 
         # Get the SQL id of the Aliquot this should be associated with
         data, header = self.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
-                                                                 study_name=StudyName,
-                                                                 aliquot_id=AliquotID), False)
+                                                                 AliquotID=AliquotID), False)
         idAliquot = int(data[0][0])
         # Get the number of Samples previously created from this Aliquot
         with self.db.cursor() as cursor:
@@ -584,12 +583,19 @@ class Database:
                 id_specimen = cursor.fetchone()
 
                 aliquot_data, header = self.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=id_specimen[0]))
+                # If aliquots were requested this create the table for them
                 if id_type == 'aliquot':
                     [id_list.append('\t'.join([str(col) for col in row])) for row in aliquot_data]
+                elif id_type == 'sample':  # Otherwise...
+                    for ali_id, _ in aliquot_data:
+                        cursor.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot', AliquotID=ali_id))
+                        id_ali = cursor.fetchone()[0]
+                        sample_data, header = self.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=id_ali))
+                        [id_list.append('\t'.join([str(col) for col in row])) for row in sample_data]
 
         if not self.path.is_dir():
             self.path.mkdir()
-        id_table = self.path / f'{id_type}_id_table.tsv'
+        id_table = self.path / f'{study_name}_{id_type}_id_table.tsv'
         id_table.write_text('\n'.join(['\t'.join(header)] + id_list))
         return id_table
 
