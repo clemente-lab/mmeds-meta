@@ -34,6 +34,7 @@ SELECT {column} FROM `Aliquot` WHERE AliquotID = "{AliquotID}"\
 
 SELECT_SAMPLE_QUERY = """\
 SELECT\
+`SampleID`,\
 `SampleDatePerformed`,\
 `SampleProcessor`,\
 `SampleProtocolInformation`,\
