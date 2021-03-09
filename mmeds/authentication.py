@@ -103,7 +103,7 @@ def reset_password(username, email, testing=False):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
 
-    with Database(STORAGE_DIR, user='root', owner=username, testing=testing) as db:
+    with Database(STORAGE_DIR, owner=username, testing=testing) as db:
         if not db.email == email:
             raise NoResultError('No account exists with the provided username and email.')
         result = db.change_password(password_hash, salt)
