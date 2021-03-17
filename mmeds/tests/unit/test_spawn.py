@@ -37,9 +37,13 @@ class SpawnTests(TestCase):
         # Sent one at time b/c only one upload can happen at a time
         for i in [0, 1]:
             info = self.pipe.recv()
+            # Drop the is alive info as it may no longer be accurate
+            del info['is_alive']
             # Check they match the contents of current_processes
             with open(fig.CURRENT_PROCESSES, 'r') as f:
                 procs = safe_load(f)
+            for proc in procs:
+                del proc['is_alive']
             self.infos += procs
             self.assertEqual([info], procs)
             # Check the process exited with code 0
