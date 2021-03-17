@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from time import sleep
 
 from yaml import safe_load
@@ -97,6 +97,31 @@ class SpawnTests(TestCase):
             result = self.pipe.recv()
             Logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
+
+    def test_e_generate_ids(self):
+        # Test generating Aliquot IDs
+        self.q.put(('upload-ids',
+                    self.infos[0]['owner'],
+                    self.infos[0]['access_code'],
+                    fig.TEST_ALIQUOT_UPLOAD,
+                    'aliquot'))
+        # Test generating Sample IDs
+        self.q.put(('upload-ids',
+                    self.infos[0]['owner'],
+                    self.infos[0]['access_code'],
+                    fig.TEST_SAMPLE_UPLOAD,
+                    'sample'))
+
+        # Get the initial results
+        for i in range(2):
+            result = self.pipe.recv()
+            Logger.error('{} result"{}"'.format(i, result))
+
+        # Get the exit codes
+        for i in range(2):
+            result = self.pipe.recv()
+            self.assertEqual(result, 0)
+            Logger.error('{} result"{}"'.format(i, result))
 
     def test_z_exit(self):
         Logger.error('Putting Terminate')
