@@ -99,29 +99,17 @@ class SpawnTests(TestCase):
         self.assertEqual(result, 'Analysis Not Started')
 
     def test_e_generate_ids(self):
-        # Test generating Aliquot IDs
-        self.q.put(('upload-ids',
-                    self.infos[0]['owner'],
-                    self.infos[0]['access_code'],
-                    fig.TEST_ALIQUOT_UPLOAD,
-                    'aliquot'))
-        # Test generating Sample IDs
-        self.q.put(('upload-ids',
-                    self.infos[0]['owner'],
-                    self.infos[0]['access_code'],
-                    fig.TEST_SAMPLE_UPLOAD,
-                    'sample'))
-
         # Get the initial results
-        for i in range(2):
+        for (utype, ufile) in [('aliquot', fig.TEST_ALIQUOT_UPLOAD), ('sample', fig.TEST_SAMPLE_UPLOAD)]:
+            self.q.put(('upload-ids',
+                        self.infos[0]['owner'],
+                        self.infos[0]['access_code'],
+                        ufile,
+                        utype))
             result = self.pipe.recv()
-            Logger.error('{} result"{}"'.format(i, result))
 
-        # Get the exit codes
-        for i in range(2):
             result = self.pipe.recv()
             self.assertEqual(result, 0)
-            Logger.error('{} result"{}"'.format(i, result))
 
     def test_z_exit(self):
         Logger.error('Putting Terminate')
