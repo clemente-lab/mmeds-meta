@@ -597,7 +597,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         mail = recieve_email(self.server_user, 'upload',
-                             'user {} uploaded data for the Short_Study'.format(self.server_user))
+                             'user {} uploaded data for the Validate_Study'.format(self.server_user))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
 
     def modify_upload(self):
