@@ -115,9 +115,8 @@ class Validator:
         avg = mean(counts.values)
         for val, count in counts.iteritems():
             if count < (avg - stddev) and count < 3:
-                breakpoint()
-                text = '{}\t{}\tCategorical Data Warning: Potential categorical data detected.' +\
-                    ' Value {} may be in error, only {} found.'
+                text = ('{}\t{}\tCategorical Data Warning: Potential categorical data detected.' +
+                        ' Value {} may be in error, only {} found.')
                 self.warnings.append(text.format(-1, self.col_index, val, count))
 
     def check_lengths(self, column):

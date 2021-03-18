@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from time import sleep
 
 from yaml import safe_load
@@ -37,9 +37,13 @@ class SpawnTests(TestCase):
         # Sent one at time b/c only one upload can happen at a time
         for i in [0, 1]:
             info = self.pipe.recv()
+            # Drop the is alive info as it may no longer be accurate
+            del info['is_alive']
             # Check they match the contents of current_processes
             with open(fig.CURRENT_PROCESSES, 'r') as f:
                 procs = safe_load(f)
+            for proc in procs:
+                del proc['is_alive']
             self.infos += procs
             self.assertEqual([info], procs)
             # Check the process exited with code 0
@@ -93,6 +97,19 @@ class SpawnTests(TestCase):
             result = self.pipe.recv()
             Logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
+
+    def test_e_generate_ids(self):
+        # Get the initial results
+        for (utype, ufile) in [('aliquot', fig.TEST_ALIQUOT_UPLOAD), ('sample', fig.TEST_SAMPLE_UPLOAD)]:
+            self.q.put(('upload-ids',
+                        self.infos[0]['owner'],
+                        self.infos[0]['access_code'],
+                        ufile,
+                        utype))
+            result = self.pipe.recv()
+
+            result = self.pipe.recv()
+            self.assertEqual(result, 0)
 
     def test_z_exit(self):
         Logger.error('Putting Terminate')

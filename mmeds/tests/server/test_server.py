@@ -796,7 +796,6 @@ class TestServer(helper.CPWebCase):
         body = self.body.decode('utf-8')
         code = re.findall('access_code=(.+?)">', body)
 
-        breakpoint()
         self.getPage('/query/select_specimen?access_code={}'.format(code[-1]), headers=self.cookies)
         self.assertStatus('200 OK')
 
