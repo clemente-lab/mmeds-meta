@@ -166,7 +166,7 @@ HTML_ARGS = {
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
     'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
-    'upload_modify_page': SERVER_PATH + 'upload/upload_page',
+    'upload_modify_page': SERVER_PATH + 'upload/modify_upload',
     'upload_multiple_ids_page': SERVER_PATH + 'upload/generate_multiple_ids',
 
     # Download Pages

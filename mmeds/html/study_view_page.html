@@ -53,12 +53,16 @@
     <div id="ModifyUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <h2> File to Modify </h2>
         <form action='{upload_modify_page}' method='post' enctype='multipart/form-data' id='modify_form'>
-            <select class="w3-select w3-border" name='file_name' form='modify_form'>
+            <select class="w3-select w3-border" name='data_type' form='modify_form'>
                 {study_files}
             </select>
             <p>
             <label class> <b>New File</b> </label>
-            <input class="w3-input" type='file' placeholder="Default Config" name='config'/>
+            <input class="w3-input" type='file' placeholder="Default Config" name='myData'/>
+            </p>
+            <p>
+            <label class> <b>Access Code</b> </label>
+            <input class="w3-input" type='text' placeholder="Default Config" name='access_code'/>
             </p>
 
             <button class="w3-button w3-border" type='submit' method='post'>Modify Upload</button>
