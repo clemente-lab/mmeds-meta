@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import click
+import shutil
 import pandas as pd
 import mmeds.config as fig
 from mmeds.util import join_metadata, write_metadata, load_metadata
@@ -22,22 +23,25 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-p', '--path', required=True, type=click.Path(exists=True),
               help='Path to put the created test files')
 def main(path):
-    file_path = path / 'validation_files'
+    file_path = Path(path) / 'validation_files'
     for test_file in file_path.glob('validate_*'):
         print('Deleting {}'.format(test_file))
         Path(test_file).unlink()
 
     # Create the subjects test files
-    df = pd.read_csv(fig.TEST_SUBJECT_SHORT, sep='\t', header=[0, 1], na_filter=False)
-    write_error_files(df, 'subject', file_path)
-    write_warning_files(df, 'subject', file_path)
-    write_alternate_files(df, 'subject', file_path)
+    sub_df = pd.read_csv(Path(path) / Path(fig.TEST_SUBJECT_SHORT).name, sep='\t', header=[0, 1], na_filter=False)
+    write_error_files(sub_df, 'subject', file_path)
+    write_warning_files(sub_df, 'subject', file_path)
+    write_alternate_files(sub_df, 'subject', file_path)
 
     # Create the specimen test files
-    df = pd.read_csv(fig.TEST_SPECIMEN_SHORT, sep='\t', header=[0, 1], na_filter=False)
-    write_error_files(df, 'specimen', file_path)
-    write_warning_files(df, 'specimen', file_path)
-    write_alternate_files(df, 'specimen', file_path)
+    spec_df = pd.read_csv(Path(path) / Path(fig.TEST_SPECIMEN_SHORT).name, sep='\t', header=[0, 1], na_filter=False)
+    for i in range(len(spec_df[('Study', 'StudyName')])):
+        if i > 2:
+            spec_df.iloc[i][('Study', 'StudyName')] = 'Validate_Study'
+    write_error_files(spec_df, 'specimen', file_path)
+    write_warning_files(spec_df, 'specimen', file_path)
+    write_alternate_files(spec_df, 'specimen', file_path)
 
     test_path = file_path.parent
 
@@ -52,6 +56,9 @@ def main(path):
                            load_metadata(test_path / 'test_specimen_alt.tsv'),
                            'human')
     write_metadata(df_alt, test_path / 'test_metadata_alt.tsv')
+
+    shutil.rmtree(fig.TEST_PATH)
+    shutil.copytree(path, fig.TEST_PATH)
 
 
 # Subjects Metadata Test Files
@@ -253,7 +260,7 @@ def write_error_files(df, file_type, file_path):
     if file_type == 'subject':
         # invalid_icd_code
         invalid_icd_code = df.copy(deep=True)
-        invalid_icd_code.iloc[10]['ICDCode']['ICDCode'] = 'NotACode'
+        invalid_icd_code.iloc[10][('ICDCode', 'ICDCode')] = 'NotACode'
         write_test_metadata(invalid_icd_code, '{}/{}_validate_error_invalid_icd_code.tsv'.format(file_path, file_type))
 
         # phi Header Column
@@ -314,7 +321,7 @@ def write_warning_files(df, file_type, file_path):
 
     # stddev_warning
     stddev_warning = df.copy(deep=True)
-    stddev_warning.iloc[10][std_col] = '9'
+    stddev_warning.iloc[10][std_col] = '900000'
     write_test_metadata(stddev_warning, '{}/{}_validate_warning_stddev_warning.tsv'.format(file_path, file_type))
 
     # categorical_data

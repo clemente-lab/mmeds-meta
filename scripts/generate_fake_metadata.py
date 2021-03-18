@@ -3,22 +3,10 @@ import mmeds.config as fig
 import click
 from shutil import copyfile
 from collections import defaultdict
-from mmeds.util import write_metadata, load_metadata
+from mmeds.util import load_metadata
 from random import randrange, choice
 from pathlib import Path
 
-# List of people to generate metadata for
-people = [
-    'Jose',
-    'Alba',
-    'Tiffany',
-    'Brooke',
-    'Matt',
-    'Hilary',
-    'David',
-    'Kevin',
-    'Jakleen'
-]
 __author__ = "David Wallach"
 __copyright__ = "Copyright 2021, The Clemente Lab"
 __credits__ = ["David Wallach", "Jose Clemente"]
@@ -58,7 +46,7 @@ def generate(path, users):
         ali_table = generate_aliquot_id_request(peep, sdf[('Specimen', 'SpecimenID')])
         write_table(ali_table, peep_path / 'aliquot_id_request.tsv')
 
-        sam_table = generate_sample_id_request(peep, sdf[('Aliquot', 'AliquotID')])
+        sam_table = generate_sample_id_request(peep, sdf[('Aliquot', 'AliquotID')], people)
         write_table(sam_table, peep_path / 'sample_id_request.tsv')
 
         subject_count += len(tdf)
@@ -142,7 +130,7 @@ def generate_aliquot_id_request(peep, specimen_ids):
     return table
 
 
-def generate_sample_id_request(peep, aliquot_ids):
+def generate_sample_id_request(peep, aliquot_ids, people):
     table = defaultdict(list)
     dates = ['2020-03-01', '2021-02-12', '1999-06-23']
     versions = ['0.3.0', '1.0.1', '1.3.0']

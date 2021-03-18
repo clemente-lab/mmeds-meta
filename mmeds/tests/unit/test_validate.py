@@ -48,7 +48,7 @@ class ValidateTests(TestCase):
                 name = Path(test_file).name
                 error = ' '.join(name.split('.')[0].split('_')[3:])
                 errors, warnings, subjects = valid.validate_mapping_file(test_file,
-                                                                         'Good_Study',
+                                                                         'Validate_Study',
                                                                          metadata_type,
                                                                          subject_ids,
                                                                          'human')
@@ -73,7 +73,7 @@ class ValidateTests(TestCase):
                 name = Path(test_file).name
                 warning = ' '.join(name.split('.')[0].split('_')[3:])
                 warnings, warnings, subjects = valid.validate_mapping_file(test_file,
-                                                                           'Good_Study',
+                                                                           'Validate_Study',
                                                                            metadata_type,
                                                                            subject_ids,
                                                                            'human')
