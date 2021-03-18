@@ -1,9 +1,10 @@
 import pandas as pd
 import mmeds.config as fig
+import click
 from shutil import copyfile
 from collections import defaultdict
-from mmeds.util import join_metadata, write_metadata, load_metadata
-from random import randrange, getrandbits, choice
+from mmeds.util import write_metadata, load_metadata
+from random import randrange, choice
 from pathlib import Path
 
 # List of people to generate metadata for
@@ -18,6 +19,50 @@ people = [
     'Kevin',
     'Jakleen'
 ]
+__author__ = "David Wallach"
+__copyright__ = "Copyright 2021, The Clemente Lab"
+__credits__ = ["David Wallach", "Jose Clemente"]
+__license__ = "GPL"
+__maintainer__ = "David Wallach"
+__email__ = "d.s.t.wallach@gmail.com"
+
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('-p', '--path', required=True, type=click.Path(exists=True),
+              help='Path to put the created test files')
+@click.option('-u', '--users', required=True, type=str,
+              help='Comma separated list of names to generate metadata for')
+def generate(path, users):
+    subject_count = 0
+    specimen_count = 0
+
+    people = users.split(',')
+    for peep in people:
+        peep_path = path / peep
+        if not peep_path.is_dir():
+            peep_path.mkdir()
+        copyfile('/home/david/Work/mmeds-meta/test_files/test_otu_table.txt', peep_path / 'test_otu_table.txt')
+
+        # Create the subjects test files
+        tdf = load_metadata(fig.TEST_SUBJECT_SHORT)
+        pdf = generate_subject(tdf, peep, subject_count)
+        write_test_metadata(pdf, peep_path / f'{peep}_subject.tsv', 'subject')
+
+        df = load_metadata(fig.TEST_SPECIMEN_SHORT)
+        sdf = generate_specimen(df, peep, subject_count, specimen_count)
+        write_test_metadata(sdf, peep_path / f'{peep}_specimen.tsv', 'specimen')
+
+        ali_table = generate_aliquot_id_request(peep, sdf[('Specimen', 'SpecimenID')])
+        write_table(ali_table, peep_path / 'aliquot_id_request.tsv')
+
+        sam_table = generate_sample_id_request(peep, sdf[('Aliquot', 'AliquotID')])
+        write_table(sam_table, peep_path / 'sample_id_request.tsv')
+
+        subject_count += len(tdf)
+        specimen_count += len(df)
 
 
 # Subjects Metadata Test Files
@@ -132,38 +177,6 @@ def write_table(table, output_path):
     if not output.exists():
         output.touch()
     Path(output_path).write_text('\n'.join(lines) + '\n')
-
-
-def generate():
-    subject_count = 0
-    specimen_count = 0
-    path = Path('/home/david/Work/stash/demo_files/')
-
-    for peep in people:
-        peep_path = path / peep
-        if not peep_path.is_dir():
-            peep_path.mkdir()
-        copyfile('/home/david/Work/mmeds-meta/test_files/test_otu_table.txt', peep_path / 'test_otu_table.txt')
-
-        # Create the subjects test files
-        tdf = load_metadata(fig.TEST_SUBJECT_SHORT)
-        pdf = generate_subject(tdf, peep, subject_count)
-        write_test_metadata(pdf, peep_path / f'{peep}_subject.tsv', 'subject')
-
-        df = load_metadata(fig.TEST_SPECIMEN_SHORT)
-        sdf = generate_specimen(df, peep, subject_count, specimen_count)
-        write_test_metadata(sdf, peep_path / f'{peep}_specimen.tsv', 'specimen')
-
-        ali_table = generate_aliquot_id_request(peep, sdf[('Specimen', 'SpecimenID')])
-        write_table(ali_table, peep_path / 'aliquot_id_request.tsv')
-
-        sam_table = generate_sample_id_request(peep, sdf[('Aliquot', 'AliquotID')])
-        write_table(sam_table, peep_path / 'sample_id_request.tsv')
-
-        subject_count += len(tdf)
-        specimen_count += len(df)
-
-    # Create the specimen test files
 
 
 if __name__ == '__main__':
