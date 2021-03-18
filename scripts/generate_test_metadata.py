@@ -332,16 +332,18 @@ def write_warning_files(df, file_type, file_path):
 
 def write_alternate_files(df, file_type, file_path):
     if file_type == 'subject':
-        col_one = ('Subjects', 'Nationality')
-        col_two = ('Illness', 'IllnessDescription')
+        cols = [('Subjects', 'Nationality'),
+                ('Illness', 'IllnessDescription'),
+                ('Intervention', 'InterventionDescription')]
     elif file_type == 'specimen':
-        col_one = ('RawData', 'RawDataDescription')
-        col_two = ('Aliquot', 'AliquotID')
+        cols = [('RawData', 'RawDataDescription'),
+                ('Aliquot', 'AliquotID'),
+                ('Study', 'StudyName')]
 
     test_alt = df.copy(deep=True)
     for val in range(len(test_alt)):
-        test_alt.loc[val][col_one] = test_alt.loc[val][col_one] + '_alt'
-        test_alt.loc[val][col_two] = test_alt.loc[val][col_two] + '_alt'
+        for col in cols:
+            test_alt.loc[val][col] = test_alt.loc[val][col] + '_alt'
     write_path = '{}/test_{}_alt.tsv'.format(file_path.parent, file_type)
     write_test_metadata(test_alt, write_path)
 

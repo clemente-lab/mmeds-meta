@@ -549,7 +549,8 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def upload_metadata(self):
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Validate_Study&subjectType=human',
+                     self.cookies)
 
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
