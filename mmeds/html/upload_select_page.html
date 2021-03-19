@@ -1,60 +1,108 @@
-<hr>
-<div class="w3-container w3-card-4">
-    <!-- Header -->
-    <header class="w3-container" style="padding-top:22px">
-        <h5><b> <i class="fa fa-cloud-upload "></i> Upload Study</b></h5>
+<div class="w3-container w3-grey w3-margin-top">
+    <header class="w3-container w3-margin-top">
+        <h5><b><i class="fas fa-server" aria-hidden="true"></i> Select Upload Operation </b></h5>
     </header>
+    <div class="w3-bar w3-card-4 w3-dark-grey">
+        <button onclick="openStudyAction(event, 'NewUpload')" class="action-link w3-third w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Upload New Dataset</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'AddData')" class="action-link w3-third w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Add Data to Study</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'GenerateID')" class="action-link w3-third w3-button">
+            <i class="fa fa-clipboard-check w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Generate IDs</h4>
+        </button>
+    </div>
 
-    <!-- Upload Form -->
-    <form  action="{upload_metadata_page}" method="post" enctype="multipart/form-data" id="upload_form">
-        <p>
-        <label><b>Upload</b></label>
-        <select class="w3-select w3-border" name="uploadType" form="upload_form" required>
-            <option value="other" disabled="disabled" selected="selected">Choose your option</option>
-            <option value="qiime">Raw Reads</option>
-            <option value="sparcc">OTU Table</option>
-            <option value="lefse">LEfSe Table</option>
-        </select>
-        </p>
-        <p>
-        <label><b>Subject Type</b></label>
-        <select class="w3-select w3-border" name="subjectType" form="upload_form" placeholder="Subject Type" required>
-            <option value="human" selected="selected">Human</option>
-            <option value="animal">Animal</option>
-        </select>
-        </p>
-        <p>
-        <label><b>Study Name</b></label>
-        <input class="w3-input w3-border" type="text" name="studyName" required>
-        </p>
-        <p><button class="w3-btn w3-blue" type="submit" method="post"><b>Begin Upload</b></button></p>
-    </form>
-</div>
-<br>
-<div class="w3-container w3-card-4">
-    <!-- Header -->
-    <header class="w3-container" style="padding-top:22px">
-        <h5><b> <i class="fa fa-cloud-upload "></i> Generate IDs From File </b></h5>
-    </header>
-    <form class="w3-container w3-padding" action='{upload_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
-        <p>
-        <label><b>Access Code</b></label>
-        <input class="w3-input w3-border" type="text" name="accessCode" required>
-        </p>
-        <p>
-        <label><b>ID Type</b></label>
-        <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
-            <option value="aliquot" selected="selected">Aliquot</option>
-            <option value="sample">Sample</option>
-        </select>
-        </p>
-        <p>
-        <label><b>Data File</b></label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="dataFile" required>
-        </p>
-        <br>
-        <button class="w3-btn w3-blue" type='submit' method='post'>Submit Upload</button> </p>
-    </form>
-</div>
+    <hr>
 
-<hr>
+    <!-- Sections of the page that only appear upon selection -->
+    <div id="NewUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <!-- Header -->
+        <header class="w3-container w3-padding-top">
+            <h5><b> <i class="fa fa-cloud-upload "></i> Upload Study</b></h5>
+        </header>
+
+        <!-- Upload Form -->
+        <form class="w3-container w3-padding" action="{upload_metadata_page}" method="post" enctype="multipart/form-data" id="upload_form">
+            <p>
+            <label><b>Upload</b></label>
+            <select class="w3-select w3-border" name="uploadType" form="upload_form" required>
+                <option value="other" disabled="disabled" selected="selected">Choose your option</option>
+                <option value="qiime">Raw Reads</option>
+                <option value="sparcc">OTU Table</option>
+                <option value="lefse">LEfSe Table</option>
+            </select>
+            </p>
+            <p>
+            <label><b>Subject Type</b></label>
+            <select class="w3-select w3-border" name="subjectType" form="upload_form" placeholder="Subject Type" required>
+                <option value="human" selected="selected">Human</option>
+                <option value="animal">Animal</option>
+            </select>
+            </p>
+            <p>
+            <label><b>Study Name</b></label>
+            <input class="w3-input w3-border" type="text" name="studyName" required>
+            </p>
+            <p><button class="w3-btn w3-dark-grey" type="submit" method="post">Begin Upload</button></p>
+        </form>
+    </div>
+    <div id="AddData" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <!-- Header -->
+        <header class="w3-container w3-padding-top">
+            <h5><b> <i class="fa fa-cloud-upload "></i> Add Data From File </b></h5>
+        </header>
+        <form class="w3-container w3-padding" action='{generate_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
+            <p>
+            <label><b>Access Code</b></label>
+            <input class="w3-input w3-border" type="text" name="accessCode" required>
+            </p>
+            <p>
+            <label><b>ID Type</b></label>
+            <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
+                <option value="subject" selected="selected">Subject</option>
+                <option value="aliquot">Aliquot</option>
+                <option value="sample">Sample</option>
+            </select>
+            </p>
+            <p>
+            <label><b>Data File</b></label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="dataFile" required>
+            </p>
+            <br>
+            <button class="w3-btn w3-dark-grey" type='submit' method='post'>Submit Upload</button> </p>
+        </form>
+    </div>
+    <div id="GenerateID" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <!-- Header -->
+        <header class="w3-container" style="padding-top:22px">
+            <h5><b> <i class="fa fa-cloud-upload "></i> Generate IDs From File </b></h5>
+        </header>
+        <form class="w3-container w3-padding" action='{generate_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
+            <p>
+            <label><b>Access Code</b></label>
+            <input class="w3-input w3-border" type="text" name="accessCode" required>
+            </p>
+            <p>
+            <label><b>ID Type</b></label>
+            <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
+                <option value="aliquot" selected="selected">Aliquot</option>
+                <option value="sample">Sample</option>
+            </select>
+            </p>
+            <p>
+            <label><b>Data File</b></label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="dataFile" required>
+            </p>
+            <br>
+            <button class="w3-btn w3-dark-grey" type='submit' method='post'>Submit Upload</button> </p>
+        </form>
+    </div>
+</div>

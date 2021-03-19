@@ -645,6 +645,10 @@ class MMEDSupload(MMEDSbase):
                 error = 'There was an issue with your ID file. Please check the example.'
         return self.load_webpage('home', success=success, error=error)
 
+    @cp.expose
+    def upload_multiple_ids(self, accessCode, idType, dataFile):
+        pass
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
