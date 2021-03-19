@@ -2,6 +2,7 @@ import warnings
 import pandas as pd
 
 from multiprocessing import Process
+from mmeds.error import InvalidUploadError
 from mmeds.util import send_email
 from mmeds.logging import Logger
 from mmeds.database.database import Database
@@ -38,6 +39,10 @@ class IDGenerator(Process):
                 generate_method = db.generate_aliquot_id
             elif self.id_type == 'sample':
                 generate_method = db.generate_sample_id
+            elif self.id_type == 'subject':
+                generate_method = db.add_subject_data
+            else:
+                raise InvalidUploadError(f'{self.id_type} is not a valid upload type')
             df = pd.read_csv(self.id_table, sep='\t')
 
             # Insert the values for every row

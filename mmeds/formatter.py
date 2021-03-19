@@ -52,6 +52,13 @@ SELECT * FROM SampleView WHERE\
 
 INSERT_QUERY = """INSERT INTO {table} ({columns}) VALUES ({values})"""
 
+SELECT_COLUMN_SUBJECT_QUERY = """\
+    SELECT {column} FROM\
+    `SubjectView` WHERE\
+    `StudyName` = "{StudyName}" AND\
+    `HostSubjectId` = "{HostSubjectId}"\
+"""
+
 
 def build_html_table(header, data):
     """
