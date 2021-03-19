@@ -767,6 +767,11 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'New Data Uploaded'
+    elif message == 'ids_generated':
+        body = 'Hello {email},\nthe user {user} uploaded {id_type}s for the study {study}. \n' +\
+               'The aliquots are added and the IDs have been generated.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = f'{kwargs["id_type"].capitalize()} IDs Generated'
     elif message == 'reset':
         body = 'Hello {user},\nYour password has been reset.\n' +\
                'The new password is:\n{password}\n\nBest,\nMmeds Team\n\n' +\
@@ -806,6 +811,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         user=user,
         cemail=fig.CONTACT_EMAIL,
         email=toaddr,
+        id_type=kwargs.get('id_type'),
         study=kwargs.get('study'),
         code=kwargs.get('code'),
         analysis=kwargs.get('analysis'),

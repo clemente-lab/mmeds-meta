@@ -166,10 +166,12 @@ HTML_ARGS = {
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
     'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
     'upload_data_page': SERVER_PATH + 'upload/upload_data',
-    'upload_modify_page': SERVER_PATH + 'upload/upload_page',
+    'upload_modify_page': SERVER_PATH + 'upload/modify_upload',
+    'upload_multiple_ids_page': SERVER_PATH + 'upload/generate_multiple_ids',
 
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',
+    'download_multiple_ids_page': SERVER_PATH + 'download/download_multiple_ids',
 
     # Study Pages
     'study_select_page': SERVER_PATH + 'study/select_study',
@@ -344,6 +346,8 @@ TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
+TEST_ALIQUOT_UPLOAD = str(TEST_PATH / 'test_aliquot_upload.tsv')
+TEST_SAMPLE_UPLOAD = str(TEST_PATH / 'test_sample_upload.tsv')
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,
@@ -599,6 +603,26 @@ for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPEC
 
 # Clean up
 del db
+
+# Create the lists for Sample and Aliquot IDs
+ALIQUOT_ID_COLUMNS = {}
+for col in ['StudyName', 'SpecimenID', 'AliquotWeight']:
+    col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
+    ALIQUOT_ID_COLUMNS[col] = col_type
+
+SAMPLE_ID_COLUMNS = {}
+for col in ['StudyName',
+            'AliquotID',
+            'SampleDatePerformed',
+            'SampleProcessor',
+            'SampleProtocolInformation',
+            'SampleProtocolID',
+            'SampleConditions',
+            'SampleTool',
+            'SampleToolVersion'
+            ]:
+    col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
+    SAMPLE_ID_COLUMNS[col] = col_type
 
 # Map known columns from MIxS
 MMEDS_MAP = {

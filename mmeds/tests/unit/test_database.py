@@ -1,16 +1,13 @@
 from prettytable import PrettyTable, ALL
 from unittest import TestCase
-import unittest
 import datetime
 import pymysql as pms
 import pandas as pd
-import pytest
 
 import mmeds.secrets as sec
 import mmeds.config as fig
 from mmeds.database.database import Database
 from mmeds.database.sql_builder import SQLBuilder
-from mmeds.error import TableAccessError
 from mmeds.util import parse_ICD_codes, load_metadata
 from mmeds.logging import Logger
 
@@ -217,3 +214,9 @@ class DatabaseTests(TestCase):
                                   SampleProcessor="Alba",
                                   SampleProtocolInformation="Nothing",
                                   SampleProtocolID="Proto3")
+
+    def test_h_download_ids(self):
+        with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
+            result = db.create_ids_file('Good_Study', 'aliquot')
+        print(result)
+

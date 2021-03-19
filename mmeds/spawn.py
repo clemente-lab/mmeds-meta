@@ -5,7 +5,7 @@ from shutil import rmtree
 from pathlib import Path
 from datetime import datetime
 from multiprocessing import Queue, Pipe, Lock
-from multiprocessing.managers import BaseManager, AcquirerProxy
+from multiprocessing.managers import BaseManager
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -13,6 +13,7 @@ import mmeds.secrets as sec
 from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
+from mmeds.database.id_generators import IDGenerator
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
@@ -269,7 +270,7 @@ class Watcher(BaseManager):
         # Add it to the list of analysis processes
         self.add_process(ptype, p.access_code)
 
-    def handle_upload(self, process, current_upload):
+    def handle_upload(self, process):
         """
         :process: A n-tuple containing information on what process to spawn.
         ====================================================================
@@ -279,20 +280,25 @@ class Watcher(BaseManager):
 
         # If there is nothing uploading currently start the new upload process
         if self.current_upload is None:
-            (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
-             username, reads_type, barcodes_type, datafiles, temporary, public) = process
-            # Start a process to handle loading the data
-            p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', reads_type,
-                                 barcodes_type, study_name, temporary, datafiles, public, self.testing)
-            self.db_lock.acquire()
+            # Check what type of upload this is
+            if 'ids' in process[0]:
+                (ptype, owner, access_code, aliquot_table, id_type) = process
+                p = IDGenerator(owner, access_code, aliquot_table, id_type, self.testing)
+            else:
+                (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
+                 username, reads_type, barcodes_type, datafiles, temporary, public) = process
+                # Start a process to handle loading the data
+                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', reads_type,
+                                     barcodes_type, study_name, temporary, datafiles, public, self.testing)
+                self.db_lock.acquire()
             p.start()
-            self.add_process('upload', p.access_code)
-
+            self.add_process(ptype, p.access_code)
             with Database(testing=self.testing) as db:
                 doc = db.get_doc(p.access_code, False)
             self.pipe.send(doc.get_info())
+            # Keep track of this new process
             self.started.append(p.access_code)
-            current_upload = p
+            self.current_upload = p
             if self.testing:
                 p.join()
         else:
@@ -319,7 +325,6 @@ class Watcher(BaseManager):
 
     def run(self):
         """ The loop to run when a Watcher is started """
-        current_upload = None
         # Continue until it's parent process is killed
         while True:
             self.check_processes()
@@ -339,6 +344,7 @@ class Watcher(BaseManager):
                 print("Got something {}".format(process))
                 self.logger.error('Got process requirements')
                 self.logger.error(process)
+                # Whenever it's acceptable to move to Python 3.10 this needs to be turned into a switch statement
                 # If the watcher needs to shut down
                 if process == 'terminate':
                     self.logger.error('Terminating')
@@ -357,9 +363,9 @@ class Watcher(BaseManager):
                 elif process[0] == 'restart':
                     self.handle_restart(process)
                 # If it's an upload
-                elif process[0] == 'upload':
+                elif 'upload' in process[0]:
                     Logger.error("Got an upload, processing")
-                    current_upload = self.handle_upload(process, current_upload)
+                    self.handle_upload(process)
                 elif process[0] == 'email':
                     self.logger.error('Sending email')
                     ptype, toaddr, user, message, kwargs = process

@@ -450,7 +450,7 @@ class Database:
         # Clear the mongo files
         self.clear_mongo_data(username)
 
-    def generate_aliquot_id(self, study_name, specimen_id, aliquot_weight):
+    def generate_aliquot_id(self, StudyName, SpecimenID, AliquotWeight):
         """ Generate a new id for the aliquot with the given weight """
 
         # Get a new unique SQL id for this aliquot
@@ -460,8 +460,8 @@ class Database:
 
         # Get the SQL id of the Specimen this should be associated with
         data, header = self.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
-                                                                            StudyName=study_name,
-                                                                            SpecimenID=specimen_id), False)
+                                                                            StudyName=StudyName,
+                                                                            SpecimenID=SpecimenID), False)
         idSpecimen = int(data[0][0])
         # Get the number of Aliquots previously created from this Specimen
         with self.db.cursor() as cursor:
@@ -471,9 +471,9 @@ class Database:
             aliquot_count = cursor.fetchone()[0]
 
         # Create the human readable ID
-        AliquotID = '{}-Aliquot{}'.format(specimen_id, aliquot_count)
+        AliquotID = '{}-Aliquot{}'.format(SpecimenID, aliquot_count)
 
-        row_string = f'({idAliquot}, {idSpecimen}, {self.user_id}, "{AliquotID}", {aliquot_weight})'
+        row_string = f'({idAliquot}, {idSpecimen}, {self.user_id}, "{AliquotID}", {AliquotWeight})'
         sql = fmt.INSERT_ALIQUOT_QUERY.format(row_string)
 
         with self.db.cursor() as cursor:
@@ -481,13 +481,12 @@ class Database:
         self.db.commit()
         return AliquotID
 
-    def generate_sample_id(self, study_name, aliquot_id, **kwargs):
+    def generate_sample_id(self, StudyName, AliquotID, **kwargs):
         """ Generate a new id for the aliquot with the given weight """
 
         # Get the SQL id of the Aliquot this should be associated with
         data, header = self.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
-                                                                 study_name=study_name,
-                                                                 aliquot_id=aliquot_id), False)
+                                                                 AliquotID=AliquotID), False)
         idAliquot = int(data[0][0])
         # Get the number of Samples previously created from this Aliquot
         with self.db.cursor() as cursor:
@@ -497,7 +496,7 @@ class Database:
             aliquot_count = cursor.fetchone()[0]
 
         # Create the human readable ID
-        SampleID = '{}-Sample{}'.format(aliquot_id, aliquot_count)
+        SampleID = '{}-Sample{}'.format(AliquotID, aliquot_count)
         kwargs['SampleID'] = SampleID
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
         tables = list(set([index[0] for index in multi_index]))
@@ -570,6 +569,35 @@ class Database:
 
         # Return the key
         return fkey
+
+    def create_ids_file(self, study_name, id_type):
+        """ Create a file containing the requested ID information and return the path to it """
+        id_list = []
+        with self.db.cursor() as cursor:
+            cursor.execute(fmt.SELECT_SPECIMEN_QUERY.format(StudyName=study_name))
+            specimen = cursor.fetchall()
+            for speciman in specimen:
+                cursor.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='idSpecimen',
+                                                                       StudyName=study_name,
+                                                                       SpecimenID=speciman[0]))
+                id_specimen = cursor.fetchone()
+
+                aliquot_data, header = self.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=id_specimen[0]))
+                # If aliquots were requested this create the table for them
+                if id_type == 'aliquot':
+                    id_list += ['\t'.join([str(col) for col in row]) for row in aliquot_data]
+                elif id_type == 'sample':  # Otherwise...
+                    for ali_id, _ in aliquot_data:
+                        cursor.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot', AliquotID=ali_id))
+                        id_ali = cursor.fetchone()[0]
+                        sample_data, header = self.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=id_ali))
+                        id_list += ['\t'.join([str(col) for col in row]) for row in sample_data]
+
+        if not self.path.is_dir():
+            self.path.mkdir()
+        id_table = self.path / f'{study_name}_{id_type}_id_table.tsv'
+        id_table.write_text('\n'.join(['\t'.join(header)] + id_list))
+        return id_table
 
     ########################################
     #               MongoDB                #

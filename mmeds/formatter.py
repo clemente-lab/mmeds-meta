@@ -29,11 +29,12 @@ SELECT `AliquotID`, `AliquotWeight` FROM `Aliquot` WHERE `Specimen_idSpecimen` =
 """
 
 GET_ALIQUOT_QUERY = """\
-SELECT {column} FROM `Aliquot` WHERE AliquotID = "{aliquot_id}"\
+SELECT {column} FROM `Aliquot` WHERE AliquotID = "{AliquotID}"\
 """
 
 SELECT_SAMPLE_QUERY = """\
 SELECT\
+`SampleID`,\
 `SampleDatePerformed`,\
 `SampleProcessor`,\
 `SampleProtocolInformation`,\

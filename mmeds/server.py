@@ -13,7 +13,7 @@ import mmeds.util as util
 import mmeds.config as fig
 import mmeds.formatter as fmt
 
-from mmeds.validate import Validator
+from mmeds.validate import Validator, valid_file
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
@@ -50,6 +50,7 @@ def decorate_all_methods(decorator):
 
 # Note: In all of the following classes, if a parameter is named in camel case instead of underscore
 # (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML form
+# Update 2021-03-08: This is not as consistant as it should be
 
 class MMEDSbase:
     """
@@ -192,6 +193,14 @@ class MMEDSdownload(MMEDSbase):
     def download_file(self, file_name):
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
+
+    @cp.expose
+    def download_multiple_ids(self, studyName, idType):
+        """ Generate a file containing the requested IDs and return it for download """
+        with Database(path=self.get_dir(), testing=self.testing, owner=self.get_user()) as db:
+            id_file = db.create_ids_file(studyName, idType)
+
+        return static.serve_file(id_file, 'application/x-download', 'attachment', id_file.name)
 
 
 @decorate_all_methods(catch_server_errors)
@@ -570,9 +579,6 @@ class MMEDSupload(MMEDSbase):
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
-        # Get the username
-        username = self.get_user()
-
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
@@ -611,10 +617,33 @@ class MMEDSupload(MMEDSbase):
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, username, reads_type, barcodes_type, datafiles,
+                    specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
                     cp.session['metadata_temporary'], public))
 
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+
+    @cp.expose
+    def generate_multiple_ids(self, accessCode, idType, dataFile):
+        """ Takes a file specifying the Aliquots to generate IDs for and passes it to the watcher """
+        success = ''
+        error = ''
+        # Ensure that the access code is valid for a particular user
+        try:
+            self.check_upload(accessCode)
+        except err.MissingUploadError as e:
+            error = e.message
+        else:
+            data_file = self.load_data_files(idFile=dataFile)
+
+            if valid_file(data_file['idFile'], idType):
+
+                # Pass it to the watcher
+                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
+                success = f'{idType.capitalize()} ID Generation Initiated.' +\
+                    'You will recieve an email when the ID generation finishes'
+            else:
+                error = 'There was an issue with your ID file. Please check the example.'
+        return self.load_webpage('home', success=success, error=error)
 
 
 @decorate_all_methods(catch_server_errors)
@@ -850,20 +879,26 @@ class MMEDSquery(MMEDSbase):
             <th>{date_created}</th>
         </tr> '''
 
-        with Database(path='.', testing=self.testing) as db:
-            studies = db.get_all_studies()
+        id_study_html = '<option value="{study_name}">{study_name}</option>'
+
+        with Database(testing=self.testing) as db:
+            studies = db.get_all_user_studies(self.get_user())
 
         study_list = []
+        id_study_list = []
         for study in studies:
             study_list.append(study_html.format(study_name=study.study_name,
                                                 select_specimen_page=SERVER_PATH + 'query/select_specimen',
                                                 access_code=study.access_code,
                                                 date_created=study.created,
                                                 ))
+            id_study_list.append(id_study_html.format(study_name=study.study_name))
 
         page = self.load_webpage('query_select_page',
                                  title='Select Study',
-                                 user_studies='\n'.join(study_list))
+                                 user_studies='\n'.join(study_list),
+                                 id_user_studies='\n'.join(id_study_list)
+                                 )
 
         return page
 
@@ -921,18 +956,22 @@ class MMEDSquery(MMEDSbase):
 
         # Create the new ID and add it to the database
         success = ''
-        if AliquotWeight is not None:
-            cp.log("Got weight ", AliquotWeight)
-            with Database(testing=self.testing) as db:
-                doc = db.get_docs(access_code=AccessCode).first()
-                self.monitor.get_db_lock().acquire()
-                new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
-                self.monitor.get_db_lock().release()
-            success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+        error = ''
+        with Database(testing=self.testing, owner=self.get_user()) as db:
+            if AliquotWeight is not None:
+                # Check that the value provided is numeric
+                if AliquotWeight.replace('.', '').isnumeric():
+                    cp.log("Got weight ", AliquotWeight)
+                    doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
+                    self.monitor.get_db_lock().acquire()
+                    new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
+                    self.monitor.get_db_lock().release()
+                    success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+                else:
+                    error = f'Weight {AliquotWeight} is not a number'
 
-        # Build the table of aliquots
-        with Database(testing=self.testing) as db:
-            doc = db.get_docs(access_code=AccessCode).first()
+            doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
+            cp.log(AccessCode)
             # Get the SQL id of the Specimen this should be associated with
             data, header = db.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
                                                                               StudyName=doc.study_name,
@@ -946,6 +985,7 @@ class MMEDSquery(MMEDSbase):
 
         page = self.load_webpage('query_generate_aliquot_id_page',
                                  success=success,
+                                 error=error,
                                  access_code=AccessCode,
                                  aliquot_table=aliquot_table,
                                  SpecimenID=SpecimenID)
@@ -995,7 +1035,7 @@ class MMEDSquery(MMEDSbase):
             doc = db.get_docs(access_code=AccessCode).first()
             # Get the SQL id of the Aliquot this should be associated with
             data, header = db.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
-                                                                   aliquot_id=AliquotID),
+                                                                   AliquotID=AliquotID),
                                       False)
             idAliquot = data[0][0]
             data, header = db.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=idAliquot))

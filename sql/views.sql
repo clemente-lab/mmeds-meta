@@ -24,6 +24,7 @@ DROP VIEW IF EXISTS `mmeds_data1`.`SampleView`;
 CREATE VIEW `mmeds_data1`.`SampleView` AS SELECT
 `idSample`,
 `Aliquot_idAliquot`,
+`SampleID`,
 `SampleDatePerformed`,
 `SampleProcessor`,
 `SampleProtocolInformation`,

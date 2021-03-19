@@ -1,10 +1,64 @@
 #!/usr/bin/python
 
+import click
+import shutil
 import pandas as pd
 import mmeds.config as fig
 from mmeds.util import join_metadata, write_metadata, load_metadata
 from random import randrange, getrandbits
 from pathlib import Path
+
+__author__ = "David Wallach"
+__copyright__ = "Copyright 2021, The Clemente Lab"
+__credits__ = ["David Wallach", "Jose Clemente"]
+__license__ = "GPL"
+__maintainer__ = "David Wallach"
+__email__ = "d.s.t.wallach@gmail.com"
+
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('-p', '--path', required=True, type=click.Path(exists=True),
+              help='Path to put the created test files')
+def main(path):
+    file_path = Path(path) / 'validation_files'
+    for test_file in file_path.glob('validate_*'):
+        print('Deleting {}'.format(test_file))
+        Path(test_file).unlink()
+
+    # Create the subjects test files
+    sub_df = pd.read_csv(Path(path) / Path(fig.TEST_SUBJECT_SHORT).name, sep='\t', header=[0, 1], na_filter=False)
+    write_error_files(sub_df, 'subject', file_path)
+    write_warning_files(sub_df, 'subject', file_path)
+    write_alternate_files(sub_df, 'subject', file_path)
+
+    # Create the specimen test files
+    spec_df = pd.read_csv(Path(path) / Path(fig.TEST_SPECIMEN_SHORT).name, sep='\t', header=[0, 1], na_filter=False)
+    for i in range(len(spec_df[('Study', 'StudyName')])):
+        if i > 2:
+            spec_df.iloc[i][('Study', 'StudyName')] = 'Validate_Study'
+    write_error_files(spec_df, 'specimen', file_path)
+    write_warning_files(spec_df, 'specimen', file_path)
+    write_alternate_files(spec_df, 'specimen', file_path)
+
+    test_path = file_path.parent
+
+    # Create the combined metadata file
+    df = join_metadata(load_metadata(test_path / 'test_subject.tsv'),
+                       load_metadata(test_path / 'test_specimen.tsv'),
+                       'human')
+    write_metadata(df, test_path / 'test_metadata.tsv')
+
+    # Create the alternate combined metadata file
+    df_alt = join_metadata(load_metadata(test_path / 'test_subject_alt.tsv'),
+                           load_metadata(test_path / 'test_specimen_alt.tsv'),
+                           'human')
+    write_metadata(df_alt, test_path / 'test_metadata_alt.tsv')
+
+    shutil.rmtree(fig.TEST_PATH)
+    shutil.copytree(path, fig.TEST_PATH)
 
 
 # Subjects Metadata Test Files
@@ -35,7 +89,7 @@ def write_test_metadata(df, output_path):
     Path(output_path).write_text('\n'.join(lines) + '\n')
 
 
-def write_error_files(df, file_type):
+def write_error_files(df, file_type, file_path):
     if file_type == 'subject':
         random_col = ('Interventions', 'InterventionType')
         start_date_col = ('Illness', 'IllnessStartDate')
@@ -206,7 +260,7 @@ def write_error_files(df, file_type):
     if file_type == 'subject':
         # invalid_icd_code
         invalid_icd_code = df.copy(deep=True)
-        invalid_icd_code.iloc[10]['ICDCode']['ICDCode'] = 'NotACode'
+        invalid_icd_code.iloc[10][('ICDCode', 'ICDCode')] = 'NotACode'
         write_test_metadata(invalid_icd_code, '{}/{}_validate_error_invalid_icd_code.tsv'.format(file_path, file_type))
 
         # phi Header Column
@@ -249,7 +303,7 @@ def write_error_files(df, file_type):
         write_test_metadata(missing_subject, '{}/{}_validate_error_missing_subject.tsv'.format(file_path, file_type))
 
 
-def write_warning_files(df, file_type):
+def write_warning_files(df, file_type, file_path):
     # Multiple Warnings
     if file_type == 'subject':
         random_col = ('Interventions', 'InterventionType')
@@ -263,11 +317,11 @@ def write_warning_files(df, file_type):
     test_warning = df.copy(deep=True)
     test_warning.iloc[10][random_col] = '9'
     test_warning.iloc[10][cat_col] = 'Protocol90'
-    write_test_metadata(test_warning, '{}/test_{}_warn.tsv'.format(file_path, file_type))
+    write_test_metadata(test_warning, '{}/test_{}_short_warn.tsv'.format(file_path, file_type))
 
     # stddev_warning
     stddev_warning = df.copy(deep=True)
-    stddev_warning.iloc[10][std_col] = '9'
+    stddev_warning.iloc[10][std_col] = '900000'
     write_test_metadata(stddev_warning, '{}/{}_validate_warning_stddev_warning.tsv'.format(file_path, file_type))
 
     # categorical_data
@@ -276,54 +330,24 @@ def write_warning_files(df, file_type):
     write_test_metadata(categorical_data, '{}/{}_validate_warning_categorical_data.tsv'.format(file_path, file_type))
 
 
-def write_alternate_files(df, file_type):
+def write_alternate_files(df, file_type, file_path):
     if file_type == 'subject':
-        col_one = ('Subjects', 'Nationality')
-        col_two = ('Illness', 'IllnessDescription')
+        cols = [('Subjects', 'Nationality'),
+                ('Illness', 'IllnessDescription'),
+                ('Intervention', 'InterventionDescription')]
     elif file_type == 'specimen':
-        col_one = ('RawData', 'RawDataDescription')
-        col_two = ('Aliquot', 'AliquotID')
+        cols = [('RawData', 'RawDataDescription'),
+                ('Aliquot', 'AliquotID'),
+                ('Study', 'StudyName')]
 
     test_alt = df.copy(deep=True)
     for val in range(len(test_alt)):
-        test_alt.loc[val][col_one] = test_alt.loc[val][col_one] + '_alt'
-        test_alt.loc[val][col_two] = test_alt.loc[val][col_two] + '_alt'
+        for col in cols:
+            test_alt.loc[val][col] = test_alt.loc[val][col] + '_alt'
     write_path = '{}/test_{}_alt.tsv'.format(file_path.parent, file_type)
     write_test_metadata(test_alt, write_path)
 
 
 # Specimen Metadata Test Files
-
-
 if __name__ == '__main__':
-
-    file_path = fig.TEST_PATH / 'validation_files'
-    for test_file in file_path.glob('validate_*'):
-        print('Deleting {}'.format(test_file))
-        Path(test_file).unlink()
-
-    # Create the subjects test files
-    df = pd.read_csv(fig.TEST_SUBJECT_SHORT, sep='\t', header=[0, 1], na_filter=False)
-    write_error_files(df, 'subject')
-    write_warning_files(df, 'subject')
-    write_alternate_files(df, 'subject')
-
-    # Create the specimen test files
-    df = pd.read_csv(fig.TEST_SPECIMEN_SHORT, sep='\t', header=[0, 1], na_filter=False)
-    write_error_files(df, 'specimen')
-    write_warning_files(df, 'specimen')
-    write_alternate_files(df, 'specimen')
-
-    test_path = file_path.parent
-
-    # Create the combined metadata file
-    df = join_metadata(load_metadata(test_path / 'test_subject.tsv'),
-                       load_metadata(test_path / 'test_specimen.tsv'),
-                       'human')
-    write_metadata(df, test_path / 'test_metadata.tsv')
-
-    # Create the alternate combined metadata file
-    df_alt = join_metadata(load_metadata(test_path / 'test_subject_alt.tsv'),
-                           load_metadata(test_path / 'test_specimen_alt.tsv'),
-                           'human')
-    write_metadata(df_alt, test_path / 'test_metadata_alt.tsv')
+    main()

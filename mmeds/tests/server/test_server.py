@@ -549,7 +549,8 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def upload_metadata(self):
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Validate_Study&subjectType=human',
+                     self.cookies)
 
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
@@ -596,7 +597,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         mail = recieve_email(self.server_user, 'upload',
-                             'user {} uploaded data for the Short_Study'.format(self.server_user))
+                             'user {} uploaded data for the Validate_Study'.format(self.server_user))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
 
     def modify_upload(self):
@@ -786,7 +787,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
     def test_fa_generate_aliquot_id(self):
-        self.login(False, True)
+        self.login(False, False)
         self.generate_aliquot_id()
 
     def generate_aliquot_id(self):
@@ -802,9 +803,11 @@ class TestServer(helper.CPWebCase):
         # Grab link to the first Specimen
         body = self.body.decode('utf-8')
         code = re.findall('http:\/\/localhost\/myapp(.+?)" class="row-link">', body)
+        url_path = Path('/tmp/urls.txt')
+        url_path.write_text('\n'.join([cod for cod in code]))
 
         # Open the weight entry page
-        self.getPage(code[0], headers=self.cookies)
+        self.getPage(code[0].strip(), headers=self.cookies)
         self.assertStatus('200 OK')
 
         # Submit the new aliquot id
