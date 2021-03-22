@@ -31,7 +31,7 @@ def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subje
     return valid.run()
 
 
-def valid_file(file_fp, id_type):
+def valid_additional_file(file_fp, id_type):
     """ Checks that the provided file is valid for the specified ID type """
     valid = True
 
@@ -39,13 +39,17 @@ def valid_file(file_fp, id_type):
         cols = fig.ALIQUOT_ID_COLUMNS
     elif id_type == 'sample':
         cols = fig.SAMPLE_ID_COLUMNS
+    elif id_type == 'subject':
+        cols = fig.SUBJECT_COlUMNS
+    else:
+        raise InvalidMetaDataFileError(f"The provided file type ({id_type}) is not valid")
 
     try:  # Check the file can actually be parsed
         df = pd.read_csv(file_fp, sep='\t')
     except pd.errors.ParserError:
         valid = False
     else:
-        diff = set(cols.keys()).symmetric_difference(df.columns)
+        diff = set(df.columns).difference(cols)
         # Check that all the correct columns and only the correct columns are included
         if diff:
             Logger.error(f"Invalid columns in ID file as {file_fp}")

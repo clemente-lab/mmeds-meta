@@ -13,7 +13,7 @@ import mmeds.util as util
 import mmeds.config as fig
 import mmeds.formatter as fmt
 
-from mmeds.validate import Validator, valid_file
+from mmeds.validate import Validator, valid_additional_file
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
@@ -635,7 +635,7 @@ class MMEDSupload(MMEDSbase):
         else:
             data_file = self.load_data_files(idFile=dataFile)
 
-            if valid_file(data_file['idFile'], idType):
+            if valid_additional_file(data_file['idFile'], idType):
 
                 # Pass it to the watcher
                 self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
@@ -646,8 +646,29 @@ class MMEDSupload(MMEDSbase):
         return self.load_webpage('home', success=success, error=error)
 
     @cp.expose
-    def upload_multiple_ids(self, accessCode, idType, dataFile):
-        pass
+    def additional_metadata(self, accessCode, idType, dataFile):
+        """ Webpage for handling the upload of new metadata related to an existing study """
+        success = ''
+        error = ''
+        cp.log('idType is ')
+        cp.log(idType)
+        # Ensure that the access code is valid for a particular user
+        try:
+            self.check_upload(accessCode)
+        except err.MissingUploadError as e:
+            error = e.message
+        else:
+            data_file = self.load_data_files(idFile=dataFile)
+
+            if valid_additional_file(data_file['idFile'], idType):
+
+                # Pass it to the watcher
+                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
+                success = f'{idType.capitalize()} Data Upload Initiated.' +\
+                    'You will recieve an email when it finishes'
+            else:
+                error = f'There was an issue with your {idType} file. Please check the example.'
+        return self.load_webpage('home', success=success, error=error)
 
 
 @decorate_all_methods(catch_server_errors)

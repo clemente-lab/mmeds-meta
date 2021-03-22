@@ -59,22 +59,23 @@
         <header class="w3-container w3-padding-top">
             <h5><b> <i class="fa fa-cloud-upload "></i> Add Data From File </b></h5>
         </header>
-        <form class="w3-container w3-padding" action='{generate_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
+        <form class="w3-container w3-padding" action='{upload_additional_metadata_page}' method='post' enctype='multipart/form-data' id='additional_upload_form'>
             <p>
             <label><b>Access Code</b></label>
-            <input class="w3-input w3-border" type="text" name="accessCode" required>
+            <input class="w3-input w3-border" type="text" name="accessCode" form="additional_upload_form" required>
             </p>
             <p>
             <label><b>ID Type</b></label>
-            <select class="w3-select w3-border" name="idType" form="id_form" placeholder="Data Type" required>
-                <option value="subject" selected="selected">Subject</option>
+            <select class="w3-select w3-border" name="idType" form="additional_upload_form" placeholder="Data Type" required>
+                <option value="other" disabled="disabled" selected="selected">Choose your option</option>
+                <option value="subject">Subject</option>
                 <option value="aliquot">Aliquot</option>
                 <option value="sample">Sample</option>
             </select>
             </p>
             <p>
             <label><b>Data File</b></label>
-            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="dataFile" required>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" form="additional_upload_form" name="dataFile" required>
             </p>
             <br>
             <button class="w3-btn w3-dark-grey" type='submit' method='post'>Submit Upload</button> </p>

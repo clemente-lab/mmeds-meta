@@ -94,6 +94,8 @@ if TESTING:
 
 # Each page returns a tuple
 # (<Path to the page>, <Should the header and topbar be loaded>)
+# These link the keys used to identify the HTML pages the server loads
+# to the location of the HTML files on disk
 HTML_PAGES = {
     # Templates
     'logged_out_template': HTML_DIR / 'logged_out_template.html',
@@ -132,6 +134,8 @@ HTML_PAGES = {
 }
 
 # Predefined options for formatting webpages are set here
+# These link the key names for webpages used in the HTML templates
+# To the locations of those webpages on the server and in the server class
 HTML_ARGS = {
     'version': '0.1.0',
     'study_count': 0,
@@ -169,6 +173,7 @@ HTML_ARGS = {
     'upload_modify_page': SERVER_PATH + 'upload/modify_upload',
     'upload_multiple_ids_page': SERVER_PATH + 'upload/upload_multiple_ids',
     'generate_multiple_ids_page': SERVER_PATH + 'upload/generate_multiple_ids',
+    'upload_additional_metadata_page': SERVER_PATH + 'upload/additional_metadata',
 
     # Download Pages
     'download_page': SERVER_PATH + 'download/download_file',
@@ -653,6 +658,21 @@ MMEDS_MAP = {
 for table in TABLE_COLS:
     for column in TABLE_COLS[table]:
         MMEDS_MAP[column] = (table, column)
+
+SUBJECT_COLUMNS = {}
+for table in SUBJECT_TABLES:
+    cols = TABLE_COLS[table]
+    if 'ICDDetails' in cols:
+        cols.remove('ICDDetails')
+        cols.remove('ICDExtension')
+    elif 'ICDCategory' in cols:
+        cols.remove('ICDCategory')
+    elif 'ICDFirstCharacter' in cols:
+        cols.remove('ICDFirstCharacter')
+    for col in cols:
+        col_type = COLUMN_TYPES_SUBJECT[table][col]
+        SUBJECT_COLUMNS[col] = col_type
+        print(col, SUBJECT_COLUMNS[col])
 
 MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 
