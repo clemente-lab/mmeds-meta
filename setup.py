@@ -3,7 +3,7 @@ from setuptools import setup
 from glob import glob
 
 __author__ = "The Clemente Lab"
-__copyright__ = "Copyright (c) 2016 The Clemente Lab"
+__copyright__ = "Copyright (c) 2021 The Clemente Lab"
 __credits__ = ["David S. Wallach", "Jose C. Clemente"]
 __license__ = "GPL"
 __maintainer__ = "David S. Wallach"
@@ -15,7 +15,7 @@ setup(name='mmeds',
       classifiers=[
           'Development Status :: 3 - Alpha',
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.9',
           'Topic :: Scientific/Engineering :: Bio-Informatics',
       ],
       url='http://github.com/clemente-lab/mmeds-meta',
