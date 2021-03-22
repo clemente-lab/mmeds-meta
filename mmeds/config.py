@@ -672,7 +672,6 @@ for table in SUBJECT_TABLES:
     for col in cols:
         col_type = COLUMN_TYPES_SUBJECT[table][col]
         SUBJECT_COLUMNS[col] = col_type
-        print(col, SUBJECT_COLUMNS[col])
 
 MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 

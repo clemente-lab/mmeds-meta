@@ -40,7 +40,7 @@ def valid_additional_file(file_fp, id_type):
     elif id_type == 'sample':
         cols = fig.SAMPLE_ID_COLUMNS
     elif id_type == 'subject':
-        cols = fig.SUBJECT_COlUMNS
+        cols = fig.SUBJECT_COLUMNS
     else:
         raise InvalidMetaDataFileError(f"The provided file type ({id_type}) is not valid")
 
@@ -49,16 +49,19 @@ def valid_additional_file(file_fp, id_type):
     except pd.errors.ParserError:
         valid = False
     else:
-        diff = set(df.columns).difference(cols)
+        file_cols = df.columns.tolist()
+        if 'StudyName' not in file_cols:
+            valid = False
+        file_cols.remove('StudyName')
+        diff = set(file_cols).difference(cols)
         # Check that all the correct columns and only the correct columns are included
         if diff:
             Logger.error(f"Invalid columns in ID file as {file_fp}")
             valid = False
         else:
-            for column in df.columns:
-                try:
-                    # Date objects need a special cast
-                    if column == 'SampleDatePerformed':
+            for column in file_cols:
+                try:  # Date objects need a special cast
+                    if cols[column] == pd.Timestamp:
                         pd.to_datetime(df[column])
                     else:
                         df[column].astype(cols[column])
