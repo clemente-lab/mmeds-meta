@@ -61,8 +61,10 @@
         </header>
         <form class="w3-container w3-padding" action='{upload_additional_metadata_page}' method='post' enctype='multipart/form-data' id='additional_upload_form'>
             <p>
-            <label><b>Access Code</b></label>
-            <input class="w3-input w3-border" type="text" name="accessCode" form="additional_upload_form" required>
+            <label><b>Select Study</b></label>
+            <select class="w3-select w3-border" name="accessCode" form="additional_upload_form" placeholder="Study Name" required>
+                {user_studies}
+            </select>
             </p>
             <p>
             <label><b>ID Type</b></label>
@@ -88,8 +90,10 @@
         </header>
         <form class="w3-container w3-padding" action='{generate_multiple_ids_page}' method='post' enctype='multipart/form-data' id='id_form'>
             <p>
-            <label><b>Access Code</b></label>
-            <input class="w3-input w3-border" type="text" name="accessCode" required>
+            <label><b>Select Study</b></label>
+            <select class="w3-select w3-border" name="accessCode" form="id_form" placeholder="Study Name" required>
+                {user_studies}
+            </select>
             </p>
             <p>
             <label><b>ID Type</b></label>
