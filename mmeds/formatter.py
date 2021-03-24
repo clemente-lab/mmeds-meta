@@ -155,3 +155,17 @@ def build_clickable_table(header, data, page, common_args={}, row_args={}):
         html += '</tr>\n'
     html += '</table>'
     return html
+
+
+def build_study_code_dropdown(studies):
+    """
+    Creates a drop down of study names with values of the access codes from the provided mongo Documents
+    ===================================================================================================
+    :studies: A list of MMEDSdocs Corresponding to a user's studies
+    """
+    study_code_html = '<option value="{access_code}">{study_name}</option>'
+    study_code_list = []
+    for study in studies:
+        study_code_list.append(study_code_html.format(study_name=study.study_name,
+                                                      access_code=study.access_code))
+    return '\n'.join(study_code_list)

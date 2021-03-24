@@ -85,4 +85,5 @@ class Logger:
         log_message = sql.replace('%(', '{').replace(')s', '}').format(**args)
         return Logger._log('debug', format_log_message(log_message), *log_args)
 
+
 Logger(load_log_config())

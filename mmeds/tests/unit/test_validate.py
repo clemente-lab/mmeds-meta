@@ -94,6 +94,4 @@ class ValidateTests(TestCase):
         assert not valid.valid_additional_file(fig.TEST_ALIQUOT_UPLOAD, 'sample')
         assert valid.valid_additional_file(fig.TEST_SAMPLE_UPLOAD, 'sample')
         assert not valid.valid_additional_file(fig.TEST_SAMPLE_UPLOAD, 'aliquot')
-        breakpoint()
-        result = valid.valid_additional_file(fig.TEST_ADD_SUBJECT, 'subject')
-        assert result
+        assert valid.valid_additional_file(fig.TEST_ADD_SUBJECT, 'subject')

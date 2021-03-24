@@ -58,7 +58,6 @@ class SpawnTests(TestCase):
         self.assertEqual([], procs)
         Logger.info('Upload data finished')
 
-    @skip
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
@@ -82,7 +81,6 @@ class SpawnTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
 
-    @skip
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         for proc in self.analyses:
@@ -92,7 +90,6 @@ class SpawnTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
 
-    @skip
     def test_d_node_analysis(self):
         for i in range(3):
             self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
@@ -101,7 +98,6 @@ class SpawnTests(TestCase):
             Logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
 
-    @skip
     def test_e_generate_ids(self):
         # Get the initial results
         for (utype, ufile) in [('aliquot', fig.TEST_ALIQUOT_UPLOAD), ('sample', fig.TEST_SAMPLE_UPLOAD)]:

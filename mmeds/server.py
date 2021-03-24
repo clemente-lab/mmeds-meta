@@ -490,7 +490,12 @@ class MMEDSupload(MMEDSbase):
     def upload_page(self):
         """ Page for selecting upload type or modifying upload. """
         cp.log('Access upload page')
-        page = self.load_webpage('upload_select_page', title='Upload Type')
+        with Database(testing=self.testing) as db:
+            studies = db.get_all_user_studies(self.get_user())
+            study_dropdown = fmt.build_study_code_dropdown(studies)
+            page = self.load_webpage('upload_select_page',
+                                     user_studies=study_dropdown,
+                                     title='Upload Type')
         return page
 
     @cp.expose
