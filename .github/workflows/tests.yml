@@ -22,6 +22,10 @@ jobs:
         run: sudo apt-get install tidy environment-modules -y
       - name: Start Services
         run: sudo systemctl start mysql.service; sudo systemctl start mongod.service;
+      - name: Wht
+        run: pwd
+      - name: why
+        run: ls -la
       - name: Python install
         run: sudo python setup.py install
       - name: Check Verion
