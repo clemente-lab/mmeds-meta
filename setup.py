@@ -10,7 +10,7 @@ __maintainer__ = "David S. Wallach"
 __email__ = "d.s.t.wallach@gmail.com"
 
 setup(name='mmeds',
-      version='0.5.0',
+      version='0.6.0',
       description='',
       classifiers=[
           'Development Status :: 3 - Alpha',
