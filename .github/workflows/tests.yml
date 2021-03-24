@@ -1,6 +1,7 @@
 name: MMEDs Tests
 
-on: [push, pull_request]
+on: [push
+]
 
 jobs:
   run-tests:
@@ -8,6 +9,7 @@ jobs:
     strategy:
       max-parallel: 5
     steps:
+      - uses: actions/checkout@v2
       - name: Shutdown default
         run: sudo service mysql stop
       - uses: mirromutth/mysql-action@v1.1
