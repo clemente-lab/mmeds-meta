@@ -6,8 +6,6 @@ on: [push
 jobs:
   run-tests:
     runs-on: ubuntu-20.04
-    strategy:
-      max-parallel: 5
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.9

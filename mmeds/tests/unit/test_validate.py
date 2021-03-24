@@ -41,11 +41,12 @@ class ValidateTests(TestCase):
 
     def test_b_error_files(self):
         """ Checks that the metadata files altered for validation raise the appropriate errors """
-        subject_ids = None
 
+        subject_ids = None
         for metadata_type in ['subject', 'specimen']:
             error_files = fig.TEST_PATH.glob('validation_files/{}_validate_error*'.format(metadata_type))
             print('Testing', metadata_type)
+            print(subject_ids)
             for test_file in error_files:
                 name = Path(test_file).name
                 print(test_file)
@@ -56,8 +57,10 @@ class ValidateTests(TestCase):
                                                                          subject_ids,
                                                                          'human')
                 if subject_ids is None:
+                    print('setting subject ids')
                     subject_ids = subjects
 
+                print(subject_ids)
                 # Check the correct error is raised
                 assert error in errors[0].lower()
 
