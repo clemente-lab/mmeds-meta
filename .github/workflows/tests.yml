@@ -8,31 +8,10 @@ jobs:
     strategy:
       max-parallel: 5
     steps:
-      - uses: actions/checkout@v2
-
-      - name: cache Python modules
-        uses: actions/cache@v2
-        env:
-          cache-name: python-cache
-        with:
-          path: $CONDA
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.pyc') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
-      - name: Shutdown default
-        run: sudo service mysql stop
-      - uses: mirromutth/mysql-action@v1.1
-        with:
-          character set server: 'utf8'
-            # mysql database: 'mmeds_data1'
-          mysql root password: 'root'
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Install packages
         run: sudo apt-get install tidy environment-modules xvfb mysql-client -y
       - name: Start Services
