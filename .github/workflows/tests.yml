@@ -19,18 +19,11 @@ jobs:
         with:
           python-version: 3.9
       - name: Install packages
-        run: sudo apt-get install tidy environment-modules mysql-client -y
+        run: sudo apt-get install tidy environment-modules -y
       - name: Start Services
         run: sudo systemctl start mysql.service; sudo systemctl start mongod.service;
-      - name: Add conda to system path
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        run: echo $CONDA/bin >> $GITHUB_PATH
-      - name: Install dependencies
-        run: conda env update --file environment.yml --name mmeds-stable
-      - name: Do MMEDs setup
-        run: source activate mmeds-stable
       - name: Python install
-        run: pip install .
+        run: sudo python setup.py install
       - name: Check Verion
         run: mysql --version
       - name: Mysql Setup
