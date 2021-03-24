@@ -469,7 +469,7 @@ class MMEDSupload(MMEDSbase):
             # Get the html for the upload page
             page = self.load_webpage('home', success='Upload modification successful')
         except err.MissingUploadError as e:
-            page = self.load_webpage('upload_select_page', title='Upload Type', error=e.message)
+            page = self.load_webpage('home', error=e.message)
         return page
 
     @cp.expose
@@ -493,9 +493,9 @@ class MMEDSupload(MMEDSbase):
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
             study_dropdown = fmt.build_study_code_dropdown(studies)
-            page = self.load_webpage('upload_select_page',
-                                     user_studies=study_dropdown,
-                                     title='Upload Type')
+        page = self.load_webpage('upload_select_page',
+                                 user_studies=study_dropdown,
+                                 title='Upload Type')
         return page
 
     @cp.expose
