@@ -50,6 +50,7 @@ setup(name='mmeds',
           'xlrd',
           'multiprocessing_logging',
           'pyyaml',
-          'pandoc'
+          'pandoc',
+          'click'
       ],
       zip_safe=False)

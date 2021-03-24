@@ -98,7 +98,7 @@ def write_error_files(df, file_type, file_path):
         required_col = ('Subjects', 'HostSubjectId')
         sub_col = required_col
     elif file_type == 'specimen':
-        random_col = ('Specimen', 'SpecimenInformation')
+        random_col = ('Specimen', 'SpecimenNotes')
         start_date_col = ('Specimen', 'SpecimenCollectionDate')
         end_date_col = ('Specimen', 'SpecimenCollectionDate')
         unique_col = ('RawData', 'RawDataID')
@@ -310,7 +310,7 @@ def write_warning_files(df, file_type, file_path):
         cat_col = ('Subjects', 'Nationality')
         std_col = ('Weights', 'Weight')
     elif file_type == 'specimen':
-        random_col = ('Specimen', 'SpecimenInformation')
+        random_col = ('Specimen', 'SpecimenNotes')
         cat_col = ('ResultsProtocols', 'ResultsMethod')
         std_col = ('Specimen', 'SpecimenWeight')
 
@@ -334,7 +334,7 @@ def write_alternate_files(df, file_type, file_path):
     if file_type == 'subject':
         cols = [('Subjects', 'Nationality'),
                 ('Illness', 'IllnessDescription'),
-                ('Intervention', 'InterventionDescription')]
+                ('Intervention', 'InterventionNotes')]
     elif file_type == 'specimen':
         cols = [('RawData', 'RawDataDescription'),
                 ('Aliquot', 'AliquotID'),
