@@ -47,7 +47,8 @@ class ValidateTests(TestCase):
             error_files = fig.TEST_PATH.glob('validation_files/{}_validate_error*'.format(metadata_type))
             print('Testing', metadata_type)
             print(subject_ids)
-            for test_file in error_files:
+
+            for test_file in sorted(list(error_files)):
                 name = Path(test_file).name
                 print(test_file)
                 error = ' '.join(name.split('.')[0].split('_')[3:])
