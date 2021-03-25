@@ -118,6 +118,14 @@ class InvalidMetaDataFileError(MmedsError):
         super().__init__()
 
 
+class InvalidUploadError(MmedsError):
+    """ Exception for errors with the upload type """
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__()
+
+
 class MissingFileError(MmedsError):
     """ Exception for missing file errors """
 

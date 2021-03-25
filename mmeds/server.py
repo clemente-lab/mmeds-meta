@@ -13,7 +13,7 @@ import mmeds.util as util
 import mmeds.config as fig
 import mmeds.formatter as fmt
 
-from mmeds.validate import Validator, valid_file
+from mmeds.validate import Validator, valid_additional_file
 from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
@@ -469,7 +469,7 @@ class MMEDSupload(MMEDSbase):
             # Get the html for the upload page
             page = self.load_webpage('home', success='Upload modification successful')
         except err.MissingUploadError as e:
-            page = self.load_webpage('upload_select_page', title='Upload Type', error=e.message)
+            page = self.load_webpage('home', error=e.message)
         return page
 
     @cp.expose
@@ -490,7 +490,12 @@ class MMEDSupload(MMEDSbase):
     def upload_page(self):
         """ Page for selecting upload type or modifying upload. """
         cp.log('Access upload page')
-        page = self.load_webpage('upload_select_page', title='Upload Type')
+        with Database(testing=self.testing) as db:
+            studies = db.get_all_user_studies(self.get_user())
+            study_dropdown = fmt.build_study_code_dropdown(studies)
+        page = self.load_webpage('upload_select_page',
+                                 user_studies=study_dropdown,
+                                 title='Upload Type')
         return page
 
     @cp.expose
@@ -635,7 +640,7 @@ class MMEDSupload(MMEDSbase):
         else:
             data_file = self.load_data_files(idFile=dataFile)
 
-            if valid_file(data_file['idFile'], idType):
+            if valid_additional_file(data_file['idFile'], idType):
 
                 # Pass it to the watcher
                 self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
@@ -643,6 +648,31 @@ class MMEDSupload(MMEDSbase):
                     'You will recieve an email when the ID generation finishes'
             else:
                 error = 'There was an issue with your ID file. Please check the example.'
+        return self.load_webpage('home', success=success, error=error)
+
+    @cp.expose
+    def additional_metadata(self, accessCode, idType, dataFile):
+        """ Webpage for handling the upload of new metadata related to an existing study """
+        success = ''
+        error = ''
+        cp.log('idType is ')
+        cp.log(idType)
+        # Ensure that the access code is valid for a particular user
+        try:
+            self.check_upload(accessCode)
+        except err.MissingUploadError as e:
+            error = e.message
+        else:
+            data_file = self.load_data_files(idFile=dataFile)
+
+            if valid_additional_file(data_file['idFile'], idType):
+
+                # Pass it to the watcher
+                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
+                success = f'{idType.capitalize()} Data Upload Initiated.' +\
+                    'You will recieve an email when it finishes'
+            else:
+                error = f'There was an issue with your {idType} file. Please check the example.'
         return self.load_webpage('home', success=success, error=error)
 
 

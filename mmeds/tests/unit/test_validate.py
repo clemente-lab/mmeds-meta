@@ -41,10 +41,12 @@ class ValidateTests(TestCase):
 
     def test_b_error_files(self):
         """ Checks that the metadata files altered for validation raise the appropriate errors """
+
         subject_ids = None
         for metadata_type in ['subject', 'specimen']:
             error_files = fig.TEST_PATH.glob('validation_files/{}_validate_error*'.format(metadata_type))
-            for test_file in error_files:
+
+            for test_file in sorted(list(error_files)):
                 name = Path(test_file).name
                 error = ' '.join(name.split('.')[0].split('_')[3:])
                 errors, warnings, subjects = valid.validate_mapping_file(test_file,
@@ -90,7 +92,8 @@ class ValidateTests(TestCase):
                 assert parts[1].strip('-').isnumeric()
 
     def test_d_valid_file(self):
-        assert valid.valid_file(fig.TEST_ALIQUOT_UPLOAD, 'aliquot')
-        assert not valid.valid_file(fig.TEST_ALIQUOT_UPLOAD, 'sample')
-        assert valid.valid_file(fig.TEST_SAMPLE_UPLOAD, 'sample')
-        assert not valid.valid_file(fig.TEST_SAMPLE_UPLOAD, 'aliquot')
+        assert valid.valid_additional_file(fig.TEST_ALIQUOT_UPLOAD, 'aliquot')
+        assert not valid.valid_additional_file(fig.TEST_ALIQUOT_UPLOAD, 'sample')
+        assert valid.valid_additional_file(fig.TEST_SAMPLE_UPLOAD, 'sample')
+        assert not valid.valid_additional_file(fig.TEST_SAMPLE_UPLOAD, 'aliquot')
+        assert valid.valid_additional_file(fig.TEST_ADD_SUBJECT, 'subject')

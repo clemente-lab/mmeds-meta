@@ -13,7 +13,7 @@ import mmeds.secrets as sec
 from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
-from mmeds.database.id_generators import IDGenerator
+from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
@@ -283,7 +283,7 @@ class Watcher(BaseManager):
             # Check what type of upload this is
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type) = process
-                p = IDGenerator(owner, access_code, aliquot_table, id_type, self.testing)
+                p = MetaDataAdder(owner, access_code, aliquot_table, id_type, self.testing)
             else:
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
                  username, reads_type, barcodes_type, datafiles, temporary, public) = process

@@ -605,10 +605,10 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/modify_upload?data_type=for_reads&access_code=badcode',
                      headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        err_page = server.load_webpage('upload_select_page',
+        err_page = server.load_webpage('home',
                                        user=self.server_user,
-                                       upload_selected='w3-blue',
                                        home_selected='',
+                                       upload_selected='w3-blue',
                                        error=err.MissingUploadError().message)
         self.assertBody(err_page)
 

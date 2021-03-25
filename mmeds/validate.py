@@ -31,7 +31,7 @@ def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subje
     return valid.run()
 
 
-def valid_file(file_fp, id_type):
+def valid_additional_file(file_fp, id_type):
     """ Checks that the provided file is valid for the specified ID type """
     valid = True
 
@@ -39,22 +39,29 @@ def valid_file(file_fp, id_type):
         cols = fig.ALIQUOT_ID_COLUMNS
     elif id_type == 'sample':
         cols = fig.SAMPLE_ID_COLUMNS
+    elif id_type == 'subject':
+        cols = fig.SUBJECT_COLUMNS
+    else:
+        raise InvalidMetaDataFileError(f"The provided file type ({id_type}) is not valid")
 
     try:  # Check the file can actually be parsed
         df = pd.read_csv(file_fp, sep='\t')
     except pd.errors.ParserError:
         valid = False
     else:
-        diff = set(cols.keys()).symmetric_difference(df.columns)
+        file_cols = df.columns.tolist()
+        if 'StudyName' not in file_cols:
+            valid = False
+        file_cols.remove('StudyName')
+        diff = set(file_cols).difference(cols)
         # Check that all the correct columns and only the correct columns are included
         if diff:
             Logger.error(f"Invalid columns in ID file as {file_fp}")
             valid = False
         else:
-            for column in df.columns:
-                try:
-                    # Date objects need a special cast
-                    if column == 'SampleDatePerformed':
+            for column in file_cols:
+                try:  # Date objects need a special cast
+                    if cols[column] == pd.Timestamp:
                         pd.to_datetime(df[column])
                     else:
                         df[column].astype(cols[column])

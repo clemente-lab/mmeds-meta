@@ -5,12 +5,16 @@ SetHandler wsgi-script
   Deny from all
 </Files>
 
+# Set the python path
+PythonPath "['/home/david/.modules/mmeds-stable']"
+
 # Allow access to the CSS directory
 Options +Indexes
 DirectoryIndex /hpc/users/wallad07/www/mmeds/CSS
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.*)$ app.wsgi/$1 [QSA,PT,L]
+
 
 # Prevent browsers from caching webpages for more than a few seconds
 ExpiresActive On

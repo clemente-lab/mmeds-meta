@@ -30,6 +30,17 @@ make;
 sudo make install;
 ```
 
+# Note:
+mod_wsgi is built for a specific version of python (e.g. python3.8) if
+Your OS upgrades to a newer python version you need to uninstall and reinstall mod_wsgi for it to update.
+You can do so with the following.
+
+```
+make clean;
+./configure;
+sudo make install;
+```
+
 
 # Add module to apache
 `sudo $(echo "LoadModule wsgi_module modules/mod_wsgi.so" &> /etc/httpd/conf.modules.d/00-wsgi.conf)`
