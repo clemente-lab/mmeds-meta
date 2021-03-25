@@ -8,7 +8,7 @@ from mmeds.logging import Logger
 from mmeds.database.database import Database
 
 
-class IDGenerator(Process):
+class MetaDataAdder(Process):
     def __init__(self, owner, access_code, id_table, id_type, testing):
         """
         Connect to the specified database.
@@ -29,6 +29,7 @@ class IDGenerator(Process):
     def run(self):
         """ Perform the uploads """
 
+        df = pd.read_csv(self.id_table, sep='\t')
         with Database(testing=self.testing, owner=self.owner) as db:
             mdata = db.get_doc(access_code=self.access_code)
             mdata.update(is_alive=True, exit_code=None)
@@ -43,7 +44,6 @@ class IDGenerator(Process):
                 generate_method = db.add_subject_data
             else:
                 raise InvalidUploadError(f'{self.id_type} is not a valid upload type')
-            df = pd.read_csv(self.id_table, sep='\t')
 
             # Insert the values for every row
             for index, row in df.iterrows():
