@@ -15,7 +15,7 @@ from prettytable import PrettyTable, ALL
 from collections import defaultdict
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError, StudyNameError,
                          MetaDataError, NoResultError, InvalidSQLError)
-from mmeds.util import (send_email, pyformat_translate, quote_sql)
+from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes)
 from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.database.sql_builder import SQLBuilder
 from mmeds.documents import MMEDSDoc
@@ -522,6 +522,46 @@ class Database:
                 known_fkeys[f'{table}_id{table}'] = fkey
 
         return SampleID
+
+    def add_subject_data(self, StudyName, HostSubjectId, **kwargs):
+        # Get the SQL id of the subject this should be associated with
+        data, header = self.execute(fmt.SELECT_COLUMN_SUBJECT_QUERY.format(column='idSubjects',
+                                                                           HostSubjectId=HostSubjectId,
+                                                                           StudyName=StudyName), False)
+        idSubjects = int(data[0][0])
+
+        # kwargs['idSubjects'] = SampleID
+        multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
+        entry_frame = parse_ICD_codes(pd.DataFrame([kwargs.values()], columns=multi_index))
+        entry_frame.drop(('ICDCode', 'ICDCode'), axis=1, inplace=True)
+        # Maps foreign keys to the tables that require them
+        # TODO this should probably be built out in config.py
+        required_fkeys = defaultdict(set)
+
+        # Add foreign key columns where necessary
+        tables = list(set([index[0] for index in entry_frame.columns]))
+        for table in tables:
+            fkey_cols = [col for col in fig.ALL_TABLE_COLS[table] if '_id' in col]
+            for col in fkey_cols:
+                required_fkeys[col].add(table)
+                if col == 'Subjects_idSubjects':
+                    entry_frame[(table, 'Subjects_idSubjects')] = idSubjects
+
+        # Sort the tables into the correct order to fill them
+        tables.sort(key=fig.TABLE_ORDER.index)
+        for i, table in enumerate(tables):
+
+            Logger.info('Query table {}'.format(table))
+            row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
+
+            # Create a new known keys dict
+            known_fkeys = {'Subjects_idSubjects': idSubjects}
+            fkey = self.insert_into_table(row_data, table, entry_frame, known_fkeys)
+            # Only add the keys if included in the table
+            for key_table in tables:
+                if key_table in required_fkeys[f'{table}_id{table}']:
+                    entry_frame[(key_table, f'{table}_id{table}')] = fkey
+            known_fkeys[f'{table}_id{table}'] = fkey
 
     def insert_into_table(self, data, table, entry_frame, known_fkeys):
         """

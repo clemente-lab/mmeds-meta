@@ -111,6 +111,19 @@ class SpawnTests(TestCase):
             result = self.pipe.recv()
             self.assertEqual(result, 0)
 
+    def test_f_add_subject_data(self):
+        # Get the initial results
+        for (utype, ufile) in [('subject', fig.TEST_ADD_SUBJECT)]:
+            self.q.put(('upload-ids',
+                        self.infos[0]['owner'],
+                        self.infos[0]['access_code'],
+                        ufile,
+                        utype))
+            result = self.pipe.recv()
+
+            result = self.pipe.recv()
+            self.assertEqual(result, 0)
+
     def test_z_exit(self):
         Logger.error('Putting Terminate')
         self.q.put(('terminate'))

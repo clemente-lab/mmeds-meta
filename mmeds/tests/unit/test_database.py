@@ -219,4 +219,3 @@ class DatabaseTests(TestCase):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             result = db.create_ids_file('Good_Study', 'aliquot')
         print(result)
-
