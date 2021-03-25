@@ -52,6 +52,7 @@ setup(name='mmeds',
           'rpy2==3.4.3',
           'six==1.15.0',
           'xlrd==2.0.1',
-          'click'
+          'click==7.1.2',
+          'tidy-html5==5.7.28'
       ],
       zip_safe=False)
