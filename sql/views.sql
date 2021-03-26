@@ -10,7 +10,7 @@ CREATE VIEW `mmeds_data1`.`SpecimenView` AS SELECT
 `SpecimenID`,
 `Specimen`.`user_id`,
 `SpecimenCollectionDate`,
-`SpecimenInformation`,
+`SpecimenNotes`,
 `SpecimenCollectionTime`,
 `SpecimenWeight`,
 `StudyName`

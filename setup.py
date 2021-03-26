@@ -52,5 +52,6 @@ setup(name='mmeds',
           'rpy2==3.4.3',
           'six==1.15.0',
           'xlrd==2.0.1',
+          'click==7.1.2'
       ],
       zip_safe=False)

@@ -84,7 +84,7 @@ sudo systemctl start mysql
 
 In MMEDs install directory:
 ```
-sudo python host/manager.py
+sudo python mmeds/host/manager.py
 ```
 
 Load the MMEDs webpage in your browser of preference:\

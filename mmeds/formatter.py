@@ -6,7 +6,7 @@ SELECT_SPECIMEN_QUERY = """\
 SELECT\
  `SpecimenID`,\
  `SpecimenCollectionDate`,\
- `SpecimenInformation`,\
+ `SpecimenNotes`,\
  `SpecimenCollectionTime`,\
  `SpecimenWeight`,\
  `StudyName`\
@@ -108,7 +108,7 @@ def build_clickable_table(header, data, page, common_args={}, row_args={}):
     header = [
     'SpecimenID',
     'SpecimenCollectionDate',
-    'SpecimenInformation',
+    'SpecimenNotes',
     'SpecimenCollectionTime',
     'SpecimenWeight',
     'StudyName'
