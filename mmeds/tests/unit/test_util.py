@@ -155,8 +155,11 @@ class UtilTests(TestCase):
 
         h1 = hl.md5()
         h2 = hl.md5()
+        print(fig.TEST_METADATA)
         h1.update(Path(fig.TEST_METADATA).read_bytes())
         h2.update((tmpdir / 'metadata_copy.tsv').read_bytes())
+        print(h1)
+        print(h2)
         hash1 = h1.hexdigest()
         hash2 = h2.hexdigest()
 
