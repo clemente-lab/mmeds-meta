@@ -27,7 +27,7 @@ CREATE VIEW `mmeds_data1`.`SampleView` AS SELECT
 `SampleID`,
 `SampleDatePerformed`,
 `SampleProcessor`,
-`SampleProtocolInformation`,
+`SampleProtocolNotes`,
 `SampleProtocolID`,
 `SampleConditions`,
 `SampleTool`,
