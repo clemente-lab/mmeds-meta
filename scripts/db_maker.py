@@ -30,7 +30,7 @@ def insert_null(table):
 
 # If given an argument write the script where specified
 if len(argv) < 2:
-    view_file = 'sql/views.sql'
+    view_file = 'sql/protected_views.sql'
 else:
     view_file = argv[1]
 
