@@ -66,7 +66,7 @@ INSERT INTO `Aliquot` VALUES (1, 1, 1, NULL, NULL);
 
 INSERT INTO `SampleProtocol` VALUES (1, 1, 1, NULL, NULL, NULL, NULL);
 
-INSERT INTO `Sample` VALUES (1, 1, 1, 1, NULL);
+INSERT INTO `Sample` VALUES (1, 1, 1, 1, NULL, NULL);
 
 INSERT INTO `RawDataProtocol` VALUES (1, 1, 1, NULL, NULL, NULL);
 
