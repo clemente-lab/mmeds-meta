@@ -557,6 +557,8 @@ for table in TABLE_ORDER:
                 csize = 0
 
             COL_SIZES[col] = (ctype, csize)
+        if 'IllnessDescription' in results:
+            breakpoint()
         TABLE_COLS[table] = [x for x in results if 'id' not in x]
         ALL_TABLE_COLS[table] = results
         ALL_COLS += results
@@ -613,7 +615,7 @@ del db
 
 # Create the lists for Sample and Aliquot IDs
 ALIQUOT_ID_COLUMNS = {}
-for col in ['StudyName', 'SpecimenID', 'AliquotWeight']:
+for col in ['StudyName', 'SpecimenID', 'AliquotWeight', 'AliquotWeightUnit']:
     col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
     ALIQUOT_ID_COLUMNS[col] = col_type
 
@@ -626,7 +628,9 @@ for col in ['StudyName',
             'SampleProtocolID',
             'SampleConditions',
             'SampleTool',
-            'SampleToolVersion'
+            'SampleToolVersion',
+            'SampleWeight',
+            'SampleWeightUnit'
             ]:
     col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
     SAMPLE_ID_COLUMNS[col] = col_type

@@ -212,7 +212,9 @@ class DatabaseTests(TestCase):
                                   SampleConditions="Standard",
                                   SampleDatePerformed=datetime.date.today(),
                                   SampleProcessor="Alba",
-                                  SampleProtocolInformation="Nothing",
+                                  SampleWeight=1.00,
+                                  SampleWeightUnit='Kilogram',
+                                  SampleProtocolNotes="Nothing",
                                   SampleProtocolID="Proto3")
 
     def test_h_download_ids(self):

@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`Illness` (
   `user_id` INT NULL DEFAULT NULL,
   `IllnessStartDate` DATE NULL DEFAULT NULL,
   `IllnessEndDate` DATE NULL DEFAULT NULL,
-  `IllnessDescription` VARCHAR(256) NULL DEFAULT NULL,
+  `IllnessNotes` VARCHAR(256) NULL DEFAULT NULL,
   `IllnessInstanceID` VARCHAR(256) NULL DEFAULT NULL,
   PRIMARY KEY (`idIllness`),
   INDEX `fk_Illness_Subjects1_idx` (`Subjects_idSubjects` ASC),
