@@ -557,8 +557,6 @@ for table in TABLE_ORDER:
                 csize = 0
 
             COL_SIZES[col] = (ctype, csize)
-        if 'IllnessDescription' in results:
-            breakpoint()
         TABLE_COLS[table] = [x for x in results if 'id' not in x]
         ALL_TABLE_COLS[table] = results
         ALL_COLS += results
