@@ -211,7 +211,7 @@ class Validator:
                 if cast_cell.date() > datetime.now().date():
                     self.errors.append(row_col + 'Future Date Error: Date {} has not yet occurred'.format(cell))
         # Error handling for column values that don't match the column type
-        except ValueError as e:
+        except ValueError:
             err = 'Cell Wrong Type Error: Cell {} contains the wrong type of values'
             self.errors.append(row_col + err.format(cell))
 
