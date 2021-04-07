@@ -409,6 +409,7 @@ TABLE_ORDER = [
     'AnimalSubjects',
     'HousingDates',
     'SubjectType',
+    'StorageLocation',
     'Specimen',
     'Aliquot',
     'SampleProtocol',
@@ -613,7 +614,13 @@ del db
 
 # Create the lists for Sample and Aliquot IDs
 ALIQUOT_ID_COLUMNS = {}
-for col in ['StudyName', 'SpecimenID', 'AliquotWeight', 'AliquotWeightUnit']:
+for col in ['StudyName',
+            'SpecimenID',
+            'AliquotWeight',
+            'AliquotWeightUnit',
+            'StorageInstitution',
+            'StorageFreezer'
+            ]:
     col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
     ALIQUOT_ID_COLUMNS[col] = col_type
 
@@ -628,7 +635,9 @@ for col in ['StudyName',
             'SampleTool',
             'SampleToolVersion',
             'SampleWeight',
-            'SampleWeightUnit'
+            'SampleWeightUnit',
+            'StorageInstitution',
+            'StorageFreezer'
             ]:
     col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
     SAMPLE_ID_COLUMNS[col] = col_type
