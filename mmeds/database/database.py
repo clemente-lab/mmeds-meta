@@ -450,6 +450,48 @@ class Database:
         # Clear the mongo files
         self.clear_mongo_data(username)
 
+    def add_metadata(self, entry_frame, main_table, known_id):
+        """
+        Handles the import of metadata from a file containing
+        only some columns related to an existing dataset.
+        =====================================================
+        :entry_frame: A pandas dataframe containing one row of the
+                        data from the metadata file being uploaded
+        :main_table: The primary table that this upload links to. So
+                        for a new Aliquot the :main_table: is Specimen,
+        a new Sample, the :main_table: is Aliquot
+        :known_id: The id of the primary key in the main table that
+                        this row relates to
+        """
+
+        # Maps foreign keys to the tables that require them
+        # TODO this should probably be built out in config.py
+        required_fkeys = defaultdict(set)
+
+        # Add foreign key columns where necessary
+        tables = list(set([index[0] for index in entry_frame.columns]))
+        for table in tables:
+            fkey_cols = [col for col in fig.ALL_TABLE_COLS[table] if '_id' in col]
+            for col in fkey_cols:
+                required_fkeys[col].add(table)
+                if col == f'{main_table}_id{main_table}':
+                    entry_frame[(table, f'{main_table}_id{main_table}')] = known_id
+
+        # Sort the tables into the correct order to fill them
+        tables.sort(key=fig.TABLE_ORDER.index)
+        for i, table in enumerate(tables):
+            Logger.info('Query table {}'.format(table))
+            row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
+
+            # Create a new known keys dict
+            known_fkeys = {f'{main_table}_id{main_table}': known_id}
+            fkey = self.insert_into_table(row_data, table, entry_frame, known_fkeys)
+            # Only add the keys if included in the table
+            for key_table in tables:
+                if key_table in required_fkeys[f'{table}_id{table}']:
+                    entry_frame[(key_table, f'{table}_id{table}')] = fkey
+            known_fkeys[f'{table}_id{table}'] = fkey
+
     def generate_aliquot_id(self, StudyName, SpecimenID, **kwargs):
         """ Generate a new id for the aliquot with the given weight """
 
@@ -475,27 +517,12 @@ class Database:
         AliquotID = '{}-Aliquot{}'.format(SpecimenID, aliquot_count)
         kwargs['AliquotID'] = AliquotID
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
-        tables = list(set([index[0] for index in multi_index]))
-
         entry_frame = pd.DataFrame([kwargs.values()], columns=multi_index)
 
         # Create a dict for storing the already known fkeys
-        entry_frame[('Aliquot', 'Specimen_idSpecimen')] = idAliquot
+        entry_frame[('Aliquot', 'Specimen_idSpecimen')] = idSpecimen
 
-        # Sort the tables into the correct order to fill them
-        tables.sort(key=fig.TABLE_ORDER.index)
-        for i, table in enumerate(tables):
-
-            Logger.info('Query table {}'.format(table))
-            row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
-
-            # Create a new known keys dict
-            known_fkeys = {'Specimen_idSpecimen': idSpecimen}
-            fkey = self.insert_into_table(row_data, table, entry_frame, known_fkeys)
-            # Don't update these if it's the final table, they'll index error
-            if i < len(tables) - 1:
-                entry_frame[(tables[i + 1], f'{table}_id{table}')] = fkey
-                known_fkeys[f'{table}_id{table}'] = fkey
+        self.add_metadata(entry_frame, 'Specimen', idSpecimen)
 
         return AliquotID
 
@@ -517,27 +544,12 @@ class Database:
         SampleID = '{}-Sample{}'.format(AliquotID, aliquot_count)
         kwargs['SampleID'] = SampleID
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
-        tables = list(set([index[0] for index in multi_index]))
-
         entry_frame = pd.DataFrame([kwargs.values()], columns=multi_index)
 
         # Create a dict for storing the already known fkeys
         entry_frame[('Sample', 'Aliquot_idAliquot')] = idAliquot
 
-        # Sort the tables into the correct order to fill them
-        tables.sort(key=fig.TABLE_ORDER.index)
-        for i, table in enumerate(tables):
-
-            Logger.info('Query table {}'.format(table))
-            row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
-
-            # Create a new known keys dict
-            known_fkeys = {'Aliquot_idAliquot': idAliquot}
-            fkey = self.insert_into_table(row_data, table, entry_frame, known_fkeys)
-            # Don't update these if it's the final table, they'll index error
-            if i < len(tables) - 1:
-                entry_frame[(tables[i + 1], f'{table}_id{table}')] = fkey
-                known_fkeys[f'{table}_id{table}'] = fkey
+        self.add_metadata(entry_frame, 'Aliquot', idAliquot)
 
         return SampleID
 
@@ -552,34 +564,7 @@ class Database:
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
         entry_frame = parse_ICD_codes(pd.DataFrame([kwargs.values()], columns=multi_index))
         entry_frame.drop(('ICDCode', 'ICDCode'), axis=1, inplace=True)
-        # Maps foreign keys to the tables that require them
-        # TODO this should probably be built out in config.py
-        required_fkeys = defaultdict(set)
-
-        # Add foreign key columns where necessary
-        tables = list(set([index[0] for index in entry_frame.columns]))
-        for table in tables:
-            fkey_cols = [col for col in fig.ALL_TABLE_COLS[table] if '_id' in col]
-            for col in fkey_cols:
-                required_fkeys[col].add(table)
-                if col == 'Subjects_idSubjects':
-                    entry_frame[(table, 'Subjects_idSubjects')] = idSubjects
-
-        # Sort the tables into the correct order to fill them
-        tables.sort(key=fig.TABLE_ORDER.index)
-        for i, table in enumerate(tables):
-
-            Logger.info('Query table {}'.format(table))
-            row_data = {key: value[0] for key, value in entry_frame[table].to_dict().items()}
-
-            # Create a new known keys dict
-            known_fkeys = {'Subjects_idSubjects': idSubjects}
-            fkey = self.insert_into_table(row_data, table, entry_frame, known_fkeys)
-            # Only add the keys if included in the table
-            for key_table in tables:
-                if key_table in required_fkeys[f'{table}_id{table}']:
-                    entry_frame[(key_table, f'{table}_id{table}')] = fkey
-            known_fkeys[f'{table}_id{table}'] = fkey
+        self.add_metadata(entry_frame, 'Subjects', idSubjects)
 
     def insert_into_table(self, data, table, entry_frame, known_fkeys):
         """
