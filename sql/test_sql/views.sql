@@ -13,6 +13,7 @@ CREATE VIEW `mmeds_data1`.`SpecimenView` AS SELECT
 `SpecimenNotes`,
 `SpecimenCollectionTime`,
 `SpecimenWeight`,
+`SpecimenWeightUnit`,
 `StudyName`
 FROM ( `Specimen` INNER JOIN
     ( `Experiment` INNER JOIN
