@@ -15,6 +15,7 @@ import os
 class UtilTests(TestCase):
     def test_load_stats(self):
         util.load_mmeds_stats(True)
+        util.load_mmeds_stats(False)
 
     def test_format_alerts(self):
         args = {
@@ -119,6 +120,10 @@ class UtilTests(TestCase):
         with raises(InvalidConfigError) as e_info:
             config = util.load_config(Path(fig.TEST_CONFIG_3), fig.TEST_METADATA)
         assert 'Invalid parameter' in e_info.value.message
+
+        with raises(InvalidConfigError) as e_info:
+            config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA)
+        assert 'YAML format' in e_info.value.message
 
     def test_mmeds_to_MIxS(self):
         return  # TODO Either fix the test or deprecate the functionality

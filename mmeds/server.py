@@ -967,7 +967,7 @@ class MMEDSquery(MMEDSbase):
         return page
 
     @cp.expose
-    def generate_aliquot_id(self, AccessCode=None, SpecimenID=None, AliquotWeight=None):
+    def generate_aliquot_id(self, AccessCode=None, SpecimenID=None, **kwargs):
         """
         Page for handling generation of new AliquotIDs for a given study
         ==================================================================
@@ -988,17 +988,16 @@ class MMEDSquery(MMEDSbase):
         success = ''
         error = ''
         with Database(testing=self.testing, owner=self.get_user()) as db:
-            if AliquotWeight is not None:
+            if 'AliquotWeight' in kwargs.keys():
                 # Check that the value provided is numeric
-                if AliquotWeight.replace('.', '').isnumeric():
-                    cp.log("Got weight ", AliquotWeight)
+                if kwargs['AliquotWeight'].replace('.', '').isnumeric():
                     doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
                     self.monitor.get_db_lock().acquire()
-                    new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, AliquotWeight)
+                    new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, **kwargs)
                     self.monitor.get_db_lock().release()
-                    success = f'New ID is {new_id} for Aliquot with weight {AliquotWeight}'
+                    success = f'New ID is {new_id} for Aliquot with weight {kwargs["AliquotWeight"]}'
                 else:
-                    error = f'Weight {AliquotWeight} is not a number'
+                    error = f'Weight {kwargs["AliquotWeight"]} is not a number'
 
             doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
             cp.log(AccessCode)
@@ -1041,6 +1040,10 @@ class MMEDSquery(MMEDSbase):
             - SampleProcessor
             - SampleProtocolInformation
             - SampleProtocolID
+            - SampleWeight
+            - SampleWeightUnit
+            - StorageInstitution
+            - StorageFreezer
 
         The way this page functions is largely the same as generate_aliquot_id.
         The only difference is all the above arguments are passed rather than just AliquotWeight

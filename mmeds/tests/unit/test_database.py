@@ -212,8 +212,12 @@ class DatabaseTests(TestCase):
                                   SampleConditions="Standard",
                                   SampleDatePerformed=datetime.date.today(),
                                   SampleProcessor="Alba",
-                                  SampleProtocolInformation="Nothing",
-                                  SampleProtocolID="Proto3")
+                                  SampleWeight=1.00,
+                                  SampleWeightUnit='Kilogram',
+                                  SampleProtocolNotes="Nothing",
+                                  SampleProtocolID="Proto3",
+                                  StorageInstitution="MountSinai",
+                                  StorageFreezer="Freezer43")
 
     def test_h_download_ids(self):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:

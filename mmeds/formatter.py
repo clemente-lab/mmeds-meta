@@ -3,14 +3,15 @@ import mmeds.config as fig
 
 
 SELECT_SPECIMEN_QUERY = """\
-SELECT\
- `SpecimenID`,\
- `SpecimenCollectionDate`,\
- `SpecimenNotes`,\
- `SpecimenCollectionTime`,\
- `SpecimenWeight`,\
- `StudyName`\
- FROM `SpecimenView` WHERE `StudyName` = "{StudyName}"\
+    SELECT\
+    `SpecimenID`,\
+    `SpecimenCollectionDate`,\
+    `SpecimenNotes`,\
+    `SpecimenCollectionTime`,\
+    `SpecimenWeight`,\
+    `SpecimenWeightUnit`,\
+    `StudyName`\
+    FROM `SpecimenView` WHERE `StudyName` = "{StudyName}"\
 """
 
 SELECT_COLUMN_SPECIMEN_QUERY = """\

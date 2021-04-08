@@ -1,10 +1,10 @@
-StudyName	AliquotID	SampleToolVersion	SampleTool	SampleConditions	SampleDatePerformed	SampleProcessor	SampleProtocolInformation	SampleProtocolID
-Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123
-Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123
-Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123
-Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Tiffany	Nothing to report	123
-Good_Study	here33	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123
-Good_Study	here32	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123
-Good_Study	here32	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123
-Good_Study	here32	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123
-Good_Study	here32	1.0.1	Illumina	Standard	2020-03-03	Tiffany	Nothing to report	123
+StudyName	AliquotID	SampleToolVersion	SampleTool	SampleConditions	SampleDatePerformed	SampleProcessor	SampleProtocolNotes	SampleProtocolID	SampleWeight	SampleWeightUnit
+Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123	1	Kilogram
+Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123	2	Kilogram
+Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123	3	Kilogram
+Good_Study	here33	1.0.1	Illumina	Standard	2020-03-01	Tiffany	Nothing to report	123	4	Kilogram
+Good_Study	here33	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	5	Kilogram
+Good_Study	here32	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	6	Kilogram
+Good_Study	here32	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	7	Kilogram
+Good_Study	here32	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	8	Kilogram
+Good_Study	here32	1.0.1	Illumina	Standard	2020-03-03	Tiffany	Nothing to report	123	9	Kilogram

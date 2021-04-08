@@ -17,20 +17,20 @@ user = '{user}@"%";\n\n'
 def insert_null(table):
     sql = quote_sql('INSERT INTO {table} VALUES (', table=table)
     for i, column in enumerate(ALL_TABLE_COLS[table]):
-            if 'id' in column:
-                if i == 0:
-                    sql += '1'
-                else:
-                    sql += ', 1'
+        if 'id' in column:
+            if i == 0:
+                sql += '1'
             else:
-                sql += ', NULL'
+                sql += ', 1'
+        else:
+            sql += ', NULL'
     sql += ');\n\n'
     return sql
 
 
 # If given an argument write the script where specified
 if len(argv) < 2:
-    view_file = 'sql/views.sql'
+    view_file = 'sql/protected_views.sql'
 else:
     view_file = argv[1]
 
@@ -68,6 +68,8 @@ if not test_root.is_dir():
 # Re-Write sql files using the memory engine
 for sql_file in sql_root.glob('*.sql'):
     sql = sql_file.read_text()
+    # Replace Inno with Memory b/c it speeds up tests
+    # Replace % with localhost b/c otherwise it can't find 'mmedsusers' when running locally
     test_sql = sql.replace('InnoDB', 'MEMORY').replace("%", "localhost")
     test_file = test_root / sql_file.name
     test_file.touch()

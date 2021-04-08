@@ -333,10 +333,10 @@ def write_warning_files(df, file_type, file_path):
 def write_alternate_files(df, file_type, file_path):
     if file_type == 'subject':
         cols = [('Subjects', 'Nationality'),
-                ('Illness', 'IllnessDescription'),
+                ('Illness', 'IllnessNotes'),
                 ('Intervention', 'InterventionNotes')]
     elif file_type == 'specimen':
-        cols = [('RawData', 'RawDataDescription'),
+        cols = [('RawData', 'RawDataNotes'),
                 ('Aliquot', 'AliquotID'),
                 ('Study', 'StudyName')]
 

@@ -426,32 +426,6 @@ def parse_ICD_codes(df):
     return df
 
 
-def load_MIxS_metadata(file_fp, skip_rows, unit_column):
-    """
-    A function for load and transforming the MIxS data in a pandas dataframe.
-    ========================================================================
-    :file_fp: The path to the file to convert
-    :skip_rows: The number of rows to skip after the header
-    :unit_column: A string. If None then the function checks each cell for units.
-    """
-    units = {}
-    # Read in the data file
-    df = pd.read_csv(file_fp, header=0, sep='\t')
-    # Set the index to be the 'column_header' column
-    df.set_index('column_header', inplace=True)
-    # Remove rows with null indexes
-    df = df.loc[df.index.notnull()]
-    # Transpose the dataframe across the diagonal
-    df = df.T
-    # Drop unnamed columns
-    df.drop([x for x in df.axes[0] if 'Unnamed' in x], inplace=True)
-    # Drop any columns with only np.nan values
-    df.dropna(how='all', axis='columns', inplace=True)
-    # Replace np.nans with "NA"s
-    df.fillna('"NA"', inplace=True)
-    return df, units
-
-
 def is_numeric(s):
     """
     Check if the provided string is a number.
@@ -589,152 +563,6 @@ def generate_error_html(file_fp, errors, warnings):
     html += build_error_rows(df, tables, columns, markup)
     html += '</table>\n</body>\n</html>'
     return html
-
-
-def split_data(column):
-    """
-    Split the data into multiple columns
-    ------------------------------------
-    :column: A pandas Series object
-    """
-    result = defaultdict(list)
-    if column.name == 'lat_lon':
-        Logger.debug("name: {}, vals: {}".format(column.name, column))
-        # Skip the header
-        for value in column[1:]:
-            parsed = value.strip('+').split('-')
-            Logger.debug('Parsed: {}'.format(parsed))
-            result['Latitude'].append(parsed[0])
-            result['Longitude'].append(parsed[1])
-    elif column.name == 'assembly_name':
-        for value in column:
-            parsed = value.strip(' ')
-            result['Tool'].append(parsed[0])
-            result['Version'].append(parsed[1])
-    else:
-        raise ValueError
-    return result
-
-
-def MIxS_to_mmeds(file_fp, out_file, skip_rows=0, unit_column=None):
-    """
-    A function for converting a MIxS formatted datafile to a MMEDS formatted file.
-    ------------------------------------------------------------------------------
-    :file_fp: The path to the file to convert
-    :out_file: The path to write the new metadata file to
-    :skip_rows: The number of rows to skip after the header
-    :unit_column: A string. If None then the function checks each cell for units.
-    """
-
-    df, units = load_MIxS_metadata(file_fp, skip_rows, unit_column)
-
-    # Create a new dictionary for accessing the columns belonging to each table
-    all_cols = defaultdict(list)
-    all_cols.update(fig.METADATA_COLS)
-
-    # Find all columns that don't have a mapping and add them to AdditionalMetaData
-    unmapped_items = [x for x in df.columns if fig.MMEDS_MAP.get(x) is None]
-    for item in unmapped_items:
-        # If there is no units entry for the item
-        if pd.isnull(units.get(item)):
-            first = df[item][0].split(' ')
-            # If the value is numeric grab the units in the data cell
-            if is_numeric(first[0]):
-                unit_col = item
-                df[item] = df[item].map(lambda x: x.split(' ')[0])
-            else:
-                unit_col = item
-        # Add the units to the header if available
-        else:
-            unit_col = item
-        fig.MIXS_MAP[('AdditionalMetaData', str(unit_col))] = str(unit_col)
-        fig.MMEDS_MAP[item] = ('AdditionalMetaData', str(unit_col))
-        all_cols['AdditionalMetaData'].append(str(unit_col))
-
-    # Build the data for the new format
-    meta = {}
-    for col in df.columns:
-        (table, column) = fig.MMEDS_MAP[col]
-        if ':' in column:
-            Logger.debug('Table: {}, Column: {}'.format(table, column))
-            cols = column.split(':')
-            data = split_data(df[col])
-            for new_col in cols:
-                meta[(table, new_col)] = data[new_col]
-        else:
-            meta[(table, column)] = df[col].astype(str)
-
-    # Write the file
-    write_mmeds_metadata(out_file, meta, all_cols, len(df))
-
-
-def write_mmeds_metadata(out_file, meta, all_cols, num_rows):
-    """
-    Write out a mmeds metadate file based on the data provided
-    ----------------------------------------------------------
-    :out_file: The path to write the metadata to
-    :meta: A dictionary containing all the information to write
-    :all_cols: A dictionary specifying all the tables and columns
-        for this metadata file
-    :num_rows: An int. The number of rows in the original metadata
-    """
-
-    # Build the first two rows of the mmeds metadata file
-    table_row, column_row = [], []
-    for table in sorted(all_cols.keys()):
-        for column in sorted(all_cols[table]):
-            table_row.append(table)
-            column_row.append(column.strip(' ()'))
-
-    # Get the additional header rows from one of the example metadata files
-    md_template = pd.read_csv(fig.TEST_METADATA, sep='\t', header=[0, 1], nrows=5, na_filter=False)
-    column_type = []
-    column_unit = []
-    column_required = []
-    for (table, column) in zip(table_row, column_row):
-        try:
-            column_type.append(str(md_template[table][column].iloc[0]))
-            column_unit.append(str(md_template[table][column].iloc[1]))
-            column_required.append(str(md_template[table][column].iloc[2]))
-        except (KeyError, IndexError):
-            column_type.append('')
-            column_unit.append('')
-            column_required.append('')
-
-    # Write out each line of the file
-    with open(out_file, 'w') as f:
-        f.write('\t'.join(table_row) + '\n')
-        f.write('\t'.join(column_row) + '\n')
-        f.write('\t'.join(column_type) + '\n')
-        f.write('\t'.join(column_unit) + '\n')
-        f.write('\t'.join(column_required) + '\n')
-        for i in range(num_rows):
-            row = []
-            for table, column in zip(table_row, column_row):
-                # Add the value to the row
-                try:
-                    row.append(meta[(table, column)][i].strip('"'))
-                # If a value doesn't exist for this table, column insert NA
-                except (KeyError, IndexError):
-                    row.append('NA')
-            f.write('\t'.join(row) + '\n')
-
-
-def mmeds_to_MIxS(file_fp, out_file, skip_rows=0, unit_column=None):
-    """
-    A function to convert a mmeds formatted metadata file to a MIxS one.
-    """
-    # Read in the data file
-    df = pd.read_csv(file_fp, header=[0, 1], skiprows=[2, 3, 4], sep='\t')
-    with open(out_file, 'w') as f:
-        f.write('\t'.join(['column_header'] + list(map(str, df['RawData']['RawDataID'].tolist()))) + '\n')
-        for (col1, col2) in df.columns:
-            if df[col1][col2].notnull().any():
-                try:
-                    header = fig.MIXS_MAP[(col1, col2)]
-                except KeyError:
-                    header = col2
-                f.write('\t'.join([header] + list(map(str, df[col1][col2].tolist()))) + '\n')
 
 
 def parse_code_blocks(path):
@@ -949,7 +777,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
     headers[di] = 'MmedsSampleID'
 
     hold = headers[-1]
-    di = headers.index('RawDataDescription')
+    di = headers.index('RawDataNotes')
     headers[-1] = 'Description'
     headers[di] = hold
 
@@ -973,7 +801,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
                 elif header == 'MmedsSampleID':
                     row.append(str(mdata['SampleID'][row_index]))
                 elif header == 'Description':
-                    row.append(str(mdata['RawDataDescription'][row_index]))
+                    row.append(str(mdata['RawDataNotes'][row_index]))
                 else:
                     row.append(str(mdata[header][row_index]))
             f.write('\t'.join(row) + '\n')
