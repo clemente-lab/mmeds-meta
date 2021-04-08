@@ -284,7 +284,7 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`StorageLocation` (
   `StorageInstitution` VARCHAR(256) NULL,
   `StorageFreezer` VARCHAR(256) NULL,
   PRIMARY KEY (`idStorageLocation`))
-ENGINE = InnoDB;
+ENGINE = MEMORY;
 
 
 -- -----------------------------------------------------
