@@ -7,8 +7,14 @@
 <div class='w3-container w3-grey w3-card-4 w3-center'>
     <h2> ID Generation </h2>
     <form action='{query_generate_aliquot_id_page}' method='post' enctype='multipart/form-data' id='id_form'>
-        <label><b>Aliquot Weight in Grams</b></label>
+        <label><b>Aliquot Weight</b></label>
         <input class="w3-input w3-border" type="text" name="AliquotWeight" required>
+        <label><b>Aliquot Weight Unit (Grams/Liters)</b></label>
+        <input class="w3-input w3-border" type="text" name="AliquotWeightUnit" required>
+        <label><b>Storage Institution</b></label>
+        <input class="w3-input w3-border" type="text" name="StorageInstitution" required>
+        <label><b>Storage Freezer</b></label>
+        <input class="w3-input w3-border" type="text" name="StorageFreezer" required>
         <button class="w3-btn w3-dark-grey" type='submit' method='post'>Generate ID</button>
     </form>
     <br>
