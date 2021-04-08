@@ -1040,6 +1040,10 @@ class MMEDSquery(MMEDSbase):
             - SampleProcessor
             - SampleProtocolInformation
             - SampleProtocolID
+            - SampleWeight
+            - SampleWeightUnit
+            - StorageInstitution
+            - StorageFreezer
 
         The way this page functions is largely the same as generate_aliquot_id.
         The only difference is all the above arguments are passed rather than just AliquotWeight

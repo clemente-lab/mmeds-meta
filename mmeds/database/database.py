@@ -504,6 +504,7 @@ class Database:
         data, header = self.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
                                                                             StudyName=StudyName,
                                                                             SpecimenID=SpecimenID), False)
+        # This refers to the primary key of the Specimen this Aliquot is taken from
         idSpecimen = int(data[0][0])
 
         # Get the number of Aliquots previously created from this Specimen
