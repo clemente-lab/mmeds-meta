@@ -189,7 +189,8 @@ def main():
             'util',
             'validate',
             'formatter',
-            'adder'
+            'adder',
+            'uploader'
         ]
 
     users_added = add_users(tests)
