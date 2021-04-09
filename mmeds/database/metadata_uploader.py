@@ -234,6 +234,11 @@ class MetaDataUploader(Process):
             column_order = [fig.TABLE_ORDER.index(col) for col in columns]
             tables = [x for _, x in sorted(zip(column_order, columns)) if not x == 'ICDCode']
 
+            # Disable the table Weight Triggers
+            with self.db.cursor() as cursor:
+                cursor.execute('SET @DISABLE_TRIGGERS = TRUE')
+            self.db.commit()
+
             # Create file and import data for each regular table
             for table in tables:
                 # Upload the additional meta data to the NoSQL database
@@ -247,9 +252,8 @@ class MetaDataUploader(Process):
                     sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
                                     table=table)
                     sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                    cursor = self.db.cursor()
-                    cursor.execute(sql, {'file': str(filename), 'table': table})
-                    cursor.close()
+                    with self.db.cursor() as cursor:
+                        cursor.execute(sql, {'file': str(filename), 'table': table})
                     # Commit the inserted data
                     self.db.commit()
 
@@ -259,6 +263,11 @@ class MetaDataUploader(Process):
 
             # Remove all row information from the current input
             self.IDs.clear()
+
+            # Reenable the table Weight Triggers
+            with self.db.cursor() as cursor:
+                cursor.execute('SET @DISABLE_TRIGGERS = FALSE')
+            self.db.commit()
 
     def create_import_data(self, table, verbose=True):
         """
@@ -416,9 +425,8 @@ class MetaDataUploader(Process):
                 sql = quote_sql('LOAD DATA LOCAL INFILE %(file)s INTO TABLE {table} FIELDS TERMINATED BY "\\t"',
                                 table=table)
                 sql += ' LINES TERMINATED BY "\\n" IGNORE 1 ROWS'
-                cursor = self.db.cursor()
-                cursor.execute(sql, {'file': str(filename), 'table': table})
-                cursor.close()
+                with self.db.cursor() as cursor:
+                    cursor.execute(sql, {'file': str(filename), 'table': table})
                 # Commit the inserted data
                 self.db.commit()
             except KeyError as e:
