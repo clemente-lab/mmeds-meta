@@ -26,8 +26,6 @@ jobs:
         run: |
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
-      - name: Combine Coverage
-        run: coverage combine
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;
       - name: Server Tests

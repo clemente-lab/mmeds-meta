@@ -151,7 +151,7 @@ def run_tests(tests, pudb):
         run(['pytest', '--cov=mmeds', '--pudb', '-W', 'ignore::DeprecationWarning', '-W', 'ignore::FutureWarning',
              '-s', test_directory, '-x', '-k', ' or '.join(test_class), '--durations=0'], check=True)
     else:
-        run(['pytest', '-W', 'ignore::DeprecationWarning', '-W',
+        run(['pytest', '--cov=mmeds', '-W', 'ignore::DeprecationWarning', '-W',
              'ignore::FutureWarning', test_directory, '-k', ' or '.join(test_class), '--durations=0'], check=True)
 
 

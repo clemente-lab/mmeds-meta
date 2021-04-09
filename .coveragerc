@@ -3,10 +3,11 @@ exclude_lines =
     if __name__ == "__main__":
 
 [run]
+include = */mmeds/*
 omit =
-    **/__init__.py
     setup.py
     mmeds/tests/**
+    scripts/**
     ~/.modules/**
     **/modules/**
     **/bad**
