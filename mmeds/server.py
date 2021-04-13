@@ -970,7 +970,7 @@ class MMEDSquery(MMEDSbase):
                 if kwargs['AliquotWeight'].replace('.', '').isnumeric():
                     doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
                     self.monitor.get_db_lock().acquire()
-                    new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, **kwargs)
+                    new_id = db.generate_aliquot_id(True, doc.study_name, SpecimenID, **kwargs)
                     self.monitor.get_db_lock().release()
                     success = f'New ID is {new_id} for Aliquot with weight {kwargs["AliquotWeight"]}'
                 else:
@@ -1036,7 +1036,7 @@ class MMEDSquery(MMEDSbase):
             with Database(testing=self.testing, owner=self.get_user()) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
                 self.monitor.get_db_lock().acquire()
-                new_id = db.generate_sample_id(doc.study_name, AliquotID, **kwargs)
+                new_id = db.generate_sample_id(True, doc.study_name, AliquotID, **kwargs)
                 self.monitor.get_db_lock().release()
             success = f'New ID is {new_id} for Sample with processor {kwargs["SampleProcessor"]}'
 

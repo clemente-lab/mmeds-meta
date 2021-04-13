@@ -811,7 +811,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Submit the new aliquot id
-        url = '/query/generate_aliquot_id?AccessCode=&AliquotWeight=0.05&AliquotWeightUnit=Kilogram' +\
+        url = '/query/generate_aliquot_id?AliquotWeight=0.05&AliquotWeightUnit=Kilogram' +\
             '&StorageInstitution=MountSinai&StorageFreezer=Freezer49'
         self.getPage(url, headers=self.cookies)
         self.assertStatus('200 OK')
