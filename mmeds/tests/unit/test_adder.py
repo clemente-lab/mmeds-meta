@@ -18,12 +18,21 @@ class MetaDataAdderTests(TestCase):
             self.doc = db.get_docs(study_name='Test_Single_Short').first()
         self.access_code = self.doc.access_code
 
-    def test_a_generate_aliquot(self):
+    def test_a_add_aliquot(self):
+        # Test generating an aliquot ID
         mda = MetaDataAdder(fig.TEST_USER, self.access_code, fig.TEST_ALIQUOT_UPLOAD, 'aliquot', testing)
+        assert mda.run() == 0
+
+        # Test adding an Aliquot ID
+        mda = MetaDataAdder(fig.TEST_USER, self.access_code, fig.TEST_ADD_ALIQUOT, 'aliquot', testing)
         assert mda.run() == 0
 
     def test_b_generate_sample(self):
         mda = MetaDataAdder(fig.TEST_USER, self.access_code, fig.TEST_SAMPLE_UPLOAD, 'sample', testing)
+        assert mda.run() == 0
+
+        # Test adding a Sample ID
+        mda = MetaDataAdder(fig.TEST_USER, self.access_code, fig.TEST_ADD_SAMPLE, 'sample', testing)
         assert mda.run() == 0
 
     def test_c_add_subject(self):
