@@ -8,6 +8,8 @@ SetHandler wsgi-script
 # Set the python path
 PythonPath "['/home/david/.modules/mmeds-stable']"
 
+LogLevel info
+
 # Allow access to the CSS directory
 Options +Indexes
 DirectoryIndex /hpc/users/wallad07/www/mmeds/CSS

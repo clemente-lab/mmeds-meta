@@ -257,7 +257,7 @@ if not PROCESS_LOG_DIR.exists():
         PROCESS_LOG_DIR.mkdir()
     except FileExistsError:
         pass
-LOG_DIR = DATABASE_DIR / 'log_dir'
+LOG_DIR = DATABASE_DIR #  / 'log_dir'
 if not LOG_DIR.exists():
     try:
         LOG_DIR.mkdir()
@@ -354,6 +354,7 @@ TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
 TEST_ADD_ALIQUOT = str(TEST_PATH / 'test_add_aliquot.tsv')
+TEST_NA_ALIQUOT = str(TEST_PATH / 'test_na_aliquot.tsv')
 TEST_ALIQUOT_UPLOAD = str(TEST_PATH / 'test_aliquot_upload.tsv')
 TEST_SAMPLE_UPLOAD = str(TEST_PATH / 'test_sample_upload.tsv')
 TEST_ADD_SAMPLE = str(TEST_PATH / 'test_add_sample.tsv')
