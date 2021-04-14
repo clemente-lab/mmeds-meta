@@ -41,8 +41,6 @@ def valid_additional_file(file_fp, data_table, generate=True):
         If False the IDs already exist in the file being uploaded
     """
     valid = True
-    Logger.error
-
     if data_table == 'aliquot':
         cols = fig.ALIQUOT_ID_COLUMNS
     elif data_table == 'sample':
@@ -61,8 +59,10 @@ def valid_additional_file(file_fp, data_table, generate=True):
 
     try:  # Check the file can actually be parsed
         df = pd.read_csv(file_fp, sep='\t')
-    except pd.errors.ParserError:
+    except pd.errors.ParserError as e:
         valid = False
+        Logger.error("Invalid file type")
+        Logger.error(e)
     else:
         file_cols = df.columns.tolist()
         if 'StudyName' not in file_cols:
