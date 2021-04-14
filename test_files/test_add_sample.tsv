@@ -1,0 +1,10 @@
+StudyName	AliquotID	SampleID	SampleToolVersion	SampleTool	SampleConditions	SampleDatePerformed	SampleProcessor	SampleProtocolNotes	SampleProtocolID	SampleWeight	SampleWeightUnit	StorageInstitution	StorageFreezer
+Short_Study	here33	Sample1	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123	1	Kilogram	Mount Sinai	Freezer 45
+Short_Study	here33	Sample2	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123	2	Kilogram	Mount Sinai	Freezer 46
+Short_Study	here33	Sample3	1.0.1	Illumina	Standard	2020-03-01	Alba	Nothing to report	123	3	Kilogram	Mount Sinai	Freezer 47
+Short_Study	here33	Sample4	1.0.1	Illumina	Standard	2020-03-01	Tiffany	Nothing to report	123	4	Kilogram	Mount Sinai	Freezer 48
+Short_Study	here33	Sample5	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	5	Kilogram	Mount Sinai	Freezer 49
+Short_Study	here32	Sample6	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	6	Kilogram	Mount Sinai	Freezer 50
+Short_Study	here32	Sample7	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	7	Kilogram	Mount Sinai	Freezer 51
+Short_Study	here32	Sample8	1.0.1	Illumina	Standard	2020-03-02	Tiffany	Nothing to report	123	8	Kilogram	Mount Sinai	Freezer 52
+Short_Study	here32	Sample9	1.0.1	Illumina	Standard	2020-03-03	Tiffany	Nothing to report	123	9	Kilogram	Mount Sinai	Freezer 53

@@ -282,8 +282,8 @@ class Watcher(BaseManager):
         if self.current_upload is None:
             # Check what type of upload this is
             if 'ids' in process[0]:
-                (ptype, owner, access_code, aliquot_table, id_type) = process
-                p = MetaDataAdder(owner, access_code, aliquot_table, id_type, self.testing)
+                (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
+                p = MetaDataAdder(owner, access_code, aliquot_table, id_type, generate_id, self.testing)
             else:
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
                  username, reads_type, barcodes_type, datafiles, temporary, public) = process

@@ -628,30 +628,7 @@ class MMEDSupload(MMEDSbase):
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 
     @cp.expose
-    def generate_multiple_ids(self, accessCode, idType, dataFile):
-        """ Takes a file specifying the Aliquots to generate IDs for and passes it to the watcher """
-        success = ''
-        error = ''
-        # Ensure that the access code is valid for a particular user
-        try:
-            self.check_upload(accessCode)
-        except err.MissingUploadError as e:
-            error = e.message
-        else:
-            data_file = self.load_data_files(idFile=dataFile)
-
-            if valid_additional_file(data_file['idFile'], idType):
-
-                # Pass it to the watcher
-                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
-                success = f'{idType.capitalize()} ID Generation Initiated.' +\
-                    'You will recieve an email when the ID generation finishes'
-            else:
-                error = 'There was an issue with your ID file. Please check the example.'
-        return self.load_webpage('home', success=success, error=error)
-
-    @cp.expose
-    def additional_metadata(self, accessCode, idType, dataFile):
+    def additional_metadata(self, accessCode, idType, dataFile, generateID=False):
         """ Webpage for handling the upload of new metadata related to an existing study """
         success = ''
         error = ''
@@ -665,10 +642,10 @@ class MMEDSupload(MMEDSbase):
         else:
             data_file = self.load_data_files(idFile=dataFile)
 
-            if valid_additional_file(data_file['idFile'], idType):
+            if valid_additional_file(data_file['idFile'], idType, generateID):
 
                 # Pass it to the watcher
-                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType))
+                self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType, generateID))
                 success = f'{idType.capitalize()} Data Upload Initiated.' +\
                     'You will recieve an email when it finishes'
             else:
@@ -993,7 +970,7 @@ class MMEDSquery(MMEDSbase):
                 if kwargs['AliquotWeight'].replace('.', '').isnumeric():
                     doc = db.get_docs(access_code=AccessCode, owner=self.get_user()).first()
                     self.monitor.get_db_lock().acquire()
-                    new_id = db.generate_aliquot_id(doc.study_name, SpecimenID, **kwargs)
+                    new_id = db.generate_aliquot_id(True, doc.study_name, SpecimenID, **kwargs)
                     self.monitor.get_db_lock().release()
                     success = f'New ID is {new_id} for Aliquot with weight {kwargs["AliquotWeight"]}'
                 else:
@@ -1059,7 +1036,7 @@ class MMEDSquery(MMEDSbase):
             with Database(testing=self.testing, owner=self.get_user()) as db:
                 doc = db.get_docs(access_code=AccessCode).first()
                 self.monitor.get_db_lock().acquire()
-                new_id = db.generate_sample_id(doc.study_name, AliquotID, **kwargs)
+                new_id = db.generate_sample_id(True, doc.study_name, AliquotID, **kwargs)
                 self.monitor.get_db_lock().release()
             success = f'New ID is {new_id} for Sample with processor {kwargs["SampleProcessor"]}'
 

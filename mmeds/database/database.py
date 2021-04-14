@@ -492,13 +492,8 @@ class Database:
                     entry_frame[(key_table, f'{table}_id{table}')] = fkey
             known_fkeys[f'{table}_id{table}'] = fkey
 
-    def generate_aliquot_id(self, StudyName, SpecimenID, **kwargs):
+    def generate_aliquot_id(self, generate_id, StudyName, SpecimenID, **kwargs):
         """ Generate a new id for the aliquot with the given weight """
-
-        # Get a new unique SQL id for this aliquot
-        with self.db.cursor() as cursor:
-            cursor.execute("SELECT MAX(idAliquot) from Aliquot")
-            idAliquot = cursor.fetchone()[0] + 1
 
         # Get the SQL id of the Specimen this should be associated with
         data, header = self.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
@@ -515,8 +510,9 @@ class Database:
             aliquot_count = cursor.fetchone()[0]
 
         # Create the human readable ID
-        AliquotID = '{}-Aliquot{}'.format(SpecimenID, aliquot_count)
-        kwargs['AliquotID'] = AliquotID
+        if generate_id:
+            AliquotID = '{}-Aliquot{}'.format(SpecimenID, aliquot_count)
+            kwargs['AliquotID'] = AliquotID
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
         entry_frame = pd.DataFrame([kwargs.values()], columns=multi_index)
 
@@ -525,9 +521,11 @@ class Database:
 
         self.add_metadata(entry_frame, 'Specimen', idSpecimen)
 
-        return AliquotID
+        # TODO get rid of this if I drop support for individual id creation
+        if generate_id:
+            return AliquotID
 
-    def generate_sample_id(self, StudyName, AliquotID, **kwargs):
+    def generate_sample_id(self, generate_id, StudyName, AliquotID, **kwargs):
         """ Generate a new id for the aliquot with the given weight """
 
         # Get the SQL id of the Aliquot this should be associated with
@@ -542,8 +540,9 @@ class Database:
             aliquot_count = cursor.fetchone()[0]
 
         # Create the human readable ID
-        SampleID = '{}-Sample{}'.format(AliquotID, aliquot_count)
-        kwargs['SampleID'] = SampleID
+        if generate_id:
+            SampleID = '{}-Sample{}'.format(AliquotID, aliquot_count)
+            kwargs['SampleID'] = SampleID
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
         entry_frame = pd.DataFrame([kwargs.values()], columns=multi_index)
 
@@ -552,9 +551,10 @@ class Database:
 
         self.add_metadata(entry_frame, 'Aliquot', idAliquot)
 
-        return SampleID
+        if generate_id:
+            return SampleID
 
-    def add_subject_data(self, StudyName, HostSubjectId, **kwargs):
+    def add_subject_data(self, generate_id, StudyName, HostSubjectId, **kwargs):
         # Get the SQL id of the subject this should be associated with
         data, header = self.execute(fmt.SELECT_COLUMN_SUBJECT_QUERY.format(column='idSubjects',
                                                                            HostSubjectId=HostSubjectId,
