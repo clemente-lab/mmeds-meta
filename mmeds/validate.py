@@ -67,6 +67,7 @@ def valid_additional_file(file_fp, data_table, generate=True):
         file_cols = df.columns.tolist()
         if 'StudyName' not in file_cols:
             valid = False
+        else:
             file_cols.remove('StudyName')
         diff = set(file_cols).difference(cols)
         # Check that all the correct columns and only the correct columns are included
@@ -75,13 +76,14 @@ def valid_additional_file(file_fp, data_table, generate=True):
             Logger.error(diff)
             valid = False
         else:
-            valid = cast_columns(df, cols, valid)
+            valid = cast_columns(df, cols, file_cols) and valid
     return valid
 
 
-def cast_columns(df, cols, valid):
+def cast_columns(df, cols, file_cols):
     """ Casts columns in df to specified types """
-    for column in df.columns.tolist():
+    result = True
+    for column in file_cols:
         try:  # Date objects need a special cast
             if cols[column] == pd.Timestamp:
                 pd.to_datetime(df[column])
@@ -89,9 +91,9 @@ def cast_columns(df, cols, valid):
                 df[column].astype(cols[column])
         except ValueError:
             Logger.error("Invalid types in ID file")
-            valid = False
+            result = False
             break
-    return valid
+    return result
 
 
 class Validator:
