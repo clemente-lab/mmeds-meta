@@ -67,7 +67,7 @@ def valid_additional_file(file_fp, data_table, generate=True):
         file_cols = df.columns.tolist()
         if 'StudyName' not in file_cols:
             valid = False
-        file_cols.remove('StudyName')
+            file_cols.remove('StudyName')
         diff = set(file_cols).difference(cols)
         # Check that all the correct columns and only the correct columns are included
         if diff:
