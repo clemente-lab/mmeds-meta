@@ -75,17 +75,22 @@ def valid_additional_file(file_fp, data_table, generate=True):
             Logger.error(diff)
             valid = False
         else:
-            for column in file_cols:
-                try:  # Date objects need a special cast
-                    if cols[column] == pd.Timestamp:
-                        pd.to_datetime(df[column])
-                    else:
-                        df[column].astype(cols[column])
-                except ValueError:
-                    Logger.error(f"Invalid types in ID file at {file_fp}")
-                    valid = False
-                    break
+            valid = cast_columns(df, cols, valid)
+    return valid
 
+
+def cast_columns(df, cols, valid):
+    """ Casts columns in df to specified types """
+    for column in df.columns.tolist():
+        try:  # Date objects need a special cast
+            if cols[column] == pd.Timestamp:
+                pd.to_datetime(df[column])
+            else:
+                df[column].astype(cols[column])
+        except ValueError:
+            Logger.error("Invalid types in ID file")
+            valid = False
+            break
     return valid
 
 
