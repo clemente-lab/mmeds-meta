@@ -261,34 +261,40 @@ class Validator:
         header = column.name
 
         Logger.debug("iterate over cells")
-        # Check each cell in the column
-        for i, cell in enumerate(column):
-            if pd.isna(cell):
-                Logger.debug("Cell is NA")
-                # Check for missing required fields
-                if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
-                    Logger.debug("Cell shouldn't be NA")
-                    err = '{}\t{}\tMissing Required Value Error'
-                    self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
-            else:
-                Logger.debug("Checking Cell")
-                self.check_cell(i, cell)
-                Logger.debug("CHecked cell")
+        if column.isna('all').all():
+           if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+               Logger.debug("Column shouldn't be NA")
+               err = '{}\t{}\tMissing Required Value Error'
+               self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col)))
+        else:
+            # Check each cell in the column
+            for i, cell in enumerate(column):
+                if pd.isna(cell):
+                    Logger.debug("Cell is NA")
+                    # Check for missing required fields
+                    if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                        Logger.debug("Cell shouldn't be NA")
+                        err = '{}\t{}\tMissing Required Value Error'
+                        self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
+                else:
+                    Logger.debug("Checking Cell")
+                    self.check_cell(i, cell)
+                    Logger.debug("CHecked cell")
 
-        # Ensure there is only one study being uploaded
-        if header == 'StudyName' and len(set(column.tolist())) > 1:
-            self.errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
+            # Ensure there is only one study being uploaded
+            if header == 'StudyName' and len(set(column.tolist())) > 1:
+                self.errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
-        Logger.debug("Checked StudyName")
+            Logger.debug("Checked StudyName")
 
-        # Check that values fall within standard deviation
-        if self.col_type == int or self.col_type == float:
-            Logger.debug("check number column")
-            self.check_number_column(column)
-        # Check for categorical data
-        elif self.col_type == str and not header == 'ICDCode':
-            Logger.debug("Check string column")
-            self.check_string_column(column)
+            # Check that values fall within standard deviation
+            if self.col_type == int or self.col_type == float:
+                Logger.debug("check number column")
+                self.check_number_column(column)
+            # Check for categorical data
+            elif self.col_type == str and not header == 'ICDCode':
+                Logger.debug("Check string column")
+                self.check_string_column(column)
 
     def check_dates(self, start, end):
         """
