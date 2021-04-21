@@ -31,46 +31,69 @@ def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subje
     return valid.run()
 
 
-def valid_additional_file(file_fp, id_type):
-    """ Checks that the provided file is valid for the specified ID type """
+def valid_additional_file(file_fp, data_table, generate=True):
+    """
+    Checks that the provided file is valid for the specified ID type
+    ================================================================
+    :file_fp: A string, Path to the file to check
+    :data_table: A string, The table this data relates to
+    :generate: A boolean, if True then this file will be used for ID generation.
+        If False the IDs already exist in the file being uploaded
+    """
     valid = True
-
-    if id_type == 'aliquot':
+    if data_table == 'aliquot':
         cols = fig.ALIQUOT_ID_COLUMNS
-    elif id_type == 'sample':
+    elif data_table == 'sample':
         cols = fig.SAMPLE_ID_COLUMNS
-    elif id_type == 'subject':
+    elif data_table == 'subject':
         cols = fig.SUBJECT_COLUMNS
     else:
-        raise InvalidMetaDataFileError(f"The provided file type ({id_type}) is not valid")
+        raise InvalidMetaDataFileError(f"The provided file type ({data_table}) is not valid")
+
+    Logger.error(f'Generate: {generate}')
+    # IF the ID is not being generated add it to the dict
+    if not generate:
+        cols[f'{data_table.capitalize()}ID'] = str
+
+    Logger.error(cols.values())
 
     try:  # Check the file can actually be parsed
         df = pd.read_csv(file_fp, sep='\t')
-    except pd.errors.ParserError:
+    except pd.errors.ParserError as e:
         valid = False
+        Logger.error("Invalid file type")
+        Logger.error(e)
     else:
         file_cols = df.columns.tolist()
         if 'StudyName' not in file_cols:
             valid = False
-        file_cols.remove('StudyName')
+        else:
+            file_cols.remove('StudyName')
         diff = set(file_cols).difference(cols)
         # Check that all the correct columns and only the correct columns are included
         if diff:
             Logger.error(f"Invalid columns in ID file as {file_fp}")
+            Logger.error(diff)
             valid = False
         else:
-            for column in file_cols:
-                try:  # Date objects need a special cast
-                    if cols[column] == pd.Timestamp:
-                        pd.to_datetime(df[column])
-                    else:
-                        df[column].astype(cols[column])
-                except ValueError:
-                    Logger.error(f"Invalid types in ID file at {file_fp}")
-                    valid = False
-                    break
-
+            valid = cast_columns(df, cols, file_cols) and valid
     return valid
+
+
+def cast_columns(df, cols, file_cols):
+    """ Casts columns in df to specified types """
+    result = True
+    for column in file_cols:
+        try:  # Date objects need a special cast
+            if cols[column] == pd.Timestamp:
+                pd.to_datetime(df[column])
+            else:
+                df[column].astype(cols[column])
+        except ValueError:
+            Logger.error("Invalid types in ID file")
+            result = False
+            break
+    return result
 
 
 class Validator:

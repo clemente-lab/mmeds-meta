@@ -786,7 +786,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/analysis/execute_query?query={}'.format('Select+*+from+Subjects'), self.cookies, 'POST')
         self.assertStatus('200 OK')
 
-    def test_fa_generate_aliquot_id(self):
+    def test_fa_single_id(self):
         self.login(False, False)
         self.generate_aliquot_id()
 
@@ -815,3 +815,23 @@ class TestServer(helper.CPWebCase):
             '&StorageInstitution=MountSinai&StorageFreezer=Freezer49'
         self.getPage(url, headers=self.cookies)
         self.assertStatus('200 OK')
+
+    def test_fb_generate_multiple_ids(self):
+        self.login(False, False)
+
+    def generate_multiple_ids(self):
+        # Grab the access code
+        self.getPage('/query/query_select', headers=self.cookies)
+        self.assertStatus('200 OK')
+        # Grab all the access codes on the page
+        body = self.body.decode('utf-8')
+        code = re.findall('access_code=(.+?)">', body)
+
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+
+        headers, body = self.upload_files(['dataFile'], [fig.TEST_ADD_SAMPLE], ['text/tab-seperated-values'])
+        self.getPage(f'/upload/upload_additional_metadata?accessCode={code[-1]}&idType=Sample',
+                     headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+

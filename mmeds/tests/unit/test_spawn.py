@@ -105,7 +105,8 @@ class SpawnTests(TestCase):
                         self.infos[0]['owner'],
                         self.infos[0]['access_code'],
                         ufile,
-                        utype))
+                        utype,
+                        True))
             result = self.pipe.recv()
 
             result = self.pipe.recv()
@@ -118,7 +119,8 @@ class SpawnTests(TestCase):
                         self.infos[0]['owner'],
                         self.infos[0]['access_code'],
                         ufile,
-                        utype))
+                        utype,
+                        False))
             result = self.pipe.recv()
 
             result = self.pipe.recv()

@@ -9,13 +9,15 @@ from mmeds.database.database import Database
 
 
 class MetaDataAdder(Process):
-    def __init__(self, owner, access_code, id_table, id_type, testing):
+    def __init__(self, owner, access_code, id_table, id_type, generate_ids, testing):
         """
         Connect to the specified database.
         Initialize variables for this session.
         ====================================
         :owner: The user who is uploading these aliquots
-        :aliquot_table: Filepath to the aliquots being uploaded
+        :access_code: Access code for the study this data is associated with
+        :id_table: Filepath to the ids being uploaded
+        :generate_ids: A boolean. If true generate new IDs. If False, they're included.
         """
         warnings.simplefilter('ignore')
         super().__init__()
@@ -25,6 +27,7 @@ class MetaDataAdder(Process):
         self.testing = testing
         self.access_code = access_code
         self.id_type = id_type
+        self.generate_ids = generate_ids
 
     def run(self):
         """ Perform the uploads """
@@ -47,7 +50,7 @@ class MetaDataAdder(Process):
 
             # Insert the values for every row
             for index, row in df.iterrows():
-                generate_method(**row.to_dict())
+                generate_method(generate_id=self.generate_ids, **row.to_dict())
 
             email = db.get_email(self.owner)
             # Update the doc to reflect the successful upload
