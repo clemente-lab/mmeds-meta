@@ -493,6 +493,12 @@ class MMEDSupload(MMEDSbase):
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
             study_dropdown = fmt.build_study_code_dropdown(studies)
+
+        cp.session['download_files']['user_guide'] = fig.USER_GUIDE
+        cp.session['download_files']['Subject_template'] = fig.SUBJECT_TEMPLATE
+        cp.session['download_files']['Specimen_template'] = fig.SPECIMEN_TEMPLATE
+        cp.session['download_files']['Subject_example'] = fig.TEST_SUBJECT
+        cp.session['download_files']['Specimen_example'] = fig.TEST_SPECIMEN
         page = self.load_webpage('upload_select_page',
                                  user_studies=study_dropdown,
                                  title='Upload Type')
@@ -506,10 +512,6 @@ class MMEDSupload(MMEDSbase):
             cp.session['metadata_type'] = 'subject'
             cp.session['subject_type'] = subjectType
             cp.session['upload_type'] = uploadType
-
-            cp.session['download_files']['user_guide'] = fig.USER_GUIDE
-            cp.session['download_files']['Subject_example'] = fig.TEST_SUBJECT
-            cp.session['download_files']['Specimen_example'] = fig.TEST_SPECIMEN
 
             with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
                 db.check_study_name(studyName)
