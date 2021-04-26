@@ -359,6 +359,9 @@ TEST_ADD_ALIQUOT = str(TEST_PATH / 'test_add_aliquot.tsv')
 TEST_ALIQUOT_UPLOAD = str(TEST_PATH / 'test_aliquot_upload.tsv')
 TEST_SAMPLE_UPLOAD = str(TEST_PATH / 'test_sample_upload.tsv')
 TEST_ADD_SAMPLE = str(TEST_PATH / 'test_add_sample.tsv')
+USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
+SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
+SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,
