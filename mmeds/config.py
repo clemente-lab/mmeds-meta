@@ -109,6 +109,7 @@ HTML_PAGES = {
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
 
     # Upload Pages
+    'user_guide': (HTML_DIR / 'user_guide.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
@@ -161,6 +162,7 @@ HTML_ARGS = {
     'study_page': SERVER_PATH + 'study/select_study',
     'account_page': SERVER_PATH + 'auth/input_password',
     'query_page': SERVER_PATH + 'query/query_select',
+    'user_guide_page': SERVER_PATH + 'upload/user_guide',
     'settings_page': '#',
 
     # Upload Pages

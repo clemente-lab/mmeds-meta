@@ -440,6 +440,13 @@ class MMEDSupload(MMEDSbase):
     ########################################
 
     @cp.expose
+    def user_guide(self):
+        """ Page for the guide for the user on how to upload """
+        page = self.load_webpage('user_guide',
+                                 title='Upload Guide')
+        return page
+
+    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
