@@ -1,141 +1,244 @@
-### MMEDS User Guide ###
+<div class="w3-container w3-light-grey">
 
-# 1) Overview
+    <header class="w3-container">
+        <h1> MMEDS User Guide </h1>
+    </header>
+    <br>
+    <div class="w3-container w3-card-4">
+        <h2 class='w3-container'> 1) Overview </h2>
+        <p>
+        The metadata for mmeds is split into two files. Subject metadata and specimen metadata.
+        Both follow the same format. The column ('AdditionalMetaData', 'SubjectIdCol') in the
+        specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
+        metadata for the specimen to be linked to that particular subject.
+        </p>
 
-The metadata for mmeds is split into two files. Subject metadata and specimen metadata.
-Both follow the same format. The column ('AdditionalMetaData', 'SubjectIdCol') in the
-specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
-metadata for the specimen to be linked to that particular subject.
+        <p>
+        The reason they are split into separate files is to allow multiple rows of subject information,
+        illnesses, treatments (interventions), etc without having to fill out all those rows with
+        duplicate information for each specimen.
+        </p>
 
-The reason they are split into separate files is to allow multiple rows of subject information,
-illnesses, treatments (interventions), etc without having to fill out all those rows with
-duplicate information for each specimen.
+        <p>
+        The first row of the metadata file specifies the entity the metadata pertains
+        to (i.e. the table in the database the information will be stored in).The
+        second row specifies the specific property (This is akin to a traditional metadata
+        header column). The third row specifies if this column is required for every sample.
+        The fourth row specifies the data-type and the fifth row specifies the unit/format of the data.
+        These rows are the header of the metadata file, the following rows should
+        each contain all the information relating to a particular sample.
+        </p>
+
+        <p>
+        For Example:
+        <ul class="w3-ul">
+            <li>1:	Subjects</li>
+            <li>2:	Height</li>
+            <li>3:	Optional</li>
+            <li>4:	Number</li>
+            <li>5:	Meters</li>
+        </ul>
+        </p>
+
+        <p>
+        This column should contain the height in meters of the subject the
+        sample described in this row was taken from.
+
+        To create a template to fill with your metadata delete all rows after
+        the first five in example metadata files provided (or a copy if you want
+        to use them for reference).
+        </p>
+    </div>
+
+    <div class="w3-container w3-card-4">
+        <h2 class='w3-container'> 2) Study Specific Metadata </h2>
+
+        <p>
+        Not every metadata column will be relevant to every study. If the metadata
+        doesn't exist for an optional column it should be filled in with 'NA' not
+        'na', 'n.a.', 'N/A' or any other Not Available indicator. DO NOT delete
+        the columns from the metadata template.
+        </p>
+
+        <p>
+        If metadata exists that does not fit into any of the default columns
+        additional columns may be added. Their format should be as follows
+        </p>
+
+        <p>
+        <h4>For Example: </h4>
+        <ul class="w3-ul">
+            <li>1:	AdditionalMetaData</li>
+            <li>2:	(Name of the metadata column)</li>
+            <li>3:	Optional</li>
+            <li>4:	(Type of the metadata: Text, Number, Date, Time, etc)</li>
+            <li>5:	(Unit of the metadata: If applicable)</li>
+        </ul>
+        </p>
+
+        <p>
+        This metadata will be stored separately from the default columns so
+        possible analysis based on these columns may be limited.
+        </p>
+    </div>
+    <br>
+    <div class="w3-container w3-card-4">
+        <h2 class='w3-container'> 3) Term Definitions </h2>
+        <p>
+        Certain terms in our metadata may be used differently in others contexts.
+        For reference we define them as follows:
+
+        <ul class="w3-ul">
+
+            <li><b>Intervention</b>: Any procedure, medication, or other type of treatment
+                performed on a subject.</li>
+            <li><b>Specimen</b>: The initial material collected prior to any analysis.</li>
+            <li><b>Aliquot</b>: Any sub-divisions of the initial specimen.</li>
+            <li><b>Sample</b>: The result of processing an aliquot through some type of
+                wet lab procedure.</li>
+            <li><b>RawData</b>: The result of sequencing a sample. Typically this is the stage
+                we will receive the data and accompanying metadata.</li>
+            <li><b>Result</b>: The final result of running a computational tool (such as Qiime)
+                on RawData. This will typically be generated by MMEDS and so it
+                may be left blank.</li>
+        </ul>
+        </p>
 
 
-The first row of the metadata file specifies the entity the metadata pertains
-to (i.e. the table in the database the information will be stored in).The
-second row specifies the specific property (This is akin to a traditional metadata
-header column). The third row specifies if this column is required for every sample.
-The fourth row specifies the data-type and the fifth row specifies the unit/format of the data.
-These rows are the header of the metadata file, the following rows should
-each contain all the information relating to a particular sample.
+        <p>
+        For all fields entries should contain no special characters '$', '*', ';', etc.
+        Metadata files containing entries with these characters cannot be uploaded to the server.
+        All text fields will be converted to lowercase for storage in the database
+        so be sure none of the entries are case sensitive.
+        </p>
+    </div>
+    <br>
+    <div class="w3-container w3-card-4">
+        <h2 class='w3-container'> 4) Column Specifics </h2>
+        <div class="w3-card">
+            <p>
+            <h3 class='w3-container'> RawDataID: </h3>
+            <ul class='w3-ul'>
+                <li>This is the unique identifier for each sample that has already gone through sequencing. </li>
+                <li> Equivalent to #SampleID when using qiime</li>
+                <li>If the reads are demultiplexed the file names should follow the format</li>
+                <li> (RawDataID)_(AdditionalInformation)_R1_001.fastq.gz
+                    - E.G.
+                    - Forward Read: S33_L001_R1_001.fastq.gz
+                    - Reverse Read: S33_L001_R2_001.fastq.gz</li>
+            </ul>
+            </p>
+        </div>
+    </div>
+    <br>
+    <div class="w3-container w3-card-4">
+        <h2 class='w3-container'> 5) Column Specifics </h2>
 
-For Example:
-The column
-============
-1:	Subjects
-2:	Height
-3:	Optional
-4:	Number
-5:	Meters
+        <p>
+        Certain Fields will only accept values that fall into certain categories.
+        They are as follows:
+        </p>
 
-This column should contain the height in meters of the subject the
-sample described in this row was taken from.
+        <div class="w3-card">
+            <p>
+            <h3 class='w3-container'> RawDataID: </h3>
+            <ul class='w3-ul'>
+                <li>This is the unique identifier for each sample that has already gone through sequencing. </li>
+                <li> Equivalent to #SampleID when using qiime</li>
+                <li>If the reads are demultiplexed the file names should follow the format</li>
+                <li> (RawDataID)_(AdditionalInformation)_R1_001.fastq.gz
+                    - E.G.
+                    - Forward Read: S33_L001_R1_001.fastq.gz
+                    - Reverse Read: S33_L001_R2_001.fastq.gz</li>
+            </ul>
+            </p>
+        </div>
+        <div class="w3-card">
+            <p>
+            <h3 class='w3-container'> SpecimenBodySite & SpecimenType: </h3>
+            <ul class='w3-ul'>
+                <li> Values should be taken from UBERON 
+                    <link>https://www.ebi.ac.uk/ols/ontologies/uberon</link>
+                    , using the terms as provided on the website</li>
+                <li> The UBERON ID should be included in their respective UberonCode columns</li>
+            </ul>
+            </p>
+        </div>
+        <div class="w3-card">
+            <p>
+            <h3 class="w3-container"> Ethnicity: </h3>
+            Categories taken from NIH standards.
+            https://grants.nih.gov/grants/guide/notice-files/not-od-15-089.html
+            <ul class='w3-ul'>
+                <li>- American Indian or Alaska Native </li>
+                <li>- Asian </li>
+                <li>- Black or African American </li>
+                <li>- Hispanic or Latino</li>
+                <li>- Native Hawaiian or Other Pacific Islander </li>
+                <li>- White </li>
+            </ul>
+            <div class="w3-panel w3-pale-yellow">
+                <p>
+                Note: One subject may have multiple ethnicities. Include each in a
+                separate row. It is acceptable to duplicate other information
+                for this purpose.
+                </p>
+            </div>
+            </p>
+        </div>
+        <div class="w3-card">
+            <p>
+            <h3 class='w3-container'> Sex: </h3>
+            <ul class='w3-ul'>
+                <li>Male</li>
+                <li> Female</li>
+                <li> Transgender Male</li>
+                <li> Transgender Female</li>
+            </ul>
+            <div class="w3-panel w3-pale-yellow">
+                <p>
+                Note: For someone to qualify as Transgender they must have undergone
+                some procedure or received some medication such as hormone therapy.
+                Please include this information under 'Intervention' if known.
+                </p>
+            </div>
 
-To create a template to fill with your metadata delete all rows after
-the first five in example metadata files provided (or a copy if you want
-to use them for reference).
+            </p>
+        </div>
+        <div class="w3-card">
+            <p>
+            <h3 class='w3-container'> ICDCode: </h3>
+            <ul class='w3-ul'>
+                <li> Illnesses should be classified by ICD 10 code and recorded in this column</li>
+                <li> If the subject is known to be healthy use the code XXX.XXXX </li>
 
-# 2) Study Specific Metadata
+                <li> If the subject's health status is unknown enter "NA"</li>
+                <li> All codes must contain all seven digits + the decimal. Fill empty digits with 'X'. E.G. K55.5 should become K55.5XXX </li>
+                <li> If only part of the code is known fill in the rest with 'X' E.G. K45 should become K45.XXXX </li>
+                <li> If the subject is an animal use the code for a human subject that most closely
+                    resembles its condition </li>
+            </ul>
+            </p>
+        </div>
 
-Not every metadata column will be relevant to every study. If the metadata
-doesn't exist for an optional column it should be filled in with 'NA' not
-'na', 'n.a.', 'N/A' or any other Not Available indicator. DO NOT delete
-the columns from the metadata template.
-
-If metadata exists that does not fit into any of the default columns
-additional columns may be added. Their format should be as follows
-
-For Example:
-1:	AdditionalMetaData
-2:	(Name of the metadata column)
-3:	Optional
-4:	(Type of the metadata: Text, Number, Date, Time, etc)
-5:	(Unit of the metadata: If applicable)
-
-This metadata will be stored separately from the default columns so
-possible analysis based on these columns may be limited.
-
-
-# 3) Term Definitions
-
-Certain terms in our metadata may be used differently in others contexts.
-For reference we define them as follows:
-
-Intervention: Any procedure, medication, or other type of treatment
-              performed on a subject.
-Specimen: The initial material collected prior to any analysis.
-Aliquot: Any sub-divisions of the initial specimen.
-Sample: The result of processing an aliquot through some type of
-        wet lab procedure.
-RawData: The result of sequencing a sample. Typically this is the stage
-        we will receive the data and accompanying metadata.
-Result: The final result of running a computational tool (such as Qiime)
-        on RawData. This will typically be generated by MMEDS and so it
-        may be left blank.
-
-
-For all fields entries should contain no special characters '$', '*', ';', etc.
-Metadata files containing entries with these characters cannot be uploaded to the server.
-All text fields will be converted to lowercase for storage in the database
-so be sure none of the entries are case sensitive.
-
-# 4) Column Specifics
-
-Certain Fields will only accept values that fall into certain categories.
-They are as follows:
-
-RawDataID:
-    - This is the unique identifier for each sample that has already gone through sequencing
-    - Equivalent to #SampleID when using qiime
-    - If the reads are demultiplexed the file names should follow the format
-        - {RawDataID}_{AdditionalInformation}_R1_001.fastq.gz
-        - E.G.
-            - Forward Read: S33_L001_R1_001.fastq.gz
-            - Reverse Read: S33_L001_R2_001.fastq.gz
-SpecimenBodySite & SpecimenType:
-https://www.ebi.ac.uk/ols/ontologies/uberon
-    - Values should be taken from UBERON, using the terms as provided on the website
-    - The UBERON ID should be included in their respective UberonCode columns
-Ethnicity:
-Categories taken from NIH standards.
-https://grants.nih.gov/grants/guide/notice-files/not-od-15-089.html
-    - American Indian or Alaska Native
-    - Asian
-    - Black or African American
-    - Hispanic or Latino
-    - Native Hawaiian or Other Pacific Islander
-    - White
-    Note: One subject may have multiple ethnicities. Include each in a
-        separate row. It is acceptable to duplicate other information
-        for this purpose.
-Sex:
-    - Male
-    - Female
-    - Transgender Male
-    - Transgender Female
-    Note: For someone to qualify as Transgender they must have undergone
-        some procedure or received some medication such as hormone therapy.
-        Please include this information under 'Intervention' if known.
-ICDCode:
-    - Illnesses should be classified by ICD 10 code and recorded in this column
-    - If the subject is known to be healthy use the code XXX.XXXX
-    - If the subject's health status is unknown enter "NA"
-    - All codes must contain all seven digits + the decimal. Fill empty digits with 'X'
-        - E.G. K55.5 -> K55.5XXX
-    - If only part of the code is known fill in the rest with 'X'
-        - E.G. K45 -> K45.XXXX
-    - If the subject is an animal use the code for a human subject that most closely
-        resembles its condition
-Intervention:
-    - InterventionTypes include:
-        - Medication
-        - Surgery
-        - Physical Therapy
-        - Environmental
-        - Other
-    - Treatments should include the NCD code if it is a drug or CPT
-        code for a surgical procedure.
-    - If the treatment does not have a code under these codes such as
-        a dietary intervention the intervention should be described well
-        enough to be reproducible.
+        <div class="w3-card">
+            <p>
+            <h3 class='w3-container'> Intervention: </h3>
+            - InterventionTypes include:
+            <ul class='w3-ul'>
+                <li> Medication </li>
+                <li> Surgery </li>
+                <li> Physical Therapy </li>
+                <li> Environmental </li>
+                <li> Other </li>
+                <li> Treatments should include the NCD code if it is a drug or CPT
+                    code for a surgical procedure. </li>
+                <li> If the treatment does not have a code under these codes such as
+                    a dietary intervention the intervention should be described well
+                    enough to be reproducible. </li>
+            </ul>
+            </p>
+        </div>
+    </div>
+    <br>
+</div>
