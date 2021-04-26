@@ -261,7 +261,7 @@ class Validator:
         header = column.name
 
         Logger.debug("iterate over cells")
-        if column.isna('all').all():
+        if column.isna().all():
            if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
                Logger.debug("Column shouldn't be NA")
                err = '{}\t{}\tMissing Required Value Error'

@@ -36,6 +36,7 @@ def application(environ, start_response):
 
     print("sssaaaaaa")
     print("hello there")
+    print("yooooooooooo")
     if testing:
         web_path = '/myapp'
     else:
