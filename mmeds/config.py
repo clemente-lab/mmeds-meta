@@ -107,6 +107,7 @@ HTML_PAGES = {
     'home': (HTML_DIR / 'home_body.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
+    'user_guide_public': (HTML_DIR / 'user_guide.html', False),
 
     # Upload Pages
     'user_guide': (HTML_DIR / 'user_guide.html', True),

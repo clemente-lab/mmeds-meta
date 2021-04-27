@@ -693,6 +693,12 @@ class MMEDSauthentication(MMEDSbase):
         return self.load_webpage('auth_sign_up_page')
 
     @cp.expose
+    def public_guide(self):
+        """ Return the public user guide """
+        return self.load_webpage('user_guide_public', title='Upload Guide')
+
+
+    @cp.expose
     def logout(self):
         """ Expires the session and returns to login page """
         cp.log('Logout user {}'.format(self.get_user()))
