@@ -4,8 +4,8 @@
         <h1> MMEDS User Guide </h1>
     </header>
     <br>
-    <div class="w3-container w3-card-4">
-        <h2 class='w3-container'> 1) Overview </h2>
+    <div class="w3-container w3-card-4 w3-white">
+        <h2 class='w3-blue w3-center'> Overview </h2>
         <p>
         The metadata for mmeds is split into two files. Subject metadata and specimen metadata.
         Both follow the same format. The column ('AdditionalMetaData', 'SubjectIdCol') in the
@@ -49,9 +49,9 @@
         to use them for reference).
         </p>
     </div>
-
-    <div class="w3-container w3-card-4">
-        <h2 class='w3-container'> 2) Study Specific Metadata </h2>
+    <br>
+    <div class="w3-container w3-card-4 w3-white">
+        <h2 class='w3-purple w3-center'> Study Specific Metadata </h2>
 
         <p>
         Not every metadata column will be relevant to every study. If the metadata
@@ -82,8 +82,8 @@
         </p>
     </div>
     <br>
-    <div class="w3-container w3-card-4">
-        <h2 class='w3-container'> 3) Term Definitions </h2>
+    <div class="w3-container w3-card-4 w3-white">
+        <h2 class='w3-pink w3-center'> Term Definitions </h2>
         <p>
         Certain terms in our metadata may be used differently in others contexts.
         For reference we define them as follows:
@@ -103,8 +103,6 @@
                 may be left blank.</li>
         </ul>
         </p>
-
-
         <p>
         For all fields entries should contain no special characters '$', '*', ';', etc.
         Metadata files containing entries with these characters cannot be uploaded to the server.
@@ -113,49 +111,51 @@
         </p>
     </div>
     <br>
-    <div class="w3-container w3-card-4">
-        <h2 class='w3-container'> 4) Column Specifics </h2>
-        <div class="w3-card">
-            <p>
-            <h3 class='w3-container'> RawDataID: </h3>
-            <ul class='w3-ul'>
-                <li>This is the unique identifier for each sample that has already gone through sequencing. </li>
-                <li> Equivalent to #SampleID when using qiime</li>
-                <li>If the reads are demultiplexed the file names should follow the format</li>
-                <li> (RawDataID)_(AdditionalInformation)_R1_001.fastq.gz
-                    - E.G.
-                    - Forward Read: S33_L001_R1_001.fastq.gz
-                    - Reverse Read: S33_L001_R2_001.fastq.gz</li>
-            </ul>
-            </p>
-        </div>
+    <div class="w3-container w3-card-4 w3-white">
+        <h2 class='w3-purple w3-center'> Protocol vs. Protocols </h2>
+        <p>
+        As you may have noticed there are several columns with similar names.
+        Such as SampleProtocol and SampleProtocols, SpecimenProtocol and SpecimenProtocols, etc.
+        These refer to the methods used to produce a particular Specimen, Aliquot, etc.
+        Take a Sample for example. For a particular Sample, the 'SampleProtocols' columns
+        in the same row refer to the standard procedure, such as FACS sorting, used to create this
+        Sample from the associated Aliquot. SampleProtocol contains information related to that
+        particular run of FACS sorting. When was it performed. Who performed it. Was there anything
+        unusual about this run of sorting that should be noticed. Similarly RawDataProtocols refer
+        to general methods for processing Samples into RawData, such as Illumina MiSeq. RawDataProtocol
+        refers to a particular instance of running Illumina MiSeq.
+
+        </p>
     </div>
     <br>
-    <div class="w3-container w3-card-4">
-        <h2 class='w3-container'> 5) Column Specifics </h2>
+    <div class="w3-container w3-card-4 w3-white">
+        <h2 class='w3-blue w3-center'> Column Specifics </h2>
 
         <p>
         Certain Fields will only accept values that fall into certain categories.
         They are as follows:
         </p>
 
-        <div class="w3-card">
+        <div class="w3-border">
             <p>
-            <h3 class='w3-container'> RawDataID: </h3>
+            <h3 class='w3-blue w3-center'> RawDataID: </h3>
             <ul class='w3-ul'>
                 <li>This is the unique identifier for each sample that has already gone through sequencing. </li>
                 <li> Equivalent to #SampleID when using qiime</li>
                 <li>If the reads are demultiplexed the file names should follow the format</li>
                 <li> (RawDataID)_(AdditionalInformation)_R1_001.fastq.gz
-                    - E.G.
-                    - Forward Read: S33_L001_R1_001.fastq.gz
-                    - Reverse Read: S33_L001_R2_001.fastq.gz</li>
+                    <br>
+                    E.G.
+                    <br>
+                    Forward Read: S33_L001_R1_001.fastq.gz
+                    <br>
+                    Reverse Read: S33_L001_R2_001.fastq.gz</li>
             </ul>
             </p>
         </div>
-        <div class="w3-card">
+        <div class="w3-border">
             <p>
-            <h3 class='w3-container'> SpecimenBodySite & SpecimenType: </h3>
+            <h3 class='w3-purple w3-center'> SpecimenBodySite & SpecimenType: </h3>
             <ul class='w3-ul'>
                 <li> Values should be taken from UBERON 
                     <link>https://www.ebi.ac.uk/ols/ontologies/uberon</link>
@@ -164,18 +164,20 @@
             </ul>
             </p>
         </div>
-        <div class="w3-card">
+        <div class="w3-border">
             <p>
-            <h3 class="w3-container"> Ethnicity: </h3>
+            <h3 class="w3-pink w3-center"> Ethnicity </h3>
+            <p>
             Categories taken from NIH standards.
             https://grants.nih.gov/grants/guide/notice-files/not-od-15-089.html
+            </p>
             <ul class='w3-ul'>
-                <li>- American Indian or Alaska Native </li>
-                <li>- Asian </li>
-                <li>- Black or African American </li>
-                <li>- Hispanic or Latino</li>
-                <li>- Native Hawaiian or Other Pacific Islander </li>
-                <li>- White </li>
+                <li> American Indian or Alaska Native </li>
+                <li> Asian </li>
+                <li> Black or African American </li>
+                <li> Hispanic or Latino</li>
+                <li> Native Hawaiian or Other Pacific Islander </li>
+                <li> White </li>
             </ul>
             <div class="w3-panel w3-pale-yellow">
                 <p>
@@ -186,11 +188,11 @@
             </div>
             </p>
         </div>
-        <div class="w3-card">
+        <div class="w3-border">
             <p>
-            <h3 class='w3-container'> Sex: </h3>
+            <h3 class='w3-purple w3-center'> Sex </h3>
             <ul class='w3-ul'>
-                <li>Male</li>
+                <li> Male</li>
                 <li> Female</li>
                 <li> Transgender Male</li>
                 <li> Transgender Female</li>
@@ -205,9 +207,9 @@
 
             </p>
         </div>
-        <div class="w3-card">
+        <div class="w3-border">
             <p>
-            <h3 class='w3-container'> ICDCode: </h3>
+            <h3 class='w3-center w3-blue'> ICDCode </h3>
             <ul class='w3-ul'>
                 <li> Illnesses should be classified by ICD 10 code and recorded in this column</li>
                 <li> If the subject is known to be healthy use the code XXX.XXXX </li>
@@ -221,10 +223,10 @@
             </p>
         </div>
 
-        <div class="w3-card">
+        <div class="w3-border">
             <p>
-            <h3 class='w3-container'> Intervention: </h3>
-            - InterventionTypes include:
+            <h3 class='w3-purple w3-center'> Intervention </h3>
+            <p> InterventionTypes include: </p>
             <ul class='w3-ul'>
                 <li> Medication </li>
                 <li> Surgery </li>
