@@ -111,6 +111,8 @@ class TestServer(helper.CPWebCase):
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
         page_body = self.body.decode('utf-8')
         check_page(page_body)
+        self.getPage('auth/public_guide')
+        self.assertStatus('200 OK')
 
     def test_ba_sign_up(self):
         Logger.info('ba sign up')
@@ -834,4 +836,3 @@ class TestServer(helper.CPWebCase):
         self.getPage(f'/upload/upload_additional_metadata?accessCode={code[-1]}&idType=Sample',
                      headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-
