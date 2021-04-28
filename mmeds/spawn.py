@@ -3,7 +3,7 @@ import yaml
 from time import sleep
 from shutil import rmtree
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from multiprocessing import Queue, Pipe, Lock
 from multiprocessing.managers import BaseManager
 
@@ -65,6 +65,7 @@ class Watcher(BaseManager):
         self.running_on_node = set()
         self.logger = Logger
         self.current_upload = None
+        self.checked_stats = None
         queue = Queue()
         self.register('get_queue', callable=lambda: queue)
         pipe_ends = Pipe()
@@ -218,16 +219,24 @@ class Watcher(BaseManager):
 
     def update_stats(self):
         """ Update the mmeds stats to their most recent values """
-        # Get stats for MMEDs server
-        with Database(testing=self.testing) as db:
-            args = {
-                'study_count': len(db.get_all_studies()),
-                'analysis_count': len(db.get_all_analyses()),
-                'user_count': len(db.get_all_usernames()),
-                'query_count': 42,
-            }
-        with open(fig.STAT_FILE, 'w+') as f:
-            yaml.safe_dump(args, f)
+
+        # Update when the watcher starts and every five minutes thereafter
+        if self.checked_stats is None or (datetime.utcnow() - self.checked_stats) > timedelta(minutes=5):
+            # Get stats for MMEDs server
+            with Database(testing=self.testing) as db:
+                args = {
+                    'study_count': len(db.get_all_studies()),
+                    'analysis_count': len(db.get_all_analyses()),
+                    'user_count': len(db.get_all_usernames()),
+                    'query_count': 42,
+                }
+            # If there's already a file remove it
+            if fig.STAT_FILE.exists():
+                fig.STAT_FILE.unlink()
+            # Write the new stats
+            with open(fig.STAT_FILE, 'w') as f:
+                yaml.safe_dump(args, f)
+            self.checked_stats = datetime.utcnow()
 
     def any_running(self, ptype):
         """ Returns true if there is a process running """
@@ -327,6 +336,7 @@ class Watcher(BaseManager):
         """ The loop to run when a Watcher is started """
         # Continue until it's parent process is killed
         while True:
+            self.update_stats()
             self.check_processes()
             self.check_upload()
             self.write_running_processes()
