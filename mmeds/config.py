@@ -111,6 +111,7 @@ HTML_PAGES = {
 
     # Upload Pages
     'user_guide': (HTML_DIR / 'user_guide.html', True),
+    'simple_guide': (HTML_DIR / 'simple_guide.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
@@ -164,6 +165,7 @@ HTML_ARGS = {
     'account_page': SERVER_PATH + 'auth/input_password',
     'query_page': SERVER_PATH + 'query/query_select',
     'user_guide_page': SERVER_PATH + 'upload/user_guide',
+    'simple_guide_page': SERVER_PATH + 'upload/simple_guide',
     'settings_page': '#',
 
     # Upload Pages

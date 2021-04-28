@@ -447,6 +447,13 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
+    def simple_guide(self):
+        """ Page for the guide for the user on how to upload """
+        page = self.load_webpage('simple_guide',
+                                 title='Upload Guide')
+        return page
+
+    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
@@ -696,7 +703,6 @@ class MMEDSauthentication(MMEDSbase):
     def public_guide(self):
         """ Return the public user guide """
         return self.load_webpage('user_guide_public', title='Upload Guide')
-
 
     @cp.expose
     def logout(self):
