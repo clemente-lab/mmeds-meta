@@ -133,7 +133,7 @@ class MMEDSbase:
             args.update(kwargs)
 
             # Add the mmeds stats
-            args.update(load_mmeds_stats(self.testing))
+            args.update(load_mmeds_stats())
 
             # If a user is logged in, load the side bar
             if header:
