@@ -396,6 +396,11 @@ def parse_ICD_codes(df):
     null = nan
     for code in codes:
         try:
+            # This error used to be thrown by pandas if
+            # I tried to split a NA. Doesn't seem to be happening
+            # anymore but I didn't want to add another code path
+            if code.isna():
+                raise ValueError
             parts = code.split('.')
             # Gets the first character
             IBC.append(parts[0][0])
@@ -413,10 +418,10 @@ def parse_ICD_codes(df):
                 raise e
         # If the value is null it will error
         except (AttributeError, IndexError):
-            IBC.append('NA')
-            IC.append('NA')
-            ID.append('NA')
-            IDe.append('NA')
+            IBC.append(null)
+            IC.append(null)
+            ID.append(null)
+            IDe.append(null)
 
     # Add the parsed values to the dataframe
     df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC
