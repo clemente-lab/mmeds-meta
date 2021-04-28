@@ -7,22 +7,31 @@
     <div class="w3-container w3-card-4 w3-white">
         <h2 class='w3-blue w3-center'> Overview </h2>
         <p>
-        The metadata for mmeds is split into two files. Subject metadata and specimen metadata.
-        Both follow the same format. The column ('AdditionalMetaData', 'SubjectIdCol') in the
-        specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
-        metadata for the specimen to be linked to that particular subject.
-        </p>
+        ** Gotta plug MMEDs, probably you'll want to edit it**
+        **MMEDs is super cool data warehouse for metagenomic data, and associated metadata.
+        To facilitate meta-analysis MMEDs has a standardized metadata format that all submissions must follow.
+        In this user guide, we'll go over submission requirements for MMEDs:**
 
         <p>
-        The reason they are split into separate files is to allow multiple rows of subject information,
+        Metadata for MMEDs submissions is split into two files named subject metadata and specimen metadata.
+        Having the metadata in separate files allows for multiple rows of subject information,
         illnesses, treatments (interventions), etc without having to fill out all those rows with
         duplicate information for each specimen.
         </p>
 
         <p>
-        The first row of the metadata file specifies the entity the metadata pertains
-        to (i.e. the table in the database the information will be stored in).The
-        second row specifies the specific property (This is akin to a traditional metadata
+        **
+        Both **metadata files** follow the same format. **what does this mean? what is the format? Either leave out or provide more detail **
+        The column  **columns?** ('AdditionalMetaData', 'SubjectIdCol') in the
+        specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
+        metadata in order for the specimen to be linked to that particular subject.
+        </p>
+
+        <p>
+        ** Edited, but not sure exactly what was meant by entity. I mean I kinda know but not 100% on the language**
+        The first row of the metadata file specifies an entity that represents
+        the table in the database the information will be stored in. The
+        second row specifies the property being measured (This is akin to a traditional metadata
         header column). The third row specifies if this column is required for every sample.
         The fourth row specifies the data-type and the fifth row specifies the unit/format of the data.
         These rows are the header of the metadata file, the following rows should
@@ -41,10 +50,9 @@
         </p>
 
         <p>
-        This column should contain the height in meters of the subject the
-        sample described in this row was taken from.
+        This column should contain the subject's height in meters for the associated sample.
 
-        To create a template to fill with your metadata delete all rows after
+        To create a template to fill with your metadata, you can delete all rows after
         the first five in example metadata files provided (or a copy if you want
         to use them for reference).
         </p>
@@ -54,15 +62,15 @@
         <h2 class='w3-purple w3-center'> Study Specific Metadata </h2>
 
         <p>
-        Not every metadata column will be relevant to every study. If the metadata
+        Some metadata columns may not be relevant to a given study. If the metadata
         doesn't exist for an optional column it should be filled in with 'NA' not
         'na', 'n.a.', 'N/A' or any other Not Available indicator. DO NOT delete
         the columns from the metadata template.
         </p>
 
         <p>
-        If metadata exists that does not fit into any of the default columns
-        additional columns may be added. Their format should be as follows
+        If metadata exists that does not fit into any of the default columns,
+        additional columns may be added. The format should be as follows:
         </p>
 
         <p>
@@ -77,8 +85,8 @@
         </p>
 
         <p>
-        This metadata will be stored separately from the default columns so
-        possible analysis based on these columns may be limited.
+        This optional metadata is stored separately from the default columns so
+        analysis based on these columns may be limited.
         </p>
     </div>
     <br>
@@ -104,10 +112,10 @@
         </ul>
         </p>
         <p>
-        For all fields entries should contain no special characters '$', '*', ';', etc.
+        Metadata field entries should not contain special characters '$', '*', ';', etc.
         Metadata files containing entries with these characters cannot be uploaded to the server.
-        All text fields will be converted to lowercase for storage in the database
-        so be sure none of the entries are case sensitive.
+        All text fields will be converted to lowercase when stored in the database,
+        so make sure none of the entries are case sensitive.
         </p>
     </div>
     <br>
@@ -117,12 +125,12 @@
         As you may have noticed there are several columns with similar names.
         Such as SampleProtocol and SampleProtocols, SpecimenProtocol and SpecimenProtocols, etc.
         These refer to the methods used to produce a particular Specimen, Aliquot, etc.
-        Take a Sample for example. For a particular Sample, the 'SampleProtocols' columns
+        For example, a particular Sample, the 'SampleProtocols' columns
         in the same row refer to the standard procedure, such as FACS sorting, used to create this
         Sample from the associated Aliquot. SampleProtocol contains information related to that
-        particular run of FACS sorting. When was it performed. Who performed it. Was there anything
-        unusual about this run of sorting that should be noticed. Similarly RawDataProtocols refer
-        to general methods for processing Samples into RawData, such as Illumina MiSeq. RawDataProtocol
+        particular run of FACS sorting. This includes, when was it performed, who performed it and if there was anything
+        unusual about the sorting in this run. Similarly RawDataProtocols refer
+        to general methods for processing Samples into RawData, such as Illumina MiSeq. For example, RawDataProtocol
         refers to a particular instance of running Illumina MiSeq.
 
         </p>
@@ -132,8 +140,7 @@
         <h2 class='w3-blue w3-center'> Column Specifics </h2>
 
         <p>
-        Certain Fields will only accept values that fall into certain categories.
-        They are as follows:
+        There are certain fields that will only accept values that fall into certain categories:
         </p>
 
         <div class="w3-border">
@@ -157,7 +164,7 @@
             <p>
             <h3 class='w3-purple w3-center'> SpecimenBodySite & SpecimenType: </h3>
             <ul class='w3-ul'>
-                <li> Values should be taken from UBERON 
+                <li> Values should be taken from UBERON
                     <link>https://www.ebi.ac.uk/ols/ontologies/uberon</link>
                     , using the terms as provided on the website</li>
                 <li> The UBERON ID should be included in their respective UberonCode columns</li>
@@ -211,14 +218,14 @@
             <p>
             <h3 class='w3-center w3-blue'> ICDCode </h3>
             <ul class='w3-ul'>
-                <li> Illnesses should be classified by ICD 10 code and recorded in this column</li>
+                <li> Illnesses should be classified by ICD 10 code and recorded in this column.</li>
                 <li> If the subject is known to be healthy use the code XXX.XXXX </li>
 
                 <li> If the subject's health status is unknown enter "NA"</li>
                 <li> All codes must contain all seven digits + the decimal. Fill empty digits with 'X'. E.G. K55.5 should become K55.5XXX </li>
                 <li> If only part of the code is known fill in the rest with 'X' E.G. K45 should become K45.XXXX </li>
-                <li> If the subject is an animal use the code for a human subject that most closely
-                    resembles its condition </li>
+                <li> If the subject is an animal, use the code for a human subject that most closely
+                    resembles its condition. </li>
             </ul>
             </p>
         </div>
@@ -235,8 +242,8 @@
                 <li> Other </li>
                 <li> Treatments should include the NCD code if it is a drug or CPT
                     code for a surgical procedure. </li>
-                <li> If the treatment does not have a code under these codes such as
-                    a dietary intervention the intervention should be described well
+                <li> If the treatment does not have a code from this list, such as
+                    a dietary intervention, then the intervention should be described well
                     enough to be reproducible. </li>
             </ul>
             </p>
