@@ -34,9 +34,7 @@ def application(environ, start_response):
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
 
-    print("sssaaaaaa")
     print("hello there")
-    print("yooooooooooo")
     if testing:
         web_path = '/myapp'
     else:
