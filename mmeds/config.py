@@ -257,7 +257,7 @@ if not PROCESS_LOG_DIR.exists():
         PROCESS_LOG_DIR.mkdir()
     except FileExistsError:
         pass
-LOG_DIR = DATABASE_DIR #  / 'log_dir'
+LOG_DIR = DATABASE_DIR
 if not LOG_DIR.exists():
     try:
         LOG_DIR.mkdir()
