@@ -7,10 +7,11 @@
     <div class="w3-container w3-card-4 w3-white">
         <h2 class='w3-blue w3-center'> Overview </h2>
         <p>
-        ** Gotta plug MMEDs, probably you'll want to edit it**
-        **MMEDs is super cool data warehouse for metagenomic data, and associated metadata.
+
+        MMEDs is an innovative warehouse and analysis server for metagenomic data, and associated metadata.
         To facilitate meta-analysis MMEDs has a standardized metadata format that all submissions must follow.
-        In this user guide, we'll go over submission requirements for MMEDs:**
+
+        In this user guide, we'll go over submission requirements for MMEDs:
 
         <p>
         Metadata for MMEDs submissions is split into two files named subject metadata and specimen metadata.
@@ -19,18 +20,11 @@
         duplicate information for each specimen.
         </p>
 
-        <p>
-        **
-        Both **metadata files** follow the same format. **what does this mean? what is the format? Either leave out or provide more detail **
-        The column  **columns?** ('AdditionalMetaData', 'SubjectIdCol') in the
-        specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
-        metadata in order for the specimen to be linked to that particular subject.
-        </p>
+        <p> Both metadata files follow the same format, described below.  </p>
 
         <p>
-        ** Edited, but not sure exactly what was meant by entity. I mean I kinda know but not 100% on the language**
-        The first row of the metadata file specifies an entity that represents
-        the table in the database the information will be stored in. The
+        The first row of the metadata file specifies the table in the database the information
+        will be stored in. As a user you can largely ignore this. The
         second row specifies the property being measured (This is akin to a traditional metadata
         header column). The third row specifies if this column is required for every sample.
         The fourth row specifies the data-type and the fifth row specifies the unit/format of the data.
@@ -56,10 +50,20 @@
         the first five in example metadata files provided (or a copy if you want
         to use them for reference).
         </p>
+
     </div>
     <br>
     <div class="w3-container w3-card-4 w3-white">
-        <h2 class='w3-purple w3-center'> Study Specific Metadata </h2>
+        <h2 class="w3-blue w3-card-4 w3-center"> Special Columns </h2>
+        <p>
+        The column ('AdditionalMetaData', 'SubjectIdCol') in the
+        specimen metadata must match the value in ('Subjects', 'HostSubjectId') in the subject
+        metadata in order for the specimen to be linked to that particular subject.
+        </p>
+    </div>
+    <br>
+    <div class="w3-container w3-card-4 w3-white">
+        <h2 class='w3-blue w3-center'> Study Specific Metadata </h2>
 
         <p>
         Some metadata columns may not be relevant to a given study. If the metadata
@@ -91,7 +95,7 @@
     </div>
     <br>
     <div class="w3-container w3-card-4 w3-white">
-        <h2 class='w3-pink w3-center'> Term Definitions </h2>
+        <h2 class='w3-blue w3-center'> Term Definitions </h2>
         <p>
         Certain terms in our metadata may be used differently in others contexts.
         For reference we define them as follows:
@@ -120,16 +124,19 @@
     </div>
     <br>
     <div class="w3-container w3-card-4 w3-white">
-        <h2 class='w3-purple w3-center'> Protocol vs. Protocols </h2>
+        <h2 class='w3-blue w3-center'> Protocol vs. Protocols </h2>
         <p>
         As you may have noticed there are several columns with similar names.
         Such as SampleProtocol and SampleProtocols, SpecimenProtocol and SpecimenProtocols, etc.
         These refer to the methods used to produce a particular Specimen, Aliquot, etc.
+        <br>
         For example, a particular Sample, the 'SampleProtocols' columns
         in the same row refer to the standard procedure, such as FACS sorting, used to create this
         Sample from the associated Aliquot. SampleProtocol contains information related to that
         particular run of FACS sorting. This includes, when was it performed, who performed it and if there was anything
-        unusual about the sorting in this run. Similarly RawDataProtocols refer
+        unusual about the sorting in this run. 
+        <br>
+        Similarly RawDataProtocols refer
         to general methods for processing Samples into RawData, such as Illumina MiSeq. For example, RawDataProtocol
         refers to a particular instance of running Illumina MiSeq.
 
