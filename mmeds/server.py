@@ -133,7 +133,7 @@ class MMEDSbase:
             args.update(kwargs)
 
             # Add the mmeds stats
-            args.update(load_mmeds_stats(self.testing))
+            args.update(load_mmeds_stats())
 
             # If a user is logged in, load the side bar
             if header:
@@ -447,6 +447,13 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
+    def simple_guide(self):
+        """ Page for the guide for the user on how to upload """
+        page = self.load_webpage('simple_guide',
+                                 title='Upload Guide')
+        return page
+
+    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
@@ -691,6 +698,11 @@ class MMEDSauthentication(MMEDSbase):
     def register_account(self):
         """ Return the page for signing up. """
         return self.load_webpage('auth_sign_up_page')
+
+    @cp.expose
+    def public_guide(self):
+        """ Return the public user guide """
+        return self.load_webpage('user_guide_public', title='Upload Guide')
 
     @cp.expose
     def logout(self):
