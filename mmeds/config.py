@@ -25,7 +25,6 @@ if TESTING:
         DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
     else:
         DATABASE_DIR = Path().home() / 'mmeds_server_data'
-    SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
@@ -35,13 +34,13 @@ else:
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-    SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
     WWW_ROOT = "https://wallad07.u.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
+SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 
 ############################
 # CONFIGURE SERVER GLOBALS #

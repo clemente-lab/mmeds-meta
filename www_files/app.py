@@ -9,10 +9,10 @@ testing = not (gethostname() == 'web01')
 
 # Setup the path to mmeds (since it isn't being installed)
 if testing:
-    MODULE_PATH = "/home/david/Work/mmeds-meta/mmeds/__init__.py"
+    MODULE_PATH = "~/Work/mmeds-meta/mmeds/__init__.py"
     import mmeds
 else:
-    MODULE_PATH = "/hpc/users/wallad07/www/mmeds-meta/mmeds/__init__.py"
+    MODULE_PATH = "/hpc/users/mmedsadmin/www/mmeds-meta/mmeds/__init__.py"
 
     # import mmeds
     # Loading mmeds as a module without installation
@@ -33,6 +33,7 @@ curdir = os.path.abspath(os.path.dirname(__file__))
 def application(environ, start_response):
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
+    print('update please')
 
     print("hello there")
     if testing:
