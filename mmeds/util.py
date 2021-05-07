@@ -391,16 +391,12 @@ def load_ICD_codes():
 
 def parse_ICD_codes(df):
     """ Parse the ICD codes into seperate columns """
+    df.fillna('XXX.XXXX', inplace=True)
     codes = df['ICDCode']['ICDCode'].tolist()
     IBC, IC, ID, IDe = [], [], [], []
     null = nan
     for code in codes:
         try:
-            # This error used to be thrown by pandas if
-            # I tried to split a NA. Doesn't seem to be happening
-            # anymore but I didn't want to add another code path
-            if code.isna():
-                raise ValueError
             parts = code.split('.')
             # Gets the first character
             IBC.append(parts[0][0])
