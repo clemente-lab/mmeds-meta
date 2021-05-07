@@ -35,6 +35,7 @@ def application(environ, start_response):
     cp.server.unsubscribe()
     print('update please')
 
+    print("hello there")
     if testing:
         web_path = '/myapp'
     else:
