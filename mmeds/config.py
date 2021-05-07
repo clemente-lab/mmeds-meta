@@ -25,7 +25,6 @@ if TESTING:
         DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
     else:
         DATABASE_DIR = Path().home() / 'mmeds_server_data'
-    SESSION_PATH = DATABASE_DIR / 'CherryPySession'
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
@@ -35,13 +34,13 @@ else:
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-    SESSION_PATH = "/hpc/users/wallad07/CherryPySessions"
     WWW_ROOT = "https://wallad07.u.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
+SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 
 ############################
 # CONFIGURE SERVER GLOBALS #
@@ -257,7 +256,7 @@ if not PROCESS_LOG_DIR.exists():
         PROCESS_LOG_DIR.mkdir()
     except FileExistsError:
         pass
-LOG_DIR = DATABASE_DIR / 'log_dir'
+LOG_DIR = DATABASE_DIR
 if not LOG_DIR.exists():
     try:
         LOG_DIR.mkdir()
@@ -354,6 +353,7 @@ TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
 TEST_ADD_ALIQUOT = str(TEST_PATH / 'test_add_aliquot.tsv')
+TEST_NA_ALIQUOT = str(TEST_PATH / 'test_na_aliquot.tsv')
 TEST_ALIQUOT_UPLOAD = str(TEST_PATH / 'test_aliquot_upload.tsv')
 TEST_SAMPLE_UPLOAD = str(TEST_PATH / 'test_sample_upload.tsv')
 TEST_ADD_SAMPLE = str(TEST_PATH / 'test_add_sample.tsv')

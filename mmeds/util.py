@@ -391,6 +391,7 @@ def load_ICD_codes():
 
 def parse_ICD_codes(df):
     """ Parse the ICD codes into seperate columns """
+    df.fillna('XXX.XXXX', inplace=True)
     codes = df['ICDCode']['ICDCode'].tolist()
     IBC, IC, ID, IDe = [], [], [], []
     null = nan
@@ -413,10 +414,10 @@ def parse_ICD_codes(df):
                 raise e
         # If the value is null it will error
         except (AttributeError, IndexError):
-            IBC.append('NA')
-            IC.append('NA')
-            ID.append('NA')
-            IDe.append('NA')
+            IBC.append(null)
+            IC.append(null)
+            ID.append(null)
+            IDe.append(null)
 
     # Add the parsed values to the dataframe
     df['IllnessBroadCategory', 'ICDFirstCharacter'] = IBC

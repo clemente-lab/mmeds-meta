@@ -6,7 +6,8 @@ from pathlib import Path
 from pytest import raises
 from tempfile import gettempdir
 from tidylib import tidy_document
-from pandas import read_csv
+from pandas import read_csv, DataFrame, MultiIndex
+from numpy import nan
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -213,3 +214,34 @@ class UtilTests(TestCase):
         all_formatted = '1 is less than 2 is less than 3'
         self.assertEqual(to_format.format_map(test_dict), all_formatted)
         self.assertNotIn('val3', test_dict.missed)
+
+    def test_parse_ICD(self):
+        """ Test the parsing of ICD_codes """
+        cols = MultiIndex.from_tuples([('ICDCode', 'ICDCode')])
+        codes = [
+            ['XXX.XXXX'],
+            ['A19.XXXX'],
+            ['Y33.XXXA'],
+            ['V93.24XS'],
+            [nan]
+        ]
+        df = DataFrame(codes, columns=cols)
+
+        check_cols = MultiIndex.from_tuples([
+            ('ICDCode', 'ICDCode'),
+            ('IllnessBroadCategory', 'ICDFirstCharacter'),
+            ('IllnessCategory', 'ICDCategory'),
+            ('IllnessDetails', 'ICDDetails'),
+            ('IllnessDetails', 'ICDExtension'),
+        ])
+        check_codes = [
+            ['XXX.XXXX', 'X', nan, 'XXX', 'X'],
+            ['A19.XXXX', 'A', 19.0, 'XXX', 'X'],
+            ['Y33.XXXA', 'Y', 33.0, 'XXX', 'A'],
+            ['V93.24XS', 'V', 93.0, '24X', 'S'],
+            ['XXX.XXXX', 'X', nan, 'XXX', 'X'],
+        ]
+        check_df = DataFrame(check_codes, columns=check_cols)
+
+        parsed_df = util.parse_ICD_codes(df)
+        assert check_df.equals(parsed_df)

@@ -27,6 +27,7 @@ def generate(path, users):
     subject_count = 0
     specimen_count = 0
 
+    path = Path(path)
     people = users.split(',')
     for peep in people:
         peep_path = path / peep
