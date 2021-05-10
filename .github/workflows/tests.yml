@@ -24,13 +24,13 @@ jobs:
         run: sudo python setup.py install
       - name: Unit Tests
         run: |
-          pytest --cov=./ -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;
       - name: Server Tests
         run: |
           pytest --cov=./ -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
-          pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server -x --durations=0;
+          pytest --cov=./ -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server -x --durations=0;
       - name: Upload Server Coverage
         run: bash <(curl -s https://codecov.io/bash) -cF server;
