@@ -64,11 +64,11 @@ def format_alerts(args):
     return args
 
 
-def load_mmeds_stats(testing):
-    if testing:
-        stats = {}
-    else:
+def load_mmeds_stats():
+    if Path(fig.STAT_FILE).exists():
         stats = yaml.safe_load(fig.STAT_FILE.read_text())
+    else:
+        stats = {}
     return stats
 
 

@@ -35,6 +35,8 @@ def catch_server_errors(page_method):
             body = HTML_PAGES['login'][0].read_text()
             args = deepcopy(HTML_ARGS)
             args['body'] = body.format(**args)
+            # Add the mmeds stats
+            args.update(load_mmeds_stats())
             return HTML_PAGES['logged_out_template'].read_text().format(**args)
     return wrapper
 
@@ -133,7 +135,7 @@ class MMEDSbase:
             args.update(kwargs)
 
             # Add the mmeds stats
-            args.update(load_mmeds_stats(self.testing))
+            args.update(load_mmeds_stats())
 
             # If a user is logged in, load the side bar
             if header:
@@ -440,6 +442,20 @@ class MMEDSupload(MMEDSbase):
     ########################################
 
     @cp.expose
+    def user_guide(self):
+        """ Page for the guide for the user on how to upload """
+        page = self.load_webpage('user_guide',
+                                 title='Upload Guide')
+        return page
+
+    @cp.expose
+    def simple_guide(self):
+        """ Page for the guide for the user on how to upload """
+        page = self.load_webpage('simple_guide',
+                                 title='Upload Guide')
+        return page
+
+    @cp.expose
     def retry_upload(self):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
@@ -493,6 +509,12 @@ class MMEDSupload(MMEDSbase):
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
             study_dropdown = fmt.build_study_code_dropdown(studies)
+
+        cp.session['download_files']['user_guide'] = fig.USER_GUIDE
+        cp.session['download_files']['Subject_template'] = fig.SUBJECT_TEMPLATE
+        cp.session['download_files']['Specimen_template'] = fig.SPECIMEN_TEMPLATE
+        cp.session['download_files']['Subject_example'] = fig.TEST_SUBJECT
+        cp.session['download_files']['Specimen_example'] = fig.TEST_SPECIMEN
         page = self.load_webpage('upload_select_page',
                                  user_studies=study_dropdown,
                                  title='Upload Type')
@@ -523,7 +545,13 @@ class MMEDSupload(MMEDSbase):
                                          metadata_type=cp.session['metadata_type'].capitalize(),
                                          version=uploadType)
         except(err.StudyNameError) as e:
-            page = self.load_webpage('upload_select_page', title='Upload Type', error=e.message)
+            with Database(testing=self.testing) as db:
+                studies = db.get_all_user_studies(self.get_user())
+                study_dropdown = fmt.build_study_code_dropdown(studies)
+            page = self.load_webpage('upload_select_page',
+                                     title='Upload Type',
+                                     user_studies=study_dropdown,
+                                     error=e.message)
         return page
 
     @cp.expose
@@ -672,6 +700,11 @@ class MMEDSauthentication(MMEDSbase):
     def register_account(self):
         """ Return the page for signing up. """
         return self.load_webpage('auth_sign_up_page')
+
+    @cp.expose
+    def public_guide(self):
+        """ Return the public user guide """
+        return self.load_webpage('user_guide_public', title='Upload Guide')
 
     @cp.expose
     def logout(self):

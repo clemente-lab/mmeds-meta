@@ -15,8 +15,7 @@ import os
 
 class UtilTests(TestCase):
     def test_load_stats(self):
-        util.load_mmeds_stats(True)
-        util.load_mmeds_stats(False)
+        util.load_mmeds_stats()
 
     def test_format_alerts(self):
         args = {

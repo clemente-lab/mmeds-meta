@@ -4,6 +4,8 @@
 [![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e4cc5a646a8c4d53b55d6511e995657d)](https://www.codacy.com/manual/DSWallach/mmeds-meta?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=clemente-lab/mmeds-meta&amp;utm_campaign=Badge_Grade)
 
+![MMEDS Image](/test_files/MMEDS_image.png?raw=true "MMEDs Server")
+
 ## Instructions
 
 In order to run the mmeds server locally you will need.

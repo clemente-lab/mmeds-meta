@@ -106,8 +106,11 @@ HTML_PAGES = {
     'home': (HTML_DIR / 'home_body.html', True),
     'auth_change_password': (HTML_DIR / 'auth_change_password.html', True),
     'auth_sign_up_page': (HTML_DIR / 'auth_sign_up_page.html', False),
+    'user_guide_public': (HTML_DIR / 'user_guide.html', False),
 
     # Upload Pages
+    'user_guide': (HTML_DIR / 'user_guide.html', True),
+    'simple_guide': (HTML_DIR / 'simple_guide.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
@@ -160,6 +163,8 @@ HTML_ARGS = {
     'study_page': SERVER_PATH + 'study/select_study',
     'account_page': SERVER_PATH + 'auth/input_password',
     'query_page': SERVER_PATH + 'query/query_select',
+    'user_guide_page': SERVER_PATH + 'upload/user_guide',
+    'simple_guide_page': SERVER_PATH + 'upload/simple_guide',
     'settings_page': '#',
 
     # Upload Pages
@@ -357,6 +362,9 @@ TEST_NA_ALIQUOT = str(TEST_PATH / 'test_na_aliquot.tsv')
 TEST_ALIQUOT_UPLOAD = str(TEST_PATH / 'test_aliquot_upload.tsv')
 TEST_SAMPLE_UPLOAD = str(TEST_PATH / 'test_sample_upload.tsv')
 TEST_ADD_SAMPLE = str(TEST_PATH / 'test_add_sample.tsv')
+USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
+SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
+SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,

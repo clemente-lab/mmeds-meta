@@ -3,7 +3,6 @@ exclude_lines =
     if __name__ == "__main__":
 
 [run]
-include = */mmeds/*
 omit =
     setup.py
     mmeds/tests/**
