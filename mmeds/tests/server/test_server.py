@@ -111,7 +111,7 @@ class TestServer(helper.CPWebCase):
         self.assertHeader('Content-Type', 'text/html;charset=utf-8')
         page_body = self.body.decode('utf-8')
         check_page(page_body)
-        self.getPage('auth/public_guide')
+        self.getPage('/auth/public_guide')
         self.assertStatus('200 OK')
 
     def test_ba_sign_up(self):

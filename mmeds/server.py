@@ -35,6 +35,8 @@ def catch_server_errors(page_method):
             body = HTML_PAGES['login'][0].read_text()
             args = deepcopy(HTML_ARGS)
             args['body'] = body.format(**args)
+            # Add the mmeds stats
+            args.update(load_mmeds_stats())
             return HTML_PAGES['logged_out_template'].read_text().format(**args)
     return wrapper
 
