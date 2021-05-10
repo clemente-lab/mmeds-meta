@@ -19,6 +19,11 @@ class MetaDataAdderTests(TestCase):
         self.access_code = self.doc.access_code
 
     def test_a_add_aliquot(self):
+
+        # Test adding an Aliquot with NAs
+        mda = MetaDataAdder(fig.TEST_USER, self.access_code, fig.TEST_NA_ALIQUOT, 'aliquot', False, testing)
+        assert mda.run() == 0
+
         # Test generating an aliquot ID
         mda = MetaDataAdder(fig.TEST_USER, self.access_code, fig.TEST_ALIQUOT_UPLOAD, 'aliquot', True, testing)
         assert mda.run() == 0

@@ -8,6 +8,7 @@ import mmeds.formatter as fmt
 import mongoengine as men
 import pymysql as pms
 import pandas as pd
+import numpy as np
 
 from datetime import datetime
 from pathlib import Path
@@ -600,6 +601,11 @@ class Database:
             # Get the user id if necessary
             if table in fig.PROTECTED_TABLES:
                 data['user_id'] = self.user_id
+
+            # Replace nans with none
+            for key in data.keys():
+                if pd.isna(data[key]):
+                    data[key] = None
 
             # Build the insertion query
             sql = fmt.INSERT_QUERY.format(columns=', '.join([f'`{col}`' for col in data.keys()]),

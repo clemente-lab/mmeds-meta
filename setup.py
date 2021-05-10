@@ -32,6 +32,7 @@ setup(name='mmeds',
       install_requires=[
           'cherrypy==18.6.0',
           'codecov==2.1.11',
+          'setuptools>=46.4.0',
           'jupyter==1.0.0',
           'mongoengine==0.23.0',
           'numpy==1.19.4',
