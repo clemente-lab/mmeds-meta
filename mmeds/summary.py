@@ -434,8 +434,9 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
-            output = run(cmd.split(' '), check=True, env=self.env, capture_output=True)
-            Logger.debug(output)
+            with open(self.path / 'notebook.err', 'w') as err:
+                with open(self.path / 'notebook.out', 'w') as out:
+                    output = run(cmd.split(' '), check=True, env=self.env, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
             # Convert to pdf

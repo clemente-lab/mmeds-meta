@@ -96,7 +96,7 @@ class Tool(mp.Process):
         self.access_code = self.doc.access_code
         self.path = Path(self.doc.path)
         self.add_path(self.path, key='path')
-        write_config(self.doc.config, self.path)
+        write_config(self.doc.config.to_dict(), self.path)
         self.create_qiime_mapping_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
@@ -261,7 +261,7 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append(f'module use {DATABASE_DIR.parent}/.modules/modulefiles; module load mmeds-stable;')
+            self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),

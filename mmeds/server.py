@@ -30,7 +30,8 @@ def catch_server_errors(page_method):
     @wraps(page_method)
     def wrapper(*a, **kwargs):
         try:
-            return page_method(*a, **kwargs)
+            # Strip any whitespace surrounding input fields
+            return page_method(*a, **{key: value.strip() for key, value in kwargs.items()})
         except err.LoggedOutError:
             body = HTML_PAGES['login'][0].read_text()
             args = deepcopy(HTML_ARGS)
