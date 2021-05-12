@@ -29,12 +29,12 @@ if TESTING:
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
 else:
-    ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
+    ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-    WWW_ROOT = "https://wallad07.u.hpc.mssm.edu/"
+    WWW_ROOT = "https://mmedsadmin.u.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'

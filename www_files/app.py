@@ -34,6 +34,7 @@ def application(environ, start_response):
     cp.config.update(mmeds.config.CONFIG)
     cp.server.unsubscribe()
     print('update please')
+    print('hi again')
 
     print("hello there")
     if testing:
