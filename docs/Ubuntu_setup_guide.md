@@ -106,6 +106,7 @@ Make sure python3 is the default for your system:\
 Check that MongoDB, mysql and apache2 are running, try restarting them.
 
 Make sure test files, html, other local files are up to date in ~/mmeds_server_data and /var/www/mmeds_server_data
+See section: Add required files to /var/www/
 
 Try removing the mmeds_data1 sql database and re-run mysql setup.
 
