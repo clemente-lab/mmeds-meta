@@ -36,7 +36,7 @@ setup(name='mmeds',
           'jupyter==1.0.0',
           'mongoengine==0.23.0',
           'numpy==1.19.4',
-          'pandas==1.0.3',
+          'pandas==1.2.3',
           'pandoc==2.0a4',
           'pint==0.17',
           'pillow==8.1.1',
@@ -57,7 +57,6 @@ setup(name='mmeds',
           'jaraco.classes==3.2.1',
           'jaraco.text==3.5.0',
           'jaraco.functools==3.3.0',
-          'tempora==4.0.2',
-          'zc.lockfile==2.0'
+          'tempora==4.0.2'
       ],
       zip_safe=False)
