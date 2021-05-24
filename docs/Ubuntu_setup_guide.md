@@ -111,7 +111,7 @@ Try removing the mmeds_data1 sql database and re-run mysql setup.
 
 Module not found errors:
    - Can happen after updating system python version, mod_wsgi has its own python install that needs updating. To do this, recreate mod_wsgi from source.
-    Remove mod_Wsgi, follow instructions here to reinstall and make sure to run as root: https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.html
-   - Apache2 looks to the root python install for modules: /usr/local/lib/python3.7/dist-packages
-   When installing modules as root, python will look in multiple locations for installs like in: /home/user/.local/lib/python3.7/site-packages
+    Remove mod_wsgi, follow instructions here to reinstall and make sure to run as root: https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.html
+   - Apache2 looks to the root python install for modules: `/usr/local/lib/{python version}/dist-packages`
+   When installing modules as root, python will look in multiple locations for installs like in: `/home/{username}/.local/lib/{python version}/site-packages`
    So make sure that required packages aren't in inaccessible locations and if so, remove them.
