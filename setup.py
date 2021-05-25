@@ -53,6 +53,10 @@ setup(name='mmeds',
           'rpy2==3.4.3',
           'six==1.15.0',
           'xlrd==2.0.1',
-          'click==7.1.2'
+          'click==7.1.2',
+          'jaraco.classes==3.2.1',
+          'jaraco.text==3.5.0',
+          'jaraco.functools==3.3.0',
+          'tempora==4.0.2'
       ],
       zip_safe=False)

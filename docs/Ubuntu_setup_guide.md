@@ -27,7 +27,7 @@ Create necessary folders if they don't already exist:
 ```
 sudo mkdir /var/www/mmeds_server_data/
 sudo mkdir /var/www/mmeds_server_data/test_files
-sudo mkdir /var/www/mmeds_server_data/CherryPySession
+sudo mkdir /var/www/mmeds_server_data/CherryPySessions
 ```
 
 copy files to /var/www/:
@@ -102,3 +102,17 @@ Make sure python3 is the default for your system:\
 `python --version`\
 [default python version](https://unix.stackexchange.com/questions/410579/change-the-python3-default-version-in-ubuntu)
 [default python version2](https://dev.to/serhatteker/how-to-upgrade-to-python-3-7-on-ubuntu-18-04-18-10-5hab)
+
+Check that MongoDB, mysql and apache2 are running, try restarting them.
+
+Make sure test files, html, other local files are up to date in ~/mmeds_server_data and /var/www/mmeds_server_data
+See section: Add required files to /var/www/
+
+Try removing the mmeds_data1 sql database and re-run mysql setup.
+
+Module not found errors:
+   - Can happen after updating system python version, mod_wsgi has its own python install that needs updating. To do this, recreate mod_wsgi from source.
+    Remove mod_wsgi, follow instructions here to reinstall and make sure to run as root: https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.html
+   - Apache2 looks to the root python install for modules: `/usr/local/lib/{python version}/dist-packages`
+   When installing modules as root, python will look in multiple locations for installs like in: `/home/{username}/.local/lib/{python version}/site-packages`
+   So make sure that required packages aren't in inaccessible locations and if so, remove them.
