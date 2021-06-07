@@ -64,12 +64,55 @@ def format_alerts(args):
     return args
 
 
+def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
+    """
+    Takes in a simplified MMEDs metadata file and expands it to the full format.
+    """
+    if metadata_type == 'subject':
+        template = load_subject_template(subject_type)
+    elif metadata_type == 'specimen':
+        template = load_specimen_template()
+        swapped = {
+            ('Specimen', 'SpecimenID'): ('RawData', 'RawDataID'),
+            ('Specimen', 'BarcodeSequence'): ('RawData', 'BarcodeSequence'),
+            ('Specimen', 'LinkerPrimerSequence'): ('RawData', 'LinkerPrimerSequence'),
+            ('SpecimenProtocol', 'SpecimenDatePerformed'): ('RawDataProtocol', 'RawDataDatePerformed'),
+            ('SpecimenProtocol', 'SpecimenProcessor'): ('RawDataProtocol', 'RawDataProcessor'),
+            ('SpecimenProtocols', 'Primer'): ('RawDataProtocols', 'Primer'),
+            ('SpecimenProtocols', 'SequencingTechnology'): ('SpecimenProtocols', 'SequencingTechnology'),
+            ('SpecimenProtocols', 'TargetGene'): ('SpecimenProtocols', 'TargetGene')
+        }
+
+    partial_df = pd.read_csv(file_fp, header=[0, 1], sep='\t')
+    print(partial_df.columns)
+    partial_df.columns.rename(names=swapped, inplace=True)
+    print(partial_df.columns)
+    add_cols = set(template.columns.tolist()).difference(partial_df.columns)
+    for col in add_cols:
+        partial_df[col] = (template[col].tolist() + ([None] * (len(partial_df) - 3)))
+    partial_df.to_csv(output_fp, sep='\t', index=False, na_rep='NA')
+    print(partial_df)
+    return partial_df
+
+
 def load_mmeds_stats():
     if Path(fig.STAT_FILE).exists():
         stats = yaml.safe_load(fig.STAT_FILE.read_text())
     else:
         stats = {}
     return stats
+
+
+def load_subject_template(subject_type):
+    if subject_type == 'human':
+        df = pd.read_csv(fig.TEST_SUBJECT, header=[0, 1], nrows=3, sep='\t')
+    elif subject_type == 'animal':
+        df = pd.read_csv(fig.TEST_ANIMAL_SUBJECT, header=[0, 1], nrows=3, sep='\t')
+    return df
+
+
+def load_specimen_template():
+    return pd.read_csv(fig.TEST_SPECIMEN, header=[0, 1], nrows=3, sep='\t')
 
 
 def load_metadata_template(subject_type):
@@ -114,6 +157,7 @@ def write_metadata(df, output_path):
         subject_type = 'human'
     elif ('AnimalSubjects', 'AnimalSubjectID') in unsorted.keys():
         subject_type = 'animal'
+
     template = load_metadata_template(subject_type)
 
     metadata_length = len(unsorted[('RawData', 'RawDataID')])

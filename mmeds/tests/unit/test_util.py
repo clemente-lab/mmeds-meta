@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from mmeds import util
 from mmeds.error import InvalidConfigError, InvalidSQLError
 from mmeds.validate import validate_mapping_file
@@ -17,6 +17,11 @@ class UtilTests(TestCase):
     def test_load_stats(self):
         util.load_mmeds_stats()
 
+    def test_simplified_to_full(self):
+        df = util.simplified_to_full(fig.TEST_SPECIMEN_PARTIAL, '/tmp/out_df.tsv', 'specimen')
+        print(df)
+
+    @skip
     def test_format_alerts(self):
         args = {
                 'error': 'This is an error',
@@ -28,10 +33,12 @@ class UtilTests(TestCase):
         assert 'w3-pale-yellow' in formatted['warning']
         assert 'w3-pale-green' in formatted['success']
 
+    @skip
     def test_load_metadata_template(self):
         util.load_metadata_template('human')
         util.load_metadata_template('animal')
 
+    @skip
     def test_is_numeric(self):
         assert util.is_numeric('45') is True
         assert util.is_numeric('4.5') is True
@@ -41,6 +48,7 @@ class UtilTests(TestCase):
         assert util.is_numeric('5r') is False
         assert util.is_numeric('2016-12-01') is False
 
+    @skip
     def test_create_local_copy(self):
         """ Test the creation of a new unique file. """
         h1 = hl.md5()
@@ -60,6 +68,7 @@ class UtilTests(TestCase):
 
         assert hash1 == hash2
 
+    @skip
     def test_get_valid_columns(self):
         columns, col_types = util.get_valid_columns(fig.TEST_METADATA, 'all')
         for key in col_types.keys():
@@ -96,6 +105,7 @@ class UtilTests(TestCase):
                                                          'StudyName'])
         assert 'selected for analysis' in e_info.value.message
 
+    @skip
     def test_load_config_file(self):
         # Test when no config is given
         config = util.load_config(None, fig.TEST_METADATA)
@@ -125,6 +135,7 @@ class UtilTests(TestCase):
             config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA)
         assert 'YAML format' in e_info.value.message
 
+    @skip
     def test_mmeds_to_MIxS(self):
         return  # TODO Either fix the test or deprecate the functionality
         tempdir = Path(gettempdir())
@@ -135,6 +146,7 @@ class UtilTests(TestCase):
         util.MIxS_to_mmeds(fig.TEST_MIXS, tempdir / 'new_mmeds.tsv')
         assert (tempdir / 'new_mmeds.tsv').is_file()
 
+    @skip
     def test_generate_error_html(self):
         errors, warnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_ERROR,
                                                            'Good_Study',
@@ -146,6 +158,7 @@ class UtilTests(TestCase):
         document, errors = tidy_document(html)
         assert not errors
 
+    @skip
     def test_copy_metadata(self):
         tempdir = Path(gettempdir())
         util.copy_metadata(fig.TEST_METADATA, tempdir / 'new_metadata.tsv')
@@ -153,6 +166,7 @@ class UtilTests(TestCase):
         assert df['AdditionalMetaData']['Together'].any()
         assert df['AdditionalMetaData']['Separate'].any()
 
+    @skip
     def test_read_write_mmeds(self):
         tmpdir = Path(gettempdir())
         mdf = util.load_metadata(fig.TEST_METADATA)
@@ -167,6 +181,7 @@ class UtilTests(TestCase):
 
         assert hash1 == hash2
 
+    @skip
     def test_join_metadata(self):
         # Test joining human metadata
         subject = util.load_metadata(fig.TEST_SUBJECT)
@@ -180,6 +195,7 @@ class UtilTests(TestCase):
         df = util.join_metadata(subject, specimen, 'animal')
         assert df is not None
 
+    @skip
     def test_quote_sql(self):
         """ Test the qouting of sql """
         with self.assertRaises(AssertionError):
@@ -196,6 +212,7 @@ class UtilTests(TestCase):
         self.assertEquals('select `HostSubjectId` from `Subjects`',
                           util.quote_sql('select {col} from {table}', col='HostSubjectId', table='Subjects'))
 
+    @skip
     def test_safe_dict(self):
         test_dict = util.SafeDict({
             'val1': 1,
@@ -214,6 +231,7 @@ class UtilTests(TestCase):
         self.assertEqual(to_format.format_map(test_dict), all_formatted)
         self.assertNotIn('val3', test_dict.missed)
 
+    @skip
     def test_parse_ICD(self):
         """ Test the parsing of ICD_codes """
         cols = MultiIndex.from_tuples([('ICDCode', 'ICDCode')])
