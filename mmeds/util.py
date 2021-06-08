@@ -73,26 +73,29 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
     elif metadata_type == 'specimen':
         template = load_specimen_template()
         swapped = {
-            ('Specimen', 'SpecimenID'): ('RawData', 'RawDataID'),
-            ('Specimen', 'BarcodeSequence'): ('RawData', 'BarcodeSequence'),
-            ('Specimen', 'LinkerPrimerSequence'): ('RawData', 'LinkerPrimerSequence'),
-            ('SpecimenProtocol', 'SpecimenDatePerformed'): ('RawDataProtocol', 'RawDataDatePerformed'),
-            ('SpecimenProtocol', 'SpecimenProcessor'): ('RawDataProtocol', 'RawDataProcessor'),
-            ('SpecimenProtocols', 'Primer'): ('RawDataProtocols', 'Primer'),
-            ('SpecimenProtocols', 'SequencingTechnology'): ('SpecimenProtocols', 'SequencingTechnology'),
-            ('SpecimenProtocols', 'TargetGene'): ('SpecimenProtocols', 'TargetGene')
+            'Specimen': 'RawData',
+            'SpecimenProtocol': 'RawDataProtocol',
+            'SpecimenProtocols': 'RawDataProtocols',
+            'SpecimenID': 'RawDataID',
+            'BarcodeSequence': 'BarcodeSequence',
+            'LinkerPrimerSequence': 'LinkerPrimerSequence',
+            'SpecimenDatePerformed':  'RawDataDatePerformed',
+            'SpecimenProcessor':  'RawDataProcessor',
+            'Primer':  'Primer',
+            'SequencingTechnology': 'SequencingTechnology',
+            'TargetGene': 'TargetGene'
         }
 
     partial_df = pd.read_csv(file_fp, header=[0, 1], sep='\t')
-    print(partial_df.columns)
-    partial_df.columns.rename(names=swapped, inplace=True)
-    print(partial_df.columns)
-    add_cols = set(template.columns.tolist()).difference(partial_df.columns)
+    print(partial_df.T)
+    renamed_df = partial_df.T.rename(index=swapped).T
+    print(renamed_df.columns)
+    add_cols = set(template.columns.tolist()).difference(renamed_df.columns)
     for col in add_cols:
-        partial_df[col] = (template[col].tolist() + ([None] * (len(partial_df) - 3)))
-    partial_df.to_csv(output_fp, sep='\t', index=False, na_rep='NA')
-    print(partial_df)
-    return partial_df
+        renamed_df[col] = (template[col].tolist() + ([None] * (len(renamed_df) - 3)))
+    renamed_df.to_csv(output_fp, sep='\t', index=False, na_rep='NA')
+    print(renamed_df)
+    return renamed_df
 
 
 def load_mmeds_stats():

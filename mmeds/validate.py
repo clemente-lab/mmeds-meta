@@ -262,10 +262,12 @@ class Validator:
 
         Logger.debug("iterate over cells")
         if column.isna().all():
-           if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
-               Logger.debug("Column shouldn't be NA")
-               err = '{}\t{}\tMissing Required Value Error'
-               self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col)))
+            if (not self.cur_table == 'AdditionalMetaData' and
+                self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
+
+                Logger.debug("Column shouldn't be NA")
+                err = '{}\t{}\tMissing Required Value Error'
+                self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col)))
         else:
             # Check each cell in the column
             for i, cell in enumerate(column):
