@@ -14,7 +14,7 @@ import mmeds.config as fig
 import mmeds.formatter as fmt
 
 from mmeds.validate import Validator, valid_additional_file
-from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
+from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats, simplified_to_full)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
@@ -578,14 +578,16 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
+    def validate_metadata(self, myMetaData, barcodes_type, partial=False):
         """ The page returned after a file is uploaded. """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
-            # If the metadata is temporary don't perform validation
-            if temporary:
+            # If the metadata is partial don't perform validation
+            if partial:
                 cp.session['metadata_temporary'] = True
+                initial_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
                 metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+                simplified_to_full(initial_copy, metadata_copy, cp.session['metadata_type'], cp.session['subject_type'])
                 errors, warnings = [], []
             else:
                 cp.session['metadata_temporary'] = False

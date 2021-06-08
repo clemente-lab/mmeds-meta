@@ -19,11 +19,17 @@ class UtilTests(TestCase):
 
     def test_simplified_to_full(self):
         df = util.simplified_to_full(fig.TEST_SPECIMEN_PARTIAL, '/tmp/out_df.tsv', 'specimen')
-        assert validate_mapping_file('/tmp/out_df.tsv',
-                                     df['Study']['StudyName'],
-                                     'subject',
-                                     None,
-                                     'human')
+        errors, warnings, subjects = validate_mapping_file('/tmp/out_df.tsv',
+                                                           df['Study']['StudyName'],
+                                                           'subject',
+                                                           None,
+                                                           'human')
+        for error in errors:
+            print(error)
+        for warning in warnings:
+            print(warning)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
         print(df)
 
     @skip
