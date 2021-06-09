@@ -91,8 +91,8 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
     # Get the required columns
     required_cols = [col for col in template.columns if template[col][0] == 'Required']
 
-    partial_df = pd.read_csv(file_fp, header=[0, 1], sep='\t')
-    renamed_df = partial_df.rename(columns=swapped)
+    simplified_df = pd.read_csv(file_fp, header=[0, 1], sep='\t')
+    renamed_df = simplified_df.rename(columns=swapped)
 
     # Get the missing columns
     add_cols = set(template.columns.tolist()).difference(renamed_df.columns)

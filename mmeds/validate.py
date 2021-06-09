@@ -544,7 +544,7 @@ class Validator:
     def check_study_name(self):
         """ Check that the study name input by the user matches that in the metadata """
         df_study_name = self.df['Study']['StudyName'][0]
-        if not self.study_name.all() == df_study_name:
+        if not self.study_name == df_study_name:
             self.errors.append(f'-1\t-1\tStudy Name Error: The study name in the metadata ({df_study_name})' +
                                f' does not match the name provided for this upload ({self.study_name})')
 

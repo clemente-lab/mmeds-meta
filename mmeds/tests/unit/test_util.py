@@ -18,14 +18,14 @@ class UtilTests(TestCase):
         util.load_mmeds_stats()
 
     def test_simplified_to_full(self):
-        df = util.simplified_to_full(fig.TEST_SPECIMEN_PARTIAL, '/tmp/out_df.tsv', 'specimen')
-        derrors, dwarnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_PARTIAL,
-                                                             df['Study']['StudyName'],
+        df = util.simplified_to_full(fig.TEST_SPECIMEN_SIMPLIFIED, '/tmp/out_df.tsv', 'specimen')
+        derrors, dwarnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_SIMPLIFIED,
+                                                             df['Study']['StudyName'][4],
                                                              'subject',
                                                              [],
                                                              'human')
         errors, warnings, subjects = validate_mapping_file('/tmp/out_df.tsv',
-                                                           df['Study']['StudyName'],
+                                                           df['Study']['StudyName'][5],
                                                            'specimen',
                                                            subjects,
                                                            'human')

@@ -336,7 +336,7 @@ class MMEDSupload(MMEDSbase):
 
         return super().load_webpage(page, **kwargs)
 
-    def run_validate(self, myMetaData):
+    def run_validate(self, myMetaData, simplified):
         """ Run validate_mapping_file and return the results """
         cp.log('In run validate')
         errors = []
@@ -349,6 +349,11 @@ class MMEDSupload(MMEDSbase):
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+
+        # If the metadata is partial don't perform validation
+        if simplified:
+            # Overwrite the metadata_copy
+            simplified_to_full(metadata_copy, metadata_copy, cp.session['metadata_type'], cp.session['subject_type'])
 
         # Store the copy's location
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
@@ -515,6 +520,7 @@ class MMEDSupload(MMEDSbase):
         cp.session['download_files']['Specimen_template'] = fig.SPECIMEN_TEMPLATE
         cp.session['download_files']['Subject_example'] = fig.TEST_SUBJECT
         cp.session['download_files']['Specimen_example'] = fig.TEST_SPECIMEN
+        cp.session['metadata_type'] = 'subject'
         page = self.load_webpage('upload_select_page',
                                  user_studies=study_dropdown,
                                  title='Upload Type')
@@ -525,7 +531,8 @@ class MMEDSupload(MMEDSbase):
         """ Page for uploading Qiime data """
         try:
             cp.session['study_name'] = studyName
-            cp.session['metadata_type'] = 'subject'
+            if cp.session.get('metadata_type') is None:
+                cp.session['metadata_type'] = 'subject'
             cp.session['subject_type'] = subjectType
             cp.session['upload_type'] = uploadType
 
@@ -578,21 +585,13 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def validate_metadata(self, myMetaData, barcodes_type, partial=False):
+    def validate_metadata(self, myMetaData, barcodes_type, simplified=False):
         """ The page returned after a file is uploaded. """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
-            # If the metadata is partial don't perform validation
-            if partial:
-                cp.session['metadata_temporary'] = True
-                initial_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-                simplified_to_full(initial_copy, metadata_copy, cp.session['metadata_type'], cp.session['subject_type'])
-                errors, warnings = [], []
-            else:
-                cp.session['metadata_temporary'] = False
-                errors, warnings = self.run_validate(myMetaData)
+            errors, warnings = self.run_validate(myMetaData, simplified)
             metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
+
             if barcodes_type == 'dual':
                 cp.session['dual_barcodes'] = True
             else:
