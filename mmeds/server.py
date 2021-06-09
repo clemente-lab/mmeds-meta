@@ -531,8 +531,7 @@ class MMEDSupload(MMEDSbase):
         """ Page for uploading Qiime data """
         try:
             cp.session['study_name'] = studyName
-            if cp.session.get('metadata_type') is None:
-                cp.session['metadata_type'] = 'subject'
+            cp.session['metadata_type'] = 'subject'
             cp.session['subject_type'] = subjectType
             cp.session['upload_type'] = uploadType
 
@@ -652,7 +651,7 @@ class MMEDSupload(MMEDSbase):
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
                     specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
-                    cp.session['metadata_temporary'], public))
+                    cp.session['subject_type'], public))
 
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 
