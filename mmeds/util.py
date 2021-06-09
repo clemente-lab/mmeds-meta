@@ -68,6 +68,7 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
     """
     Takes in a simplified MMEDs metadata file and expands it to the full format.
     """
+    # Load the relvant template
     if metadata_type == 'subject':
         template = load_subject_template(subject_type)
     elif metadata_type == 'specimen':
@@ -77,6 +78,7 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
             'SpecimenProtocol': 'RawDataProtocol',
             'SpecimenProtocols': 'RawDataProtocols',
             'SpecimenID': 'RawDataID',
+            'SpecimenNotes': 'RawDataNotes',
             'BarcodeSequence': 'BarcodeSequence',
             'LinkerPrimerSequence': 'LinkerPrimerSequence',
             'SpecimenDatePerformed':  'RawDataDatePerformed',
@@ -86,15 +88,30 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
             'TargetGene': 'TargetGene'
         }
 
+    # Get the required columns
+    required_cols = [col for col in template.columns if template[col][0] == 'Required']
+
     partial_df = pd.read_csv(file_fp, header=[0, 1], sep='\t')
-    print(partial_df.T)
-    renamed_df = partial_df.T.rename(index=swapped).T
-    print(renamed_df.columns)
+    renamed_df = partial_df.rename(columns=swapped)
+
+    # Get the missing columns
     add_cols = set(template.columns.tolist()).difference(renamed_df.columns)
+
+    # Add the missing columns
     for col in add_cols:
-        renamed_df[col] = (template[col].tolist() + ([None] * (len(renamed_df) - 3)))
+        # If the column is required fill it in based on existing data
+        if col in required_cols:
+            if 'ProtocolID' in col[1]:
+                renamed_df[col] = (template[col].tolist() + list(range(0, len(renamed_df) - 3)))
+            elif 'SpecimenID' == col[1]:
+                renamed_df[col] = (template[col].tolist() +
+                                   ['Specimen_' + x for x in renamed_df[('RawData', 'RawDataID')][3:].tolist()])
+        # If it's optional just fill it with NAs
+        else:
+            renamed_df[col] = (template[col].tolist() + ([None] * (len(renamed_df) - 3)))
+
+    # Write the dataframe to the file specified
     renamed_df.to_csv(output_fp, sep='\t', index=False, na_rep='NA')
-    print(renamed_df)
     return renamed_df
 
 

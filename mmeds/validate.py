@@ -254,7 +254,6 @@ class Validator:
         =======================================================================
         :col_index: The index of the column in the original dataframe
         """
-        Logger.debug(f"Check column {column}")
         self.col_type = self.col_types[self.cur_col]
 
         # Get the header
@@ -279,9 +278,7 @@ class Validator:
                         err = '{}\t{}\tMissing Required Value Error'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
                 else:
-                    Logger.debug("Checking Cell")
                     self.check_cell(i, cell)
-                    Logger.debug("CHecked cell")
 
             # Ensure there is only one study being uploaded
             if header == 'StudyName' and len(set(column.tolist())) > 1:
@@ -547,7 +544,7 @@ class Validator:
     def check_study_name(self):
         """ Check that the study name input by the user matches that in the metadata """
         df_study_name = self.df['Study']['StudyName'][0]
-        if not self.study_name == df_study_name:
+        if not self.study_name.all() == df_study_name:
             self.errors.append(f'-1\t-1\tStudy Name Error: The study name in the metadata ({df_study_name})' +
                                f' does not match the name provided for this upload ({self.study_name})')
 

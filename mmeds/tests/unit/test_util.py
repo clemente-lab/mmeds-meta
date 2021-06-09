@@ -19,10 +19,15 @@ class UtilTests(TestCase):
 
     def test_simplified_to_full(self):
         df = util.simplified_to_full(fig.TEST_SPECIMEN_PARTIAL, '/tmp/out_df.tsv', 'specimen')
+        derrors, dwarnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_PARTIAL,
+                                                             df['Study']['StudyName'],
+                                                             'subject',
+                                                             [],
+                                                             'human')
         errors, warnings, subjects = validate_mapping_file('/tmp/out_df.tsv',
                                                            df['Study']['StudyName'],
-                                                           'subject',
-                                                           None,
+                                                           'specimen',
+                                                           subjects,
                                                            'human')
         for error in errors:
             print(error)

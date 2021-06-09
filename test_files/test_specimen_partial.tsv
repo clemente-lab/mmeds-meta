@@ -1,21 +1,21 @@
-Specimen	Specimen	Specimen	SpecimenProtocol	SpecimenProtocol	SpecimenProtocols	SpecimenProtocols	SpecimenProtocols	Type	Study	Lab	Lab	BodySite	CollectionSite	CollectionSite	AdditionalMetaData	AdditionalMetaData	AdditionalMetaData
-BarcodeSequence	LinkerPrimerSequence	SpecimenID	SpecimenDatePerformed	SpecimenProcessor	Primer	SequencingTechnology	TargetGene	SpecimenType	StudyName	ContactName	PrimaryInvestigator	SpecimenBodySite	CollectionSiteName	CollectionSiteTechnician	SubjectIdCol	SpecimenGroup	SpecimenNotes
-Required	Required	Required	Optional	Optional	Optional	Optional	Optional	Optional	Required	Required	Required	Optional	Optional	Optional	Optional	Optional	Optional
-Text	Text	Text	Date	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text
-Limit 256 Characters	Limit 256 Characters	Limit 256 Characters	Year-Month-Day	Limit 45 Characters	Limit 256 Characters	Limit 256 Characters	Limit 256 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 256 Characters	Limit 256 Characters	Limit 256 Characters
-TCTCTATG-TCGACGAG	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0001_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0001_V1		recist_NR
-TCTCTATG-GATCGTGT	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0001_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0001_V2		recist_NR
-TCTCTATG-GTCAGATA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0002_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0002_V1		recist_NR
-GATCTACG-CTACTATA	CAAGCAGAAGACGGCATACGAGATCGTAGATCAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0002_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0002_V2		recist_NR
-GATCTACG-CGTTACTA	CAAGCAGAAGACGGCATACGAGATCGTAGATCAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0003_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0003_V1		recist_R
-TCTCTATG-CTACTATA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0003_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0003_V2		recist_R
-TAGCAGCT-AGAGTCAC	CAAGCAGAAGACGGCATACGAGATAGCTGCTAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0005_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0005_V1		recist_NR
-TCTCTATG-CGTTACTA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0005_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0005_V2		recist_NR
-TAGCAGCT-TACGAGAC	CAAGCAGAAGACGGCATACGAGATAGCTGCTAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0007_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0007_V1		recist_NR
-TAGCAGCT-ACGTCTCG	CAAGCAGAAGACGGCATACGAGATAGCTGCTAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0008_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0008_V1		recist_NR
-TCTCTATG-AGAGTCAC	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0008_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0008_V2		recist_NR
-TAGCAGCT-TCGACGAG	CAAGCAGAAGACGGCATACGAGATAGCTGCTAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0009_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0009_V1		recist_NR
-TCTCTATG-TACGAGAC	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0009_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0009_V2		recist_NR
-TAGCAGCT-GATCGTGT	CAAGCAGAAGACGGCATACGAGATAGCTGCTAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0010_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0010_V1		recist_NR
-TCTCTATG-ACGTCTCG	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0010_V2					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0010_V2		recist_NR
-TAGCAGCT-GTCAGATA	CAAGCAGAAGACGGCATACGAGATAGCTGCTAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0011_V1					16S	feces	AFL	Jeremiah Faith	Jeremiah Faith	Stool	Mount Sinai		AFL0011_V1		recist_NR
+Specimen	Specimen	Specimen	SpecimenProtocol	SpecimenProtocol	SpecimenProtocols	SpecimenProtocols	SpecimenProtocols	Type	Study	Lab	Lab	Lab	BodySite	CollectionSite	CollectionSite	AdditionalMetaData	AdditionalMetaData	Specimen
+BarcodeSequence	LinkerPrimerSequence	SpecimenID	SpecimenDatePerformed	SpecimenProcessor	Primer	SequencingMethod	TargetGene	SpecimenType	StudyName	ContactName	ContactEmail	PrimaryInvestigator	SpecimenBodySite	CollectionSiteName	CollectionSiteTechnician	SubjectIdCol	SpecimenGroup	SpecimenNotes
+Required	Required	Required	Optional	Optional	Optional	Optional	Optional	Optional	Required	Required	Required	Required	Optional	Optional	Optional	Optional	Optional	Optional
+Text	Text	Text	Date	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text	Text
+Limit 256 Characters	Limit 256 Characters	Limit 256 Characters	Year-Month-Day	Limit 45 Characters	Limit 256 Characters	Limit 256 Characters	Limit 256 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Limit 256 Characters	Limit 256 Characters	Limit 256 Characters
+TCTCTATGTCGACGAG	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0001_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0001_V1		recist_NR
+TCTCTATGGATCGTGT	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0001_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0001_V2		recist_NR
+TCTCTATGGTCAGATA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0002_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0002_V1		recist_NR
+GATCTACGCTACTATA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0002_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0002_V2		recist_NR
+GATCTACGCGTTACTA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0003_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0003_V1		recist_R
+TCTCTATGCTACTATA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0003_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0003_V2		recist_R
+TAGCAGCTAGAGTCAC	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0005_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0005_V1		recist_NR
+TCTCTATGCGTTACTA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0005_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0005_V2		recist_NR
+TAGCAGCTTACGAGAC	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0007_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0007_V1		recist_NR
+TAGCAGCTACGTCTCG	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0008_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0008_V1		recist_NR
+TCTCTATGAGAGTCAC	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0008_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0008_V2		recist_NR
+TAGCAGCTTCGACGAG	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0009_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0009_V1		recist_NR
+TCTCTATGTACGAGAC	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0009_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0009_V2		recist_NR
+TAGCAGCTGATCGTGT	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0010_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0010_V1		recist_NR
+TCTCTATGACGTCTCG	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0010_V2					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0010_V2		recist_NR
+TAGCAGCTGTCAGATA	CAAGCAGAAGACGGCATACGAGATCATAGAGAAGTCAGTCAGCCGGACTACHVGGGTWTCTAAT	AFL0011_V1					16S	feces	AFL	Jeremiah Faith	jeremiah.faith@mssm.edu	Jeremiah Faith	Stool	Mount Sinai		AFL0011_V1		recist_NR
