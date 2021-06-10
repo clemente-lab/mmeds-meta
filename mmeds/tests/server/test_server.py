@@ -798,7 +798,10 @@ class TestServer(helper.CPWebCase):
         # Grab all the access codes on the page
         body = self.body.decode('utf-8')
         code = re.findall('access_code=(.+?)">', body)
+        url_path = Path('/tmp/pre_urls.txt')
+        url_path = Path('/tmp/pre_urls.txt').write_text('\n'.join([cod for cod in code]))
 
+        Path('/tmp/pre_other_page.html').write_text(body)
         self.getPage('/query/select_specimen?access_code={}'.format(code[-1]), headers=self.cookies)
         self.assertStatus('200 OK')
 
@@ -807,7 +810,7 @@ class TestServer(helper.CPWebCase):
         code = re.findall('http:\/\/localhost\/myapp(.+?)" class="row-link">', body)
         url_path = Path('/tmp/urls.txt')
         url_path.write_text('\n'.join([cod for cod in code]))
-
+        Path('/tmp/other_page.html').write_text(body)
         # Open the weight entry page
         self.getPage(code[0].strip(), headers=self.cookies)
         self.assertStatus('200 OK')
