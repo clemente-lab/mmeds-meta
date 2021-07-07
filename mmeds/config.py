@@ -575,6 +575,7 @@ for table in TABLE_ORDER:
         ALL_COLS += results
 c.close()
 TABLE_COLS['AdditionalMetaData'] = []
+DATE_COLS = [col for col in ALL_COLS if 'Date' in col]
 
 # For use when working with Metadata files
 METADATA_TABLES = set(TABLE_ORDER) - ICD_TABLES
