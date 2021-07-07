@@ -262,6 +262,8 @@ class Tool(mp.Process):
             self.jobtext.append('module load mmeds-stable;')
         else:
             self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
+        # Make sure the kernel is up to date
+        self.jobtext.append('python -m jupyter install --user --name mmeds-stable --display-name "MMEDS"')
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
