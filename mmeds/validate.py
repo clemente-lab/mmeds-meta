@@ -455,22 +455,19 @@ class Validator:
             if self.metadata_type == 'subject':
                 if self.subject_type == 'human':
                     self.reference_header = pd.read_csv(fig.TEST_SUBJECT,
-                                                        parse_dates=True, # [('Illness', 'IllnessStartDate')],
                                                         sep=self.sep,
                                                         header=[0, 1],
                                                         nrows=3)
                 elif self.subject_type == 'animal':
                     self.reference_header = pd.read_csv(fig.TEST_ANIMAL_SUBJECT,
-                                                        parse_dates=True,
                                                         sep=self.sep,
                                                         header=[0, 1],
                                                         nrows=3)
-                elif self.metadata_type == 'specimen':
-                    self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
-                                                        parse_dates=True,
-                                                        sep=self.sep,
-                                                        header=[0, 1],
-                                                        nrows=3)
+            elif self.metadata_type == 'specimen':
+                self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
+                                                    sep=self.sep,
+                                                    header=[0, 1],
+                                                    nrows=3)
         except (pd.errors.ParserError, UnicodeDecodeError):
             raise InvalidMetaDataFileError('-1\t-1\tThere is an issue parsing your metadata. Please check that it is' +
                                            ' in tab delimited format with no tab or newline characters in any of the' +
