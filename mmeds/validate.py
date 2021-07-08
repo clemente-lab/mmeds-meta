@@ -87,6 +87,7 @@ def cast_columns(df, cols, file_cols):
         try:  # Date objects need a special cast
             if cols[column] == pd.Timestamp:
                 df[column] = pd.to_datetime(df[column])
+                breakpoint()
             else:
                 df[column].astype(cols[column])
         except ValueError:
