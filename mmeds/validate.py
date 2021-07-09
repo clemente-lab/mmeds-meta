@@ -507,7 +507,7 @@ class Validator:
                     self.errors.append(err.format(column))
 
             # Check the type information is valid
-            ctype = self.header_df[(table, column)].iloc[1]
+            ctype = self.header_df[table][column].iloc[1]
             try:
                 self.col_types[column] = fig.TYPE_MAP[ctype]
             except KeyError:
@@ -521,10 +521,12 @@ class Validator:
                 self.col_types[column] = fig.TYPE_MAP['Text']
 
             if self.col_types[column] == pd.Timestamp:
-                cast_column = pd.to_datetime(self.df[(table, column)])
+                if column == 'IllnessStartDate':
+                    breakpoint()
+                cast_column = pd.to_datetime(self.df[table][column])
                 self.df[(table, column)] = cast_column
             else:
-                self.df[(table, column)].astype(self.col_types[column])
+                self.df[table][column].astype(self.col_types[column])
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
