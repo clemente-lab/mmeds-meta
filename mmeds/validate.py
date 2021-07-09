@@ -521,8 +521,6 @@ class Validator:
                 self.col_types[column] = fig.TYPE_MAP['Text']
 
             if self.col_types[column] == pd.Timestamp:
-                if column == 'IllnessStartDate':
-                    breakpoint()
                 cast_column = pd.to_datetime(self.df[table][column])
                 self.df[(table, column)] = cast_column
             else:
