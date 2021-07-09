@@ -228,6 +228,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
     return pd.read_csv(file_name,
                        sep='\t',
                        header=header,
+                       parse_dates=True,
                        skiprows=skiprows,
                        na_values=na_values,
                        keep_default_na=keep_default_na)

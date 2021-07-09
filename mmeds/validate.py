@@ -76,7 +76,7 @@ def valid_additional_file(file_fp, data_table, generate=True):
             Logger.error(diff)
             valid = False
         else:
-            valid = cast_columns(df, cols, file_cols) and valid
+            df, valid = cast_columns(df, cols, file_cols) and valid
     return valid
 
 
@@ -87,14 +87,13 @@ def cast_columns(df, cols, file_cols):
         try:  # Date objects need a special cast
             if cols[column] == pd.Timestamp:
                 df[column] = pd.to_datetime(df[column])
-                breakpoint()
             else:
                 df[column].astype(cols[column])
         except ValueError:
             Logger.error("Invalid types in ID file")
             result = False
             break
-    return result
+    return df, result
 
 
 class Validator:
@@ -508,7 +507,7 @@ class Validator:
                     self.errors.append(err.format(column))
 
             # Check the type information is valid
-            ctype = self.header_df[table][column].iloc[1]
+            ctype = self.header_df[(table, column)].iloc[1]
             try:
                 self.col_types[column] = fig.TYPE_MAP[ctype]
             except KeyError:
@@ -520,6 +519,12 @@ class Validator:
                     err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
                     self.errors.append(err.format(self.col_index, column))
                 self.col_types[column] = fig.TYPE_MAP['Text']
+
+            if self.col_types[column] == pd.Timestamp:
+                cast_column = pd.to_datetime(self.df[(table, column)])
+                self.df[(table, column)] = cast_column
+            else:
+                self.df[(table, column)].astype(self.col_types[column])
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
