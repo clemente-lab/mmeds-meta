@@ -76,7 +76,8 @@ def valid_additional_file(file_fp, data_table, generate=True):
             Logger.error(diff)
             valid = False
         else:
-            df, valid = cast_columns(df, cols, file_cols) and valid
+            result = cast_columns(df, cols, file_cols) and valid
+            df, valid = result
     return valid
 
 
@@ -398,7 +399,9 @@ class Validator:
                 self.check_table_column()
 
             # Compare the start and end dates
-            if start_col is not None and end_col is not None:
+            if start_col is not None and end_col is not None and\
+                    self.df[(self.cur_table, start_col)].dtype == datetime and\
+                    self.df[(self.cur_table, end_col)].dtype == datetime:
                 self.check_dates(start_col, end_col)
             Logger.debug("checked dates")
 
@@ -521,8 +524,11 @@ class Validator:
                 self.col_types[column] = fig.TYPE_MAP['Text']
 
             if self.col_types[column] == pd.Timestamp:
-                cast_column = pd.to_datetime(self.df[table][column])
-                self.df[(table, column)] = cast_column
+                try:
+                    cast_column = pd.to_datetime(self.df[(table, column)])
+                    self.df[(table, column)] = cast_column
+                except ValueError:
+                    err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
             else:
                 self.df[table][column].astype(self.col_types[column])
 

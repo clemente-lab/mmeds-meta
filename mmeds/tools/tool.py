@@ -96,7 +96,7 @@ class Tool(mp.Process):
         self.access_code = self.doc.access_code
         self.path = Path(self.doc.path)
         self.add_path(self.path, key='path')
-        write_config(self.doc.config.to_dict(), self.path)
+        write_config(self.doc.config, self.path)
         self.create_qiime_mapping_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
