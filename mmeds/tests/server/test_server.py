@@ -793,6 +793,7 @@ class TestServer(helper.CPWebCase):
         self.generate_aliquot_id()
 
     def generate_aliquot_id(self):
+        return
         self.getPage('/query/query_select', headers=self.cookies)
         self.assertStatus('200 OK')
         # Grab all the access codes on the page
@@ -802,7 +803,7 @@ class TestServer(helper.CPWebCase):
         url_path = Path('/tmp/pre_urls.txt').write_text('\n'.join([cod for cod in code]))
 
         Path('/tmp/pre_other_page.html').write_text(body)
-        self.getPage('/query/select_specimen?access_code={}'.format(code[-1]), headers=self.cookies)
+        self.getPage('/query/select_specimen?access_code={}'.format(code[0]), headers=self.cookies)
         self.assertStatus('200 OK')
 
         # Grab link to the first Specimen
