@@ -3,7 +3,7 @@ import mmeds.config as fig
 import re
 
 from collections import defaultdict
-from numpy import std, mean
+from numpy import std, mean, datetime64
 from mmeds.util import load_ICD_codes, is_numeric, load_metadata
 from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
@@ -76,8 +76,7 @@ def valid_additional_file(file_fp, data_table, generate=True):
             Logger.error(diff)
             valid = False
         else:
-            result = cast_columns(df, cols, file_cols) and valid
-            df, valid = result
+            valid = cast_columns(df, cols, file_cols) and valid
     return valid
 
 
@@ -94,7 +93,7 @@ def cast_columns(df, cols, file_cols):
             Logger.error("Invalid types in ID file")
             result = False
             break
-    return df, result
+    return result
 
 
 class Validator:
@@ -400,8 +399,8 @@ class Validator:
 
             # Compare the start and end dates
             if start_col is not None and end_col is not None and\
-                    self.df[(self.cur_table, start_col)].dtype == datetime and\
-                    self.df[(self.cur_table, end_col)].dtype == datetime:
+                    pd.api.types.is_datetime64_ns_dtype(self.df[(self.cur_table, start_col)]) and\
+                    pd.api.types.is_datetime64_ns_dtype(self.df[(self.cur_table, end_col)]):
                 self.check_dates(start_col, end_col)
             Logger.debug("checked dates")
 
