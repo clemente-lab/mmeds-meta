@@ -71,6 +71,7 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
     # Load the relvant template
     if metadata_type == 'subject':
         template = load_subject_template(subject_type)
+        swapped = {}
     elif metadata_type == 'specimen':
         template = load_specimen_template()
         swapped = {
