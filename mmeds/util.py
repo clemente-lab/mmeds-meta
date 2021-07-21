@@ -64,7 +64,7 @@ def format_alerts(args):
     return args
 
 
-def simplified_to_full(file_fp, output_fp, metadata_type, subject_type=None):
+def simplified_to_full(file_fp, output_fp, metadata_type, subject_type='human'):
     """
     Takes in a simplified MMEDs metadata file and expands it to the full format.
     """
