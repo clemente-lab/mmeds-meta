@@ -178,11 +178,6 @@ class MMEDSbase:
 
         return page
 
-    def add_process(self, ptype, process):
-        """ Add an analysis process to the list of processes. """
-        cp.log(f"Adding analysis process {process}")
-        self.monitor.add_process(ptype, process)
-
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
@@ -192,11 +187,6 @@ class MMEDSdownload(MMEDSbase):
     ########################################
     #            Download Pages            #
     ########################################
-
-    @cp.expose
-    def download_filepath(self, file_path):
-        return static.serve_file(file_path, 'application/x-download',
-                                 'attachment', os.path.basename(file_path))
 
     @cp.expose
     def download_file(self, file_name):

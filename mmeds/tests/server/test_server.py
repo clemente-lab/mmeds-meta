@@ -134,6 +134,12 @@ class TestServer(helper.CPWebCase):
         self.change_password()
         self.logout()
 
+    def test_be_access_guides(self):
+        self.login()
+        self.access_user_guide()
+        self.access_simple_guide()
+        self.logout()
+
     def test_ca_animal_upload(self):
         Logger.info('ca animal upload')
         self.login()
@@ -356,6 +362,14 @@ class TestServer(helper.CPWebCase):
     ###########
     # Uploads #
     ###########
+
+    def access_simple_guide(self):
+        self.getPage('/upload/simple_guide', self.cookies)
+        self.assertStatus('200 OK')
+
+    def access_user_guide(self):
+        self.getPage('/upload/user_guide', self.cookies)
+        self.assertStatus('200 OK')
 
     def upload_animal_metadata(self):
         """ Try uploading the two metadata files associated with animal metadata """
