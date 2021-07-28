@@ -849,6 +849,9 @@ class Database:
 
     def check_study_name(self, study_name):
         """ Verifies the provided study name is valid and not already in use. """
+        Logger.debug(f"Checking study_name: {study_name}")
+        Logger.debug(str(list(MMEDSDoc.objects())))
+
         if not study_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
         if MMEDSDoc.objects(study_name=study_name):

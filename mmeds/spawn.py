@@ -66,6 +66,8 @@ class Watcher(BaseManager):
         self.logger = Logger
         self.current_upload = None
         self.checked_stats = None
+        self.cleaned_temp = datetime.utcnow()
+
         queue = Queue()
         self.register('get_queue', callable=lambda: queue)
         pipe_ends = Pipe()
@@ -217,6 +219,18 @@ class Watcher(BaseManager):
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 
+
+    def clean_temp_folders(self):
+        """ Clean out temp folders older than a day, once every day."""
+        if datetime.utcnow() - self.cleaned_temp > timedelta(days=1):
+            temp_files = (Path(fig.DATABASE_DIR) / 'temp_dir').glob('*')
+            for temp_file in temp_files:
+                if datetime.utcnow() - datetime.fromtimestamp(temp_file.stat().st_mtime) > timedelta(days=1):
+                    rmtree(temp_file)
+
+            self.cleaned_temp = datetime.utcnow()
+
+
     def update_stats(self):
         """ Update the mmeds stats to their most recent values """
 
@@ -337,6 +351,7 @@ class Watcher(BaseManager):
         # Continue until it's parent process is killed
         while True:
             self.update_stats()
+            self.clean_temp_folders()
             self.check_processes()
             self.check_upload()
             self.write_running_processes()

@@ -1133,10 +1133,11 @@ class MMEDSserver(MMEDSbase):
             filename = cp.session['user']
             # Create the filename
             temp_dir = Path(path) / Path(filename).name
+            cp.log(f'sesh: {str(cp.session)}')
 
             # Ensure there is not already a file with the same name
             while temp_dir.is_dir():
-                temp_dir = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
+                temp_dir = Path(path) / 'temp_dir' / '_'.join([fig.get_salt(5), Path(filename).name])
             temp_dir.mkdir()
             cp.session['temp_dir'] = temp_dir  # tempfile.TemporaryDirectory()
             cp.session['working_dir'] = Path(cp.session['temp_dir'])
