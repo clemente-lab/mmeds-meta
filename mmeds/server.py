@@ -1133,7 +1133,6 @@ class MMEDSserver(MMEDSbase):
             filename = cp.session['user']
             # Create the filename
             temp_dir = Path(path) / Path(filename).name
-            cp.log(f'sesh: {str(cp.session)}')
 
             # Ensure there is not already a file with the same name
             while temp_dir.is_dir():
