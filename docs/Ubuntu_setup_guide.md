@@ -31,7 +31,6 @@ sudo cp -R [install-dir]/mmeds/CSS /var/www/html
 copy files to ~/mmeds_server_data:
 ```
 mkdir ~/mmeds_server_data
-mkdir ~/mmeds_server_data/temp_dir
 mkdir ~/mmeds_server_data/test_files
 mkdir ~/mmeds_server_data/CherryPySessions
 cp [install-dir]/test* ~/mmeds_server_data/test_files
