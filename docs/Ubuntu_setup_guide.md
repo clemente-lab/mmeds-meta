@@ -31,6 +31,7 @@ sudo cp -R [install-dir]/mmeds/CSS /var/www/html
 copy files to ~/mmeds_server_data:
 ```
 mkdir ~/mmeds_server_data
+mkdir ~/mmeds_server_data/temp_dir
 mkdir ~/mmeds_server_data/test_files
 mkdir ~/mmeds_server_data/CherryPySessions
 cp [install-dir]/test* ~/mmeds_server_data/test_files
@@ -44,8 +45,8 @@ Test symbolic link:\
 `readlink -f myapp.wsgi`
 
 Finally, grant general permissions to /var/www and ~/mmeds_server_data\
-`sudo chmod -R 755 /var/www`
-`sudo chmod -R 755 ~/mmeds_server_data`
+`sudo chmod -R 777 /var/www`
+`sudo chmod -R 777 ~/mmeds_server_data`
 
 ## mysql setup:
 [Follow install instructions](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/)\
@@ -73,6 +74,7 @@ Install pip if you haven't already:\
 ```
 sudo apt-get install libapache2-mod-wsgi-py3 python libexpat1 apache2 apache2-utils ssl-cert
 sudo pip install psutil==5.7.3 more-itertools jaraco.collections zc.lockfile cheroot portend CherryPy
+sudo apt install tidy
 ```
 
 ## Start MMEDs
@@ -114,6 +116,7 @@ Try removing the mmeds_data1 sql database and re-run mysql setup.
 Module not found errors:
    - Can happen after updating system python version, mod_wsgi has its own python install that needs updating. To do this, recreate mod_wsgi from source.
     Remove mod_wsgi, follow instructions here to reinstall and make sure to run as root: https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.html
+`sudo chmod -R 777 ~/mmeds_server_data`
    - Apache2 looks to the root python install for modules: `/usr/local/lib/{python version}/dist-packages`
    When installing modules as root, python will look in multiple locations for installs like in: `/home/{username}/.local/lib/{python version}/site-packages`
    So make sure that required packages aren't in inaccessible locations and if so, remove them.
