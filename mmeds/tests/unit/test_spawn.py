@@ -128,9 +128,7 @@ class SpawnTests(TestCase):
             self.assertEqual(result, 0)
 
     def test_g_clean_temp_folders(self):
-        """ """
-        Logger.info('test clean folders')
-        print("test clean folders")
+        """ Test code for removing temporary folders daily and on startup. """
         temp_sub_dir = Path(fig.DATABASE_DIR) / 'temp_dir' / 'temp_folder'
         temp_sub_dir.mkdir(parents=True)
         self.monitor.clean_temp_folders()

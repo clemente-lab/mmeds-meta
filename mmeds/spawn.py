@@ -56,7 +56,6 @@ class Watcher(BaseManager):
             the necessary information will be added to this queue.
         :testing: A boolean. If true run in testing configuration, otherwise run in deployment configuration.
         """
-        # import pudb; pudb.set_trace()
         super().__init__(address, authkey)
         self.testing = fig.TESTING
         self.count = 0
@@ -224,9 +223,7 @@ class Watcher(BaseManager):
     def clean_temp_folders(self):
         """ Clean out temp folders older than a day, once every day."""
         # Check if a day has passed since we cleaned out temp folders.
-
         if self.cleaned_temp is None or datetime.utcnow() - self.cleaned_temp > timedelta(days=1):
-            # import pudb; pudb.set_trace()
             temp_sub_dirs = (Path(fig.DATABASE_DIR) / 'temp_dir').glob('*')
             for temp_sub_dir in temp_sub_dirs:
                 # Check if any temp folder is more than a day old.
