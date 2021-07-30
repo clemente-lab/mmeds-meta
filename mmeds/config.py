@@ -32,7 +32,7 @@ if TESTING:
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
 else:
-    # TODO: Figure out if all these fp settings being set to wallad07 going to cause issues down the road.
+    # TODO: Change from wallad07 to mmedsadmin
     ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
