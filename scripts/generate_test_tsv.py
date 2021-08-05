@@ -68,7 +68,8 @@ def write_test_metadata(df, output_path, output_name):
 
 
 def write_error_files(df, file_type, file_path):
-    # There must be a better way to do this
+    # Contains all the headers
+    # This takes up many lines and is hard-coded, not ideal
     if file_type == 'subject':
         headers = [('Ethnicity', 'Ethnicity'), 
                 ('Genotypes', 'Genotype'), 
