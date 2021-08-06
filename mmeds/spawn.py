@@ -229,11 +229,14 @@ class Watcher(BaseManager):
             for temp_sub_dir in temp_sub_dirs:
                 # Check if any temp folder is more than a day old.
                 # TODO: Note that if any uploads take longer than a day this could cause a problem.
-                temp_date = temp_sub_dir.stem.split('_')[1]
-                temp_dt = datetime.strptime(temp_date, '%Y-%m-%d-%H:%M')
+                try:
+                    temp_date = temp_sub_dir.stem.split('__')[1]
+                    temp_dt = datetime.strptime(temp_date, '%Y-%m-%d-%H:%M')
 
-                if datetime.utcnow() - temp_dt > timedelta(days=1):
-                    rmtree(temp_sub_dir)
+                    if datetime.utcnow() - temp_dt > timedelta(days=1):
+                        rmtree(temp_sub_dir)
+                except(ValueError):
+                    self.logger.error('Error removing temp folder: {temp_sub_dir}')
 
             self.cleaned_temp = datetime.utcnow()
 
@@ -307,7 +310,6 @@ class Watcher(BaseManager):
         """
         self.check_upload()
 
-        import pudb; pudb.set_trace()
         # If there is nothing uploading currently start the new upload process
         if self.current_upload is None:
             # Check what type of upload this is

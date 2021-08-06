@@ -3,24 +3,11 @@
 Pick an install directory for MMEDS and clone it. Will be referred to as [install-dir]\
 `git clone https://github.com/clemente-lab/mmeds-meta/tree/master/mmeds`
 
-Get mmeds secrets unencoded file from David and place in install-dir:\
-`[install-dir]/mmeds/secrets.py`
-
 Deactivate anaconda if it's running:\
 `conda deactivate`
 
 In the [install-dir] run MMEDs setup as root:\
 `sudo python setup.py install`
-
-## Apache setup
-[Apache information and setup](https://ubuntu.com/tutorials/install-and-configure-apache#1-overview)
-
-```
-sudo cp [install-dir]/www_files/mmeds_ubuntu.conf /etc/apache2/sites-available
-cd /etc/apache2/sites-available
-sudo a2ensite mmeds.conf
-sudo systemctl restart apache2
-```
 
 ## Add required files to /var/www and to ~/mmeds_server_data
 copy files to /var/www/:
@@ -31,10 +18,8 @@ sudo cp -R [install-dir]/mmeds/CSS /var/www/html
 copy files to ~/mmeds_server_data:
 ```
 mkdir ~/mmeds_server_data
-mkdir ~/mmeds_server_data/test_files
 mkdir ~/mmeds_server_data/CherryPySessions
-cp [install-dir]/test_files/test* ~/mmeds_server_data/test_files
-cp [install-dir]/test_files/*.gz ~/mmeds_server_data/test_files
+cp -R [install-dir]/test_files ~/mmeds_server_data
 ```
 
 Create symbolic link:\
@@ -42,10 +27,6 @@ Create symbolic link:\
 
 Test symbolic link:\
 `readlink -f myapp.wsgi`
-
-Finally, grant general permissions to /var/www and ~/mmeds_server_data\
-`sudo chmod -R 777 /var/www`
-`sudo chmod -R 777 ~/mmeds_server_data`
 
 ## mysql setup:
 [Follow install instructions](https://dev.mysql.com/doc/mysql-installation-excerpt/5.7/en/)\
@@ -76,6 +57,21 @@ sudo pip install psutil==5.7.3 more-itertools jaraco.collections zc.lockfile che
 sudo apt install tidy
 ```
 
+## Apache setup
+[Apache information and setup](https://ubuntu.com/tutorials/install-and-configure-apache#1-overview)
+
+```
+sudo cp [install-dir]/www_files/mmeds_ubuntu.conf /etc/apache2/sites-available
+sudo vim /etc/apache2/sites-available/mmeds_ubuntu.conf
+```
+Now that you're editing mmeds_ubuntu.conf, replace  <username> with your own system's username.
+Make sure socket-user=#33 is correct for your system.
+```
+cd /etc/apache2/sites-available
+sudo a2ensite mmeds_ubuntu.conf
+sudo systemctl restart apache2
+```
+
 ## Start MMEDs
 Run the following commands:
 ```
@@ -96,6 +92,9 @@ localhost/myapp/
 ## Troubleshooting:
 If the webpage isn't loading and/or an error is showing, check Apache2's error log for clues:\
 `vi /var/log/apache2/error.log`
+If the webpage can't be found, try the following in /etc/apache2/sites-available/mmeds_ubuntu.conf:
+Move WSGIScriptAlias /myapp /var/www/html/myapp.wsgi outside of <VirtualHost *:80>
+
 
 If you get permissions issues connecting to mysql, try restarting mysql and supply the skip-grant-tables setting:\
 [skip-grant-tables](https://www.oreilly.com/library/view/mysql-8-cookbook/9781788395809/6ea03335-6ff2-4d4f-a008-48c8cf88fd01.xhtml)
@@ -115,7 +114,6 @@ Try removing the mmeds_data1 sql database and re-run mysql setup.
 Module not found errors:
    - Can happen after updating system python version, mod_wsgi has its own python install that needs updating. To do this, recreate mod_wsgi from source.
     Remove mod_wsgi, follow instructions here to reinstall and make sure to run as root: https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.html
-`sudo chmod -R 777 ~/mmeds_server_data`
    - Apache2 looks to the root python install for modules: `/usr/local/lib/{python version}/dist-packages`
    When installing modules as root, python will look in multiple locations for installs like in: `/home/{username}/.local/lib/{python version}/site-packages`
    So make sure that required packages aren't in inaccessible locations and if so, remove them.
