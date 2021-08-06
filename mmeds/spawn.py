@@ -236,7 +236,7 @@ class Watcher(BaseManager):
                     if datetime.utcnow() - temp_dt > timedelta(days=1):
                         rmtree(temp_sub_dir)
                 except(ValueError):
-                    self.logger.error('Error removing temp folder: {temp_sub_dir}')
+                    self.logger.error(f'Error removing temp folder: {temp_sub_dir}')
 
             self.cleaned_temp = datetime.utcnow()
 
