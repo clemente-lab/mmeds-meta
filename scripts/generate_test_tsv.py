@@ -91,7 +91,14 @@ def write_error_files(df, file_type, file_path):
     # Other data columns
     for header in headers:
         other_column = df.copy(deep=True)
-        other_column.loc[headerCount:len(df), header] = np.array([{True if randrange(2) == 0 else False : True if randrange(2) == 0 else False} for i in range(diff)])
+        
+        # Get another column, ensure it is not the same as being tested
+        while True:
+            other_header = headers[randrange(len(headers))]
+            if not other_header == header:
+                break
+
+        other_column.loc[headerCount:len(df), header] = df.loc[headerCount:len(df), other_header]
 
         write_test_metadata(other_column, file_path / 'other_column_tests' / file_type, f'other_{header[1]}.tsv')
 
