@@ -33,8 +33,8 @@ copy files to ~/mmeds_server_data:
 mkdir ~/mmeds_server_data
 mkdir ~/mmeds_server_data/test_files
 mkdir ~/mmeds_server_data/CherryPySessions
-cp [install-dir]/test* ~/mmeds_server_data/test_files
-cp [install-dir]/*.gz ~/mmeds_server_data/test_files
+cp [install-dir]/test_files/test* ~/mmeds_server_data/test_files
+cp [install-dir]/test_files/*.gz ~/mmeds_server_data/test_files
 ```
 
 Create symbolic link:\

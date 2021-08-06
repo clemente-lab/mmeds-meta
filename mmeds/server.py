@@ -1,7 +1,7 @@
 import os
 import cherrypy as cp
 import getpass
-
+from datetime import datetime
 from cherrypy.lib import static
 from pathlib import Path
 from functools import wraps
@@ -1123,6 +1123,8 @@ class MMEDSserver(MMEDSbase):
         Otherwise returns to the login page with an error message.
         """
         cp.log('Login attempt for user: {}'.format(username))
+        cp.log("hiya try")
+        cp.log("hiya 2")
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
@@ -1136,7 +1138,9 @@ class MMEDSserver(MMEDSbase):
 
             # Ensure there is not already a file with the same name
             while temp_dir.is_dir():
-                temp_dir = Path(path) / 'temp_dir' / '_'.join([fig.get_salt(5), Path(filename).name])
+                temp_dir = Path(path) / 'temp_dir' / '_'.join([Path(filename).name,
+                                                               str(datetime.utcnow().
+                                                                   strftime("%Y-%m-%d-%H:%M"))])
             temp_dir.mkdir(parents=True)
             cp.session['temp_dir'] = temp_dir  # tempfile.TemporaryDirectory()
             cp.session['working_dir'] = Path(cp.session['temp_dir'])
@@ -1149,6 +1153,7 @@ class MMEDSserver(MMEDSbase):
             cp.log('Login Successful')
         except err.InvalidLoginError as e:
             page = self.load_webpage('login', error=e.message)
+            cp.log("hiya exception")
         return page
 
     def exit(self):
