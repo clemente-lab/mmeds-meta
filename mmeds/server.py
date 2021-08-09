@@ -1,7 +1,7 @@
 import os
 import cherrypy as cp
 import getpass
-
+from datetime import datetime
 from cherrypy.lib import static
 from pathlib import Path
 from functools import wraps
@@ -1129,11 +1129,18 @@ class MMEDSserver(MMEDSbase):
             path = fig.DATABASE_DIR
             filename = cp.session['user']
             # Create the filename
-            temp_dir = Path(path) / Path(filename).name
+            temp_dir = Path(path) / 'temp_dir' / '__'.join([Path(filename).name,
+                                                            str(datetime.utcnow().
+                                                                strftime("%Y-%m-%d-%H:%M")),
+                                                            '0x'])
 
             # Ensure there is not already a file with the same name
+            temp_idx = 0
             while temp_dir.is_dir():
-                temp_dir = Path(path) / 'temp_dir' / '_'.join([fig.get_salt(5), Path(filename).name])
+                temp_dir=Path(str(temp_dir).replace(f'__{temp_idx}x', f'__{temp_idx + 1}x'))
+                temp_idx+=1
+
+
             temp_dir.mkdir(parents=True)
             cp.session['temp_dir'] = temp_dir  # tempfile.TemporaryDirectory()
             cp.session['working_dir'] = Path(cp.session['temp_dir'])

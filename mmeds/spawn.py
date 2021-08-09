@@ -224,16 +224,23 @@ class Watcher(BaseManager):
         """ Clean out temp folders older than a day, once every day."""
         # Check if a day has passed since we cleaned out temp folders.
         if self.cleaned_temp is None or datetime.utcnow() - self.cleaned_temp > timedelta(days=1):
+            self.logger.debug('Cleaning temp directory')
+
             temp_sub_dirs = (Path(fig.DATABASE_DIR) / 'temp_dir').glob('*')
             for temp_sub_dir in temp_sub_dirs:
                 # Check if any temp folder is more than a day old.
                 # TODO: Note that if any uploads take longer than a day this could cause a problem.
-                if self.cleaned_temp is None or \
-                        datetime.utcnow() - datetime.fromtimestamp(temp_sub_dir.stat().st_mtime) > timedelta(days=1):
-                    rmtree(temp_sub_dir)
+                try:
+                    temp_date = temp_sub_dir.stem.split('__')[1]
+                    temp_dt = datetime.strptime(temp_date, '%Y-%m-%d-%H:%M')
+
+                    if datetime.utcnow() - temp_dt > timedelta(days=1):
+                        rmtree(temp_sub_dir)
+                except(ValueError):
+                    self.logger.error(f'Error removing temp folder: {temp_sub_dir}')
+                    self.cleaned_temp = datetime.utcnow()
 
             self.cleaned_temp = datetime.utcnow()
-
 
     def update_stats(self):
         """ Update the mmeds stats to their most recent values """

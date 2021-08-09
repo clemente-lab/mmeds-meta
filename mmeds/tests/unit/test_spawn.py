@@ -3,6 +3,7 @@ from time import sleep
 
 from yaml import safe_load
 from pathlib import Path
+from datetime import datetime, timedelta
 
 from mmeds.logging import Logger
 import mmeds.config as fig
@@ -129,8 +130,12 @@ class SpawnTests(TestCase):
 
     def test_g_clean_temp_folders(self):
         """ Test code for removing temporary folders daily and on startup. """
-        temp_sub_dir = Path(fig.DATABASE_DIR) / 'temp_dir' / 'temp_folder'
+        # Make a fake old folder that clean_temp_folders() will remove.
+        day_before_yesterday = datetime.utcnow() - timedelta(days=2)
+        day_before_yesterday = day_before_yesterday.strftime('%Y-%m-%d-%H:%M')
+        temp_sub_dir = Path(fig.DATABASE_DIR) / 'temp_dir' / f'lab_user__{day_before_yesterday}__0x'
         temp_sub_dir.mkdir(parents=True)
+
         self.monitor.clean_temp_folders()
         self.assertFalse(temp_sub_dir.exists())
 
