@@ -21,8 +21,11 @@ if TESTING:
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
     # If apache is trying to access apache's home directory for `mmeds_server_data` rather than your user account's home
     # you may need to hardcode the path here
+    # TODO: Add mmeds configuration options for DATABASE_DIR
     if gethostname() == 'fedora-y70':
         DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
+    elif gethostname() == 'Hal':
+        DATABASE_DIR = Path('/home/matt') / 'mmeds_server_data'
     else:
         DATABASE_DIR = Path().home() / 'mmeds_server_data'
     SERVER_PATH = 'http://localhost/myapp/'

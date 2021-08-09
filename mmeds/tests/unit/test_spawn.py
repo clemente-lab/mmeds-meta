@@ -2,6 +2,7 @@ from unittest import TestCase, skip
 from time import sleep
 
 from yaml import safe_load
+from pathlib import Path
 
 from mmeds.logging import Logger
 import mmeds.config as fig
@@ -125,6 +126,13 @@ class SpawnTests(TestCase):
 
             result = self.pipe.recv()
             self.assertEqual(result, 0)
+
+    def test_g_clean_temp_folders(self):
+        """ Test code for removing temporary folders daily and on startup. """
+        temp_sub_dir = Path(fig.DATABASE_DIR) / 'temp_dir' / 'temp_folder'
+        temp_sub_dir.mkdir(parents=True)
+        self.monitor.clean_temp_folders()
+        self.assertFalse(temp_sub_dir.exists())
 
     def test_z_exit(self):
         Logger.error('Putting Terminate')
