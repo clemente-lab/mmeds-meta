@@ -71,8 +71,36 @@ cd /etc/apache2/sites-available
 sudo a2ensite mmeds_ubuntu.conf
 sudo systemctl restart apache2
 ```
+
+## Setup mod_wsgi
 Setup mod_wsgi:
 [mod_wsgi setup](https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html)
+You'll most likely want to build from source so that mod_wsgi is built with your system's python version:
+
+```
+wget https://github.com/GrahamDumpleton/mod_wsgi/archive/4.7.1.tar.gz;
+tar -zxvf ~/Downloads/mod_wsgi-4.7.1.tar.gz;
+sudo mv ~/Downloads/mod_wsgi-4.7.1 /opt/.;
+cd /opt/mod_wsgi-4.7.1;
+```
+
+# Build mod_wsgi
+```
+./configure;
+make;
+sudo make install;
+```
+
+# Note:
+mod_wsgi is built for a specific version of python (e.g. python3.8) if
+Your OS upgrades to a newer python version you need to uninstall and reinstall mod_wsgi for it to update.
+You can do so with the following.
+
+```
+make clean;
+./configure;
+sudo make install;
+```
 
 ## Start MMEDs
 Run the following commands:
