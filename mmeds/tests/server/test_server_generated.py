@@ -99,12 +99,28 @@ class TestServer(CPWebCase):
         cp.config.update(test_config)
         cp.tree.mount(server)
 
-    def test_aa(self):
+    def test_aa_setup(self):
+        Logger.info('========== Test Server Start ==========')
+        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
+
+    def test_ab_index(self):
+        Logger.info('ab index')
         self.getPage('/index')
         self.assertStatus('200 OK')
+        self.assertHeader('Content-Type', 'text/html;charset=utf-8')
+        page_body = self.body.decode('utf-8')
+        check_page(page_body)
+        self.getPage('/auth/public_guide')
+        self.assertStatus('200 OK')
 
-    def test_ab_upload_tsv(self):
-        self.login()
+    def test_ba_sign_up(self):
+        Logger.info('ba sign up')
+        self.not_logged_in()
+        self.sign_up_fail()
+        self.sign_up_success()
+
+    def test_bc_upload_tsv(self):
+        Logger.info('bc upload tsvs')
         top_dir = Path('~/mmeds-meta/scripts/tests/validation_files/')
         sub_directories = ['blank_column_tests', 'na_column_tests', 'other_column_tests', 'number_column_tests', 'date_column_tests']
 
@@ -182,7 +198,7 @@ class TestServer(CPWebCase):
             user = self.server_user
         self.assertStatus('200 OK')
         page = server.load_webpage('home', user=user, dir='.')
-        # self.assertBody(page)
+        self.assertBody(page)
 
     def logout(self):
         self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
