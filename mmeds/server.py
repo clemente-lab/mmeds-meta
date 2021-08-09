@@ -14,7 +14,7 @@ import mmeds.config as fig
 import mmeds.formatter as fmt
 
 from mmeds.validate import Validator, valid_additional_file
-from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats)
+from mmeds.util import (create_local_copy, SafeDict, load_mmeds_stats, simplified_to_full)
 from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
@@ -30,7 +30,14 @@ def catch_server_errors(page_method):
     @wraps(page_method)
     def wrapper(*a, **kwargs):
         try:
-            return page_method(*a, **kwargs)
+            # Strip any whitespace surrounding input fields
+            cleaned_kwargs = {}
+            for key, value in kwargs.items():
+                if isinstance(value, str):
+                    cleaned_kwargs[key] = value.strip()
+                else:
+                    cleaned_kwargs[key] = value
+            return page_method(*a, **cleaned_kwargs)
         except err.LoggedOutError:
             body = HTML_PAGES['login'][0].read_text()
             args = deepcopy(HTML_ARGS)
@@ -171,11 +178,6 @@ class MMEDSbase:
 
         return page
 
-    def add_process(self, ptype, process):
-        """ Add an analysis process to the list of processes. """
-        cp.log(f"Adding analysis process {process}")
-        self.monitor.add_process(ptype, process)
-
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
@@ -185,11 +187,6 @@ class MMEDSdownload(MMEDSbase):
     ########################################
     #            Download Pages            #
     ########################################
-
-    @cp.expose
-    def download_filepath(self, file_path):
-        return static.serve_file(file_path, 'application/x-download',
-                                 'attachment', os.path.basename(file_path))
 
     @cp.expose
     def download_file(self, file_name):
@@ -336,7 +333,7 @@ class MMEDSupload(MMEDSbase):
 
         return super().load_webpage(page, **kwargs)
 
-    def run_validate(self, myMetaData):
+    def run_validate(self, myMetaData, simplified):
         """ Run validate_mapping_file and return the results """
         cp.log('In run validate')
         errors = []
@@ -349,6 +346,11 @@ class MMEDSupload(MMEDSbase):
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
+
+        # If the metadata is partial don't perform validation
+        if simplified:
+            # Overwrite the metadata_copy
+            simplified_to_full(metadata_copy, metadata_copy, cp.session['metadata_type'], cp.session['subject_type'])
 
         # Store the copy's location
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
@@ -515,6 +517,7 @@ class MMEDSupload(MMEDSbase):
         cp.session['download_files']['Specimen_template'] = fig.SPECIMEN_TEMPLATE
         cp.session['download_files']['Subject_example'] = fig.TEST_SUBJECT
         cp.session['download_files']['Specimen_example'] = fig.TEST_SPECIMEN
+        cp.session['metadata_type'] = 'subject'
         page = self.load_webpage('upload_select_page',
                                  user_studies=study_dropdown,
                                  title='Upload Type')
@@ -578,19 +581,13 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def validate_metadata(self, myMetaData, barcodes_type, temporary=False):
+    def validate_metadata(self, myMetaData, barcodes_type, simplified=False):
         """ The page returned after a file is uploaded. """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
-            # If the metadata is temporary don't perform validation
-            if temporary:
-                cp.session['metadata_temporary'] = True
-                metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
-                errors, warnings = [], []
-            else:
-                cp.session['metadata_temporary'] = False
-                errors, warnings = self.run_validate(myMetaData)
+            errors, warnings = self.run_validate(myMetaData, simplified)
             metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
+
             if barcodes_type == 'dual':
                 cp.session['dual_barcodes'] = True
             else:
@@ -651,7 +648,7 @@ class MMEDSupload(MMEDSbase):
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
                     specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
-                    cp.session['metadata_temporary'], public))
+                    cp.session['subject_type'], public))
 
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 

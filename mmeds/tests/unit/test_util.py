@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from mmeds import util
 from mmeds.error import InvalidConfigError, InvalidSQLError
 from mmeds.validate import validate_mapping_file
@@ -16,6 +16,26 @@ import os
 class UtilTests(TestCase):
     def test_load_stats(self):
         util.load_mmeds_stats()
+
+    def test_simplified_to_full(self):
+        df = util.simplified_to_full(fig.TEST_SUBJECT_SIMPLIFIED, '/tmp/subject_df.tsv', 'subject')
+        df2 = util.simplified_to_full(fig.TEST_SPECIMEN_SIMPLIFIED, '/tmp/specimen_df.tsv', 'specimen')
+        errors, dwarnings, subjects = validate_mapping_file('/tmp/subject_df.tsv',
+                                                            df2['Study']['StudyName'][4],
+                                                            'subject',
+                                                            [],
+                                                            'human')
+        errors, warnings, subjects = validate_mapping_file('/tmp/specimen_df.tsv',
+                                                           df2['Study']['StudyName'][5],
+                                                           'specimen',
+                                                           subjects,
+                                                           'human')
+        for error in errors:
+            print(error)
+        for warning in warnings:
+            print(warning)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
 
     def test_format_alerts(self):
         args = {
