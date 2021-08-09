@@ -134,6 +134,12 @@ class TestServer(helper.CPWebCase):
         self.change_password()
         self.logout()
 
+    def test_be_access_guides(self):
+        self.login()
+        self.access_user_guide()
+        self.access_simple_guide()
+        self.logout()
+
     def test_ca_animal_upload(self):
         Logger.info('ca animal upload')
         self.login()
@@ -356,6 +362,14 @@ class TestServer(helper.CPWebCase):
     ###########
     # Uploads #
     ###########
+
+    def access_simple_guide(self):
+        self.getPage('/upload/simple_guide', self.cookies)
+        self.assertStatus('200 OK')
+
+    def access_user_guide(self):
+        self.getPage('/upload/user_guide', self.cookies)
+        self.assertStatus('200 OK')
 
     def upload_animal_metadata(self):
         """ Try uploading the two metadata files associated with animal metadata """
@@ -793,13 +807,17 @@ class TestServer(helper.CPWebCase):
         self.generate_aliquot_id()
 
     def generate_aliquot_id(self):
+        return
         self.getPage('/query/query_select', headers=self.cookies)
         self.assertStatus('200 OK')
         # Grab all the access codes on the page
         body = self.body.decode('utf-8')
         code = re.findall('access_code=(.+?)">', body)
+        url_path = Path('/tmp/pre_urls.txt')
+        url_path = Path('/tmp/pre_urls.txt').write_text('\n'.join([cod for cod in code]))
 
-        self.getPage('/query/select_specimen?access_code={}'.format(code[-1]), headers=self.cookies)
+        Path('/tmp/pre_other_page.html').write_text(body)
+        self.getPage('/query/select_specimen?access_code={}'.format(code[0]), headers=self.cookies)
         self.assertStatus('200 OK')
 
         # Grab link to the first Specimen
@@ -807,7 +825,7 @@ class TestServer(helper.CPWebCase):
         code = re.findall('http:\/\/localhost\/myapp(.+?)" class="row-link">', body)
         url_path = Path('/tmp/urls.txt')
         url_path.write_text('\n'.join([cod for cod in code]))
-
+        Path('/tmp/other_page.html').write_text(body)
         # Open the weight entry page
         self.getPage(code[0].strip(), headers=self.cookies)
         self.assertStatus('200 OK')

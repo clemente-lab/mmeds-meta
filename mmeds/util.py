@@ -64,12 +64,76 @@ def format_alerts(args):
     return args
 
 
+def simplified_to_full(file_fp, output_fp, metadata_type, subject_type='human'):
+    """
+    Takes in a simplified MMEDs metadata file and expands it to the full format.
+    """
+    # Load the relvant template
+    if metadata_type == 'subject':
+        template = load_subject_template(subject_type)
+        swapped = {}
+    elif metadata_type == 'specimen':
+        template = load_specimen_template()
+        swapped = {
+            'Specimen': 'RawData',
+            'SpecimenProtocol': 'RawDataProtocol',
+            'SpecimenProtocols': 'RawDataProtocols',
+            'SpecimenID': 'RawDataID',
+            'SpecimenNotes': 'RawDataNotes',
+            'BarcodeSequence': 'BarcodeSequence',
+            'LinkerPrimerSequence': 'LinkerPrimerSequence',
+            'SpecimenDatePerformed':  'RawDataDatePerformed',
+            'SpecimenProcessor':  'RawDataProcessor',
+            'Primer':  'Primer',
+            'SequencingTechnology': 'SequencingTechnology',
+            'TargetGene': 'TargetGene'
+        }
+
+    # Get the required columns
+    required_cols = [col for col in template.columns if template[col][0] == 'Required']
+
+    simplified_df = pd.read_csv(file_fp, header=[0, 1], sep='\t')
+    renamed_df = simplified_df.rename(columns=swapped)
+
+    # Get the missing columns
+    add_cols = set(template.columns.tolist()).difference(renamed_df.columns)
+
+    # Add the missing columns
+    for col in add_cols:
+        # If the column is required fill it in based on existing data
+        if col in required_cols:
+            if 'ProtocolID' in col[1]:
+                renamed_df[col] = (template[col].tolist() + list(range(0, len(renamed_df) - 3)))
+            elif 'SpecimenID' == col[1]:
+                renamed_df[col] = (template[col].tolist() +
+                                   ['Specimen_' + x for x in renamed_df[('RawData', 'RawDataID')][3:].tolist()])
+        # If it's optional just fill it with NAs
+        else:
+            renamed_df[col] = (template[col].tolist() + ([None] * (len(renamed_df) - 3)))
+
+    # Write the dataframe to the file specified
+    renamed_df.to_csv(output_fp, sep='\t', index=False, na_rep='NA')
+    return renamed_df
+
+
 def load_mmeds_stats():
     if Path(fig.STAT_FILE).exists():
         stats = yaml.safe_load(fig.STAT_FILE.read_text())
     else:
         stats = {}
     return stats
+
+
+def load_subject_template(subject_type):
+    if subject_type == 'human':
+        df = pd.read_csv(fig.TEST_SUBJECT, header=[0, 1], nrows=3, sep='\t')
+    elif subject_type == 'animal':
+        df = pd.read_csv(fig.TEST_ANIMAL_SUBJECT, header=[0, 1], nrows=3, sep='\t')
+    return df
+
+
+def load_specimen_template():
+    return pd.read_csv(fig.TEST_SPECIMEN, header=[0, 1], nrows=3, sep='\t')
 
 
 def load_metadata_template(subject_type):
@@ -114,6 +178,7 @@ def write_metadata(df, output_path):
         subject_type = 'human'
     elif ('AnimalSubjects', 'AnimalSubjectID') in unsorted.keys():
         subject_type = 'animal'
+
     template = load_metadata_template(subject_type)
 
     metadata_length = len(unsorted[('RawData', 'RawDataID')])
@@ -164,6 +229,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
     return pd.read_csv(file_name,
                        sep='\t',
                        header=header,
+                       parse_dates=True,
                        skiprows=skiprows,
                        na_values=na_values,
                        keep_default_na=keep_default_na)

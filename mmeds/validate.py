@@ -3,7 +3,7 @@ import mmeds.config as fig
 import re
 
 from collections import defaultdict
-from numpy import std, mean
+from numpy import std, mean, datetime64
 from mmeds.util import load_ICD_codes, is_numeric, load_metadata
 from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
@@ -86,7 +86,7 @@ def cast_columns(df, cols, file_cols):
     for column in file_cols:
         try:  # Date objects need a special cast
             if cols[column] == pd.Timestamp:
-                pd.to_datetime(df[column])
+                df[column] = pd.to_datetime(df[column])
             else:
                 df[column].astype(cols[column])
         except ValueError:
@@ -254,7 +254,6 @@ class Validator:
         =======================================================================
         :col_index: The index of the column in the original dataframe
         """
-        Logger.debug(f"Check column {column}")
         self.col_type = self.col_types[self.cur_col]
 
         # Get the header
@@ -262,10 +261,12 @@ class Validator:
 
         Logger.debug("iterate over cells")
         if column.isna().all():
-           if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
-               Logger.debug("Column shouldn't be NA")
-               err = '{}\t{}\tMissing Required Value Error'
-               self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col)))
+            if (not self.cur_table == 'AdditionalMetaData' and
+                self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
+
+                Logger.debug("Column shouldn't be NA")
+                err = '{}\t{}\tMissing Required Value Error'
+                self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col)))
         else:
             # Check each cell in the column
             for i, cell in enumerate(column):
@@ -277,9 +278,7 @@ class Validator:
                         err = '{}\t{}\tMissing Required Value Error'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
                 else:
-                    Logger.debug("Checking Cell")
                     self.check_cell(i, cell)
-                    Logger.debug("CHecked cell")
 
             # Ensure there is only one study being uploaded
             if header == 'StudyName' and len(set(column.tolist())) > 1:
@@ -399,7 +398,9 @@ class Validator:
                 self.check_table_column()
 
             # Compare the start and end dates
-            if start_col is not None and end_col is not None:
+            if start_col is not None and end_col is not None and\
+                    pd.api.types.is_datetime64_ns_dtype(self.df[(self.cur_table, start_col)]) and\
+                    pd.api.types.is_datetime64_ns_dtype(self.df[(self.cur_table, end_col)]):
                 self.check_dates(start_col, end_col)
             Logger.debug("checked dates")
 
@@ -520,6 +521,15 @@ class Validator:
                     err = '-1\t{}\tColumn Invalid Type Error: Invalid type information for column {}'
                     self.errors.append(err.format(self.col_index, column))
                 self.col_types[column] = fig.TYPE_MAP['Text']
+
+            if self.col_types[column] == pd.Timestamp:
+                try:
+                    cast_column = pd.to_datetime(self.df[(table, column)])
+                    self.df[(table, column)] = cast_column
+                except ValueError:
+                    err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
+            else:
+                self.df[table][column].astype(self.col_types[column])
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
