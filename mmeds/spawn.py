@@ -224,6 +224,7 @@ class Watcher(BaseManager):
         """ Clean out temp folders older than a day, once every day."""
         # Check if a day has passed since we cleaned out temp folders.
         if self.cleaned_temp is None or datetime.utcnow() - self.cleaned_temp > timedelta(days=1):
+            self.logger.debug('Cleaning temp directory')
 
             temp_sub_dirs = (Path(fig.DATABASE_DIR) / 'temp_dir').glob('*')
             for temp_sub_dir in temp_sub_dirs:
@@ -237,6 +238,7 @@ class Watcher(BaseManager):
                         rmtree(temp_sub_dir)
                 except(ValueError):
                     self.logger.error(f'Error removing temp folder: {temp_sub_dir}')
+                    self.cleaned_temp = datetime.utcnow()
 
             self.cleaned_temp = datetime.utcnow()
 

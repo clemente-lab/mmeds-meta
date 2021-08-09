@@ -133,7 +133,7 @@ class SpawnTests(TestCase):
         # Make a fake old folder that clean_temp_folders() will remove.
         day_before_yesterday = datetime.utcnow() - timedelta(days=2)
         day_before_yesterday = day_before_yesterday.strftime('%Y-%m-%d-%H:%M')
-        temp_sub_dir = Path(fig.DATABASE_DIR) / 'temp_dir' / f'lab_user__{day_before_yesterday}'
+        temp_sub_dir = Path(fig.DATABASE_DIR) / 'temp_dir' / f'lab_user__{day_before_yesterday}__0x'
         temp_sub_dir.mkdir(parents=True)
 
         self.monitor.clean_temp_folders()
