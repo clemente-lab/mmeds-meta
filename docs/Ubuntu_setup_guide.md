@@ -71,6 +71,8 @@ cd /etc/apache2/sites-available
 sudo a2ensite mmeds_ubuntu.conf
 sudo systemctl restart apache2
 ```
+Setup mod_wsgi:
+[mod_wsgi setup](https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html)
 
 ## Start MMEDs
 Run the following commands:
