@@ -100,7 +100,7 @@ class TestServer(CPWebCase):
         cp.tree.mount(server)
 
     def test_aa_setup(self):
-        Logger.info('========== Test Server Start ==========')
+        Logger.warn('========== Test Server Start ==========')
         add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
 
     def test_ab_index(self):
@@ -118,22 +118,30 @@ class TestServer(CPWebCase):
         self.not_logged_in()
         self.sign_up_fail()
         self.sign_up_success()
-
+    
     def test_bc_upload_tsv(self):
         Logger.info('bc upload tsvs')
         self.login()
         top_dir = Path('/home/adamcantor22/mmeds-meta/scripts/tests/validation_files/')
         sub_directories = ['blank_column_tests', 'na_column_tests', 'other_column_tests', 'number_column_tests', 'date_column_tests']
-
+        
         total_directories = []
         for directory in sub_directories:
             total_directories.append(top_dir / directory / 'specimen')
             total_directories.append(top_dir / directory / 'subject')
         
+        fail_files = []
         for directory in total_directories:
             for test_file in directory.glob('*.tsv'):
-                Logger.info(test_file)
-                self.upload_error_file(test_file)
+                Logger.info(test_file.name)
+                if not self.upload_error_file(test_file):
+                    fail_files.append(test_file)
+                    Logger.info('Failed: ' + str(len(fail_files)))
+        output_string = ''
+        for f in fail_files:
+            output_string += str(f) + '\n'
+        Logger.warn('These files did not return 200 OK when uploaded: \n' + output_string)
+        self.logout()
 
     ####################
     #  Authentication  #
@@ -274,15 +282,17 @@ class TestServer(CPWebCase):
     ###########
 
     def upload_error_file(self, file_path):
-        Logger.info('Getting upload page')
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        Logger.info('success')
 
-        headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Good_Study22&subjectType=animal', self.cookies)
         self.assertStatus('200 OK')
         
+        headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])
+        status = self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        return status[0] == '200 OK' 
+    
+        """        
         page_body = self.body
         document, errors = tidy_document(page_body)
         # Assert no errors, warnings are okay
@@ -291,6 +301,7 @@ class TestServer(CPWebCase):
         
         assert recieve_email(self.server_user, 'upload',
                              'user {} uploaded data for the {}'.format(self.server_user, 'Good_Study'))
+        """
 
     def upload_animal_metadata(self):
         """ Try uploading the two metadata files associated with animal metadata """
