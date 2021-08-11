@@ -121,6 +121,7 @@ class TestServer(CPWebCase):
 
     def test_bc_upload_tsv(self):
         Logger.info('bc upload tsvs')
+        self.login()
         top_dir = Path('/home/adamcantor22/mmeds-meta/scripts/tests/validation_files/')
         sub_directories = ['blank_column_tests', 'na_column_tests', 'other_column_tests', 'number_column_tests', 'date_column_tests']
 
@@ -130,8 +131,8 @@ class TestServer(CPWebCase):
             total_directories.append(top_dir / directory / 'subject')
         
         for directory in total_directories:
-            Logger.debug(str(directory))
             for test_file in directory.glob('*.tsv'):
+                Logger.info(test_file)
                 self.upload_error_file(test_file)
 
     ####################
@@ -273,13 +274,17 @@ class TestServer(CPWebCase):
     ###########
 
     def upload_error_file(self, file_path):
+        Logger.info('Getting upload page')
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        
-        headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
-        self.assertStatus('200 OK')
+        Logger.info('success')
 
+        headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])
+        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+        
+        page_body = self.body
+        document, errors = tidy_document(page_body)
         # Assert no errors, warnings are okay
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
