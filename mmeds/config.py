@@ -34,13 +34,12 @@ if TESTING:
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
 else:
-    # TODO: Change from wallad07 to mmedsadmin
-    ROOT = Path('/hpc/users/wallad07/www/mmeds-meta/')
+    ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-    WWW_ROOT = "https://wallad07.u.hpc.mssm.edu/"
+    WWW_ROOT = "https://mmedsadmin.u.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
@@ -335,6 +334,7 @@ TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
 TEST_ANIMAL_CONFIG = str(TEST_PATH / 'test_config_animal.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
+TEST_SPECIMEN_SIMPLIFIED = str(TEST_PATH / 'test_specimen_simplified.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
 TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
 TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
@@ -342,6 +342,7 @@ TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
 TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
 TEST_SPECIMEN_SHORT_WARN = str(TEST_PATH / 'validation_files/test_specimen_short_warn.tsv')
 TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
+TEST_SUBJECT_SIMPLIFIED = str(TEST_PATH / 'test_subject_simplified.tsv')
 TEST_ADD_SUBJECT = str(TEST_PATH / 'test_add_subject.tsv')
 TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
@@ -579,6 +580,7 @@ for table in TABLE_ORDER:
         ALL_COLS += results
 c.close()
 TABLE_COLS['AdditionalMetaData'] = []
+DATE_COLS = [col for col in ALL_COLS if 'Date' in col]
 
 # For use when working with Metadata files
 METADATA_TABLES = set(TABLE_ORDER) - ICD_TABLES
