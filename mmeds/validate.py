@@ -271,9 +271,9 @@ class Validator:
             # Check each cell in the column
             for i, cell in enumerate(column):
                 if pd.isna(cell):
-                    Logger.debug("Cell is NA")
                     # Check for missing required fields
-                    if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                    if not self.cur_table == 'AdditionalMetaData' and\
+                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
                         Logger.debug("Cell shouldn't be NA")
                         err = '{}\t{}\tMissing Required Value Error'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
