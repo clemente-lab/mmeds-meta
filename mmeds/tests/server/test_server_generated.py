@@ -17,6 +17,12 @@ import cherrypy as cp
 import re
 from cherrypy.test.helper import CPWebCase
 
+"""
+Prior to running this test, one must run from the folder /mmeds-meta/scripts:
+    python generate_test_tsv.py
+
+Logged output of this test can be found in /mmeds_server_data/MMEDS_log.txt
+"""
 
 testing = True
 monitor = Watcher()
@@ -122,17 +128,19 @@ class TestServer(CPWebCase):
     def test_bc_upload_tsv(self):
         Logger.info('bc upload tsvs')
         self.login()
-        top_dir = Path('/home/adamcantor22/mmeds-meta/scripts/tests/validation_files/')
+        top_dir = Path('../../../test_files/validation_files/')
         sub_directories = ['blank_column_tests', 'na_column_tests', 'other_column_tests', 'number_column_tests', 'date_column_tests']
         
         total_directories = []
         for directory in sub_directories:
             total_directories.append(top_dir / directory / 'specimen')
             total_directories.append(top_dir / directory / 'subject')
+        #total_directories.append(top_dir / 'misc_tests')
         
         fail_files = []
         for directory in total_directories:
-            for test_file in directory.glob('*.tsv'):
+            pattern = '*.*' if directory.name == 'misc_tests' else '*.tsv' 
+            for test_file in directory.glob(pattern):
                 Logger.info(test_file.name)
                 if not self.upload_error_file(test_file):
                     fail_files.append(test_file)
@@ -285,7 +293,7 @@ class TestServer(CPWebCase):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
 
-        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Good_Study22&subjectType=animal', self.cookies)
+        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human', self.cookies)
         self.assertStatus('200 OK')
         
         headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])

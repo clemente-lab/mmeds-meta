@@ -161,19 +161,32 @@ class Validator:
 
     def check_lengths(self, column):
         """ Checks that all entries have the same length in the provided column """
-        length = len(column[0])
+        try:
+            length = len(column[0])
+        except TypeError:
+            length = 0
+            err = '{}\t{}\tLength Error: Column {} had an unexpected length'
+            self.errors.append(err.format(-1, self.col_index, column.name))
         for i, cell in enumerate(column[1:]):
-            if not len(cell) == length:
+            try:
+                cell_length = len(cell)
+            except TypeError:
+                cell_length = 0
+                err = '{}\t{}\tLength Error: Cell {} had an unexpected length in column {}'
+                self.errors.append(err.format(i, self.col_index, cell, column.name))
+            if not cell_length == length:
                 err = '{}\t{}\tLength Error: Value {} has a different length from other values in column {}'
-                self.errors.append(err.format(i, self.col_index, cell, self.col_index))
+                self.errors.append(err.format(i, self.col_index, cell, column.name))
 
     def check_barcode_chars(self, column):
         """ Check that BarcodeSequence only contains valid DNA characters. """
         for i, cell in enumerate(column):
-            diff = set(cell).difference(DNA)
+            try:
+                diff = set(cell).difference(DNA)
+            except TypeError:
+                diff = set()
             if diff:
-                self.errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' %
-                                   (i, self.col_index, ', '.join(diff), i))
+                self.errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' % (i, self.col_index, ', '.join(diff), i))
 
     def check_ICD_codes(self, column):
         """ Ensures all ICD codes in the column are valid. """
@@ -181,10 +194,14 @@ class Validator:
         ICD_codes = load_ICD_codes()
         for i, cell in enumerate(column):
             if not pd.isnull(cell):
-                parts = cell.split('.')
-                if (ICD_codes.get(parts[0]) is None or ICD_codes.get(parts[0]).get(parts[1]) is None):
-                    err = '{}\t{}\tICD Code Error: Invalid ICD code {} in row {}'
-                    self.errors.append(err.format(i, self.col_index, cell, i))
+                try:
+                    parts = cell.split('.')
+                except AttributeError:
+                    parts = [None, None]
+                finally:
+                    if (ICD_codes.get(parts[0]) is None or ICD_codes.get(parts[0]).get(parts[1]) is None):
+                        err = '{}\t{}\tICD Code Error: Invalid ICD code {} in row {}'
+                        self.errors.append(err.format(i, self.col_index, cell, i))
 
     def check_NA(self, column):
         """ Checks for any NA values in the provided column """
@@ -227,7 +244,7 @@ class Validator:
             if self.col_type == str:
                 # Check for empty fields
                 if '' == cell:
-                    self.errors.append(row_col + 'Empty Cell Error: Empty cell value {}'.format(cell))
+                    self.errors.append(row_col + 'Empty Cell Error: Empty cell value in column {}'.format(self.cur_col))
                 # Check for non-standard NAs
                 elif cast_cell in NAs:
                     self.errors.append(row_col + 'NA Error: Non standard NA format {}'.format(cast_cell))
@@ -265,8 +282,8 @@ class Validator:
                 self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
 
                 Logger.debug("Column shouldn't be NA")
-                err = '{}\t{}\tMissing Required Value Error'
-                self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col)))
+                err = '{}\t{}\tMissing Required Value Error in Column {}'
+                self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col), self.cur_col))
         else:
             # Check each cell in the column
             for i, cell in enumerate(column):
@@ -501,6 +518,7 @@ class Validator:
         """ Ensure each column will cast to its specified type """
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
+            # self.col_index = self.column.index(self.cur_column)
             # Get the specified types for additional metadata fields
             if table == 'AdditionalMetaData':
                 # Add an error if the column name is one of the columns in the default template
@@ -528,8 +546,13 @@ class Validator:
                     self.df[(table, column)] = cast_column
                 except ValueError:
                     err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
+                    self.errors.append(err.format(self.col_index, column))
             else:
-                self.df[table][column].astype(self.col_types[column])
+                try:
+                    self.df[table][column].astype(self.col_types[column])
+                except ValueError:
+                    err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
+                    self.errors.append(err.format(self.col_index, column))
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
