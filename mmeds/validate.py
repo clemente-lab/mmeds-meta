@@ -161,19 +161,25 @@ class Validator:
 
     def check_lengths(self, column):
         """ Checks that all entries have the same length in the provided column """
-        length = len(column[0])
-        for i, cell in enumerate(column[1:]):
-            if not len(cell) == length:
-                err = '{}\t{}\tLength Error: Value {} has a different length from other values in column {}'
-                self.errors.append(err.format(i, self.col_index, cell, self.col_index))
+        if isinstance(column[0], str):
+            length = len(column[0])
+            for i, cell in enumerate(column[1:]):
+                if not len(cell) == length:
+                    err = '{}\t{}\tLength Error: Value {} has a different length from other values in column {}'
+                    self.errors.append(err.format(i, self.col_index, cell, self.col_index))
+        else:
+            self.errors.append(f'-1\t{self.col_index} Column Error: Column {self.col_index} has wrong type of value')
 
     def check_barcode_chars(self, column):
         """ Check that BarcodeSequence only contains valid DNA characters. """
-        for i, cell in enumerate(column):
-            diff = set(cell).difference(DNA)
-            if diff:
-                self.errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' %
-                                   (i, self.col_index, ', '.join(diff), i))
+        if isinstance(column[0], str):
+            for i, cell in enumerate(column):
+                diff = set(cell).difference(DNA)
+                if diff:
+                    self.errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' %
+                                       (i, self.col_index, ', '.join(diff), i))
+        else:
+            self.errors.append(f'-1\t{self.col_index} Column Error: Column {self.col_index} has wrong type of value')
 
     def check_ICD_codes(self, column):
         """ Ensures all ICD codes in the column are valid. """
