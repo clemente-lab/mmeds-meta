@@ -53,8 +53,9 @@ class ErrorTests(TestCase):
 
         # Get all sub directories to analyze
         total_directories = list(top_dir.glob('*/subject/')) + list(top_dir.glob('*/specimen/'))
-
+        print(total_directories)
         good_subjects = valid.validate_mapping_file(fig.TEST_SUBJECT_SHORT, 'Short_Study', 'subject', None, 'human')[2]
+        print(total_directories[0].glob('*'))
         for directory in total_directories:
             for test_file in directory.glob('*.tsv'):
                 exceptions_covered = True
