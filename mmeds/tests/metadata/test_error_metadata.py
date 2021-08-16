@@ -60,7 +60,7 @@ class ErrorTests(TestCase):
                 exceptions_covered = True
 
                 if VERBOSE:
-                    print_header(test_file)
+                    self.print_header(test_file)
 
                 # Test subject files
                 if test_file.parent.name == 'subject':
@@ -68,7 +68,7 @@ class ErrorTests(TestCase):
                         errors, warnings, subjects = valid.validate_mapping_file(test_file, 'Good_Study22',
                                                                                  'subject', None, 'human')
                         if VERBOSE:
-                            print_messages(test_file, errors, warnings)
+                            self.print_messages(test_file, errors, warnings)
 
                     except Exception as ex:
                         print('Exception', ex, 'of type', type(ex))
@@ -82,7 +82,7 @@ class ErrorTests(TestCase):
                         errors, warnings, subjects = valid.validate_mapping_file(test_file, 'Short_Study',
                                                                                  'specimen', good_subjects, 'human')
                         if VERBOSE:
-                            print_messages(test_file, errors, warnings)
+                            self.print_messages(test_file, errors, warnings)
 
                     except Exception as ex:
                         print('Exception', ex, 'of type', type(ex))
