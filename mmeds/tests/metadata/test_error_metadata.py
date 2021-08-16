@@ -4,6 +4,7 @@ import mmeds.config as fig
 import sys
 import traceback as tb
 from pathlib import Path
+from socket import gethostname
 
 # Set as True to see formatted error output
 VERBOSE = True
@@ -54,6 +55,7 @@ class ErrorTests(TestCase):
         # Get all sub directories to analyze
         total_directories = list(top_dir.glob('*/subject/')) + list(top_dir.glob('*/specimen/'))
         print(Path.cwd())
+        print('hostname', gethostname())
         good_subjects = valid.validate_mapping_file(fig.TEST_SUBJECT_SHORT, 'Short_Study', 'subject', None, 'human')[2]
         for directory in total_directories:
             for test_file in directory.glob('*.tsv'):
