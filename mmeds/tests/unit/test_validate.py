@@ -116,6 +116,7 @@ class ValidateTests(TestCase):
         good_subjects = valid.validate_mapping_file(fig.TEST_SUBJECT_SHORT, 'Short_Study', 'subject', None, 'human')[2]
         for directory in total_directories:
             for test_file in directory.glob('*.tsv'):
+                exceptions_covered = True
 
                 # Generate headers for each file output
                 length = len(test_file.name)
@@ -150,6 +151,7 @@ class ValidateTests(TestCase):
                     except Exception as ex:
                         print('Exception', ex, 'of type', type(ex))
                         trace = tb.StackSummary.extract(tb.walk_tb(sys.exc_info()[2]))
+                        exceptions_covered = False
                         for tr in trace:
                             print(tr)
 
@@ -174,7 +176,9 @@ class ValidateTests(TestCase):
                     except Exception as ex:
                         print('Exception', ex, 'of type', type(ex))
                         trace = tb.StackSummary.extract(tb.walk_tb(sys.exc_info()[2]))
+                        exceptions_covered = False
                         for tr in trace:
                             print(tr)
-
+                
+                assert exceptions_covered
        
