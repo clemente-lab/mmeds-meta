@@ -165,7 +165,7 @@ class Validator:
             length = len(column[0])
         except TypeError:
             length = 0
-            err = '{}\t{}\tLength Error: Column {} had an unexpected length'
+            err = '{}\t{}\tColumn Error: Column {} had no content'
             self.errors.append(err.format(-1, self.col_index, column.name))
         for i, cell in enumerate(column[1:]):
             try:
@@ -183,10 +183,12 @@ class Validator:
         for i, cell in enumerate(column):
             try:
                 diff = set(cell).difference(DNA)
+            # Create blank set to allow error to occur normally
             except TypeError:
                 diff = set()
             if diff:
-                self.errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' % (i, self.col_index, ', '.join(diff), i))
+                self.errors.append('%d\t%d\tBarcode Error: Invalid BarcodeSequence char(s) %s in row %d' %
+                                   (i, self.col_index, ', '.join(diff), i))
 
     def check_ICD_codes(self, column):
         """ Ensures all ICD codes in the column are valid. """
@@ -279,7 +281,7 @@ class Validator:
         Logger.debug("iterate over cells")
         if column.isna().all():
             if (not self.cur_table == 'AdditionalMetaData' and
-                self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
+                    self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
 
                 Logger.debug("Column shouldn't be NA")
                 err = '{}\t{}\tMissing Required Value Error in Column {}'
@@ -518,7 +520,6 @@ class Validator:
         """ Ensure each column will cast to its specified type """
         # Get the tables in the dataframe while maintaining order
         for (table, column) in self.df.axes[1]:
-            # self.col_index = self.column.index(self.cur_column)
             # Get the specified types for additional metadata fields
             if table == 'AdditionalMetaData':
                 # Add an error if the column name is one of the columns in the default template

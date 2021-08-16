@@ -33,5 +33,7 @@ jobs:
         run: |
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
+      - name: Metadata Tests
+        run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py 
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;
