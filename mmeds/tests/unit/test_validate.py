@@ -3,7 +3,6 @@ import mmeds.validate as valid
 import mmeds.config as fig
 from pathlib import Path
 
-
 class ValidateTests(TestCase):
     def test_a_validate_mapping_files(self):
         """ Checks that the primary testing metadata files of each type validate without error """
