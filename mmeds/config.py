@@ -26,6 +26,8 @@ if TESTING:
         DATABASE_DIR = Path('/home/david') / 'mmeds_server_data'
     elif gethostname() == 'Hal':
         DATABASE_DIR = Path('/home/matt') / 'mmeds_server_data'
+    elif gethostname() == 'adam-Inspiron-15-7000':
+        DATABASE_DIR = Path('/home/adamcantor22') / 'mmeds_server_data'
     else:
         DATABASE_DIR = Path().home() / 'mmeds_server_data'
     SERVER_PATH = 'http://localhost/myapp/'

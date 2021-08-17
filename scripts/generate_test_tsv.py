@@ -20,8 +20,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('-p', '--path', required=True, type=click.Path(exists=True),
-              help='Path to put the created test files')
+@click.option('-p', '--path', default='../test_files/', show_default=True, 
+        type=click.Path(exists=True), help='Path to put the created test files')
+
 def main(path):
     file_path = Path(path) / 'validation_files'
     print('Output:', file_path)
