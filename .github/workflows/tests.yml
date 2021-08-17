@@ -23,7 +23,7 @@ jobs:
       - name: Python install
         run: sudo python setup.py install
       - name: Metadata Tests
-        run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py; 
+        run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Server Tests
         run: |
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
