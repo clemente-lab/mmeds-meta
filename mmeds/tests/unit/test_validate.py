@@ -96,4 +96,3 @@ class ValidateTests(TestCase):
         assert valid.valid_additional_file(fig.TEST_SAMPLE_UPLOAD, 'sample')
         assert not valid.valid_additional_file(fig.TEST_SAMPLE_UPLOAD, 'aliquot')
         assert valid.valid_additional_file(fig.TEST_ADD_SUBJECT, 'subject')
-
