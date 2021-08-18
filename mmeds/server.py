@@ -772,6 +772,7 @@ class MMEDSauthentication(MMEDSbase):
 class MMEDSanalysis(MMEDSbase):
     def __init__(self):
         super().__init__()
+        self.with_privileges = False
 
     ######################################
     #              Analysis              #
@@ -855,8 +856,7 @@ class MMEDSanalysis(MMEDSbase):
             if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
-            # Get study access code based on name
-            with Database(testing=self.testing) as dbase:
+            with Database(testing=self.testing, owner=self.get_user()) as dbase:
                 studies = dbase.get_all_user_studies(self.get_user())
 
             access_code = ''
@@ -906,8 +906,9 @@ class MMEDSanalysis(MMEDSbase):
         </tr> '''
 
         id_study_html = '<option value="{study_name}">{study_name}</option>'
+        print('IF THIS PRINTS A USER, SESSION EXISTS', cp.session['user'])
 
-        with Database(testing=self.testing) as dbase:
+        with Database(testing=self.testing, owner=self.get_user()) as dbase:
             studies = dbase.get_all_user_studies(self.get_user())
 
         study_list = []
@@ -920,7 +921,7 @@ class MMEDSanalysis(MMEDSbase):
                                                 ))
             id_study_list.append(id_study_html.format(study_name=study.study_name))
         # Add unhide any privileged options
-        if check_privileges(self.get_user(), self.testing):
+        if self.with_privileges or check_privileges(self.get_user(), self.testing):
             page = self.load_webpage('analysis_select_tool',
                                      title='Select Analysis',
                                      user_studies='\n'.join(study_list),
@@ -1163,7 +1164,6 @@ class MMEDSserver(MMEDSbase):
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
-
             # TODO: TEmporary for figuring this out
 
             path = fig.DATABASE_DIR

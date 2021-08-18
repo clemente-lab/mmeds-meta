@@ -660,22 +660,15 @@ class TestServer(helper.CPWebCase):
     def check_analysis_no_privileges(self):
         self.getPage("/analysis/analysis_page", headers=self.cookies)
         self.assertStatus('200 OK')
-        page = server.load_webpage('analysis_select_tool',
-                                   analysis_selected='w3-blue',
-                                   home_selected='',
-                                   title='Select Analysis',
-                                   user=self.server_user)
+        server.analysis.with_privileges = False
+        page = server.analysis.analysis_page()
         self.assertBody(page)
 
     def check_analysis_has_privileges(self):
         self.getPage("/analysis/analysis_page", headers=self.cookies)
         self.assertStatus('200 OK')
-        page = server.load_webpage('analysis_select_tool',
-                                   title='Select Analysis',
-                                   analysis_selected='w3-blue',
-                                   home_selected='',
-                                   privilege='',
-                                   user=self.lab_user)
+        server.analysis.with_privileges = True
+        page = server.analysis.analysis_page()
         self.assertBody(page)
 
     def run_test_analysis(self):
@@ -683,14 +676,16 @@ class TestServer(helper.CPWebCase):
         # Parse the body of the page
         body = self.body.decode('utf-8')
         # Grab the access code
-        code = re.findall('access_code=(.+?)">', body)
-        self.analyzed_study_code = code[0].strip('"')
+        data = re.findall('access_code=(.+?)"> (.+?) <', body)
+        study_name = data[0][1]
+
+        self.analyzed_study_code = data[0][0].strip('"')
 
         # Load the test config for animal subjects
         headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
 
         # Check that it works to access the view_study page
-        self.getPage('/analysis/run_analysis?access_code={}&analysis_method=test'.format(code[0]),
+        self.getPage('/analysis/run_analysis?studyName={}&analysis_method=test'.format(study_name),
                      headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page = server.load_webpage('home',
