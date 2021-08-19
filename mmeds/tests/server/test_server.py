@@ -12,6 +12,7 @@ from mmeds.authentication import add_user, remove_user
 from mmeds.util import recieve_email, send_email
 from mmeds.spawn import Watcher
 from mmeds.logging import Logger
+from mmeds.database.database import Database
 
 import cherrypy as cp
 import re
@@ -190,12 +191,12 @@ class TestServer(helper.CPWebCase):
 
     def test_ea_analysis_no_privileges(self):
         self.login()
-        self.check_analysis_no_privileges()
+        self.check_analysis()
         self.logout()
 
     def test_eb_analysis_has_privileges(self):
         self.login(lab=True)
-        self.check_analysis_has_privileges()
+        self.check_analysis(True)
         self.logout()
 
     def test_ec_run_analysis(self):
@@ -657,18 +658,50 @@ class TestServer(helper.CPWebCase):
     ############
     # Analysis #
     ############
-    def check_analysis_no_privileges(self):
+    def check_analysis(self, privileges=False):
+        """
+        Mimics the setup of mmeds.server.analysis.analysis_page
+        """
         self.getPage("/analysis/analysis_page", headers=self.cookies)
         self.assertStatus('200 OK')
-        server.analysis.with_privileges = False
-        page = server.analysis.analysis_page()
-        self.assertBody(page)
+        study_html = ''' <tr class="w3-hover-blue">
+            <th>
+            <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>
+            </th>
+            <th>{date_created}</th>
+        </tr> '''
 
-    def check_analysis_has_privileges(self):
-        self.getPage("/analysis/analysis_page", headers=self.cookies)
-        self.assertStatus('200 OK')
-        server.analysis.with_privileges = True
-        page = server.analysis.analysis_page()
+        id_study_html = '<option value="{study_name}">{study_name}</option>'
+
+        this_user = self.lab_user if privileges else self.server_user
+        with Database(testing=server.testing, owner=this_user) as dbase:
+            studies = dbase.get_all_user_studies(this_user)
+
+        study_list = []
+        id_study_list = []
+        for study in studies:
+            study_list.append(study_html.format(study_name=study.study_name,
+                                                select_specimen_page=fig.SERVER_PATH + 'query/select_specimen',
+                                                access_code=study.access_code,
+                                                date_created=study.created,
+                                                ))
+            id_study_list.append(id_study_html.format(study_name=study.study_name))
+
+        if privileges:
+            page = server.analysis.load_webpage('analysis_select_tool',
+                                                title='Select Analysis',
+                                                user=this_user,
+                                                user_studies='\n'.join(study_list),
+                                                id_user_studies='\n'.join(id_study_list),
+                                                privilege=''
+                                                )
+        else:
+            page = server.analysis.load_webpage('analysis_select_tool',
+                                                title='Select Analysis',
+                                                user=this_user,
+                                                user_studies='\n'.join(study_list),
+                                                id_user_studies='\n'.join(id_study_list)
+                                                )
         self.assertBody(page)
 
     def run_test_analysis(self):
