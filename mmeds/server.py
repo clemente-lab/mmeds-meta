@@ -855,8 +855,8 @@ class MMEDSanalysis(MMEDSbase):
             if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
-            with Database(testing=self.testing, owner=self.get_user()) as dbase:
-                studies = dbase.get_all_user_studies(self.get_user())
+            with Database(testing=self.testing, owner=self.get_user()) as db:
+                studies = db.get_all_user_studies(self.get_user())
 
             access_code = ''
             for study in studies:
