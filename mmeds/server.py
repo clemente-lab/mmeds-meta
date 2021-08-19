@@ -906,8 +906,8 @@ class MMEDSanalysis(MMEDSbase):
 
         id_study_html = '<option value="{study_name}">{study_name}</option>'
 
-        with Database(testing=self.testing, owner=self.get_user()) as dbase:
-            studies = dbase.get_all_user_studies(self.get_user())
+        with Database(testing=self.testing, owner=self.get_user()) as db:
+            studies = db.get_all_user_studies(self.get_user())
 
         study_list = []
         id_study_list = []
