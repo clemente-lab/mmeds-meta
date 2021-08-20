@@ -619,6 +619,7 @@ class MMEDSupload(MMEDSbase):
                                                  for_barcodes=kwargs['barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
                 reads_type = 'paired_end'
+                barcodes_type = 'dual_barcodes'
             else:
                 barcodes_type = 'single_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
