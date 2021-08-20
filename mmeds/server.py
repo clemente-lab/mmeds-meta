@@ -616,7 +616,7 @@ class MMEDSupload(MMEDSbase):
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
-                                                 for_barcodes=kwargs['for_barcodes'],
+                                                 for_barcodes=kwargs['barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
                 reads_type = 'paired_end'
             else:
