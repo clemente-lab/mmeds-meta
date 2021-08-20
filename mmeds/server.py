@@ -549,7 +549,7 @@ class MMEDSupload(MMEDSbase):
         """ Page for uploading Qiime data """
         cp.session['metadata_type'] = 'specimen'
         # Add the success message if applicable
-        page = self.load_webpage('upload_specimen_metadata',
+        page = self.load_webpage('upload_specimen_file',
                                  title='Upload Metadata',
                                  success='Subject table uploaded successfully',
                                  metadata_type=cp.session['metadata_type'].capitalize(),
@@ -572,7 +572,7 @@ class MMEDSupload(MMEDSbase):
         # Move on to uploading specimen metadata
         else:
             cp.session['metadata_type'] = 'specimen'
-            page = self.load_webpage('upload_specimen_metadata',
+            page = self.load_webpage('upload_specimen_file',
                                      title='Upload Metadata',
                                      success='Subject table uploaded successfully',
                                      metadata_type=cp.session['metadata_type'].capitalize(),
