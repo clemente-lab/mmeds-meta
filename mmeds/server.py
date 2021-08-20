@@ -312,11 +312,14 @@ class MMEDSupload(MMEDSbase):
         # Handle what input forms should appear based on previous selections
         if cp.session.get('upload_type') == 'qiime':
             if cp.session.get('barcodes_type') == 'dual':
+                kwargs['dual_barcodes'] = 'required'
                 kwargs['select_barcodes'] = 'style="display:none"'
             else:
+                kwargs['dual_barcodes'] = 'style="display:none"'
                 kwargs['select_barcodes'] = ''
         # If it's not qiime (aka fastq) input then don't display the options
         else:
+            kwargs['dual_barcodes'] = 'style="display:none"'
             kwargs['select_barcodes'] = 'style="display:none"'
 
         # Handle if the lefse input options should display when uploading a table
