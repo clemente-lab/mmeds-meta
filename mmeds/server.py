@@ -347,7 +347,7 @@ class MMEDSupload(MMEDSbase):
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
 
-        # If the metadata is partial don't perform validation
+        # If the metadata is simplified, convert it to full before performing validation
         if simplified:
             # Overwrite the metadata_copy
             simplified_to_full(metadata_copy, metadata_copy, cp.session['metadata_type'], cp.session['subject_type'])
@@ -360,7 +360,8 @@ class MMEDSupload(MMEDSbase):
                           cp.session['study_name'],
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
-                          cp.session['subject_type'])
+                          cp.session['subject_type'],
+                          cp.session['dual_barcodes'])
         cp.log('before validator run')
 
         # Check the metadata file for errors
@@ -589,9 +590,9 @@ class MMEDSupload(MMEDSbase):
             metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
 
             if barcodes_type == 'dual':
-                cp.session['dual_barcodes'] = True
+                cp.session['barcodes_type'] = 'dual'
             else:
-                cp.session['dual_barcodes'] = False
+                cp.session['barcodes_type'] = 'single'
 
             page = self.handle_errors_warnings(metadata_copy, errors, warnings)
 
@@ -612,7 +613,7 @@ class MMEDSupload(MMEDSbase):
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
-            if cp.session['dual_barcodes']:
+            if cp.session['barcodes_type'] == 'dual':
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it
                 barcodes_type = 'dual_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
@@ -1124,25 +1125,21 @@ class MMEDSserver(MMEDSbase):
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
 
-            # TODO: TEmporary for figuring this out
-
             path = fig.DATABASE_DIR
             filename = cp.session['user']
             # Create the filename
             temp_dir = Path(path) / 'temp_dir' / '__'.join([Path(filename).name,
-                                                            str(datetime.utcnow().
-                                                                strftime("%Y-%m-%d-%H:%M")),
+                                                            str(datetime.utcnow().strftime("%Y-%m-%d-%H:%M")),
                                                             '0x'])
 
             # Ensure there is not already a file with the same name
             temp_idx = 0
             while temp_dir.is_dir():
-                temp_dir=Path(str(temp_dir).replace(f'__{temp_idx}x', f'__{temp_idx + 1}x'))
-                temp_idx+=1
-
+                temp_dir = Path(str(temp_dir).replace(f'__{temp_idx}x', f'__{temp_idx + 1}x'))
+                temp_idx += 1
 
             temp_dir.mkdir(parents=True)
-            cp.session['temp_dir'] = temp_dir  # tempfile.TemporaryDirectory()
+            cp.session['temp_dir'] = temp_dir
             cp.session['working_dir'] = Path(cp.session['temp_dir'])
 
             cp.session['processes'] = {}
