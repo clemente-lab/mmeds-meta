@@ -2,7 +2,7 @@
 
 [![Tests Passing](https://github.com/clemente-lab/mmeds-meta/actions/workflows/tests.yml/badge.svg)](https://github.com/clemente-lab/mmeds-meta/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/clemente-lab/mmeds-meta/branch/master/graph/badge.svg)](https://codecov.io/gh/clemente-lab/mmeds-meta)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e4cc5a646a8c4d53b55d6511e995657d)](https://www.codacy.com/manual/DSWallach/mmeds-meta?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=clemente-lab/mmeds-meta&amp;utm_campaign=Badge_Grade)
+[![CodeFactor](https://www.codefactor.io/repository/github/clemente-lab/mmeds-meta/badge)](https://www.codefactor.io/repository/github/clemente-lab/mmeds-meta)
 
 ![MMEDS Image](/test_files/MMEDS_image.png?raw=true "MMEDs Server")
 

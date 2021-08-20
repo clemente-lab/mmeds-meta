@@ -378,7 +378,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype
-        self.getPage('/upload/upload_metadata?uploadType=sparcc&studyName=Good_Study&subjectType=animal',
+        self.getPage('/upload/upload_subject_metadata?uploadType=sparcc&studyName=Good_Study&subjectType=animal',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -387,7 +387,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=other', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         page_body = self.body
         document, errors = tidy_document(page_body)
@@ -410,7 +410,7 @@ class TestServer(helper.CPWebCase):
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?uploadType=lefse&studyName=Test_Lefse&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?uploadType=lefse&studyName=Test_Lefse&subjectType=human', self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
@@ -440,7 +440,7 @@ class TestServer(helper.CPWebCase):
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_DualBarcodes&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_DualBarcodes&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -476,14 +476,14 @@ class TestServer(helper.CPWebCase):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human', self.cookies)
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_CONFIG], ['application/gzip'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = server.load_webpage('upload_metadata_file',
+        page = server.load_webpage('upload_subject_file',
                                    user=self.server_user,
                                    upload_selected='w3-blue',
                                    home_selected='',
@@ -566,7 +566,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def upload_metadata(self):
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Validate_Study&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Validate_Study&subjectType=human',
                      self.cookies)
 
         # Check a subject metadata file that has no issues

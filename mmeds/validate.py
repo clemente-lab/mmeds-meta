@@ -3,7 +3,7 @@ import mmeds.config as fig
 import re
 
 from collections import defaultdict
-from numpy import std, mean, datetime64
+from numpy import std, mean
 from mmeds.util import load_ICD_codes, is_numeric, load_metadata
 from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
@@ -98,11 +98,12 @@ def cast_columns(df, cols, file_cols):
 
 class Validator:
 
-    def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, sep='\t'):
+    def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, barcodes_type='single', sep='\t'):
         """ Initialize the validator object. """
         self.study_name = study_name
         self.metadata_type = metadata_type
         self.subject_type = subject_type
+        self.barcodes_type = barcodes_type
         self.errors = []
         self.warnings = []
         self.subjects = []
@@ -290,9 +291,9 @@ class Validator:
             # Check each cell in the column
             for i, cell in enumerate(column):
                 if pd.isna(cell):
-                    Logger.debug("Cell is NA")
                     # Check for missing required fields
-                    if self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                    if not self.cur_table == 'AdditionalMetaData' and\
+                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
                         Logger.debug("Cell shouldn't be NA")
                         err = '{}\t{}\tMissing Required Value Error'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
@@ -349,8 +350,9 @@ class Validator:
             Logger.debug("ran check_columns")
             # Perform column specific checks
             if self.cur_table == 'RawData':
-                if self.cur_col == 'BarcodeSequence':
-                    self.check_duplicates(col)
+                if self.cur_col == 'BarcodeSequence' or self.cur_col == 'BarcodeSequenceR':
+                    if self.barcodes_type == 'single':
+                        self.check_duplicates(col)
                     self.check_lengths(col)
                     self.check_barcode_chars(col)
                     self.check_NA(col)

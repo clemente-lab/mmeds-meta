@@ -311,7 +311,7 @@ class MMEDSupload(MMEDSbase):
 
         # Handle what input forms should appear based on previous selections
         if cp.session.get('upload_type') == 'qiime':
-            if cp.session.get('dual_barcodes'):
+            if cp.session.get('barcodes_type') == 'dual':
                 kwargs['dual_barcodes'] = 'required'
                 kwargs['select_barcodes'] = 'style="display:none"'
             else:
@@ -347,7 +347,7 @@ class MMEDSupload(MMEDSbase):
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
 
-        # If the metadata is partial don't perform validation
+        # If the metadata is simplified, convert it to full before performing validation
         if simplified:
             # Overwrite the metadata_copy
             simplified_to_full(metadata_copy, metadata_copy, cp.session['metadata_type'], cp.session['subject_type'])
@@ -360,7 +360,8 @@ class MMEDSupload(MMEDSbase):
                           cp.session['study_name'],
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
-                          cp.session['subject_type'])
+                          cp.session['subject_type'],
+                          cp.session.get('barcodes_type'))
         cp.log('before validator run')
 
         # Check the metadata file for errors
@@ -427,9 +428,8 @@ class MMEDSupload(MMEDSbase):
         else:
             # If it's the subject metadata file return the page for uploading the specimen metadata
             if cp.session['metadata_type'] == 'subject':
-                page = self.load_webpage('upload_metadata_file',
+                page = self.load_webpage('upload_specimen_file',
                                          title='Upload Metadata',
-                                         metadata_type='Specimen',
                                          success='Subject table uploaded successfully')
                 cp.session['metadata_type'] = 'specimen'
                 # Otherwise proceed to uploading data files
@@ -524,7 +524,7 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_metadata(self, uploadType, subjectType, studyName):
+    def upload_subject_metadata(self, uploadType, subjectType, studyName):
         """ Page for uploading Qiime data """
         try:
             cp.session['study_name'] = studyName
@@ -534,27 +534,29 @@ class MMEDSupload(MMEDSbase):
 
             with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
                 db.check_study_name(studyName)
-
-            # Add the success message if applicable
-            if cp.session['metadata_type'] == 'specimen':
-                page = self.load_webpage('upload_metadata_file',
-                                         title='Upload Metadata',
-                                         success='Subject table uploaded successfully',
-                                         metadata_type=cp.session['metadata_type'].capitalize(),
-                                         version=uploadType)
-            else:
-                page = self.load_webpage('upload_metadata_file',
-                                         title='Upload Metadata',
-                                         metadata_type=cp.session['metadata_type'].capitalize(),
+                page = self.load_webpage('upload_subject_file',
+                                         title='Upload Subject Metadata',
                                          version=uploadType)
         except(err.StudyNameError) as e:
             with Database(testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
                 study_dropdown = fmt.build_study_code_dropdown(studies)
-            page = self.load_webpage('upload_select_page',
-                                     title='Upload Type',
-                                     user_studies=study_dropdown,
-                                     error=e.message)
+                page = self.load_webpage('upload_select_page',
+                                         title='Upload Type',
+                                         user_studies=study_dropdown,
+                                         error=e.message)
+        return page
+
+    @cp.expose
+    def upload_specimen_metadata(self, uploadType, subjectType, studyName):
+        """ Page for uploading Qiime data """
+        cp.session['metadata_type'] = 'specimen'
+        # Add the success message if applicable
+        page = self.load_webpage('upload_specimen_file',
+                                 title='Upload Metadata',
+                                 success='Subject table uploaded successfully',
+                                 metadata_type=cp.session['metadata_type'].capitalize(),
+                                 version=uploadType)
         return page
 
     @cp.expose
@@ -573,7 +575,7 @@ class MMEDSupload(MMEDSbase):
         # Move on to uploading specimen metadata
         else:
             cp.session['metadata_type'] = 'specimen'
-            page = self.load_webpage('upload_metadata_file',
+            page = self.load_webpage('upload_specimen_file',
                                      title='Upload Metadata',
                                      success='Subject table uploaded successfully',
                                      metadata_type=cp.session['metadata_type'].capitalize(),
@@ -581,22 +583,20 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def validate_metadata(self, myMetaData, barcodes_type, simplified=False):
+    def validate_metadata(self, myMetaData, barcodes_type=None, simplified=False):
         """ The page returned after a file is uploaded. """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
             errors, warnings = self.run_validate(myMetaData, simplified)
             metadata_copy = cp.session['uploaded_files'][cp.session['metadata_type']]
 
-            if barcodes_type == 'dual':
-                cp.session['dual_barcodes'] = True
-            else:
-                cp.session['dual_barcodes'] = False
+            if barcodes_type is not None:
+                cp.session['barcodes_type'] = barcodes_type
 
             page = self.handle_errors_warnings(metadata_copy, errors, warnings)
 
         except err.MetaDataError as e:
-            page = self.load_webpage('upload_metadata_file',
+            page = self.load_webpage(f'upload_{cp.session["metadata_type"]}_file',
                                      title='Upload Metadata',
                                      error=e.message,
                                      metadata_type=cp.session['metadata_type'])
@@ -612,14 +612,14 @@ class MMEDSupload(MMEDSbase):
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
         if cp.session['upload_type'] == 'qiime':
-            if cp.session['dual_barcodes']:
+            if cp.session['barcodes_type'] == 'dual':
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it
-                barcodes_type = 'dual_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
-                                                 for_barcodes=kwargs['for_barcodes'],
+                                                 for_barcodes=kwargs['barcodes'],
                                                  rev_barcodes=kwargs['rev_barcodes'])
                 reads_type = 'paired_end'
+                barcodes_type = 'dual_barcodes'
             else:
                 barcodes_type = 'single_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
@@ -1155,14 +1155,12 @@ class MMEDSserver(MMEDSbase):
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
-            # TODO: TEmporary for figuring this out
 
             path = fig.DATABASE_DIR
             filename = cp.session['user']
             # Create the filename
             temp_dir = Path(path) / 'temp_dir' / '__'.join([Path(filename).name,
-                                                            str(datetime.utcnow().
-                                                                strftime("%Y-%m-%d-%H:%M")),
+                                                            str(datetime.utcnow().strftime("%Y-%m-%d-%H:%M")),
                                                             '0x'])
 
             # Ensure there is not already a file with the same name
@@ -1171,7 +1169,7 @@ class MMEDSserver(MMEDSbase):
                 temp_dir = Path(str(temp_dir).replace(f'__{temp_idx}x', f'__{temp_idx + 1}x'))
                 temp_idx += 1
             temp_dir.mkdir(parents=True)
-            cp.session['temp_dir'] = temp_dir  # tempfile.TemporaryDirectory()
+            cp.session['temp_dir'] = temp_dir
             cp.session['working_dir'] = Path(cp.session['temp_dir'])
 
             cp.session['processes'] = {}
