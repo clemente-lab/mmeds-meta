@@ -834,7 +834,7 @@ class MMEDSanalysis(MMEDSbase):
         return page
 
     @cp.expose
-    def run_analysis(self, access_code, analysis_method, config, runOnNode=None):
+    def run_analysis(self, studyName, analysis_method, config, runOnNode=None):
         """
         Run analysis on the specified study
         ----------------------------------------
@@ -854,6 +854,8 @@ class MMEDSanalysis(MMEDSbase):
             cp.log(f"runOnNode is ${runOnNode}")
             if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
+
+            access_code = Database.get_access_code_from_study_name(studyName)
 
             # Check that the requested upload exists
             # Getting the files to check the config options match the provided metadata
@@ -888,11 +890,41 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
+        study_html = ''' <tr class="w3-hover-blue">
+            <th>
+            <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>
+            </th>
+            <th>{date_created}</th>
+        </tr> '''
+
+        id_study_html = '<option value="{study_name}">{study_name}</option>'
+
+        with Database(testing=self.testing, owner=self.get_user()) as db:
+            studies = db.get_all_user_studies(self.get_user())
+
+        study_list = []
+        id_study_list = []
+        for study in studies:
+            study_list.append(study_html.format(study_name=study.study_name,
+                                                select_specimen_page=SERVER_PATH + 'query/select_specimen',
+                                                access_code=study.access_code,
+                                                date_created=study.created,
+                                                ))
+            id_study_list.append(id_study_html.format(study_name=study.study_name))
         # Add unhide any privileged options
         if check_privileges(self.get_user(), self.testing):
-            page = self.load_webpage('analysis_select_tool', title='Select Analysis', privilege='')
+            page = self.load_webpage('analysis_select_tool',
+                                     title='Select Analysis',
+                                     user_studies='\n'.join(study_list),
+                                     id_user_studies='\n'.join(id_study_list),
+                                     privilege=''
+                                     )
         else:
-            page = self.load_webpage('analysis_select_tool', title='Select Analysis')
+            page = self.load_webpage('analysis_select_tool',
+                                     title='Select Analysis',
+                                     user_studies='\n'.join(study_list),
+                                     id_user_studies='\n'.join(id_study_list)
+                                     )
         return page
 
 
@@ -1136,7 +1168,6 @@ class MMEDSserver(MMEDSbase):
             while temp_dir.is_dir():
                 temp_dir = Path(str(temp_dir).replace(f'__{temp_idx}x', f'__{temp_idx + 1}x'))
                 temp_idx += 1
-
             temp_dir.mkdir(parents=True)
             cp.session['temp_dir'] = temp_dir
             cp.session['working_dir'] = Path(cp.session['temp_dir'])
