@@ -905,7 +905,7 @@ class Database:
     @classmethod
     def get_access_code_from_study_name(cls, study):
         """ For server use """
-        return MMEDSDoc.objects(study_name=study)first().access_code
+        return MMEDSDoc.objects(study_name=study).first().access_code
 
     @classmethod
     def get_docs(cls, **kwargs):
