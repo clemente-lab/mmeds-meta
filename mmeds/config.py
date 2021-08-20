@@ -237,8 +237,8 @@ HTML_ARGS = {
 
 TOOL_FILES = {
     'child_analysis': ['otu_table'],
-    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
-    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'metadata'],
+    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
+    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
     'sparcc': ['otu_table'],
     'lefse': ['lefse_table'],
     'picrust1': ['otu_table'],
