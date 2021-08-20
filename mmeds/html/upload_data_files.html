@@ -1,38 +1,38 @@
 <div>
-		<divv class="w3-card-4 w3-padding w3-panel w3-pale-yellow w3-border">
-		<h3> Note: </h3>
-		<p>Large files may take several minutes to upload. Please stay on this page until you see a message that the upload is complete.</p>
-</div>
-<form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
-		<p>
-		<label class> Forward Reads (Upload a zip if demultiplexed) </label>
-		<input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="for_reads" required>
-		</p>
-		<p>
-		<label class> Reverse Reads (Optional) </label>
-		<input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="rev_reads">
-		</p>
-		<p>
-		<label class> Barcodes (Optional) </label>
-		<input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="barcodes">
-		</p>
-		<p {dual_barcodes}>
-		<label class> Reverse Barcodes (Optional) </label>
-		<input class="upload-btn-wrapper w3-btn w3-border w3-input" type='file' name='rev_barcodes' />
-		</p>
-		<p>
-		<label class> Reads Type </label>
-		<select class="w3-select w3-border" name='reads_type' form='upload_form'>
-				<option value='single_end' selected='selected'>Single End</option>
-				<option value='paired_end'>Paired End</option>
-		</select>
-		</p>
-		<p>
-		<input class="w3-check" type='checkbox' name='public' />
-		<label class> Make data public </label>
-		</p>
-		<p>
-		<button class="w3-button w3-blue" type='submit' method='post'> Submit Study </button>
-		</p>
+    <div class="w3-card-4 w3-padding w3-panel w3-pale-yellow w3-border">
+        <h3> Note: </h3>
+        <p>Large files may take several minutes to upload. Please stay on this page until you see a message that the upload is complete.</p>
+    </div>
+    <form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+        <p>
+        <label class> Forward Reads (Upload a zip if demultiplexed) </label>
+        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="for_reads" required>
+        </p>
+        <p>
+        <label class> Reverse Reads (Optional) </label>
+        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="rev_reads">
+        </p>
+        <p>
+        <label class> Barcodes (Optional) </label>
+        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="barcodes">
+        </p>
+        <p {dual_barcodes}>
+        <label class> Reverse Barcodes (Optional) </label>
+        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type='file' name='rev_barcodes' />
+        </p>
+        <p>
+        <label class> Reads Type </label>
+        <select class="w3-select w3-border" name='reads_type' form='upload_form'>
+            <option value='single_end' selected='selected'>Single End</option>
+            <option value='paired_end'>Paired End</option>
+        </select>
+        </p>
+        <p>
+        <input class="w3-check" type='checkbox' name='public' />
+        <label class> Make data public </label>
+        </p>
+        <p>
+        <button class="w3-button w3-blue" type='submit' method='post'> Submit Study </button>
+        </p>
 </form>
 </div>

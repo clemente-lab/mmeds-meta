@@ -117,7 +117,8 @@ HTML_PAGES = {
     'user_guide': (HTML_DIR / 'user_guide.html', True),
     'simple_guide': (HTML_DIR / 'simple_guide.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
-    'upload_metadata_file': (HTML_DIR / 'upload_metadata_file.html', True),
+    'upload_specimen_file': (HTML_DIR / 'upload_specimen_file.html', True),
+    'upload_subject_file': (HTML_DIR / 'upload_subject_file.html', True),
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
@@ -173,7 +174,8 @@ HTML_ARGS = {
     'settings_page': '#',
 
     # Upload Pages
-    'upload_metadata_page': SERVER_PATH + 'upload/upload_metadata',
+    'upload_subject_metadata_page': SERVER_PATH + 'upload/upload_subject_metadata',
+    'upload_specimen_metadata_page': SERVER_PATH + 'upload/upload_specimen_metadata',
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
     'process_data_page': SERVER_PATH + 'upload/process_data',
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',

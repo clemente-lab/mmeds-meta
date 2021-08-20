@@ -1,0 +1,24 @@
+<form class="w3-container w3-card-4 w3-padding w3-grey" action='{validate_metadata_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+    <p>
+    <label><b>Specimen Data File </b></label>
+    <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="myMetaData" required>
+    </input>
+    </p>
+    <p>
+    <input class="w3-check w3-padding" type='checkbox' name='simplified' />
+    <label><b>Simplified Meta Data File </b></label>
+    </p>
+    <label><b> Barcodes Type </b></label>
+    <select class="w3-select w3-border" name='barcodes_type' form='upload_form'>
+        <option value='single' selected='selected'>Single Barcodes</option>
+        <option value='dual'>Dual Barcodes</option>
+        <option value='other'>No Barcodes (Already Demultiplexed)</option>
+    </select>
+    <p> <button class="w3-button w3-blue" type='submit' method='post'><b>Check Metadata</b></button> </p>
+</form>
+<div class="w3-container w3-padding">
+    <h3> Unsure what to upload? </h3>
+    <a class="w3-button w3-half w3-border w3-padding" href="{download_page}?file_name=specimen_example">Click here for an Example</a>
+    <a class="w3-button w3-half w3-border w3-padding" href="{download_page}?file_name=user_guide">Click here for the User Guide</a>
+</div>
+
