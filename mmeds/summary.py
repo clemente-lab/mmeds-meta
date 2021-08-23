@@ -425,7 +425,7 @@ class MMEDSNotebook():
         """
         try:
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --template=mod_revtex.tplx --to=latex'
+            cmd = 'jupyter nbconvert --template latex --template-file mod_revtex.tplx --to=latex'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
