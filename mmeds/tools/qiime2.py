@@ -531,10 +531,12 @@ class Qiime2(Tool):
         self.taxa_diversity()
         # Calculate group significance
         for col in self.doc.config['metadata']:
-            self.group_significance(col)
-            # For the requested taxanomic levels
-            for level in self.doc.config['taxa_levels']:
-                self.group_significance(col, level)
+            # Do not group if the metadata is continuous
+            if not self.doc.config['metadata_continuous'][col]:
+                self.group_significance(col)
+                # For the requested taxanomic levels
+                for level in self.doc.config['taxa_levels']:
+                    self.group_significance(col, level)
         self.jobtext.append('wait')
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')

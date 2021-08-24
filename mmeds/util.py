@@ -356,7 +356,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
         # Filter out any categories containing only NaN
         # Or containing only a single metadata value
         # Or where every sample contains a different value
-        df = load_metadata(metadata_file, header=0, skiprows=[0, 2, 3, 4])
+        df = load_metadata(metadata_file, header=0, na_values='nan', skiprows=[0, 2, 3, 4])
         if option == 'all':
             cols = df.columns
         else:
@@ -366,7 +366,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
             # Ensure there aren't any invalid columns specified to be included in the analysis
             try:
                 # If 'all' only select columns that don't have all the same or all unique values
-                if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
+                if df[col].isnull().all() or df[col].nunique() == 1:
                     if col in ['Together', 'Separate']:
                         summary_cols.append(col)
                         col_types[col] = False
@@ -379,6 +379,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
                     assert df[col].any()
                     summary_cols.append(col)
                     col_types[col] = pd.api.types.is_numeric_dtype(df[col])
+                    breakpoint()
             except KeyError:
                 if not ignore_bad_cols:
                     raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
