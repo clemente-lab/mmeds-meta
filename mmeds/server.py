@@ -1,5 +1,6 @@
 import os
 import cherrypy as cp
+import pandas as pd
 import getpass
 from datetime import datetime
 from cherrypy.lib import static
@@ -392,6 +393,25 @@ class MMEDSupload(MMEDSbase):
 
     def handle_errors_warnings(self, metadata_copy, errors, warnings):
         """ Handle loading different pages depending if there are metadata errors, warnings, or neither """
+
+        # Get data from upload
+        try:
+            df = cp.session['subject_ids']
+        except Exception:
+            df = None
+
+        # Append Host Subject IDs to list without duplicates
+        subjectIds = []
+        if df is not None:
+            if isinstance(df, pd.DataFrame):
+                subject_metadata = df.to_dict('list')
+            else:
+                subject_metadata = df
+
+            for cell in subject_metadata['HostSubjectId']:
+                if cell not in subjectIds:
+                    subjectIds.append(cell)
+
         # If there are errors report them and return the error page
         if errors:
             cp.log('There are errors')
@@ -415,26 +435,29 @@ class MMEDSupload(MMEDSbase):
         elif warnings:
             cp.log('There are warnings')
             # Set the proceed button based on current metadata file
-            if cp.session['metadata_type'] == 'subject':
-                page = self.load_webpage('upload_metadata_warning',
-                                         title='Warnings',
-                                         warning=warnings,
-                                         next_page='{retry_upload_page}')
-            elif cp.session['metadata_type'] == 'specimen':
-                page = self.load_webpage('upload_metadata_warning',
-                                         title='Warnings',
-                                         warning=warnings,
-                                         next_page='{upload_data_page}')
+            page = self.load_webpage('upload_metadata_confirmation',
+                                     title='Warnings',
+                                     warning=warnings,
+                                     confirmation_message='Ignore warnings and proceed?',
+                                     yes_page='continue_metadata_upload',
+                                     no_page='upload_subject_metadata')
         else:
             # If it's the subject metadata file return the page for uploading the specimen metadata
             if cp.session['metadata_type'] == 'subject':
-                page = self.load_webpage('upload_specimen_file',
+                cp.session['retry'] = True
+                success_str = 'Subject table reviewed successfully'
+                if subjectIds:
+                    success_str += ' and found {} unique subjects'.format(len(subjectIds))
+
+                page = self.load_webpage('upload_metadata_confirmation',
                                          title='Upload Metadata',
-                                         success='Subject table uploaded successfully')
-                cp.session['metadata_type'] = 'specimen'
+                                         success=success_str,
+                                         confirmation_message='Confirm this data and continue?',
+                                         yes_page='continue_metadata_upload',
+                                         no_page='upload_subject_metadata')
                 # Otherwise proceed to uploading data files
             elif cp.session['metadata_type'] == 'specimen':
-                # If it's the sspecimen metadata file, save the type of barcodes
+                # If it's the specimen metadata file, save the type of barcodes
                 # And return the page for uploading data files
                 page = self.upload_data()
         return page
@@ -524,8 +547,16 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_subject_metadata(self, uploadType, subjectType, studyName):
+    def upload_subject_metadata(self, uploadType=None, subjectType=None, studyName=None):
         """ Page for uploading Qiime data """
+
+        if uploadType is None and subjectType is None and studyName is None:
+            # Page is being reset to here from a further point in the process,
+            #   pull data from cp.session and proceed
+            uploadType = cp.session['upload_type']
+            subjectType = cp.session['subject_type']
+            studyName = cp.session['study_name']
+
         try:
             cp.session['study_name'] = studyName
             cp.session['metadata_type'] = 'subject'
