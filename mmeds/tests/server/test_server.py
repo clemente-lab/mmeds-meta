@@ -410,7 +410,8 @@ class TestServer(helper.CPWebCase):
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=lefse&studyName=Test_Lefse&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?uploadType=lefse&studyName=Test_Lefse&subjectType=human',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
@@ -476,7 +477,8 @@ class TestServer(helper.CPWebCase):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype

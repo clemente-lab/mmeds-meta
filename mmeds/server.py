@@ -408,9 +408,10 @@ class MMEDSupload(MMEDSbase):
             else:
                 subject_metadata = df
 
-            for cell in subject_metadata['HostSubjectId']:
-                if cell not in subjectIds:
-                    subjectIds.append(cell)
+            if 'HostSubjectId' in subjectIds:
+                for cell in subject_metadata['HostSubjectId']:
+                    if cell not in subjectIds:
+                        subjectIds.append(cell)
 
         # If there are errors report them and return the error page
         if errors:
