@@ -71,11 +71,13 @@ class Qiime2(Tool):
                                      self.get_file('working_dir'),
                                      self.get_file('working_file'))
             elif 'paired_end' == self.doc.reads_type:
+
+                #TODO determing if these lines should be removed for all cases
                 # Create links to the data in the qiime2 import directory
-                (self.get_file('working_dir', True) /
-                 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
-                (self.get_file('working_dir', True) /
-                 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
+                #(self.get_file('working_dir', True) /
+                # 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
+                #(self.get_file('working_dir', True) /
+                # 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
 
                 if 'single_barcodes' == self.doc.barcodes_type:
                     # Link the barcodes
