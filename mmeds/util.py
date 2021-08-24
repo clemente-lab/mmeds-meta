@@ -379,7 +379,6 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
                     assert df[col].any()
                     summary_cols.append(col)
                     col_types[col] = pd.api.types.is_numeric_dtype(df[col])
-                    breakpoint()
             except KeyError:
                 if not ignore_bad_cols:
                     raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
