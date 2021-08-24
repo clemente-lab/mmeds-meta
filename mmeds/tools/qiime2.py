@@ -518,7 +518,7 @@ class Qiime2(Tool):
         self.alpha_diversity()
         for col in self.doc.config['metadata']:
             # Don't run on continuous columns
-            if not self.col.config['metadata_continuous'][col]:
+            if not self.doc.config['metadata_continuous'][col]:
                 self.beta_diversity(col)
         self.alpha_rarefaction()
 
