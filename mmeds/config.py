@@ -45,6 +45,8 @@ else:
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
+
+STUDIES_DIR = DATABASE_DIR / 'studies'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 
 ############################
@@ -253,6 +255,12 @@ MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 if not DATABASE_DIR.exists():
     try:
         DATABASE_DIR.mkdir()
+    except FileExistsError:
+        pass
+
+if not STUDIES_DIR.exists():
+    try:
+        STUDIES_DIR.mkdir()
     except FileExistsError:
         pass
 
