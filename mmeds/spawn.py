@@ -95,7 +95,7 @@ class Watcher(BaseManager):
         """ Start running the analysis in a new process """
         # Create access code for this analysis
         with Database('.', owner=user, testing=testing) as db:
-            files, path = db.get_mongo_files(parent_code)
+            files, path = db.get_mongo_files(parent_code, not testing)
             access_code = db.create_access_code()
         config = load_config(config_file, files['metadata'])
         try:
@@ -219,7 +219,6 @@ class Watcher(BaseManager):
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 
-
     def clean_temp_folders(self):
         """ Clean out temp folders older than a day, once every day."""
         # Check if a day has passed since we cleaned out temp folders.
@@ -295,7 +294,7 @@ class Watcher(BaseManager):
         p.start()
         sleep(1)
         with Database(testing=self.testing, owner=user) as db:
-            doc = db.get_doc(p.access_code)
+            doc = db.get_doc(p.access_code, not self.testing)
 
         # Store the access code
         if run_on_node:

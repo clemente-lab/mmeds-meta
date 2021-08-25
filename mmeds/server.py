@@ -120,8 +120,8 @@ class MMEDSbase:
 
         # Check that the upload does exist for the given user
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
-            db.check_upload(access_code)
-            files, path = db.get_mongo_files(access_code)
+            db.check_upload(access_code, not self.testing)
+            files, path = db.get_mongo_files(access_code, not self.testing)
         return files
 
     def load_webpage(self, page, **kwargs):
@@ -445,7 +445,6 @@ class MMEDSupload(MMEDSbase):
         else:
             # If it's the subject metadata file return the page for uploading the specimen metadata
             if cp.session['metadata_type'] == 'subject':
-                cp.session['retry'] = True
                 success_str = 'Subject table reviewed successfully'
                 if subjectIds:
                     success_str += ' and found {} unique subjects'.format(len(subjectIds))
@@ -553,7 +552,7 @@ class MMEDSupload(MMEDSbase):
 
         if uploadType is None and subjectType is None and studyName is None:
             # Page is being reset to here from a further point in the process,
-            #   pull data from cp.session and proceed
+            #   pull data from cp.session and proceed.
             uploadType = cp.session['upload_type']
             subjectType = cp.session['subject_type']
             studyName = cp.session['study_name']
@@ -580,15 +579,31 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_specimen_metadata(self, uploadType, subjectType, studyName):
+    def upload_specimen_metadata(self, uploadType, studyName):
         """ Page for uploading Qiime data """
-        cp.session['metadata_type'] = 'specimen'
-        # Add the success message if applicable
-        page = self.load_webpage('upload_specimen_file',
-                                 title='Upload Metadata',
-                                 success='Subject table uploaded successfully',
-                                 metadata_type=cp.session['metadata_type'].capitalize(),
-                                 version=uploadType)
+        try:
+            cp.session['metadata_type'] = 'specimen'
+            cp.session['study_name'] = studyName
+            cp.session['upload_type'] = uploadType
+
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                db.check_study_name(studyName)
+
+            # Add the success message if applicable
+            page = self.load_webpage('upload_specimen_file',
+                                     title='Upload Metadata',
+                                     success='Subject table uploaded successfully',
+                                     metadata_type=cp.session['metadata_type'].capitalize(),
+                                     version=uploadType)
+
+        except(err.StudyNameError) as e:
+            with Database(testing=self.testing) as db:
+                studies = db.get_all_user_studies(self.get_user())
+                study_dropdown = fmt.build_study_code_dropdown(studies)
+                page = self.load_webpage('upload_select_page',
+                                         title='Upload Type',
+                                         user_studies=study_dropdown,
+                                         error=e.message)
         return page
 
     @cp.expose
@@ -822,7 +837,7 @@ class MMEDSanalysis(MMEDSbase):
         cp.log("viewing analysis with code: {}".format(access_code))
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             # Check the study belongs to the user only if the user doesn't have elevated privileges
-            analysis = db.get_doc(access_code, not self.get_privilege())
+            analysis = db.get_doc(access_code, not self.testing)
 
         option_template = '<option value="{}">{}</option>'
 

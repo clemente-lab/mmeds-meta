@@ -625,6 +625,8 @@ class Validator:
             missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
             Logger.debug("Checked missing tables")
             if missing_tables:
+                missing_tables = list(missing_tables)
+                missing_tables.sort()
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
             Logger.debug("Going through tables")
             # For each table
