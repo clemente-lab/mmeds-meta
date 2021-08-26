@@ -748,7 +748,6 @@ class TestServer(helper.CPWebCase):
         self.analyzed_study_code = data[0][0].strip('"')
         # Load the test config for animal subjects
         headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
-
         # Check that it works to access the view_study page
         self.getPage('/analysis/run_analysis?studyName={}&analysis_method=test'.format(study_name),
                      headers + self.cookies, 'POST', body)

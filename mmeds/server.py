@@ -120,8 +120,8 @@ class MMEDSbase:
 
         # Check that the upload does exist for the given user
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
-            db.check_upload(access_code, not self.testing)
-            files, path = db.get_mongo_files(access_code, not self.testing)
+            db.check_upload(access_code, not self.get_privilege())
+            files, path = db.get_mongo_files(access_code, not self.get_privilege())
         return files
 
     def load_webpage(self, page, **kwargs):
@@ -397,21 +397,13 @@ class MMEDSupload(MMEDSbase):
         # Get data from upload
         try:
             df = cp.session['subject_ids']
-        except Exception:
+        except KeyError:
             df = None
 
         # Append Host Subject IDs to list without duplicates
-        subjectIds = []
-        if df is not None:
-            if isinstance(df, pd.DataFrame):
-                subject_metadata = df.to_dict('list')
-            else:
-                subject_metadata = df
-
-            if 'HostSubjectId' in subjectIds:
-                for cell in subject_metadata['HostSubjectId']:
-                    if cell not in subjectIds:
-                        subjectIds.append(cell)
+        sub_count = 0
+        if df is not None and 'HostSubjectId' in df.columns:
+            sub_count = df['HostSubjectId'].nunique()
 
         # If there are errors report them and return the error page
         if errors:
@@ -446,8 +438,8 @@ class MMEDSupload(MMEDSbase):
             # If it's the subject metadata file return the page for uploading the specimen metadata
             if cp.session['metadata_type'] == 'subject':
                 success_str = 'Subject table reviewed successfully'
-                if subjectIds:
-                    success_str += ' and found {} unique subjects'.format(len(subjectIds))
+                if df is not None:
+                    success_str += ' and found {} unique subjects'.format(sub_count)
 
                 page = self.load_webpage('upload_metadata_confirmation',
                                          title='Upload Metadata',
@@ -837,7 +829,7 @@ class MMEDSanalysis(MMEDSbase):
         cp.log("viewing analysis with code: {}".format(access_code))
         with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
             # Check the study belongs to the user only if the user doesn't have elevated privileges
-            analysis = db.get_doc(access_code, not self.testing)
+            analysis = db.get_doc(access_code, not self.get_privilege())
 
         option_template = '<option value="{}">{}</option>'
 
@@ -902,8 +894,7 @@ class MMEDSanalysis(MMEDSbase):
             if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
-            access_code = Database.get_access_code_from_study_name(studyName)
-
+            access_code = Database.get_access_code_from_study_name(studyName, self.get_user())
             # Check that the requested upload exists
             # Getting the files to check the config options match the provided metadata
             files = self.check_upload(access_code)
