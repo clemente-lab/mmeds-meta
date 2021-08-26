@@ -122,7 +122,7 @@ HTML_PAGES = {
     'upload_select_page': (HTML_DIR / 'upload_select_page.html', True),
     'upload_otu_data': (HTML_DIR / 'upload_otu_data.html', True),
     'upload_data_files': (HTML_DIR / 'upload_data_files.html', True),
-    'upload_metadata_warning': (HTML_DIR / 'upload_metadata_warning.html', True),
+    'upload_metadata_confirmation': (HTML_DIR / 'upload_metadata_confirmation.html', True),
 
     # Study Pages
     'study_select_page': (HTML_DIR / 'study_select_page.html', True),

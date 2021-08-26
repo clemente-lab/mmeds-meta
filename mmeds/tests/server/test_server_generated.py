@@ -297,7 +297,8 @@ class TestServer(CPWebCase):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
 
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])
