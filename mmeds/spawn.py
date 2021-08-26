@@ -95,7 +95,7 @@ class Watcher(BaseManager):
         """ Start running the analysis in a new process """
         # Create access code for this analysis
         with Database('.', owner=user, testing=testing) as db:
-            files, path = db.get_mongo_files(parent_code, not testing)
+            files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
         config = load_config(config_file, files['metadata'])
         try:
@@ -294,7 +294,7 @@ class Watcher(BaseManager):
         p.start()
         sleep(1)
         with Database(testing=self.testing, owner=user) as db:
-            doc = db.get_doc(p.access_code, not self.testing)
+            doc = db.get_doc(p.access_code)
 
         # Store the access code
         if run_on_node:

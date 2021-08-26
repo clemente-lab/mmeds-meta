@@ -80,7 +80,7 @@ class Tool(mp.Process):
         # Get info on the study/parent analysis from the database
         with Database(owner=self.owner, testing=self.testing) as db:
             if self.restart_stage == 0:
-                parent_doc = db.get_doc(self.parent_code, not self.testing)
+                parent_doc = db.get_doc(self.parent_code)
                 self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
                                                         self.analysis_type, self.config, self.access_code)
             else:
