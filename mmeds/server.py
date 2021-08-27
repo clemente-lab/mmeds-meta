@@ -643,7 +643,13 @@ class MMEDSupload(MMEDSbase):
 
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
-        cp.session['upload_type'] = kwargs['uploadType']
+        if 'otu_table' in kwargs:
+            cp.session['upload_type'] = 'sparcc'
+        elif 'lefse_table' in kwargs:
+            cp.session['upload_type'] = 'lefse'
+        else:
+            cp.session['upload_type'] = 'qiime'
+
         if cp.session['upload_type'] == 'qiime':
             if cp.session['barcodes_type'] == 'dual':
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it

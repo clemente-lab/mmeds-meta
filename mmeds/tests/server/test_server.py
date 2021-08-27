@@ -379,7 +379,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype
-        self.getPage('/upload/upload_subject_metadata?uploadType=sparcc&studyName=Good_Study&subjectType=animal',
+        self.getPage('/upload/upload_subject_metadata?studyName=Good_Study&subjectType=animal',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -414,7 +414,7 @@ class TestServer(helper.CPWebCase):
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=lefse&studyName=Test_Lefse&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?studyName=Test_Lefse&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -445,7 +445,7 @@ class TestServer(helper.CPWebCase):
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_DualBarcodes&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?studyName=Test_DualBarcodes&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -481,7 +481,7 @@ class TestServer(helper.CPWebCase):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?studyName=Test_Server&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -594,7 +594,7 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
 
     def upload_metadata(self):
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Validate_Study&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?studyName=Validate_Study&subjectType=human',
                      self.cookies)
 
         # Check a subject metadata file that has no issues
@@ -632,7 +632,8 @@ class TestServer(helper.CPWebCase):
                                    upload_selected='w3-blue',
                                    success='Specimen metadata uploaded successfully',
                                    dual_barcodes='style="display:none"',
-                                   home_selected='')
+                                   home_selected='',
+                                   table_type_lower='')
 
         self.assertBody(page)
         Logger.debug('Checked a metadata file with no problems')
