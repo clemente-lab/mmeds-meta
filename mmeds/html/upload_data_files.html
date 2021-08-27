@@ -1,38 +1,93 @@
-<div>
-    <div class="w3-card-4 w3-padding w3-panel w3-pale-yellow w3-border">
-        <h3> Note: </h3>
-        <p>Large files may take several minutes to upload. Please stay on this page until you see a message that the upload is complete.</p>
+<div class="w3-card-4 w3-padding w3-panel w3-pale-yellow w3-border">
+    <h3> Note: </h3>
+    <p>Large files may take several minutes to upload. Please stay on this page until you see a message that the upload is complete.
+    </p>
+</div>
+
+<div class="w3-container w3-grey w3-margin-top">
+    <header class="w3-container w3-margin-top">
+        <h5><b><i class="fas fa-server" aria-hidden="true"></i> Select Upload Type </b></h5>
+    </header>
+    <div class="w3-bar w3-card-4 w3-dark-grey">
+        <button onclick="openStudyAction(event, 'QiimeUpload')" class="action-link w3-half w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Raw Reads (Qiime)</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'OTUUpload')" class="action-link w3-half w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>OTU Table</h4>
+        </button>
     </div>
-    <form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
-        <p>
-        <label class> Forward Reads (Upload a zip if demultiplexed) </label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="for_reads" required>
-        </p>
-        <p>
-        <label class> Reverse Reads (Optional) </label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="rev_reads">
-        </p>
-        <p>
-        <label class> Barcodes (Optional) </label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="barcodes">
-        </p>
-        <p {dual_barcodes}>
-        <label class> Reverse Barcodes (Optional) </label>
-        <input class="upload-btn-wrapper w3-btn w3-border w3-input" type='file' name='rev_barcodes' />
-        </p>
-        <p>
-        <label class> Reads Type </label>
-        <select class="w3-select w3-border" name='reads_type' form='upload_form'>
-            <option value='single_end' selected='selected'>Single End</option>
-            <option value='paired_end'>Paired End</option>
-        </select>
-        </p>
-        <p>
-        <input class="w3-check" type='checkbox' name='public' />
-        <label class> Make data public </label>
-        </p>
-        <p>
-        <button class="w3-button w3-blue" type='submit' method='post'> Submit Study </button>
-        </p>
-</form>
+
+    <hr>
+
+    <div id="QiimeUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        
+        <header class="w3-container w3-padding-top">
+            <h5><b> <i class="fa fa-cloud-upload"></i> Upload Data</b></h5>
+        </header>
+
+        <form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+            <p>
+            <label class> Forward Reads (Upload a zip if demultiplexed) </label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="for_reads" required>
+            </p>
+            <p>
+            <label class> Reverse Reads (Optional) </label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="rev_reads">
+            </p>
+            <p>
+            <label class> Barcodes (Optional) </label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="barcodes">
+            </p>
+            <p {dual_barcodes}>
+            <label class> Reverse Barcodes (Optional) </label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type='file' name='rev_barcodes' />
+            </p>
+            <p>
+            <label class> Reads Type </label>
+            <select class="w3-select w3-border" name='reads_type' form='upload_form'>
+                <option value='single_end' selected='selected'>Single End</option>
+                <option value='paired_end'>Paired End</option>
+            </select>
+            </p>
+            <p>
+            <input class="w3-check" type='checkbox' name='public' />
+            <label class> Make data public </label>
+            </p>
+            <p>
+            <button class="w3-button w3-blue" type='submit' method='post'> Submit Study </button>
+            </p>
+        </form>
+    </div>
+    <div id="OTUUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+
+        <header class="w3-container w3-padding-top">
+            <h5><b> <i class="fa fa-cloud-upload"></i> Upload OTU Data</b></h5>
+        </header>
+
+        <form class="w3-container w3-card-4 w3-padding" action='{process_data_page}' method='post' enctype='multipart/form-data' id='upload_form'>
+            <p>
+            <label class> {table_type} Table </label>
+            <input class="upload-btn-wrapper w3-btn w3-border w3-input" type="file" name="{table_type_lower}_table" required>
+            </p>
+            <p {lefse_table}>
+            <input class="w3-check" type='checkbox' name='subclass' />
+            <label> Subclass </label>
+            </p>
+            <p {lefse_table}>
+            <input class="w3-check w3-padding" type='checkbox' name='subjects' />
+            <label> Subject IDs </label>
+            </p>
+            <p>
+            <input class="w3-check w3-padding" type='checkbox' name='public' />
+            <label> Make Data Public </label>
+            </p>
+            <p>
+            <button class="w3-button w3-blue" type='submit' method='post'>Submit Upload</button>
+            </p>
+        </form>
+    </div>
 </div>
