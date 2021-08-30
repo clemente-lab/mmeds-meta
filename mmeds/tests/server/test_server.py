@@ -633,7 +633,7 @@ class TestServer(helper.CPWebCase):
                                    success='Specimen metadata uploaded successfully',
                                    dual_barcodes='style="display:none"',
                                    home_selected='',
-                                   table_type_lower='')
+                                   table_type_lower='otu')
 
         self.assertBody(page)
         Logger.debug('Checked a metadata file with no problems')
