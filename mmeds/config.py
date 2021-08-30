@@ -215,6 +215,7 @@ HTML_ARGS = {
     'warning': '',
     'success': '',
     'javascript': IMAGE_PATH + 'mmeds.js',
+    'password_js': IMAGE_PATH + 'validate_password.js',
     'privilege': 'display:none',
 
     # Settings for highlighting the section of the web site currently being accessed

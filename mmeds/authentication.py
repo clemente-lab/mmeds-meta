@@ -67,7 +67,7 @@ def check_password(password1, password2):
     if not (pas.intersection(set(ascii_uppercase)) and pas.intersection(set(ascii_lowercase))):
         errors.append('Passwords must contain a mix of upper and lower case characters.')
     if len(password1) <= 10:
-        errors.append('Passwords must be longer than 10 characters.')
+        errors.append('Passwords must be at least 10 characters.')
 
     if errors:
         raise InvalidPasswordErrors(errors)

@@ -161,6 +161,7 @@ class MMEDSbase:
             page = template.format_map(SafeDict({'body': body}))
 
             # Format all provided arguments
+            Logger.error(page)
             page = page.format_map(args)
             cp.log("Finished loading arguments for web page")
 
