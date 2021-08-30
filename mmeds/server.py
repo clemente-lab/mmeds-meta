@@ -513,10 +513,7 @@ class MMEDSupload(MMEDSbase):
         alert = 'Specimen metadata uploaded successfully'
 
         # The case for handling uploads of fastq files
-        if cp.session['upload_type'] == 'qiime':
-            page = self.load_webpage('upload_data_files', title='Upload Data', success=alert)
-        else:
-            page = self.load_webpage('upload_otu_data', title='Upload Data', success=alert)
+        page = self.load_webpage('upload_data_files', title='Upload Data', success=alert)
         return page
 
     @cp.expose
@@ -539,13 +536,12 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_subject_metadata(self, uploadType=None, subjectType=None, studyName=None):
+    def upload_subject_metadata(self, subjectType=None, studyName=None):
         """ Page for uploading Qiime data """
 
-        if uploadType is None and subjectType is None and studyName is None:
+        if subjectType is None and studyName is None:
             # Page is being reset to here from a further point in the process,
             #   pull data from cp.session and proceed.
-            uploadType = cp.session['upload_type']
             subjectType = cp.session['subject_type']
             studyName = cp.session['study_name']
 
@@ -553,13 +549,11 @@ class MMEDSupload(MMEDSbase):
             cp.session['study_name'] = studyName
             cp.session['metadata_type'] = 'subject'
             cp.session['subject_type'] = subjectType
-            cp.session['upload_type'] = uploadType
 
             with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
                 db.check_study_name(studyName)
                 page = self.load_webpage('upload_subject_file',
-                                         title='Upload Subject Metadata',
-                                         version=uploadType)
+                                         title='Upload Subject Metadata')
         except(err.StudyNameError) as e:
             with Database(testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
@@ -617,8 +611,7 @@ class MMEDSupload(MMEDSbase):
             page = self.load_webpage('upload_specimen_file',
                                      title='Upload Metadata',
                                      success='Subject table uploaded successfully',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=cp.session['upload_type'])
+                                     metadata_type=cp.session['metadata_type'].capitalize())
         return page
 
     @cp.expose
@@ -650,6 +643,13 @@ class MMEDSupload(MMEDSbase):
 
         # Unpack kwargs based on barcode type
         # Add the datafiles that exist as arguments
+        if 'otu_table' in kwargs:
+            cp.session['upload_type'] = 'sparcc'
+        elif 'lefse_table' in kwargs:
+            cp.session['upload_type'] = 'lefse'
+        else:
+            cp.session['upload_type'] = 'qiime'
+
         if cp.session['upload_type'] == 'qiime':
             if cp.session['barcodes_type'] == 'dual':
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it
