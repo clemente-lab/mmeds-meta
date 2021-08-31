@@ -155,7 +155,7 @@ class MMEDSbase:
                 template = HTML_PAGES['logged_out_template'].read_text()
 
             # Load the body of the requested webpage
-            body = path.read_text()
+            body = path.read_text(encoding='utf-8')
 
             # Insert the body into the outer template
             page = template.format_map(SafeDict({'body': body}))

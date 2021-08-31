@@ -1,20 +1,20 @@
+<link rel="stylesheet" href={password_stylesheet}>
 <div class='w3-container w3-card-4 w3-center'>
-    <form class='w3-form w3-padding' action='{sign_up_page}' method='post' enctype='multipart/form-data'>
+    <form class='w3-form w3-padding w3-threequarter' action='{sign_up_page}' method='post' enctype='multipart/form-data'>
         <h4 class="w3-center"> Register Account </h4>
         <p> <input class='w3-input' type="text" placeholder="Enter Username" name="username" required> </p>
         <p> <input class='w3-input' type='email' name='email' placeholder='Enter Email' required/> </p>
         <p> <input class='w3-input' id="psw" type="password" placeholder="Enter Password" name="password1" required> </p>
-        <p> <input class='w3-input' type="password" placeholder="Enter Password" name="password2" required> </p>
+        <p> <input class='w3-input' id="psw2" type="password" placeholder="Re-enter Password" name="password2" required> </p>
         <button class="w3-button w3-blue w3-center" type="submit">Sign Up</button>
     </form>
+    <div class='w3-container w3-quarter' id="message">
+        <h5>Password must meet the following requirements:</h5>
+        <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
+        <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
+        <p id="num" class="invalid">A <b>number</b></p>
+        <p id="symbol" class="invalid">A <b>symbol</b></p>
+        <p id="length" class="invalid">Minimum <b>10 characters</b></p>
+        <p id="match" class="invalid">Passwords <b>match</b></p>
+    </div>
 </div>
-<hr>
-<div class='w3-container w3-card-4' id="message">
-    <h3>Password must contain the following:</h3>
-    <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
-    <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
-    <p id="num" class="invalid">A <b>number</b></p>
-    <p id="symbol" class="invalid">A <b>symbol</b></p>
-    <p id="length" class="invalid">Minimum <b>10 characters</b></p>
-</div>
-<script src={password_js}> </script>
