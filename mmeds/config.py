@@ -201,6 +201,7 @@ HTML_ARGS = {
     'register_account_page': SERVER_PATH + 'auth/register_account',
     'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
     'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
+    'change_password': SERVER_PATH + 'auth/change_password',
     'sign_up_page': SERVER_PATH + 'auth/sign_up',
 
     # Query Pages

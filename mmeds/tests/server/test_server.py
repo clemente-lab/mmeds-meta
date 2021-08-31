@@ -344,7 +344,7 @@ class TestServer(helper.CPWebCase):
                                         user=self.server_user,
                                         account_selected='w3-text-blue',
                                         home_selected='',
-                                        error=['Passwords must be longer than 10 characters.'])
+                                        error=['Passwords must be at least 10 characters.'])
 
         self.assertBody(fail_page)
         self.getPage('/auth/change_password?password0={old}&password1={new}&password2={new}'.format(old=self.tp,
