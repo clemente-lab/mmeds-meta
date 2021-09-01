@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS `mmeds_data1`.`user` (
     `password` varchar(64),
     `salt` varchar(10),
     `email` varchar(100),
-    `privilege` int
+    `privilege` int,
+    `reset_needed` boolean
 );
 
 -- -----------------------------------------------------

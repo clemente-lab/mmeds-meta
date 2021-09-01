@@ -130,8 +130,17 @@ class MMEDSbase:
         if necessary as well as any formatting arguments.
         """
         cp.log("Loading webpage")
+
         try:
             path, header = HTML_PAGES[page]
+            if header:
+                with Database(owner=self.get_user(), testing=self.testing) as db:
+                    reset_needed = db.get_reset_needed()
+                    if reset_needed:
+                        page = 'auth_change_password'
+                        kwargs['errors'] = [(
+                            'Password change required. Your temporary password has been emailed to you.')]
+                        path, header = HTML_PAGES[page]
 
             # Handle any user alerts messages
             kwargs = util.format_alerts(kwargs)
@@ -161,7 +170,6 @@ class MMEDSbase:
             page = template.format_map(SafeDict({'body': body}))
 
             # Format all provided arguments
-            Logger.error(page)
             page = page.format_map(args)
             cp.log("Finished loading arguments for web page")
 
@@ -789,6 +797,8 @@ class MMEDSauthentication(MMEDSbase):
             check_password(password1, password2)
             change_password(self.get_user(), password1, testing=self.testing)
             page = self.load_webpage('auth_change_password', success='Your password was successfully changed.')
+            with Database(owner=self.get_user(), testing=self.testing) as db:
+                db.set_reset_needed(False)
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
             page = self.load_webpage('auth_change_password', error=e.message)
         return page
@@ -803,6 +813,8 @@ class MMEDSauthentication(MMEDSbase):
         try:
             reset_password(username, email, testing=self.testing)
             page = self.load_webpage('login', success='A new password has been sent to your email.')
+            with Database(owner=username, testing=self.testing) as db:
+                db.set_reset_needed(True)
         except err.NoResultError:
             page = self.load_webpage('login', error='No account exists with the provided username and email.')
         return page

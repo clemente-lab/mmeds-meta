@@ -12,7 +12,7 @@ BEGIN
         -- Get the current weight of the associated Specimen
         -- NEW is a temporary table containing the data from the INSERT call
         SELECT SpecimenWeight INTO @CurrentSpecimenWeight FROM Specimen WHERE idSpecimen = NEW.Specimen_idSpecimen;
-        -- Subject the weight of the new Aliquot from the Specimen
+        -- Subtract the weight of the new Aliquot from the Specimen
         UPDATE Specimen SET SpecimenWeight = @CurrentSpecimenWeight - NEW.AliquotWeight WHERE idSpecimen = NEW.Specimen_idSpecimen;
     END IF;
 END //
@@ -29,7 +29,7 @@ BEGIN
         -- Get the current weight of the associated Specimen
         -- NEW is a temporary table containing the data from the INSERT call
         SELECT AliquotWeight INTO @CurrentAliquotWeight FROM Aliquot WHERE `idAliquot` = `NEW`.`Aliquot_idAliquot`;
-        -- Subject the weight of the new Sample from the Aliquot
+        -- Subtract the weight of the new Sample from the Aliquot
         UPDATE Aliquot SET AliquotWeight = @CurrentAliquotWeight - NEW.`SampleWeight` WHERE `idAliquot` = `NEW`.`Aliquot_idAliquot`;
 END IF;
 END //
