@@ -138,7 +138,7 @@ class MMEDSbase:
                     reset_needed = db.get_reset_needed()
                     if reset_needed:
                         page = 'auth_change_password'
-                        kwargs['errors'] = [(
+                        kwargs['error'] = [(
                             'Password change required. Your temporary password has been emailed to you.')]
                         path, header = HTML_PAGES[page]
 
@@ -797,8 +797,6 @@ class MMEDSauthentication(MMEDSbase):
             check_password(password1, password2)
             change_password(self.get_user(), password1, testing=self.testing)
             page = self.load_webpage('auth_change_password', success='Your password was successfully changed.')
-            with Database(owner=self.get_user(), testing=self.testing) as db:
-                db.set_reset_needed(False)
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
             page = self.load_webpage('auth_change_password', error=e.message)
         return page

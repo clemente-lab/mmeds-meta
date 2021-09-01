@@ -7,7 +7,7 @@ from mmeds.logging import Logger
 from mmeds.error import NoResultError, InvalidLoginError, InvalidPasswordErrors, InvalidUsernameError
 
 
-def add_user(username, password, email, privilege_level=0, testing=False):
+def add_user(username, password, email, privilege_level=0, reset_needed=0, testing=False):
     """ Adds a user to the file containing login info. """
 
     # Hash the password
@@ -17,7 +17,7 @@ def add_user(username, password, email, privilege_level=0, testing=False):
     sha256.update(salted.encode('utf-8'))
     password_hash = sha256.hexdigest()
     with Database(testing=testing) as db:
-        db.add_user(username, password_hash, salt, email, privilege_level)
+        db.add_user(username, password_hash, salt, email, privilege_level, reset_needed)
 
 
 def remove_user(username, testing=False):

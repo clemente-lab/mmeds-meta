@@ -765,7 +765,7 @@ class Database:
                 'salt': new_salt,
                 'email': result[4],
                 'priv': result[5],
-                'reset_needed': result[6]
+                'reset_needed': 0
             })
         self.db.commit()
         return True

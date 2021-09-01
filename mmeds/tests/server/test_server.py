@@ -103,7 +103,7 @@ class TestServer(helper.CPWebCase):
 
     def test_aa_setup(self):
         Logger.info('===== Test Server Start =====')
-        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
+        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, 0, True)
 
     def test_ab_index(self):
         Logger.info('ab index')
@@ -120,6 +120,9 @@ class TestServer(helper.CPWebCase):
         self.not_logged_in()
         self.sign_up_fail()
         self.sign_up_success()
+
+    def test_bb_temp(self):
+        self.login()
 
     def test_bc_login(self):
         Logger.info('bc login')
