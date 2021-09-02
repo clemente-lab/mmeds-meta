@@ -135,6 +135,7 @@ class MMEDSbase:
             path, header = HTML_PAGES[page]
 
             if header:
+                # Check if password needs to be reset
                 if kwargs.get('user') is not None:
                     user = kwargs.get('user')
                 else:
