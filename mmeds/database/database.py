@@ -415,10 +415,7 @@ class Database:
         """ Update the 'reset_needed' value, which forces the user to change their
             password before continuing
         """
-        if reset_needed is True:
-            reset_needed = 1
-        elif reset_needed is False:
-            reset_needed = 0
+        reset_needed = int(reset_needed)
         sql = 'SELECT * FROM `user` WHERE `username` = %(uname)s'
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'uname': self.owner})
@@ -428,7 +425,7 @@ class Database:
             cursor.execute(sql, {'id': result[0]})
 
             # Insert the user with the updated value
-            sql = 'INSERT INTO user (user_id, username, password, salt, email, privilege, reset_needed) VALUES\
+            sql = 'INSERT INTO `user` (user_id, username, password, salt, email, privilege, reset_needed) VALUES\
                 (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(privilege)s, %(reset_needed)s);'
             cursor.execute(sql, {
                 'id': result[0],
@@ -442,7 +439,7 @@ class Database:
         self.db.commit()
 
     def get_reset_needed(self):
-        """ Get the 'reset_needed' value and return """
+        """ Return the 'reset_needed' value from the `mmeds_data1`.`user` table """
         sql = 'SELECT * FROM `user` WHERE `username` = %(uname)s'
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'uname': self.owner})

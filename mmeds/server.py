@@ -132,21 +132,14 @@ class MMEDSbase:
         cp.log("Loading webpage")
 
         try:
-            path, header = HTML_PAGES[page]
+            if 'reset_needed' in cp.session:
+                if cp.session['reset_needed'] == 1:
+                    Logger.error(page)
+                    page = 'auth_change_password'
+                    kwargs['error'] = [(
+                        'Password change required. Your temporary password has been emailed to you.')]
 
-            if header:
-                # Check if password needs to be reset
-                if kwargs.get('user') is not None:
-                    user = kwargs.get('user')
-                else:
-                    user = self.get_user()
-                with Database(owner=user, testing=self.testing) as db:
-                    reset_needed = db.get_reset_needed()
-                    if reset_needed:
-                        page = 'auth_change_password'
-                        kwargs['error'] = [(
-                            'Password change required. Your temporary password has been emailed to you.')]
-                        path, header = HTML_PAGES[page]
+            path, header = HTML_PAGES[page]
 
             # Handle any user alerts messages
             kwargs = util.format_alerts(kwargs)
@@ -803,6 +796,7 @@ class MMEDSauthentication(MMEDSbase):
             check_password(password1, password2)
             change_password(self.get_user(), password1, testing=self.testing)
             page = self.load_webpage('auth_change_password', success='Your password was successfully changed.')
+            cp.session['reset_needed'] = 0
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
             page = self.load_webpage('auth_change_password', error=e.message)
         return page
@@ -1230,6 +1224,8 @@ class MMEDSserver(MMEDSbase):
             cp.session['download_files'] = {}
             cp.session['uploaded_files'] = {}
             cp.session['subject_ids'] = None
+            with Database(owner=username, testing=self.testing) as db:
+                cp.session['reset_needed'] = db.get_reset_needed()
             page = self.load_webpage('home', title='Welcome to Mmeds')
             cp.log('Login Successful')
         except err.InvalidLoginError as e:
