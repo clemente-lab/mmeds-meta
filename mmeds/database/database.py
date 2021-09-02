@@ -409,6 +409,7 @@ class Database:
                                  'reset_needed': reset_needed
                                  })
         self.db.commit()
+        Logger.info('USER {} HAS BEEN ADDED'.format(username))
 
     def set_reset_needed(self, reset_needed):
         """ Update the 'reset_needed' value, which forces the user to change their

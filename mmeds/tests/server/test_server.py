@@ -121,9 +121,6 @@ class TestServer(helper.CPWebCase):
         self.sign_up_fail()
         self.sign_up_success()
 
-    def test_bb_temp(self):
-        self.login()
-
     def test_bc_login(self):
         Logger.info('bc login')
         self.login_fail_password()
@@ -271,12 +268,13 @@ class TestServer(helper.CPWebCase):
     def sign_up_success(self):
         """ Check a successful sign in """
         addr = '/auth/sign_up?username={}&email={}&password1={}&password2={}'
-
         # Test successful signup
         self.getPage(addr.format(self.server_user, fig.TEST_EMAIL, sec.TEST_PASS, sec.TEST_PASS))
         self.assertStatus('200 OK')
         good_page = server.load_webpage('login', success='Account created successfully!')
         self.assertBody(good_page)
+        self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
+        self.assertStatus('200 OK')
 
     def login(self, alt=False, lab=False):
         """ When alt is True use alternate password """
@@ -883,7 +881,7 @@ class TestServer(helper.CPWebCase):
 
         # Grab link to the first Specimen
         body = self.body.decode('utf-8')
-        code = re.findall('http:\/\/localhost\/myapp(.+?)" class="row-link">', body)
+        code = re.findall('http://localhost/myapp(.+?)" class="row-link">', body)
         url_path = Path('/tmp/urls.txt')
         url_path.write_text('\n'.join([cod for cod in code]))
         Path('/tmp/other_page.html').write_text(body)

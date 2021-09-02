@@ -133,8 +133,13 @@ class MMEDSbase:
 
         try:
             path, header = HTML_PAGES[page]
+
             if header:
-                with Database(owner=self.get_user(), testing=self.testing) as db:
+                if kwargs.get('user') is not None:
+                    user = kwargs.get('user')
+                else:
+                    user = self.get_user()
+                with Database(owner=user, testing=self.testing) as db:
                     reset_needed = db.get_reset_needed()
                     if reset_needed:
                         page = 'auth_change_password'
@@ -346,6 +351,7 @@ class MMEDSupload(MMEDSbase):
     def run_validate(self, myMetaData, simplified):
         """ Run validate_mapping_file and return the results """
         cp.log('In run validate')
+        Logger.info('WHAT IS GOING ON')
         errors = []
         warnings = []
         # Check the file that's uploaded
@@ -389,6 +395,7 @@ class MMEDSupload(MMEDSbase):
                     raise err.MmedsError('Invalid metadata type')
             except err.MetaDataError as e:
                 errors.append('-1\t-1\t' + e.message)
+        Logger.info('HI HELLO IT ME ' + str(errors) + str(warnings))
         return errors, warnings
 
     def load_data_files(self, **kwargs):
@@ -1204,7 +1211,6 @@ class MMEDSserver(MMEDSbase):
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
-
             path = fig.DATABASE_DIR
             filename = cp.session['user']
             # Create the filename

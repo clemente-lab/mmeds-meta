@@ -108,7 +108,7 @@ class TestServer(CPWebCase):
 
     def test_aa_setup(self):
         Logger.warn('========== Test Server Start ==========')
-        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, True)
+        add_user(self.lab_user, sec.TEST_PASS, fig.TEST_EMAIL, 1, 0, True)
 
     def test_ab_index(self):
         Logger.info('ab index')
@@ -749,7 +749,7 @@ class TestServer(CPWebCase):
 
         # Grab link to the first Specimen
         body = self.body.decode('utf-8')
-        code = re.findall('http:\/\/localhost\/myapp(.+?)" class="row-link">', body)
+        code = re.findall('http://localhost/myapp(.+?)" class="row-link">', body)
         url_path = Path('/tmp/urls.txt')
         url_path.write_text('\n'.join([cod for cod in code]))
 
