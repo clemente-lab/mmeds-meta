@@ -136,9 +136,7 @@ class MMEDSbase:
             if HTML_PAGES[page][1]:
                 try:
                     reset = cp.session['reset_needed']
-                    Logger.error('cp session worked')
                 except AttributeError:
-                    Logger.error('had to not use session')
                     if kwargs.get('user') is not None:
                         user = kwargs.get('user')
                     else:
