@@ -132,11 +132,14 @@ class MMEDSbase:
         cp.log("Loading webpage")
 
         try:
+            # Check if user needs to reset their password
             reset = False
             if HTML_PAGES[page][1]:
                 try:
+                    # Check in active dictionary
                     reset = cp.session['reset_needed']
                 except AttributeError:
+                    # Check in sql database
                     if kwargs.get('user') is not None:
                         user = kwargs.get('user')
                     else:
