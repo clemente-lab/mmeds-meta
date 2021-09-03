@@ -352,10 +352,12 @@ class TestServer(helper.CPWebCase):
                                                                                                     new=sec.TEST_PASS),
                      self.cookies)
         self.assertStatus('200 OK')
+        error_content = 'Password change required. Your temporary password has been emailed to you.'
         pass_page = server.load_webpage('auth_change_password',
                                         user=self.server_user,
                                         account_selected='w3-text-blue',
                                         home_selected='',
+                                        error=[error_content],
                                         success='Your password was successfully changed.')
         self.assertBody(pass_page)
 

@@ -132,12 +132,24 @@ class MMEDSbase:
         cp.log("Loading webpage")
 
         try:
-            if 'reset_needed' in cp.session:
-                if cp.session['reset_needed'] == 1:
-                    Logger.error(page)
-                    page = 'auth_change_password'
-                    kwargs['error'] = [(
-                        'Password change required. Your temporary password has been emailed to you.')]
+            reset = False
+            if HTML_PAGES[page][1]:
+                try:
+                    reset = cp.session['reset_needed']
+                    Logger.error('cp session worked')
+                except AttributeError:
+                    Logger.error('had to not use session')
+                    if kwargs.get('user') is not None:
+                        user = kwargs.get('user')
+                    else:
+                        user = self.get_user()
+                    with Database(owner=user, testing=self.testing) as db:
+                        reset = db.get_reset_needed()
+            if reset:
+                Logger.error(page)
+                page = 'auth_change_password'
+                kwargs['error'] = [(
+                    'Password change required. Your temporary password has been emailed to you.')]
 
             path, header = HTML_PAGES[page]
 
