@@ -264,6 +264,12 @@ if not STUDIES_DIR.exists():
     except FileExistsError:
         pass
 
+if not SESSION_PATH.exists():
+    try:
+        SESSION_PATH.mkdir()
+    except FileExistsError:
+        pass
+
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
