@@ -196,7 +196,7 @@ class Validator:
         # Load the ICD codes
         ICD_codes = load_ICD_codes()
         for i, cell in enumerate(column):
-            if not pd.isnull(cell):
+            if not pd.isnull(cell) and not cell == '':
                 try:
                     parts = cell.split('.')
                 except AttributeError:
@@ -221,14 +221,14 @@ class Validator:
         for i, cell in enumerate(column):
             cells[cell].append(i)
         # Find any duplicates
-        dups = {k: v for k, v in cells.items() if len(v) > 1}
+        dups = {k: v for k, v in cells.items() if(len(v) > 1 and not pd.isnull(k))}
         err_str = '{}\t{}\tDuplicate Value Error: Duplicate value {} of row {} in row {} in column {}.'
         for dup_key in dups.keys():
             value = dups[dup_key]
             for val in value[1:]:
                 self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
 
-    def check_cell(self, row_index, cell, check_date=False):
+    def check_cell(self, row_index, cell, required):
         """
         Check the data in the specified cell.
         ====================================
@@ -246,7 +246,7 @@ class Validator:
             # Checks if the cell is a string
             if self.col_type == str:
                 # Check for empty fields
-                if '' == cell:
+                if required and '' == cell:
                     self.errors.append(row_col + 'Empty Cell Error: Empty cell value in column {}'.format(self.cur_col))
                 # Check for non-standard NAs
                 elif cast_cell in NAs:
@@ -265,8 +265,9 @@ class Validator:
                     self.errors.append(row_col + 'Future Date Error: Date {} has not yet occurred'.format(cell))
         # Error handling for column values that don't match the column type
         except ValueError:
-            err = 'Cell Wrong Type Error: Cell {} contains the wrong type of values'
-            self.errors.append(row_col + err.format(cell))
+            if required:
+                err = 'Cell Wrong Type Error: Cell {} contains the wrong type of values'
+                self.errors.append(row_col + err.format(cell))
 
     def check_column(self, column):
         """
@@ -278,11 +279,10 @@ class Validator:
 
         # Get the header
         header = column.name
-
+        required = self.cur_col in fig.REQUIRED_SUBJECT_COLS or self.cur_col in fig.REQUIRED_SPECIMEN_COLS
         Logger.debug("iterate over cells")
         if column.isna().all():
-            if (not self.cur_table == 'AdditionalMetaData' and
-                    self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
+            if not self.cur_table == 'AdditionalMetaData' and required:
 
                 Logger.debug("Column shouldn't be NA")
                 err = '{}\t{}\tMissing Required Value Error in Column {}'
@@ -292,13 +292,12 @@ class Validator:
             for i, cell in enumerate(column):
                 if pd.isna(cell):
                     # Check for missing required fields
-                    if not self.cur_table == 'AdditionalMetaData' and\
-                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                    if not self.cur_table == 'AdditionalMetaData' and required:
                         Logger.debug("Cell shouldn't be NA")
                         err = '{}\t{}\tMissing Required Value Error'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
                 else:
-                    self.check_cell(i, cell)
+                    self.check_cell(i, cell, required)
 
             # Ensure there is only one study being uploaded
             if header == 'StudyName' and len(set(column.tolist())) > 1:
@@ -395,6 +394,11 @@ class Validator:
             if not self.cur_table == 'AdditionalMetaData':
                 Logger.debug("Not additional metadata")
                 missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
+                if self.metadata_type == 'subject':
+                    missing_cols = fig.REQUIRED_SUBJECT_COLS.intersection(missing_cols)
+                else:
+                    missing_cols = fig.REQUIRED_SPECIMEN_COLS.intersection(missing_cols)
+
                 if missing_cols:
                     Logger.debug(f"Missing columns {missing_cols}")
                     text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
@@ -531,6 +535,7 @@ class Validator:
 
             # Check the type information is valid
             ctype = self.header_df[table][column].iloc[1]
+            required = column in fig.REQUIRED_SUBJECT_COLS or column in fig.REQUIRED_SPECIMEN_COLS
             try:
                 self.col_types[column] = fig.TYPE_MAP[ctype]
             except KeyError:
@@ -548,14 +553,16 @@ class Validator:
                     cast_column = pd.to_datetime(self.df[(table, column)])
                     self.df[(table, column)] = cast_column
                 except ValueError:
-                    err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
-                    self.errors.append(err.format(self.col_index, column))
+                    if required:
+                        err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
+                        self.errors.append(err.format(self.col_index, column))
             else:
                 try:
                     self.df[table][column].astype(self.col_types[column])
                 except ValueError:
-                    err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
-                    self.errors.append(err.format(self.col_index, column))
+                    if required:
+                        err = '-1\t{}\tColumn Wrong Type Error: Column {} contains the wrong type of values'
+                        self.errors.append(err.format(self.col_index, column))
 
     def check_matching_subjects(self):
         """ Insure the subjects match those previouvs found in subject metadata """
@@ -602,6 +609,7 @@ class Validator:
         else:
             if self.metadata_type == 'subject':
                 Logger.debug("metadata type subject")
+                req_tables = fig.REQUIRED_SUBJECT_CATS
                 if self.subject_type == 'human':
                     Logger.debug("Subject Type Human")
                     tables = fig.SUBJECT_TABLES
@@ -617,12 +625,14 @@ class Validator:
             elif self.metadata_type == 'specimen':
                 self.check_study_name()
                 tables = fig.SPECIMEN_TABLES
-            Logger.debug("Checking COlumn Types")
+                req_tables = fig.REQUIRED_SPECIMEN_CATS
+            Logger.debug("Checking Column Types")
             self.check_column_types()
-            Logger.debug("Checked column types")
+            Logger.debug("Checked Column types")
 
             # Check for missing tables
             missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
+            missing_tables = req_tables.intersection(missing_tables)
             Logger.debug("Checked missing tables")
             if missing_tables:
                 missing_tables = list(missing_tables)

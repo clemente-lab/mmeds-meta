@@ -524,8 +524,47 @@ USER_FILES = set(map(
         'analysis\w*_summary_dir'
     ]))
 
-ICD_TABLES = {'IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'}
+ICD_TABLES = {
+    'IllnessBroadCategory',
+    'IllnessCategory',
+    'IllnessDetails'
+}
 
+# Required tables and columns
+REQUIRED_SUBJECT_CATS = {
+    'Subjects',
+    'SubjectType'
+}
+
+REQUIRED_SUBJECT_COLS = {
+    'HostSubjectId',
+    'SubjectType'
+}
+
+REQUIRED_SPECIMEN_CATS = {
+    'Lab',
+    'RawData',
+    'RawDataProtocol',
+    'ResultsProtocol',
+    'SampleProtocol',
+    'Specimen',
+    'Study'
+}
+
+REQUIRED_SPECIMEN_COLS = {
+    'ContactEmail',
+    'ContactName',
+    'PrimaryInvestigator',
+    'BarcodeSequence',
+    'LinkerPrimerSequence',
+    'RawDataID',
+    'RawDataNotes',
+    'RawDataProtocolID',
+    'ResultsProtocolID',
+    'SampleProtocolID',
+    'SpecimenID',
+    'StudyName',
+}
 
 # These are the tables that users are given direct access to
 PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData', 'ICDCode']))
