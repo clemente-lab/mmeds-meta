@@ -360,11 +360,6 @@ class MMEDSupload(MMEDSbase):
         cp.log('In run validate')
         errors = []
         warnings = []
-        # Check the file that's uploaded
-        valid_extensions = ['txt', 'csv', 'tsv']
-        file_extension = myMetaData.filename.split('.')[-1]
-        if file_extension not in valid_extensions:
-            raise err.MetaDataError('{} is not a valid filetype.'.format(file_extension))
 
         # Create a copy of the MetaData
         metadata_copy = create_local_copy(myMetaData.file, myMetaData.filename, self.get_dir())
@@ -377,30 +372,36 @@ class MMEDSupload(MMEDSbase):
         # Store the copy's location
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
 
-        cp.log('before validator creation')
-        valid = Validator(metadata_copy,
-                          cp.session['study_name'],
-                          cp.session['metadata_type'],
-                          cp.session['subject_ids'],
-                          cp.session['subject_type'],
-                          cp.session.get('barcodes_type'))
-        cp.log('before validator run')
+        # Check the file that's uploaded
+        valid_extensions = ['txt', 'csv', 'tsv']
+        file_extension = myMetaData.filename.split('.')[-1]
+        if file_extension not in valid_extensions:
+            errors.append('{} is not a valid filetype.'.format(file_extension))
+        else:
+            cp.log('before validator creation')
+            valid = Validator(metadata_copy,
+                              cp.session['study_name'],
+                              cp.session['metadata_type'],
+                              cp.session['subject_ids'],
+                              cp.session['subject_type'],
+                              cp.session.get('barcodes_type'))
+            cp.log('before validator run')
 
-        # Check the metadata file for errors
-        errors, warnings, subjects = valid.run()
+            # Check the metadata file for errors
+            errors, warnings, subjects = valid.run()
 
-        # The database for any issues with previous uploads for the subject metadata
-        with Database('.', owner=self.get_user(), testing=self.testing) as db:
-            try:
-                if cp.session['metadata_type'] == 'subject':
-                    warnings += db.check_repeated_subjects(subjects, cp.session['subject_type'])
-                    cp.session['subject_ids'] = subjects
-                elif cp.session['metadata_type'] == 'specimen':
-                    errors += db.check_user_study_name(cp.session['study_name'])
-                else:
-                    raise err.MmedsError('Invalid metadata type')
-            except err.MetaDataError as e:
-                errors.append('-1\t-1\t' + e.message)
+            # The database for any issues with previous uploads for the subject metadata
+            with Database('.', owner=self.get_user(), testing=self.testing) as db:
+                try:
+                    if cp.session['metadata_type'] == 'subject':
+                        warnings += db.check_repeated_subjects(subjects, cp.session['subject_type'])
+                        cp.session['subject_ids'] = subjects
+                    elif cp.session['metadata_type'] == 'specimen':
+                        errors += db.check_user_study_name(cp.session['study_name'])
+                    else:
+                        raise err.MmedsError('Invalid metadata type')
+                except err.MetaDataError as e:
+                    errors.append('-1\t-1\t' + e.message)
         return errors, warnings
 
     def load_data_files(self, **kwargs):

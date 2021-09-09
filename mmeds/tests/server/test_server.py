@@ -385,7 +385,6 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/upload_subject_metadata?studyName=Good_Study&subjectType=animal',
                      self.cookies)
         self.assertStatus('200 OK')
-
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_ANIMAL_SUBJECT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
@@ -420,7 +419,6 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/upload_subject_metadata?studyName=Test_Lefse&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
-
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
@@ -451,7 +449,6 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/upload_subject_metadata?studyName=Test_DualBarcodes&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
-
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
@@ -492,13 +489,13 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_CONFIG], ['application/gzip'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        page = server.load_webpage('upload_subject_file',
+        page = server.load_webpage('upload_metadata_error',
                                    user=self.server_user,
                                    upload_selected='w3-blue',
                                    home_selected='',
                                    select_barcodes='',
                                    metadata_type='subject',
-                                   error='yaml is not a valid filetype.')
+                                   error=['yaml is not a valid filetype.'])
         self.assertBody(page)
         Logger.debug('Checked invalid filetype')
 
@@ -566,8 +563,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
         standard_error = ('-1\t-1\tIllegal Table Error: Table {} should not be the metadata')
-        error_message = [('-1\t-1\tMissing Table Error: Missing tables Ethnicity, Genotypes, Heights, ICDCode,' +
-                          ' Illness, Intervention, Interventions, SubjectType, Subjects, Weights')]
+        error_message = [('-1\t-1\tMissing Table Error: Missing tables SubjectType, Subjects')]
         error_categories = ['Aliquot',
                             'BodySite',
                             'CollectionSite',
