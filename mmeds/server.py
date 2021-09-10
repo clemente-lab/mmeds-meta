@@ -623,10 +623,7 @@ class MMEDSupload(MMEDSbase):
         # Move on to uploading data files
         if cp.session['metadata_type'] == 'specimen':
             # The case for handling uploads of fastq files
-            if cp.session['upload_type'] == 'qiime':
-                page = self.load_webpage('upload_data_files', title='Upload Data', success=alert)
-            else:
-                page = self.load_webpage('upload_otu_data', title='Upload Data', success=alert)
+            page = self.load_webpage('upload_data_files', title='Upload Data', success=alert)
         # Move on to uploading specimen metadata
         else:
             cp.session['metadata_type'] = 'specimen'

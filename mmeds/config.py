@@ -558,7 +558,6 @@ REQUIRED_SPECIMEN_COLS = {
     'BarcodeSequence',
     'LinkerPrimerSequence',
     'RawDataID',
-    'RawDataNotes',
     'RawDataProtocolID',
     'ResultsProtocolID',
     'SampleProtocolID',
