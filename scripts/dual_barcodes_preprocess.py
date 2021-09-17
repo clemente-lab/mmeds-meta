@@ -19,6 +19,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-i1', '--barcodes-forward', required=True, help='Path to .fastq.gz forward barcodes file')
 @click.option('-i2', '--barcodes-reverse', required=True, help='Path to .fastq.gz reverse barcodes file')
 def main(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse):
+    # Unzip the four required files
     r1 = gzip.open(reads_forward)
     r2 = gzip.open(reads_reverse)
     i1 = gzip.open(barcodes_forward)
@@ -40,7 +41,9 @@ def main(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse):
     output = demux(r1, r2, i1, i2, tmp_adapters)
     out_dir = Path('output_dir/')
     out_dir.mkdir(parents=True, exist_ok=True)
+    # All output text exists in 'output'
     for key in output:
+        # Creates two output fastq.gz for each sample and populates it
         path1 = out_dir / '{}_L001_R1_001.fastq.gz'.format(key)
         path2 = out_dir / '{}_L001_R2_001.fastq.gz'.format(key)
         path1.touch()
@@ -61,13 +64,18 @@ def demux(r1, r2, i1, i2, sample_barcodes):
     while True:
         debug_count += 1
         print(debug_count)
+
+        # Grab four lines from each file
         r1_str = get_lines(r1, 4)
         r2_str = get_lines(r2, 4)
         i1_str = get_lines(i1, 4).split('\n')
         i2_str = get_lines(i2, 4).split('\n')
+
+        # End when we get to EOF
         if len(i1_str) < 4:
             break
         for key in sample_barcodes:
+            # When sample barcodes match file barcodes, add those reads to output
             if i1_str[1] == sample_barcodes[key][0] and i2_str[1] == sample_barcodes[key][1]:
                 output[key][0] += r1_str
                 output[key][1] += r2_str
