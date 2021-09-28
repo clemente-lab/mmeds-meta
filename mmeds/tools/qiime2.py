@@ -30,7 +30,7 @@ class Qiime2(Tool):
     # =============== #
     # Qiime2 Commands #
     # =============== #
-    def qimport(self):
+    def qimport(self, write=True):
         """ Split the libraries and perform quality analysis. """
 
         self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
@@ -97,8 +97,8 @@ class Qiime2(Tool):
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
-
-        self.jobtext.append(command)
+        if write:
+            self.jobtext.append(command)
 
     def demultiplex(self):
         """ Demultiplex the reads. """
@@ -120,7 +120,54 @@ class Qiime2(Tool):
             # Reverse compliment the barcodes in the mapping file if using paired reads
             if 'paired_end' == self.doc.reads_type:
                 cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
+            self.jobtext.append(' '.join(cmd))
+
         elif 'dual_barcodes':
+            self.add_path('pheniqs_config', '.json')
+            self.add_path(self.path / 'pheniqs_output', key='pheniqs_dir')
+            self.add_path(self.path / 'stripped_output', key='stripped_dir')
+
+            if not self.get_file('pheniqs_dir', True).is_dir():
+                self.get_file('pheniqs_dir', True).mkdir()
+
+            if not self.get_file('stripped_dir', True).is_dir():
+                self.get_file('stripped_dir', True).mkdir()
+
+            load = 'ml pheniqs'
+            self.module = load
+            self.jobtext.append(load)
+            cmd = [
+                'python make_pheniqs_config.py',
+                '--reads-forward {}'.format(self.get_file('for_reads')),
+                '--reads-reverse {}'.format(self.get_file('rev_reads')),
+                '--barcodes-forward {}'.format(self.get_file('for_barcodes')),
+                '--barcodes-reverse {}'.format(self.get_file('rev_barcodes')),
+                '--mapping-file {}'.format(self.get_file('mapping')),
+                '--o-config {}'.format(self.get_file('pheniqs_config')),
+                '--o-directory {}'.format(self.get_file('pheniqs_dir'))
+            ]
+            self.jobtext.append(' '.join(cmd))
+
+            cmd = 'pheniqs mux --config {}'.format(self.get_file('pheniqs_config'))
+            self.jobtext.append(cmd)
+
+            cmd = [
+                'python strip_error_barcodes.py',
+                '--num-allowed-errors {}'.format(1),
+                '--mapping-file {}'.format(self.get_file('mapping')),
+                '--input-dir {}'.format(self.get_file('pheniqs_dir')),
+                '--output-dir {}'.format(self.get_file('stripped_dir'))
+            ]
+            self.jobtext.append(' '.join(cmd))
+
+            if testing:
+                load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
+            else:
+                load = 'ml anaconda3;\nsource activate qiime2-2020.8.0;'
+            self.module = load
+            self.jobtext.append(load)
+
+        elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
             self.add_path('demux_log', '.txt')
             cmd = [
@@ -136,7 +183,7 @@ class Qiime2(Tool):
                 '--verbose &> {}'.format(self.get_file('demux_log'))
             ]
 
-        self.jobtext.append(' '.join(cmd))
+            self.jobtext.append(' '.join(cmd))
 
     def filter_by_metadata(self, column=None, value=None):
         """
@@ -478,7 +525,7 @@ class Qiime2(Tool):
         if not self.doc.sub_analysis:
             if 'demuxed' in self.doc.reads_type:
                 self.unzip()
-            self.qimport()
+            self.qimport(not 'dual_barcodes' == self.doc.barcodes_type)
 
     def setup_stage_1(self):
         self.set_stage(1)

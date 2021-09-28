@@ -651,7 +651,7 @@ class MMEDSupload(MMEDSbase):
             cp.session['upload_type'] = 'qiime'
 
         if cp.session['upload_type'] == 'qiime':
-            if cp.session['barcodes_type'] == 'dual':
+            if cp.session['barcodes_type'].startswith('dual'):
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
@@ -659,6 +659,8 @@ class MMEDSupload(MMEDSbase):
                                                  rev_barcodes=kwargs['rev_barcodes'])
                 reads_type = 'paired_end'
                 barcodes_type = 'dual_barcodes'
+                if cp.session['barcodes_type'].endswith('x'):
+                    barcodes_type += '_legacy'
             else:
                 barcodes_type = 'single_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
