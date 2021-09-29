@@ -101,6 +101,7 @@ class Qiime2(Tool):
             self.jobtext.append(command)
 
     def qimport_demultiplexed(self):
+        """ Import the demultiplexed dual_barcode files """
         cmd = [
             'qiime tools import',
             '--type {}'.format('"SampleData[PairedEndSequencesWithQuality]"'),
@@ -143,6 +144,7 @@ class Qiime2(Tool):
             if not self.get_file('stripped_dir', True).is_dir():
                 self.get_file('stripped_dir', True).mkdir()
 
+            # Create pheniqs configuration file
             self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable')
             cmd = [
                 'make_pheniqs_config.py',
@@ -156,10 +158,12 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
 
+            # Run pheniqs demultiplexing
             self.jobtext.append('source activate pheniqs')
             cmd = 'pheniqs mux --config {}'.format(self.get_file('pheniqs_config'))
             self.jobtext.append(cmd)
 
+            # Edit out pheniqs errors greater than --num-allowed-errors
             self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable')
             cmd = [
                 'strip_error_barcodes.py',
