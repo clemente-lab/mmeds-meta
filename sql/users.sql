@@ -33,7 +33,7 @@ DROP PROCEDURE IF EXISTS `mmeds_data1`.`add_users` //
 DELIMITER ;
 
 -- Create the Public user
-INSERT INTO user VALUES (1, 'Public', '', '', '', 1);
+INSERT INTO user VALUES (1, 'Public', '', '', '', 1, False);
 
 SELECT * FROM user;
 

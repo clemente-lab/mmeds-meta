@@ -130,7 +130,28 @@ class MMEDSbase:
         if necessary as well as any formatting arguments.
         """
         cp.log("Loading webpage")
+
         try:
+            # Check if user needs to reset their password
+            reset = False
+            if HTML_PAGES[page][1]:
+                try:
+                    # Check in active dictionary
+                    reset = cp.session['reset_needed']
+                except AttributeError:
+                    # Check in sql database
+                    if kwargs.get('user') is not None:
+                        user = kwargs.get('user')
+                    else:
+                        user = self.get_user()
+                    with Database(owner=user, testing=self.testing) as db:
+                        reset = db.get_reset_needed()
+            if reset:
+                Logger.error(page)
+                page = 'auth_change_password'
+                kwargs['error'] = [(
+                    'Password change required. Your temporary password has been emailed to you.')]
+
             path, header = HTML_PAGES[page]
 
             # Handle any user alerts messages
@@ -155,7 +176,7 @@ class MMEDSbase:
                 template = HTML_PAGES['logged_out_template'].read_text()
 
             # Load the body of the requested webpage
-            body = path.read_text()
+            body = path.read_text(encoding='utf-8')
 
             # Insert the body into the outer template
             page = template.format_map(SafeDict({'body': body}))
@@ -788,6 +809,7 @@ class MMEDSauthentication(MMEDSbase):
             check_password(password1, password2)
             change_password(self.get_user(), password1, testing=self.testing)
             page = self.load_webpage('auth_change_password', success='Your password was successfully changed.')
+            cp.session['reset_needed'] = 0
         except (err.InvalidLoginError, err.InvalidPasswordErrors) as e:
             page = self.load_webpage('auth_change_password', error=e.message)
         return page
@@ -802,6 +824,8 @@ class MMEDSauthentication(MMEDSbase):
         try:
             reset_password(username, email, testing=self.testing)
             page = self.load_webpage('login', success='A new password has been sent to your email.')
+            with Database(owner=username, testing=self.testing) as db:
+                db.set_reset_needed(True)
         except err.NoResultError:
             page = self.load_webpage('login', error='No account exists with the provided username and email.')
         return page
@@ -1193,7 +1217,6 @@ class MMEDSserver(MMEDSbase):
         try:
             validate_password(username, password, testing=self.testing)
             cp.session['user'] = username
-
             path = fig.DATABASE_DIR
             filename = cp.session['user']
             # Create the filename
@@ -1214,6 +1237,8 @@ class MMEDSserver(MMEDSbase):
             cp.session['download_files'] = {}
             cp.session['uploaded_files'] = {}
             cp.session['subject_ids'] = None
+            with Database(owner=username, testing=self.testing) as db:
+                cp.session['reset_needed'] = db.get_reset_needed()
             page = self.load_webpage('home', title='Welcome to Mmeds')
             cp.log('Login Successful')
         except err.InvalidLoginError as e:
