@@ -145,7 +145,7 @@ class Qiime2(Tool):
                 self.get_file('stripped_dir', True).mkdir()
 
             # Create pheniqs configuration file
-            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable')
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
             cmd = [
                 'make_pheniqs_config.py',
                 '--reads-forward {}'.format(self.get_file('for_reads')),
@@ -154,27 +154,27 @@ class Qiime2(Tool):
                 '--barcodes-reverse {}'.format(self.get_file('rev_barcodes')),
                 '--mapping-file {}'.format(self.get_file('mapping')),
                 '--o-config {}'.format(self.get_file('pheniqs_config')),
-                '--o-directory {}'.format(self.get_file('pheniqs_dir'))
+                '--o-directory {};'.format(self.get_file('pheniqs_dir'))
             ]
             self.jobtext.append(' '.join(cmd))
 
             # Run pheniqs demultiplexing
-            self.jobtext.append('source activate pheniqs')
-            cmd = 'pheniqs mux --config {}'.format(self.get_file('pheniqs_config'))
+            self.jobtext.append('source activate pheniqs;')
+            cmd = 'pheniqs mux --config {};'.format(self.get_file('pheniqs_config'))
             self.jobtext.append(cmd)
 
             # Edit out pheniqs errors greater than --num-allowed-errors
-            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable')
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
             cmd = [
                 'strip_error_barcodes.py',
                 '--num-allowed-errors {}'.format(1),
                 '--mapping-file {}'.format(self.get_file('mapping')),
                 '--input-dir {}'.format(self.get_file('pheniqs_dir')),
-                '--output-dir {}'.format(self.get_file('stripped_dir'))
+                '--output-dir {};'.format(self.get_file('stripped_dir'))
             ]
             self.jobtext.append(' '.join(cmd))
 
-            self.jobtext.append('source activate qiime2-2020.8')
+            self.jobtext.append('source activate qiime2-2020.8;')
 
         elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
