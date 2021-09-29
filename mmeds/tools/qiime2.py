@@ -100,6 +100,16 @@ class Qiime2(Tool):
         if write:
             self.jobtext.append(command)
 
+    def qimport_demultiplexed(self):
+        cmd = [
+            'qiime tools import',
+            '--type {}'.format('"SampleData[PairedEndSequencesWithQuality]"'),
+            '--input-path {}'.format(self.get_file('stripped_dir')),
+            '--input-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
+            '--output-path {};'.format(self.get_file('demux_file'))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def demultiplex(self):
         """ Demultiplex the reads. """
         # Add the otu directory to the MetaData object
@@ -133,11 +143,9 @@ class Qiime2(Tool):
             if not self.get_file('stripped_dir', True).is_dir():
                 self.get_file('stripped_dir', True).mkdir()
 
-            load = 'ml pheniqs'
-            self.module = load
-            self.jobtext.append(load)
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable')
             cmd = [
-                'python make_pheniqs_config.py',
+                'make_pheniqs_config.py',
                 '--reads-forward {}'.format(self.get_file('for_reads')),
                 '--reads-reverse {}'.format(self.get_file('rev_reads')),
                 '--barcodes-forward {}'.format(self.get_file('for_barcodes')),
@@ -148,11 +156,13 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
 
+            self.jobtext.append('source activate pheniqs')
             cmd = 'pheniqs mux --config {}'.format(self.get_file('pheniqs_config'))
             self.jobtext.append(cmd)
 
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable')
             cmd = [
-                'python strip_error_barcodes.py',
+                'strip_error_barcodes.py',
                 '--num-allowed-errors {}'.format(1),
                 '--mapping-file {}'.format(self.get_file('mapping')),
                 '--input-dir {}'.format(self.get_file('pheniqs_dir')),
@@ -160,12 +170,7 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
 
-            if testing:
-                load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
-            else:
-                load = 'ml anaconda3;\nsource activate qiime2-2020.8.0;'
-            self.module = load
-            self.jobtext.append(load)
+            self.jobtext.append('source activate qiime2-2020.8')
 
         elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
@@ -525,12 +530,17 @@ class Qiime2(Tool):
         if not self.doc.sub_analysis:
             if 'demuxed' in self.doc.reads_type:
                 self.unzip()
-            self.qimport(not 'dual_barcodes' == self.doc.barcodes_type)
+            if 'dual_barcodes' == self.doc.barcodes_type:
+                self.qimport(False)
+                self.demultiplex()
+                self.qimport_demultiplexed()
+            else:
+                self.qimport(True)
 
     def setup_stage_1(self):
         self.set_stage(1)
         if not self.doc.sub_analysis:
-            if 'demuxed' not in self.doc.reads_type:
+            if 'demuxed' not in self.doc.reads_type and not 'dual_barcodes' == self.doc.barcodes_type:
                 self.demultiplex()
                 self.demux_visualize()
             if 'deblur' == self.doc.analysis_type:
