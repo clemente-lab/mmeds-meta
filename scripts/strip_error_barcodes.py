@@ -54,10 +54,11 @@ def strip_errors(num_allowed_errors, mapping_file, input_dir, output_dir):
             while line is not None and not line == '':
                 code = line[len(line)-18:len(line)-1].split('-')
                 diff = 0
+                # Compare forward barcodes and count diff
                 for i in range(len(code[0])):
                     if not code[0][i] == map_hash[sample][0][i]:
                         diff += 1
-
+                # Compare reverse barcodes and count diff
                 for i in range(len(code[1])):
                     if not code[1][i] == map_hash[sample][1][i]:
                         diff += 1

@@ -651,9 +651,6 @@ class Tool(mp.Process):
                           stage=self.doc.restart_stage,
                           study=self.doc.study_name))
             self.queue.put(email)
-            # TODO: Is this relevant?
-            if False:
-                raise AnalysisError('{} failed during stage {}'.format(self.name, self.doc.restart_stage))
 
         email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
                  dict(code=self.doc.access_code,
