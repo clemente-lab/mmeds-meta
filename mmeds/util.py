@@ -8,6 +8,7 @@ from numpy import nan, int64, float64, datetime64
 from tempfile import gettempdir
 from re import sub
 from time import sleep
+from Bio.Seq import Seq
 
 import yaml
 import pandas as pd
@@ -910,3 +911,43 @@ def quote_sql(sql, quote='`', **kwargs):
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = cleaned_sql.format(**quoted_args)
     return formatted
+
+
+def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes, reverse_complement=False):
+    """
+    forward_barcodes, reverse_barcodes are the paths to those barcode files.
+    forward_mapcodes, reverse_mapcodes are lists of barcodes taken from the mapping file.
+    reverse_complement: reverse complement the barcodes in the mapping file.
+    """
+    if reverse_complement:
+        for i, read in enumerate(reverse_mapcodes):
+            seq = Seq(read)
+            seq = seq.reverse_complement()
+            reverse_mapcodes[i] = str(seq)
+        for i, read in enumerate(forward_mapcodes):
+            seq = Seq(read)
+            seq = seq.reverse_complement()
+            forward_mapcodes[i] = str(seq)
+
+    results_dict = dict.fromkeys(reverse_mapcodes)
+    full_results = {}
+    with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
+        forward_barcodes = forward.readlines()
+        for i, line in enumerate(reverse):
+            line = line.strip('\n')
+            if not i % 4 == 1:
+                continue
+            else:
+                # If the forward, reverse barcodes are in the mapping file.
+                if line in reverse_mapcodes and forward_barcodes[i].strip('\n') in forward_mapcodes:
+                    # count barcodes
+                    if not results_dict[line]:
+                        results_dict[line] = 1
+                    else:
+                        results_dict[line] += 1
+
+                if line in full_results.keys():
+                    full_results[line] += 1
+                else:
+                    full_results[line] = 1
+        return results_dict, full_results
