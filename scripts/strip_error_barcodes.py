@@ -35,53 +35,7 @@ def strip_errors(num_allowed_errors, mapping_file, input_dir, output_dir):
                             map_df['BarcodeSequence'][i],
                             map_df['BarcodeSequenceR'][i]
                     )
-    # Strip errors for each fastq.gz file in input_dir
-    count = 1
-    for filename in os.listdir(input_dir):
-        sample = ''
-        # Match sample file to sample in hash
-        for key in map_hash:
-            if filename.startswith(key):
-                sample = key
-                break
-        if not sample == '':
-            # Open sample file for reading
-            f = gzip.open(Path(input_dir) / filename, mode='rt')
-            out = ''
-
-            line = f.readline()
-            # Compare each line's barcodes with the expected barcodes and count diff
-            while line is not None and not line == '':
-                code = line[len(line)-18:len(line)-1].split('-')
-                diff = 0
-                # Compare forward barcodes and count diff
-                for i in range(len(code[0])):
-                    if not code[0][i] == map_hash[sample][0][i]:
-                        diff += 1
-                # Compare reverse barcodes and count diff
-                for i in range(len(code[1])):
-                    if not code[1][i] == map_hash[sample][1][i]:
-                        diff += 1
-
-                # If diff does not exceed N, write read to output
-                if diff <= num_allowed_errors:
-                    out += line
-                    out += f.readline()
-                    out += f.readline()
-                    out += f.readline()
-                # Else skip read
-                else:
-                    f.readline()
-                    f.readline()
-                    f.readline()
-
-                line = f.readline()
-            # Write output file to output_dir
-            p_out = Path(output_dir) / filename
-            p_out.touch()
-            p_out.write_bytes(gzip.compress(out.encode('utf-8')))
-            print(count, 'written', filename)
-            count += 1
+    strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir)
 
 
 if __name__ == '__main__':
