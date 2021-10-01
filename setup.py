@@ -58,7 +58,6 @@ setup(name='mmeds',
           'jaraco.classes==3.2.1',
           'jaraco.text==3.5.0',
           'jaraco.functools==3.3.0',
-          'tempora==4.0.2',
-          'biopython==1.78'
+          'tempora==4.0.2'
       ],
       zip_safe=False)
