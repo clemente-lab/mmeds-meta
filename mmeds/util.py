@@ -913,6 +913,7 @@ def quote_sql(sql, quote='`', **kwargs):
     formatted = cleaned_sql.format(**quoted_args)
     return formatted
 
+
 def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_directory):
     """
     Method for taking in fastq.gz files and tsv mapping files and creating an
@@ -970,6 +971,7 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
 
     return out_s
 
+
 def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
     # Strip errors for each fastq.gz file in input_dir
     count = 1
@@ -1019,3 +1021,33 @@ def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
             p_out.write_bytes(gzip.compress(out.encode('utf-8')))
             print(count, 'written', filename)
             count += 1
+
+
+def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes):
+    """
+    forward_barcodes, reverse_barcodes are the paths to those barcode files.
+    forward_mapcodes, reverse_mapcodes are lists of barcodes taken from the mapping file.
+    reverse_complement: reverse complement the barcodes in the mapping file.
+    """
+    results_dict = dict.fromkeys(reverse_mapcodes)
+    full_results = {}
+    with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
+        forward_barcodes = forward.readlines()
+        for i, line in enumerate(reverse):
+            line = line.strip('\n')
+            if not i % 4 == 1:
+                continue
+            else:
+                # If the forward, reverse barcodes are in the mapping file.
+                if line in reverse_mapcodes and forward_barcodes[i].strip('\n') in forward_mapcodes:
+                    # count barcodes
+                    if not results_dict[line]:
+                        results_dict[line] = 1
+                    else:
+                        results_dict[line] += 1
+
+                if line in full_results.keys():
+                    full_results[line] += 1
+                else:
+                    full_results[line] = 1
+        return results_dict, full_results
