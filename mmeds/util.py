@@ -717,6 +717,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     if testing:
         path = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
         path.write_text(email_body)
+        Logger.error(str(path) + ":\n" + path.read_text())
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
