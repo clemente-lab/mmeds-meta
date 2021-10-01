@@ -3,7 +3,6 @@
 import click
 import pandas as pd
 from pathlib import Path
-from Bio.Seq import Seq
 
 from mmeds.util import parse_barcodes
 

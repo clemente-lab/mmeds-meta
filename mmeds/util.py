@@ -8,7 +8,6 @@ from numpy import nan, int64, float64, datetime64
 from tempfile import gettempdir
 from re import sub
 from time import sleep
-from Bio.Seq import Seq
 
 import yaml
 import pandas as pd
@@ -913,22 +912,12 @@ def quote_sql(sql, quote='`', **kwargs):
     return formatted
 
 
-def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes, reverse_complement=False):
+def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes):
     """
     forward_barcodes, reverse_barcodes are the paths to those barcode files.
     forward_mapcodes, reverse_mapcodes are lists of barcodes taken from the mapping file.
     reverse_complement: reverse complement the barcodes in the mapping file.
     """
-    if reverse_complement:
-        for i, read in enumerate(reverse_mapcodes):
-            seq = Seq(read)
-            seq = seq.reverse_complement()
-            reverse_mapcodes[i] = str(seq)
-        for i, read in enumerate(forward_mapcodes):
-            seq = Seq(read)
-            seq = seq.reverse_complement()
-            forward_mapcodes[i] = str(seq)
-
     results_dict = dict.fromkeys(reverse_mapcodes)
     full_results = {}
     with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
