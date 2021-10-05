@@ -1,4 +1,4 @@
-name: /home/david/.modules/mmeds-stable
+name: jupyter
 channels:
   - conda-forge
   - defaults
@@ -194,5 +194,5 @@ dependencies:
     - xlrd==1.2.0
     - zc-lockfile==2.0
     - zipp==0.6.0
-prefix: /home/david/.modules/mmeds-stable
+prefix: jupyter
 
