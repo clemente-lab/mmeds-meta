@@ -194,7 +194,7 @@ class Tool(mp.Process):
             'jobname': '{}-{}'.format(self.owner, self.doc.name),
             'path': self.path,
             'nodes': self.num_jobs,
-            'memory': 1000,
+            'memory': 10000,
             'queue': 'premium'
         }
         return params
