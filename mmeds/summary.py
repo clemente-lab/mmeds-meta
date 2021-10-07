@@ -425,20 +425,23 @@ class MMEDSNotebook():
         """
         try:
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --template latex --template-file mod_revtex.tplx --to=latex'
+            cmd = 'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
-                cmd += ' --execute --ExecutePreprocessor.timeout=0'
+                cmd += ' --ExecutePreprocessor.timeout=-1'
                 cmd += ' --ExecutePreprocessor.kernel_name="mmeds-stable"'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
+            new_env = setup_environment('jupyter')
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
                     run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'mmeds-stable', '--display-name', '"MMEDS"'], stdout=out, stderr=err)
-                    output = run(cmd.split(' '), check=True, env=self.env, stdout=out, stderr=err)
+                    print(cmd)
+                    output = run(cmd.split(' '), check=True, env=new_env, stdout=out, stderr=err)
+                    print('cmd complete')
 
 
             Logger.debug('Convert latex to pdf')
@@ -446,8 +449,11 @@ class MMEDSNotebook():
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
+            print(cmd)
             output = run(cmd.split(' '), check=True, capture_output=True)
+            print('run 1 complete')
             output = run(cmd.split(' '), check=True, capture_output=True)
+            print('run 2 complete')
 
         except RuntimeError:
             Logger.debug(output)

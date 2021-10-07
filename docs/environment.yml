@@ -1,4 +1,4 @@
-name: /home/david/.admin_modules/jupyter
+name: jupyter
 channels:
   - conda-forge
   - bioconda
