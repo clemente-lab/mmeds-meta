@@ -854,7 +854,7 @@ class Database:
             raise MissingUploadError()
         for path in mdata.files.values():
             if not Path(path).exists():
-                raise MissingFileError('File {}, does not exist')
+                raise MissingFileError('File {}, does not exist'.format(path))
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()

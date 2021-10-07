@@ -534,7 +534,11 @@ class MMEDSupload(MMEDSbase):
         alert = 'Specimen metadata uploaded successfully'
 
         # The case for handling uploads of fastq files
-        page = self.load_webpage('upload_data_files', title='Upload Data', success=alert)
+        page = self.load_webpage(
+            'upload_data_files',
+            title='Upload Data',
+            success=alert
+        )
         return page
 
     @cp.expose
@@ -622,10 +626,11 @@ class MMEDSupload(MMEDSbase):
         # Move on to uploading data files
         if cp.session['metadata_type'] == 'specimen':
             # The case for handling uploads of fastq files
-            if cp.session['upload_type'] == 'qiime':
-                page = self.load_webpage('upload_data_files', title='Upload Data', success=alert)
-            else:
-                page = self.load_webpage('upload_otu_data', title='Upload Data', success=alert)
+            page = self.load_webpage(
+                'upload_data_files',
+                title='Upload Data',
+                success=alert
+            )
         # Move on to uploading specimen metadata
         else:
             cp.session['metadata_type'] = 'specimen'
@@ -672,7 +677,7 @@ class MMEDSupload(MMEDSbase):
             cp.session['upload_type'] = 'qiime'
 
         if cp.session['upload_type'] == 'qiime':
-            if cp.session['barcodes_type'] == 'dual':
+            if cp.session['barcodes_type'].startswith('dual'):
                 # If have dual barcodes, don't have a reads_type in kwargs so must set it
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                  rev_reads=kwargs['rev_reads'],
@@ -680,6 +685,8 @@ class MMEDSupload(MMEDSbase):
                                                  rev_barcodes=kwargs['rev_barcodes'])
                 reads_type = 'paired_end'
                 barcodes_type = 'dual_barcodes'
+                if cp.session['barcodes_type'].endswith('x'):
+                    barcodes_type += '_legacy'
             else:
                 barcodes_type = 'single_barcodes'
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
