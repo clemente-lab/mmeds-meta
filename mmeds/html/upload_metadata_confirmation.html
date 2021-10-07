@@ -1,9 +1,9 @@
 <div class="w3-card-4 w3-row-padding">
-    <h3 class="w3-center">Do you wish to proceed?</h3>
-    <form action={continue_metadata_upload} method='post'>
+    <h3 class="w3-center">{confirmation_message}</h3>
+    <form action={yes_page} method='post'>
         <button class='w3-button w3-half w3-border' type='submit' method='post'>Yes</button>
     </form>
-    <form action='{retry_upload_page}' method='post'>
+    <form action={no_page} method='post'>
         <button class='w3-button w3-half w3-border' type='submit' method='post'>No</button>
     </form>
 </div>

@@ -200,6 +200,7 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_ec_run_analysis(self):
+        Logger.info('ec run analysis')
         self.login()
         self.run_test_analysis()
         self.view_analysis()
@@ -378,12 +379,15 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype
-        self.getPage('/upload/upload_subject_metadata?uploadType=sparcc&studyName=Good_Study&subjectType=animal',
+        self.getPage('/upload/upload_subject_metadata?studyName=Good_Study&subjectType=animal',
                      self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_ANIMAL_SUBJECT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        self.getPage('/upload/upload_specimen_metadata?uploadType=sparcc&studyName=Good_Study', self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
@@ -410,7 +414,8 @@ class TestServer(helper.CPWebCase):
     def upload_lefse(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=lefse&studyName=Test_Lefse&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?studyName=Test_Lefse&subjectType=human',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_ALT], ['text/tab-seperated-values'])
@@ -440,7 +445,7 @@ class TestServer(helper.CPWebCase):
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_DualBarcodes&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?studyName=Test_DualBarcodes&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
 
@@ -476,7 +481,8 @@ class TestServer(helper.CPWebCase):
         # Check the page for uploading metadata
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Test_Server&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?studyName=Test_Server&subjectType=human',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         # Check an invalid metadata filetype
@@ -506,7 +512,6 @@ class TestServer(helper.CPWebCase):
         # Assert no errors, warnings are okay
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
-
         Logger.debug('Checked metadata that errors')
 
         # Check a subject metadata file that produces warnings
@@ -515,12 +520,14 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         warning = '-1\t17\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
             ' may be in error, only 1 found.'
-        page = server.load_webpage('upload_metadata_warning',
+        page = server.load_webpage('upload_metadata_confirmation',
                                    user=self.server_user,
                                    warning=[warning],
                                    upload_selected='w3-blue',
                                    home_selected='',
-                                   next_page='{retry_upload_page}')
+                                   confirmation_message='Ignore warnings and proceed?',
+                                   yes_page='continue_metadata_upload',
+                                   no_page='upload_subject_metadata')
 
         self.assertBody(page)
         Logger.debug('Checked metadata that warns')
@@ -555,23 +562,47 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        error_message = ('-1\t-1\tStudy Name Error: The study name in the metadata (Good_Study)' +
-                         ' does not match the name provided for this upload (Test_Server)')
+        standard_error = ('-1\t-1\tIllegal Table Error: Table {} should not be the metadata')
+        error_message = [('-1\t-1\tMissing Table Error: Missing tables Ethnicity, Genotypes, Heights, ICDCode,' +
+                          ' Illness, Intervention, Interventions, SubjectType, Subjects, Weights')]
+        error_categories = ['Aliquot',
+                            'BodySite',
+                            'CollectionSite',
+                            'Experiment',
+                            'Lab',
+                            'RawData',
+                            'RawDataProtocol',
+                            'RawDataProtocols',
+                            'Results',
+                            'ResultsProtocol',
+                            'ResultsProtocols',
+                            'Sample',
+                            'SampleProtocol',
+                            'SampleProtocols',
+                            'Specimen',
+                            'StorageLocation',
+                            'Study',
+                            'Type']
+        for cat in error_categories:
+            error_message.append(standard_error.format(cat))
         page = server.load_webpage('upload_metadata_error',
                                    user=self.server_user,
                                    upload_selected='w3-blue',
-                                   error=[error_message],
+                                   error=error_message,
                                    dual_barcodes='style="display:none"',
                                    home_selected='')
         self.assertBody(page)
 
     def upload_metadata(self):
-        self.getPage('/upload/upload_subject_metadata?uploadType=qiime&studyName=Validate_Study&subjectType=human',
+        self.getPage('/upload/upload_subject_metadata?studyName=Validate_Study&subjectType=human',
                      self.cookies)
 
         # Check a subject metadata file that has no issues
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        self.getPage('/upload/upload_specimen_metadata?uploadType=qiime&studyName=Validate_Study', self.cookies)
         self.assertStatus('200 OK')
 
         # Check a subject metadata file that produces warnings
@@ -582,12 +613,14 @@ class TestServer(helper.CPWebCase):
         warning = '-1\t41\tCategorical Data Warning: Potential categorical data detected. Value Protocol90' +\
             ' may be in error, only 1 found.'
 
-        page = server.load_webpage('upload_metadata_warning',
+        page = server.load_webpage('upload_metadata_confirmation',
                                    user=self.server_user,
                                    warning=[warning],
                                    upload_selected='w3-blue',
                                    home_selected='',
-                                   next_page='{upload_data_page}')
+                                   confirmation_message='Ignore warnings and proceed?',
+                                   yes_page='continue_metadata_upload',
+                                   no_page='upload_subject_metadata')
         self.assertBody(page)
         Logger.debug('Checked metadata that warns')
 
@@ -599,7 +632,9 @@ class TestServer(helper.CPWebCase):
                                    upload_selected='w3-blue',
                                    success='Specimen metadata uploaded successfully',
                                    dual_barcodes='style="display:none"',
-                                   home_selected='')
+                                   home_selected='',
+                                   table_type_lower='otu')
+
         self.assertBody(page)
         Logger.debug('Checked a metadata file with no problems')
 
@@ -711,12 +746,9 @@ class TestServer(helper.CPWebCase):
         # Grab the access code
         data = re.findall('access_code=(.+?)"> (.+?) <', body)
         study_name = data[0][1]
-
         self.analyzed_study_code = data[0][0].strip('"')
-
         # Load the test config for animal subjects
         headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
-
         # Check that it works to access the view_study page
         self.getPage('/analysis/run_analysis?studyName={}&analysis_method=test'.format(study_name),
                      headers + self.cookies, 'POST', body)
@@ -736,9 +768,7 @@ class TestServer(helper.CPWebCase):
         self.getPage("/study/view_study?access_code={}".format(self.analyzed_study_code), headers=self.cookies)
         self.assertStatus('200 OK')
         body = self.body.decode('utf-8')
-        # Grab the access code
-        analysis_code = re.findall('option value="(.+?)">', body)
-        self.getPage("/analysis/view_analysis?access_code={}".format(analysis_code[0]), headers=self.cookies)
+        self.getPage("/analysis/view_analysis?access_code={}".format(self.analyzed_study_code), headers=self.cookies)
         self.assertStatus('200 OK')
 
     #############
