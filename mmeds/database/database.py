@@ -835,15 +835,19 @@ class Database:
         Any modifications should be done through the Database class.
         """
         if check_owner:
-            doc = MMEDSDoc.objects(access_code=str(access_code), owner=self.owner).first()
+            doc = MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
         else:
-            doc = MMEDSDoc.objects(access_code=str(access_code)).first()
+            doc = MMEDSDoc.objects(access_code=access_code).first()
+
         if doc is None:
             raise MissingUploadError('Upload does not exist for user {} with code {}'.format(self.owner, access_code))
         return doc
 
-    def check_upload(self, access_code):
-        obs = MMEDSDoc.objects(access_code=access_code, owner=self.owner)
+    def check_upload(self, access_code, check_owner=True):
+        if check_owner:
+            obs = MMEDSDoc.objects(access_code=access_code, owner=self.owner)
+        else:
+            obs = MMEDSDoc.objects(access_code=access_code)
         if not obs:
             raise MissingUploadError()
 
@@ -903,9 +907,9 @@ class Database:
         return MMEDSDoc.objects(access_code=code).first()
 
     @classmethod
-    def get_access_code_from_study_name(cls, study):
+    def get_access_code_from_study_name(cls, study, username):
         """ For server use """
-        return MMEDSDoc.objects(study_name=study).first().access_code
+        return MMEDSDoc.objects(owner=username, study_name=study).first().access_code
 
     @classmethod
     def get_docs(cls, **kwargs):

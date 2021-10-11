@@ -219,7 +219,6 @@ class Watcher(BaseManager):
         # Remove logged processes so they aren't recorded twice
         self.processes.clear()
 
-
     def clean_temp_folders(self):
         """ Clean out temp folders older than a day, once every day."""
         # Check if a day has passed since we cleaned out temp folders.
