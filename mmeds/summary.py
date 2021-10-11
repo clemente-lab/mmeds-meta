@@ -209,13 +209,17 @@ class MMEDSNotebook():
             '5': 'Five',
             '6': 'Six',
             '7': 'Seven',
+            '8': 'Eight',
+            '9': 'Nine',
             1: 'One',
             2: 'Two',
             3: 'Three',
             4: 'Four',
             5: 'Five',
             6: 'Six',
-            7: 'Seven'
+            7: 'Seven',
+            8: 'Eight',
+            9: 'Nine'
         }
         copy(self.path / 'revtex.tplx', self.path / 'mod_revtex.tplx')
 
@@ -353,6 +357,17 @@ class MMEDSNotebook():
                 self.add_code('Image("{plot}")'.format(plot=subplot % (x, y)), meta={column: True})
             self.add_markdown(self.source['page_break'])
 
+    def setup_summary_directory(self):
+        """
+        Prepare the files in the summary directory for jupyter notebook execution.
+        """
+        column_swap = {column: column for column in self.config['metadata']}
+        for column in self.config['metadata']:
+            for key, value in self.words.items():
+                if key in column:
+                    column_swap[column] = column_swap[column].replace(key, value)
+        breakpoint()
+
     def summarize(self):
         """
         Create the python notebook containing the summary of analysis results.
@@ -363,6 +378,9 @@ class MMEDSNotebook():
 
         Logger.debug('in notebook')
         Logger.debug(self.files)
+
+        self.setup_summary_directory()
+
         # Add cells for setting up the notebook
         self.add_code(self.source['py_setup'].format(font='font_file.otf',
                                                      analysis_type=self.analysis_type,
@@ -437,9 +455,9 @@ class MMEDSNotebook():
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
-                    run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'mmeds-stable', '--display-name', '"MMEDS"'], stdout=out, stderr=err)
+                    run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'mmeds-stable',
+                         '--display-name', '"MMEDS"'], stdout=out, stderr=err)
                     output = run(cmd.split(' '), check=True, env=self.env, stdout=out, stderr=err)
-
 
             Logger.debug('Convert latex to pdf')
             # Convert to pdf
