@@ -297,23 +297,13 @@ class TestServer(CPWebCase):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
 
-        self.getPage('/upload/upload_metadata?uploadType=qiime&studyName=Short_Study&subjectType=human', self.cookies)
+        self.getPage('/upload/upload_subject_metadata?studyName=Short_Study&subjectType=human',
+                     self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [file_path], ['text/tab-separated-values'])
         status = self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         return status[0] == '200 OK'
-
-        """
-        page_body = self.body
-        document, errors = tidy_document(page_body)
-        # Assert no errors, warnings are okay
-        for warn in errors:
-            assert not ('error' in warn or 'Error' in warn)
-
-        assert recieve_email(self.server_user, 'upload',
-                             'user {} uploaded data for the {}'.format(self.server_user, 'Good_Study'))
-        """
 
     def upload_animal_metadata(self):
         """ Try uploading the two metadata files associated with animal metadata """

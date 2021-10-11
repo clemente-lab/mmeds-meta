@@ -216,7 +216,13 @@ class Validator:
     def check_duplicates(self, column):
         """ Checks for any duplicate entries in the provided column """
         cells = defaultdict(list)
-
+        #####################################################################
+        #TODO Temporary override do not let this be merged into master!!!####
+        #####################################################################
+        return
+        #############################
+        #############################
+        #############################
         # Add the indices of each item
         for i, cell in enumerate(column):
             cells[cell].append(i)
@@ -625,6 +631,8 @@ class Validator:
             missing_tables = tables.difference(set(self.tables)) - ({'AdditionalMetaData'} | fig.ICD_TABLES)
             Logger.debug("Checked missing tables")
             if missing_tables:
+                missing_tables = list(missing_tables)
+                missing_tables.sort()
                 self.errors.append('-1\t-1\tMissing Table Error: Missing tables ' + ', '.join(missing_tables))
             Logger.debug("Going through tables")
             # For each table

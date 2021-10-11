@@ -788,6 +788,7 @@ def setup_environment(module):
                                  'Modules may only contain letters, numbers, "/", "_", "-", and "."')
 
     module_file = (fig.MODULE_ROOT / module).read_text()
+
     new_env = environ.copy()
     variables = {}
 

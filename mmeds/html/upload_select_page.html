@@ -27,15 +27,6 @@
         <!-- Upload Form -->
         <form class="w3-container w3-padding" action="{upload_subject_metadata_page}" method="post" enctype="multipart/form-data" id="upload_form">
             <p>
-            <label><b>Upload</b></label>
-            <select class="w3-select w3-border" name="uploadType" form="upload_form" required>
-                <option value="other" disabled="disabled" selected="selected">Choose your option</option>
-                <option value="qiime">Raw Reads</option>
-                <option value="sparcc">OTU Table</option>
-                <option value="lefse">LEfSe Table</option>
-            </select>
-            </p>
-            <p>
             <label><b>Subject Type</b></label>
             <select class="w3-select w3-border" name="subjectType" form="upload_form" placeholder="Subject Type" required>
                 <option value="human" selected="selected">Human</option>
