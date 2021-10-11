@@ -424,12 +424,13 @@ class MMEDSNotebook():
         :nn: A python notebook object.
         """
         try:
+            new_env = setup_environment('jupyter')
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
             cmd = 'jupyter nbconvert --template=mod_revtex.tplx --to=latex'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
-                cmd += ' --execute --ExecutePreprocessor.timeout=0'
+                cmd += ' --ExecutePreprocessor.timeout=-1'
                 cmd += ' --ExecutePreprocessor.kernel_name="mmeds-stable"'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
@@ -438,7 +439,7 @@ class MMEDSNotebook():
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
                     run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'mmeds-stable', '--display-name', '"MMEDS"'], stdout=out, stderr=err)
-                    output = run(cmd.split(' '), check=True, env=self.env, stdout=out, stderr=err)
+                    output = run(cmd.split(' '), check=True, env=new_env, stdout=out, stderr=err)
 
 
             Logger.debug('Convert latex to pdf')
