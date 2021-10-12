@@ -1,0 +1,95 @@
+{
+	"input": [
+		"for_reads_dual.fastq.gz",
+		"for_barcodes_dual.fastq.gz",
+		"rev_barcodes_dual.fastq.gz",
+		"rev_reads_dual.fastq.gz"
+	],
+	"output": [ "output_all.fastq" ],
+	"template": {
+		"transform": {
+			"comment": "This global transform directive specifies the     segments that will be written to output as the biological sequences of interest, this represents all of R1 and R2.",
+			"token": [ "0::", "3::" ]
+		}
+	},
+	"sample": {
+		"transform": {
+			"token": [ "1::8", "2::8" ]
+		},
+		"algorithm": "pamld",
+		"confidence threshold": 0.95,
+		"noise": 0.05,
+		"codec": {
+			"@240_16": {
+				"LB": "240_16",
+				"barcode": [ "CTCGACTT", "ATCGTACG" ],
+				"output": [        
+					"test_pheniqs//240_16_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//240_16_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@240_1": {
+				"LB": "240_1",
+				"barcode": [ "CTCGACTT", "ACTATCTG" ],
+				"output": [        
+					"test_pheniqs//240_1_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//240_1_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@242_16": {
+				"LB": "242_16",
+				"barcode": [ "CTCGACTT", "TAGCGAGT" ],
+				"output": [        
+					"test_pheniqs//242_16_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//242_16_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@242_1": {
+				"LB": "242_1",
+				"barcode": [ "CTCGACTT", "CTGCGTGT" ],
+				"output": [        
+					"test_pheniqs//242_1_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//242_1_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@BC258": {
+				"LB": "BC258",
+				"barcode": [ "CTCGACTT", "TCATCGAG" ],
+				"output": [        
+					"test_pheniqs//BC258_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//BC258_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@HD-7002": {
+				"LB": "HD-7002",
+				"barcode": [ "CTCGACTT", "GGATATCT" ],
+				"output": [        
+					"test_pheniqs//HD-7002_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//HD-7002_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@HD-7003": {
+				"LB": "HD-7003",
+				"barcode": [ "CTCGACTT", "GACACCGT" ],
+				"output": [        
+					"test_pheniqs//HD-7003_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//HD-7003_S1_L001_R2_001.fastq.gz"
+				]
+			},
+			"@NTC": {
+				"LB": "NTC",
+				"barcode": [ "CTCGACTT", "CGTGAGTG" ],
+				"output": [        
+					"test_pheniqs//NTC_S1_L001_R1_001.fastq.gz",
+					"test_pheniqs//NTC_S1_L001_R2_001.fastq.gz"
+				]
+			}
+		},
+		"undetermined": {
+			"output": [
+				        "test_pheniqs//undetermined_S1_L001_R1_001.fastq.gz",
+				        "test_pheniqs//undetermined_S1_L001_R2_001.fastq.gz"
+			]
+		}
+	}
+}

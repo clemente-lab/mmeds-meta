@@ -4,12 +4,14 @@ from operator import itemgetter
 from subprocess import run
 from pathlib import Path
 from os import environ
+import os
 from numpy import nan, int64, float64, datetime64
 from tempfile import gettempdir
 from re import sub
 from time import sleep
 
 import yaml
+import gzip
 import pandas as pd
 import mmeds.config as fig
 from mmeds.logging import Logger
@@ -715,6 +717,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     if testing:
         path = Path(gettempdir()) / '{user}_{message}.mail'.format(user=user, message=message)
         path.write_text(email_body)
+        Logger.error(str(path) + ":\n" + path.read_text())
     else:
         script = 'echo "{body}" | mail -s "{subject}" "{toaddr}"'
         if 'summary' in kwargs.keys():
@@ -910,3 +913,142 @@ def quote_sql(sql, quote='`', **kwargs):
         quoted_args[key] = '{quote}{item}{quote}'.format(quote=quote, item=item)
     formatted = cleaned_sql.format(**quoted_args)
     return formatted
+
+
+def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_directory):
+    """
+    Method for taking in fastq.gz files and tsv mapping files and creating an
+    output.json file that can be read by the 'pheniqs' module for demultiplexing
+    """
+    # The top of the output.json file, including R1, I1, I2, and R2
+    out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
+    out_s += '\n\t"template": {\n\t\t"transform": {\n\t\t\t"comment": "This global transform directive specifies the \
+    segments that will be written to output as the biological sequences of interest, this represents all of R1 and R2."'
+    out_s += ',\n\t\t\t"token": [ "0::", "3::" ]\n\t\t}\n\t},\n\t"sample": {\n\t\t"transform": {\n\t\t\t"token": '
+    out_s += '[ "1::8", "2::8" ]\n\t\t},\n\t\t"algorithm": "pamld",\n\t\t"confidence threshold": 0.95,\n\t\t'
+    out_s += '"noise": 0.05,\n\t\t"codec": {\n'
+
+    out_s = out_s % (reads_forward, barcodes_forward, barcodes_reverse, reads_reverse)
+
+    # Template for each sample and their barcodes
+    sample_template = '\t\t\t"@%s": {\n\t\t\t\t"LB": "%s",\n\t\t\t\t"barcode": [ "%s", "%s" ],\n\t\t\t\t"output": [\
+        \n\t\t\t\t\t"%s/%s_S1_L001_R1_001.fastq.gz",\n\t\t\t\t\t"%s/%s_S1_L001_R2_001.fastq.gz"\n\t\t\t\t]\n\t\t\t}'
+
+    # Getting mapping file as DataFrame
+    headers = True
+    map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
+
+    try:
+        length = len(map_df['#SampleID']['#q2:types'])
+    except KeyError:
+        map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0], na_filter=False)
+        length = len(map_df['#SampleID'])
+        headers = False
+
+    if headers:
+        ids = map_df['#SampleID']['#q2:types']
+        b1s = map_df['BarcodeSequence']['categorical']
+        b2s = map_df['BarcodeSequenceR']['categorical']
+    else:
+        ids = map_df['#SampleID']
+        b1s = map_df['BarcodeSequence']
+        b2s = map_df['BarcodeSequenceR']
+
+    # Adding each sample and barcodes to output.json
+    for i in range(length):
+        name = ids[i]
+        b1 = b1s[i]
+        b2 = b2s[i]
+        out_s += sample_template % (name, name, b1, b2, o_directory, name, o_directory, name)
+        if i == length-1:
+            out_s += '\n'
+        else:
+            out_s += ',\n'
+
+    # Bottom of output.json file
+    out_s += '\t\t},\n\t\t"undetermined": {\n\t\t\t"output": [\n\t\t\t\t\
+        "%s/undetermined_S1_L001_R1_001.fastq.gz",\n\t\t\t\t\
+        "%s/undetermined_S1_L001_R2_001.fastq.gz"\n\t\t\t]\n\t\t}\n\t}\n}' % (o_directory, o_directory)
+
+    return out_s
+
+
+def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
+    # Strip errors for each fastq.gz file in input_dir
+    count = 1
+    for filename in os.listdir(input_dir):
+        sample = ''
+        # Match sample file to sample in hash
+        for key in map_hash:
+            if filename.startswith(key):
+                sample = key
+                break
+        if not sample == '':
+            # Open sample file for reading
+            f = gzip.open(Path(input_dir) / filename, mode='rt')
+            out = ''
+
+            line = f.readline()
+            # Compare each line's barcodes with the expected barcodes and count diff
+            while line is not None and not line == '':
+                code = line[len(line)-18:len(line)-1].split('-')
+                diff = 0
+                # Compare forward barcodes and count diff
+                for i in range(len(code[0])):
+                    if not code[0][i] == map_hash[sample][0][i]:
+                        diff += 1
+                # Compare reverse barcodes and count diff
+                for i in range(len(code[1])):
+                    if not code[1][i] == map_hash[sample][1][i]:
+                        diff += 1
+
+                # If diff does not exceed N, write read to output
+                if diff <= num_allowed_errors:
+                    out += line
+                    out += f.readline()
+                    out += f.readline()
+                    out += f.readline()
+                # Else skip read
+                else:
+                    f.readline()
+                    f.readline()
+                    f.readline()
+
+                line = f.readline()
+
+            # Write output file to output_dir
+            p_out = Path(output_dir) / filename
+            p_out.touch()
+            p_out.write_bytes(gzip.compress(out.encode('utf-8')))
+            print(count, 'written', filename)
+            count += 1
+
+
+def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes):
+    """
+    forward_barcodes, reverse_barcodes are the paths to those barcode files.
+    forward_mapcodes, reverse_mapcodes are lists of barcodes taken from the mapping file.
+    reverse_complement: reverse complement the barcodes in the mapping file.
+    """
+    results_dict = dict.fromkeys(reverse_mapcodes)
+    full_results = {}
+    with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
+        forward_barcodes = forward.readlines()
+        for i, line in enumerate(reverse):
+            line = line.strip('\n')
+            if not i % 4 == 1:
+                continue
+            else:
+                # If the forward, reverse barcodes are in the mapping file.
+                if line in reverse_mapcodes and forward_barcodes[i].strip('\n') in forward_mapcodes:
+                    # count barcodes
+                    if not results_dict[line]:
+                        results_dict[line] = 1
+                    else:
+                        results_dict[line] += 1
+
+                if line in full_results.keys():
+                    full_results[line] += 1
+                else:
+                    full_results[line] = 1
+        return results_dict, full_results

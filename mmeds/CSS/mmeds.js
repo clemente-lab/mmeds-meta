@@ -45,3 +45,78 @@ function w3Close() {
     mySidebar.style.display = "none";
     overlayBg.style.display = "none";
 }
+
+/* 
+ * Dynamic pasword validation
+ */
+let myInput = document.getElementById("psw");
+let myInput2 = document.getElementById("psw2");
+let letter = document.getElementById("letter");
+let capital = document.getElementById("capital");
+let num = document.getElementById("num");
+let symbol = document.getElementById("symbol");
+let length = document.getElementById("length");
+let match = document.getElementById("match");
+
+// When the user clicks outside of the password field, hide the message box
+myInput.onkeyup = function() {
+    // Validate lowercase letters
+    var lowerCaseCharacters = /[a-z]/g;
+    if(myInput.value.match(lowerCaseCharacters)) {
+        letter.classList.remove("invalid");
+        letter.classList.add("valid");
+    } else {
+        letter.classList.remove("valid");
+        letter.classList.add("invalid")
+    }
+    
+    // Validate lowercase letters
+    var upperCaseCharacters = /[A-Z]/g;
+    if(myInput.value.match(upperCaseCharacters)) {
+        capital.classList.remove("invalid");
+        capital.classList.add("valid");
+    } else {
+        capital.classList.remove("valid");
+        capital.classList.add("invalid")
+    }
+
+    // Validate lowercase letters
+    var numbers = /[0-9]/g;
+    if(myInput.value.match(numbers)) {
+        num.classList.remove("invalid");
+        num.classList.add("valid");
+    } else {
+        num.classList.remove("valid");
+        num.classList.add("invalid")
+    }
+
+    // Validate lowercase letters
+    var symbols = /[!@#$%^&*~`_+=-]/g;
+    if(myInput.value.match(symbols)) {
+        symbol.classList.remove("invalid");
+        symbol.classList.add("valid");
+    } else {
+        symbol.classList.remove("valid");
+        symbol.classList.add("invalid")
+    }
+
+    // Validate lowercase letters
+    if(myInput.value.length >= 10) {
+        length.classList.remove("invalid");
+        length.classList.add("valid");
+    } else {
+        length.classList.remove("valid");
+        length.classList.add("invalid")
+    }
+}
+
+myInput2.onkeyup = function() {
+    // Validate matching passwords
+    if(myInput.value === myInput2.value) {
+        match.classList.remove("invalid");
+        match.classList.add("valid");
+    } else {
+        match.classList.remove("valid");
+        match.classList.add("invalid");
+    }
+}

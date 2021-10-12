@@ -424,6 +424,7 @@ class MMEDSNotebook():
         :nn: A python notebook object.
         """
         try:
+            new_env = setup_environment('jupyter')
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
             cmd = 'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += ' {}.ipynb'.format(self.name)

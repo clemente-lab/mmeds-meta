@@ -390,14 +390,14 @@ class Database:
             data = cursor.fetchall()
         return data
 
-    def add_user(self, username, password, salt, email, privilege_level):
+    def add_user(self, username, password, salt, email, privilege_level, reset_needed=0):
         """ Add the user with the specified parameters. """
         with self.db.cursor() as cursor:
             cursor.execute('SELECT MAX(user_id) FROM user')
             user_id = int(cursor.fetchone()[0]) + 1
         # Create the SQL to add the user
-        sql = 'INSERT INTO `user` (user_id, username, password, salt, email, privilege)'
-        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(privilege)s);'
+        sql = 'INSERT INTO `user` (user_id, username, password, salt, email, privilege, reset_needed)'
+        sql += ' VALUES (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(privilege)s, %(reset_needed)s);'
 
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'id': user_id,
@@ -405,9 +405,47 @@ class Database:
                                  'pass': password,
                                  'salt': salt,
                                  'email': email,
-                                 'privilege': privilege_level
+                                 'privilege': privilege_level,
+                                 'reset_needed': reset_needed
                                  })
         self.db.commit()
+        Logger.info('USER {} HAS BEEN ADDED'.format(username))
+
+    def set_reset_needed(self, reset_needed):
+        """ Update the 'reset_needed' value, which forces the user to change their
+            password before continuing
+        """
+        reset_needed = int(reset_needed)
+        sql = 'SELECT * FROM `user` WHERE `username` = %(uname)s'
+        with self.db.cursor() as cursor:
+            cursor.execute(sql, {'uname': self.owner})
+            result = cursor.fetchone()
+            # Delete the old entry for the user
+            sql = 'DELETE FROM `user` WHERE `user_id` = %(id)s'
+            cursor.execute(sql, {'id': result[0]})
+
+            # Insert the user with the updated value
+            sql = 'INSERT INTO `user` (user_id, username, password, salt, email, privilege, reset_needed) VALUES\
+                (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(privilege)s, %(reset_needed)s);'
+            cursor.execute(sql, {
+                'id': result[0],
+                'uname': result[1],
+                'pass': result[2],
+                'salt': result[3],
+                'email': result[4],
+                'privilege': result[5],
+                'reset_needed': reset_needed
+            })
+        self.db.commit()
+
+    def get_reset_needed(self):
+        """ Return the 'reset_needed' value from the `mmeds_data1`.`user` table """
+        sql = 'SELECT * FROM `user` WHERE `username` = %(uname)s'
+        with self.db.cursor() as cursor:
+            cursor.execute(sql, {'uname': self.owner})
+            result = cursor.fetchone()
+
+            return result[6]
 
     def remove_user(self, username):
         """ Remove a user from the database. """
@@ -716,14 +754,16 @@ class Database:
             cursor.execute(sql, {'id': result[0]})
 
             # Insert the user with the updated password
-            sql = 'INSERT INTO user (user_id, username, password, salt, email) VALUES\
-                (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s);'
+            sql = 'INSERT INTO user (user_id, username, password, salt, email, privilege, reset_needed) VALUES\
+                (%(id)s, %(uname)s, %(pass)s, %(salt)s, %(email)s, %(priv)s, %(reset_needed)s);'
             cursor.execute(sql, {
                 'id': result[0],
                 'uname': result[1],
                 'pass': new_password,
                 'salt': new_salt,
-                'email': result[4]
+                'email': result[4],
+                'priv': result[5],
+                'reset_needed': 0
             })
         self.db.commit()
         return True
@@ -814,7 +854,7 @@ class Database:
             raise MissingUploadError()
         for path in mdata.files.values():
             if not Path(path).exists():
-                raise MissingFileError('File {}, does not exist')
+                raise MissingFileError('File {}, does not exist'.format(path))
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()

@@ -232,7 +232,8 @@ class Validator:
         for dup_key in dups.keys():
             value = dups[dup_key]
             for val in value[1:]:
-                self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
+                if not pd.isnull(dup_key):
+                    self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
 
     def check_cell(self, row_index, cell, check_date=False):
         """
