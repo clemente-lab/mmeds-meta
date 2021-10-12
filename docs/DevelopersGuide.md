@@ -15,6 +15,8 @@ The server is broken up into six application "sections". Each gets its own class
 
 Through out most of MMEDS variables are written using underscores, as is typical Python style. To distinguish arguments that are direct webpage inputs from the user they are usually written in camel case. I've tried to be consistent with this but there may be a few locations where this doesn't hold true.
 
+
+
 ## Database
 
 ### Mongo 
