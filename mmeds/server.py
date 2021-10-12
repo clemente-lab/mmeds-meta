@@ -259,6 +259,9 @@ class MMEDSstudy(MMEDSbase):
 
     def load_webpage(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
+        # Each of the app sections do this. It adds formatting to highlight the button on
+        # the side bar that matches the section of the application the user is in
+        # Some of the other `load_webpage` wrappers do more.
         if kwargs.get('study_selected') is None:
             kwargs['study_selected'] = 'w3-blue'
         return super().load_webpage(page, **kwargs)
@@ -850,6 +853,9 @@ class MMEDSupload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
+    """
+    This is the section of the web application that handles use accounts and account management.
+    """
     def __init__(self):
         super().__init__()
 
@@ -884,6 +890,10 @@ class MMEDSauthentication(MMEDSbase):
     def sign_up(self, username, password1, password2, email):
         """
         Perform the actions necessary to sign up a new user.
+        :username: The username selected by the user. Must be unique to create the account.
+        :password1: First copy of the user's desired password.
+        :password2: Second copy of the user's desire password, must match :password1:.
+        :email: The email address the user is signing up with.
         """
         try:
             check_password(password1, password2)
@@ -897,7 +907,10 @@ class MMEDSauthentication(MMEDSbase):
 
     @cp.expose
     def input_password(self):
-        """ Load page for changing the user's password """
+        """
+        Load page for changing the user's password
+        NOTE: Not sure if this is still used? I think it's been superseded by `change_password`.
+        """
         page = self.load_webpage('auth_change_password', title='Change Password')
         return page
 
@@ -913,6 +926,7 @@ class MMEDSauthentication(MMEDSbase):
 
         # Check the old password matches
         try:
+            # Force the user to logout
             cp.lib.sessions.expire()
             validate_password(self.get_user(), password0, testing=self.testing)
             # Check the two copies of the new password match
@@ -943,6 +957,9 @@ class MMEDSauthentication(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
+    """
+    This is the section of the web app that handles selecting and viewing analyses.
+    """
     def __init__(self):
         super().__init__()
 
@@ -1013,6 +1030,10 @@ class MMEDSanalysis(MMEDSbase):
         ----------------------------------------
         :access_code: The code that identifies the dataset to run the tool on
         :analysis_method: The tool and analysis to run on the chosen dataset
+        :config: The config file in some format. This is an ongoing issue.
+        :runOnNode: A value only selectable by those with a Privilege of 1
+            When selected the analysis will run directly on the MMEDS node
+            rather than being submitted to the job queue.
         """
         if '-' in analysis_method:
             tool_type = analysis_method.split('-')[0]
@@ -1071,9 +1092,11 @@ class MMEDSanalysis(MMEDSbase):
 
         id_study_html = '<option value="{study_name}">{study_name}</option>'
 
+        # Get all the studies that are available to the current user
         with Database(testing=self.testing, owner=self.get_user()) as db:
             studies = db.get_all_user_studies(self.get_user())
 
+        # Build an HTML list of the studies
         study_list = []
         id_study_list = []
         for study in studies:
@@ -1083,6 +1106,7 @@ class MMEDSanalysis(MMEDSbase):
                                                 date_created=study.created,
                                                 ))
             id_study_list.append(id_study_html.format(study_name=study.study_name))
+
         # Add unhide any privileged options
         if check_privileges(self.get_user(), self.testing):
             page = self.load_webpage('analysis_select_tool',
@@ -1102,6 +1126,13 @@ class MMEDSanalysis(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSquery(MMEDSbase):
+    """
+    The section of the web app that handles interaction with the SQL database.
+    Performing queries, requesting data dumps (when implemented), etc
+    It also includes the web pages for adding Samples/Aliquots to an existing study
+    Arguably that should be in `MMEDSupload`, but that class is already more that
+    twice the size of any other.
+    """
     def __init__(self):
         super().__init__()
 
@@ -1113,6 +1144,13 @@ class MMEDSquery(MMEDSbase):
 
     @cp.expose
     def query_select(self):
+        """
+        The base page for the Query section of the application. From here the user can select
+        from several forms for either
+        1) Running a query against the MySQL
+        2) Downloading all the IDs for for Samples or Aliquots in a given study
+        3) Uploading new IDs for Samples or Aliquots to a given study
+        """
         study_html = ''' <tr class="w3-hover-blue">
             <th>
             <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>
@@ -1125,6 +1163,8 @@ class MMEDSquery(MMEDSbase):
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
 
+        # This exact code block appears elsewhere in server.py
+        # It might be worth moving it into it's own utility method
         study_list = []
         id_study_list = []
         for study in studies:
@@ -1184,7 +1224,7 @@ class MMEDSquery(MMEDSbase):
         ==================================================================
         :AccessCode: The access_code for the study the new id is to be associated with
         :SpecimenID: The ID string of the specimen the new aliquot is taken from
-        :AliquotWeight: The weight of the new aliquot to generate an ID for
+        :kwargs: The other keyword arguments, passed as a dictionary
 
         Depending on how a user is getting to this page the arguments vary. When initially
         reaching it from `select_specimen`, :AccessCode: and :SpecimenID: are passed in.
@@ -1299,6 +1339,14 @@ class MMEDSquery(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
+    """
+    The final level of the web app. This inherits from MMEDSbase and has an instance
+    of each of the sections of the app as a property. When accessing the web app those
+    sections are apparent in the URL.
+    This class also directly handles users logging in and logging out, as well as loading
+    the application home page. The log in / log out functionality should arguably be
+    moved to MMEDSauthentication.
+    """
     def __init__(self):
         super().__init__()
         self.download = MMEDSdownload()
