@@ -200,6 +200,7 @@ class MMEDSNotebook():
         self.name = name
         self.path = path
         self.config = config
+        print(self.config)
         self.env = setup_environment('mmeds-stable')
         self.words = {
             '1': 'One',
@@ -364,9 +365,10 @@ class MMEDSNotebook():
         column_swap = {column: column for column in self.config['metadata']}
         for column in self.config['metadata']:
             for key, value in self.words.items():
-                if key in column:
-                    column_swap[column] = column_swap[column].replace(key, value)
-        breakpoint()
+                if type(key) == type(column):
+                    if key in column:
+                        column_swap[column] = column_swap[column].replace(key, value)
+        # breakpoint()
 
     def summarize(self):
         """
@@ -448,18 +450,19 @@ class MMEDSNotebook():
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
-                cmd += ' --ExecutePreprocessor.timeout=-1'
+                cmd += ' --execute --ExecutePreprocessor.timeout=-1'
                 cmd += ' --ExecutePreprocessor.kernel_name="mmeds-stable"'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
             new_env = setup_environment('jupyter')
+            print(cmd)
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
                     run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'mmeds-stable',
                          '--display-name', '"MMEDS"'], stdout=out, stderr=err)
-                    output = run(cmd.split(' '), check=True, env=self.env, stdout=out, stderr=err)
+                    output = run(cmd.split(' '), check=True, env=new_env, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
             # Convert to pdf

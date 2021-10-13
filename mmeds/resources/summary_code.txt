@@ -360,7 +360,7 @@ cols = {{x:'PC{{}}'.format(x + 1) for x in df.columns}}
 df = df.rename(index=str, columns=cols)
 
 # Assign GroupIDs based on metadata
-samples = mdf['{group}'][df.axes[0]]
+samples = mdf['{group}'][[int(x) for x in df.axes[0]]]
 df = df.assign(GroupID=[color_maps['{group}'][str(x)] for x in samples])
 =====
 beta_r<source>
@@ -522,7 +522,7 @@ for row in otu_percs.itertuples():
     RGB = tuple(otuAllRGB{level}[otu])
 
     # Align sample names
-    perc = 100 * float(otu_percs.loc[otu])
+    perc = 100 * float(otu_percs.loc[otu]['value'])
     if perc < 1:
         perc_text = '<0.01'
     elif perc < 10:
