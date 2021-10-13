@@ -24,6 +24,27 @@ Through out most of MMEDS variables are written using underscores, as is typical
 ### MySQL
 
 ## Tools
+All tools in MMEDS inherit from the `Tool` class in `mmeds/tools/tool.py`. There is a lot of functionality that has been developed for the Tool class at one point or another. Not all of it has been maintained. Analysis Restarting and Sub-Analyses both fall into this category.
+
+#### Restarting Analysis
+Restarting analysis allows an analysis to be selected to run again starting from the last successful MMEDS_STAGE as indicated by the echo statement in the job file. However for this to work, the files generated after that stage of the analysis need to be removed or qiime will complain. I had set it so those files were automatically cleared when an analysis failed but quickly that become a pain when debugging analysis issues. Two possible fixes for this are
+1) Changing the clean up to happen when the analysis is restarted, so the files remain for the period of time where one would be debugging them.
+2) Add parameters to the qiime commands to overwrite existing files.
+
+On the whole I like solution 1 better, but priorities in the lab shifted and I never ended up implementing it. There are still methods and other functionality in MMEDS that refers to this restarting capability, though there is no way currently to directly restart analysis from the web app.
+
+#### Sub-Analysis
+This is was a big thing Jose wanted for a while. so there is quite a bit of functionality built around it. I'm not sure if it currently works or not. My guess would be it doesn't but could be fixed without too much effort. The idea is that often people want to compare results speficially within certain groups. SO for example, if a study has both gut and nasal samples, often people would want one summary of just the nasal results and one for just the gut.
+The workflow for this is as follows,
+- The user selections some columns for subanalysis via the config file.
+- When setting up the main analysis the tool class creates child processes for each group within the specified columns.
+- These children wait on the main analysis process to import, demux, and create the initial table (DADA2 or DeBlur). The child process then creates it's own analysis folder that links to the data files from the parent analysis.
+- Each child process filters the table so it only contains samples from the desired group and then proceeds as would any other analysis.
+
+This functionality did work the last time it was tested but that was more than a year ago as of 2021-10-13. Any references to 'child', 'children', 'parent', 'sub-analysis', etc in the Tool class refer to this functionality. As with analysis restarting my guess is that it doesn't work currently but it wouldn't take too much effort to get it to work again.
+
+I will say though, this can be a bit of a headache to work on. It's two levels of processes removed from whatever initially started python running. This means you usually can't use a debugger to see what's going on directly.
+
 
 ### Qiime1
 

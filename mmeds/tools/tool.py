@@ -42,6 +42,10 @@ class Tool(mp.Process):
         :child: A boolean. If True this Tool object is the child of another tool.
         :access_code: A string. If this analysis is being restarted from a previous analysis then this
             will be the access_code for the previous document
+        :restart_stage: An int. Refers to the stage the analysis should be restarted from. The stages are
+            indicated via echo statements in the jobfile.
+        :kill_stage: An int. Indicates at what point in an analysis the process should automatically
+            terminate, if any. Not used in production, only when testing.
         """
         super().__init__()
         self.queue = queue
@@ -76,38 +80,12 @@ class Tool(mp.Process):
         else:
             self.num_jobs = min([threads, mp.cpu_count()])
 
-    def initial_setup(self):
-        # Get info on the study/parent analysis from the database
-        with Database(owner=self.owner, testing=self.testing) as db:
-            if self.restart_stage == 0:
-                parent_doc = db.get_doc(self.parent_code)
-                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
-                                                        self.analysis_type, self.config, self.access_code)
-            else:
-                self.doc = db.get_doc(self.access_code)
-
-        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.ident)
-        self.doc.save()
-
-        self.path = Path(self.doc.path)
-        if self.child:
-            self.child_setup()
-
-        self.access_code = self.doc.access_code
-        self.path = Path(self.doc.path)
-        self.add_path(self.path, key='path')
-        write_config(self.doc.config, self.path)
-        self.create_qiime_mapping_file()
-        self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
-
-        email = ('email', self.doc.email, self.owner, 'analysis_start',
-                 dict(code=self.access_code,
-                      analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
-                      study=self.doc.study_name))
-        self.queue.put(email)
-
     def __str__(self):
         return ppretty(self, seq_length=5)
+
+    ###################
+    # General Utility #
+    ###################
 
     def get_info(self):
         """ Method for return a dictionary of relevant info for the process log """
@@ -175,13 +153,6 @@ class Tool(mp.Process):
                 file_path = self.run_dir / '..' / Path(self.doc.files[key]).relative_to(self.path.parent)
         return file_path
 
-    def unzip(self):
-        """ Split the libraries and perform quality analysis. """
-        self.add_path('for_reads', '')
-        command = 'unzip {} -d {}'.format(self.get_file('data'),
-                                          self.get_file('for_reads'))
-        self.jobtext.append(command)
-
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.get_file('mapping', True), self.path)
@@ -216,6 +187,26 @@ class Tool(mp.Process):
             # If the job is found set it back to true
             if str(job_id) in jobs:
                 running = True
+
+    def queue_analysis(self, tool_type):
+        """
+        Add an analysis of the specified type to the watcher queue
+        ===============================
+        :tool_type: The type of tool to spawn
+        """
+        self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
+                        self.config['type'], self.doc.config, self.run_on_node, self.kill_stage))
+
+    ############################
+    # Analysis File Management #
+    ############################
+
+    def unzip(self):
+        """ Split the libraries and perform quality analysis. """
+        self.add_path('for_reads', '')
+        command = 'unzip {} -d {}'.format(self.get_file('data'),
+                                          self.get_file('for_reads'))
+        self.jobtext.append(command)
 
     def move_user_files(self):
         """ Move all visualization files intended for the user to a set location. """
@@ -255,25 +246,13 @@ class Tool(mp.Process):
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
 
-    def summary(self):
-        """ Setup script to create summary. """
-        self.add_path('summary')
-        if self.testing:
-            self.jobtext.append('module load mmeds-stable;')
-        else:
-            self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
-        # Make sure the kernel is up to date
-        self.jobtext.append('python -m jupyter install --user --name mmeds-stable --display-name "MMEDS"')
-        cmd = [
-            'summarize.py ',
-            '--path "{}"'.format(self.run_dir),
-            '--tool_type {};'.format(self.doc.tool_type)
-        ]
-        self.jobtext.append(' '.join(cmd))
-
     def zip(self):
         cmd = f'zip -r {self.run_dir}.zip {self.run_dir};'
         self.jobtext.append(cmd)
+
+    ###########################
+    # Sub-Analysis Management #
+    ###########################
 
     def create_sub_analysis(self, category, value):
         """
@@ -344,15 +323,6 @@ class Tool(mp.Process):
         # Set the parent pid
         child._parent_pid = self.ident
         return child
-
-    def queue_analysis(self, tool_type):
-        """
-        Add an analysis of the specified type to the watcher queue
-        ===============================
-        :tool_type: The type of tool to spawn
-        """
-        self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
-                        self.config['type'], self.doc.config, self.run_on_node, self.kill_stage))
 
     def child_setup(self):
         # Update process name and children
@@ -498,8 +468,44 @@ class Tool(mp.Process):
         for child in self.children:
             child.join()
 
+    ##############################
+    # Analysis Execution Control #
+    ##############################
+
+    def initial_setup(self):
+        """
+        Perform initial setup for an analysis process. This includes creating a MMEDSDoc if
+        one doesn't already exist (happens when restarting). Also creates a directory for the
+        analysis
+        """
+        # Get info on the study/parent analysis from the database
+        with Database(owner=self.owner, testing=self.testing) as db:
+            if self.restart_stage == 0:
+                parent_doc = db.get_doc(self.parent_code)
+                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
+                                                        self.analysis_type, self.config, self.access_code)
+            else:
+                self.doc = db.get_doc(self.access_code)
+
+        # Update the document with the most current information on this analysis
+        self.update_doc(sub_analysis=False, is_alive=True, exit_code=1, pid=self.ident)
+        self.doc.save()
+
+        self.path = Path(self.doc.path)
+
+        # Perform the necessary setup for an sub-analyses
+        if self.child:
+            self.child_setup()
+
+        self.access_code = self.doc.access_code
+        self.path = Path(self.doc.path)
+        self.add_path(self.path, key='path')
+        write_config(self.doc.config, self.path)
+        self.create_qiime_mapping_file()
+        self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
+
     def setup_analysis(self, summary=True):
-        """ Create the summary of the analysis """
+        """ Setup error logs and jobfile. """
         if summary:
             self.summary()
         self.zip()
@@ -562,6 +568,14 @@ class Tool(mp.Process):
             self.update_doc(analysis_status='started')
             type_ron = type(self.run_on_node)
             self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node} (type) {type_ron}')
+
+            # Tell the watcher to send an email that the analysis has started.
+            email = ('email', self.doc.email, self.owner, 'analysis_start',
+                     dict(code=self.access_code,
+                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          study=self.doc.study_name))
+            self.queue.put(email)
+
             if self.testing or not (self.run_on_node == -1):
                 self.logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)
@@ -660,8 +674,27 @@ class Tool(mp.Process):
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
         self.move_user_files()
 
+    def summary(self):
+        """ Setup script to create summary. """
+        self.add_path('summary')
+        if self.testing:
+            self.jobtext.append('module load mmeds-stable;')
+        else:
+            self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
+        # Make sure the kernel is up to date
+        self.jobtext.append('python -m jupyter install --user --name mmeds-stable --display-name "MMEDS"')
+        cmd = [
+            'summarize.py ',
+            '--path "{}"'.format(self.run_dir),
+            '--tool_type {};'.format(self.doc.tool_type)
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def run(self):
-        """ Overrides Process.run() """
+        """
+        Overrides Process.run()
+        This is entry point for the analysis process's execution.
+        """
         # Unless all of run completes succesfully exit code should be 1
         exit_code = 1
         try:
