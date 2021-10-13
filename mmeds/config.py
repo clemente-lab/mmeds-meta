@@ -201,6 +201,7 @@ HTML_ARGS = {
     'register_account_page': SERVER_PATH + 'auth/register_account',
     'forgot_password_page': SERVER_PATH + 'auth/password_recovery',
     'submit_recovery_page': SERVER_PATH + 'auth/submit_password_recovery',
+    'change_password': SERVER_PATH + 'auth/change_password',
     'sign_up_page': SERVER_PATH + 'auth/sign_up',
 
     # Query Pages
@@ -215,6 +216,7 @@ HTML_ARGS = {
     'warning': '',
     'success': '',
     'javascript': IMAGE_PATH + 'mmeds.js',
+    'stylesheet': IMAGE_PATH + 'stylesheet.css',
     'privilege': 'display:none',
 
     # Settings for highlighting the section of the web site currently being accessed
@@ -335,6 +337,8 @@ TEST_CONFIG_3 = str(TEST_PATH / 'test_config_file_fail3.yaml')
 TEST_CONFIG_ALL = str(TEST_PATH / 'test_config_all.yaml')
 TEST_ANIMAL_CONFIG = str(TEST_PATH / 'test_config_animal.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
+TEST_MAPPING_DUAL = str(TEST_PATH / 'qiime_mapping_file_dual.tsv')
+TEST_PHENIQS_DIR = str(TEST_PATH / 'test_pheniqs')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_SPECIMEN_SIMPLIFIED = str(TEST_PATH / 'test_specimen_simplified.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
@@ -362,7 +366,11 @@ UNIQUE_METADATA = str(TEST_PATH / 'unique_metadata.tsv')
 TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
-TEST_REV_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
+TEST_REV_READS = str(TEST_PATH / 'reverse_reads.fastq.gz')
+TEST_BARCODES_DUAL = str(TEST_PATH / 'for_barcodes_dual.fastq.gz')
+TEST_REV_BARCODES_DUAL = str(TEST_PATH / 'rev_barcodes_dual.fastq.gz')
+TEST_READS_DUAL = str(TEST_PATH / 'for_reads_dual.fastq.gz')
+TEST_REV_READS_DUAL = str(TEST_PATH / 'rev_reads_dual.fastq.gz')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'

@@ -30,7 +30,7 @@ class Qiime2(Tool):
     # =============== #
     # Qiime2 Commands #
     # =============== #
-    def qimport(self):
+    def qimport(self, write=True):
         """ Split the libraries and perform quality analysis. """
 
         self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
@@ -97,8 +97,19 @@ class Qiime2(Tool):
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
+        if write:
+            self.jobtext.append(command)
 
-        self.jobtext.append(command)
+    def qimport_demultiplexed(self):
+        """ Import the demultiplexed dual_barcode files """
+        cmd = [
+            'qiime tools import',
+            '--type {}'.format('"SampleData[PairedEndSequencesWithQuality]"'),
+            '--input-path {}'.format(self.get_file('stripped_dir')),
+            '--input-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
+            '--output-path {};'.format(self.get_file('demux_file'))
+        ]
+        self.jobtext.append(' '.join(cmd))
 
     def demultiplex(self):
         """ Demultiplex the reads. """
@@ -120,7 +131,52 @@ class Qiime2(Tool):
             # Reverse compliment the barcodes in the mapping file if using paired reads
             if 'paired_end' == self.doc.reads_type:
                 cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
+            self.jobtext.append(' '.join(cmd))
+
         elif 'dual_barcodes':
+            self.add_path('pheniqs_config', '.json')
+            self.add_path(self.path / 'pheniqs_output', key='pheniqs_dir')
+            self.add_path(self.path / 'stripped_output', key='stripped_dir')
+
+            if not self.get_file('pheniqs_dir', True).is_dir():
+                self.get_file('pheniqs_dir', True).mkdir()
+
+            if not self.get_file('stripped_dir', True).is_dir():
+                self.get_file('stripped_dir', True).mkdir()
+
+            # Create pheniqs configuration file
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
+            cmd = [
+                'make_pheniqs_config.py',
+                '--reads-forward {}'.format(self.get_file('for_reads')),
+                '--reads-reverse {}'.format(self.get_file('rev_reads')),
+                '--barcodes-forward {}'.format(self.get_file('for_barcodes')),
+                '--barcodes-reverse {}'.format(self.get_file('rev_barcodes')),
+                '--mapping-file {}'.format(self.get_file('mapping')),
+                '--o-config {}'.format(self.get_file('pheniqs_config')),
+                '--o-directory {};'.format(self.get_file('pheniqs_dir'))
+            ]
+            self.jobtext.append(' '.join(cmd))
+
+            # Run pheniqs demultiplexing
+            self.jobtext.append('source activate pheniqs;')
+            cmd = 'pheniqs mux --config {};'.format(self.get_file('pheniqs_config'))
+            self.jobtext.append(cmd)
+
+            # Edit out pheniqs errors greater than --num-allowed-errors
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
+            cmd = [
+                'strip_error_barcodes.py',
+                '--num-allowed-errors {}'.format(1),
+                '--mapping-file {}'.format(self.get_file('mapping')),
+                '--input-dir {}'.format(self.get_file('pheniqs_dir')),
+                '--output-dir {};'.format(self.get_file('stripped_dir'))
+            ]
+            self.jobtext.append(' '.join(cmd))
+
+            self.jobtext.append('source activate qiime2-2020.8;')
+
+        elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
             self.add_path('demux_log', '.txt')
             cmd = [
@@ -136,7 +192,7 @@ class Qiime2(Tool):
                 '--verbose &> {}'.format(self.get_file('demux_log'))
             ]
 
-        self.jobtext.append(' '.join(cmd))
+            self.jobtext.append(' '.join(cmd))
 
     def filter_by_metadata(self, column=None, value=None):
         """
@@ -478,12 +534,17 @@ class Qiime2(Tool):
         if not self.doc.sub_analysis:
             if 'demuxed' in self.doc.reads_type:
                 self.unzip()
-            self.qimport()
+            if 'dual_barcodes' == self.doc.barcodes_type:
+                self.qimport(False)
+                self.demultiplex()
+                self.qimport_demultiplexed()
+            else:
+                self.qimport(True)
 
     def setup_stage_1(self):
         self.set_stage(1)
         if not self.doc.sub_analysis:
-            if 'demuxed' not in self.doc.reads_type:
+            if 'demuxed' not in self.doc.reads_type and not 'dual_barcodes' == self.doc.barcodes_type:
                 self.demultiplex()
                 self.demux_visualize()
             if 'deblur' == self.doc.analysis_type:

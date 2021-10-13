@@ -2,7 +2,20 @@
 
 ## General Overview
 
+Author's Note:
+    MMEDS is my most beloved child. You best treat it right or there will be consequences. Specifically it will quickly become
+    increasingly difficult to maintain. Since you'll be the one (or two) maintaining it, it's in your best interest to keep
+    the quality of code high....
+    Also I will come 4 u.
+
 ## Server
+Found at `mmmeds/server.py`
+
+The server is broken up into six application "sections". Each gets its own class, all of which inherit from the `MMEDSBase` class. The final `MMEDSServer` class creates an instance of each of the sections and acts as the main entry point to the application. Each class has a number of methods. Those that are decorated with `@cp.expose` are actual webpages that the user can access. Each of these will, after some server side processing, assign a bunch of HTML as a string to the variable `page` and return that page. This will be what the user sees.
+
+Through out most of MMEDS variables are written using underscores, as is typical Python style. To distinguish arguments that are direct webpage inputs from the user they are usually written in camel case. I've tried to be consistent with this but there may be a few locations where this doesn't hold true.
+
+
 
 ## Database
 
