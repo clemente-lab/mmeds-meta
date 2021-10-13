@@ -24,7 +24,10 @@ Through out most of MMEDS variables are written using underscores, as is typical
 ### MySQL
 
 ## Tools
-All tools in MMEDS inherit from the `Tool` class in `mmeds/tools/tool.py`. There is a lot of functionality that has been developed for the Tool class at one point or another. Not all of it has been maintained. Analysis Restarting and Sub-Analyses both fall into this category.
+All tools in MMEDS inherit from the `Tool` class in `mmeds/tools/tool.py`. All the general Tool management happens in this class. The only methods in the inheriting classes are those for commands specific to each analysis tool.
+
+### Untested Functionality
+There is a lot of functionality that has been developed for the Tool class at one point or another. Not all of it has been maintained. Analysis Restarting, Sub-Analyses, and Additional Analyses fall into this category.
 
 #### Restarting Analysis
 Restarting analysis allows an analysis to be selected to run again starting from the last successful MMEDS_STAGE as indicated by the echo statement in the job file. However for this to work, the files generated after that stage of the analysis need to be removed or qiime will complain. I had set it so those files were automatically cleared when an analysis failed but quickly that become a pain when debugging analysis issues. Two possible fixes for this are
@@ -34,16 +37,26 @@ Restarting analysis allows an analysis to be selected to run again starting from
 On the whole I like solution 1 better, but priorities in the lab shifted and I never ended up implementing it. There are still methods and other functionality in MMEDS that refers to this restarting capability, though there is no way currently to directly restart analysis from the web app.
 
 #### Sub-Analysis
-This is was a big thing Jose wanted for a while. so there is quite a bit of functionality built around it. I'm not sure if it currently works or not. My guess would be it doesn't but could be fixed without too much effort. The idea is that often people want to compare results speficially within certain groups. SO for example, if a study has both gut and nasal samples, often people would want one summary of just the nasal results and one for just the gut.
+This is was a big thing Jose wanted for a while. so there is quite a bit of functionality built around it. I'm not sure if it currently works or not. My guess would be it doesn't but could be fixed without too much effort. The idea is that often people want to compare results specifically within certain groups. SO for example, if a study has both gut and nasal samples, often people would want one summary of just the nasal results and one for just the gut.
 The workflow for this is as follows,
-- The user selections some columns for subanalysis via the config file.
+- The user selections some columns for sub-analysis via the config file.
 - When setting up the main analysis the tool class creates child processes for each group within the specified columns.
 - These children wait on the main analysis process to import, demux, and create the initial table (DADA2 or DeBlur). The child process then creates it's own analysis folder that links to the data files from the parent analysis.
 - Each child process filters the table so it only contains samples from the desired group and then proceeds as would any other analysis.
 
 This functionality did work the last time it was tested but that was more than a year ago as of 2021-10-13. Any references to 'child', 'children', 'parent', 'sub-analysis', etc in the Tool class refer to this functionality. As with analysis restarting my guess is that it doesn't work currently but it wouldn't take too much effort to get it to work again.
 
-I will say though, this can be a bit of a headache to work on. It's two levels of processes removed from whatever initially started python running. This means you usually can't use a debugger to see what's going on directly.
+I will say though, this can be a bit of a headache to work on. It's two levels of processes removed from whatever initially started python running. This means you usually can't use a debugger to see what's going on directly. This also means that
+unlike regular analysis processes the Watcher can't see what's happening with a child process. Only the primary analysis
+process which spawned the child can view it's status. This creates a few issues. The primary one being that the primary
+analysis needs to stick around to monitor it's children, so if the Primary analysis fails, the children are orphaned and
+someones has to go manually check on their status. The fix I was working on for htis was to have the primary process pass
+instructions for creating the sub-analysis (child) to the watcher rather than creating it directly. This in turn creates
+some issues however as the child needs to know the location of various files from the primary analysis as well as some
+other things. I don't think I ever fully implemented it.
+
+#### Additional Analysis
+This is some functionality similar to that for creating sub-analyses but with some key differences. Where a sub-analysis runs the same tool (generally Qiime1 or Qiime2) on a subset on the data, an additional analysis is an analysis with a different tool performed on some data generated by the primary analysis. For example, a primary analysis of Qiime2 could have an additional analysis of SparCC, so that would automatically run SparCC on the OTU table generated during the Qiime2 run (ASV tables can bite me). As with Restarting analysis and Sub-analysis, ever since I stopped being able to maintain analysis tests as part of the automated testing suite I'm not sure if this works or not. The method `create_additional_analysis` shares a lot of code with `create_sub_analysis` but the differences were significant enough that I never managed to unify them. Also this stuff just stopped being a priority after the old nodes were retired and I had to move MMEDS to a WSGI app on HPC's apache setup.
 
 
 ### Qiime1
