@@ -112,7 +112,10 @@ class Qiime2(Tool):
         self.jobtext.append(' '.join(cmd))
 
     def demultiplex(self):
-        """ Demultiplex the reads. """
+        """
+        Demultiplex the reads.
+        NOTE: Great place to put a switch statement.
+        """
         # Add the otu directory to the MetaData object
         self.add_path('demux_file', '.qza')
         self.add_path('error_correction', '.qza')
