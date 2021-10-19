@@ -24,7 +24,7 @@ Through out most of MMEDS variables are written using underscores, as is typical
 ### MySQL
 
 ## Tools
-All tools in MMEDS inherit from the `Tool` class in `mmeds/tools/tool.py`. All the general Tool management happens in this class. The only methods in the inheriting classes are those for commands specific to each analysis tool.
+All tools in MMEDS inherit from the `Tool` class in `mmeds/tools/tool.py`. All the general Tool management happens in this class. The only methods in the inheriting classes are those for commands specific to each analysis tool. 
 
 ### Untested Functionality
 There is a lot of functionality that has been developed for the Tool class at one point or another. Not all of it has been maintained. Analysis Restarting, Sub-Analyses, and Additional Analyses fall into this category.
@@ -60,8 +60,21 @@ This is some functionality similar to that for creating sub-analyses but with so
 
 
 ### Qiime1
+Qiime1 is not often used these days. Most primary analysis is done with Qiime2. However qiime1 still offers some functionality that Qiime2 never implemented. As of (10/19/2021) I think the qiime1 tool class doesn't work on minerva. The minerva Qiime1 install requires some finagling to get it to run and that hasn't been added to the class here. For more info on Qiime1 see here (http://qiime.org/). It's been a few years since I've been able to create a fresh, functional Qiime1 install. Not since Python2 went EOL. Apparently someone was able to install it in a VM? Not sure why that would help but w/e (https://forum.qiime2.org/t/qiime1-installation/19309/7).
 
 ### Qiime2
+This is by far the most used tool in MMEDs. It's also the largest class since a full qiime2 run requires quite a few commands. They are all fairly well commented and I think most MMEDs devs are relatively familiar with them at this point. For more info see the Qiime2 site (https://qiime2.org/). MMEDs uses version 2020.8.1, the most recent version installed on Minerva. There are a number of parameters, like `p_trim_length` that we might want to make selectable via the config file. Not sure if there's too much more needs said about this.
+
+### PiCRUSt1
+PiCRUSt does some stuff. Probably. It predicts metagenomes or something. It's currently being replaced by PiCRUSt2 which is python3 based but that isn't finished yet so we still use PiCRUSt1. Find out more about this exicting project here (https://picrust.github.io/picrust/install.html)
+
+### SparCC
+SparCC generates a sparsity matrix for a given OTU input. It creates a certain number of permutations and iterates over then a given number of times. These parameters can be set in the config file for an analysis. The permutations are shuffled versions of the data set, created in the `make_bootstraps` step. The interations are used to generate pseudo p values for the shuffle datasets, this is the `pseudo_pvals` step. For more information on the tool look here (https://github.com/bio-developer/sparcc)
+NOTE: SparCC is poorly coded. If you want to set it up locally and have the scripts as part of your path you're going to have to modify some of them by adding a `#!/usr/bin/python` header, and setting their execute flag in bash. By default you can only run the scripts by typing out the full path.
+
+### Lefse
+
+What does this tool even do? Make a cladogram? TF is a cladogram? Whatever it is lefse makes one. Using a modified OTU table as inputs.There's an example called `lefse_table.tsv` in `test_files`. There are some settings for 'subclass' and 'subjects', these effect which metadata column is used for grouping the final output. More info can be found here (https://github.com/SegataLab/lefse) and here (https://pubmed.ncbi.nlm.nih.gov/21702898/). Nothing too complicated about the methods in this class.
 
 ## Summary
 
