@@ -847,11 +847,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
     di = headers.index('SampleID')
     headers[di] = 'MmedsSampleID'
 
-    hold = headers[-1]
-    di = headers.index('RawDataNotes')
-    headers[-1] = 'Description'
-    headers[di] = hold
-
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
         if 'qiime2' == tool_type:
@@ -871,8 +866,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
                     seen_bars.add(str(mdata['BarcodeSequence'][row_index]))
                 elif header == 'MmedsSampleID':
                     row.append(str(mdata['SampleID'][row_index]))
-                elif header == 'Description':
-                    row.append(str(mdata['RawDataNotes'][row_index]))
                 else:
                     row.append(str(mdata[header][row_index]))
             f.write('\t'.join(row) + '\n')

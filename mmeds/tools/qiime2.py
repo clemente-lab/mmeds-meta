@@ -88,11 +88,11 @@ class Qiime2(Tool):
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
                 else:
-                    #TODO determing if these lines should be removed for all cases
+                    # TODO determing if these lines should be removed for all cases
                     # Link the barcodes
-                    #(self.get_file('working_dir', True) /
+                    # (self.get_file('working_dir', True) /
                     # 'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
-                    #(self.get_file('working_dir', True) /
+                    # (self.get_file('working_dir', True) /
                     # 'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
 
                     # Run the script
@@ -176,7 +176,7 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
 
-            self.jobtext.append('source activate qiime2-2020.8;')
+            self.jobtext.append('source activate qiime2-2020.8.0;')
 
         elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')

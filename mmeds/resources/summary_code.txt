@@ -31,7 +31,7 @@ max_colors = 0
 max_colors_con = 0
 # Create information for R color palettes
 for group_name in metadata_columns:
-    if not mdf[group_name].isnull().all():
+    if group_name in mdf and not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         uni = grouping.nunique()
         if config['metadata_continuous'][group_name]:
@@ -360,7 +360,7 @@ cols = {{x:'PC{{}}'.format(x + 1) for x in df.columns}}
 df = df.rename(index=str, columns=cols)
 
 # Assign GroupIDs based on metadata
-samples = mdf['{group}'][[int(x) for x in df.axes[0]]]
+samples = mdf['{group}'][[x for x in df.axes[0]]]
 df = df.assign(GroupID=[color_maps['{group}'][str(x)] for x in samples])
 =====
 beta_r<source>
