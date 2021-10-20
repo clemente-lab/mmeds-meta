@@ -90,9 +90,9 @@ class Qiime2(Tool):
                 else:
                     # Link the barcodes
                     (self.get_file('working_dir', True) /
-                    'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
+                     'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
                     (self.get_file('working_dir', True) /
-                    'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
+                     'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
 
                     # Run the script
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',

@@ -216,6 +216,8 @@ class Validator:
     def check_duplicates(self, column):
         """ Checks for any duplicate entries in the provided column """
         cells = defaultdict(list)
+
+        # Add the indices of each item
         for i, cell in enumerate(column):
             cells[cell].append(i)
         # Find any duplicates
