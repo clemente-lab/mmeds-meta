@@ -925,8 +925,9 @@ class MMEDSanalysis(MMEDSbase):
             if runOnNode and not check_privileges(self.get_user(), self.testing):
                 raise err.PrivilegeError('Only users with elevated privileges may run analysis directly')
 
-            with Database() as db:
-                access_code = db.get_access_code_from_study_name(studyName)
+            with Database(testing=self.testing) as db:
+                access_code = db.get_access_code_from_study_name(studyName, self.get_user())
+                Logger.error(access_code)
 
             # Check that the requested upload exists
             # Getting the files to check the config options match the provided metadata
