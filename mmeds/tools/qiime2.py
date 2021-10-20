@@ -88,12 +88,11 @@ class Qiime2(Tool):
                                          self.get_file('working_dir'),
                                          self.get_file('working_file'))
                 else:
-                    # TODO determing if these lines should be removed for all cases
                     # Link the barcodes
-                    # (self.get_file('working_dir', True) /
-                    # 'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
-                    # (self.get_file('working_dir', True) /
-                    # 'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
+                    (self.get_file('working_dir', True) /
+                    'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
+                    (self.get_file('working_dir', True) /
+                    'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
 
                     # Run the script
                     command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
