@@ -368,7 +368,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
             # Ensure there aren't any invalid columns specified to be included in the analysis
             try:
                 # If 'all' only select columns that don't have all the same or all unique values
-                if df[col].isnull().all() or df[col].nunique() == 1:
+                if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
                     if col in ['Together', 'Separate']:
                         summary_cols.append(col)
                         col_types[col] = False
