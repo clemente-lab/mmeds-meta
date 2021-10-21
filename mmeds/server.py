@@ -1,6 +1,4 @@
-import os
 import cherrypy as cp
-import pandas as pd
 import getpass
 from datetime import datetime
 from cherrypy.lib import static
@@ -23,11 +21,13 @@ from mmeds.database.database import Database
 from mmeds.spawn import handle_modify_data, Watcher
 from mmeds.logging import Logger
 
-absDir = Path(os.getcwd())
-
 
 def catch_server_errors(page_method):
-    """ Handles LoggedOutError, and HTTPErrors for all mmeds pages. """
+    """
+    Handles LoggedOutError, and HTTPErrors for all mmeds pages.
+    Acts as a wrapper function, meaning it automatically wraps the body of the function
+    it is a decorator on.
+    """
     @wraps(page_method)
     def wrapper(*a, **kwargs):
         try:
@@ -50,6 +50,10 @@ def catch_server_errors(page_method):
 
 
 def decorate_all_methods(decorator):
+    """
+    Applies the given decorator to all methods of a class. In the mmeds server it's used
+    to wrap each webpage with the `catch_server_errors` function.
+    """
     def apply_decorator(cls):
         for k, m in cls.__dict__.items():
             if isfunction(m):
@@ -58,10 +62,6 @@ def decorate_all_methods(decorator):
     return apply_decorator
 
 
-# Note: In all of the following classes, if a parameter is named in camel case instead of underscore
-# (e.g. studyName vs. study_name) that incidates that the parameter is coming from an HTML form
-# Update 2021-03-08: This is not as consistant as it should be
-
 class MMEDSbase:
     """
     The base class inherited by all mmeds server classes.
@@ -69,6 +69,10 @@ class MMEDSbase:
     """
 
     def __init__(self):
+        """
+        Creates a connection from the webpage to the watcher process to allow
+        for information transfer via the queue
+        """
         self.db = None
         self.testing = fig.TESTING
         self.monitor = Watcher()
@@ -80,8 +84,9 @@ class MMEDSbase:
 
     def get_user(self):
         """
-        Return the current user. Delete them from the
-        user list if session data is unavailable.
+        Return the current user. Raises a LoggedOutError if a current user isn't found.
+        This error is caught by the `catch_server_errors` decorator allowing it to
+        return the Logged out webpage to the user rather than an error.
         """
         try:
             return cp.session['user']
@@ -91,8 +96,8 @@ class MMEDSbase:
 
     def get_dir(self):
         """
-        Return the current user. Delete them from the
-        user list if session data is unavailable.
+        Return the current user. Delete them from the user list if session data is unavailable.
+        Functions similar to `get_user`, Both ensure that someone is properly logged in.
         """
         try:
             return cp.session['working_dir']
@@ -100,6 +105,11 @@ class MMEDSbase:
             raise err.LoggedOutError('No user logged in')
 
     def get_privilege(self):
+        """
+        Get's the privilege level of the current user. Right now there are only two levels.
+        0 for general users and 1 for lab members. This affects some aspects of how the
+        webpages load: What studies are shown, what options are available, etc.
+        """
         try:
             privilege = cp.session['privilege']
         except KeyError:
@@ -126,11 +136,11 @@ class MMEDSbase:
 
     def load_webpage(self, page, **kwargs):
         """
-        Load the requested HTML page, adding the header and topbar
-        if necessary as well as any formatting arguments.
+        Load the requested HTML page, adding the header and topbar if necessary as well
+        as any formatting arguments. This is the base method and includes most of the functionality
+        but each section of the web app has it's own wrapper around this method to add formatting
+        specific to that part of the application.
         """
-        cp.log("Loading webpage")
-
         try:
             # Check if user needs to reset their password
             reset = False
@@ -203,6 +213,11 @@ class MMEDSbase:
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSdownload(MMEDSbase):
+    """
+    The section of the application dedicated to downloading things. The most significant method is
+    `download_file`. It is generally what's linked to from any webpage where the user is selecting
+    a download.
+    """
     def __init__(self):
         super().__init__()
 
@@ -212,12 +227,22 @@ class MMEDSdownload(MMEDSbase):
 
     @cp.expose
     def download_file(self, file_name):
+        """
+        Used to provide downloads to the user. The path to the file must first be added to
+        the `cp.session['download_files']` dictionary with the `file_name` as the key and
+        the path to the file on disk as the value.
+        """
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
 
     @cp.expose
     def download_multiple_ids(self, studyName, idType):
-        """ Generate a file containing the requested IDs and return it for download """
+        """
+        Generate a file containing the requested IDs and return it for download
+        Arguably the call to Database should happen on the caller webpage and just link
+        to `download_file` but if it's going to be used it multiple locations on the
+        application maybe this does make sense. Who knows.
+        """
         with Database(path=self.get_dir(), testing=self.testing, owner=self.get_user()) as db:
             id_file = db.create_ids_file(studyName, idType)
 
@@ -226,18 +251,28 @@ class MMEDSdownload(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSstudy(MMEDSbase):
+    """
+    The section of the web application dedicated to interacting with studies already uploaded to MMEDS.
+    """
     def __init__(self):
         super().__init__()
 
     def load_webpage(self, page, **kwargs):
         """ Add the highlighting for this section of the website """
+        # Each of the app sections do this. It adds formatting to highlight the button on
+        # the side bar that matches the section of the application the user is in
+        # Some of the other `load_webpage` wrappers do more.
         if kwargs.get('study_selected') is None:
             kwargs['study_selected'] = 'w3-blue'
         return super().load_webpage(page, **kwargs)
 
     @cp.expose
     def select_study(self):
-        """ Allows authorized user accounts to access uploaded studies. """
+        """
+        Allows authorized user accounts to access uploaded studies. Users with privilege 0 are
+        authorized only to see studies they have uploaded, or studies that have been made public.
+        Users with privilege 1 can see all the studies.
+        """
         cp.log("In select study")
         # TODO Convert to a clickable table from formatter
         study_html = ''' <tr class="w3-hover-blue">
@@ -320,6 +355,13 @@ class MMEDSstudy(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSupload(MMEDSbase):
+    """
+    This is the largest section of the application. It is dedicated to managing
+    user data and metadata uploads. So much functionality is packed in here that
+    it requires some non-webpage helper methods. Possibly it could be broken up
+    into multiple classed in the future but for now I've tried to roughly organize
+    it into several sections based on the method's utility.
+    """
     def __init__(self):
         super().__init__()
     ########################################
@@ -327,7 +369,13 @@ class MMEDSupload(MMEDSbase):
     ########################################
 
     def load_webpage(self, page, **kwargs):
-        """ Add the highlighting for this section of the website """
+        """
+        Add the highlighting for this section of the website
+        NOTE: If MMEDS moves to Python 3.10 at some point I think this
+        method could be cleaned up significantly if it was converted into
+        a pattern matching switch statement instead of all these gross
+        if-else blocks.
+        """
         if kwargs.get('upload_selected') is None:
             kwargs['upload_selected'] = 'w3-blue'
 
@@ -356,11 +404,13 @@ class MMEDSupload(MMEDSbase):
         return super().load_webpage(page, **kwargs)
 
     def run_validate(self, myMetaData, simplified):
-        """ Run validate_mapping_file and return the results """
+        """
+        Run validate_mapping_file and return the results
+        """
         cp.log('In run validate')
-        errors = []
-        warnings = []
-        # Check the file that's uploaded
+
+        # Check the file that's uploaded is a valid file type.
+        # TODO Expand this to allow .xls and .xlsx files.
         valid_extensions = ['txt', 'csv', 'tsv']
         file_extension = myMetaData.filename.split('.')[-1]
         if file_extension not in valid_extensions:
@@ -378,6 +428,7 @@ class MMEDSupload(MMEDSbase):
         cp.session['uploaded_files'][cp.session['metadata_type']] = metadata_copy
 
         cp.log('before validator creation')
+        # Create an instance of the Validator class with all the appropriate parameters
         valid = Validator(metadata_copy,
                           cp.session['study_name'],
                           cp.session['metadata_type'],
@@ -392,6 +443,8 @@ class MMEDSupload(MMEDSbase):
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:
             try:
+                # Perform additional checks that the Validator has insufficient information
+                # to perform during it's run
                 if cp.session['metadata_type'] == 'subject':
                     warnings += db.check_repeated_subjects(subjects, cp.session['subject_type'])
                     cp.session['subject_ids'] = subjects
@@ -404,7 +457,7 @@ class MMEDSupload(MMEDSbase):
         return errors, warnings
 
     def load_data_files(self, **kwargs):
-        """ Load the files passed that exist. """
+        """ Load the files passed in by the user. """
         files = {}
         for key, value in kwargs.items():
             if value is not None:
@@ -413,7 +466,10 @@ class MMEDSupload(MMEDSbase):
         return files
 
     def handle_errors_warnings(self, metadata_copy, errors, warnings):
-        """ Handle loading different pages depending if there are metadata errors, warnings, or neither """
+        """
+        Handle loading different pages depending if there are metadata errors, warnings, or neither.
+        NOTE: This is another place that could benefit from switch statements.
+        """
 
         # Get data from upload
         try:
@@ -475,9 +531,9 @@ class MMEDSupload(MMEDSbase):
                 page = self.upload_data()
         return page
 
-    ########################################
-    #             Upload Pages             #
-    ########################################
+    ########################
+    # General Upload Pages #
+    ########################
 
     @cp.expose
     def user_guide(self):
@@ -488,7 +544,7 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def simple_guide(self):
-        """ Page for the guide for the user on how to upload """
+        """ Page for the user guide for simplified uploads """
         page = self.load_webpage('simple_guide',
                                  title='Upload Guide')
         return page
@@ -511,7 +567,18 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def modify_upload(self, myData, data_type, access_code):
-        """ Modify the data of an existing upload. """
+        """
+        Modify the data of an existing upload.
+        :myData: The new data file to upload
+        :data_type: The key for the file to be replaced
+        :access_code: The access_code for the study to replace a file in
+
+        NOTE: This method should probably be moved to the MMEDSstudy section
+        and split into two pages. The first would have a drop down where the
+        user can select the Study to modify. The second would have a drop down
+        to select the file to be replaced as well as the upload form for the
+        new file.
+        """
         cp.log('In modify_upload')
         try:
             # Handle modifying the uploaded data
@@ -527,28 +594,18 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def upload_data(self):
-        """ The page for uploading data files of any type"""
-
-        # Only arrive here if there are no errors or warnings proceed to upload the data files
-        alert = 'Specimen metadata uploaded successfully'
-
-        # The case for handling uploads of fastq files
-        page = self.load_webpage(
-            'upload_data_files',
-            title='Upload Data',
-            success=alert
-        )
-        return page
-
-    @cp.expose
     def upload_page(self):
-        """ Page for selecting upload type or modifying upload. """
+        """
+        Page for selecting upload type or modifying upload.
+        This is the root page that a user lands on when they select
+        'uploade' from the navigation panel.
+        """
         cp.log('Access upload page')
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
             study_dropdown = fmt.build_study_code_dropdown(studies)
 
+        # Note: I don't love this but I don't have a better solution
         cp.session['download_files']['user_guide'] = fig.USER_GUIDE
         cp.session['download_files']['Subject_template'] = fig.SUBJECT_TEMPLATE
         cp.session['download_files']['Specimen_template'] = fig.SPECIMEN_TEMPLATE
@@ -560,13 +617,21 @@ class MMEDSupload(MMEDSbase):
                                  title='Upload Type')
         return page
 
+    #########################
+    # Metadata Upload Pages #
+    #########################
+
     @cp.expose
     def upload_subject_metadata(self, subjectType=None, studyName=None):
-        """ Page for uploading Qiime data """
+        """
+        Page for uploading subject metadata data.
+        This is the first thing to be uploaded for a particular study.
+        """
 
         if subjectType is None and studyName is None:
-            # Page is being reset to here from a further point in the process,
-            #   pull data from cp.session and proceed.
+            # If neither of these value are being passed in from the webpage then the
+            # page is being reset to here from a further point in the upload process,
+            # pull data from cp.session and proceed.
             subjectType = cp.session['subject_type']
             studyName = cp.session['study_name']
 
@@ -579,6 +644,8 @@ class MMEDSupload(MMEDSbase):
                 db.check_study_name(studyName)
                 page = self.load_webpage('upload_subject_file',
                                          title='Upload Subject Metadata')
+
+        # If the study name is already in use instruct the user to try something else.
         except(err.StudyNameError) as e:
             with Database(testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
@@ -591,7 +658,10 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def upload_specimen_metadata(self, uploadType, studyName):
-        """ Page for uploading Qiime data """
+        """
+        Page for uploading specimen metadata files.
+        This happens after a successful subject metadata upload.
+        """
         try:
             cp.session['metadata_type'] = 'specimen'
             cp.session['study_name'] = studyName
@@ -607,6 +677,8 @@ class MMEDSupload(MMEDSbase):
                                      metadata_type=cp.session['metadata_type'].capitalize(),
                                      version=uploadType)
 
+        # Not 100% sure this check still needs to be here, as the study name
+        # should've already been checked at this point.
         except(err.StudyNameError) as e:
             with Database(testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
@@ -619,7 +691,12 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def continue_metadata_upload(self):
-        """ Like Upload metadata, but the continuation if there are warnings in a file """
+        """
+        If there are warnings generated for a particular metadata file then the user will
+        be presented with a page displaying the warnings as asking the user if they want
+        to continue. If there are no warnings this page will take them directly to the
+        next appropraite upload page.
+        """
         # Only arrive here if there are no errors or warnings proceed to upload the data files
         alert = '{} metadata uploaded successfully'.format(cp.session['metadata_type'].capitalize())
 
@@ -642,7 +719,10 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def validate_metadata(self, myMetaData, barcodes_type=None, simplified=False):
-        """ The page returned after a file is uploaded. """
+        """
+        This webpage handles the validation of each metadata file. Using a call to
+        the helper method `run_validate`.
+        """
         try:
             cp.log('in validate, current metadata {}'.format(cp.session['metadata_type']))
             errors, warnings = self.run_validate(myMetaData, simplified)
@@ -661,67 +741,10 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def process_data(self, public=False, **kwargs):
-        """ The page for loading data files into the database """
-        # Create a unique dir for handling files uploaded by this user
-        subject_metadata = Path(cp.session['uploaded_files']['subject'])
-        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
-
-        # Unpack kwargs based on barcode type
-        # Add the datafiles that exist as arguments
-        if 'otu_table' in kwargs:
-            cp.session['upload_type'] = 'sparcc'
-        elif 'lefse_table' in kwargs:
-            cp.session['upload_type'] = 'lefse'
-        else:
-            cp.session['upload_type'] = 'qiime'
-
-        if cp.session['upload_type'] == 'qiime':
-            if cp.session['barcodes_type'].startswith('dual'):
-                # If have dual barcodes, don't have a reads_type in kwargs so must set it
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                 rev_reads=kwargs['rev_reads'],
-                                                 for_barcodes=kwargs['barcodes'],
-                                                 rev_barcodes=kwargs['rev_barcodes'])
-                reads_type = 'paired_end'
-                barcodes_type = 'dual_barcodes'
-                if cp.session['barcodes_type'].endswith('x'):
-                    barcodes_type += '_legacy'
-            else:
-                barcodes_type = 'single_barcodes'
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                 rev_reads=kwargs['rev_reads'],
-                                                 barcodes=kwargs['barcodes'])
-                reads_type = kwargs['reads_type']
-        elif cp.session['upload_type'] == 'sparcc':
-            datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
-            reads_type = None
-            barcodes_type = None
-        elif cp.session['upload_type'] == 'lefse':
-            datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
-            # Use reads_type variable to store if data file contins subclass and subjects
-            if 'subclass' in kwargs.keys():
-                reads_type = 'subclass'
-                if 'subjects' in kwargs.keys():
-                    reads_type = reads_type + '_subjects'
-            elif 'subjects' in kwargs.keys():
-                reads_type = 'subjects'
-            else:
-                reads_type = 'class_only'
-            barcodes_type = None
-
-        cp.log("Server putting upload in queue {}".format(id(self.q)))
-        # Add the files to be uploaded to the queue for uploads
-        # This will be handled by the Watcher class found in spawn.py
-        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
-                    cp.session['subject_type'], public))
-
-        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
-
-    @cp.expose
     def additional_metadata(self, accessCode, idType, dataFile, generateID=False):
-        """ Webpage for handling the upload of new metadata related to an existing study """
+        """
+        Webpage for handling the upload of new metadata related to an existing study.
+        """
         success = ''
         error = ''
         cp.log('idType is ')
@@ -744,9 +767,95 @@ class MMEDSupload(MMEDSbase):
                 error = f'There was an issue with your {idType} file. Please check the example.'
         return self.load_webpage('home', success=success, error=error)
 
+    #####################
+    # Data Upload Pages #
+    #####################
+
+    @cp.expose
+    def upload_data(self):
+        """ The page for uploading data files of any type"""
+
+        # Only arrive here if there are no errors or warnings proceed to upload the data files
+        alert = 'Specimen metadata uploaded successfully'
+
+        # The case for handling uploads of fastq files
+        page = self.load_webpage(
+            'upload_data_files',
+            title='Upload Data',
+            success=alert
+        )
+        return page
+
+    @cp.expose
+    def process_data(self, public=False, **kwargs):
+        """ The page for loading data files into the database """
+        # Create a unique dir for handling files uploaded by this user
+        subject_metadata = Path(cp.session['uploaded_files']['subject'])
+        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
+
+        # Unpack kwargs based on barcode type
+        # Add the datafiles that exist as arguments
+        if 'otu_table' in kwargs:
+            cp.session['upload_type'] = 'sparcc'
+        elif 'lefse_table' in kwargs:
+            cp.session['upload_type'] = 'lefse'
+        else:
+            cp.session['upload_type'] = 'qiime'
+
+        # NOTE: More places to update with pattern matched switch statements
+        if cp.session['upload_type'] == 'qiime':
+            if cp.session['barcodes_type'].startswith('dual'):
+                cp.log("Upload is Qiime Dual Barcodes")
+                # If have dual barcodes, don't have a reads_type in kwargs so must set it
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 for_barcodes=kwargs['barcodes'],
+                                                 rev_barcodes=kwargs['rev_barcodes'])
+                reads_type = 'paired_end'
+                barcodes_type = 'dual_barcodes'
+                if cp.session['barcodes_type'].endswith('x'):
+                    barcodes_type += '_legacy'
+            else:
+                cp.log("Upload is Qiime Single Barcodes")
+                barcodes_type = 'single_barcodes'
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+                reads_type = kwargs['reads_type']
+        elif cp.session['upload_type'] == 'sparcc':
+            cp.log("Upload is SparCC data")
+            datafiles = self.load_data_files(otu_table=kwargs['otu_table'])
+            reads_type = None
+            barcodes_type = None
+        elif cp.session['upload_type'] == 'lefse':
+            datafiles = self.load_data_files(lefse_table=kwargs['lefse_table'])
+            # Use reads_type variable to store if data file contins subclass and subjects
+            if 'subclass' in kwargs.keys():
+                reads_type = 'subclass'
+                if 'subjects' in kwargs.keys():
+                    reads_type = reads_type + '_subjects'
+            elif 'subjects' in kwargs.keys():
+                reads_type = 'subjects'
+            else:
+                reads_type = 'class_only'
+            cp.log(f"Upload is LeFSe data with reads type {reads_type}")
+            barcodes_type = None
+
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
+                    specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
+                    cp.session['subject_type'], public))
+
+        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSauthentication(MMEDSbase):
+    """
+    This is the section of the web application that handles use accounts and account management.
+    """
     def __init__(self):
         super().__init__()
 
@@ -781,6 +890,10 @@ class MMEDSauthentication(MMEDSbase):
     def sign_up(self, username, password1, password2, email):
         """
         Perform the actions necessary to sign up a new user.
+        :username: The username selected by the user. Must be unique to create the account.
+        :password1: First copy of the user's desired password.
+        :password2: Second copy of the user's desire password, must match :password1:.
+        :email: The email address the user is signing up with.
         """
         try:
             check_password(password1, password2)
@@ -794,7 +907,10 @@ class MMEDSauthentication(MMEDSbase):
 
     @cp.expose
     def input_password(self):
-        """ Load page for changing the user's password """
+        """
+        Load page for changing the user's password
+        NOTE: Not sure if this is still used? I think it's been superseded by `change_password`.
+        """
         page = self.load_webpage('auth_change_password', title='Change Password')
         return page
 
@@ -810,6 +926,7 @@ class MMEDSauthentication(MMEDSbase):
 
         # Check the old password matches
         try:
+            # Force the user to logout
             cp.lib.sessions.expire()
             validate_password(self.get_user(), password0, testing=self.testing)
             # Check the two copies of the new password match
@@ -840,6 +957,9 @@ class MMEDSauthentication(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSanalysis(MMEDSbase):
+    """
+    This is the section of the web app that handles selecting and viewing analyses.
+    """
     def __init__(self):
         super().__init__()
 
@@ -910,6 +1030,10 @@ class MMEDSanalysis(MMEDSbase):
         ----------------------------------------
         :access_code: The code that identifies the dataset to run the tool on
         :analysis_method: The tool and analysis to run on the chosen dataset
+        :config: The config file in some format. This is an ongoing issue.
+        :runOnNode: A value only selectable by those with a Privilege of 1
+            When selected the analysis will run directly on the MMEDS node
+            rather than being submitted to the job queue.
         """
         if '-' in analysis_method:
             tool_type = analysis_method.split('-')[0]
@@ -971,9 +1095,11 @@ class MMEDSanalysis(MMEDSbase):
 
         id_study_html = '<option value="{study_name}">{study_name}</option>'
 
+        # Get all the studies that are available to the current user
         with Database(testing=self.testing, owner=self.get_user()) as db:
             studies = db.get_all_user_studies(self.get_user())
 
+        # Build an HTML list of the studies
         study_list = []
         id_study_list = []
         for study in studies:
@@ -983,6 +1109,7 @@ class MMEDSanalysis(MMEDSbase):
                                                 date_created=study.created,
                                                 ))
             id_study_list.append(id_study_html.format(study_name=study.study_name))
+
         # Add unhide any privileged options
         if check_privileges(self.get_user(), self.testing):
             page = self.load_webpage('analysis_select_tool',
@@ -1002,6 +1129,13 @@ class MMEDSanalysis(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSquery(MMEDSbase):
+    """
+    The section of the web app that handles interaction with the SQL database.
+    Performing queries, requesting data dumps (when implemented), etc
+    It also includes the web pages for adding Samples/Aliquots to an existing study
+    Arguably that should be in `MMEDSupload`, but that class is already more that
+    twice the size of any other.
+    """
     def __init__(self):
         super().__init__()
 
@@ -1013,6 +1147,13 @@ class MMEDSquery(MMEDSbase):
 
     @cp.expose
     def query_select(self):
+        """
+        The base page for the Query section of the application. From here the user can select
+        from several forms for either
+        1) Running a query against the MySQL
+        2) Downloading all the IDs for for Samples or Aliquots in a given study
+        3) Uploading new IDs for Samples or Aliquots to a given study
+        """
         study_html = ''' <tr class="w3-hover-blue">
             <th>
             <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>
@@ -1025,6 +1166,8 @@ class MMEDSquery(MMEDSbase):
         with Database(testing=self.testing) as db:
             studies = db.get_all_user_studies(self.get_user())
 
+        # This exact code block appears elsewhere in server.py
+        # It might be worth moving it into it's own utility method
         study_list = []
         id_study_list = []
         for study in studies:
@@ -1084,7 +1227,7 @@ class MMEDSquery(MMEDSbase):
         ==================================================================
         :AccessCode: The access_code for the study the new id is to be associated with
         :SpecimenID: The ID string of the specimen the new aliquot is taken from
-        :AliquotWeight: The weight of the new aliquot to generate an ID for
+        :kwargs: The other keyword arguments, passed as a dictionary
 
         Depending on how a user is getting to this page the arguments vary. When initially
         reaching it from `select_specimen`, :AccessCode: and :SpecimenID: are passed in.
@@ -1199,6 +1342,14 @@ class MMEDSquery(MMEDSbase):
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
+    """
+    The final level of the web app. This inherits from MMEDSbase and has an instance
+    of each of the sections of the app as a property. When accessing the web app those
+    sections are apparent in the URL.
+    This class also directly handles users logging in and logging out, as well as loading
+    the application home page. The log in / log out functionality should arguably be
+    moved to MMEDSauthentication.
+    """
     def __init__(self):
         super().__init__()
         self.download = MMEDSdownload()

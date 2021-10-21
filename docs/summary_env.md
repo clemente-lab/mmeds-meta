@@ -11,9 +11,9 @@
 # NB: nbconvert was previously kept at version 5.6.1, now kept current
 `conda install nbconvert r-ggplot2 r-ggally r-ggrepel r-rcolorbrewer -c conda-forge`
 
-# Now use pip to install the PDF template for jupyter
+# Now use pip to install the PDF template for jupyter and the Pillow python library
 
-`pip install nb_pdf_template`
+`pip install nb_pdf_template pillow`
 
 # Once all that is installed create a jupyter kernel from the current environment
 
