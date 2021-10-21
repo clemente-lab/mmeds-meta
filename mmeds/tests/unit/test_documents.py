@@ -1,12 +1,11 @@
 from unittest import TestCase
-import mmeds.config as fig
-from mmeds.database.database import Database
-
 from pathlib import Path
-
-import mmeds.documents as docs
-import mmeds.util as util
 import mongoengine as men
+
+from mmeds.database.database import Database
+import mmeds.config as fig
+import mmeds.database.documents as docs
+import mmeds.util as util
 
 
 TESTING = True

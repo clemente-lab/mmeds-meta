@@ -14,7 +14,7 @@ from mmeds.error import NoResultError
 from mmeds.util import (quote_sql, parse_ICD_codes, send_email, create_local_copy,
                         load_metadata, join_metadata, write_metadata)
 from mmeds.database.sql_builder import SQLBuilder
-from mmeds.documents import MMEDSDoc
+from mmeds.database.documents import MMEDSDoc
 from mmeds.logging import Logger
 
 
