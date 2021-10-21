@@ -23,6 +23,9 @@ from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.tool import TestTool
 from mmeds.logging import Logger
 
+# This is used as a stand in for a switch statement when the watcher
+# spins up a new analysis process. It should be replaced with an
+# actual switch statement when MMEDs migrates to 3.10
 TOOLS = {
     'qiime1': Qiime1,
     'qiime2': Qiime2,
@@ -98,6 +101,8 @@ class Watcher(BaseManager):
             files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
         config = load_config(config_file, files['metadata'])
+
+        # Switch statment will go here
         try:
             tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type,
                                     analysis_type, config, testing, run_on_node,
