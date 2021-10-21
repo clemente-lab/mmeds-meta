@@ -22,10 +22,21 @@ Through out most of MMEDS variables are written using underscores, as is typical
 There are a few significant files that have to do with Database operations.
 
 ### database.py
+This contains the Database class which is the primary way most of MMEDs interfaces with the MySQL and MongoDB databases.
+Pretty much all operations are done by opening an instance of this class in a `with` block and calling various methods.
+
 ### metadata_uploader.py
+Contains the class for performing the import of a new study's metadata into the MySQL database.
+
 ### metadata_adder.py
+Like metadata_uploader but for adding additional metadata to an existing study rather than uploading an entirely new study.
+
 ### sql_builder.py
+This is probably the most technically complicated of the files. It contains the SQLBuilder class which find the necessary foreign keys for each row of a metadata file. The class itself is pretty well documented and contains examples so look there for more info. This is
+the only place recursive logic is used in mmeds.
+
 ### documents.py
+This file contains the MMEDSDoc class which is how MMEDs stores info in the mongoDB database.
 
 ### Mongo 
 

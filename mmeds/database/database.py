@@ -997,7 +997,7 @@ class Database:
         return empty_files
 
     def delete_mongo_documents(self):
-        """ Clear all metadata documents. This may be necessary if the MMEDSDoc class is modified. """
+        """ Clear all metadata documents. This may be necessary if the MMEDSDoc class is modified """
         data = list(MMEDSDoc.objects())
         for doc in data:
             doc.delete()

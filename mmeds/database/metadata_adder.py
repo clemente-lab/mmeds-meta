@@ -9,6 +9,9 @@ from mmeds.database.database import Database
 
 
 class MetaDataAdder(Process):
+    """
+    The class used for uploading additional metadata to an existing study
+    """
     def __init__(self, owner, access_code, id_table, id_type, generate_ids, testing):
         """
         Connect to the specified database.
@@ -39,6 +42,7 @@ class MetaDataAdder(Process):
             mdata.save()
 
             # Keep logic outside the loop
+            # Move to a switch statement in the loop when moving to 3.10
             if self.id_type == 'aliquot':
                 generate_method = db.generate_aliquot_id
             elif self.id_type == 'sample':
@@ -64,4 +68,5 @@ class MetaDataAdder(Process):
                    id_type=self.id_type,
                    study=df['StudyName'][0])
 
+        # Return 0 if all completes successfully
         return 0
