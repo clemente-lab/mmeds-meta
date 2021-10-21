@@ -294,8 +294,8 @@ class Validator:
                     # Check for missing required fields
                     if not self.cur_table == 'AdditionalMetaData' and\
                             self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
-                        Logger.debug("Cell shouldn't be NA")
-                        err = '{}\t{}\tMissing Required Value Error'
+                        Logger.debug(f"Cell shouldn't be NA: {self.cur_col}")
+                        err = f'{{}}\t{{}}\tMissing Required Value Error: {self.cur_col}'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
                 else:
                     self.check_cell(i, cell)

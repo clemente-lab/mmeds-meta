@@ -387,7 +387,13 @@ class MMEDSupload(MMEDSbase):
         cp.log('before validator run')
 
         # Check the metadata file for errors
-        errors, warnings, subjects = valid.run()
+        try:
+            errors, warnings, subjects = valid.run()
+        except Exception as ex:
+            cp.log(ex)
+
+        cp.log('validator ran')
+
 
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:

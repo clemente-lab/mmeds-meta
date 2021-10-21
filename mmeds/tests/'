@@ -1,15 +1,18 @@
 from unittest import TestCase
 import mmeds.config as fig
 import pandas as pd
+from subprocess import run, CalledProcessError
+import unittest
+
 
 from pathlib import Path
-from mmeds.util import make_pheniqs_config
-from mmeds.util import strip_error_barcodes
+from mmeds.util import make_pheniqs_config, strip_error_barcodes, setup_environment
+from mmeds.logging import Logger
 
 TESTING = True
+unittest.TestLoader.sortTestMethodsUsing = None
 
-
-class ScriptsTests(TestCase):
+class DemultiplexTests(TestCase):
     """ Tests of scripts """
 
     @classmethod
@@ -26,7 +29,7 @@ class ScriptsTests(TestCase):
         self.pheniqs_dir = fig.TEST_PHENIQS_DIR
         self.strip_dir = self.tmp_dir / 'stripped_out/'
 
-    def test_make_pheniqs_config(self):
+    def test_pheniqs(self):
         """ Test making a pheniqs configuration .json file """
         out_s = make_pheniqs_config(
             self.for_reads,
@@ -43,10 +46,16 @@ class ScriptsTests(TestCase):
 
         assert self.out.exists()
 
-        f = self.out.open('r')
 
-        assert not f.readline() == ''
-        assert f.readline() is not None
+        import pudb; pudb.set_trace()
+        new_env = setup_environment('pheniqs')
+
+        cmd = [f'pheniqs mux --config {self.out}']
+        try:
+            run(cmd, capture_output=True, env=new_env, check=True)
+        except CalledProcessError as e:
+            Logger.debug(e)
+            print(e.output)
 
     def test_strip_error_barcodes(self):
         """ Test stripping errors from demuxed fastq.gz files """
@@ -66,3 +75,21 @@ class ScriptsTests(TestCase):
         strip_error_barcodes(1, map_hash, self.pheniqs_dir, self.strip_dir)
         p_test = self.strip_dir / '{}_S1_L001_R1_001.fastq.gz'.format(map_df['#SampleID'][1])
         assert p_test.exists()
+
+    def test_demultiplex_validation(self):
+        """  """
+        import pudb; pudb.set_trace()
+        new_env = setup_environment('qiime/1.9.1')
+# gunzip data/240_16_CTCGACTTATCGTACG_L001_R1_001.fastq.gz
+#sed -n '1~4s/^@/>/p;2~4p' data/240_16_CTCGACTTATCGTACG_L001_R1_001.fastq > data/240_16.fasta
+#
+        cmd = ['validate_demultiplexed_fasta.py', '-b', '-a',
+               '-i', '/home/matt/mmeds/Qiime2_validate_demutliplex/data/240_16_L001_R1_001.fasta',
+               '-o', '/home/matt/mmeds/Qiime2_validate_demutliplex/validate_output',
+               '-m', '/home/matt/mmeds/Qiime3_validate_demutliplex/qiime_mapping_file_test.tsv']
+        try:
+            run(cmd, capture_output=True, env=new_env, check=True)
+        except CalledProcessError as e:
+            Logger.debug(e)
+            print(e.output)
+            raise e

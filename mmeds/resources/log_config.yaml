@@ -16,7 +16,7 @@ handlers:
         encoding: utf8
 loggers:
     mmeds_logger:
-        level: INFO
+        level: DEBUG
         handlers:
         - file
     sql_logger:

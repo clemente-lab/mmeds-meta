@@ -184,7 +184,7 @@ def main():
             'database',
             'documents',
             'spawn',
-            'scripts',
+            'demultiplex',
             'tool',
             'tools',
             'util',

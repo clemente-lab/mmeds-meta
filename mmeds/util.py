@@ -914,13 +914,17 @@ def quote_sql(sql, quote='`', **kwargs):
     return formatted
 
 
-def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_directory):
+def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_directory,
+                        testing=False):
     """
     Method for taking in fastq.gz files and tsv mapping files and creating an
     output.json file that can be read by the 'pheniqs' module for demultiplexing
     """
     # The top of the output.json file, including R1, I1, I2, and R2
-    out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
+    if testing:
+        out_s = f'{{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "{o_directory}/output_all.fastq" ],'
+    else:
+        out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
     out_s += '\n\t"template": {\n\t\t"transform": {\n\t\t\t"comment": "This global transform directive specifies the \
     segments that will be written to output as the biological sequences of interest, this represents all of R1 and R2."'
     out_s += ',\n\t\t\t"token": [ "0::", "3::" ]\n\t\t}\n\t},\n\t"sample": {\n\t\t"transform": {\n\t\t\t"token": '
@@ -1031,13 +1035,15 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
     """
     results_dict = dict.fromkeys(reverse_mapcodes)
     full_results = {}
+    barcode_ids = []
     with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
         forward_barcodes = forward.readlines()
         for i, line in enumerate(reverse):
             line = line.strip('\n')
-            if not i % 4 == 1:
-                continue
-            else:
+            if i % 4 == 0:
+                barcode_id = line
+
+            elif i % 4 == 1:
                 # If the forward, reverse barcodes are in the mapping file.
                 if line in reverse_mapcodes and forward_barcodes[i].strip('\n') in forward_mapcodes:
                     # count barcodes
@@ -1046,8 +1052,10 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
                     else:
                         results_dict[line] += 1
 
+                    barcode_ids.append(barcode_id)
+
                 if line in full_results.keys():
                     full_results[line] += 1
                 else:
                     full_results[line] = 1
-        return results_dict, full_results
+        return results_dict, full_results, barcode_ids

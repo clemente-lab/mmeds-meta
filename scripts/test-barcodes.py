@@ -4,7 +4,7 @@ import click
 import pandas as pd
 from pathlib import Path
 
-from mmeds.util import parse_barcodes
+from mmeds.util import parse_barcode_files
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -42,7 +42,7 @@ def test_barcodes(forward_read,
     map_df = pd.read_csv(map_path, sep="\t", skiprows=[0, 2, 3, 4])
 
     # parse barcode files
-    results_dict, full_dict = parse_barcodes(forward_barcodes, reverse_barcodes,
+    results_dict, full_dict = parse_barcode_files(forward_barcodes, reverse_barcodes,
                                              map_df['BarcodeSequence'].tolist(), map_df['BarcodeSequenceR'].tolist())
 
     # Ouput read counts for only barcodes matched to in the mapping file
