@@ -46,7 +46,36 @@ sudo make install;
 `sudo $(echo "LoadModule wsgi_module modules/mod_wsgi.so" &> /etc/httpd/conf.modules.d/00-wsgi.conf)`
 
 # Add virtual environment setup
-`sudo $(cat $MMEDS/vhost.conf &> /etc/httpd/conf.d/wsgi.conf)`
+`sudo ln -s mmeds-meta/www_files/wsgi.conf /etc/httpd/conf.d/wsgi.conf`
+
+
+## Get MongoDb
+```
+sudo cat > /etc/yum.repos.d/mongodb.repo &lt;&lt;EOF
+[mongodb-upstream]
+name=MongoDB Upstream Repository
+baseurl=https://repo.mongodb.org/yum/redhat/8Server/mongodb-org/4.2/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
+EOF
+```
+
+## Install
+`sudo dnf install mongodb-org`
+
+## Start/enable mongodb
+`sudo service mongod start`
+
+## Start/enable mysql
+`sudo service mariadb start`
+
+## Set mysql password to 'root'
+https://www.digitalocean.com/community/tutorials/how-to-reset-your-mysql-or-mariadb-root-password
+
+## Setup mmeds database
+`mysql -u root -proot`
+`> source setup.sql`
 
 # Set apache to run as me (david/user account)
 #
@@ -72,7 +101,13 @@ apachectl restart
 `/usr/local/www/wsgi-scripts`
 
 ## Copy CSS directory to app root
-`cp -r /path/to/CSS /usr/local/www/wsgi-scripts/.`
+`cp -r /path/to/CSS /usr/local/www/.`
+
+## Link wsgi app to app root
+`ln -s /path/to/www_files/app.py /usr/local/www/wsgi-scripts/myapp.wsgi;`
+
+## Start databases
+sudo service mongod start
 
 # Troubleshooting
 

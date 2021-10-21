@@ -358,7 +358,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
         # Filter out any categories containing only NaN
         # Or containing only a single metadata value
         # Or where every sample contains a different value
-        df = load_metadata(metadata_file, header=0, skiprows=[0, 2, 3, 4])
+        df = load_metadata(metadata_file, header=0, na_values='nan', skiprows=[0, 2, 3, 4])
         if option == 'all':
             cols = df.columns
         else:
@@ -368,7 +368,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
             # Ensure there aren't any invalid columns specified to be included in the analysis
             try:
                 # If 'all' only select columns that don't have all the same or all unique values
-                if (df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col])):
+                if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
                     if col in ['Together', 'Separate']:
                         summary_cols.append(col)
                         col_types[col] = False
@@ -791,6 +791,7 @@ def setup_environment(module):
                                  'Modules may only contain letters, numbers, "/", "_", "-", and "."')
 
     module_file = (fig.MODULE_ROOT / module).read_text()
+
     new_env = environ.copy()
     variables = {}
 
@@ -846,11 +847,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
     di = headers.index('SampleID')
     headers[di] = 'MmedsSampleID'
 
-    hold = headers[-1]
-    di = headers.index('RawDataNotes')
-    headers[-1] = 'Description'
-    headers[di] = hold
-
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
         if 'qiime2' == tool_type:
@@ -870,8 +866,6 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
                     seen_bars.add(str(mdata['BarcodeSequence'][row_index]))
                 elif header == 'MmedsSampleID':
                     row.append(str(mdata['SampleID'][row_index]))
-                elif header == 'Description':
-                    row.append(str(mdata['RawDataNotes'][row_index]))
                 else:
                     row.append(str(mdata[header][row_index]))
             f.write('\t'.join(row) + '\n')
