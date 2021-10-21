@@ -85,6 +85,44 @@ NOTE: SparCC is poorly coded. If you want to set it up locally and have the scri
 
 What does this tool even do? Make a cladogram? TF is a cladogram? Whatever it is lefse makes one. Using a modified OTU table as inputs.There's an example called `lefse_table.tsv` in `test_files`. There are some settings for 'subclass' and 'subjects', these effect which metadata column is used for grouping the final output. More info can be found here (https://github.com/SegataLab/lefse) and here (https://pubmed.ncbi.nlm.nih.gov/21702898/). Nothing too complicated about the methods in this class.
 
+
+
+## Solo Files
+
+### formatter.py
+
+
+#### What does this do?
+This file is a bit of a mish-mash of things at the moment. It contains predefined queries used to update Aliquots and Samples in existing studies. These are global strings that are imported elsewhere. The specifics of the query are formatted into each of them.
+The other thing in this file are formatting functions for the HTML the server generates. `build_xxx_...`. These are used in server.py to build out html tables that are used in multiple locations throughout the web application.
+Eventually I think these thing should each get their own file but for now each file would be pretty small.
+
+### authentication.py
+This file contains functions used to manage user accounts. Adding new users, resetting passwords, etc. If it has to do with a user account the function should be in here.
+
+### error.py
+This file contains all the error classes used in MMEDs. They all inherit from the MmedsError base class. Some of them take string arguments as specific messages they display. Most of them have hard coded default messages.
+
+### secrets.py
+This file contains the authentication information for accounts on Minerva. The version of this file that get uploaded to github is a dummy version that doesn't contain the actual account info. The real version stays on minerva, with a backup of it in the base directory of the MMEDs allocation.
+
+### logger.py
+This file contains the mmeds Logger class. It takes advantage of the built in python logging libratry. The log levels it implements are `info`, `debug`, `warning`, and `error`. This can likely be improved in the future.
+
+### spawn.py
+This file contains the Watcher class and associated functionality. The Watcher class inherits from a Python Manager class as
+runs as it's own process. It does all the process monitoring and management for mmeds. I think most of the methods are fairly straightforward and appropriately named. The most complex are the `handle_...` methods. These perform the actual creation and starting of the processes spawned for analysis, uploads, etc. For each the watcher passes in the n-tuple it received in the watch queue and generates the process from there.
+
+### validate.py
+As the name suggests this contains the classes for performing metadata validation. The Validator class is currently only used to validate the full subject and specimen mapping files. For additional metadata files (like those used to add new Aliquots and Samples to an existing study), the function `valid_additional_file` is used. Eventually this functionality should be incorporated into the main Validator class, with parameters to set if the input file is a full or partial (additional) metadata file.
+
+`validate_mapping_file` serves as a wrapper of sorts for the Validator class. It just passes along the arguments and starts the class running. `cast_columns` is used by `valid_additional_file` to cast columns. Shocking I know.
+
+#### Validator
+The Validator class doesn't do any single thing that's especially complex. It just has to do a lot of simple things together making for a somewhat complex class. The basic idea is that there are two lists that are properties of the object, `self.errors` and `self.warnings`. As the class runs on the provided metadata file any problem it encounters with the metadata will be recorded as an error, which will prevent the upload from continuing, or a warning which will inform the user but give them the option to proceed.
+
+There are a lot of specific checks and I'm not going to get into them all here. The basic control flow is `run` -> `check_table` -> `check_table_column` -> `check_column` -> `check_cell`. At each stage the checks relevant to that subset of the data are performed. So checks that are checking the properties of a column as a whole are found in `check_column` while checks that are checking something about an individual entry occur in `check_cell`.
+
 ## Summary
 
 ### Overview
