@@ -240,6 +240,7 @@ class MMEDSNotebook():
         if meta:
             for key, value in meta.items():
                 new_cell.metadata[key] = value
+        print(new_cell)
         self.cells.append(new_cell)
 
     def update_template(self, location, text):
@@ -399,6 +400,7 @@ class MMEDSNotebook():
 
         # Add the cells for the Taxa summaries
         self.add_markdown('# Taxa Summary')
+        self.add_markdown(self.source['taxa_description'])
         for data_file in included_files:
             self.taxa_plots(data_file)
         self.add_code(self.source['latex_legend_py'])
@@ -408,13 +410,17 @@ class MMEDSNotebook():
             self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
+        # self.add_markdown(self.source['page_break'])
         self.add_markdown('# Alpha Diversity Summary')
+        self.add_markdown(self.source['alpha_description'])
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity
+        # self.add_markdown(self.source['page_break'])
         self.add_markdown('# Beta Diversity Summary')
+        self.add_markdown(self.source['beta_description'])
         for data_file in sorted(self.files['beta']):
             if 'dm' not in data_file:
                 self.beta_plots(data_file)
@@ -456,6 +462,7 @@ class MMEDSNotebook():
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
             new_env = setup_environment('jupyter')
+            print(cmd)
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
@@ -466,6 +473,7 @@ class MMEDSNotebook():
             Logger.debug('Convert latex to pdf')
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
+            print(cmd)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
             output = run(cmd.split(' '), check=True, capture_output=True)

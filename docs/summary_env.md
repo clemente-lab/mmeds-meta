@@ -8,8 +8,8 @@
 `conda activate jupyter`
 
 # Then install the necessary R packages and version of nbconvert from conda-forge
-# NB: nbconvert was previously kept at version 5.6.1, now kept current
-`conda install nbconvert r-ggplot2 r-ggally r-ggrepel r-rcolorbrewer -c conda-forge`
+# NB: you will regret attempting to use a more recent version than nbconvert 5.6.1
+`conda install nbconvert=5.6.1 r-ggplot2 r-ggally r-ggrepel r-rcolorbrewer -c conda-forge`
 
 # Now use pip to install the PDF template for jupyter and the Pillow python library
 

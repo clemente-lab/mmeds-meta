@@ -94,7 +94,7 @@ colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
 allRGB <- data.frame(apply(data.frame(allColors), 1, col2rgb))
 =====
 page_break<source>
-<div style="page-break-after: always;"></div>
+\pagebreak
 =====
 otu_py<source>
 df = pd.read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
@@ -411,6 +411,15 @@ for(i in 1:p$nrow) {{
         }}
     }}
 }}
+=====
+taxa_description<source>
+Taxonomy plots represent the abundance of different taxa using stacked plots on a per-sample or per-group (averaged) basis. Data is normalized so that abundances per sample or per group add up to 100%. When using group-based taxonomy plots, it should be noted that only average abundances are shown per group and taxa: this can induce visual biases when a small number of samples in a group have significantly higher abundance of a given taxa compared to the rest of samples in the group, and give the (incorrect) impression that the group as a whole has high high abundance of the taxa.
+=====
+alpha_description<source>
+Alpha diversity estimates the amount of microbial diversity present in a sample or group of samples. There are several measures that can be used for alpha diversity, including observed features, Shannon's diversity or Faith's phylogenetic diversity. Because diversity estimates depend on the total number of sequences assigned to each sample, rarefaction curves are constructed to show the relation between alpha diversity (on the vertical axis) and sequencing depth (on the horizontal axis). Curves that gradually plateau as sequencing depth increases suggest that additional sequencing effort would not substantially yield additional results in terms of currently not observed diversity; curves that continue to increase suggest additional sequencing effort might be required to saturate the estimate.
+=====
+beta_description<source>
+Beta diversity estimates how similar or dissimilar samples are based on their microbiome composition. Different to alpha diversity, which is estimated per sample, beta diversity is a distance that is calculated between pairs of samples. Samples that are similar to each other in their microbiome composition will have a low distance between them based on beta diversity, while those that are very different in their composition will have a large distance. Principal Coordinate Analysis (PCoA) is an ordination technique that visually represents the samples based on their beta diversity distances to facilitate the identification of clusters or gradients of samples. By default, the first three principal coordinates are shown in PCoA plots.
 =====
 taxa_caption<source>
 The above plot represents the percentage of each sample belonging to particular taxon summarized at level {level}.
