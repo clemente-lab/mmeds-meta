@@ -200,7 +200,7 @@ class MMEDSNotebook():
         self.name = name
         self.path = path
         self.config = config
-        print(self.config)
+        Logger.debug(self.config)
         self.env = setup_environment('mmeds-stable')
         self.words = {
             '1': 'One',
@@ -451,17 +451,16 @@ class MMEDSNotebook():
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
                 cmd += ' --execute --ExecutePreprocessor.timeout=-1'
-                cmd += ' --ExecutePreprocessor.kernel_name="mmeds-stable"'
+                cmd += ' --ExecutePreprocessor.kernel_name="jupyter"'
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
             new_env = setup_environment('jupyter')
-            print(cmd)
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
-                    run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'mmeds-stable',
-                         '--display-name', '"MMEDS"'], stdout=out, stderr=err)
+                    run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'jupyter',
+                         '--display-name', '"Jupyter"'], stdout=out, stderr=err)
                     output = run(cmd.split(' '), check=True, env=new_env, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
@@ -469,11 +468,8 @@ class MMEDSNotebook():
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
-            print(cmd)
             output = run(cmd.split(' '), check=True, capture_output=True)
-            print('run 1 complete')
             output = run(cmd.split(' '), check=True, capture_output=True)
-            print('run 2 complete')
 
         except RuntimeError:
             Logger.debug(output)

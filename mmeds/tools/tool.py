@@ -263,7 +263,7 @@ class Tool(mp.Process):
         else:
             self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
         # Make sure the kernel is up to date
-        self.jobtext.append('python -m ipykernel install --user --name mmeds-stable --display-name "MMEDS"')
+        self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name "Jupyter"')
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
