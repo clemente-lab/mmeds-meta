@@ -287,6 +287,22 @@ class Tool(mp.Process):
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
 
+    def summary(self):
+        """ Setup script to create summary. """
+        self.add_path('summary')
+        if self.testing:
+            self.jobtext.append('module load mmeds-stable;')
+        else:
+            self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
+        # Make sure the kernel is up to date
+        self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name "Jupyter"')
+        cmd = [
+            'summarize.py ',
+            '--path "{}"'.format(self.run_dir),
+            '--tool_type {};'.format(self.doc.tool_type)
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def zip(self):
         """
         Create a zip of the whole analyiss directory.
