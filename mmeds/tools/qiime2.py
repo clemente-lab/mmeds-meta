@@ -217,6 +217,17 @@ class Qiime2(Tool):
             cmd.append('--p-where "{column}={value}')
         self.jobtext.append(' '.join(cmd))
 
+    def filter_visualize(self):
+        """ Create visualization summary for the filtered table """
+        self.add_path('filtered_viz', '.qzv')
+
+        cmd = [
+            'qiime feature-table summarize',
+            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--o-visualization {}'.format(self.get_file('filtered_viz'))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
     def demux_visualize(self):
         """ Create visualization summary for the demux file. """
         self.add_path('demux_viz', '.qzv')
@@ -567,6 +578,7 @@ class Qiime2(Tool):
         self.set_stage(2)
         # Run these commands sequentially
         self.filter_by_metadata()
+        self.filter_visualize()
         self.alignment_mafft()
         self.alignment_mask()
         self.phylogeny_fasttree()

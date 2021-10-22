@@ -240,7 +240,6 @@ class MMEDSNotebook():
         if meta:
             for key, value in meta.items():
                 new_cell.metadata[key] = value
-        print(new_cell)
         self.cells.append(new_cell)
 
     def update_template(self, location, text):
@@ -309,7 +308,7 @@ class MMEDSNotebook():
             self.add_code('Image("{plot}")'.format(plot=filename),
                           meta={'{}{}'.format(self.words[level], column): True})
             self.add_code(self.source['otu_legend_py'].format(level=self.words[level]))
-            self.add_markdown(self.source['taxa_caption'])
+            self.add_markdown(self.source['taxa_caption'].format(level=self.words[level]))
             self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
@@ -391,6 +390,12 @@ class MMEDSNotebook():
         self.add_code(self.source['r_setup'])
         self.add_code(self.source['py_setup_2'])
 
+        # Add the cells for Demultiplexing
+        self.add_markdown('# Demultiplexing Summary')
+
+        # Add the cells for Table Statistics
+        self.add_markdown('# Table Statistics Summary')
+
         # Get only files for the requested taxa levels
         included_files = []
         for taxa_level in self.config['taxa_levels']:
@@ -399,7 +404,8 @@ class MMEDSNotebook():
                     included_files.append(taxa_file)
 
         # Add the cells for the Taxa summaries
-        self.add_markdown('# Taxa Summary')
+        self.add_markdown('# Taxonomy Summary')
+        self.add_markdown('## Reading Taxonomy Results')
         self.add_markdown(self.source['taxa_description'])
         for data_file in included_files:
             self.taxa_plots(data_file)
@@ -410,16 +416,16 @@ class MMEDSNotebook():
             self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
-        # self.add_markdown(self.source['page_break'])
         self.add_markdown('# Alpha Diversity Summary')
+        self.add_markdown('## Reading Alpha Diversity Results')
         self.add_markdown(self.source['alpha_description'])
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity
-        # self.add_markdown(self.source['page_break'])
         self.add_markdown('# Beta Diversity Summary')
+        self.add_markdown('## Reading Beta Diversity Results')
         self.add_markdown(self.source['beta_description'])
         for data_file in sorted(self.files['beta']):
             if 'dm' not in data_file:
