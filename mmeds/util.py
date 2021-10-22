@@ -69,6 +69,11 @@ def format_alerts(args):
 def simplified_to_full(file_fp, output_fp, metadata_type, subject_type='human'):
     """
     Takes in a simplified MMEDs metadata file and expands it to the full format.
+    ============================================================================
+    :file_fp: The location of the simplified metadata on disk
+    :output_fp: The location to write the full version of the metadata to
+    :metadata_type: The type of metadata
+    :subject_type: The type of subject
     """
     # Load the relvant template
     if metadata_type == 'subject':
@@ -119,6 +124,7 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type='human'):
 
 
 def load_mmeds_stats():
+    """ Load the values from the mmeds stats file. Used to give the stats on the homepage. """
     if Path(fig.STAT_FILE).exists():
         stats = yaml.safe_load(fig.STAT_FILE.read_text())
     else:
@@ -127,6 +133,7 @@ def load_mmeds_stats():
 
 
 def load_subject_template(subject_type):
+    """ Loads the base template for the subject metadata """
     if subject_type == 'human':
         df = pd.read_csv(fig.TEST_SUBJECT, header=[0, 1], nrows=3, sep='\t')
     elif subject_type == 'animal':
@@ -135,6 +142,7 @@ def load_subject_template(subject_type):
 
 
 def load_specimen_template():
+    """ Loads the base template for the specimen metadata """
     return pd.read_csv(fig.TEST_SPECIMEN, header=[0, 1], nrows=3, sep='\t')
 
 
@@ -228,6 +236,7 @@ def write_metadata(df, output_path):
 
 
 def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', keep_default_na=False):
+    """ Load a combined mmeds metadata file """
     return pd.read_csv(file_name,
                        sep='\t',
                        header=header,
@@ -238,9 +247,18 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
 
 
 def load_config(config_file, metadata, ignore_bad_cols=False):
-    """ Read the provided config file to determine settings for the analysis. """
+    """
+    Read the provided config file to determine settings for the analysis.
+    ====================================================================
+    Note: This function tries to support the various formats a config file
+        might be presented to it in. When uploading a config file to the server
+        it is loaded as a particular type of FileStream object that I haven't
+        been able to replicate outside of the server. So when testing or loading
+        the default config from disk I have had to pass it in as a file path.
+    """
     try:
         config = {}
+        # Replace with a switch statement or unify config_file type
         # If a Path was passed (as is the case during testing)
         if isinstance(config_file, Path):
             page = config_file.read_text()
@@ -265,6 +283,13 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
 
 def parse_parameters(config, metadata, ignore_bad_cols=False):
+    """
+    Helper function for load_config. This parses the individual options provided in
+    the config file. For example, the user can put 'all' as the taxa column option
+    which this will then replace with a list of 1 -> 7. Similar for metadata columns
+    used in analysis, if the user put all, this will select all the valid columns from
+    the metadata. This functionality has been causing some problems recently however.
+    """
     # Ignore the 'all' keys
     diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS)
             if '_all' not in x}
@@ -301,45 +326,10 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     return config
 
 
-def write_config(config, path):
-    """ Write out the config file being used to the working directory. """
-    config_text = {}
-    for (key, value) in config.items():
-        # Don't write values that are generated on loading
-        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
-                   'sub_analysis_continuous', 'sub_analysis_all']:
-            continue
-        # If the value was initially 'all', write that
-        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
-            if config['{}_all'.format(key)]:
-                config_text[key] = 'all'
-            # Write lists as comma seperated strings
-            elif value:
-                config_text[key] = list(value)
-            else:
-                config_text[key] = 'none'
-        else:
-            config_text[key] = value
-    with open(path / 'config_file.yaml', 'w') as f:
-        yaml.dump(config_text, f)
-
-
-def copy_metadata(metadata_file, metadata_copy):
-    """
-    Copy the provided metadata file with a few additional columns to be used for analysis
-    =====================================================================================
-    :metadata_file: Path to the metadata file.
-    :metadata_copy: Path to save the new metadata file.
-    """
-    mdf = load_metadata(metadata_file).T
-    mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
-        ['All' for x in range(mdf.shape[1] - 3)]
-    mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
-    write_metadata(mdf.T, metadata_copy)
-
-
 def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
     """
+    Helper for parse_parameters.
+
     Get the column headers for metadata columns meeting the
     criteria to be used in analysis.
     =======================================================
@@ -385,6 +375,43 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
                 if not ignore_bad_cols:
                     raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
     return summary_cols, col_types
+
+
+def write_config(config, path):
+    """ Write out the config file being used to the working directory. """
+    config_text = {}
+    for (key, value) in config.items():
+        # Don't write values that are generated on loading
+        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
+                   'sub_analysis_continuous', 'sub_analysis_all']:
+            continue
+        # If the value was initially 'all', write that
+        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
+            if config['{}_all'.format(key)]:
+                config_text[key] = 'all'
+            # Write lists as comma seperated strings
+            elif value:
+                config_text[key] = list(value)
+            else:
+                config_text[key] = 'none'
+        else:
+            config_text[key] = value
+    with open(path / 'config_file.yaml', 'w') as f:
+        yaml.dump(config_text, f)
+
+
+def copy_metadata(metadata_file, metadata_copy):
+    """
+    Copy the provided metadata file with a few additional columns to be used for analysis
+    =====================================================================================
+    :metadata_file: Path to the metadata file.
+    :metadata_copy: Path to save the new metadata file.
+    """
+    mdf = load_metadata(metadata_file).T
+    mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
+        ['All' for x in range(mdf.shape[1] - 3)]
+    mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
+    write_metadata(mdf.T, metadata_copy)
 
 
 def get_col_type(raw_column):
@@ -536,6 +563,10 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
 
 def build_error_rows(df, tables, headers, markup):
+    """
+    Helper function for generate_error_html. Builds out the rows of a metadata error table.
+    This highlights for the user where the problems are and notes how they need to be fixed.
+    """
     html = ''
     # Build each row of the table
     for row in range(len(df[tables[0]][headers[0]])):
@@ -635,6 +666,9 @@ def generate_error_html(file_fp, errors, warnings):
 
 
 def parse_code_blocks(path):
+    """
+    Parses the code blocks found in mmeds/resources/summary_code.txt into a dict
+    """
     # Load the code templates
     data = Path(path).read_text().split('\n=====\n')
 
