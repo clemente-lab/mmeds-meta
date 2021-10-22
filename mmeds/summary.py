@@ -368,7 +368,6 @@ class MMEDSNotebook():
                 if type(key) == type(column):
                     if key in column:
                         column_swap[column] = column_swap[column].replace(key, value)
-        # breakpoint()
 
     def summarize(self):
         """
@@ -452,6 +451,9 @@ class MMEDSNotebook():
                 # Don't let the cells timeout, some will take a long time to process
                 cmd += ' --execute --ExecutePreprocessor.timeout=-1'
                 cmd += ' --ExecutePreprocessor.kernel_name="jupyter"'
+                # This should probably be behind some kind of debugging flag.
+                # The output is obviously helpful if there's an issue, but if the summaries
+                # run correctly it can make logs harder to parse for other things.
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
