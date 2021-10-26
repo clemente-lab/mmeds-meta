@@ -32,31 +32,30 @@ class DemultiplexTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Set up tests """
+        # paths in config.py
         self.mapping = fig.TEST_MAPPING_DUAL
         self.for_reads = fig.TEST_READS_DUAL
         self.rev_reads = fig.TEST_REV_READS_DUAL
         self.for_barcodes = fig.TEST_BARCODES_DUAL
         self.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
         self.pheniqs_dir = fig.TEST_PHENIQS_DIR
+
+        # temp paths for testing demultiplexing
         self.strip_dir = Path(self.pheniqs_dir) / 'stripped_out/'
         self.out_dir = Path(self.pheniqs_dir) / 'pheniqs_out/'
         self.log_dir = Path(self.pheniqs_dir) / 'logs/'
         self.target_file = '240_16_S1_L001_R1_001.fastq'
-        self.temp_dir = Path(self.pheniqs_dir) / 'temp/'
 
+        # make paths we need
         Path(self.pheniqs_dir).mkdir(exist_ok=True)
         self.out_dir.mkdir(exist_ok=True)
         self.strip_dir.mkdir(exist_ok=True)
         self.log_dir.mkdir(exist_ok=True)
-        self.temp_dir.mkdir(exist_ok=True)
-
-        # self.out = Path('/home/matt/pheniqs_config_test.json')
         self.out = Path(self.pheniqs_dir) / 'pheniqs_config_test.json'
         self.log = Path(self.log_dir) / 'pheniqs_report.txt'
 
     def test_pheniqs(self):
-        """ Test making a pheniqs configuration .json file """
-        # import pudb; pudb.set_trace()
+        """ Test pheniqs demultiplexing """
         create_pheniqs_config(self)
         new_env = setup_environment('pheniqs/2.1.0')
 
@@ -65,7 +64,6 @@ class DemultiplexTests(TestCase):
         pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{self.out}']
 
         try:
-            pass
             run(pheniqs_demultiplex, capture_output=True, env=new_env, check=True)
             run(gunzip_forward_barcodes, capture_output=True, check=True)
             run(gunzip_reverse_barcodes, capture_output=True, check=True)
@@ -74,8 +72,11 @@ class DemultiplexTests(TestCase):
             Logger.debug(e)
             print(e.output)
 
-        validate_demultiplex(self.out_dir, f'{self.target_file}', self.for_barcodes,
+        # validate one of the demultiplexed files
+        validate_demultiplex(f'{self.out_dir}/{self.target_file}', self.for_barcodes,
                              self.rev_barcodes, self.mapping, self.log_dir)
+
+        # check values in the validation log file
         validate_log = self.log_dir / f'{self.target_file}_report.log'
         log_df = pd.read_csv(validate_log, sep=':', skiprows=[0], names=['stat', 'value'])
         log_df.set_index('stat', inplace=True)
@@ -83,6 +84,9 @@ class DemultiplexTests(TestCase):
 
         self.assertEqual(log_df['Percent duplicate labels']['value'], 0)
         self.assertEqual(log_df['Percent QIIME-incompatible fasta labels']['value'], 0)
+
+        # If it's 1, no SampleIDs were found
+        # This should be a value between 0 and 1, representing the percentage of exact match barcodes
         self.assertNotEqual(log_df['Percent of labels that fail to map to SampleIDs']['value'], 1)
         self.assertEqual(log_df['Percent of sequences with invalid characters']['value'], 0)
         self.assertEqual(log_df['Percent of sequences with barcodes detected']['value'], 0)
@@ -92,12 +96,12 @@ class DemultiplexTests(TestCase):
         self.assertEqual(log_df['Percent of sequences with primers detected']['value'], 0)
         self.assertTrue('All SampleIDs found in sequence labels.' in log_df.columns)
 
-        cmd5 = ['gzip', f'{self.for_barcodes}']
-        cmd6 = ['gzip', f'{self.rev_barcodes}']
+        gzip1 = ['gzip', f'{self.for_barcodes}']
+        gzip2 = ['gzip', f'{self.rev_barcodes}']
         try:
             pass
-            run(cmd5, capture_output=True, check=True)
-            run(cmd6, capture_output=True, check=True)
+            run(gzip1, capture_output=True, check=True)
+            run(gzip2, capture_output=True, check=True)
         except CalledProcessError as e:
             Logger.debug(e)
             print(e.output)
@@ -122,7 +126,7 @@ class DemultiplexTests(TestCase):
     @classmethod
     def tearDownClass(self):
         """ Set up tests """
-        # cleanup
+        # cleanup demultiplexed files.
         remove_test_dir = ['rm', '-rf', f'{self.out_dir}']
         try:
             run(remove_test_dir, capture_output=True, check=True)

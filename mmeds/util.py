@@ -1033,29 +1033,35 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
     """
     forward_barcodes, reverse_barcodes are the paths to those barcode files.
     forward_mapcodes, reverse_mapcodes are lists of barcodes taken from the mapping file.
-    reverse_complement: reverse complement the barcodes in the mapping file.
     """
     results_dict = dict.fromkeys(reverse_mapcodes)
     full_results = {}
     barcode_ids = []
+
+    # open the barcode files
     with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
         forward_barcodes = forward.readlines()
         for i, line in enumerate(reverse):
             line = line.strip('\n')
+
+            # save barcode id, in case the barcode is found in the mapping file
             if i % 4 == 0:
                 barcode_id = line
 
             elif i % 4 == 1:
                 # If the forward, reverse barcodes are in the mapping file.
                 if line in reverse_mapcodes and forward_barcodes[i].strip('\n') in forward_mapcodes:
-                    # count barcodes
+
+                    # add entry for new barcode or increment an existing count
                     if not results_dict[line]:
                         results_dict[line] = 1
                     else:
                         results_dict[line] += 1
 
+                    # save barcode id, since it's in the mapping file
                     barcode_ids.append(barcode_id)
 
+                # increment counts for all barcodes, not just those in the mapping file.
                 if line in full_results.keys():
                     full_results[line] += 1
                 else:
@@ -1063,50 +1069,76 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
         return results_dict, full_results, barcode_ids
 
 
-def create_barcode_mapfile(source_dir, for_barcodes, rev_barcodes, file_name, map_file):
+def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, map_file):
+    """
+    Helper function for validate_demultiplex()
+    Replaces the samples in a qiime1 mapping file with barcodes for a given sample in that mapping file.
+    Then we can test if the those barcodes are in the demultiplexed file and the proportion they represent of all reads.
+
+    output_dir: where the barcode mapping file will be written to.
+    for_barcodes: path to gzipped, forward barcode file
+    rev_barcodes: path to reverse barcode file
+    map_file: path to a qiime mapping file
+    """
     map_df = pd.read_csv(Path(map_file), sep='\t', header=[0, 1], na_filter=False)
 
-    # filter mapping file down to one sample
+    # get matching sample
     matched_sample = None
     for sample in map_df[('#SampleID', '#q2:types')]:
         if sample in file_name:
             matched_sample = sample
             break
 
+    # filter mapping file down to said sample
     map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
     map_df = map_df.filter(like=matched_sample, axis='index')
 
+    # Get barcodes for that sample
     results_dict, full_dict, barcode_ids = parse_barcodes(for_barcodes, rev_barcodes,
                                                           map_df[('BarcodeSequence', 'categorical')].tolist(),
                                                           map_df[('BarcodeSequenceR', 'categorical')].tolist())
     map_df = map_df.append([map_df]*(len(barcode_ids)-1), ignore_index=True)
     map_df.reset_index(drop=True, inplace=True)
 
+    # replace sampleIDs with barcodes
     map_df[('#SampleID', '#q2:types')] = barcode_ids
     map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.split(' ', expand=True)[0]
     map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.replace('@', '')
 
-    # necessary?
+    # make sure this column is first
     map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
     map_df.reset_index(inplace=True)
 
-    map_df.to_csv(f'{source_dir}/qiime_barcode_mapfile.tsv', index=None, header=True, sep='\t')
+    # write to disk, for validate_demultiplex to access
+    map_df.to_csv(f'{output_dir}/qiime_barcode_mapfile.tsv', index=None, header=True, sep='\t')
     return map_df
 
 
-def validate_demultiplex(source_dir, file_name, for_barcodes, rev_barcodes, map_file, log_dir):
-    """  """
-    map_df = create_barcode_mapfile(source_dir, for_barcodes, rev_barcodes, file_name, map_file)
+def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_dir):
+    """
+    Calls qiime1 script to validate a gzipped, demultiplex fastq file.
+    source_dir: where the data is located.
+    demux_file: path to gzipped, demultiplexed, fastq file.
+    for_barcodes: path to gzipped, forward barcode file
+    rev_barcodes: path to reverse barcode file
+    map_file: path to a qiime mapping file
+    log_dir: path to log dir, where the results will be saved
+    """
+    #TODO: generalize for single barcodes
+
+    # Allows us to test that the correct barcodes are in the resulting demultiplexed file.
+    map_df = create_barcode_mapfile(Path(demux_file).parent, for_barcodes, rev_barcodes, Path(demux_file).stem, map_file)
     new_env = setup_environment('qiime/1.9.1')
 
-    gunzip_demux_file = ['gunzip', f'{source_dir}/{file_name}.gz']
-    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{source_dir}/{file_name}']
-    gzip_demux_file = ['gzip', f'{source_dir}/{file_name}']
+    gunzip_demux_file = ['gunzip', f'{demux_file}.gz']
+    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', demux_file]
+    gzip_demux_file = ['gzip', demux_file]
 
+    # Call qiime1 validate demultiplex script
     validate_demux_file = ['validate_demultiplexed_fasta.py', '-b', '-a',
-                           '-i', f'{source_dir}/{file_name}',
+                           '-i', demux_file,
                            '-o', f'{log_dir}',
-                           '-m', f'{source_dir}/qiime_barcode_mapfile.tsv']
+                           '-m', f'{Path(demux_file).parent}/qiime_barcode_mapfile.tsv']
 
     try:
         run(gunzip_demux_file, capture_output=True, check=True)
