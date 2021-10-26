@@ -15,6 +15,7 @@ import gzip
 import pandas as pd
 import mmeds.config as fig
 from mmeds.logging import Logger
+from subprocess import CalledProcessError
 
 
 ###########
@@ -989,6 +990,7 @@ def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
         if not sample == '':
             # Open sample file for reading
             f = gzip.open(Path(input_dir) / filename, mode='rt')
+
             out = ''
 
             line = f.readline()
@@ -1059,3 +1061,60 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
                 else:
                     full_results[line] = 1
         return results_dict, full_results, barcode_ids
+
+
+def create_barcode_mapfile(source_dir, for_barcodes, rev_barcodes, file_name, map_file):
+    map_df = pd.read_csv(Path(map_file), sep='\t', header=[0, 1], na_filter=False)
+
+    # filter mapping file down to one sample
+    matched_sample = None
+    for sample in map_df[('#SampleID', '#q2:types')]:
+        if sample in file_name:
+            matched_sample = sample
+            break
+
+    map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
+    map_df = map_df.filter(like=matched_sample, axis='index')
+
+    results_dict, full_dict, barcode_ids = parse_barcodes(for_barcodes, rev_barcodes,
+                                                          map_df[('BarcodeSequence', 'categorical')].tolist(),
+                                                          map_df[('BarcodeSequenceR', 'categorical')].tolist())
+    map_df = map_df.append([map_df]*(len(barcode_ids)-1), ignore_index=True)
+    map_df.reset_index(drop=True, inplace=True)
+
+    map_df[('#SampleID', '#q2:types')] = barcode_ids
+    map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.split(' ', expand=True)[0]
+    map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.replace('@', '')
+
+    # necessary?
+    map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
+    map_df.reset_index(inplace=True)
+
+    map_df.to_csv(f'{source_dir}/qiime_barcode_mapfile.tsv', index=None, header=True, sep='\t')
+    return map_df
+
+
+def validate_demultiplex(source_dir, file_name, for_barcodes, rev_barcodes, map_file, log_dir):
+    """  """
+    map_df = create_barcode_mapfile(source_dir, for_barcodes, rev_barcodes, file_name, map_file)
+    new_env = setup_environment('qiime/1.9.1')
+
+    gunzip_demux_file = ['gunzip', f'{source_dir}/{file_name}.gz']
+    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{source_dir}/{file_name}']
+    gzip_demux_file = ['gzip', f'{source_dir}/{file_name}']
+
+    validate_demux_file = ['validate_demultiplexed_fasta.py', '-b', '-a',
+                           '-i', f'{source_dir}/{file_name}',
+                           '-o', f'{log_dir}',
+                           '-m', f'{source_dir}/qiime_barcode_mapfile.tsv']
+
+    try:
+        run(gunzip_demux_file, capture_output=True, check=True)
+        run(create_fasta_file, capture_output=True, check=True)
+        run(validate_demux_file, capture_output=True, env=new_env, check=True)
+        run(gzip_demux_file, capture_output=True, check=True)
+
+    except CalledProcessError as e:
+        Logger.debug(e)
+        print(e.output)
+        raise e
