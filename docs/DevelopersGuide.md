@@ -142,6 +142,11 @@ The Validator class doesn't do any single thing that's especially complex. It ju
 
 There are a lot of specific checks and I'm not going to get into them all here. The basic control flow is `run` -> `check_table` -> `check_table_column` -> `check_column` -> `check_cell`. At each stage the checks relevant to that subset of the data are performed. So checks that are checking the properties of a column as a whole are found in `check_column` while checks that are checking something about an individual entry occur in `check_cell`.
 
+### util.py
+This is a general purpose file for functions that are used in multiple places through out mmeds. If it's a general utility function it should probably be in this file. 
+It also includes the SafeDict class. This class is primarily used for formatting the HTML pages. When formatting from a SafeDict, rather than erroring if a certain formatting argument isn't found in the dict, it just leaves that argument unformatted, allowing it to be formatted at a later point.
+
+
 ## Summary
 
 ### Overview
@@ -152,3 +157,5 @@ Before the final PDF is produced, the notebook will be executed and converted to
 
 
 ### Notebook
+
+Running the notebook is fairly straightforward. Getting an environment setup for the summaries to run is detailed in `docs/summary_env.md`. The commands for executing the notebook may change in the future if MMEDs migrates from nbconvert==5.6.1 to nbconvert==6.2.0 or newer. So I won't list them here. The current command can be found in the `write_notebook` method of the `MMEDSNotebook` class in `mmeds/summary.py`. It will start with `jupyter nbconvert ...`.
