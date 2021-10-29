@@ -21,12 +21,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-d', '--o-directory', required=True, help='Directory for demultiplexed files to be written to')
 def make_file(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_config, o_directory):
     """
-    Method for taking in fastq.gz files and tsv mapping files and creating an
+    Script for taking in fastq.gz files and tsv mapping files and creating an
     output.json file that can be read by the 'pheniqs' module for demultiplexing
     """
 
     out_s = make_pheniqs_config(reads_forward, reads_reverse,
-            barcodes_forward, barcodes_reverse, mapping_file, o_directory)
+                                barcodes_forward, barcodes_reverse, mapping_file, o_directory)
 
     # Write output.json to file
     p_out = Path(o_config)

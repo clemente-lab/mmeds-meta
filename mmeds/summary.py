@@ -47,6 +47,7 @@ def summarize_qiime(summary_path, tool):
 
     # Load the configuration
     config = load_config(path / 'config_file.yaml', files['metadata'], True)
+    print(config)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
@@ -203,24 +204,20 @@ class MMEDSNotebook():
         Logger.debug(self.config)
         self.env = setup_environment('mmeds-stable')
         self.words = {
-            '1': 'One',
-            '2': 'Two',
-            '3': 'Three',
-            '4': 'Four',
-            '5': 'Five',
-            '6': 'Six',
-            '7': 'Seven',
-            '8': 'Eight',
-            '9': 'Nine',
-            1: 'One',
-            2: 'Two',
-            3: 'Three',
-            4: 'Four',
-            5: 'Five',
-            6: 'Six',
-            7: 'Seven',
-            8: 'Eight',
-            9: 'Nine'
+            '1': 'Kingdom',
+            '2': 'Phylum',
+            '3': 'Class',
+            '4': 'Order',
+            '5': 'Family',
+            '6': 'Genus',
+            '7': 'Species',
+            1: 'Kingdom',
+            2: 'Phylum',
+            3: 'Class',
+            4: 'Order',
+            5: 'Family',
+            6: 'Genus',
+            7: 'Species',
         }
         copy(self.path / 'revtex.tplx', self.path / 'mod_revtex.tplx')
 
@@ -282,7 +279,7 @@ class MMEDSNotebook():
         """
         # Get the taxa level from the filename
         level = data_file.split('.')[0][-1]
-        self.add_markdown('## OTU level {level}'.format(level=self.words[level]))
+        self.add_markdown('## OTU {level} Level'.format(level=self.words[level]))
 
         # For each selected metadata column
         for i, column in enumerate(self.config['metadata']):

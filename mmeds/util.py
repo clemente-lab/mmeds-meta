@@ -966,6 +966,19 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     return out_s
 
 
+def make_grouped_mapping_file(mapping_file, col):
+    """ Generate tsv file that corresponds to the groups in a metadata category """
+    df = pd.read_csv(Path(mapping_file), header=[0, 1], na_filter=False, sep='\t')
+    categories = ['#q2:types']
+    for cell in df[col]['categorical']:
+        if cell not in categories:
+            categories.append(cell)
+    out_data = {'#SampleID': categories}
+    out_df = pd.DataFrame(data=categories)
+    out_tsv = out_df.to_csv(sep='\t')
+    return out_tsv
+
+
 def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
     # Strip errors for each fastq.gz file in input_dir
     count = 1

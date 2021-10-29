@@ -30,6 +30,20 @@ class Qiime2(Tool):
     # =============== #
     # Qiime2 Commands #
     # =============== #
+    def source_activate(self, env):
+        """ Change anaconda3 environment """
+        # possible envs: ['qiime', 'pheniqs', 'mmeds']
+        full_env = ''
+        if env == 'qiime':
+            full_env = 'qiime2-2020.8.0'
+        elif env == 'mmeds':
+            full_env = '/sc/arion/projects/MMEDS/admin_modules/mmeds-stable'
+        else:
+            full_env = env
+        cmd = 'source activate {};'.format(full_env)
+        self.jobtext.append(cmd)
+
+
     def qimport(self, write=True):
         """ Split the libraries and perform quality analysis. """
 
@@ -149,7 +163,7 @@ class Qiime2(Tool):
                 self.get_file('stripped_dir', True).mkdir()
 
             # Create pheniqs configuration file
-            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
+            self.source_activate('mmeds')
             cmd = [
                 'make_pheniqs_config.py',
                 '--reads-forward {}'.format(self.get_file('for_reads')),
@@ -163,12 +177,12 @@ class Qiime2(Tool):
             self.jobtext.append(' '.join(cmd))
 
             # Run pheniqs demultiplexing
-            self.jobtext.append('source activate pheniqs;')
+            self.source_activate('pheniqs')
             cmd = 'pheniqs mux --config {};'.format(self.get_file('pheniqs_config'))
             self.jobtext.append(cmd)
 
             # Edit out pheniqs errors greater than --num-allowed-errors
-            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
+            self.source_activate('mmeds')
             cmd = [
                 'strip_error_barcodes.py',
                 '--num-allowed-errors {}'.format(1),
@@ -178,7 +192,7 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
 
-            self.jobtext.append('source activate qiime2-2020.8.0;')
+            self.source_activate('qiime')
 
         elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
@@ -411,15 +425,25 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def taxa_diversity(self):
+    def taxa_diversity(self, category=None):
         """ Create visualizations of taxa summaries at each level. """
-        self.add_path('taxa_bar_plot', '.qzv')
+        if category is None:
+            # Create taxa visualization for entire dataset
+            taxa_bar_plot = 'taxa_bar_plot'
+            table = 'filtered_table'
+            mapping = 'mapping'
+        else:
+            # Create taxa visualization averaged for metadata category
+            taxa_bar_plot = 'grouped_{}_taxa_bar_plot'.format(category)
+            table = 'grouped_{}_table'.format(category)
+            mapping = 'grouped_{}_mapping_file'.format(category)
+        self.add_path(taxa_bar_plot, '.qzv')
         cmd = [
             'qiime taxa barplot',
-            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--i-table {}'.format(self.get_file(table)),
             '--i-taxonomy {}'.format(self.get_file('taxonomy')),
-            '--m-metadata-file {}'.format(self.get_file('mapping')),
-            '--o-visualization {}'.format(self.get_file('taxa_bar_plot'))
+            '--m-metadata-file {}'.format(self.get_file(mapping)),
+            '--o-visualization {}'.format(self.get_file(taxa_bar_plot))
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -506,6 +530,45 @@ class Qiime2(Tool):
             self.taxa_collapse(category, level)
         self.add_pseudocount(category, level)
         self.composition_ancom(category, level)
+
+    def group_feature_table(self, category):
+        """ Group feature table by specified metadata category """
+        new_file = 'grouped_{}_table'.format(category)
+        self.add_path(new_file, '.qza')
+        cmd = [
+            'qiime feature-table group',
+            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--p-axis \'sample\'',
+            '--m-metadata-file {}'.format(self.get_file('mapping')),
+            '--m-metadata-column {}'.format(category),
+            '--p-mode \'mean-ceiling\'',
+            '--o-grouped-table {};'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def group_mapping_file(self, category):
+        """ Run script to create grouped mapping file """
+        new_file = 'grouped_{}_mapping_file'.format(category)
+        self.add_path(new_file, '.tsv')
+        cmd = [
+            'make_grouped_mapping_file.py',
+            '--m-metadata-file {}'.format(self.get_file('mapping')),
+            '--m-metadata-column {}'.format(category),
+            '--o-grouped-metadata-file {};'.format(self.get_file(new_file))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def mean_taxa(self, cols, cols_continuous):
+        """ Run all commands relating to calculating group mean taxa bar plots """
+        categories = [col for col in cols if not cols_continuous[col]]
+        if categories:
+            self.source_activate('mmeds')
+            for cat in categories:
+                self.group_mapping_file(cat)
+            self.source_activate('qiime')
+            for cat in categories:
+                self.group_feature_table(cat)
+                self.taxa_diversity(cat)
 
     def sanity_check(self):
         """ Check that the counts after split_libraries and final counts match """
@@ -614,6 +677,8 @@ class Qiime2(Tool):
                 # For the requested taxanomic levels
                 for level in self.doc.config['taxa_levels']:
                     self.group_significance(col, level)
+        # Calculate mean taxas
+        self.mean_taxa(self.doc.config['metadata'], self.doc.config['metadata_continuous'])
         self.jobtext.append('wait')
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')
