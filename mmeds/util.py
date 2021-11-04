@@ -1011,58 +1011,76 @@ def strip_error_barcodes(num_allowed_errors, mapping_file, input_dir, verbose):
     :input_dir: Directory containing demultiplexed fastq files
     :verbose: Print information to stdout
     """
+    # Read in mapping file
     output_content = {}
     map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
+    # Only three columns are needed
     sample_ids = map_df['#SampleID']['#q2:types']
     forward_barcodes = map_df['BarcodeSequence']['categorical']
     reverse_barcodes = map_df['BarcodeSequenceR']['categorical']
 
+    # Hash data for easy access
     map_hash = {key: (value1, value2) for (key, value1, value2) in zip(sample_ids, forward_barcodes, reverse_barcodes)}
 
+    # All files should follow this naming convention
     filename_template = '{}_S1_L001_R{}_001.fastq.gz'
     verbose_template = '{} Reading {}'
     count = 0
+
+    # Generate output for each sample's forward and reverse input files
     for key in map_hash:
         forward_filename = filename_template.format(key, 1)
         reverse_filename = filename_template.format(key, 2)
 
+        # Forward Reads
         if verbose:
             count += 1
             print(verbose_template.format(count, forward_filename))
         output_content[forward_filename] = get_stripped_file_content(
             num_allowed_errors,
-            map_hash,
-            key,
+            map_hash[key][0],
+            map_hash[key][1],
             Path(input_dir) / forward_filename
         )
 
+        # Reverse Reads
         if verbose:
             count += 1
             print(verbose_template.format(count, reverse_filename))
         output_content[reverse_filename] = get_stripped_file_content(
             num_allowed_errors,
-            map_hash,
-            key,
+            map_hash[key][0],
+            map_hash[key][1],
             Path(input_dir) / reverse_filename
         )
 
     return output_content
 
 
-def get_stripped_file_content(num_allowed_errors, map_hash, sample_id, filename):
+def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barcode, filename):
+    """
+    Get the error-stripped content of one demultiplexed fastq file
+    ==============================================================
+    :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
+    :forward_barcode: First of two barcodes associated with the sample
+    :reverse_barcode: Second of two barcodes associated with the sample
+    :filename: Absolute Path object to demultiplexed fastq file
+    """
     content = ''
     f = gzip.open(filename, mode='rt')
+
+    # Create a list of every read in the file as tuples, structured as [(whole_read, forward_barcode, reverse_barcode)]
     reads = re.findall(r'(@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n)', f.read())
     for read in reads:
-        diff = 0
-        diff += lev.distance(read[1], map_hash[sample_id][0])
-        diff += lev.distance(read[2], map_hash[sample_id][1])
 
-        print('Expected: {}; Actual: {}; diff: {}'.format(map_hash[sample_id][0], read[1], diff))
+        # Use Levenshtein distance on each barcode to determine error count
+        diff = lev.distance(read[1], forward_barcode)
+        diff += lev.distance(read[2], reverse_barcode)
+
+        # Add read to the output if there are few enough errors
         if diff <= num_allowed_errors:
             content += read[0]
-            print(read[0])
 
     return content
 

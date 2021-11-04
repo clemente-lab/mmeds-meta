@@ -25,12 +25,27 @@ def strip_errors(num_allowed_errors, m_mapping_file, i_directory, o_directory, v
     Script to strip reads from individual demultiplexed fastq.gz files if a read has
     barcode error greater than N (num_allowed_errors) and write to output files
     """
+    # Call util function, returns dictionary of filenames and content
     output_content = strip_error_barcodes(num_allowed_errors, m_mapping_file, i_directory, verbose)
 
+    verbose_template = '{} Writing to {}'
+    count = 0
+    if verbose:
+        print('Generated error-stripped content')
+
+    # Iterate through all generated content
     for filename in output_content:
-        out_file = Path(o_directory) / filename
-        out_file.touch()
-        out_file.write_bytes(gzip.compress(output_content[filename]))
+        if verbose:
+            count += 1
+            print(verbose_template.format(count, filename))
+
+        # Create specified filename in output directory
+        output_file = Path(o_directory) / filename
+        output_file.touch()
+
+        # Compress data to gzip format
+        output_bytes = gzip.compress(output_content[filename].encode('utf-8'))
+        output_file.write_bytes(output_bytes)
 
 
 if __name__ == '__main__':
