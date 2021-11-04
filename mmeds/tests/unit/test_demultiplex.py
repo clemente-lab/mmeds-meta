@@ -74,7 +74,7 @@ class DemultiplexTests(TestCase):
 
         # validate one of the demultiplexed files
         validate_demultiplex(f'{self.out_dir}/{self.target_file}', self.for_barcodes,
-                             self.rev_barcodes, self.mapping, self.log_dir)
+                             self.rev_barcodes, self.mapping, self.log_dir, True)
 
         # check values in the validation log file
         validate_log = self.log_dir / f'{self.target_file}_report.log'

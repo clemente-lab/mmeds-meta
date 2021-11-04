@@ -1069,7 +1069,7 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
         return results_dict, full_results, barcode_ids
 
 
-def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, map_file):
+def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, map_file, ret_dicts=False):
     """
     Helper function for validate_demultiplex()
     Replaces the samples in a qiime1 mapping file with barcodes for a given sample in that mapping file.
@@ -1079,6 +1079,7 @@ def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, ma
     for_barcodes: path to gzipped, forward barcode file
     rev_barcodes: path to reverse barcode file
     map_file: path to a qiime mapping file
+    ret_dicts: return results dictionaries from parsing barcode files
     """
     map_df = pd.read_csv(Path(map_file), sep='\t', header=[0, 1], na_filter=False)
 
@@ -1109,12 +1110,16 @@ def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, ma
     map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
     map_df.reset_index(inplace=True)
 
-    # write to disk, for validate_demultiplex to access
     map_df.to_csv(f'{output_dir}/qiime_barcode_mapfile.tsv', index=None, header=True, sep='\t')
-    return map_df
+    if ret_dicts:
+        ret_val = (map_df, results_dict, full_dict)
+    else:
+        ret_val = map_df
+
+    return ret_val
 
 
-def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_dir):
+def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_dir, is_gzip, get_read_counts=False):
     """
     Calls qiime1 script to validate a gzipped, demultiplex fastq file.
     source_dir: where the data is located.
@@ -1127,26 +1132,54 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     #TODO: generalize for single barcodes
 
     # Allows us to test that the correct barcodes are in the resulting demultiplexed file.
-    map_df = create_barcode_mapfile(Path(demux_file).parent, for_barcodes, rev_barcodes, Path(demux_file).stem, map_file)
+    barcode_return = create_barcode_mapfile(Path(demux_file).parent, for_barcodes, rev_barcodes,
+                                            Path(demux_file).stem, map_file, get_read_counts)
+    if get_read_counts:
+        map_df = barcode_return[0]
+        results_dict = barcode_return[1]
+        full_dict = barcode_return[2]
+    else:
+        map_df = barcode_return
+
     new_env = setup_environment('qiime/1.9.1')
 
     gunzip_demux_file = ['gunzip', f'{demux_file}.gz']
-    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', demux_file]
-    gzip_demux_file = ['gzip', demux_file]
+    create_fastq_copy = ['cp', f'{demux_file}', 'test.fastq']
+    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', 'test.fastq']
 
     # Call qiime1 validate demultiplex script
     validate_demux_file = ['validate_demultiplexed_fasta.py', '-b', '-a',
-                           '-i', demux_file,
+                           '-i', 'test.tastq',
                            '-o', f'{log_dir}',
                            '-m', f'{Path(demux_file).parent}/qiime_barcode_mapfile.tsv']
+    remove_fasta_file = ['rm', 'test.fastq']
+    # need to remove fasta?
+    gzip_demux_file = ['gzip', demux_file]
+
 
     try:
-        run(gunzip_demux_file, capture_output=True, check=True)
+        if is_gzip:
+            run(gunzip_demux_file, capture_output=True, check=True)
         run(create_fasta_file, capture_output=True, check=True)
         run(validate_demux_file, capture_output=True, env=new_env, check=True)
-        run(gzip_demux_file, capture_output=True, check=True)
+
+        if is_gzip:
+            run(gzip_demux_file, capture_output=True, check=True)
 
     except CalledProcessError as e:
         Logger.debug(e)
         print(e.output)
         raise e
+
+    if get_read_counts:
+        # Ouput read counts for only barcodes matched to in the mapping file
+        results_table = pd.DataFrame.from_dict(results_dict, orient='index')
+        results_table.reset_index(inplace=True)
+        df_path = Path(output_folder) / 'matched_barcodes.tsv'
+        results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
+
+        # Output read counts for all barcodes
+        full_table = pd.DataFrame.from_dict(full_dict, orient='index')
+        full_table.reset_index(inplace=True)
+        df_path = Path(output_folder) / 'all_barcodes.tsv'
+        results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
