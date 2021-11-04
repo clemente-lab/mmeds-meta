@@ -12,7 +12,9 @@ from time import sleep
 
 import yaml
 import gzip
+import re
 import pandas as pd
+import Levenshtein as lev
 import mmeds.config as fig
 from mmeds.logging import Logger
 
@@ -1000,55 +1002,69 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     return out_s
 
 
-def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
-    # Strip errors for each fastq.gz file in input_dir
-    count = 1
-    for filename in os.listdir(input_dir):
-        sample = ''
-        # Match sample file to sample in hash
-        for key in map_hash:
-            if filename.startswith(key):
-                sample = key
-                break
-        if not sample == '':
-            # Open sample file for reading
-            f = gzip.open(Path(input_dir) / filename, mode='rt')
-            out = ''
+def strip_error_barcodes(num_allowed_errors, mapping_file, input_dir, verbose):
+    """
+    Strip reads with errors from demultiplexed fastq files and return new file content
+    =================================================================================
+    :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
+    :mapping_file: File containing sample IDs and barcode pairs
+    :input_dir: Directory containing demultiplexed fastq files
+    :verbose: Print information to stdout
+    """
+    output_content = {}
+    map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
-            line = f.readline()
-            # Compare each line's barcodes with the expected barcodes and count diff
-            while line is not None and not line == '':
-                code = line[len(line)-18:len(line)-1].split('-')
-                diff = 0
-                # Compare forward barcodes and count diff
-                for i in range(len(code[0])):
-                    if not code[0][i] == map_hash[sample][0][i]:
-                        diff += 1
-                # Compare reverse barcodes and count diff
-                for i in range(len(code[1])):
-                    if not code[1][i] == map_hash[sample][1][i]:
-                        diff += 1
+    sample_ids = map_df['#SampleID']['#q2:types']
+    forward_barcodes = map_df['BarcodeSequence']['categorical']
+    reverse_barcodes = map_df['BarcodeSequenceR']['categorical']
 
-                # If diff does not exceed N, write read to output
-                if diff <= num_allowed_errors:
-                    out += line
-                    out += f.readline()
-                    out += f.readline()
-                    out += f.readline()
-                # Else skip read
-                else:
-                    f.readline()
-                    f.readline()
-                    f.readline()
+    map_hash = {key: (value1, value2) for (key, value1, value2) in zip(sample_ids, forward_barcodes, reverse_barcodes)}
 
-                line = f.readline()
+    filename_template = '{}_S1_L001_R{}_001.fastq.gz'
+    verbose_template = '{} Reading {}'
+    count = 0
+    for key in map_hash:
+        forward_filename = filename_template.format(key, 1)
+        reverse_filename = filename_template.format(key, 2)
 
-            # Write output file to output_dir
-            p_out = Path(output_dir) / filename
-            p_out.touch()
-            p_out.write_bytes(gzip.compress(out.encode('utf-8')))
-            print(count, 'written', filename)
+        if verbose:
             count += 1
+            print(verbose_template.format(count, forward_filename))
+        output_content[forward_filename] = get_stripped_file_content(
+            num_allowed_errors,
+            map_hash,
+            key,
+            Path(input_dir) / forward_filename
+        )
+
+        if verbose:
+            count += 1
+            print(verbose_template.format(count, reverse_filename))
+        output_content[reverse_filename] = get_stripped_file_content(
+            num_allowed_errors,
+            map_hash,
+            key,
+            Path(input_dir) / reverse_filename
+        )
+
+    return output_content
+
+
+def get_stripped_file_content(num_allowed_errors, map_hash, sample_id, filename):
+    content = ''
+    f = gzip.open(filename, mode='rt')
+    reads = re.findall(r'(@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n)', f.read())
+    for read in reads:
+        diff = 0
+        diff += lev.distance(read[1], map_hash[sample_id][0])
+        diff += lev.distance(read[2], map_hash[sample_id][1])
+
+        print('Expected: {}; Actual: {}; diff: {}'.format(map_hash[sample_id][0], read[1], diff))
+        if diff <= num_allowed_errors:
+            content += read[0]
+            print(read[0])
+
+    return content
 
 
 def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes):
