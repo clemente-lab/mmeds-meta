@@ -986,7 +986,7 @@ def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
         sample = ''
         # Match sample file to sample in hash
         for key in map_hash:
-            if filename.startswith(key):
+            if filename.startswith(key + "_"):
                 sample = key
                 break
         if not sample == '':
