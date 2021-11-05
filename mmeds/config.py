@@ -38,7 +38,8 @@ else:
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
-    DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
+    # DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
+    DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
     WWW_ROOT = "https://mmedsadmin.u.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
@@ -543,6 +544,7 @@ ALL_COLS = []
 COL_SIZES = {}
 
 # Try connecting via the testing setup
+'''
 try:
     db = pms.connect(host='localhost',
                      user='root',
@@ -713,7 +715,7 @@ for table in SUBJECT_TABLES:
         SUBJECT_COLUMNS[col] = col_type
 
 MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
-
+'''
 
 def get_salt(length=10):
     listy = 'abcdefghijklmnopqrzsuvwxyz'

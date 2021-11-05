@@ -99,7 +99,7 @@ class DemultiplexTests(TestCase):
         gzip1 = ['gzip', f'{self.for_barcodes}']
         gzip2 = ['gzip', f'{self.rev_barcodes}']
         try:
-            pass
+            # pass
             run(gzip1, capture_output=True, check=True)
             run(gzip2, capture_output=True, check=True)
         except CalledProcessError as e:

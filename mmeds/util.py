@@ -1144,15 +1144,24 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     new_env = setup_environment('qiime/1.9.1')
 
     gunzip_demux_file = ['gunzip', f'{demux_file}.gz']
-    create_fastq_copy = ['cp', f'{demux_file}', 'test.fastq']
-    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', 'test.fastq']
+    create_fastq_copy = ['cp', f'{demux_file}', f'{Path(demux_file).parent}/test.fastq']
+    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{Path(demux_file).parent}/test.fastq']
+    ### only on minerva
+    # os.system('ml python/2.7.9-UCS4')
 
     # Call qiime1 validate demultiplex script
-    validate_demux_file = ['validate_demultiplexed_fasta.py', '-b', '-a',
-                           '-i', 'test.tastq',
-                           '-o', f'{log_dir}',
-                           '-m', f'{Path(demux_file).parent}/qiime_barcode_mapfile.tsv']
-    remove_fasta_file = ['rm', 'test.fastq']
+    print(log_dir)
+    #                       '-o', f'{log_dir}',
+    #validate_demux_file = ['ml', 'python/2.7.9-UCS4;', 'validate_demultiplexed_fasta.py', '-b', '-a',
+    #                       '-i', f'{Path(demux_file).parent}/test.fastq',
+    #                       '-o', f'{Path(demux_file).parent}',
+    #                       '-m', f'{Path(demux_file).parent}/qiime_barcode_mapfile.tsv']
+    validate_demux_file = f'ml python/2.7.9-UCS4; validate_demultiplexed_fasta.py -b -a\
+                           -i {Path(demux_file).parent}/test.fastq\
+                           -o {Path(demux_file).parent}\
+                           -m {Path(demux_file).parent}/qiime_barcode_mapfile.tsv'
+    ### only on minerva
+    remove_fastq_copy = ['rm', 'f{Path(demux_file).parent}/test.fastq']
     # need to remove fasta?
     gzip_demux_file = ['gzip', demux_file]
 
@@ -1160,8 +1169,13 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     try:
         if is_gzip:
             run(gunzip_demux_file, capture_output=True, check=True)
+        run(create_fastq_copy, capture_output=True, check=True)
         run(create_fasta_file, capture_output=True, check=True)
-        run(validate_demux_file, capture_output=True, env=new_env, check=True)
+        output = run(validate_demux_file, capture_output=True, env=new_env, check=True, shell=True)
+        print(output)
+        # run(validate_demux_file, env=new_env, check=True, shell=True)
+
+        # run(remove_fastq_copy, capture_output=True, check=True, shell=True)
 
         if is_gzip:
             run(gzip_demux_file, capture_output=True, check=True)
@@ -1175,11 +1189,11 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         # Ouput read counts for only barcodes matched to in the mapping file
         results_table = pd.DataFrame.from_dict(results_dict, orient='index')
         results_table.reset_index(inplace=True)
-        df_path = Path(output_folder) / 'matched_barcodes.tsv'
+        df_path = Path(log_dir) / 'matched_barcodes.tsv'
         results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
 
         # Output read counts for all barcodes
         full_table = pd.DataFrame.from_dict(full_dict, orient='index')
         full_table.reset_index(inplace=True)
-        df_path = Path(output_folder) / 'all_barcodes.tsv'
+        df_path = Path(log_dir) / 'all_barcodes.tsv'
         results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
