@@ -8,6 +8,7 @@ from tempfile import gettempdir
 from tidylib import tidy_document
 from pandas import read_csv, DataFrame, MultiIndex
 from numpy import nan
+import Levenshtein as lev
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -266,6 +267,25 @@ class UtilTests(TestCase):
         parsed_df = util.parse_ICD_codes(df)
         assert check_df.equals(parsed_df)
 
+    def test_levenshtein_distance(self):
+        """ Test the python-Levenshtein library's distance function """
+        test_barcodes = [
+            ('', '', 0),
+            ('ACTG', 'ACTG', 0),
+            ('AAGGGGCC', 'AAGGGGCC', 0),
+            ('GCTAAA', 'GCTAAC', 1),
+            ('CTAG', 'CTA', 1),
+            ('CCAGTG', 'CGACTG', 2),
+            ('TTAAC', 'TTAACGA', 2),
+            ('', 'TAG', 3),
+            ('ACGGT', 'GCAATGT', 4),
+            ('ACTGACTG', 'ACTGACTGACTGACTG', 8)
+        ]
+
+        for str1, str2, expected_dist in test_barcodes:
+            actual_dist = lev.distance(str1, str2)
+            assert expected_dist == actual_dist
+
     def test_strip_error_barcodes(self):
         """ Test the stripping of errors from pheniqs-demultiplexed read files """
         output_dir = Path(fig.TEST_STRIPPED_DIR)
@@ -287,4 +307,3 @@ class UtilTests(TestCase):
         for sample_id in sample_ids:
             gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
             gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
-
