@@ -184,7 +184,6 @@ def main():
             'database',
             'documents',
             'spawn',
-            'scripts',
             'tool',
             'tools',
             'util',

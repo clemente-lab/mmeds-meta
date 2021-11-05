@@ -12,7 +12,9 @@ from time import sleep
 
 import yaml
 import gzip
+import re
 import pandas as pd
+import Levenshtein as lev
 import mmeds.config as fig
 from mmeds.logging import Logger
 
@@ -1000,55 +1002,123 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     return out_s
 
 
-def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
-    # Strip errors for each fastq.gz file in input_dir
-    count = 1
-    for filename in os.listdir(input_dir):
-        sample = ''
-        # Match sample file to sample in hash
-        for key in map_hash:
-            if filename.startswith(key):
-                sample = key
-                break
-        if not sample == '':
-            # Open sample file for reading
-            f = gzip.open(Path(input_dir) / filename, mode='rt')
-            out = ''
+def strip_error_barcodes(num_allowed_errors,
+                         mapping_file,
+                         input_dir,
+                         output_dir,
+                         verbose,
+                         filename_template=fig.FASTQ_FILENAME_TEMPLATE,
+                         sample_id_cats=fig.QIIME_SAMPLE_ID_CATS,
+                         forward_barcode_cats=fig.QIIME_FORWARD_BARCODE_CATS,
+                         reverse_barcode_cats=fig.QIIME_REVERSE_BARCODE_CATS):
+    """
+    Strip reads with errors from demultiplexed fastq files and write new file content
+    This has only been tested using input that has been demultiplexed using 'pheniqs'
+    =================================================================================
+    :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
+    :mapping_file: File containing sample IDs and barcode pairs
+    :input_dir: Directory containing demultiplexed fastq files
+    :output_dir: Directory in which to store stripped fastq files
+    :verbose: Print information to stdout
+    :filename_template: String with formatting for sample id and (1 or 2) for forward/reverse
+    :sample_id_cats: tuple with sample id header text
+    :forward_barcode_cats: tuple with forward barcode header text
+    :reverse_barcode_cats: tuple with reverse barcode header text
+    """
+    # Read in mapping file
+    output_content = {}
+    map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
-            line = f.readline()
-            # Compare each line's barcodes with the expected barcodes and count diff
-            while line is not None and not line == '':
-                code = line[len(line)-18:len(line)-1].split('-')
-                diff = 0
-                # Compare forward barcodes and count diff
-                for i in range(len(code[0])):
-                    if not code[0][i] == map_hash[sample][0][i]:
-                        diff += 1
-                # Compare reverse barcodes and count diff
-                for i in range(len(code[1])):
-                    if not code[1][i] == map_hash[sample][1][i]:
-                        diff += 1
+    # Only three columns are needed
+    sample_ids = map_df[sample_id_cats[0]][sample_id_cats[1]]
+    forward_barcodes = map_df[forward_barcode_cats[0]][forward_barcode_cats[1]]
+    reverse_barcodes = map_df[reverse_barcode_cats[0]][reverse_barcode_cats[1]]
 
-                # If diff does not exceed N, write read to output
-                if diff <= num_allowed_errors:
-                    out += line
-                    out += f.readline()
-                    out += f.readline()
-                    out += f.readline()
-                # Else skip read
-                else:
-                    f.readline()
-                    f.readline()
-                    f.readline()
+    # Hash data for easy access
+    map_hash = {key: (value1, value2) for (key, value1, value2) in zip(sample_ids, forward_barcodes, reverse_barcodes)}
+    verbose_template = '{} Writing {}'
+    count = 0
 
-                line = f.readline()
+    # Generate output for each sample's forward and reverse input files
+    for key in map_hash:
+        forward_filename = filename_template.format(key, 1)
+        reverse_filename = filename_template.format(key, 2)
 
-            # Write output file to output_dir
-            p_out = Path(output_dir) / filename
-            p_out.touch()
-            p_out.write_bytes(gzip.compress(out.encode('utf-8')))
-            print(count, 'written', filename)
-            count += 1
+        # Create output files
+        forward_output = Path(output_dir) / forward_filename
+        reverse_output = Path(output_dir) / reverse_filename
+        forward_output.touch()
+        reverse_output.touch()
+
+        # Forward Reads
+        count += 1
+        Logger.debug(verbose_template.format(count, forward_filename))
+        if verbose:
+            print(verbose_template.format(count, forward_filename))
+        # Generate error-stripped content and write gzipped output
+        with gzip.open(forward_output, 'wt') as f:
+            f.write(
+                get_stripped_file_content(
+                    num_allowed_errors,
+                    map_hash[key][0],
+                    map_hash[key][1],
+                    Path(input_dir) / forward_filename
+                )
+            )
+
+        # Reverse Reads
+        count += 1
+        Logger.debug(verbose_template.format(count, reverse_filename))
+        if verbose:
+            print(verbose_template.format(count, reverse_filename))
+        # Generate error-stripped content and write gzipped output
+        with gzip.open(reverse_output, 'wt') as f:
+            f.write(
+                get_stripped_file_content(
+                    num_allowed_errors,
+                    map_hash[key][0],
+                    map_hash[key][1],
+                    Path(input_dir) / reverse_filename
+                )
+            )
+
+
+def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barcode, filename):
+    """
+    Get the error-stripped content of one demultiplexed fastq file
+    ==============================================================
+    :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
+    :forward_barcode: First of two barcodes associated with the sample
+    :reverse_barcode: Second of two barcodes associated with the sample
+    :filename: Absolute Path object to demultiplexed fastq file
+    """
+    content = ''
+    f = gzip.open(filename, mode='rt')
+
+    # This raw string pattern matches one entire read in the format used by the pheniqs library demultiplexer
+    # The two sections in parentheses match to the forward and reverse barcodes that were used to assign the read
+    # Example of this pattern: '@M00914:50:00000-JN85L:1:1101:18345:1663 2:N:0:CTCGACTT=ATCGTACG
+    #                           TACCGTACCCGTTACGTTTACGTGACCGTAGGGCAGAAATGAACCAGTAGACCGATTACGATT
+    #                           +
+    #                           ABBBBBBBBBBBBBBBCC///>----A---09'
+    pattern = r'@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n'
+
+    # Create an iterator for which the .group method contains (whole_read, forward_barcode, reverse_barcode)
+    reads = re.finditer(pattern, f.read())
+    read = next(reads, None)
+    while read:
+
+        # Use Levenshtein distance on each barcode to determine error count
+        diff = lev.distance(read.group(1), forward_barcode)
+        diff += lev.distance(read.group(2), reverse_barcode)
+
+        # Add read to the output if there are few enough errors
+        if diff <= num_allowed_errors:
+            content += read.group(0)
+
+        read = next(reads, None)
+
+    return content
 
 
 def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes):
