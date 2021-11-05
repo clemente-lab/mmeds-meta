@@ -684,6 +684,12 @@ for col in ['StudyName',
     col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
     SAMPLE_ID_COLUMNS[col] = col_type
 
+# Demultiplexing Qiime Defaults
+QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
+QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
+QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
+QIIME_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+
 # Map known columns from MIxS
 MMEDS_MAP = {
     'investigation_type': ('Study', 'StudyType'),

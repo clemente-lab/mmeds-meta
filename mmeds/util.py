@@ -1002,30 +1002,41 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     return out_s
 
 
-def strip_error_barcodes(num_allowed_errors, mapping_file, input_dir, verbose):
+def strip_error_barcodes(num_allowed_errors,
+                         mapping_file,
+                         input_dir,
+                         output_dir,
+                         verbose,
+                         filename_template=fig.QIIME_FILENAME_TEMPLATE,
+                         sample_id_cats=fig.QIIME_SAMPLE_ID_CATS,
+                         forward_barcode_cats=fig.QIIME_FORWARD_BARCODE_CATS,
+                         reverse_barcode_cats=fig.QIIME_REVERSE_BARCODE_CATS):
     """
-    Strip reads with errors from demultiplexed fastq files and return new file content
+    Strip reads with errors from demultiplexed fastq files and write new file content
+    This has only been tested using input that has been demultiplexed using 'pheniqs'
     =================================================================================
     :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
     :mapping_file: File containing sample IDs and barcode pairs
     :input_dir: Directory containing demultiplexed fastq files
+    :output_dir: Directory in which to store stripped fastq files
     :verbose: Print information to stdout
+    :filename_template: String with formatting for sample id and (1 or 2) for forward/reverse
+    :sample_id_cats: tuple with sample id header text
+    :forward_barcode_cats: tuple with forward barcode header text
+    :reverse_barcode_cats: tuple with reverse barcode header text
     """
     # Read in mapping file
     output_content = {}
     map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
     # Only three columns are needed
-    sample_ids = map_df['#SampleID']['#q2:types']
-    forward_barcodes = map_df['BarcodeSequence']['categorical']
-    reverse_barcodes = map_df['BarcodeSequenceR']['categorical']
+    sample_ids = map_df[sample_id_cats[0]][sample_id_cats[1]]
+    forward_barcodes = map_df[forward_barcode_cats[0]][forward_barcode_cats[1]]
+    reverse_barcodes = map_df[reverse_barcode_cats[0]][reverse_barcode_cats[1]]
 
     # Hash data for easy access
     map_hash = {key: (value1, value2) for (key, value1, value2) in zip(sample_ids, forward_barcodes, reverse_barcodes)}
-
-    # All files should follow this naming convention
-    filename_template = '{}_S1_L001_R{}_001.fastq.gz'
-    verbose_template = '{} Reading {}'
+    verbose_template = '{} Writing {}'
     count = 0
 
     # Generate output for each sample's forward and reverse input files
@@ -1033,29 +1044,45 @@ def strip_error_barcodes(num_allowed_errors, mapping_file, input_dir, verbose):
         forward_filename = filename_template.format(key, 1)
         reverse_filename = filename_template.format(key, 2)
 
+        # Create output files
+        forward_output = Path(output_dir) / forward_filename
+        reverse_output = Path(output_dir) / reverse_filename
+        forward_output.touch()
+        reverse_output.touch()
+
         # Forward Reads
+        count += 1
+        Logger.debug(verbose_template.format(count, forward_filename))
         if verbose:
-            count += 1
             print(verbose_template.format(count, forward_filename))
-        output_content[forward_filename] = get_stripped_file_content(
-            num_allowed_errors,
-            map_hash[key][0],
-            map_hash[key][1],
-            Path(input_dir) / forward_filename
+        # Generate error-stripped content, compress to gzip format, and write output
+        forward_output.write_bytes(
+            gzip.compress(
+                get_stripped_file_content(
+                    num_allowed_errors,
+                    map_hash[key][0],
+                    map_hash[key][1],
+                    Path(input_dir) / forward_filename
+                )
+            )
         )
 
         # Reverse Reads
+        count += 1
+        Logger.debug(verbose_template.format(count, reverse_filename))
         if verbose:
-            count += 1
             print(verbose_template.format(count, reverse_filename))
-        output_content[reverse_filename] = get_stripped_file_content(
-            num_allowed_errors,
-            map_hash[key][0],
-            map_hash[key][1],
-            Path(input_dir) / reverse_filename
+        # Generate error-stripped content, compress to gzip format, and write output
+        reverse_output.write_bytes(
+            gzip.compress(
+                get_stripped_file_content(
+                    num_allowed_errors,
+                    map_hash[key][0],
+                    map_hash[key][1],
+                    Path(input_dir) / reverse_filename
+                )
+            )
         )
-
-    return output_content
 
 
 def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barcode, filename):
@@ -1067,20 +1094,27 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
     :reverse_barcode: Second of two barcodes associated with the sample
     :filename: Absolute Path object to demultiplexed fastq file
     """
-    content = ''
+    content = b''
     f = gzip.open(filename, mode='rt')
 
-    # Create a list of every read in the file as tuples, structured as [(whole_read, forward_barcode, reverse_barcode)]
-    reads = re.findall(r'(@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n)', f.read())
-    for read in reads:
+    # This raw string pattern matches one entire read in the format used by the pheniqs library demultiplexer
+    # The two sections in parenthesis match to the forward and reverse barcodes that were used to assign the read
+    pattern = r'@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n'
+
+    # Create an iterator for which the .group method contains (whole_read, forward_barcode, reverse_barcode)
+    reads = re.finditer(pattern, f.read())
+    read = next(reads, None)
+    while read:
 
         # Use Levenshtein distance on each barcode to determine error count
-        diff = lev.distance(read[1], forward_barcode)
-        diff += lev.distance(read[2], reverse_barcode)
+        diff = lev.distance(read.group(1), forward_barcode)
+        diff += lev.distance(read.group(2), reverse_barcode)
 
         # Add read to the output if there are few enough errors
         if diff <= num_allowed_errors:
-            content += read[0]
+            content += read.group(0).encode('utf-8')
+
+        read = next(reads, None)
 
     return content
 
