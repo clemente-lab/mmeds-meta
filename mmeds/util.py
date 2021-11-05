@@ -1055,9 +1055,9 @@ def strip_error_barcodes(num_allowed_errors,
         Logger.debug(verbose_template.format(count, forward_filename))
         if verbose:
             print(verbose_template.format(count, forward_filename))
-        # Generate error-stripped content, compress to gzip format, and write output
-        forward_output.write_bytes(
-            gzip.compress(
+        # Generate error-stripped content and write gzipped output
+        with gzip.open(forward_output, 'wt') as f:
+            f.write(
                 get_stripped_file_content(
                     num_allowed_errors,
                     map_hash[key][0],
@@ -1065,16 +1065,15 @@ def strip_error_barcodes(num_allowed_errors,
                     Path(input_dir) / forward_filename
                 )
             )
-        )
 
         # Reverse Reads
         count += 1
         Logger.debug(verbose_template.format(count, reverse_filename))
         if verbose:
             print(verbose_template.format(count, reverse_filename))
-        # Generate error-stripped content, compress to gzip format, and write output
-        reverse_output.write_bytes(
-            gzip.compress(
+        # Generate error-stripped content and write gzipped output
+        with gzip.open(reverse_output, 'wt') as f:
+            f.write(
                 get_stripped_file_content(
                     num_allowed_errors,
                     map_hash[key][0],
@@ -1082,7 +1081,6 @@ def strip_error_barcodes(num_allowed_errors,
                     Path(input_dir) / reverse_filename
                 )
             )
-        )
 
 
 def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barcode, filename):
@@ -1094,7 +1092,7 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
     :reverse_barcode: Second of two barcodes associated with the sample
     :filename: Absolute Path object to demultiplexed fastq file
     """
-    content = b''
+    content = ''
     f = gzip.open(filename, mode='rt')
 
     # This raw string pattern matches one entire read in the format used by the pheniqs library demultiplexer
@@ -1112,7 +1110,7 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
 
         # Add read to the output if there are few enough errors
         if diff <= num_allowed_errors:
-            content += read.group(0).encode('utf-8')
+            content += read.group(0)
 
         read = next(reads, None)
 
