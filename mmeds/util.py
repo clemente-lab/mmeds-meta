@@ -1097,6 +1097,10 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
 
     # This raw string pattern matches one entire read in the format used by the pheniqs library demultiplexer
     # The two sections in parentheses match to the forward and reverse barcodes that were used to assign the read
+    # Example of this pattern: '@M00914:50:00000-JN85L:1:1101:18345:1663 2:N:0:CTCGACTT=ATCGTACG
+    #                           TACCGTACCCGTTACGTTTACGTGACCGTAGGGCAGAAATGAACCAGTAGACCGATTACGATT
+    #                           +
+    #                           ABBBBBBBBBBBBBBBCC///>----A---09'
     pattern = r'@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n'
 
     # Create an iterator for which the .group method contains (whole_read, forward_barcode, reverse_barcode)
