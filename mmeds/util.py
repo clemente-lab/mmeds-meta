@@ -1007,7 +1007,7 @@ def strip_error_barcodes(num_allowed_errors,
                          input_dir,
                          output_dir,
                          verbose,
-                         filename_template=fig.QIIME_FILENAME_TEMPLATE,
+                         filename_template=fig.FASTQ_FILENAME_TEMPLATE,
                          sample_id_cats=fig.QIIME_SAMPLE_ID_CATS,
                          forward_barcode_cats=fig.QIIME_FORWARD_BARCODE_CATS,
                          reverse_barcode_cats=fig.QIIME_REVERSE_BARCODE_CATS):

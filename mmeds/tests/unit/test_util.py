@@ -11,6 +11,7 @@ from numpy import nan
 import mmeds.config as fig
 import hashlib as hl
 import os
+import gzip
 
 
 class UtilTests(TestCase):
@@ -264,3 +265,26 @@ class UtilTests(TestCase):
 
         parsed_df = util.parse_ICD_codes(df)
         assert check_df.equals(parsed_df)
+
+    def test_strip_error_barcodes(self):
+        """ Test the stripping of errors from pheniqs-demultiplexed read files """
+        output_dir = Path(fig.TEST_STRIPPED_DIR)
+        if not output_dir.is_dir():
+            output_dir.mkdir()
+        # Remove old test files from dir
+        for f in output_dir.glob('*'):
+            f.unlink()
+
+        util.strip_error_barcodes(1, fig.TEST_PHENIQS_MAPPING, fig.TEST_PHENIQS_DIR, fig.TEST_STRIPPED_DIR, False)
+
+        # Assert correct number of output files
+        output_files = list(output_dir.glob('*'))
+        df = read_csv(Path(fig.TEST_PHENIQS_MAPPING), sep='\t', header=[0, 1], na_filter=False)
+        sample_ids = df[fig.QIIME_SAMPLE_ID_CATS[0]][fig.QIIME_SAMPLE_ID_CATS[1]]
+        assert len(output_files) == 2 * len(sample_ids)
+
+        # Assert all files can be open
+        for sample_id in sample_ids:
+            gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
+            gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
+

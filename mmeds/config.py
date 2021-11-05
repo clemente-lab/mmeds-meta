@@ -353,6 +353,8 @@ TEST_ANIMAL_CONFIG = str(TEST_PATH / 'test_config_animal.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_MAPPING_DUAL = str(TEST_PATH / 'qiime_mapping_file_dual.tsv')
 TEST_PHENIQS_DIR = str(TEST_PATH / 'test_pheniqs')
+TEST_STRIPPED_DIR = str(TEST_PATH / 'test_stripped')
+TEST_PHENIQS_MAPPING = str(TEST_PATH / 'test_pheniqs_mapping_file.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_SPECIMEN_SIMPLIFIED = str(TEST_PATH / 'test_specimen_simplified.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
@@ -688,7 +690,7 @@ for col in ['StudyName',
 QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
 QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
 QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
-QIIME_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
 
 # Map known columns from MIxS
 MMEDS_MAP = {
