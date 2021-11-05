@@ -296,13 +296,14 @@ class UtilTests(TestCase):
         test_dirs = fig.TEST_STRIPPED_DIRS
 
         # Test at three different error levels
-        for i in range(3):
+        error_levels = [0, 1, 2, 16]
+        for level in error_levels:
             # Remove old test files from dir
             for f in output_dir.glob('*'):
                 f.unlink()
 
             util.strip_error_barcodes(
-                i,
+                level,
                 fig.TEST_PHENIQS_MAPPING,
                 fig.TEST_PHENIQS_DIR,
                 fig.TEST_STRIPPED_OUTPUT_DIR,
@@ -315,14 +316,18 @@ class UtilTests(TestCase):
             sample_ids = df[fig.QIIME_SAMPLE_ID_CATS[0]][fig.QIIME_SAMPLE_ID_CATS[1]]
             assert len(output_files) == 2 * len(sample_ids)
 
+            if level < 3:
+                test_path = Path(test_dirs[level])
+            else:
+                test_path = Path(fig.TEST_PHENIQS_DIR)
             # Assert all files match their expected values
             for sample_id in sample_ids:
                 f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
-                f_test = gzip.open(Path(test_dirs[i]) / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
+                f_test = gzip.open(test_path / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
 
                 assert f.read() == f_test.read()
 
                 f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
-                f_test = gzip.open(Path(test_dirs[i]) / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
+                f_test = gzip.open(test_path / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
 
                 assert f.read() == f_test.read()
