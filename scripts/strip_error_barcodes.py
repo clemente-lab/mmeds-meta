@@ -16,27 +16,16 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-n', '--num-allowed-errors', default=1, type=int,
               help='The number of allowed barcode errors, barcodes with more errors than this will be removed.')
-@click.option('-m', '--mapping-file', required=True, help='Path to the mapping file')
-@click.option('-i', '--input-dir', required=True, help='Directory with fastq.gz files')
-@click.option('-o', '--output-dir', required=True, help='Directory to output new fastq.gz files to')
-def strip_errors(num_allowed_errors, mapping_file, input_dir, output_dir):
+@click.option('-m', '--m-mapping-file', required=True, help='Path to the mapping file')
+@click.option('-i', '--i-directory', required=True, help='Directory with fastq.gz input files')
+@click.option('-o', '--o-directory', required=True, help='Directory to output new fastq.gz files to')
+@click.option('-v', '--verbose', is_flag=True, help='Verbose output to stdout')
+def strip_errors(num_allowed_errors, m_mapping_file, i_directory, o_directory, verbose):
     """
-    Method to strip reads from individual demultiplexed fastq.gz files if a read has
-    barcode error greater than N (num_allowed_errors) and write to output
+    Calls function to strip reads from individual demultiplexed fastq.gz files if a
+    read has a barcode error greater than N (num_allowed_errors) and write to output files
     """
-
-    # Get mapping file as DataFrame and save sample data to hash
-    map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0], na_filter=False)
-    map_hash = {}
-
-    for i in range(len(map_df['#SampleID'])):
-        if i > 0:
-            map_hash[map_df['#SampleID'][i]] = \
-                    (
-                            map_df['BarcodeSequence'][i],
-                            map_df['BarcodeSequenceR'][i]
-                    )
-    strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir)
+    strip_error_barcodes(num_allowed_errors, m_mapping_file, i_directory, o_directory, verbose)
 
 
 if __name__ == '__main__':

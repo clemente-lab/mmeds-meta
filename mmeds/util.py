@@ -12,7 +12,9 @@ from time import sleep
 
 import yaml
 import gzip
+import re
 import pandas as pd
+import Levenshtein as lev
 import mmeds.config as fig
 from mmeds.logging import Logger
 
@@ -69,6 +71,11 @@ def format_alerts(args):
 def simplified_to_full(file_fp, output_fp, metadata_type, subject_type='human'):
     """
     Takes in a simplified MMEDs metadata file and expands it to the full format.
+    ============================================================================
+    :file_fp: The location of the simplified metadata on disk
+    :output_fp: The location to write the full version of the metadata to
+    :metadata_type: The type of metadata
+    :subject_type: The type of subject
     """
     # Load the relvant template
     if metadata_type == 'subject':
@@ -119,6 +126,7 @@ def simplified_to_full(file_fp, output_fp, metadata_type, subject_type='human'):
 
 
 def load_mmeds_stats():
+    """ Load the values from the mmeds stats file. Used to give the stats on the homepage. """
     if Path(fig.STAT_FILE).exists():
         stats = yaml.safe_load(fig.STAT_FILE.read_text())
     else:
@@ -127,6 +135,7 @@ def load_mmeds_stats():
 
 
 def load_subject_template(subject_type):
+    """ Loads the base template for the subject metadata """
     if subject_type == 'human':
         df = pd.read_csv(fig.TEST_SUBJECT, header=[0, 1], nrows=3, sep='\t')
     elif subject_type == 'animal':
@@ -135,6 +144,7 @@ def load_subject_template(subject_type):
 
 
 def load_specimen_template():
+    """ Loads the base template for the specimen metadata """
     return pd.read_csv(fig.TEST_SPECIMEN, header=[0, 1], nrows=3, sep='\t')
 
 
@@ -228,6 +238,7 @@ def write_metadata(df, output_path):
 
 
 def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', keep_default_na=False):
+    """ Load a combined mmeds metadata file """
     return pd.read_csv(file_name,
                        sep='\t',
                        header=header,
@@ -238,9 +249,18 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
 
 
 def load_config(config_file, metadata, ignore_bad_cols=False):
-    """ Read the provided config file to determine settings for the analysis. """
+    """
+    Read the provided config file to determine settings for the analysis.
+    ====================================================================
+    Note: This function tries to support the various formats a config file
+        might be presented to it in. When uploading a config file to the server
+        it is loaded as a particular type of FileStream object that I haven't
+        been able to replicate outside of the server. So when testing or loading
+        the default config from disk I have had to pass it in as a file path.
+    """
     try:
         config = {}
+        # Replace with a switch statement or unify config_file type
         # If a Path was passed (as is the case during testing)
         if isinstance(config_file, Path):
             page = config_file.read_text()
@@ -265,6 +285,13 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
 
 def parse_parameters(config, metadata, ignore_bad_cols=False):
+    """
+    Helper function for load_config. This parses the individual options provided in
+    the config file. For example, the user can put 'all' as the taxa column option
+    which this will then replace with a list of 1 -> 7. Similar for metadata columns
+    used in analysis, if the user put all, this will select all the valid columns from
+    the metadata. This functionality has been causing some problems recently however.
+    """
     # Ignore the 'all' keys
     diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS)
             if '_all' not in x}
@@ -301,45 +328,10 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     return config
 
 
-def write_config(config, path):
-    """ Write out the config file being used to the working directory. """
-    config_text = {}
-    for (key, value) in config.items():
-        # Don't write values that are generated on loading
-        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
-                   'sub_analysis_continuous', 'sub_analysis_all']:
-            continue
-        # If the value was initially 'all', write that
-        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
-            if config['{}_all'.format(key)]:
-                config_text[key] = 'all'
-            # Write lists as comma seperated strings
-            elif value:
-                config_text[key] = list(value)
-            else:
-                config_text[key] = 'none'
-        else:
-            config_text[key] = value
-    with open(path / 'config_file.yaml', 'w') as f:
-        yaml.dump(config_text, f)
-
-
-def copy_metadata(metadata_file, metadata_copy):
-    """
-    Copy the provided metadata file with a few additional columns to be used for analysis
-    =====================================================================================
-    :metadata_file: Path to the metadata file.
-    :metadata_copy: Path to save the new metadata file.
-    """
-    mdf = load_metadata(metadata_file).T
-    mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
-        ['All' for x in range(mdf.shape[1] - 3)]
-    mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
-    write_metadata(mdf.T, metadata_copy)
-
-
 def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
     """
+    Helper for parse_parameters.
+
     Get the column headers for metadata columns meeting the
     criteria to be used in analysis.
     =======================================================
@@ -385,6 +377,43 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
                 if not ignore_bad_cols:
                     raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))
     return summary_cols, col_types
+
+
+def write_config(config, path):
+    """ Write out the config file being used to the working directory. """
+    config_text = {}
+    for (key, value) in config.items():
+        # Don't write values that are generated on loading
+        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
+                   'sub_analysis_continuous', 'sub_analysis_all']:
+            continue
+        # If the value was initially 'all', write that
+        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
+            if config['{}_all'.format(key)]:
+                config_text[key] = 'all'
+            # Write lists as comma seperated strings
+            elif value:
+                config_text[key] = list(value)
+            else:
+                config_text[key] = 'none'
+        else:
+            config_text[key] = value
+    with open(path / 'config_file.yaml', 'w') as f:
+        yaml.dump(config_text, f)
+
+
+def copy_metadata(metadata_file, metadata_copy):
+    """
+    Copy the provided metadata file with a few additional columns to be used for analysis
+    =====================================================================================
+    :metadata_file: Path to the metadata file.
+    :metadata_copy: Path to save the new metadata file.
+    """
+    mdf = load_metadata(metadata_file).T
+    mdf.loc[('AdditionalMetaData', 'Separate'), :] = ['Required', 'Text', 'Limit 45 Characters'] +\
+        ['All' for x in range(mdf.shape[1] - 3)]
+    mdf.loc[('AdditionalMetaData', 'Together'), :] = mdf.loc['RawData', 'RawDataID']
+    write_metadata(mdf.T, metadata_copy)
 
 
 def get_col_type(raw_column):
@@ -536,6 +565,10 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
 
 
 def build_error_rows(df, tables, headers, markup):
+    """
+    Helper function for generate_error_html. Builds out the rows of a metadata error table.
+    This highlights for the user where the problems are and notes how they need to be fixed.
+    """
     html = ''
     # Build each row of the table
     for row in range(len(df[tables[0]][headers[0]])):
@@ -635,6 +668,9 @@ def generate_error_html(file_fp, errors, warnings):
 
 
 def parse_code_blocks(path):
+    """
+    Parses the code blocks found in mmeds/resources/summary_code.txt into a dict
+    """
     # Load the code templates
     data = Path(path).read_text().split('\n=====\n')
 
@@ -979,55 +1015,123 @@ def make_grouped_mapping_file(mapping_file, col):
     return out_tsv
 
 
-def strip_error_barcodes(num_allowed_errors, map_hash, input_dir, output_dir):
-    # Strip errors for each fastq.gz file in input_dir
-    count = 1
-    for filename in os.listdir(input_dir):
-        sample = ''
-        # Match sample file to sample in hash
-        for key in map_hash:
-            if filename.startswith(key + "_"):
-                sample = key
-                break
-        if not sample == '':
-            # Open sample file for reading
-            f = gzip.open(Path(input_dir) / filename, mode='rt')
-            out = ''
+def strip_error_barcodes(num_allowed_errors,
+                         mapping_file,
+                         input_dir,
+                         output_dir,
+                         verbose,
+                         filename_template=fig.FASTQ_FILENAME_TEMPLATE,
+                         sample_id_cats=fig.QIIME_SAMPLE_ID_CATS,
+                         forward_barcode_cats=fig.QIIME_FORWARD_BARCODE_CATS,
+                         reverse_barcode_cats=fig.QIIME_REVERSE_BARCODE_CATS):
+    """
+    Strip reads with errors from demultiplexed fastq files and write new file content
+    This has only been tested using input that has been demultiplexed using 'pheniqs'
+    =================================================================================
+    :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
+    :mapping_file: File containing sample IDs and barcode pairs
+    :input_dir: Directory containing demultiplexed fastq files
+    :output_dir: Directory in which to store stripped fastq files
+    :verbose: Print information to stdout
+    :filename_template: String with formatting for sample id and (1 or 2) for forward/reverse
+    :sample_id_cats: tuple with sample id header text
+    :forward_barcode_cats: tuple with forward barcode header text
+    :reverse_barcode_cats: tuple with reverse barcode header text
+    """
+    # Read in mapping file
+    output_content = {}
+    map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
-            line = f.readline()
-            # Compare each line's barcodes with the expected barcodes and count diff
-            while line is not None and not line == '':
-                code = line[len(line)-18:len(line)-1].split('-')
-                diff = 0
-                # Compare forward barcodes and count diff
-                for i in range(len(code[0])):
-                    if not code[0][i] == map_hash[sample][0][i]:
-                        diff += 1
-                # Compare reverse barcodes and count diff
-                for i in range(len(code[1])):
-                    if not code[1][i] == map_hash[sample][1][i]:
-                        diff += 1
+    # Only three columns are needed
+    sample_ids = map_df[sample_id_cats[0]][sample_id_cats[1]]
+    forward_barcodes = map_df[forward_barcode_cats[0]][forward_barcode_cats[1]]
+    reverse_barcodes = map_df[reverse_barcode_cats[0]][reverse_barcode_cats[1]]
 
-                # If diff does not exceed N, write read to output
-                if diff <= num_allowed_errors:
-                    out += line
-                    out += f.readline()
-                    out += f.readline()
-                    out += f.readline()
-                # Else skip read
-                else:
-                    f.readline()
-                    f.readline()
-                    f.readline()
+    # Hash data for easy access
+    map_hash = {key: (value1, value2) for (key, value1, value2) in zip(sample_ids, forward_barcodes, reverse_barcodes)}
+    verbose_template = '{} Writing {}'
+    count = 0
 
-                line = f.readline()
+    # Generate output for each sample's forward and reverse input files
+    for key in map_hash:
+        forward_filename = filename_template.format(key, 1)
+        reverse_filename = filename_template.format(key, 2)
 
-            # Write output file to output_dir
-            p_out = Path(output_dir) / filename
-            p_out.touch()
-            p_out.write_bytes(gzip.compress(out.encode('utf-8')))
-            print(count, 'written', filename)
-            count += 1
+        # Create output files
+        forward_output = Path(output_dir) / forward_filename
+        reverse_output = Path(output_dir) / reverse_filename
+        forward_output.touch()
+        reverse_output.touch()
+
+        # Forward Reads
+        count += 1
+        Logger.debug(verbose_template.format(count, forward_filename))
+        if verbose:
+            print(verbose_template.format(count, forward_filename))
+        # Generate error-stripped content and write gzipped output
+        with gzip.open(forward_output, 'wt') as f:
+            f.write(
+                get_stripped_file_content(
+                    num_allowed_errors,
+                    map_hash[key][0],
+                    map_hash[key][1],
+                    Path(input_dir) / forward_filename
+                )
+            )
+
+        # Reverse Reads
+        count += 1
+        Logger.debug(verbose_template.format(count, reverse_filename))
+        if verbose:
+            print(verbose_template.format(count, reverse_filename))
+        # Generate error-stripped content and write gzipped output
+        with gzip.open(reverse_output, 'wt') as f:
+            f.write(
+                get_stripped_file_content(
+                    num_allowed_errors,
+                    map_hash[key][0],
+                    map_hash[key][1],
+                    Path(input_dir) / reverse_filename
+                )
+            )
+
+
+def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barcode, filename):
+    """
+    Get the error-stripped content of one demultiplexed fastq file
+    ==============================================================
+    :num_allowed_errors: Maximum number of errors in barcode pairs to not be stripped
+    :forward_barcode: First of two barcodes associated with the sample
+    :reverse_barcode: Second of two barcodes associated with the sample
+    :filename: Absolute Path object to demultiplexed fastq file
+    """
+    content = ''
+    f = gzip.open(filename, mode='rt')
+
+    # This raw string pattern matches one entire read in the format used by the pheniqs library demultiplexer
+    # The two sections in parentheses match to the forward and reverse barcodes that were used to assign the read
+    # Example of this pattern: '@M00914:50:00000-JN85L:1:1101:18345:1663 2:N:0:CTCGACTT=ATCGTACG
+    #                           TACCGTACCCGTTACGTTTACGTGACCGTAGGGCAGAAATGAACCAGTAGACCGATTACGATT
+    #                           +
+    #                           ABBBBBBBBBBBBBBBCC///>----A---09'
+    pattern = r'@M.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n'
+
+    # Create an iterator for which the .group method contains (whole_read, forward_barcode, reverse_barcode)
+    reads = re.finditer(pattern, f.read())
+    read = next(reads, None)
+    while read:
+
+        # Use Levenshtein distance on each barcode to determine error count
+        diff = lev.distance(read.group(1), forward_barcode)
+        diff += lev.distance(read.group(2), reverse_barcode)
+
+        # Add read to the output if there are few enough errors
+        if diff <= num_allowed_errors:
+            content += read.group(0)
+
+        read = next(reads, None)
+
+    return content
 
 
 def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse_mapcodes):

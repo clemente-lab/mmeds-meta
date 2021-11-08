@@ -18,7 +18,7 @@ config = load_config(Path('config_file.yaml'), Path('metadata.tsv'), True)
 
 # Load metadata file
 if '{analysis_type}' == 'qiime2':
-    mdf = pd.read_csv('qiime_mapping_file.tsv', skiprows=[1], sep='\t')
+    mdf = pd.read_csv('qiime_mapping_file.tsv', skiprows=[1], sep='\t', dtype={{'#SampleID': 'str'}})
 else:
     mdf = pd.read_csv('qiime_mapping_file.tsv', sep='\t')
 mdf.set_index('#SampleID', inplace=True)
@@ -122,6 +122,7 @@ df = df.apply(lambda x: x / x.sum(), axis='index')
 df = df.T.reset_index(level=0).melt('index')
 # Rename the columns
 df.rename({{'index': 'variable', 'variable': 'X.OTU.ID'}}, axis='columns', inplace=True)
+df = df.astype({{'variable': 'str'}})
 # Modify the metadata
 mdf_lite = mdf.reset_index()
 mdf_lite = mdf_lite[['#SampleID', '{group}']].rename({{'#SampleID': 'variable'}}, axis='columns')
