@@ -40,7 +40,6 @@ def validate_demux(data_dir,
     # parse barcode files
     for demux_file in Path(data_dir).glob('*.fastq.*'):
         is_gzip = '.gz' in Path(demux_file).suffixes
-        print(f'is gzip: {is_gzip}')
         if is_gzip:
             demux_file = str(demux_file).replace('.gz', '')
         validate_demultiplex(demux_file, forward_barcodes,

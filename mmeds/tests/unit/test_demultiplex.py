@@ -106,23 +106,6 @@ class DemultiplexTests(TestCase):
             Logger.debug(e)
             print(e.output)
 
-    def test_strip_error_barcodes(self):
-        """ Test stripping errors from demuxed fastq.gz files """
-        map_df = pd.read_csv(Path(self.mapping), sep='\t', header=[0], na_filter=False)
-        map_hash = {}
-
-        for i in range(len(map_df['#SampleID'])):
-            if i > 0:
-                map_hash[map_df['#SampleID'][i]] = \
-                    (
-                        map_df['BarcodeSequence'][i],
-                        map_df['BarcodeSequenceR'][i]
-                    )
-
-        strip_error_barcodes(1, map_hash, self.out_dir, self.strip_dir)
-        p_test = self.strip_dir / '{}_S1_L001_R1_001.fastq.gz'.format(map_df['#SampleID'][1])
-        assert p_test.exists()
-
     @classmethod
     def tearDownClass(self):
         """ Set up tests """
