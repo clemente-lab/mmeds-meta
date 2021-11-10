@@ -43,7 +43,6 @@ class Qiime2(Tool):
         cmd = 'source activate {};'.format(full_env)
         self.jobtext.append(cmd)
 
-
     def qimport(self, write=True):
         """ Split the libraries and perform quality analysis. """
 
@@ -186,9 +185,9 @@ class Qiime2(Tool):
             cmd = [
                 'strip_error_barcodes.py',
                 '--num-allowed-errors {}'.format(1),
-                '--mapping-file {}'.format(self.get_file('mapping')),
-                '--input-dir {}'.format(self.get_file('pheniqs_dir')),
-                '--output-dir {};'.format(self.get_file('stripped_dir'))
+                '--m-mapping-file {}'.format(self.get_file('mapping')),
+                '--i-directory {}'.format(self.get_file('pheniqs_dir')),
+                '--o-directory {};'.format(self.get_file('stripped_dir'))
             ]
             self.jobtext.append(' '.join(cmd))
 
@@ -394,19 +393,20 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def alpha_diversity(self, metric='faith_pd'):
+    def alpha_diversity(self, metrics=['faith_pd', 'shannon', 'observed_features']):
         """
         Run core diversity.
-        metric : ('faith_pd' or 'evenness')
+        metric : ('faith_pd' 'shannon', or 'observed_features')
         """
-        self.add_path('{}_group_significance'.format(metric), '.qzv')
-        cmd = [
-            'qiime diversity alpha-group-significance',
-            '--i-alpha-diversity {}'.format(self.get_file('core_metrics_results') / '{}_vector.qza'.format(metric)),
-            '--m-metadata-file {}'.format(self.get_file('mapping')),
-            '--o-visualization {}&'.format(self.get_file('{}_group_significance'.format(metric)))
-        ]
-        self.jobtext.append(' '.join(cmd))
+        for metric in metrics:
+            self.add_path('{}_group_significance'.format(metric), '.qzv')
+            cmd = [
+                'qiime diversity alpha-group-significance',
+                '--i-alpha-diversity {}'.format(self.get_file('core_metrics_results') / '{}_vector.qza'.format(metric)),
+                '--m-metadata-file {}'.format(self.get_file('mapping')),
+                '--o-visualization {}&'.format(self.get_file('{}_group_significance'.format(metric)))
+            ]
+            self.jobtext.append(' '.join(cmd))
 
     def beta_diversity(self, column='Nationality'):
         """
