@@ -1086,23 +1086,24 @@ def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, ma
     # get matching sample
     matched_sample = None
     for sample in map_df[('#SampleID', '#q2:types')]:
-        if sample in file_name:
+        if str(sample) == file_name.split('_')[0] or\
+                str(sample) == f'{file_name.split("_")[0]}_{file_name.split("_")[1]}':
             matched_sample = sample
             break
 
     # filter mapping file down to said sample
     map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
-    map_df = map_df.filter(like=matched_sample, axis='index')
+    map_df = map_df.filter(items=[matched_sample], axis='index')
 
     # Get barcodes for that sample
     results_dict, full_dict, barcode_ids = parse_barcodes(for_barcodes, rev_barcodes,
                                                           map_df[('BarcodeSequence', 'categorical')].tolist(),
                                                           map_df[('BarcodeSequenceR', 'categorical')].tolist())
-    map_df = map_df.append([map_df]*(len(barcode_ids)-1), ignore_index=True)
+    # map_df = map_df.append([map_df]*(len(barcode_ids)-1), ignore_index=True)
     map_df.reset_index(drop=True, inplace=True)
 
     # replace sampleIDs with barcodes
-    map_df[('#SampleID', '#q2:types')] = barcode_ids
+    map_df[('#SampleID', '#q2:types')] = pd.Series(barcode_ids)
     map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.split(' ', expand=True)[0]
     map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.replace('@', '')
 
@@ -1172,7 +1173,9 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
 
         run(create_fastq_copy, capture_output=True, check=True)
         run(create_fasta_file, capture_output=True, check=True)
-        run(validate_demux_file, capture_output=True, env=new_env, check=True, shell=True)
+        output = run(validate_demux_file, capture_output=True, env=new_env, check=True, shell=True)
+        print('validate output')
+        print(output)
 
         if is_gzip:
             run(gzip_demux_file, capture_output=True, check=True)

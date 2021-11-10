@@ -3,6 +3,7 @@
 import click
 import pandas as pd
 from pathlib import Path
+from subprocess import run, CalledProcessError
 
 from mmeds.util import validate_demultiplex
 
@@ -35,15 +36,35 @@ def validate_demux(data_dir,
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
 
-    # map_df = pd.read_csv(map_path, sep="\t", skiprows=[0, 2, 3, 4])
+    gzipped_barcodes = '.gz' in Path(forward_barcodes).suffixes
+    if gzipped_barcodes:
+        gunzip_forward_barcodes = ['gunzip', f'{forward_barcodes}']
+        gunzip_reverse_barcodes = ['gunzip', f'{reverse_barcodes}']
+        try:
+            run(gunzip_forward_barcodes, capture_output=True, check=True)
+            run(gunzip_reverse_barcodes, capture_output=True, check=True)
+        except CalledProcessError as e:
+            print(e.output)
+
+        forward_barcodes = forward_barcodes.replace('.gz', '')
+        reverse_barcodes = reverse_barcodes.replace('.gz', '')
 
     # parse barcode files
-    for demux_file in Path(data_dir).glob('*.fastq.*'):
+    for demux_file in Path(data_dir).glob('*.fastq*'):
         is_gzip = '.gz' in Path(demux_file).suffixes
         if is_gzip:
             demux_file = str(demux_file).replace('.gz', '')
         validate_demultiplex(demux_file, forward_barcodes,
                              reverse_barcodes, map_path, output_dir, is_gzip, True)
+
+    if gzipped_barcodes:
+        gzip_forward_barcodes = ['gzip', f'{forward_barcodes}']
+        gzip_reverse_barcodes = ['gzip', f'{reverse_barcodes}']
+        try:
+            run(gzip_forward_barcodes, capture_output=True, check=True)
+            run(gzip_reverse_barcodes, capture_output=True, check=True)
+        except CalledProcessError as e:
+            print(e.output)
 
 
 if __name__ == '__main__':
