@@ -2,8 +2,6 @@ from unittest import TestCase
 import mmeds.config as fig
 import pandas as pd
 from subprocess import run, CalledProcessError
-# import unittest
-
 
 from pathlib import Path
 from mmeds.util import make_pheniqs_config, strip_error_barcodes, setup_environment, validate_demultiplex

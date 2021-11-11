@@ -1250,9 +1250,13 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     map_file = f'{Path(demux_file).parent}/{Path(demux_file).stem}_qiime_barcode_mapfile.tsv'
 
     gunzip_demux_file = ['gunzip', f'{demux_file}.gz']
-    create_fastq_copy = ['cp', f'{demux_file}', f'{test_file}']
-    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{test_file}']
     gzip_demux_file = ['gzip', demux_file]
+    create_fastq_copy = ['cp', f'{demux_file}', f'{test_file}']
+
+    # to create the fasta file, on every line mod4 = 1, replace @ with >
+    # then on every line mod4 = 2, print the line. then skip all other lines.
+    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{test_file}']
+
 
     # Call qiime1 validate demultiplex script
     if on_chimera:
@@ -1275,8 +1279,6 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         run(create_fastq_copy, capture_output=True, check=True)
         run(create_fasta_file, capture_output=True, check=True)
         validate_output = run(validate_demux_file, capture_output=True, env=new_env, check=True, shell=True)
-        print('validate output')
-        print(validate_output)
 
         if is_gzip:
             run(gzip_demux_file, capture_output=True, check=True)

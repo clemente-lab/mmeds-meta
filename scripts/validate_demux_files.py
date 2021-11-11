@@ -36,6 +36,7 @@ def validate_demux(data_dir,
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
 
+    # handle gzipped barcodes
     gzipped_barcodes = '.gz' in Path(forward_barcodes).suffixes
     if gzipped_barcodes:
         gunzip_forward_barcodes = ['gunzip', f'{forward_barcodes}']
@@ -49,7 +50,7 @@ def validate_demux(data_dir,
         forward_barcodes = forward_barcodes.replace('.gz', '')
         reverse_barcodes = reverse_barcodes.replace('.gz', '')
 
-    # parse barcode files
+    # run validate on each demultiplexed file in the directory
     results_dict = {}
     full_dict = {}
     for demux_file in Path(data_dir).glob('*.fastq*'):
@@ -67,6 +68,7 @@ def validate_demux(data_dir,
                                                                                            is_gzip,
                                                                                            True)
 
+        # Traceback error can occur if there's a problem with the demultiplexed file.
         if 'Traceback' in str(validate_output):
             log_file = Path(output_dir) / f'{Path(demux_file).stem}_validate_error.log'
             log_file.write_text('error validating demultiplex file')
@@ -74,10 +76,11 @@ def validate_demux(data_dir,
         results_dict[f'{Path(demux_file).stem}'] = matched_barcodes_count
         full_dict[f'{Path(demux_file).stem}'] = all_barcodes_count
 
-    # Ouput read counts for only barcodes matched to in the mapping file
+    # ouput read counts for only barcodes matched to in the mapping file
     results_table = pd.DataFrame.from_dict(results_dict, orient='index')
     results_table.reset_index(inplace=True)
-    # Output read counts for all barcodes
+
+    # output read counts for all barcodes
     full_table = pd.DataFrame.from_dict(full_dict, orient='index')
     full_table.reset_index(inplace=True)
 
