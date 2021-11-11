@@ -8,7 +8,6 @@ import mmeds.formatter as fmt
 import mongoengine as men
 import pymysql as pms
 import pandas as pd
-import numpy as np
 
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +18,7 @@ from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError,
 from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes)
 from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.database.sql_builder import SQLBuilder
-from mmeds.documents import MMEDSDoc
+from mmeds.database.documents import MMEDSDoc
 from mmeds.logging import Logger
 
 DAYS = 13
@@ -27,6 +26,10 @@ DAYS = 13
 
 # Used in test_cases
 def upload_metadata(args):
+    """
+    This function wraps the metadatauploader class for when you want to run the upload
+    in the current process rather than spinning up a new one
+    """
     (subject_metadata, subject_type, specimen_metadata, path, owner, study_name,
      reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code, testing) = args
     if for_reads is not None and 'zip' in for_reads:
@@ -42,6 +45,10 @@ def upload_metadata(args):
 
 
 def upload_otu(args):
+    """
+    Same idea as `upload_metadata` except uploads an otu table rather than fastq files. Upload_metadata should
+    maybe re-named to clarify that it's actually a fastq upload.
+    """
     (subject_metadata, subject_type, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
     datafiles = {'otu_table': otu_table}
     p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'sparcc', 'otu_table',
@@ -51,6 +58,9 @@ def upload_otu(args):
 
 
 def upload_lefse(args):
+    """
+    Same as the other two but this time for lefse tables.
+    """
     (subject_metadata, subject_type, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
     datafiles = {'lefse_table': lefse_table}
 
@@ -78,6 +88,9 @@ class Database:
         self.owner = owner
         self.user = user
         self.testing = testing
+
+        # This is a great spot for a switch statement to
+        # replaces these if/else blocks
 
         # If testing connect to test server
         if testing:
@@ -206,7 +219,9 @@ class Database:
         return result[0]
 
     def get_hash_and_salt(self, username):
-        """ Get the hash and salt values for the specified user. """
+        """
+        Get the hashed password and salt values for the specified user.
+        """
         sql = 'SELECT `password`, `salt` FROM `user` WHERE `username` = %(username)s'
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'username': username})
@@ -226,7 +241,11 @@ class Database:
         return [name[0] for name in result]
 
     def set_mmeds_user(self, user):
-        """ Set the session to the current user of the webapp. """
+        """
+        Set the session to the current user of the webapp.
+        This needs to be done before any user queries to ensure the
+        row level security works as intended.
+        """
         sql = 'SELECT set_connection_auth(%(user)s, %(token)s)'
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'user': user, 'token': sec.SECURITY_TOKEN})
@@ -252,6 +271,7 @@ class Database:
     def build_html_table(self, header, data):
         """
         Return an HTML formatted table containing the results of the provided query
+        ===========================================================================
         :header: List, The column names
         :data: List of Tuples, The rows of the columns
         """
@@ -275,9 +295,13 @@ class Database:
         html += '</table>'
         return html
 
-    @classmethod
-    def format_results(cls, header, data):
-        """ Takes the results from a query and formats them into a python dict """
+    def format_results(self, header, data):
+        """
+        Takes the results from a query and formats them into a python dic
+        ==================================================================
+        :header: Header information for the query, typically column names for the queried table
+        :data: The raw results from the query
+        """
         formatted = defaultdict(list)
         for row in data:
             for column, value in zip(header, row):
@@ -384,6 +408,9 @@ class Database:
                 r_tables = []
 
     def get_col_values_from_table(self, column, table):
+        """
+        Returns the values of the specified column of the specified table
+        """
         sql = quote_sql('SELECT {column} FROM {table}', column=column, table=table)
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'column': column, 'table': table})
@@ -391,7 +418,19 @@ class Database:
         return data
 
     def add_user(self, username, password, salt, email, privilege_level, reset_needed=0):
-        """ Add the user with the specified parameters. """
+        """
+        Add a new user to the MySQL with the specified parameters.
+        ==========================================================
+        :username: A String. The new users name
+        :password: A string. A hash of the users provided password + salt
+        :salt: A string. A short unique string used to ensure that if the same password
+            is used by multiple users they won't have the same hashes
+        :email: A string. The email of the user.
+        :privilege_level: An int. For now either 0 or 1. 0 by default, but lab users
+            can be promoted to privilege_level 1 for advanced features and access to
+            all uploaded studies
+        :reset_needed: An int. An indicator, when 1 the user needs to update their password
+        """
         with self.db.cursor() as cursor:
             cursor.execute('SELECT MAX(user_id) FROM user')
             user_id = int(cursor.fetchone()[0]) + 1
@@ -412,8 +451,9 @@ class Database:
         Logger.info('USER {} HAS BEEN ADDED'.format(username))
 
     def set_reset_needed(self, reset_needed):
-        """ Update the 'reset_needed' value, which forces the user to change their
-            password before continuing
+        """
+        Update the 'reset_needed' value in the `user` table of the MySQL DB.
+        This forces the user to change their password before continuing.
         """
         reset_needed = int(reset_needed)
         sql = 'SELECT * FROM `user` WHERE `username` = %(uname)s'
@@ -444,7 +484,6 @@ class Database:
         with self.db.cursor() as cursor:
             cursor.execute(sql, {'uname': self.owner})
             result = cursor.fetchone()
-
             return result[6]
 
     def remove_user(self, username):
@@ -498,7 +537,7 @@ class Database:
                         data from the metadata file being uploaded
         :main_table: The primary table that this upload links to. So
                         for a new Aliquot the :main_table: is Specimen,
-        a new Sample, the :main_table: is Aliquot
+                        a new Sample, the :main_table: is Aliquot
         :known_id: The id of the primary key in the main table that
                         this row relates to
         """
@@ -532,7 +571,15 @@ class Database:
             known_fkeys[f'{table}_id{table}'] = fkey
 
     def generate_aliquot_id(self, generate_id, StudyName, SpecimenID, **kwargs):
-        """ Generate a new id for the aliquot with the given weight """
+        """
+        Generate a new id for the aliquot with the given weight
+        =======================================================
+        :generate_id: A Boolean, when true a new ID will be created from the existing SpecimenID
+                If false the Aliquots ID must already be in kwargs
+        :StudyName: Name of study this aliquot will belong to
+        :SpecimenID: A string. The ID of the Specimen this Aliquot is taken from
+        :kwargs: A dictionary. The other properties of this Aliquot, other than the ID
+        """
 
         # Get the SQL id of the Specimen this should be associated with
         data, header = self.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='`idSpecimen`',
@@ -565,7 +612,15 @@ class Database:
             return AliquotID
 
     def generate_sample_id(self, generate_id, StudyName, AliquotID, **kwargs):
-        """ Generate a new id for the aliquot with the given weight """
+        """
+        Generate a new id for the sample with the given weight
+        =======================================================
+        :generate_id: A Boolean, when true a new ID will be created from the existing AliquotID
+                If false the Samples ID must already be in kwargs
+        :StudyName: Name of study this Sample belongs to
+        :AliquotID: A string. The ID of the Aliquot this Sample is taken from
+        :kwargs: A dictionary. The other properties of this Sample, other than the ID
+        """
 
         # Get the SQL id of the Aliquot this should be associated with
         data, header = self.execute(fmt.GET_ALIQUOT_QUERY.format(column='idAliquot',
@@ -594,13 +649,19 @@ class Database:
             return SampleID
 
     def add_subject_data(self, generate_id, StudyName, HostSubjectId, **kwargs):
+        """
+        Like `generate_aliquot_id` and `generate_sample_id` but for new subjects.
+        It doesn't have functionality for generating the ID within this method so that parameter
+        is just there for consistency. Really it should probably be a default parameter
+        of `generate_id=False` for all these methods.
+        """
         # Get the SQL id of the subject this should be associated with
         data, header = self.execute(fmt.SELECT_COLUMN_SUBJECT_QUERY.format(column='idSubjects',
                                                                            HostSubjectId=HostSubjectId,
                                                                            StudyName=StudyName), False)
         idSubjects = int(data[0][0])
 
-        # kwargs['idSubjects'] = SampleID
+        # Create a multi-index to stand in for the subject metadata
         multi_index = pd.MultiIndex.from_tuples([fig.MMEDS_MAP[key] for key in kwargs.keys()])
         entry_frame = parse_ICD_codes(pd.DataFrame([kwargs.values()], columns=multi_index))
         entry_frame.drop(('ICDCode', 'ICDCode'), axis=1, inplace=True)
@@ -608,11 +669,13 @@ class Database:
 
     def insert_into_table(self, data, table, entry_frame, known_fkeys):
         """
-        Insert the provided data into the specified table.
+        Insert the provided data into the specified table. This has to build out a full
+        row for the table, foreign keys and all.
         --------------------------------------------------
         :data: A dict containing the data for this row
         :table: A string. The name of the table to add data to.
-        :builder: A SQLBuilder instance
+        :entry_frame: A dataframe containing the data to enter as a new row
+        :known_fkeys: The already known foreign keys for this table
         """
         # Create the query
         builder = SQLBuilder(entry_frame, self.db, self.owner)
@@ -659,18 +722,26 @@ class Database:
         return fkey
 
     def create_ids_file(self, study_name, id_type):
-        """ Create a file containing the requested ID information and return the path to it """
+        """
+        Create a file containing the requested ID information and return the path to it.
+        ================================================================================
+        :study_name: A string. The name of the study to get IDs from.
+        :id_type: A string. The type of IDs to return. Sample, Aliquot, etc
+        """
         id_list = []
         with self.db.cursor() as cursor:
+            # Get all the specimen in the given study
             cursor.execute(fmt.SELECT_SPECIMEN_QUERY.format(StudyName=study_name))
             specimen = cursor.fetchall()
             for speciman in specimen:
+                # Get each Specimen ID
                 cursor.execute(fmt.SELECT_COLUMN_SPECIMEN_QUERY.format(column='idSpecimen',
                                                                        StudyName=study_name,
                                                                        SpecimenID=speciman[0]))
                 id_specimen = cursor.fetchone()
 
                 aliquot_data, header = self.execute(fmt.SELECT_ALIQUOT_QUERY.format(idSpecimen=id_specimen[0]))
+
                 # If aliquots were requested this create the table for them
                 if id_type == 'aliquot':
                     id_list += ['\t'.join([str(col) for col in row]) for row in aliquot_data]
@@ -681,6 +752,7 @@ class Database:
                         sample_data, header = self.execute(fmt.SELECT_SAMPLE_QUERY.format(idAliquot=id_ali))
                         id_list += ['\t'.join([str(col) for col in row]) for row in sample_data]
 
+        # Make sure the output location for this is valid
         if not self.path.is_dir():
             self.path.mkdir()
         id_table = self.path / f'{study_name}_{id_type}_id_table.tsv'
@@ -690,8 +762,7 @@ class Database:
     ########################################
     #               MongoDB                #
     ########################################
-    @classmethod
-    def create_access_code(cls, check_code=None, length=20):
+    def create_access_code(self, check_code=None, length=20):
         """ Creates a unique code for identifying a mongo db document """
         if check_code is None:
             check_code = fig.get_salt(20)
@@ -704,6 +775,7 @@ class Database:
         return code
 
     def mongo_clean(self, access_code):
+        """ Delete all mongo objects with the given access_code """
         obs = MMEDSDoc.objects(access_code=access_code)
         for ob in obs:
             ob.delete()
@@ -829,7 +901,7 @@ class Database:
         return warnings
 
     def check_user_study_name(self, study_name):
-        """ Checks if the current user has uploaded a study with the same name. """
+        """ Checks if the current user has already uploaded a study with the same name. """
 
         sql = 'SELECT * FROM `Study` WHERE `user_id` = %(id)s and `Study`.`StudyName` = %(study)s'
         with self.db.cursor() as cursor:
@@ -854,7 +926,7 @@ class Database:
             raise MissingUploadError()
         for path in mdata.files.values():
             if not Path(path).exists():
-                raise MissingFileError('File {}, does not exist')
+                raise MissingFileError('File {}, does not exist'.format(path))
 
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
@@ -898,23 +970,19 @@ class Database:
         if MMEDSDoc.objects(study_name=study_name):
             raise StudyNameError(f"Study name {study_name} already in use")
 
-    @classmethod
-    def get_all_studies(cls):
+    def get_all_studies(self):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(doc_type='study')
 
-    @classmethod
-    def get_all_analyses(cls):
+    def get_all_analyses(self):
         """ Return all analyses currently stored in the database. """
         return MMEDSDoc.objects(doc_type='analysis')
 
-    @classmethod
-    def get_all_user_studies(cls, user):
+    def get_all_user_studies(self, user):
         """ Return all studies currently stored in the database owned by USER. """
         return MMEDSDoc.objects(doc_type='study', owner=user)
 
-    @classmethod
-    def get_all_analyses_from_study(cls, access_code):
+    def get_all_analyses_from_study(self, access_code):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(study_code=access_code)
 
@@ -928,9 +996,8 @@ class Database:
                 del mdata.files[key]
         return empty_files
 
-    @classmethod
-    def delete_mongo_documents(cls):
-        """ Clear all metadata documents associated with the provided username. """
+    def delete_mongo_documents(self):
+        """ Clear all metadata documents. This may be necessary if the MMEDSDoc class is modified """
         data = list(MMEDSDoc.objects())
         for doc in data:
             doc.delete()
@@ -941,17 +1008,18 @@ class Database:
         for doc in data:
             doc.delete()
 
-    @classmethod
-    def get_study_from_access_code(cls, code):
-        """ For server use """
+    def get_study_from_access_code(self, code):
+        """ Get the document for the study with the given access_code"""
         return MMEDSDoc.objects(access_code=code).first()
 
-    @classmethod
-    def get_access_code_from_study_name(cls, study, username):
-        """ For server use """
+    def get_access_code_from_study_name(self, study, username):
+        """ Returns the access code of the study with the provided properties """
         return MMEDSDoc.objects(owner=username, study_name=study).first().access_code
 
-    @classmethod
-    def get_docs(cls, **kwargs):
-        """ For server use """
+    def get_docs(self, **kwargs):
+        """
+        This is a general purpose getter. It passes all arugments provided into
+        the mongoengine objects request. Mostly I've used this when debugging document
+        issues through mongoengine and the python shell.
+        """
         return MMEDSDoc.objects(**kwargs)

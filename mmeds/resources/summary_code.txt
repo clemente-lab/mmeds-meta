@@ -31,7 +31,7 @@ max_colors = 0
 max_colors_con = 0
 # Create information for R color palettes
 for group_name in metadata_columns:
-    if not mdf[group_name].isnull().all():
+    if group_name in mdf and not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         uni = grouping.nunique()
         if config['metadata_continuous'][group_name]:
@@ -312,7 +312,12 @@ for group_name in metadata_columns:
 
 # Stack all the different groups into a single dataframe
 df = pd.concat(group_means, axis=0, sort=False)
-df.SamplingDepth = df.SamplingDepth.astype(int)
+df.SamplingDepth = df.SamplingDepth.astype(float)
+df.Error = df.Error.astype(float)
+df.AverageValue = df.AverageValue.astype(float)
+df.Grouping = df.Grouping.astype(str)
+df.GroupID = df.GroupID.astype(str)
+df.GroupName = df.GroupName.astype(str)
 =====
 alpha_r<source>
 %%R -i df
@@ -355,7 +360,7 @@ cols = {{x:'PC{{}}'.format(x + 1) for x in df.columns}}
 df = df.rename(index=str, columns=cols)
 
 # Assign GroupIDs based on metadata
-samples = mdf['{group}'][df.axes[0]]
+samples = mdf['{group}'][[x for x in df.axes[0]]]
 df = df.assign(GroupID=[color_maps['{group}'][str(x)] for x in samples])
 =====
 beta_r<source>
@@ -363,7 +368,10 @@ beta_r<source>
 
 # Create the plots for the first three PCs
 png('{plot}', width = 6, height = 6, unit='in', res=200)
-p <- ggpairs(df[,c(1:3)], aes(color = df$GroupID, label = rownames(df), alpha=0.5)) +
+p <- ggpairs(df[,c(1:3)],
+             upper = list(continuous = "points", combo = "box_no_facet"),
+             lower = list(continuous = "points", combo = "dot_no_facet"),
+             aes(color = df$GroupID, label = rownames(df), alpha=0.5)) +
          theme_bw() +
          theme(legend.position = 'none',
                plot.title = element_text(hjust = 0.5),
@@ -514,7 +522,7 @@ for row in otu_percs.itertuples():
     RGB = tuple(otuAllRGB{level}[otu])
 
     # Align sample names
-    perc = 100 * float(otu_percs.loc[otu])
+    perc = 100 * float(otu_percs.loc[otu]['value'])
     if perc < 1:
         perc_text = '<0.01'
     elif perc < 10:

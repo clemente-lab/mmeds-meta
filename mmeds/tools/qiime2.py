@@ -71,6 +71,7 @@ class Qiime2(Tool):
                                      self.get_file('working_dir'),
                                      self.get_file('working_file'))
             elif 'paired_end' == self.doc.reads_type:
+
                 # Create links to the data in the qiime2 import directory
                 (self.get_file('working_dir', True) /
                  'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
@@ -112,7 +113,10 @@ class Qiime2(Tool):
         self.jobtext.append(' '.join(cmd))
 
     def demultiplex(self):
-        """ Demultiplex the reads. """
+        """
+        Demultiplex the reads.
+        NOTE: Great place to put a switch statement.
+        """
         # Add the otu directory to the MetaData object
         self.add_path('demux_file', '.qza')
         self.add_path('error_correction', '.qza')
@@ -174,7 +178,7 @@ class Qiime2(Tool):
             ]
             self.jobtext.append(' '.join(cmd))
 
-            self.jobtext.append('source activate qiime2-2020.8;')
+            self.jobtext.append('source activate qiime2-2020.8.0;')
 
         elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
@@ -576,7 +580,9 @@ class Qiime2(Tool):
         # Run these commands in parallel
         self.alpha_diversity()
         for col in self.doc.config['metadata']:
-            self.beta_diversity(col)
+            # Don't run on continuous columns
+            if not self.doc.config['metadata_continuous'][col]:
+                self.beta_diversity(col)
         self.alpha_rarefaction()
 
         # Wait for them all to finish
@@ -590,10 +596,12 @@ class Qiime2(Tool):
         self.taxa_diversity()
         # Calculate group significance
         for col in self.doc.config['metadata']:
-            self.group_significance(col)
-            # For the requested taxanomic levels
-            for level in self.doc.config['taxa_levels']:
-                self.group_significance(col, level)
+            # Do not group if the metadata is continuous
+            if not self.doc.config['metadata_continuous'][col]:
+                self.group_significance(col)
+                # For the requested taxanomic levels
+                for level in self.doc.config['taxa_levels']:
+                    self.group_significance(col, level)
         self.jobtext.append('wait')
         if self.kill_stage == 4:
             self.jobtext.append('exit 4')

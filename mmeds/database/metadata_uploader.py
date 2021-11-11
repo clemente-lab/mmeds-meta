@@ -14,11 +14,14 @@ from mmeds.error import NoResultError
 from mmeds.util import (quote_sql, parse_ICD_codes, send_email, create_local_copy,
                         load_metadata, join_metadata, write_metadata)
 from mmeds.database.sql_builder import SQLBuilder
-from mmeds.documents import MMEDSDoc
+from mmeds.database.documents import MMEDSDoc
 from mmeds.logging import Logger
 
 
 class MetaDataUploader(Process):
+    """
+    This class handles the yprocessing and uploading of mmeds metadata files into the MySQL database.
+    """
     def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
                  reads_type, barcodes_type, study_name, temporary, data_files,
                  public, testing, access_code=None):
@@ -64,6 +67,7 @@ class MetaDataUploader(Process):
         self.datafiles = data_files
         self.created = datetime.now()
 
+        # Like Database, this should be replaced with a switch statement
         # If testing connect to test server
         if testing:
             self.db = pms.connect(host='localhost',
@@ -115,17 +119,17 @@ class MetaDataUploader(Process):
         self.mdata.save()
 
         count = 0
-        new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
+        new_dir = fig.STUDIES_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
         while new_dir.is_dir():
             count += 1
-            new_dir = fig.DATABASE_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
+            new_dir = fig.STUDIES_DIR / ('{}_{}_{}'.format(self.owner, self.study_name, count))
         new_dir.mkdir()
 
         self.path = Path(new_dir) / 'database_files'
         MMEDSDoc.objects.timeout(False)
 
     def get_info(self):
-        """ Method for return a dictionary of relevant info for the process log """
+        """ Method to return a dictionary of relevant info for the process log """
         info = {
             'created': self.created,
             'type': 'upload',
@@ -271,10 +275,10 @@ class MetaDataUploader(Process):
 
     def create_import_data(self, table, verbose=True):
         """
-        Fill out the dictionaries used to create the input files
-        from the input data file.
+        Fill out the dictionaries used to create the input files from the input data file.
+        =================================================================================
         :table: The table in the database to create the import data for
-        :df: The dataframe containing all the metadata
+        :verbose: Doesn't do anything currently. Intended to be a logging flag
         """
         sql = quote_sql('SELECT MAX({idtable}) FROM {table}', idtable='id' + table, table=table)
 
@@ -361,8 +365,7 @@ class MetaDataUploader(Process):
 
     def create_import_file(self, table):
         """
-        Create the file to load into each table referenced in the
-        metadata input file
+        Create the file to load into each table referenced in the metadata input file
         """
         # Get the structure of the table currently being filled out
 

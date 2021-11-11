@@ -10,7 +10,14 @@ from mmeds.logging import Logger
 
 
 class MMEDSDoc(men.Document):
-    """ Class for MongoDB documents used in MMEDS """
+    """
+    Class for MongoDB documents used in MMEDS
+    =========================================
+    Note: If this class is modified it's often necessary to clear all
+    the existing documents that use the old specification from the database.
+    Otherwise MongoEngine will complain about certain document properties not
+    existing.
+    """
     created = men.DateTimeField(require=True)               # Datetime stamp of document creation
     last_accessed = men.DateTimeField(required=True)
     public = men.BooleanField()
@@ -130,7 +137,13 @@ class MMEDSDoc(men.Document):
         return child
 
     def generate_sub_analysis_doc(self, category, value, analysis_code):
-        """ Creates a new AnalysisDoc for a child analysis """
+        """
+        Creates a new AnalysisDoc for a child analysis
+        ==============================================
+        :category: The metadata column this analysis is being split off based on
+        :value: The value of the column for this particular sub-analysis
+        :analysis_code: The access_code to use for this sub-analysis
+        """
         Logger.debug('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
 
         count = 0

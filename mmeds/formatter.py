@@ -142,8 +142,10 @@ def build_clickable_table(header, data, page, common_args={}, row_args={}):
         html += '<tr class="w3-hover-blue">\n'
         for i, value in enumerate(row):
             row_html = '<td><a style="display:block" href="{page}?{args}"'
+            # For the first row set the class
             if i == 0:
                 row_html += ' class="row-link"'
+            # for following rows set the indent
             else:
                 row_html += ' tabindex="-1"'
             row_html += '>{value}</a></td>\n'

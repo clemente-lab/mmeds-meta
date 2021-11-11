@@ -16,8 +16,7 @@ import re
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
 # If not running on web01, can't connect to databases
-CONNECT_TO_DB = not ('li03c02' in getfqdn().split('.'))
-print(getfqdn())
+CONNECT_TO_DB = 'web01' in getfqdn().split('.')
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
@@ -56,6 +55,7 @@ else:
         DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
 
 
+STUDIES_DIR = DATABASE_DIR / 'studies'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 
 ############################
@@ -269,6 +269,18 @@ if not DATABASE_DIR.exists():
     except FileExistsError:
         pass
 
+if not STUDIES_DIR.exists():
+    try:
+        STUDIES_DIR.mkdir()
+    except FileExistsError:
+        pass
+
+if not SESSION_PATH.exists():
+    try:
+        SESSION_PATH.mkdir()
+    except FileExistsError:
+        pass
+
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
@@ -350,6 +362,13 @@ TEST_ANIMAL_CONFIG = str(TEST_PATH / 'test_config_animal.yaml')
 TEST_MAPPING = str(TEST_PATH / 'qiime_mapping_file.tsv')
 TEST_MAPPING_DUAL = str(TEST_PATH / 'qiime_mapping_file_dual.tsv')
 TEST_PHENIQS_DIR = str(TEST_PATH / 'test_pheniqs')
+TEST_STRIPPED_OUTPUT_DIR = str(TEST_PATH / 'test_stripped')
+TEST_STRIPPED_DIRS = [
+    str(TEST_PATH / 'test_stripped_0'),
+    str(TEST_PATH / 'test_stripped_1'),
+    str(TEST_PATH / 'test_stripped_2')
+]
+TEST_PHENIQS_MAPPING = str(TEST_PATH / 'test_pheniqs_mapping_file.tsv')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_SPECIMEN_SIMPLIFIED = str(TEST_PATH / 'test_specimen_simplified.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')

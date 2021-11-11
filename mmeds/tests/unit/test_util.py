@@ -8,9 +8,11 @@ from tempfile import gettempdir
 from tidylib import tidy_document
 from pandas import read_csv, DataFrame, MultiIndex
 from numpy import nan
+import Levenshtein as lev
 import mmeds.config as fig
 import hashlib as hl
 import os
+import gzip
 
 
 class UtilTests(TestCase):
@@ -264,3 +266,68 @@ class UtilTests(TestCase):
 
         parsed_df = util.parse_ICD_codes(df)
         assert check_df.equals(parsed_df)
+
+    def test_levenshtein_distance(self):
+        """ Test the python-Levenshtein library's distance function """
+        # To add more barcode tests, add tuples with format (string_1, string_2, expected_distance)
+        test_barcodes = [
+            ('', '', 0),
+            ('ACTG', 'ACTG', 0),
+            ('AAGGGGCC', 'AAGGGGCC', 0),
+            ('GCTAAA', 'GCTAAC', 1),
+            ('CTAG', 'CTA', 1),
+            ('CCAGTG', 'CGACTG', 2),
+            ('TTAAC', 'TTAACGA', 2),
+            ('', 'TAG', 3),
+            ('ACGGT', 'GCAATGT', 4),
+            ('ACTGACTG', 'ACTGACTGACTGACTG', 8)
+        ]
+
+        for str1, str2, expected_dist in test_barcodes:
+            actual_dist = lev.distance(str1, str2)
+            assert expected_dist == actual_dist
+
+    def test_strip_error_barcodes(self):
+        """ Test the stripping of errors from pheniqs-demultiplexed read files """
+        output_dir = Path(fig.TEST_STRIPPED_OUTPUT_DIR)
+        if not output_dir.is_dir():
+            output_dir.mkdir()
+
+        test_dirs = fig.TEST_STRIPPED_DIRS
+
+        # Test at three different error levels
+        error_levels = [0, 1, 2, 16]
+        for level in error_levels:
+            # Remove old test files from dir
+            for f in output_dir.glob('*'):
+                f.unlink()
+
+            util.strip_error_barcodes(
+                level,
+                fig.TEST_PHENIQS_MAPPING,
+                fig.TEST_PHENIQS_DIR,
+                fig.TEST_STRIPPED_OUTPUT_DIR,
+                False
+            )
+
+            # Assert correct number of output files
+            output_files = list(output_dir.glob('*'))
+            df = read_csv(Path(fig.TEST_PHENIQS_MAPPING), sep='\t', header=[0, 1], na_filter=False)
+            sample_ids = df[fig.QIIME_SAMPLE_ID_CATS[0]][fig.QIIME_SAMPLE_ID_CATS[1]]
+            assert len(output_files) == 2 * len(sample_ids)
+
+            if level < 3:
+                test_path = Path(test_dirs[level])
+            else:
+                test_path = Path(fig.TEST_PHENIQS_DIR)
+            # Assert all files match their expected values
+            for sample_id in sample_ids:
+                f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
+                f_test = gzip.open(test_path / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
+
+                assert f.read() == f_test.read()
+
+                f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
+                f_test = gzip.open(test_path / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
+
+                assert f.read() == f_test.read()
