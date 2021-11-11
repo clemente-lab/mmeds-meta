@@ -13,6 +13,7 @@ from time import sleep
 import yaml
 import gzip
 import pandas as pd
+import numpy as np
 import mmeds.config as fig
 from mmeds.logging import Logger
 from subprocess import CalledProcessError
@@ -1087,7 +1088,7 @@ def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, ma
     matched_sample = None
     for sample in map_df[('#SampleID', '#q2:types')]:
         if str(sample) == file_name.split('_')[0] or\
-                str(sample) == f'{file_name.split("_")[0]}_{file_name.split("_")[1]}':
+               str(sample) == f'{file_name.split("_")[0]}_{file_name.split("_")[1]}':
             matched_sample = sample
             break
 
@@ -1103,13 +1104,16 @@ def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, ma
     map_df.reset_index(drop=True, inplace=True)
 
     # replace sampleIDs with barcodes
-    map_df[('#SampleID', '#q2:types')] = pd.Series(barcode_ids)
+    map_df[('#SampleID', '#q2:types')] = pd.Series(barcode_ids, dtype=str)
     map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.split(' ', expand=True)[0]
     map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.replace('@', '')
 
     # make sure this column is first
     map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
     map_df.reset_index(inplace=True)
+
+    # add this column to the end of the mapping file, so it passes Qiime1 mapping file validation
+    map_df[('Description', 'categorical')] = np.nan
 
     map_df.to_csv(f'{output_dir}/{file_name}_qiime_barcode_mapfile.tsv', index=None, header=True, sep='\t')
     if ret_dicts:

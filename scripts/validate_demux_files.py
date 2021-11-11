@@ -56,8 +56,21 @@ def validate_demux(data_dir,
         is_gzip = '.gz' in Path(demux_file).suffixes
         if is_gzip:
             demux_file = str(demux_file).replace('.gz', '')
-        validate_output, matched_barcodes_count, all_barcodes_count = validate_demultiplex(demux_file, forward_barcodes,
-                             reverse_barcodes, map_path, output_dir, is_gzip, True)
+        # Ignore pheniqs file of unmatched reads
+        if 'undetermined' in demux_file:
+            continue
+        validate_output, matched_barcodes_count, all_barcodes_count = validate_demultiplex(demux_file,
+                                                                                           forward_barcodes,
+                                                                                           reverse_barcodes,
+                                                                                           map_path,
+                                                                                           output_dir,
+                                                                                           is_gzip,
+                                                                                           True)
+
+        if 'Traceback' in str(validate_output):
+            log_file = Path(output_dir) / f'{Path(demux_file).stem}_validate_error.log'
+            log_file.write_text('error validating demultiplex file')
+
         results_dict[f'{Path(demux_file).stem}'] = matched_barcodes_count
         full_dict[f'{Path(demux_file).stem}'] = all_barcodes_count
 
@@ -68,11 +81,10 @@ def validate_demux(data_dir,
     full_table = pd.DataFrame.from_dict(full_dict, orient='index')
     full_table.reset_index(inplace=True)
 
-    df_path = Path(output_dir) / 'all_barcodes.tsv'
-    df_path = Path(output_dir) / 'matched_barcodes.tsv'
-    results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
-    results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
-
+    all_path = Path(output_dir) / 'all_barcodes.tsv'
+    matched_path = Path(output_dir) / 'matched_barcodes.tsv'
+    results_table.to_csv((str(matched_path)), index=None, header=True, sep='\t')
+    full_table.to_csv((str(all_path)), index=None, header=True, sep='\t')
 
     # lastly, handle gzipping
     if gzipped_barcodes:
