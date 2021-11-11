@@ -13,6 +13,7 @@ TESTING = True
 
 
 def create_pheniqs_config(test_case):
+    ''' creates a config file for pheniqs demultiplexing'''
     out_s = make_pheniqs_config(
         test_case.for_reads + '.gz',
         test_case.rev_reads + '.gz',
@@ -30,38 +31,38 @@ def create_pheniqs_config(test_case):
 class DemultiplexTests(TestCase):
     """ Tests of scripts """
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """ Set up tests """
         # paths in config.py
-        self.mapping = fig.TEST_MAPPING_DUAL
-        self.for_reads = fig.TEST_READS_DUAL
-        self.rev_reads = fig.TEST_REV_READS_DUAL
-        self.for_barcodes = fig.TEST_BARCODES_DUAL
-        self.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
-        self.pheniqs_dir = fig.TEST_PHENIQS_DIR
+        cls.mapping = fig.TEST_MAPPING_DUAL
+        cls.for_reads = fig.TEST_READS_DUAL
+        cls.rev_reads = fig.TEST_REV_READS_DUAL
+        cls.for_barcodes = fig.TEST_BARCODES_DUAL
+        cls.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
+        cls.pheniqs_dir = fig.TEST_PHENIQS_DIR
 
         # temp paths for testing demultiplexing
-        self.strip_dir = Path(self.pheniqs_dir) / 'stripped_out/'
-        self.out_dir = Path(self.pheniqs_dir) / 'pheniqs_out/'
-        self.log_dir = Path(self.pheniqs_dir) / 'logs/'
-        self.target_file = '240_16_S1_L001_R1_001.fastq'
+        cls.strip_dir = Path(cls.pheniqs_dir) / 'stripped_out/'
+        cls.out_dir = Path(cls.pheniqs_dir) / 'pheniqs_out/'
+        cls.log_dir = Path(cls.pheniqs_dir) / 'logs/'
+        cls.target_file = '240_16_S1_L001_R1_001.fastq'
 
         # make paths we need
-        Path(self.pheniqs_dir).mkdir(exist_ok=True)
-        self.out_dir.mkdir(exist_ok=True)
-        self.strip_dir.mkdir(exist_ok=True)
-        self.log_dir.mkdir(exist_ok=True)
-        self.out = Path(self.pheniqs_dir) / 'pheniqs_config_test.json'
-        self.log = Path(self.log_dir) / 'pheniqs_report.txt'
+        Path(cls.pheniqs_dir).mkdir(exist_ok=True)
+        cls.out_dir.mkdir(exist_ok=True)
+        cls.strip_dir.mkdir(exist_ok=True)
+        cls.log_dir.mkdir(exist_ok=True)
+        cls.out = Path(cls.pheniqs_dir) / 'pheniqs_config_test.json'
+        cls.log = Path(cls.log_dir) / 'pheniqs_report.txt'
 
-    def test_pheniqs(self):
+    def test_pheniqs(cls):
         """ Test pheniqs demultiplexing """
-        create_pheniqs_config(self)
+        create_pheniqs_config(cls)
         new_env = setup_environment('pheniqs/2.1.0')
 
-        gunzip_forward_barcodes = ['gunzip', f'{self.for_barcodes}.gz']
-        gunzip_reverse_barcodes = ['gunzip', f'{self.rev_barcodes}.gz']
-        pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{self.out}']
+        gunzip_forward_barcodes = ['gunzip', f'{cls.for_barcodes}.gz']
+        gunzip_reverse_barcodes = ['gunzip', f'{cls.rev_barcodes}.gz']
+        pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{cls.out}']
 
         try:
             run(pheniqs_demultiplex, capture_output=True, env=new_env, check=True)
@@ -73,31 +74,31 @@ class DemultiplexTests(TestCase):
             print(e.output)
 
         # validate one of the demultiplexed files
-        validate_demultiplex(f'{self.out_dir}/{self.target_file}', self.for_barcodes,
-                             self.rev_barcodes, self.mapping, self.log_dir, True)
+        validate_demultiplex(f'{cls.out_dir}/{cls.target_file}', cls.for_barcodes,
+                             cls.rev_barcodes, cls.mapping, cls.log_dir, True)
 
         # check values in the validation log file
-        validate_log = self.log_dir / f'{self.target_file}_report.log'
+        validate_log = cls.log_dir / f'{cls.target_file}_report.log'
         log_df = pd.read_csv(validate_log, sep=':', skiprows=[0], names=['stat', 'value'])
         log_df.set_index('stat', inplace=True)
         log_df = log_df.T
 
-        self.assertEqual(log_df['Percent duplicate labels']['value'], 0)
-        self.assertEqual(log_df['Percent QIIME-incompatible fasta labels']['value'], 0)
+        cls.assertEqual(log_df['Percent duplicate labels']['value'], 0)
+        cls.assertEqual(log_df['Percent QIIME-incompatible fasta labels']['value'], 0)
 
         # If it's 1, no SampleIDs were found
         # This should be a value between 0 and 1, representing the percentage of exact match barcodes
-        self.assertNotEqual(log_df['Percent of labels that fail to map to SampleIDs']['value'], 1)
-        self.assertEqual(log_df['Percent of sequences with invalid characters']['value'], 0)
-        self.assertEqual(log_df['Percent of sequences with barcodes detected']['value'], 0)
-        self.assertEqual(
+        cls.assertNotEqual(log_df['Percent of labels that fail to map to SampleIDs']['value'], 1)
+        cls.assertEqual(log_df['Percent of sequences with invalid characters']['value'], 0)
+        cls.assertEqual(log_df['Percent of sequences with barcodes detected']['value'], 0)
+        cls.assertEqual(
             log_df['Percent of sequences with barcodes detected at the beginning of the sequence']['value'], 0)
 
-        self.assertEqual(log_df['Percent of sequences with primers detected']['value'], 0)
-        self.assertTrue('All SampleIDs found in sequence labels.' in log_df.columns)
+        cls.assertEqual(log_df['Percent of sequences with primers detected']['value'], 0)
+        cls.assertTrue('All SampleIDs found in sequence labels.' in log_df.columns)
 
-        gzip1 = ['gzip', f'{self.for_barcodes}']
-        gzip2 = ['gzip', f'{self.rev_barcodes}']
+        gzip1 = ['gzip', f'{cls.for_barcodes}']
+        gzip2 = ['gzip', f'{cls.rev_barcodes}']
         try:
             # pass
             run(gzip1, capture_output=True, check=True)
@@ -107,10 +108,10 @@ class DemultiplexTests(TestCase):
             print(e.output)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """ Set up tests """
         # cleanup demultiplexed files.
-        remove_test_dir = ['rm', '-rf', f'{self.out_dir}']
+        remove_test_dir = ['rm', '-rf', f'{cls.out_dir}']
         try:
             run(remove_test_dir, capture_output=True, check=True)
 
