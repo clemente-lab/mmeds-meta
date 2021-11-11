@@ -50,13 +50,31 @@ def validate_demux(data_dir,
         reverse_barcodes = reverse_barcodes.replace('.gz', '')
 
     # parse barcode files
+    results_dict = {}
+    full_dict = {}
     for demux_file in Path(data_dir).glob('*.fastq*'):
         is_gzip = '.gz' in Path(demux_file).suffixes
         if is_gzip:
             demux_file = str(demux_file).replace('.gz', '')
-        validate_demultiplex(demux_file, forward_barcodes,
+        validate_output, matched_barcodes_count, all_barcodes_count = validate_demultiplex(demux_file, forward_barcodes,
                              reverse_barcodes, map_path, output_dir, is_gzip, True)
+        results_dict[f'{Path(demux_file).stem}'] = matched_barcodes_count
+        full_dict[f'{Path(demux_file).stem}'] = all_barcodes_count
 
+    # Ouput read counts for only barcodes matched to in the mapping file
+    results_table = pd.DataFrame.from_dict(results_dict, orient='index')
+    results_table.reset_index(inplace=True)
+    # Output read counts for all barcodes
+    full_table = pd.DataFrame.from_dict(full_dict, orient='index')
+    full_table.reset_index(inplace=True)
+
+    df_path = Path(output_dir) / 'all_barcodes.tsv'
+    df_path = Path(output_dir) / 'matched_barcodes.tsv'
+    results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
+    results_table.to_csv((str(df_path)), index=None, header=True, sep='\t')
+
+
+    # lastly, handle gzipping
     if gzipped_barcodes:
         gzip_forward_barcodes = ['gzip', f'{forward_barcodes}']
         gzip_reverse_barcodes = ['gzip', f'{reverse_barcodes}']
