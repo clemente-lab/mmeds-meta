@@ -1,7 +1,7 @@
 from unittest import TestCase
 import mmeds.config as fig
 import pandas as pd
-from subprocess import run, CalledProcessError
+from subprocess import run, CalledProcessError, TimeoutExpired
 
 from pathlib import Path
 from mmeds.util import make_pheniqs_config, strip_error_barcodes, setup_environment, validate_demultiplex
@@ -55,15 +55,22 @@ class DemultiplexTests(TestCase):
 
     def test_pheniqs(cls):
         """ Test pheniqs demultiplexing """
+        # import pudb; pudb.set_trace()
         create_pheniqs_config(cls)
         new_env = setup_environment('pheniqs/2.1.0')
 
+        pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{cls.out}']
         gunzip_forward_barcodes = ['gunzip', f'{cls.for_barcodes}.gz']
         gunzip_reverse_barcodes = ['gunzip', f'{cls.rev_barcodes}.gz']
-        pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{cls.out}']
 
         try:
-            run(pheniqs_demultiplex, capture_output=True, env=new_env, check=True)
+            run(pheniqs_demultiplex, capture_output=True, env=new_env, check=True, timeout=120)
+
+        except (CalledProcessError, TimeoutExpired) as e:
+            Logger.debug(e)
+            print(e.output)
+
+        try:
             run(gunzip_forward_barcodes, capture_output=True, check=True)
             run(gunzip_reverse_barcodes, capture_output=True, check=True)
 
@@ -76,7 +83,8 @@ class DemultiplexTests(TestCase):
                              cls.rev_barcodes, cls.mapping, cls.log_dir, True)
 
         # check values in the validation log file
-        validate_log = cls.log_dir / f'{cls.target_file}_report.log'
+        file_name = cls.target_file.replace('.fastq', '_test.fastq')
+        validate_log = cls.log_dir / f'{file_name}_report.log'
         log_df = pd.read_csv(validate_log, sep=':', skiprows=[0], names=['stat', 'value'])
         log_df.set_index('stat', inplace=True)
         log_df = log_df.T
