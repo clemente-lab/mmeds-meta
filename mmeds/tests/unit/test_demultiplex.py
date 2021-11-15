@@ -2,12 +2,59 @@ from unittest import TestCase
 import mmeds.config as fig
 import pandas as pd
 from subprocess import run, CalledProcessError, TimeoutExpired
+import gzip
 
 from pathlib import Path
 from mmeds.util import make_pheniqs_config, strip_error_barcodes, setup_environment, validate_demultiplex
 from mmeds.logging import Logger
 
 TESTING = True
+
+
+def test_strip_error_barcodes(test_case):
+    """ Test the stripping of errors from pheniqs-demultiplexed read files """
+    output_dir = Path(fig.TEST_STRIPPED_OUTPUT_DIR)
+    if not output_dir.is_dir():
+        output_dir.mkdir()
+
+    test_dirs = fig.TEST_STRIPPED_DIRS
+
+    # Test at three different error levels
+    error_levels = [0, 1, 2, 16]
+    for level in error_levels:
+        # Remove old test files from dir
+        for f in output_dir.glob('*'):
+            f.unlink()
+
+        strip_error_barcodes(
+            level,
+            fig.TEST_PHENIQS_MAPPING,
+            fig.TEST_PHENIQS_DIR,
+            fig.TEST_STRIPPED_OUTPUT_DIR,
+            False
+        )
+
+        # Assert correct number of output files
+        output_files = list(output_dir.glob('*'))
+        df = pd.read_csv(Path(fig.TEST_PHENIQS_MAPPING), sep='\t', header=[0, 1], na_filter=False)
+        sample_ids = df[fig.QIIME_SAMPLE_ID_CATS[0]][fig.QIIME_SAMPLE_ID_CATS[1]]
+        assert len(output_files) == 2 * len(sample_ids)
+
+        if level < 3:
+            test_path = Path(test_dirs[level])
+        else:
+            test_path = Path(fig.TEST_PHENIQS_DIR)
+        # Assert all files match their expected values
+        for sample_id in sample_ids:
+            f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
+            f_test = gzip.open(test_path / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
+
+            assert f.read() == f_test.read()
+
+            f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
+            f_test = gzip.open(test_path / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 2), 'rt')
+
+            assert f.read() == f_test.read()
 
 
 def create_pheniqs_config(test_case):
@@ -112,6 +159,8 @@ class DemultiplexTests(TestCase):
         except CalledProcessError as e:
             Logger.debug(e)
             print(e.output)
+
+        test_strip_error_barcodes(cls)
 
     @classmethod
     def tearDownClass(cls):
