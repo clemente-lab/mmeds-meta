@@ -29,7 +29,7 @@ def test_strip_error_barcodes(test_case):
         strip_error_barcodes(
             level,
             fig.TEST_PHENIQS_MAPPING,
-            fig.TEST_PHENIQS_DIR,
+            f'{fig.TEST_PHENIQS_DIR}/pheniqs_out',
             fig.TEST_STRIPPED_OUTPUT_DIR,
             False
         )
