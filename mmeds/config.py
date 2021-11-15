@@ -16,7 +16,7 @@ import re
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
 # If not running on web01, can't connect to databases
-CONNECT_TO_DB = 'web01' in getfqdn().split('.')
+IS_PRODUCTION = 'web01' in getfqdn().split('.')
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
@@ -48,7 +48,7 @@ else:
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
 
     # We're on web01 and using MMEDs out of if it's project diredctory
-    if CONNECT_TO_DB:
+    if IS_PRODUCTION:
         DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
     # We're on Matt's login node, see above TODO for needed improvement
     else:
@@ -578,8 +578,13 @@ ALL_TABLE_COLS = {}
 ALL_COLS = []
 COL_SIZES = {}
 
+COLUMN_TYPES_SPECIMEN = defaultdict(dict)
+COLUMN_TYPES_SUBJECT = defaultdict(dict)
+COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
+COL_TO_TABLE = {}
+
 # Try connecting via the testing setup
-if CONNECT_TO_DB:
+if IS_PRODUCTION or TESTING:
     try:
         db = pms.connect(host='localhost',
                          user='root',
@@ -634,11 +639,6 @@ if CONNECT_TO_DB:
     METADATA_COLS = {}
     for table in METADATA_TABLES:
         METADATA_COLS[table] = TABLE_COLS[table]
-
-    COLUMN_TYPES_SPECIMEN = defaultdict(dict)
-    COLUMN_TYPES_SUBJECT = defaultdict(dict)
-    COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
-    COL_TO_TABLE = {}
 
     TYPE_MAP = {
         'Text': str,
