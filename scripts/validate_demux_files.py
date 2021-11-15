@@ -13,15 +13,19 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='0.1')
 @click.option('-d', '--data_dir',
+              required=True,
               help="path to reverse reads multiplexed file")
 @click.option('-m', '--map_path',
               required=True,
               help="Full path to a qiime2 mapping file")
 @click.option('-fb', '--forward_barcodes',
+              required=True,
               help="path to forward barcodes file.")
 @click.option('-rb', '--reverse_barcodes',
+              required=True,
               help="path to reverse barcodes file")
 @click.option('-o', '--output_dir',
+              required=True,
               help="path to reverse barcodes file")
 def validate_demux(data_dir,
                    map_path,

@@ -438,9 +438,11 @@ class MMEDSupload(MMEDSbase):
         cp.log('before validator run')
 
         # Check the metadata file for errors
+        # TODO: Improve how validation errors are reported to users and the code surrounding it.
+        # without this code block, the validation errors aren't correctly reported.
         try:
             errors, warnings, subjects = valid.run()
-        except Exception as ex:
+        except err.InvalidMetaDataFileError as ex:
             cp.log(ex)
 
         cp.log('validator ran')
