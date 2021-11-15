@@ -19,7 +19,7 @@ jobs:
       - name: Mysql Setup
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
-        run: mkdir ~/mmeds_server_data; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules /home/runner/.modules/modulefiles/;
+        run: mkdir ~/mmeds_server_data; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules ~/.modules/modulefiles/.;
       - name: Python install
         run: sudo python setup.py install
       - name: Metadata Tests
