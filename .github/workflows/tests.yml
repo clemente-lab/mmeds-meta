@@ -25,7 +25,9 @@ jobs:
       - name: install pheniqs
         run: conda install -c bioconda pheniqs
       - name: diagnostics
-        run: ls -lah ~/
+        run: ls -R ~/.conda
+      - name: diagnostics2
+        run: ls -R ~/usr/share/miniconda/
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Server Tests
