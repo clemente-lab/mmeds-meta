@@ -22,7 +22,9 @@ jobs:
         run: mkdir ~/mmeds_server_data; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.;
       - name: Python install
         run: sudo python setup.py install
+      - name: install pheniqs
         run: conda install -c bioconda pheniqs
+      - name: diagnostics
         run: ls -lah ~/
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
