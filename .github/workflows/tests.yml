@@ -19,15 +19,13 @@ jobs:
       - name: Mysql Setup
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
-        run: mkdir ~/mmeds_server_data; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.;
+        run: mkdir ~/mmeds_server_data; mkdir ~/conda_envs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.;
       - name: Python install
         run: sudo python setup.py install
       - name: install pheniqs
-        run: conda install -c bioconda pheniqs
+        run: conda install -c bioconda pheniqs -p ~/conda_envs
       - name: diagnostics
-        run: ls -R ~/.conda
-      - name: diagnostics2
-        run: ls -R ~/usr/share/miniconda/
+        run: ls -R ~/conda_envs
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Server Tests
