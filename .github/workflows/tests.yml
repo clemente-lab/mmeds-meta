@@ -38,6 +38,7 @@ jobs:
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
       - name: diagnostics
+        if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_pheniqs
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;

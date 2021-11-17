@@ -43,7 +43,7 @@ def test_strip_error_barcodes(test_case):
         if level < 3:
             test_path = Path(test_dirs[level])
         else:
-            test_path = Path(fig.TEST_PHENIQS_DIR)
+            test_path = Path(fig.TEST_PHENIQS_DIR) / 'pheniqs_out'
         # Assert all files match their expected values
         for sample_id in sample_ids:
             f = gzip.open(output_dir / fig.FASTQ_FILENAME_TEMPLATE.format(sample_id, 1), 'rt')
