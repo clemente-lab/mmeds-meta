@@ -24,8 +24,6 @@ jobs:
         run: sudo python setup.py install
       - name: install pheniqs
         run: conda install -c bioconda pheniqs -p ~/conda_envs
-      - name: diagnostics
-        run: ls -R ~/conda_envs
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Server Tests
@@ -39,5 +37,7 @@ jobs:
         run: |
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
+      - name: diagnostics
+        run: ls -ltR ~/mmeds_server_data/test_files/test_pheniqs
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;

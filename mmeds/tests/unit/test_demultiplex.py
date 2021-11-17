@@ -168,7 +168,8 @@ class DemultiplexTests(TestCase):
         # cleanup demultiplexed files.
         remove_test_dir = ['rm', '-rf', f'{cls.out_dir}']
         try:
-            run(remove_test_dir, capture_output=True, check=True)
+            # run(remove_test_dir, capture_output=True, check=True)
+            pass
 
         except CalledProcessError as e:
             Logger.debug(e)
