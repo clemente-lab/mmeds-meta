@@ -23,7 +23,7 @@ jobs:
       - name: Python install
         run: sudo python setup.py install
       - name: install pheniqs
-        run: conda install -c bioconda pheniqs -p ~/conda_envs
+        run: conda install -c bioconda pheniqs=2.1.0 -p ~/conda_envs
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Server Tests
