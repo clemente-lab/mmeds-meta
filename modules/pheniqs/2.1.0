@@ -8,4 +8,4 @@ module-info version 2.1.0
 # needs to point at the bin folder of the pheniqs conda environment
 # prepend-path PATH ~/.modules/pheniqs/bin
 # prepend-path PATH /usr/share/miniconda/pheniqs/bin
-prepend-path PATH ~/conda_envs/bin
+prepend-path PATH ~/conda_envs/pheniqs/bin
