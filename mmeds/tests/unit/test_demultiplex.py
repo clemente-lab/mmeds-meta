@@ -155,8 +155,8 @@ class DemultiplexTests(TestCase):
             # TODO: see if we can install and run qiime1, David has had trouble doing so and we've relied...
             # on the install on minerva, of which I have a local modified copy
 
-        gzip1 = ['gzip', f'{cls.for_barcodes}']
-        gzip2 = ['gzip', f'{cls.rev_barcodes}']
+        gzip1 = ['gzip', f'{self.for_barcodes}']
+        gzip2 = ['gzip', f'{self.rev_barcodes}']
         try:
             run(gzip1, capture_output=True, check=True)
             run(gzip2, capture_output=True, check=True)
