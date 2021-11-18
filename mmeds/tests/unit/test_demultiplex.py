@@ -100,15 +100,14 @@ class DemultiplexTests(TestCase):
         cls.out = Path(cls.pheniqs_dir) / 'pheniqs_config_test.json'
         cls.log = Path(cls.log_dir) / 'pheniqs_report.txt'
 
-    def test_pheniqs(cls):
+    def test_pheniqs(self):
         """ Test pheniqs demultiplexing """
-        # import pudb; pudb.set_trace()
-        create_pheniqs_config(cls)
+        create_pheniqs_config(self)
         new_env = setup_environment('pheniqs/2.1.0')
 
-        pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{cls.out}']
-        gunzip_forward_barcodes = ['gunzip', f'{cls.for_barcodes}.gz']
-        gunzip_reverse_barcodes = ['gunzip', f'{cls.rev_barcodes}.gz']
+        pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{self.out}']
+        gunzip_forward_barcodes = ['gunzip', f'{self.for_barcodes}.gz']
+        gunzip_reverse_barcodes = ['gunzip', f'{self.rev_barcodes}.gz']
 
         try:
             run(pheniqs_demultiplex, capture_output=True, env=new_env, check=True, timeout=120)
@@ -126,31 +125,31 @@ class DemultiplexTests(TestCase):
             print(e.output)
 
         # validate one of the demultiplexed files
-        validate_demultiplex(f'{cls.out_dir}/{cls.target_file}', cls.for_barcodes,
-                             cls.rev_barcodes, cls.mapping, cls.log_dir, True, on_chimera=False)
+        validate_demultiplex(f'{self.out_dir}/{self.target_file}', self.for_barcodes,
+                             self.rev_barcodes, self.mapping, self.log_dir, True, on_chimera=False)
 
         # check values in the validation log file
-        file_name = cls.target_file.replace('.fastq', '_test.fastq')
-        validate_log = cls.log_dir / f'{file_name}_report.log'
+        file_name = self.target_file.replace('.fastq', '_test.fastq')
+        validate_log = self.log_dir / f'{file_name}_report.log'
 
         try:
             log_df = pd.read_csv(validate_log, sep=':', skiprows=[0], names=['stat', 'value'])
             log_df.set_index('stat', inplace=True)
             log_df = log_df.T
 
-            cls.assertEqual(log_df['Percent duplicate labels']['value'], 0)
-            cls.assertEqual(log_df['Percent QIIME-incompatible fasta labels']['value'], 0)
+            self.assertEqual(log_df['Percent duplicate labels']['value'], 0)
+            self.assertEqual(log_df['Percent QIIME-incompatible fasta labels']['value'], 0)
 
             # If it's 1, no SampleIDs were found
             # This should be a value between 0 and 1, representing the percentage of exact match barcodes
-            cls.assertNotEqual(log_df['Percent of labels that fail to map to SampleIDs']['value'], 1)
-            cls.assertEqual(log_df['Percent of sequences with invalid characters']['value'], 0)
-            cls.assertEqual(log_df['Percent of sequences with barcodes detected']['value'], 0)
-            cls.assertEqual(
+            self.assertNotEqual(log_df['Percent of labels that fail to map to SampleIDs']['value'], 1)
+            self.assertEqual(log_df['Percent of sequences with invalid characters']['value'], 0)
+            self.assertEqual(log_df['Percent of sequences with barcodes detected']['value'], 0)
+            self.assertEqual(
                 log_df['Percent of sequences with barcodes detected at the beginning of the sequence']['value'], 0)
 
-            cls.assertEqual(log_df['Percent of sequences with primers detected']['value'], 0)
-            cls.assertTrue('All SampleIDs found in sequence labels.' in log_df.columns)
+            self.assertEqual(log_df['Percent of sequences with primers detected']['value'], 0)
+            self.assertTrue('All SampleIDs found in sequence labels.' in log_df.columns)
         except FileNotFoundError:
             print('unable to validate, log file not created. Cant run through github actions')
             # TODO: see if we can install and run qiime1, David has had trouble doing so and we've relied...
@@ -159,14 +158,13 @@ class DemultiplexTests(TestCase):
         gzip1 = ['gzip', f'{cls.for_barcodes}']
         gzip2 = ['gzip', f'{cls.rev_barcodes}']
         try:
-            # pass
             run(gzip1, capture_output=True, check=True)
             run(gzip2, capture_output=True, check=True)
         except CalledProcessError as e:
             Logger.debug(e)
             print(e.output)
 
-        test_strip_error_barcodes(cls)
+        test_strip_error_barcodes(self)
 
     @classmethod
     def tearDownClass(cls):
@@ -174,7 +172,7 @@ class DemultiplexTests(TestCase):
         # cleanup demultiplexed files.
         remove_test_dir = ['rm', '-rf', f'{cls.out_dir}']
         try:
-            # run(remove_test_dir, capture_output=True, check=True)
+            run(remove_test_dir, capture_output=True, check=True)
             pass
 
         except CalledProcessError as e:
