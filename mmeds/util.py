@@ -14,9 +14,11 @@ import yaml
 import gzip
 import re
 import pandas as pd
+import numpy as np
 import Levenshtein as lev
 import mmeds.config as fig
 from mmeds.logging import Logger
+from subprocess import CalledProcessError
 
 
 ###########
@@ -944,13 +946,17 @@ def quote_sql(sql, quote='`', **kwargs):
     return formatted
 
 
-def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_directory):
+def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes_reverse, mapping_file, o_directory,
+                        testing=False):
     """
     Method for taking in fastq.gz files and tsv mapping files and creating an
     output.json file that can be read by the 'pheniqs' module for demultiplexing
     """
     # The top of the output.json file, including R1, I1, I2, and R2
-    out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
+    if testing:
+        out_s = f'{{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "{o_directory}/output_all.fastq" ],'
+    else:
+        out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
     out_s += '\n\t"template": {\n\t\t"transform": {\n\t\t\t"comment": "This global transform directive specifies the \
     segments that will be written to output as the biological sequences of interest, this represents all of R1 and R2."'
     out_s += ',\n\t\t\t"token": [ "0::", "3::" ]\n\t\t}\n\t},\n\t"sample": {\n\t\t"transform": {\n\t\t\t"token": '
@@ -1125,27 +1131,166 @@ def parse_barcodes(forward_barcodes, reverse_barcodes, forward_mapcodes, reverse
     """
     forward_barcodes, reverse_barcodes are the paths to those barcode files.
     forward_mapcodes, reverse_mapcodes are lists of barcodes taken from the mapping file.
-    reverse_complement: reverse complement the barcodes in the mapping file.
     """
     results_dict = dict.fromkeys(reverse_mapcodes)
     full_results = {}
+    barcode_ids = []
+
+    # open the barcode files
     with open(forward_barcodes, 'r') as forward, open(reverse_barcodes, 'r') as reverse:
         forward_barcodes = forward.readlines()
         for i, line in enumerate(reverse):
             line = line.strip('\n')
-            if not i % 4 == 1:
-                continue
-            else:
+
+            # save barcode id, in case the barcode is found in the mapping file
+            if i % 4 == 0:
+                barcode_id = line
+
+            elif i % 4 == 1:
                 # If the forward, reverse barcodes are in the mapping file.
                 if line in reverse_mapcodes and forward_barcodes[i].strip('\n') in forward_mapcodes:
-                    # count barcodes
+
+                    # add entry for new barcode or increment an existing count
                     if not results_dict[line]:
                         results_dict[line] = 1
                     else:
                         results_dict[line] += 1
 
+                    # save barcode id, since it's in the mapping file
+                    barcode_ids.append(barcode_id)
+
+                # increment counts for all barcodes, not just those in the mapping file.
                 if line in full_results.keys():
                     full_results[line] += 1
                 else:
                     full_results[line] = 1
-        return results_dict, full_results
+        return results_dict, full_results, barcode_ids
+
+
+def create_barcode_mapfile(output_dir, for_barcodes, rev_barcodes, file_name, map_file, ret_dicts=False):
+    """
+    Helper function for validate_demultiplex()
+    Replaces the samples in a qiime1 mapping file with barcodes for a given sample in that mapping file.
+    Then we can test if the those barcodes are in the demultiplexed file and the proportion they represent of all reads.
+
+    output_dir: where the barcode mapping file will be written to.
+    for_barcodes: path to gzipped, forward barcode file
+    rev_barcodes: path to reverse barcode file
+    map_file: path to a qiime mapping file
+    ret_dicts: return results dictionaries from parsing barcode files
+    """
+    map_df = pd.read_csv(Path(map_file), sep='\t', header=[0, 1], na_filter=False)
+
+    # get matching sample
+    matched_sample = None
+    for sample in map_df[('#SampleID', '#q2:types')]:
+        if str(sample) == file_name.split('_')[0] or\
+               str(sample) == f'{file_name.split("_")[0]}_{file_name.split("_")[1]}':
+            matched_sample = sample
+            break
+
+    # filter mapping file down to said sample
+    map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
+    map_df = map_df.filter(items=[matched_sample], axis='index')
+
+    # Get barcodes for that sample
+    results_dict, full_dict, barcode_ids = parse_barcodes(for_barcodes, rev_barcodes,
+                                                          map_df[('BarcodeSequence', 'categorical')].tolist(),
+                                                          map_df[('BarcodeSequenceR', 'categorical')].tolist())
+    # map_df = map_df.append([map_df]*(len(barcode_ids)-1), ignore_index=True)
+    map_df.reset_index(drop=True, inplace=True)
+
+    # replace sampleIDs with barcodes
+    map_df[('#SampleID', '#q2:types')] = pd.Series(barcode_ids, dtype=str)
+    map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.split(' ', expand=True)[0]
+    map_df[('#SampleID', '#q2:types')] = map_df[('#SampleID', '#q2:types')].str.replace('@', '')
+
+    # make sure this column is first
+    map_df.set_index(('#SampleID', '#q2:types'), inplace=True)
+    map_df.reset_index(inplace=True)
+
+    # add this column to the end of the mapping file, so it passes Qiime1 mapping file validation
+    map_df[('Description', 'categorical')] = np.nan
+
+    map_df.to_csv(f'{output_dir}/{file_name}_qiime_barcode_mapfile.tsv', index=None, header=True, sep='\t')
+    if ret_dicts:
+        ret_val = (map_df, results_dict, full_dict)
+    else:
+        ret_val = map_df
+
+    return ret_val
+
+
+def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_dir, is_gzip, get_read_counts=False,
+                         on_chimera=True):
+    """
+    Calls qiime1 script to validate a gzipped, demultiplex fastq file.
+    source_dir: where the data is located.
+    demux_file: path to gzipped, demultiplexed, fastq file.
+    for_barcodes: path to gzipped, forward barcode file
+    rev_barcodes: path to reverse barcode file
+    map_file: path to a qiime mapping file
+    log_dir: path to log dir, where the results will be saved
+    """
+    # TODO: generalize for single barcodes
+
+    # Allows us to test that the correct barcodes are in the resulting demultiplexed file.
+    barcode_return = create_barcode_mapfile(Path(demux_file).parent, for_barcodes, rev_barcodes,
+                                            Path(demux_file).stem, map_file, get_read_counts)
+    if get_read_counts:
+        map_df = barcode_return[0]
+        matched_barcodes = barcode_return[1]
+        all_barcodes = barcode_return[2]
+    else:
+        map_df = barcode_return
+
+    new_env = setup_environment('qiime/1.9.1')
+
+    test_file = f'{Path(demux_file).parent}/{Path(demux_file).stem}_test.fastq'
+    map_file = f'{Path(demux_file).parent}/{Path(demux_file).stem}_qiime_barcode_mapfile.tsv'
+
+    gunzip_demux_file = ['gunzip', f'{demux_file}.gz']
+    gzip_demux_file = ['gzip', demux_file]
+    create_fastq_copy = ['cp', f'{demux_file}', f'{test_file}']
+
+    # to create the fasta file, on every line mod4 = 1, replace @ with >
+    # then on every line mod4 = 2, print the line. then skip all other lines.
+    create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{test_file}']
+
+
+    # Call qiime1 validate demultiplex script
+    if on_chimera:
+        validate_demux_file = f'ml python/2.7.9-UCS4; validate_demultiplexed_fasta.py -b -a\
+                            -i {test_file}\
+                            -o {log_dir}\
+                            -m {map_file};\
+                            rm {test_file}'
+    else:
+        validate_demux_file = f'validate_demultiplexed_fasta.py -b -a\
+                            -i test_file\
+                            -o {log_dir}\
+                            -m {map_file};\
+                            rm {test_file}'
+
+    try:
+        if is_gzip:
+            run(gunzip_demux_file, capture_output=True, check=True)
+
+        run(create_fastq_copy, capture_output=True, check=True)
+        run(create_fasta_file, capture_output=True, check=True)
+        validate_output = run(validate_demux_file, capture_output=True, env=new_env, check=True, shell=True)
+
+        if is_gzip:
+            run(gzip_demux_file, capture_output=True, check=True)
+
+    except CalledProcessError as e:
+        Logger.debug(e)
+        print(e.output)
+        raise e
+
+    if get_read_counts:
+        ret_val = (validate_output, matched_barcodes, all_barcodes)
+    else:
+        ret_val = validate_output
+
+    return ret_val

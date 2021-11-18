@@ -1,8 +1,0 @@
-#%Module1.0
-## qiime1-test modulefile
-set curMod [module-info name]
-module-info name qiime
-module-info version 1.9.1
-if [ module-info mode load ] {
-    prepend-path PATH ~/.modules/qiime1/bin
-}
