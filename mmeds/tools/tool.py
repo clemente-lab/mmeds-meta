@@ -221,7 +221,8 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
+            self.jobtext.append('ml texlive/2018;')
         # Make sure the kernel is up to date
         self.jobtext.append('python -m jupyter install --user --name mmeds-stable --display-name "MMEDS"')
         cmd = [
