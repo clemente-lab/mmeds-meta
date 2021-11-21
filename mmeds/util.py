@@ -1294,3 +1294,47 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         ret_val = validate_output
 
     return ret_val
+
+def join_taxa_with_correlations(taxonomy, correlation_files, out_dir, significance=0.05):
+    taxa_df = pd.read_csv(taxonomy, sep='\t', header=[0])
+    taxa_dict = {}
+    for i in range(len(taxa_df['Feature ID'])):
+        taxa_dict[taxa_df['Feature ID'][i]] = taxa_df['Taxon'][i]
+
+    out_dict = {}
+    for f in correlation_files:
+        out_dict[f.name] = {}
+        corr_df = pd.read_csv(f, sep='\t', header=[0])
+        for i in range(len(corr_df['Feature ID'])):
+            pval = corr_df['pval'][i]
+            if pval < significance:
+                pval_fdr = corr_df['pval_fdr'][i]
+                pval_bon = corr_df['pval_bon'][i]
+                feature_id = corr_df['Feature ID'][i]
+                out_dict[f.name][feature_id] = (taxa_dict[feature_id], pval, pval_fdr, pval_bon)
+    out_files = []
+    for d in out_dict:
+        variable = re.match(repr(fig.CORRELATION_FILENAME_TEMPLATE.format('(.+)')), d).group(0)
+        out_file = out_dir / fig.CORRELATION_TAXA_FILENAME_TEMPLATE.format(variable)
+        df = pd.DataFrame.from_dict(d, orient='index')
+        df.columns = ['Feature ID', 'Taxon', 'pval', 'pval_fdr', 'pval_bon']
+        df.to_csv(out_file, sep='\t')
+        out_files.append(out_file)
+
+    return out_files
+
+
+def generate_variable_abundance(feature_table, taxonomy, mapping_file, correlation_files):
+    feat_df = pd.read_csv(feature_table, sep='\t', skiprows=[0], header=[1])
+    map_df = pd.read_csv(mapping_file, sep='\t', skiprows=[1], header=[0])
+
+    corr_dfs = {}
+    for f in correlation_files:
+        variable = re.match(repr(fig.CORRELATION_TAXA_FILENAME_TEMPLATE.format('(.+)')), f).group(0)
+        corr_dfs[variable] = pd.read_csv(f, sep='\t', header=[0])
+
+    out_dict = {}
+
+
+
+

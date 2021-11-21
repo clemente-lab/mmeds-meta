@@ -417,7 +417,11 @@ SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
 QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
 QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
+
 FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+CORRELATION_FILENAME_TEMPLATE = '{}_correlation.tsv'
+CORRELATION_TAXA_FILENAME_TEMPLATE = '{}_correlation_taxa.tsv'
+
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,
