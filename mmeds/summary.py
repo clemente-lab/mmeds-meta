@@ -279,7 +279,7 @@ class MMEDSNotebook():
         """
         # Get the taxa level from the filename
         level = data_file.split('.')[0][-1]
-        self.add_markdown('## OTU {level} Level'.format(level=self.words[level]))
+        self.add_markdown('## {level} Level'.format(level=self.words[level]))
 
         # For each selected metadata column
         for i, column in enumerate(self.config['metadata']):
@@ -320,7 +320,15 @@ class MMEDSNotebook():
         elif self.analysis_type == 'qiime2':
             xaxis = 'SamplingDepth'
         filename = data_file.split('.')[0] + '.png'
-        self.add_markdown('## {f}'.format(f=data_file))
+        if 'shannon' in data_file:
+            display_name = 'Shannon Diversity'
+        elif 'faith_pd' in data_file:
+            display_name = 'Faith\'s Phylogenetic Diversity'
+        elif 'observed' in data_file:
+            display_name = 'Observed ASV'
+        else:
+            display_name = 'Evenness'
+        self.add_markdown('## {}'.format(display_name))
         self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
         self.add_code('Image("{plot}")'.format(plot=filename),
@@ -331,16 +339,23 @@ class MMEDSNotebook():
 
     def beta_plots(self, data_file):
         """
-        Create plots for alpha diversity files.
+        Create plots for beta diversity files.
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
         Logger.debug('Beta plots for file {}'.format(data_file))
+        if 'bray_curtis' in data_file:
+            display_name = 'Bray-Curtis'
+        elif 'unweighted' in data_file:
+            display_name = 'Unweighted UniFrac'
+        elif 'weighted' in data_file:
+            display_name = 'Weighted UniFrac'
+        else:
+            return
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
-            self.add_markdown('## {f} grouped by {group}'.format(f=data_file,
-                                                                 group=column))
+            self.add_markdown('## {}, grouped by {}'.format(display_name, column))
             self.add_code(self.source['beta_py'].format(file1=data_file,
                                                         group=column))
             contin = str(self.config['metadata_continuous'][column]).capitalize()
@@ -401,7 +416,7 @@ class MMEDSNotebook():
 
         # Add the cells for the Taxa summaries
         self.add_markdown('# Taxonomy Summary')
-        self.add_markdown('## Reading Taxonomy Results')
+        self.add_markdown('## Interpreting Taxonomy Results')
         self.add_markdown(self.source['taxa_description'])
         for data_file in included_files:
             self.taxa_plots(data_file)
@@ -412,16 +427,16 @@ class MMEDSNotebook():
             self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
-        self.add_markdown('# Alpha Diversity Summary')
-        self.add_markdown('## Reading Alpha Diversity Results')
+        self.add_markdown('# Alpha Diversity')
+        self.add_markdown('## Interpreting Alpha Diversity Results')
         self.add_markdown(self.source['alpha_description'])
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity
-        self.add_markdown('# Beta Diversity Summary')
-        self.add_markdown('## Reading Beta Diversity Results')
+        self.add_markdown('# Beta Diversity')
+        self.add_markdown('## Interpreting Beta Diversity Results')
         self.add_markdown(self.source['beta_description'])
         for data_file in sorted(self.files['beta']):
             if 'dm' not in data_file:

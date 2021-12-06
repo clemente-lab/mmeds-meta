@@ -1010,8 +1010,8 @@ def make_grouped_mapping_file(mapping_file, col):
         if cell not in categories:
             categories.append(cell)
     out_data = {'#SampleID': categories}
-    out_df = pd.DataFrame(data=categories)
-    out_tsv = out_df.to_csv(sep='\t')
+    out_df = pd.DataFrame(data=out_data)
+    out_tsv = out_df.to_csv(sep='\t', index=False)
     return out_tsv
 
 

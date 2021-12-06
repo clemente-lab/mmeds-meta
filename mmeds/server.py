@@ -479,8 +479,12 @@ class MMEDSupload(MMEDSbase):
 
         # Append Host Subject IDs to list without duplicates
         sub_count = 0
-        if df is not None and 'HostSubjectId' in df.columns:
-            sub_count = df['HostSubjectId'].nunique()
+        if cp.session['subject_type'] == 'animal':
+            subjectName = 'AnimalSubjectID'
+        else:
+            subjectName = 'HostSubjectId'
+        if df is not None and subjectName in df.columns:
+            sub_count = df[subjectName].nunique()
 
         # If there are errors report them and return the error page
         if errors:

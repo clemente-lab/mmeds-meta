@@ -393,10 +393,10 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def alpha_diversity(self, metrics=['faith_pd', 'shannon', 'observed_features']):
+    def alpha_diversity(self, metrics=['faith_pd', 'shannon', 'observed_features', 'evenness']):
         """
         Run core diversity.
-        metric : ('faith_pd' 'shannon', or 'observed_features')
+        metric : ('faith_pd' 'shannon', or 'observed_features', 'evenness')
         """
         for metric in metrics:
             self.add_path('{}_group_significance'.format(metric), '.qzv')
