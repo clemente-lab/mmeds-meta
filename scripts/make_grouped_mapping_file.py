@@ -22,12 +22,10 @@ def make_file(m_metadata_file, m_metadata_column, o_grouped_metadata_file):
     column of the original file
     """
 
-    out_s = make_grouped_mapping_file(m_metadata_file, m_metadata_column)
+    out_df = make_grouped_mapping_file(m_metadata_file, m_metadata_column)
 
     # Write output to file
-    p_out = Path(o_grouped_metadata_file)
-    p_out.touch()
-    p_out.write_text(out_s)
+    out_df.to_csv(Path(o_grouped_metadata_file), sep='\t', index=False)
 
 
 if __name__ == '__main__':

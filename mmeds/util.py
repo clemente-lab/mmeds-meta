@@ -1003,7 +1003,7 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
 
 
 def make_grouped_mapping_file(mapping_file, col):
-    """ Generate tsv file that corresponds to the groups in a metadata category """
+    """ Generate DataFrame that corresponds to the groups in a metadata category """
     df = pd.read_csv(Path(mapping_file), header=[0, 1], na_filter=False, sep='\t')
     categories = ['#q2:types']
     for cell in df[col]['categorical']:
@@ -1011,8 +1011,7 @@ def make_grouped_mapping_file(mapping_file, col):
             categories.append(cell)
     out_data = {'#SampleID': categories}
     out_df = pd.DataFrame(data=out_data)
-    out_tsv = out_df.to_csv(sep='\t', index=False)
-    return out_tsv
+    return out_df
 
 
 def strip_error_barcodes(num_allowed_errors,
