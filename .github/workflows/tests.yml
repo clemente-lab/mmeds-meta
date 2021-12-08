@@ -19,11 +19,11 @@ jobs:
       - name: Mysql Setup
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
-        run: mkdir ~/mmeds_server_data; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.;
+        run: mkdir ~/mmeds_server_data; mkdir -p ~/conda_envs/pheniqs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.; cp -r ./conda_envs/* ~/conda_envs/.;
       - name: Python install
         run: sudo python setup.py install
-      - name: Metadata Tests
-        run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
+      - name: install pheniqs
+        run: conda env create -f ./conda_envs/pheniqs_env.yml -p ~/conda_envs/pheniqs
       - name: Server Tests
         run: |
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
@@ -35,5 +35,7 @@ jobs:
         run: |
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
+      - name: Metadata Tests
+        run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;
