@@ -281,8 +281,13 @@ class MMEDSNotebook():
         level = data_file.split('.')[0][-1]
         self.add_markdown('## {level} Level'.format(level=self.words[level]))
 
-        # For each selected metadata column
-        for i, column in enumerate(self.config['metadata']):
+        # For each selected metadata column minus continuous variables
+        cols = [col for col in self.config['metadata'] if not self.config['metadata_continuous'][col]]
+        for i, column in enumerate(cols):
+            # Do not plot on continuous variables
+            if self.config['metadata_continuous'][column]:
+                continue
+
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
             self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(file1=data_file,
                                                                                       level=self.words[level],
@@ -356,13 +361,26 @@ class MMEDSNotebook():
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
             self.add_markdown('## {}, grouped by {}'.format(display_name, column))
-            self.add_code(self.source['beta_py'].format(file1=data_file,
-                                                        group=column))
-            contin = str(self.config['metadata_continuous'][column]).capitalize()
-            self.add_code(self.source['beta_r'].format(plot=plot,
-                                                       subplot=subplot,
-                                                       cat=column,
-                                                       continuous=contin))
+            if self.config['metadata_continuous'][column]:
+                self.add_code(self.source['beta_py_continuous'].format(
+                    file1=data_file,
+                    group=column
+                ))
+                self.add_code(self.source['beta_r_continuous'].format(
+                    plot=plot,
+                    subplot=subplot,
+                    cat=column
+                ))
+            else:
+                self.add_code(self.source['beta_py_discrete'].format(
+                    file1=data_file,
+                    group=column
+                ))
+                self.add_code(self.source['beta_r_discrete'].format(
+                    plot=plot,
+                    subplot=subplot,
+                    cat=column
+                ))
             self.add_code('Image("{plot}")'.format(plot=plot), meta={column: True})
             self.add_markdown(self.source['beta_caption'])
 
@@ -424,7 +442,8 @@ class MMEDSNotebook():
 
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
-            self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
+            if not self.config['metadata_continuous'][column]:
+                self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
         self.add_markdown('# Alpha Diversity')
