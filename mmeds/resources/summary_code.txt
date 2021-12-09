@@ -339,7 +339,7 @@ p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
 # Save plots
 ggsave('{file1}', height = 6, width = 6)
 =====
-beta_py<source>
+beta_py_discrete<source>
 import pandas as pd
 with open('{file1}') as f:
     page = f.read()
@@ -364,7 +364,7 @@ df = df.rename(index=str, columns=cols)
 samples = mdf['{group}'][[x for x in df.axes[0]]]
 df = df.assign(GroupID=[color_maps['{group}'][str(x)] for x in samples])
 =====
-beta_r<source>
+beta_r_discrete<source>
 %%R -i df
 
 # Create the plots for the first three PCs
@@ -407,6 +407,76 @@ for(i in 1:p$nrow) {{
                                            p[i, j]$labels$x,
                                            p[i, j]$labels$y),
                            subtitle = 'Colored by {cat}')
+            print(sp)
+            out <- dev.off()
+        }}
+    }}
+}}
+=====
+beta_py_continuous<source>
+import pandas as pd
+with open('{file1}') as f:
+    page = f.read()
+
+store = {{}}
+# Parse the PCA information file
+for i, line in enumerate(page.split('\n')):
+    parts = line.split('\t')
+    if i == 0:
+        length = int(parts[1])
+    if i > 9 :
+        if line == '':
+            break
+        store[parts[0]] = list(map(float, parts[1:length]))
+
+# Create a dataframe and name the axes
+df = pd.DataFrame.from_dict(store).T
+cols = {{x:'PC{{}}'.format(x + 1) for x in df.columns}}
+df = df.rename(index=str, columns=cols)
+
+# Assign variable to DataFrame
+df = df.assign(variable=mdf['{group}'][[x for x in df.axes[0]]])
+=====
+beta_r_continuous<source>
+%%R -i df
+
+# Create the plots for the first three PCs
+png('{plot}', width = 6, height = 6, unit='in', res=200)
+p <- ggpairs(df[,c(1:3)],
+             legend = 4,
+             upper = list(continuous = "points", combo = "box_no_facet"),
+             lower = list(continuous = "points", combo = "dot_no_facet"),
+             aes(color = df$variable, label = rownames(df)) +
+         theme_bw() +
+         theme(legend.position = 'bottom',
+               plot.title = element_text(hjust = 0.5),
+               plot.subtitle = element_text(hjust = 0.5)) +
+         labs(title = 'PCA plot',
+              subtitle = 'Colored by {cat}') +
+         scale_color_gradient(low="#0039D0", high="#FF0000", space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+
+print(p)
+out <- dev.off()
+
+# Print the individual PCA plots with labels
+for(i in 1:p$nrow) {{
+    for(j in 1:p$ncol){{
+        # Only print the PCAs not the frequency distributions
+        if (i > 2 && j < 3 || i > 1 && j < 2) {{
+            # Setup and save each individual PCA plot
+            filename <- sprintf('{subplot}',
+                                p[i, j]$labels$x,
+                                p[i, j]$labels$y)
+            png(filename, width = 6, height = 6, unit='in', res=200)
+            sp <- p[i,j] + geom_text_repel() +
+                      theme(legend.position = 'bottom',
+                            plot.title = element_text(hjust = 0.5),
+                            plot.subtitle = element_text(hjust = 0.5)) +
+                      labs(title = sprintf('%s vs. %s',
+                                           p[i, j]$labels$x,
+                                           p[i, j]$labels$y),
+                           subtitle = 'Colored by {cat}') +
+                      scale_color_gradient(low="#0039D0", high="#FF0000", space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
             print(sp)
             out <- dev.off()
         }}
