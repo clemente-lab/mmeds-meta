@@ -46,7 +46,7 @@ def summarize_qiime(summary_path, tool):
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config(path / 'config_file.yaml', files['metadata'], True)
+    config = load_config(path / 'config_file.yaml', files['metadata'], 0, True)
     print(config)
 
     if tool == 'qiime1':
@@ -334,7 +334,7 @@ class MMEDSNotebook():
         else:
             display_name = 'Evenness'
         self.add_markdown('## {}'.format(display_name))
-        self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
+        self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
         self.add_code('Image("{plot}")'.format(plot=filename),
                       meta={column: True for column in self.config['metadata']})

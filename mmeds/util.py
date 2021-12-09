@@ -248,7 +248,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        keep_default_na=keep_default_na)
 
 
-def load_config(config_file, metadata, ignore_bad_cols=False):
+def load_config(config_file, metadata, TEST_VAR, ignore_bad_cols=False):
     """
     Read the provided config file to determine settings for the analysis.
     ====================================================================
@@ -258,6 +258,7 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
         been able to replicate outside of the server. So when testing or loading
         the default config from disk I have had to pass it in as a file path.
     """
+    assert TEST_VAR == 0
     try:
         config = {}
         # Replace with a switch statement or unify config_file type
