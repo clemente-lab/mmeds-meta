@@ -487,8 +487,12 @@ class MMEDSupload(MMEDSbase):
 
         # Append Host Subject IDs to list without duplicates
         sub_count = 0
-        if df is not None and 'HostSubjectId' in df.columns:
-            sub_count = df['HostSubjectId'].nunique()
+        if cp.session['subject_type'] == 'animal':
+            subjectName = 'AnimalSubjectID'
+        else:
+            subjectName = 'HostSubjectId'
+        if df is not None and subjectName in df.columns:
+            sub_count = df[subjectName].nunique()
 
         # If there are errors report them and return the error page
         if errors:
@@ -1094,6 +1098,8 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
+        cp.session['download_files']['Config_default'] = fig.DEFAULT_CONFIG
+        cp.session['download_files']['Config_example'] = fig.CONFIG_EXAMPLE
         study_html = ''' <tr class="w3-hover-blue">
             <th>
             <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>

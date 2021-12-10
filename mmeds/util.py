@@ -1008,6 +1008,18 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     return out_s
 
 
+def make_grouped_mapping_file(mapping_file, col):
+    """ Generate DataFrame that corresponds to the groups in a metadata category """
+    df = pd.read_csv(Path(mapping_file), header=[0, 1], na_filter=False, sep='\t')
+    categories = ['#q2:types']
+    for cell in df[col]['categorical']:
+        if cell not in categories:
+            categories.append(cell)
+    out_data = {'#SampleID': categories}
+    out_df = pd.DataFrame(data=out_data)
+    return out_df
+
+
 def strip_error_barcodes(num_allowed_errors,
                          mapping_file,
                          input_dir,

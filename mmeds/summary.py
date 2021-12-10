@@ -203,24 +203,20 @@ class MMEDSNotebook():
         Logger.debug(self.config)
         self.env = setup_environment('mmeds-stable')
         self.words = {
-            '1': 'One',
-            '2': 'Two',
-            '3': 'Three',
-            '4': 'Four',
-            '5': 'Five',
-            '6': 'Six',
-            '7': 'Seven',
-            '8': 'Eight',
-            '9': 'Nine',
-            1: 'One',
-            2: 'Two',
-            3: 'Three',
-            4: 'Four',
-            5: 'Five',
-            6: 'Six',
-            7: 'Seven',
-            8: 'Eight',
-            9: 'Nine'
+            '1': 'Kingdom',
+            '2': 'Phylum',
+            '3': 'Class',
+            '4': 'Order',
+            '5': 'Family',
+            '6': 'Genus',
+            '7': 'Species',
+            1: 'Kingdom',
+            2: 'Phylum',
+            3: 'Class',
+            4: 'Order',
+            5: 'Family',
+            6: 'Genus',
+            7: 'Species',
         }
         copy(self.path / 'revtex.tplx', self.path / 'mod_revtex.tplx')
 
@@ -282,10 +278,15 @@ class MMEDSNotebook():
         """
         # Get the taxa level from the filename
         level = data_file.split('.')[0][-1]
-        self.add_markdown('## OTU level {level}'.format(level=self.words[level]))
+        self.add_markdown('## {level} Level'.format(level=self.words[level]))
 
-        # For each selected metadata column
-        for i, column in enumerate(self.config['metadata']):
+        # For each selected metadata column minus continuous variables
+        cols = [col for col in self.config['metadata'] if not self.config['metadata_continuous'][col]]
+        for i, column in enumerate(cols):
+            # Do not plot on continuous variables
+            if self.config['metadata_continuous'][column]:
+                continue
+
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
             self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(file1=data_file,
                                                                                       level=self.words[level],
@@ -308,7 +309,7 @@ class MMEDSNotebook():
             self.add_code('Image("{plot}")'.format(plot=filename),
                           meta={'{}{}'.format(self.words[level], column): True})
             self.add_code(self.source['otu_legend_py'].format(level=self.words[level]))
-            self.add_markdown(self.source['taxa_caption'])
+            self.add_markdown(self.source['taxa_caption'].format(level=self.words[level]))
             self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
@@ -323,34 +324,70 @@ class MMEDSNotebook():
         elif self.analysis_type == 'qiime2':
             xaxis = 'SamplingDepth'
         filename = data_file.split('.')[0] + '.png'
-        self.add_markdown('## {f}'.format(f=data_file))
-        self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
+        if 'shannon' in data_file:
+            display_name = 'Shannon Diversity'
+        elif 'faith_pd' in data_file:
+            display_name = 'Faith\'s Phylogenetic Diversity'
+        elif 'observed' in data_file:
+            display_name = 'Observed ASV'
+        else:
+            display_name = 'Evenness'
+        self.add_markdown('## {}'.format(display_name))
+        self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
+        for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
+            filename = data_file.split('.')[0] + '_' + col + '.png'
+            self.add_code(self.source['alpha_r_continuous'].format(file1=filename, xaxis=xaxis, cat=col))
+            self.add_code('Image("{plot}")'.format(plot=filename),
+                        meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+            self.add_markdown(self.source['page_break'])
+        self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
         self.add_code('Image("{plot}")'.format(plot=filename),
-                      meta={column: True for column in self.config['metadata']})
+                      meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
         self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
         Logger.debug('Added markdown')
         self.add_markdown(self.source['page_break'])
 
     def beta_plots(self, data_file):
         """
-        Create plots for alpha diversity files.
+        Create plots for beta diversity files.
         =======================================
         :data_file: The location of the file to create the plotting code for.
         """
         Logger.debug('Beta plots for file {}'.format(data_file))
+        if 'bray_curtis' in data_file:
+            display_name = 'Bray-Curtis'
+        elif 'unweighted' in data_file:
+            display_name = 'Unweighted UniFrac'
+        elif 'weighted' in data_file:
+            display_name = 'Weighted UniFrac'
+        else:
+            #TODO: Remove Jaccard so this isn't necessary
+            return
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
-            self.add_markdown('## {f} grouped by {group}'.format(f=data_file,
-                                                                 group=column))
-            self.add_code(self.source['beta_py'].format(file1=data_file,
-                                                        group=column))
-            contin = str(self.config['metadata_continuous'][column]).capitalize()
-            self.add_code(self.source['beta_r'].format(plot=plot,
-                                                       subplot=subplot,
-                                                       cat=column,
-                                                       continuous=contin))
+            self.add_markdown('## {}, grouped by {}'.format(display_name, column))
+            if self.config['metadata_continuous'][column]:
+                self.add_code(self.source['beta_py_continuous'].format(
+                    file1=data_file,
+                    group=column
+                ))
+                self.add_code(self.source['beta_r_continuous'].format(
+                    plot=plot,
+                    subplot=subplot,
+                    cat=column
+                ))
+            else:
+                self.add_code(self.source['beta_py_discrete'].format(
+                    file1=data_file,
+                    group=column
+                ))
+                self.add_code(self.source['beta_r_discrete'].format(
+                    plot=plot,
+                    subplot=subplot,
+                    cat=column
+                ))
             self.add_code('Image("{plot}")'.format(plot=plot), meta={column: True})
             self.add_markdown(self.source['beta_caption'])
 
@@ -389,6 +426,12 @@ class MMEDSNotebook():
         self.add_code(self.source['r_setup'])
         self.add_code(self.source['py_setup_2'])
 
+        # Add the cells for Demultiplexing
+        self.add_markdown('# Demultiplexing Summary')
+
+        # Add the cells for Table Statistics
+        self.add_markdown('# Table Statistics Summary')
+
         # Get only files for the requested taxa levels
         included_files = []
         for taxa_level in self.config['taxa_levels']:
@@ -397,23 +440,30 @@ class MMEDSNotebook():
                     included_files.append(taxa_file)
 
         # Add the cells for the Taxa summaries
-        self.add_markdown('# Taxa Summary')
+        self.add_markdown('# Taxonomy Summary')
+        self.add_markdown('## Interpreting Taxonomy Results')
+        self.add_markdown(self.source['taxa_description'])
         for data_file in included_files:
             self.taxa_plots(data_file)
         self.add_code(self.source['latex_legend_py'])
 
         # Add the latex rules for legends to the template
         for column in self.config['metadata']:
-            self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
+            if not self.config['metadata_continuous'][column]:
+                self.update_template('output', self.source['diversity_legend_latex'].format(meta=column))
 
         # Add the cells for Alpha Diversity
-        self.add_markdown('# Alpha Diversity Summary')
+        self.add_markdown('# Alpha Diversity')
+        self.add_markdown('## Interpreting Alpha Diversity Results')
+        self.add_markdown(self.source['alpha_description'])
         for data_file in self.files['alpha']:
             self.alpha_plots(data_file)
         self.add_code(self.source['group_legends_py'])
 
         # Add the cells for Beta Diversity
-        self.add_markdown('# Beta Diversity Summary')
+        self.add_markdown('# Beta Diversity')
+        self.add_markdown('## Interpreting Beta Diversity Results')
+        self.add_markdown(self.source['beta_description'])
         for data_file in sorted(self.files['beta']):
             if 'dm' not in data_file:
                 self.beta_plots(data_file)

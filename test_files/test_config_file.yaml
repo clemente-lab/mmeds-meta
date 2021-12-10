@@ -1,4 +1,4 @@
-# Sampling depth for qiime1 analysis
+# Sampling depth for qiime analysis
 sampling_depth: 1114
 # The metadata columns to include in analysis
 # To include all columns set to 'all' (no quotes)
