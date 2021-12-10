@@ -1,4 +1,4 @@
-name: jupyter.test
+name: jupyter
 channels:
   - conda-forge
   - defaults

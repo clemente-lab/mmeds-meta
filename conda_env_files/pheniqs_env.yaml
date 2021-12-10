@@ -1,4 +1,4 @@
-name: pheniqs.test
+name: pheniqs
 channels:
   - conda-forge
   - defaults

@@ -1,4 +1,4 @@
-name: latex.test
+name: latex
 channels:
   - conda-forge
   - defaults
