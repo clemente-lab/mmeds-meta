@@ -399,8 +399,8 @@ alpha_r_continuous<source>
 %%R -i df
 
 pd <- position_dodge(width = 50)
-
-p <- ggplot(data = subset(df,GroupName=="{cat}"), aes(x = {xaxis}, y = AverageValue, color = Grouping,group=Grouping)) +
+df.var <- subset(df, GroupName=="{cat}")
+p <- ggplot(data = df.var, aes(x = {xaxis}, y = AverageValue, color = Grouping,group=Grouping)) +
       geom_errorbar(aes(ymin=AverageValue-Error, ymax=AverageValue+Error), width=100, position = pd) +
       geom_point(stat='identity', position = pd, size = 1) +
       geom_line(stat='identity', position = pd) +
@@ -409,7 +409,7 @@ p <- ggplot(data = subset(df,GroupName=="{cat}"), aes(x = {xaxis}, y = AverageVa
       theme_bw() +
       theme(legend.position = 'bottom',
             plot.title = element_text(hjust = 0.5),
-            plot.subtitle = element_text(hjust = 0.5)) + scale_color_gradient(low="#0000FF", high="#FF0000", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+            plot.subtitle = element_text(hjust = 0.5)) + scale_color_gradient2(low="#0000FF", high="#FF0000", mid="#FFFFFF", midpoint=mean(df.var$Grouping, na.rm=TRUE), name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
 
 # Save plots
 ggsave('{file1}', height = 6, width = 6)
@@ -528,7 +528,7 @@ p <- ggpairs(df[,c(1:3)],
                plot.subtitle = element_text(hjust = 0.5)) +
          labs(title = 'PCA plot',
               subtitle = 'Colored by {cat}') +
-         scale_color_gradient(low="#0039D0", high="#FF0000", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+         scale_color_gradient2(low="#0000FF", high="#FF0000", mid="#FFFFFF", midpoint=mean(df$variable, na.rm=TRUE), name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
 
 print(p)
 out <- dev.off()
@@ -551,7 +551,7 @@ for(i in 1:p$nrow) {{
                                            p[i, j]$labels$x,
                                            p[i, j]$labels$y),
                            subtitle = 'Colored by {cat}') +
-                      scale_color_gradient(low="#0039D0", high="#FF0000", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+                      scale_color_gradient2(low="#0000FF", high="#FF0000", mid="#FFFFFF", midpoint=mean(df$variable, na.rm=TRUE), name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
             print(sp)
             out <- dev.off()
         }}
