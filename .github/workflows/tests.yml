@@ -19,11 +19,11 @@ jobs:
       - name: Mysql Setup
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
-        run: mkdir ~/mmeds_server_data; mkdir -p ~/conda_envs/pheniqs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.; cp -r ./conda_envs/* ~/conda_envs/.;
+        run: mkdir ~/mmeds_server_data; mkdir -p ~/conda_env_files/pheniqs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.; cp -r ./conda_env_files/* ~/conda_env_files/.;
       - name: Python install
         run: sudo python setup.py install
       - name: install pheniqs
-        run: conda env create -f ./conda_envs/pheniqs_env.yml -p ~/conda_envs/pheniqs
+        run: conda env create -f ./conda_env_files/pheniqs_env.yml -p ~/conda_env_files/pheniqs
       - name: Server Tests
         run: |
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&

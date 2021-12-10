@@ -1,49 +1,28 @@
 # This is the process for creating a functional summary environment
 
-# First create a conda environment named 'jupyter':
-`conda env create -f conda_env_files/jupyter.yaml'
+# First create a conda environment named 'jupyter' from the environment file located at `/docs/environment.yml`
 
-# Then activate the environment and run MMED's setup.py script:
+`conda env create --file environment.yml`
+
+# Then activate the environment and run the rest of these commands in it
 `conda activate jupyter`
-`python setup.py install`
 
-# With R version 3.5.1, run the following:
+# Then install the necessary R packages and version of nbconvert from conda-forge
+# NB: you will regret attempting to use a more recent version than nbconvert 5.6.1
+`conda install nbconvert=5.6.1 r-ggplot2 r-ggally r-ggrepel r-rcolorbrewer -c conda-forge`
 
-R
-install.packages("GGally",dependencies=TRUE)
-install.packages("ggrepel",dependencies=TRUE)
-install.packages("RColorBrewer")
-install.packages("ggplot2")
+# Now use pip to install the PDF template for jupyter and the Pillow python library
 
-quit()
+`pip install nb_pdf_template pillow`
 
-# Once all that is installed create a jupyter kernel from the current environment:
+# Once all that is installed create a jupyter kernel from the current environment
 
 `python -m ipykernel install --user --name jupyter --display-name="Jupyter"`
 
-### Install latex to run pdflatex command:
-# on minerva
-module load texlive/2018
+# Install necessary latex stuff
 
-# Fedora
+## Fedora
 `sudo dnf install texlive texlive-revtex texlive-braket`
 
-# Ubuntu
+## Ubuntu (I think, you may have to install more packages)
 `sudo apt install texlive-latex texlive-latex-recommended`
-
-# trying to mimic minerva by downloading texlive-core 2018:
-https://anaconda.org/conda-forge/texlive-core/files
-conda install -c conda-forge texlive-core=20180414
-
-
-### troubleshooting;
-things I at some point ran directly:
-conda install -c anaconda pandas=1.2.3
-conda install -c r rpy2=3
-conda install -c anaconda pillow
-pip install simplegeneric
-conda install -c conda-forge importlib-metadata=3
-conda install --force-reinstall jupyter_client
-conda install -c conda-forge jupyter_client=6.1.12
-conda install -c anaconda ipykernel
-conda install -c conda-forge backports.zoneinfo
