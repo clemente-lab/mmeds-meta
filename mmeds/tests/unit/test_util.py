@@ -301,7 +301,6 @@ class UtilTests(TestCase):
             # Remove old test files from dir
             for f in output_dir.glob('*'):
                 f.unlink()
-
             util.strip_error_barcodes(
                 level,
                 fig.TEST_PHENIQS_MAPPING,
@@ -309,7 +308,6 @@ class UtilTests(TestCase):
                 fig.TEST_STRIPPED_OUTPUT_DIR,
                 False
             )
-
             # Assert correct number of output files
             output_files = list(output_dir.glob('*'))
             df = read_csv(Path(fig.TEST_PHENIQS_MAPPING), sep='\t', header=[0, 1], na_filter=False)

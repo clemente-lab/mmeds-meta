@@ -47,7 +47,6 @@ def summarize_qiime(summary_path, tool):
 
     # Load the configuration
     config = load_config(path / 'config_file.yaml', files['metadata'], True)
-    print(config)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
@@ -508,7 +507,6 @@ class MMEDSNotebook():
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
             new_env = setup_environment('jupyter')
-            print(cmd)
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
@@ -519,7 +517,6 @@ class MMEDSNotebook():
             Logger.debug('Convert latex to pdf')
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
-            print(cmd)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
             output = run(cmd.split(' '), check=True, capture_output=True)
