@@ -412,12 +412,15 @@ TEST_ADD_SAMPLE = str(TEST_PATH / 'test_add_sample.tsv')
 USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
 SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
 SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
+CONFIG_EXAMPLE = str(TEST_PATH / 'config_example.yaml')
+
 
 # Demultiplexing Qiime Defaults
 QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
 QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
 QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
 FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,

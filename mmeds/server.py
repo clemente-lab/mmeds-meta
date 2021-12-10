@@ -1098,6 +1098,8 @@ class MMEDSanalysis(MMEDSbase):
     @cp.expose
     def analysis_page(self):
         """ Page for running analysis of previous uploads. """
+        cp.session['download_files']['Config_default'] = fig.DEFAULT_CONFIG
+        cp.session['download_files']['Config_example'] = fig.CONFIG_EXAMPLE
         study_html = ''' <tr class="w3-hover-blue">
             <th>
             <a href="{select_specimen_page}?access_code={access_code}"> {study_name} </a>

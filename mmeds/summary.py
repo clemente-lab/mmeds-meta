@@ -47,7 +47,6 @@ def summarize_qiime(summary_path, tool):
 
     # Load the configuration
     config = load_config(path / 'config_file.yaml', files['metadata'], True)
-    print(config)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
@@ -320,11 +319,27 @@ class MMEDSNotebook():
         elif self.analysis_type == 'qiime2':
             xaxis = 'SamplingDepth'
         filename = data_file.split('.')[0] + '.png'
-        self.add_markdown('## {f}'.format(f=data_file))
-        self.add_code(self.source['alpha_py_{}'.format(self.analysis_type)].format(file1=data_file))
+
+        if 'shannon' in data_file:
+            display_name = 'Shannon Diversity'
+        elif 'faith_pd' in data_file:
+            display_name = 'Faith\'s Phylogenetic Diversity'
+        elif 'observed' in data_file:
+            display_name = 'Observed ASV'
+        else:
+            display_name = 'Evenness'
+        self.add_markdown('## {}'.format(display_name))
+        self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
+        for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
+            filename = data_file.split('.')[0] + '_' + col + '.png'
+            self.add_code(self.source['alpha_r_continuous'].format(file1=filename, xaxis=xaxis, cat=col))
+            self.add_code('Image("{plot}")'.format(plot=filename),
+                        meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+            self.add_markdown(self.source['page_break'])
+        self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
         self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
         self.add_code('Image("{plot}")'.format(plot=filename),
-                      meta={column: True for column in self.config['metadata']})
+                      meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
         self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
         Logger.debug('Added markdown')
         self.add_markdown(self.source['page_break'])
@@ -336,6 +351,17 @@ class MMEDSNotebook():
         :data_file: The location of the file to create the plotting code for.
         """
         Logger.debug('Beta plots for file {}'.format(data_file))
+
+        if 'bray_curtis' in data_file:
+            display_name = 'Bray-Curtis'
+        elif 'unweighted' in data_file:
+            display_name = 'Unweighted UniFrac'
+        elif 'weighted' in data_file:
+            display_name = 'Weighted UniFrac'
+        else:
+            #TODO: Remove Jaccard so this isn't necessary
+            return
+
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
@@ -467,7 +493,6 @@ class MMEDSNotebook():
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
             new_env = setup_environment('jupyter')
-            print(cmd)
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
@@ -478,7 +503,6 @@ class MMEDSNotebook():
             Logger.debug('Convert latex to pdf')
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
-            print(cmd)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
             output = run(cmd.split(' '), check=True, capture_output=True)

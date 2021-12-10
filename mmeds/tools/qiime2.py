@@ -427,7 +427,7 @@ class Qiime2(Tool):
 
     def taxa_diversity(self, category=None):
         """ Create visualizations of taxa summaries at each level. """
-        if category is None:
+        if not category:
             # Create taxa visualization for entire dataset
             taxa_bar_plot = 'taxa_bar_plot'
             table = 'filtered_table'
