@@ -1,4 +1,4 @@
-# This example configuration will group data on six metadata columns, 
+# This example configuration will group data on six metadata columns,
 #  and will give taxa results at the Phylum (2) and Genus (6) levels.
 #  See default config file for full parameter descriptions.
 sampling_depth: 1000
@@ -15,7 +15,7 @@ taxa_levels:
 abundance_threshold: 0.1
 font_size: 15
 sub_analysis: none
-additional_analysis: none 
+additional_analysis: none
 iterations: 5
 permutations: 1
-type: spearman 
+type: spearman
