@@ -15,6 +15,8 @@ import re
 
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
+# If not running on web01, can't connect to databases
+IS_PRODUCTION = 'web01' in getfqdn().split('.')
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
@@ -38,13 +40,20 @@ else:
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
-    DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
     WWW_ROOT = "https://mmedsadmin.u.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
+
+    # We're on web01 and using MMEDs out of if it's project diredctory
+    if IS_PRODUCTION:
+        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
+    # We're on Matt's login node, see above TODO for needed improvement
+    else:
+        DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
+
 
 STUDIES_DIR = DATABASE_DIR / 'studies'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
@@ -388,10 +397,10 @@ TEST_CONFIG_METADATA = str(TEST_PATH / 'test_config_metadata.tsv')
 TEST_BARCODES = str(TEST_PATH / 'barcodes.fastq.gz')
 TEST_READS = str(TEST_PATH / 'forward_reads.fastq.gz')
 TEST_REV_READS = str(TEST_PATH / 'reverse_reads.fastq.gz')
-TEST_BARCODES_DUAL = str(TEST_PATH / 'for_barcodes_dual.fastq.gz')
-TEST_REV_BARCODES_DUAL = str(TEST_PATH / 'rev_barcodes_dual.fastq.gz')
-TEST_READS_DUAL = str(TEST_PATH / 'for_reads_dual.fastq.gz')
-TEST_REV_READS_DUAL = str(TEST_PATH / 'rev_reads_dual.fastq.gz')
+TEST_BARCODES_DUAL = str(TEST_PATH / 'test_S1_L001_I1_001.fastq')
+TEST_REV_BARCODES_DUAL = str(TEST_PATH / 'test_S1_L001_I2_001.fastq')
+TEST_READS_DUAL = str(TEST_PATH / 'test_S1_L001_R1_001.fastq')
+TEST_REV_READS_DUAL = str(TEST_PATH / 'test_S1_L001_R2_001.fastq')
 TEST_DEMUXED = str(TEST_PATH / 'test_demuxed.zip')
 TEST_GZ = str(TEST_PATH / 'test_archive.tar.gz')
 TEST_TOOL = 'tester-5'
@@ -404,6 +413,14 @@ USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
 SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
 SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 CONFIG_EXAMPLE = str(TEST_PATH / 'config_example.yaml')
+
+
+# Demultiplexing Qiime Defaults
+QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
+QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
+QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
+FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,
@@ -564,183 +581,177 @@ ALL_TABLE_COLS = {}
 ALL_COLS = []
 COL_SIZES = {}
 
-# Try connecting via the testing setup
-try:
-    db = pms.connect(host='localhost',
-                     user='root',
-                     password='root',
-                     db=SQL_DATABASE,
-                     max_allowed_packet=2048000000,
-                     local_infile=True)
-# Otherwise connect via secured credentials
-except pms.err.OperationalError:
-    db = pms.connect(host=sec.SQL_HOST,
-                     user=sec.SQL_ADMIN_NAME,
-                     password=sec.SQL_ADMIN_PASS,
-                     database=sec.SQL_DATABASE,
-                     local_infile=True)
-
-# Get the columns that exist in each table
-c = db.cursor()
-for table in TABLE_ORDER:
-    if table == 'ICDCode':
-        TABLE_COLS['ICDCode'] = ['ICDCode']
-        ALL_COLS += 'ICDCode'
-        COL_SIZES['ICDCode'] = ('varchar', 9)
-    elif not table == 'AdditionalMetaData':
-        c.execute('DESCRIBE ' + table)
-        info = c.fetchall()
-        results = [x[0] for x in info]
-        sizes = [x[1] for x in info]
-        for col, size in zip(results, sizes):
-            if '(' in size:
-                parts = size.split('(')
-                ctype = parts[0]
-                parsing = parts[1].split(')')[0]
-                if ',' in parsing:
-                    cparts = parsing.split(',')
-                    csize = (int(cparts[0]), int(cparts[1]))
-                else:
-                    csize = int(parsing)
-            else:
-                ctype = size
-                csize = 0
-
-            COL_SIZES[col] = (ctype, csize)
-        TABLE_COLS[table] = [x for x in results if 'id' not in x]
-        ALL_TABLE_COLS[table] = results
-        ALL_COLS += results
-c.close()
-TABLE_COLS['AdditionalMetaData'] = []
-DATE_COLS = [col for col in ALL_COLS if 'Date' in col]
-
-# For use when working with Metadata files
-METADATA_TABLES = set(TABLE_ORDER) - ICD_TABLES
-METADATA_COLS = {}
-for table in METADATA_TABLES:
-    METADATA_COLS[table] = TABLE_COLS[table]
-
-
 COLUMN_TYPES_SPECIMEN = defaultdict(dict)
 COLUMN_TYPES_SUBJECT = defaultdict(dict)
 COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
-TYPE_MAP = {
-    'Text': str,
-    'Text: Must be unique': str,
-    'Web Address': str,
-    'Email': str,
-    'Decimal': float,
-    'Integer': int,
-    'Number': float,
-    'Date': Timestamp,
-    'Time': Timestamp
-}
+# Try connecting via the testing setup
+if IS_PRODUCTION or TESTING:
+    try:
+        db = pms.connect(host='localhost',
+                         user='root',
+                         password='root',
+                         db=SQL_DATABASE,
+                         max_allowed_packet=2048000000,
+                         local_infile=True)
+    # Otherwise connect via secured credentials
+    except pms.err.OperationalError:
+        db = pms.connect(host=sec.SQL_HOST,
+                         user=sec.SQL_ADMIN_NAME,
+                         password=sec.SQL_ADMIN_PASS,
+                         database=sec.SQL_DATABASE,
+                         local_infile=True)
 
-for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPECIMEN_TABLES),
-                                     (TEST_SUBJECT, COLUMN_TYPES_SUBJECT, SUBJECT_TABLES),
-                                     (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES)]:
-    tdf = read_csv(test_file,
-                   sep='\t',
-                   header=[0, 1],
-                   skiprows=[2, 4],
-                   na_filter=False)
+    # Get the columns that exist in each table
+    c = db.cursor()
+    for table in TABLE_ORDER:
+        if table == 'ICDCode':
+            TABLE_COLS['ICDCode'] = ['ICDCode']
+            ALL_COLS += 'ICDCode'
+            COL_SIZES['ICDCode'] = ('varchar', 9)
+        elif not table == 'AdditionalMetaData':
+            c.execute('DESCRIBE ' + table)
+            info = c.fetchall()
+            results = [x[0] for x in info]
+            sizes = [x[1] for x in info]
+            for col, size in zip(results, sizes):
+                if '(' in size:
+                    parts = size.split('(')
+                    ctype = parts[0]
+                    parsing = parts[1].split(')')[0]
+                    if ',' in parsing:
+                        cparts = parsing.split(',')
+                        csize = (int(cparts[0]), int(cparts[1]))
+                    else:
+                        csize = int(parsing)
+                else:
+                    ctype = size
+                    csize = 0
 
-    for table in tables:
-        try:
-            for column in TABLE_COLS[table]:
-                col_type = tdf[table][column].iloc[0]
-                col_types[table][column] = TYPE_MAP[col_type]
-                COL_TO_TABLE[column] = table
-        except KeyError:
-            if table in ICD_TABLES or table == 'ICDcode':
-                continue
-            else:
-                raise
+                COL_SIZES[col] = (ctype, csize)
+            TABLE_COLS[table] = [x for x in results if 'id' not in x]
+            ALL_TABLE_COLS[table] = results
+            ALL_COLS += results
+    c.close()
+    TABLE_COLS['AdditionalMetaData'] = []
+    DATE_COLS = [col for col in ALL_COLS if 'Date' in col]
 
-# Clean up
-del db
+    # For use when working with Metadata files
+    METADATA_TABLES = set(TABLE_ORDER) - ICD_TABLES
+    METADATA_COLS = {}
+    for table in METADATA_TABLES:
+        METADATA_COLS[table] = TABLE_COLS[table]
 
-# Create the lists for Sample and Aliquot IDs
-ALIQUOT_ID_COLUMNS = {}
-for col in ['StudyName',
-            'SpecimenID',
-            'AliquotWeight',
-            'AliquotWeightUnit',
-            'StorageInstitution',
-            'StorageFreezer'
-            ]:
-    col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
-    ALIQUOT_ID_COLUMNS[col] = col_type
+    TYPE_MAP = {
+        'Text': str,
+        'Text: Must be unique': str,
+        'Web Address': str,
+        'Email': str,
+        'Decimal': float,
+        'Integer': int,
+        'Number': float,
+        'Date': Timestamp,
+        'Time': Timestamp
+    }
 
-SAMPLE_ID_COLUMNS = {}
-for col in ['StudyName',
-            'AliquotID',
-            'SampleDatePerformed',
-            'SampleProcessor',
-            'SampleProtocolNotes',
-            'SampleProtocolID',
-            'SampleConditions',
-            'SampleTool',
-            'SampleToolVersion',
-            'SampleWeight',
-            'SampleWeightUnit',
-            'StorageInstitution',
-            'StorageFreezer'
-            ]:
-    col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
-    SAMPLE_ID_COLUMNS[col] = col_type
+    for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPECIMEN_TABLES),
+                                        (TEST_SUBJECT, COLUMN_TYPES_SUBJECT, SUBJECT_TABLES),
+                                        (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES)]:
+        tdf = read_csv(test_file,
+                       sep='\t',
+                       header=[0, 1],
+                       skiprows=[2, 4],
+                       na_filter=False)
 
-# Demultiplexing Qiime Defaults
-QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
-QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
-QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
-FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+        for table in tables:
+            try:
+                for column in TABLE_COLS[table]:
+                    col_type = tdf[table][column].iloc[0]
+                    col_types[table][column] = TYPE_MAP[col_type]
+                    COL_TO_TABLE[column] = table
+            except KeyError:
+                if table in ICD_TABLES or table == 'ICDcode':
+                    continue
+                else:
+                    raise
 
-# Map known columns from MIxS
-MMEDS_MAP = {
-    'investigation_type': ('Study', 'StudyType'),
-    'project_name': ('Study', 'StudyName'),
-    'experimental_factor': None,
-    'collection_date': ('Specimen', 'CollectionDate'),
-    'lat_lon': ('CollectionSite', 'Latitude:Longitude'),
-    'geo_loc_name': ('CollectionSite', 'Name'),
-    'biome': ('CollectionSite', 'Biome'),
-    'feature': ('CollectionSite', 'Feature'),
-    'material': ('CollectionSite', 'Material'),
-    'env_package': ('CollectionSite', 'Environment'),
-    'depth': ('CollectionSite', 'Depth'),
-    'lib_reads_seqd': None,
-    'target_gene': ('RawDataProtocols', 'TargetGene'),
-    'pcr_primers': ('RawDataProtocols', 'Primer'),
-    'pcr_cond': ('RawDataProtocols', 'Conditions'),
-    'sequencing_meth': ('RawDataProtocols', 'SequencingMethod'),
-    'url': ('Study', 'RelevantLinks'),
-    'assembly': ('ResultsProtocols', 'Method'),
-    'assembly_name': ('ResultsProtocols', 'Name:Version'),
-    'isol_growth_condt': ('SampleProtocols', 'Conditions')
-}
-# Map all mmeds columns
-for table in TABLE_COLS:
-    for column in TABLE_COLS[table]:
-        MMEDS_MAP[column] = (table, column)
+    # Clean up
+    del db
 
-SUBJECT_COLUMNS = {}
-for table in SUBJECT_TABLES:
-    cols = TABLE_COLS[table]
-    if 'ICDDetails' in cols:
-        cols.remove('ICDDetails')
-        cols.remove('ICDExtension')
-    elif 'ICDCategory' in cols:
-        cols.remove('ICDCategory')
-    elif 'ICDFirstCharacter' in cols:
-        cols.remove('ICDFirstCharacter')
-    for col in cols:
-        col_type = COLUMN_TYPES_SUBJECT[table][col]
-        SUBJECT_COLUMNS[col] = col_type
+    # Create the lists for Sample and Aliquot IDs
+    ALIQUOT_ID_COLUMNS = {}
+    for col in ['StudyName',
+                'SpecimenID',
+                'AliquotWeight',
+                'AliquotWeightUnit',
+                'StorageInstitution',
+                'StorageFreezer'
+                ]:
+        col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
+        ALIQUOT_ID_COLUMNS[col] = col_type
 
-MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
+    SAMPLE_ID_COLUMNS = {}
+    for col in ['StudyName',
+                'AliquotID',
+                'SampleDatePerformed',
+                'SampleProcessor',
+                'SampleProtocolNotes',
+                'SampleProtocolID',
+                'SampleConditions',
+                'SampleTool',
+                'SampleToolVersion',
+                'SampleWeight',
+                'SampleWeightUnit',
+                'StorageInstitution',
+                'StorageFreezer'
+                ]:
+        col_type = COLUMN_TYPES_SPECIMEN[COL_TO_TABLE[col]][col]
+        SAMPLE_ID_COLUMNS[col] = col_type
+
+    # Map known columns from MIxS
+    MMEDS_MAP = {
+        'investigation_type': ('Study', 'StudyType'),
+        'project_name': ('Study', 'StudyName'),
+        'experimental_factor': None,
+        'collection_date': ('Specimen', 'CollectionDate'),
+        'lat_lon': ('CollectionSite', 'Latitude:Longitude'),
+        'geo_loc_name': ('CollectionSite', 'Name'),
+        'biome': ('CollectionSite', 'Biome'),
+        'feature': ('CollectionSite', 'Feature'),
+        'material': ('CollectionSite', 'Material'),
+        'env_package': ('CollectionSite', 'Environment'),
+        'depth': ('CollectionSite', 'Depth'),
+        'lib_reads_seqd': None,
+        'target_gene': ('RawDataProtocols', 'TargetGene'),
+        'pcr_primers': ('RawDataProtocols', 'Primer'),
+        'pcr_cond': ('RawDataProtocols', 'Conditions'),
+        'sequencing_meth': ('RawDataProtocols', 'SequencingMethod'),
+        'url': ('Study', 'RelevantLinks'),
+        'assembly': ('ResultsProtocols', 'Method'),
+        'assembly_name': ('ResultsProtocols', 'Name:Version'),
+        'isol_growth_condt': ('SampleProtocols', 'Conditions')
+    }
+    # Map all mmeds columns
+    for table in TABLE_COLS:
+        for column in TABLE_COLS[table]:
+            MMEDS_MAP[column] = (table, column)
+
+    SUBJECT_COLUMNS = {}
+    for table in SUBJECT_TABLES:
+        cols = TABLE_COLS[table]
+        if 'ICDDetails' in cols:
+            cols.remove('ICDDetails')
+            cols.remove('ICDExtension')
+        elif 'ICDCategory' in cols:
+            cols.remove('ICDCategory')
+        elif 'ICDFirstCharacter' in cols:
+            cols.remove('ICDFirstCharacter')
+        for col in cols:
+            col_type = COLUMN_TYPES_SUBJECT[table][col]
+            SUBJECT_COLUMNS[col] = col_type
+
+    MIXS_MAP = {v: k for (k, v) in MMEDS_MAP.items()}
 
 
 def get_salt(length=10):

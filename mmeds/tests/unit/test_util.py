@@ -12,7 +12,6 @@ import Levenshtein as lev
 import mmeds.config as fig
 import hashlib as hl
 import os
-import gzip
 
 
 class UtilTests(TestCase):
