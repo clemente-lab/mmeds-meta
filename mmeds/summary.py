@@ -362,6 +362,7 @@ class MMEDSNotebook():
         elif 'weighted' in data_file:
             display_name = 'Weighted UniFrac'
         else:
+            #TODO: Remove Jaccard so this isn't necessary
             return
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
