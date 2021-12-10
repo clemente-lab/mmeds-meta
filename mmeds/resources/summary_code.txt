@@ -322,6 +322,60 @@ df.Grouping = df.Grouping.astype(str)
 df.GroupID = df.GroupID.astype(str)
 df.GroupName = df.GroupName.astype(str)
 =====
+alpha_py_continuous<source>
+# Read in the data
+df = pd.read_csv('{file1}', sep=',')
+
+# Reshape the data into (mostly) long format
+headers = list(set(mdf.columns).intersection(set(df.columns)))
+df = df.melt(id_vars=['sample-id'] + headers)
+
+# Remove info on specific iterations to allow for grouping by value
+replacements = {{x:int(x.split('_')[0].split('-')[1]) for x in df.variable.unique()}}
+df.variable.replace(replacements, inplace=True)
+
+# For storing
+group_means = []
+
+for group_name in metadata_continuous:
+    # Remove the metadata not relevant to this grouping
+    groups = df[['sample-id', 'variable', 'value', group_name]]
+
+    # Calculate the means accross iterations
+    agger = {{'value': 'mean', group_name: 'first'}}
+    groups = groups.groupby(['sample-id', 'variable']).agg(agger).reset_index()
+
+    # Add a column to store the errors
+    groups = groups.assign(Error=groups.value)
+
+    # Group by metadata value and calculate the means and error
+    agger = {{'Error': 'sem', 'value': 'mean'}}
+    group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
+
+    # Assign information for the colors
+    colors = [color_maps[group_name][str(x)] for x in group[group_name]]
+    group = group.assign(GroupID=colors)
+
+    # Assign information for grouping
+    group_names = [group_name for x in group[group_name]]
+    group = group.assign(GroupName=group_names)
+
+    # Rename columns and append to the list of dataframes
+    new_names = {{
+        'variable': 'SamplingDepth',
+        'value': 'AverageValue',
+         group_name: 'Grouping'
+    }}
+    group_means.append(group.rename(index=str, columns=new_names))
+
+# Stack all the different groups into a single dataframe
+df = pd.concat(group_means, axis=0, sort=False)
+df.SamplingDepth = df.SamplingDepth.astype(float)
+df.Error = df.Error.astype(float)
+df.AverageValue = df.AverageValue.astype(float)
+df.GroupID = df.GroupID.astype(str)
+df.GroupName = df.GroupName.astype(str)
+=====
 alpha_r<source>
 %%R -i df
 pd <- position_dodge(width = 50)
@@ -332,11 +386,30 @@ p <- ggplot(data = df, aes(x = {xaxis}, y = AverageValue, color = GroupID)) +
      geom_line(stat='identity', position = pd) +
      facet_wrap(~GroupName) + colFill + colScale +
      labs(title = 'Alpha Diversity',
-          subtitle = 'Grouped by Metadata Catagory') +
+          subtitle = 'Grouped by Discrete Metadata Categories') +
      theme_bw() +
      theme(legend.position = 'none',
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5))
+
+# Save plots
+ggsave('{file1}', height = 6, width = 6)
+=====
+alpha_r_continuous<source>
+%%R -i df
+
+pd <- position_dodge(width = 50)
+
+p <- ggplot(data = subset(df,GroupName=="{cat}"), aes(x = {xaxis}, y = AverageValue, color = Grouping,group=Grouping)) +
+      geom_errorbar(aes(ymin=AverageValue-Error, ymax=AverageValue+Error), width=100, position = pd) +
+      geom_point(stat='identity', position = pd, size = 1) +
+      geom_line(stat='identity', position = pd) +
+      labs(title = 'Alpha Diversity',
+           subtitle = 'Grouped by {cat}') +
+      theme_bw() +
+      theme(legend.position = 'bottom',
+            plot.title = element_text(hjust = 0.5),
+            plot.subtitle = element_text(hjust = 0.5)) + scale_color_gradient(low="#0000FF", high="#FF0000", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
 
 # Save plots
 ggsave('{file1}', height = 6, width = 6)

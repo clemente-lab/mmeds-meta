@@ -403,6 +403,7 @@ TEST_ADD_SAMPLE = str(TEST_PATH / 'test_add_sample.tsv')
 USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
 SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
 SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
+CONFIG_EXAMPLE = str(TEST_PATH / 'config_example.yaml')
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
     'for_reads': TEST_READS,
