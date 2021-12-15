@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from setuptools import setup
 from glob import glob
+from setuptools.command.install import install
+import shutil
 
 __author__ = "The Clemente Lab"
 __copyright__ = "Copyright (c) 2021 The Clemente Lab"
@@ -8,6 +10,17 @@ __credits__ = ["David S. Wallach", "Jose C. Clemente"]
 __license__ = "GPL"
 __maintainer__ = "David S. Wallach"
 __email__ = "d.s.t.wallach@gmail.com"
+
+
+class cleanProject(install):
+    """Custom clean command to tidy up the project root."""
+    def run(self):
+        install.run(self)
+        print('Cleaning out build artifacts')
+        shutil.rmtree('build')
+        shutil.rmtree('dist')
+        shutil.rmtree('mmeds.egg-info')
+
 
 setup(name='mmeds',
       version='0.6.0',
@@ -61,4 +74,6 @@ setup(name='mmeds',
           'jaraco.functools==3.3.0',
           'tempora==4.0.2'
       ],
-      zip_safe=False)
+      zip_safe=False,
+      cmdclass={'install': cleanProject}
+      )
