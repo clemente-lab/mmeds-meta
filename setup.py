@@ -17,9 +17,20 @@ class cleanProject(install):
     def run(self):
         install.run(self)
         print('Cleaning out build artifacts')
-        shutil.rmtree('build')
-        shutil.rmtree('dist')
-        shutil.rmtree('mmeds.egg-info')
+        try:
+            shutil.rmtree('build')
+        except FileNotFoundError:
+            print('no build folder to remove')
+
+        try:
+            shutil.rmtree('dist')
+        except FileNotFoundError:
+            print('no dist folder to remove')
+
+        try:
+            shutil.rmtree('mmeds.egg-info')
+        except FileNotFoundError:
+            print('no egg-info folder to remove')
 
 
 setup(name='mmeds',
