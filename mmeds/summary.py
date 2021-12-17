@@ -116,6 +116,7 @@ def summarize_qiime1(path, files, config, study_name):
 def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
     Logger.debug('Start Qiime2 summary')
+    path = path.absolute()
 
     # Get the environment
     new_env = setup_environment('qiime2/2020.8')
@@ -124,10 +125,16 @@ def summarize_qiime2(path, files, config, study_name):
     summary_files = defaultdict(list)
 
     # Get Taxa
-    cmd = ['qiime', 'tools', 'export',
-           '--input-path', str(files['taxa_bar_plot']),
-           '--output-path', str(path / 'temp')]
-    run(cmd, env=new_env, check=True)
+    #cmd = ['qiime', 'tools', 'export',
+    #       '--input-path', str(files['taxa_bar_plot']),
+    #       '--output-path', str(path / 'temp')]
+    #cmd = f"qiime tools export\
+    #       --input-path {str(files['taxa_bar_plot'])}\
+    #       --output-path' {str(path / 'temp')}"
+    #path = path.absolute()
+    cmd = f"module unload python/3.7.3; qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
+
+    run(cmd, env=new_env, check=True, shell=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -140,7 +147,8 @@ def summarize_qiime2(path, files, config, study_name):
         cmd = ['qiime', 'tools', 'export',
                '--input-path', str(beta_file),
                '--output-path', str(path / 'temp')]
-        run(cmd, env=new_env, check=True)
+        cmd = f"module unload python/3.7.3; qiime tools export --input-path {str(beta_file)} --output-path {str(path / 'temp')}"
+        run(cmd, env=new_env, check=True, shell=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         Logger.debug(dest_file)
@@ -151,7 +159,8 @@ def summarize_qiime2(path, files, config, study_name):
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]
-    run(cmd, env=new_env, check=True)
+    cmd = f"module unload python/3.7.3; qiime tools export --input-path {str(files['alpha_rarefaction'])} --output-path {str(path / 'temp')}"
+    run(cmd, env=new_env, check=True, shell=True)
     for metric in ['shannon', 'faith_pd', 'observed_features']:
 
         metric_file = path / 'temp/{}.csv'.format(metric)
@@ -495,7 +504,7 @@ class MMEDSNotebook():
         try:
             new_env = setup_environment('jupyter')
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --to latex --template mod_revtex.tplx'
+            cmd = 'module unload python/3.7.3; jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
@@ -507,15 +516,19 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
+            print('Convert notebook to latex')
+
             new_env = setup_environment('jupyter')
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
-                    run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
-                    run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'jupyter',
-                         '--display-name', '"Jupyter"'], stdout=out, stderr=err)
-                    output = run(cmd.split(' '), check=True, env=new_env, stdout=out, stderr=err)
+                    # run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
+                    # run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'jupyter',
+                    #      '--display-name', '"Jupyter"'], stdout=out, stderr=err)
+                    output = run(cmd.split(' '), check=True, env=new_env, shell=True, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
+            print('Convert latex to pdf')
+
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
@@ -525,8 +538,10 @@ class MMEDSNotebook():
 
         except RuntimeError:
             Logger.debug(output)
+            print(output)
 
     def create_notebook(self):
+        print('starting notebook')
         Logger.debug('Start summary notebook')
         original_path = Path.cwd()
         os.chdir(self.path)

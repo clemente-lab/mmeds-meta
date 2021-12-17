@@ -86,4 +86,4 @@ class Logger:
         return Logger._log('debug', format_log_message(log_message), *log_args)
 
 
-Logger(load_log_config())
+# Logger(load_log_config())
