@@ -116,7 +116,7 @@ def summarize_qiime1(path, files, config, study_name):
 def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
     Logger.debug('Start Qiime2 summary')
-    # path = path.absolute()
+    path = path.absolute()
 
     # Get the environment
     new_env = setup_environment('qiime2/2020.8')
