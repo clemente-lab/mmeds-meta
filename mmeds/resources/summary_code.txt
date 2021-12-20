@@ -313,15 +313,14 @@ for group_name in metadata_discrete:
     }}
     group_means.append(group.rename(index=str, columns=new_names))
 
-if metadata_discrete:
-    # Stack all the different groups into a single dataframe
-    df = pd.concat(group_means, axis=0, sort=False)
-    df.SamplingDepth = df.SamplingDepth.astype(float)
-    df.Error = df.Error.astype(float)
-    df.AverageValue = df.AverageValue.astype(float)
-    df.Grouping = df.Grouping.astype(str)
-    df.GroupID = df.GroupID.astype(str)
-    df.GroupName = df.GroupName.astype(str)
+# Stack all the different groups into a single dataframe
+df = pd.concat(group_means, axis=0, sort=False)
+df.SamplingDepth = df.SamplingDepth.astype(float)
+df.Error = df.Error.astype(float)
+df.AverageValue = df.AverageValue.astype(float)
+df.Grouping = df.Grouping.astype(str)
+df.GroupID = df.GroupID.astype(str)
+df.GroupName = df.GroupName.astype(str)
 =====
 alpha_py_continuous<source>
 # Read in the data
@@ -369,14 +368,13 @@ for group_name in metadata_continuous:
     }}
     group_means.append(group.rename(index=str, columns=new_names))
 
-if metadata_continuous:
-    # Stack all the different groups into a single dataframe
-    df = pd.concat(group_means, axis=0, sort=False)
-    df.SamplingDepth = df.SamplingDepth.astype(float)
-    df.Error = df.Error.astype(float)
-    df.AverageValue = df.AverageValue.astype(float)
-    df.GroupID = df.GroupID.astype(str)
-    df.GroupName = df.GroupName.astype(str)
+# Stack all the different groups into a single dataframe
+df = pd.concat(group_means, axis=0, sort=False)
+df.SamplingDepth = df.SamplingDepth.astype(float)
+df.Error = df.Error.astype(float)
+df.AverageValue = df.AverageValue.astype(float)
+df.GroupID = df.GroupID.astype(str)
+df.GroupName = df.GroupName.astype(str)
 =====
 alpha_r<source>
 %%R -i df

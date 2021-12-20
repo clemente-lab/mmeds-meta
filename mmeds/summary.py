@@ -334,20 +334,26 @@ class MMEDSNotebook():
         else:
             display_name = 'Evenness'
         self.add_markdown('## {}'.format(display_name))
-        self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
-        for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
-            filename = data_file.split('.')[0] + '_' + col + '.png'
-            self.add_code(self.source['alpha_r_continuous'].format(file1=filename, xaxis=xaxis, cat=col))
+
+        # Study contains continuous variables
+        if True in [val for (key, val) in self.config['metadata_continuous'].items()]:
+            self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
+            for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
+                filename = data_file.split('.')[0] + '_' + col + '.png'
+                self.add_code(self.source['alpha_r_continuous'].format(file1=filename, xaxis=xaxis, cat=col))
+                self.add_code('Image("{plot}")'.format(plot=filename),
+                            meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+                self.add_markdown(self.source['page_break'])
+
+        # Study contains discrete variables
+        if False in [val for (key, val) in self.config['metadata_continuous'].items()]:
+            self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
+            self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
             self.add_code('Image("{plot}")'.format(plot=filename),
-                        meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+                        meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
+            self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
+            Logger.debug('Added markdown')
             self.add_markdown(self.source['page_break'])
-        self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
-        self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
-        self.add_code('Image("{plot}")'.format(plot=filename),
-                      meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
-        self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
-        Logger.debug('Added markdown')
-        self.add_markdown(self.source['page_break'])
 
     def beta_plots(self, data_file):
         """
