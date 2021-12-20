@@ -116,7 +116,7 @@ def summarize_qiime1(path, files, config, study_name):
 def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
     Logger.debug('Start Qiime2 summary')
-    path = path.absolute()
+    # path = path.absolute()
 
     # Get the environment
     new_env = setup_environment('qiime2/2020.8')
@@ -514,7 +514,6 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
-            print('Convert notebook to latex')
 
             new_env = setup_environment('jupyter')
             with open(self.path / 'notebook.err', 'w') as err:
@@ -522,7 +521,6 @@ class MMEDSNotebook():
                     output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
-            print('Convert latex to pdf')
 
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
@@ -533,7 +531,6 @@ class MMEDSNotebook():
 
         except RuntimeError:
             Logger.debug(output)
-            print(output)
 
     def create_notebook(self):
         Logger.debug('Start summary notebook')
