@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from setuptools import setup
 from glob import glob
+from setuptools.command.install import install
+import shutil
 
 __author__ = "The Clemente Lab"
 __copyright__ = "Copyright (c) 2021 The Clemente Lab"
@@ -8,6 +10,28 @@ __credits__ = ["David S. Wallach", "Jose C. Clemente"]
 __license__ = "GPL"
 __maintainer__ = "David S. Wallach"
 __email__ = "d.s.t.wallach@gmail.com"
+
+
+class cleanProject(install):
+    """Custom clean command to tidy up the project root."""
+    def run(self):
+        install.run(self)
+        print('Cleaning out build artifacts')
+        try:
+            shutil.rmtree('build')
+        except FileNotFoundError:
+            print('no build folder to remove')
+
+        try:
+            shutil.rmtree('dist')
+        except FileNotFoundError:
+            print('no dist folder to remove')
+
+        try:
+            shutil.rmtree('mmeds.egg-info')
+        except FileNotFoundError:
+            print('no egg-info folder to remove')
+
 
 setup(name='mmeds',
       version='0.6.0',
@@ -32,7 +56,7 @@ setup(name='mmeds',
       install_requires=[
           'cherrypy==18.6.0',
           'codecov==2.1.11',
-          'setuptools==58.0.4',
+          'setuptools>=46.4.0',
           'jupyter==1.0.0',
           'jupyter-client<7.0.0',
           'mongoengine==0.23.0',
@@ -61,4 +85,6 @@ setup(name='mmeds',
           'jaraco.functools==3.3.0',
           'tempora==4.0.2'
       ],
-      zip_safe=False)
+      zip_safe=False,
+      cmdclass={'install': cleanProject}
+      )
