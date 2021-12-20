@@ -61,3 +61,5 @@ To install Qiime1.9.1 with a recent version of conda run:
 `conda config --set allow_conda_downgrades true`  
 `conda install conda=4.6.14`  
 Prior to running the conda command for installing Qiime
+
+#test
