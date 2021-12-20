@@ -11,9 +11,10 @@
 mmeds-meta/modules should be copied to ~/.modules/modulefiles
 
 # or on minerva:
+this seems to work for installing dependancies, but not updating code:
 pip install git+https://github.com/clemente-lab/mmeds-meta@master
 
-to update code changes while testing, can use `python setup.py install` or `python setup.py install --user`
+to update code changes while testing, use: `python setup.py install` or as I do: `python setup.py install --user` to install into my user directory
 
 # With R version 3.5.1, run the following:
 

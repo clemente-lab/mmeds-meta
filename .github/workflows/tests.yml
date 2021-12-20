@@ -26,6 +26,7 @@ jobs:
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_env_files/pheniqs
       - name: Server Tests
         run: |
+          pip install pytest;
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
           sleep 1;
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
