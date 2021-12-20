@@ -1,11 +1,19 @@
 # This is the process for creating a functional summary environment
 
-# First create a conda environment named 'jupyter':
+### Create a conda environment named 'jupyter':
 `conda env create -f conda_env_files/jupyter.yaml'
 
 # Then activate the environment and run MMED's setup.py script:
 `conda activate jupyter`
 `python setup.py install`
+
+# add jupyter module to module folder
+mmeds-meta/modules should be copied to ~/.modules/modulefiles
+
+# or on minerva:
+pip install git+https://github.com/clemente-lab/mmeds-meta@master
+
+to update code changes while testing, can use `python setup.py install` or `python setup.py install --user`
 
 # With R version 3.5.1, run the following:
 
@@ -34,16 +42,3 @@ module load texlive/2018
 # trying to mimic minerva by downloading texlive-core 2018:
 https://anaconda.org/conda-forge/texlive-core/files
 conda install -c conda-forge texlive-core=20180414
-
-
-### troubleshooting;
-things I at some point ran directly:
-conda install -c anaconda pandas=1.2.3
-conda install -c r rpy2=3
-conda install -c anaconda pillow
-pip install simplegeneric
-conda install -c conda-forge importlib-metadata=3
-conda install --force-reinstall jupyter_client
-conda install -c conda-forge jupyter_client=6.1.12
-conda install -c anaconda ipykernel
-conda install -c conda-forge backports.zoneinfo

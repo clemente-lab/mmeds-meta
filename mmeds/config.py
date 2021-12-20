@@ -16,8 +16,12 @@ import re
 # import pudb; pudb.set_trace()
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
+
 # If not running on web01, can't connect to databases
-IS_PRODUCTION = 'web01' in getfqdn().split('.')
+# TODO: will only work for login node: minerva12 but web01 check wasn't working
+# IS_PRODUCTION = 'web01' in getfqdn().split('.')
+IS_PRODUCTION = not ('li03c02' in getfqdn().split('.'))
+
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()

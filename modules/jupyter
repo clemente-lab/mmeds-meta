@@ -1,0 +1,23 @@
+#%Module1.0
+## jupyter modulefile
+set curMod [module-info name]
+module-info name jupyter
+module-info version 4.7.1
+set condapath /sc/arion/projects/MMEDS/.modules
+set jupyterpath $condapath/jupyter_summary
+
+if [ module-info mode load ] {
+    prepend-path PATH $jupyterpath/bin
+    remove-path PATH $condapath/bin
+    setenv CONDA_DEFAULT_ENV jupyter
+    setenv CONDA_PREFIX $jupyterpath
+    setenv CONDA_PREFIX_1 $condapath
+    setenv CONDA_PROMPT_MODIFIER (jupyter)\ 
+    setenv R_LIBS_USER $jupyterpath/lib/R/library
+    setenv CONDA_SHLVL 2
+    setenv LC_ALL en_US.UTF-8
+    setenv LANG en_US.UTF-8
+    setenv MPLBACKEND Agg
+
+}
+

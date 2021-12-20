@@ -1,0 +1,21 @@
+#%Module1.0
+## sparcc modulefile
+set curMod [module-info name]
+module-info name lefse
+module-info version 0.5.0
+set condapath /sc/orga/projects/MMEDS/anaconda3
+set qiimepath /sc/orga/projects/MMEDS/.modules/lefse
+
+if [ module-info mode load ] {
+    prepend-path PATH $qiimepath/bin
+    remove-path PATH $condapath/bin
+    setenv CONDA_DEFAULT_ENV lefse
+    setenv CONDA_PREFIX $qiimepath
+    setenv CONDA_PREFIX_1 /sc/orga/projects/MMEDS/anaconda
+    setenv CONDA_PROMPT_MODIFIER (lefse)\ 
+    setenv R_LIBS_USER $qiimepath/lib/R/library
+    setenv CONDA_SHLVL 2
+    setenv LC_ALL en_US.UTF-8
+    setenv LANG en_US.UTF-8
+    setenv MPLBACKEND Agg
+}

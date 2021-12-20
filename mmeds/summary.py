@@ -124,15 +124,7 @@ def summarize_qiime2(path, files, config, study_name):
     # Setup the summary directory
     summary_files = defaultdict(list)
 
-    # Get Taxa
-    #cmd = ['qiime', 'tools', 'export',
-    #       '--input-path', str(files['taxa_bar_plot']),
-    #       '--output-path', str(path / 'temp')]
-    #cmd = f"qiime tools export\
-    #       --input-path {str(files['taxa_bar_plot'])}\
-    #       --output-path' {str(path / 'temp')}"
-    #path = path.absolute()
-    cmd = f"module unload python/3.7.3; qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
+    cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
 
     run(cmd, env=new_env, check=True, shell=True)
     taxa_files = (path / 'temp').glob('level*.csv')
@@ -147,7 +139,7 @@ def summarize_qiime2(path, files, config, study_name):
         cmd = ['qiime', 'tools', 'export',
                '--input-path', str(beta_file),
                '--output-path', str(path / 'temp')]
-        cmd = f"module unload python/3.7.3; qiime tools export --input-path {str(beta_file)} --output-path {str(path / 'temp')}"
+        cmd = f"qiime tools export --input-path {str(beta_file)} --output-path {str(path / 'temp')}"
         run(cmd, env=new_env, check=True, shell=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
@@ -159,7 +151,7 @@ def summarize_qiime2(path, files, config, study_name):
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]
-    cmd = f"module unload python/3.7.3; qiime tools export --input-path {str(files['alpha_rarefaction'])} --output-path {str(path / 'temp')}"
+    cmd = f"qiime tools export --input-path {str(files['alpha_rarefaction'])} --output-path {str(path / 'temp')}"
     run(cmd, env=new_env, check=True, shell=True)
     for metric in ['shannon', 'faith_pd', 'observed_features']:
 
@@ -504,7 +496,7 @@ class MMEDSNotebook():
         try:
             new_env = setup_environment('jupyter')
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = 'module unload python/3.7.3; jupyter nbconvert --to latex --template mod_revtex.tplx'
+            cmd = 'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
@@ -521,10 +513,7 @@ class MMEDSNotebook():
             new_env = setup_environment('jupyter')
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
-                    # run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
-                    # run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'jupyter',
-                    #      '--display-name', '"Jupyter"'], stdout=out, stderr=err)
-                    output = run(cmd.split(' '), check=True, env=new_env, shell=True, stdout=out, stderr=err)
+                    output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
             print('Convert latex to pdf')
@@ -541,7 +530,6 @@ class MMEDSNotebook():
             print(output)
 
     def create_notebook(self):
-        print('starting notebook')
         Logger.debug('Start summary notebook')
         original_path = Path.cwd()
         os.chdir(self.path)
