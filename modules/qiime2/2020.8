@@ -1,11 +1,11 @@
 #%Module1.0
 ## qiime2 modulefile
 set curMod [module-info name]
-module-info name qiime2
-module-info version 2019.1
+module-info name qiime2-2020
+module-info version 2020.8
 
-set condapath ~/miniconda2
-set qiimepath $condapath/envs/qiime2
+set condapath /hpc/packages/minerva-centos7/anaconda3/2018.12/bin/python
+set qiimepath /hpc/packages/minerva-centos7/anaconda3/2018.12/envs/qiime2-2020.8.0
 
 if [ module-info mode load ] {
     prepend-path PATH $qiimepath/bin

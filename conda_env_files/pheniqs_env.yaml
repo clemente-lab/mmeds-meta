@@ -1,4 +1,4 @@
-name: pheniqs_test
+name: pheniqs
 channels:
   - bioconda
   - conda-forge

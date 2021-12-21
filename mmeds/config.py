@@ -13,10 +13,15 @@ import hashlib
 import re
 
 
+# import pudb; pudb.set_trace()
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
+
 # If not running on web01, can't connect to databases
-IS_PRODUCTION = 'web01' in getfqdn().split('.')
+# TODO: will only work for login node: minerva12 but web01 check wasn't working
+# IS_PRODUCTION = 'web01' in getfqdn().split('.')
+IS_PRODUCTION = not ('li03c02' in getfqdn().split('.'))
+
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
@@ -36,7 +41,16 @@ if TESTING:
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
 else:
-    ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
+    # We're on web01 and using MMEDs out of if it's project diredctory
+    if IS_PRODUCTION:
+        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
+        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
+
+    # We're on Matt's login node, see above TODO for needed improvement
+    else:
+        DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
+        ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
+
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
@@ -46,13 +60,6 @@ else:
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
     # Load the path to where images are hosted
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
-
-    # We're on web01 and using MMEDs out of if it's project diredctory
-    if IS_PRODUCTION:
-        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-    # We're on Matt's login node, see above TODO for needed improvement
-    else:
-        DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
 
 
 STUDIES_DIR = DATABASE_DIR / 'studies'
@@ -587,7 +594,7 @@ COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
 # Try connecting via the testing setup
-if IS_PRODUCTION or TESTING:
+if IS_PRODUCTION:
     try:
         db = pms.connect(host='localhost',
                          user='root',
