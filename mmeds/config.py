@@ -2,7 +2,7 @@ from pathlib import Path
 from random import choice
 from pandas import read_csv, Timestamp
 from collections import defaultdict
-from socket import getfqdn, gethostname, gethostbyaddr
+from socket import getfqdn, gethostname
 import cherrypy as cp
 import pymysql as pms
 import mmeds.secrets as sec
