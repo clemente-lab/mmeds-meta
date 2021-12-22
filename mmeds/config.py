@@ -13,7 +13,6 @@ import hashlib
 import re
 
 
-# import pudb; pudb.set_trace()
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
 
@@ -43,17 +42,12 @@ else:
     # OR, we're in the folder /sc/arion/projects/MMEDS
     # TODO: this isn't great, means we have to be careful not naming folders, files as MMEDS
     # However, it's a solution that doesn't add any dependancies, and I think we should rework config.py anyway
-    if IS_PRODUCTION or 'MMEDS' in Path.cwd().parts or 'mmedsadmin' in Path.cwd().parts:
-        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
-
-    # We're on Matt's login node, see above TODO for needed improvement
-    elif 'matt' in Path.cwd().parts:
+    if 'matt' in Path.cwd().parts and 'clemej05a' in Path.cwd().parts:
         DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
         ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
-
     else:
-        raise ValueError(f'unrecognized pathing to current working directory: {Path.cwd()}')
+        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
+        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
 
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
