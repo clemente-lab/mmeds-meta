@@ -43,7 +43,7 @@ else:
     # OR, we're in the folder /sc/arion/projects/MMEDS
     # TODO: this isn't great, means we have to be careful not naming folders, files as MMEDS
     # However, it's a solution that doesn't add any dependancies, and I think we should rework config.py anyway
-    if IS_PRODUCTION or 'MMEDS' in Path.cwd().parts:
+    if IS_PRODUCTION or 'MMEDS' in Path.cwd().parts or 'mmedsadmin' in Path.cwd().parts:
         DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
         ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
 
@@ -53,7 +53,7 @@ else:
         ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
 
     else:
-        raise ValueError('unrecognized pathing to current working directory, check config.py')
+        raise ValueError(f'unrecognized pathing to current working directory: {Path.cwd()}')
 
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
