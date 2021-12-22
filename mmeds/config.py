@@ -13,14 +13,11 @@ import hashlib
 import re
 
 
-# import pudb; pudb.set_trace()
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
 
 # If not running on web01, can't connect to databases
-# TODO: will only work for login node: minerva12 but web01 check wasn't working
-# IS_PRODUCTION = 'web01' in getfqdn().split('.')
-IS_PRODUCTION = not ('li03c02' in getfqdn().split('.'))
+IS_PRODUCTION = 'web01' in getfqdn().split('.')
 
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
@@ -42,14 +39,15 @@ if TESTING:
     IMAGE_PATH = str(CSS_DIR) + '/'
 else:
     # We're on web01 and using MMEDs out of if it's project diredctory
-    if IS_PRODUCTION:
-        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
-
-    # We're on Matt's login node, see above TODO for needed improvement
-    else:
+    # OR, we're in the folder /sc/arion/projects/MMEDS
+    # TODO: this isn't great, means we have to be careful not naming folders, files as MMEDS
+    # However, it's a solution that doesn't add any dependancies, and I think we should rework config.py anyway
+    if 'matt' in Path.cwd().parts and 'clemej05a' in Path.cwd().parts:
         DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
         ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
+    else:
+        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
+        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
 
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
@@ -594,7 +592,7 @@ COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
 # Try connecting via the testing setup
-if IS_PRODUCTION:
+if IS_PRODUCTION or TESTING:
     try:
         db = pms.connect(host='localhost',
                          user='root',

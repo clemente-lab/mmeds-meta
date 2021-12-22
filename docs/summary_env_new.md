@@ -10,11 +10,13 @@
 # add jupyter module to module folder
 mmeds-meta/modules should be copied to ~/.modules/modulefiles
 
-# or on minerva:
 this seems to work for installing dependancies, but not updating code:
 pip install git+https://github.com/clemente-lab/mmeds-meta@master
 
 to update code changes while testing, use: `python setup.py install` or as I do: `python setup.py install --user` to install into my user directory
+
+# might need to run, seemed necessary for github actions
+pip install cryptography
 
 # With R version 3.5.1, run the following:
 
@@ -22,6 +24,9 @@ R
 install.packages("GGally",dependencies=TRUE)
 install.packages("ggrepel",dependencies=TRUE)
 install.packages("RColorBrewer")
+# older versions of R
+install.packages("ggplot")
+# or for newer R versions
 install.packages("ggplot2")
 
 quit()
