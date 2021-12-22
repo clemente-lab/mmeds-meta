@@ -15,8 +15,8 @@ pip install git+https://github.com/clemente-lab/mmeds-meta@master
 
 to update code changes while testing, use: `python setup.py install` or as I do: `python setup.py install --user` to install into my user directory
 
-# need to run on minerva, but not locally it seems. Also had to add to github actions
-conda install -c anaconda cryptography
+# might need to run, seemed necessary for github actions
+pip install cryptography
 
 # With R version 3.5.1, run the following:
 
