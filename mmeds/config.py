@@ -592,7 +592,7 @@ COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
 # Try connecting via the testing setup
-if IS_PRODUCTION:
+if IS_PRODUCTION or TESTING:
     try:
         db = pms.connect(host='localhost',
                          user='root',
