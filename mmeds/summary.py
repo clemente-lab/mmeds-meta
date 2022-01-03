@@ -346,8 +346,7 @@ class MMEDSNotebook():
                     xaxis=xaxis,
                     cat=col,
                     low=CONTINUOUS_GRADIENTS[gradient_index][0],
-                    mid=CONTINUOUS_GRADIENTS[gradient_index][1],
-                    high=CONTINUOUS_GRADIENTS[gradient_index][2]
+                    high=CONTINUOUS_GRADIENTS[gradient_index][1]
                 ))
                 gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
                 self.add_code('Image("{plot}")'.format(plot=filename),
@@ -395,8 +394,7 @@ class MMEDSNotebook():
                     subplot=subplot,
                     cat=column,
                     low=CONTINUOUS_GRADIENTS[gradient_index][0],
-                    mid=CONTINUOUS_GRADIENTS[gradient_index][1],
-                    high=CONTINUOUS_GRADIENTS[gradient_index][2]
+                    high=CONTINUOUS_GRADIENTS[gradient_index][1]
                 ))
                 gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
             else:
