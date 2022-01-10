@@ -593,9 +593,9 @@ COL_TO_TABLE = {}
 
 # Summary Gradient Colors for use in continuous variable plots
 CONTINUOUS_GRADIENTS = [
-    ("0000FF", "FF0000"),
-    ("FF9900", "9900CC"),
-    ("00FFFF", "FF33CC")
+    ("0000FF", "FF0000"), # Blue - Red
+    ("FF9900", "9900CC"), # Orange - Purple
+    ("00FFFF", "FF33CC")  # Cyan - Pink
 ]
 
 # Try connecting via the testing setup

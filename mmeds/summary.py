@@ -339,7 +339,7 @@ class MMEDSNotebook():
         if True in [val for (key, val) in self.config['metadata_continuous'].items()]:
             self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
             gradient_index = 0
-            for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
+            for col in sorted([col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]):
                 filename = data_file.split('.')[0] + '_' + col + '.png'
                 self.add_code(self.source['alpha_r_continuous'].format(
                     file1=filename,

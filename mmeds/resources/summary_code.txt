@@ -30,22 +30,12 @@ metadata_continuous = sorted([x for x in config['metadata'] if config['metadata_
 
 # Stores a list of values shared accross groups but unique within (for graphing)
 max_colors = 0
-max_colors_con = 0
 # Create information for R color palettes
-for group_name in metadata_columns:
+for group_name in metadata_discrete:
     if group_name in mdf and not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
-        uni = grouping.nunique()
-        if config['metadata_continuous'][group_name]:
-            # Get the category with the most colors to use for palette creation
-            if uni > max_colors_con:
-                max_colors_con = uni
-        else:
-            # Get the category with the most colors to use for palette creation
-            if uni > max_colors:
-                max_colors = uni
+        max_colors += grouping.nunique()
 
-all_colors_con = ['con{{}}'.format(i) for i in range(max_colors_con)]
 all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
 # Load the extention for jupyter
@@ -53,41 +43,35 @@ all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 =====
 py_setup_2<source>
 color_maps = {}
-for group_name in metadata_columns:
+color_max = 0
+for group_name in metadata_discrete:
     if not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
-        uni = grouping.nunique() # Unique values in the column
-        if config['metadata_continuous'][group_name]:
-            inc = floor(max_colors_con / uni) # Increment to advance the color assignments
-            color_maps[group_name] = {str(x):'con{}'.format(i * inc)
-                                      for i,x in enumerate(grouping.drop_duplicates())}
-        else:
-            inc = floor(max_colors / uni) # Increment to advance the color assignments
-            color_maps[group_name] = {str(x):'color{}'.format(i * inc)
-                                      for i, x in enumerate(grouping.drop_duplicates())}
+        color_maps[group_name] = {str(x):'color{}'.format(color_max + i)
+                                      for i, x in enumerate(grouping.drop_duplicates())} 
+        color_max += grouping.nunique() # Unique grouping vals
 =====
 r_setup<source>
-%%R -i all_colors -i all_colors_con -o allRGB
+%%R -i all_colors -o allRGB
 library(ggplot2)
 library(RColorBrewer)
 library(GGally)
 library(ggrepel)
 
 # Create custom color palette
-myColors <- brewer.pal(11, "Paired")
-colorMaker <- colorRampPalette(myColors)
-allColorsDisc <- colorMaker(length(unique(all_colors)))
-# Custom continuous(ish) color palette
-myColorsCon <- brewer.pal(11, "Spectral")
-colorMakerCon <- colorRampPalette(myColorsCon)
-allColorsCon <- colorMakerCon(length(unique(all_colors_con)))
+myColors <- brewer.pal(8, "Set1")
+if (length(myColors) > length(unique(all_colors))) {
+    allColors <- myColors[0 : length(unique(all_colors))]
+}
+else {
+    colorMaker <- colorRampPalette(myColors)
+    allColors <- colorMaker(length(unique(all_colors)))
+}
 
 # Rename the colors to match with the groups
-names(allColorsDisc) <- all_colors
-names(allColorsCon) <- all_colors_con
+names(allColors) <- all_colors
 
 # Create the objects for graphing with the colors
-allColors <- append(allColorsDisc, allColorsCon)
 colScale <- scale_color_manual(name = ~GroupID, values = allColors)
 colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
 
@@ -352,10 +336,6 @@ for group_name in metadata_continuous:
     agger = {{'Error': 'sem', 'value': 'mean'}}
     group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
 
-    # Assign information for the colors
-    colors = [color_maps[group_name][str(x)] for x in group[group_name]]
-    group = group.assign(GroupID=colors)
-
     # Assign information for grouping
     group_names = [group_name for x in group[group_name]]
     group = group.assign(GroupName=group_names)
@@ -373,7 +353,6 @@ df = pd.concat(group_means, axis=0, sort=False)
 df.SamplingDepth = df.SamplingDepth.astype(float)
 df.Error = df.Error.astype(float)
 df.AverageValue = df.AverageValue.astype(float)
-df.GroupID = df.GroupID.astype(str)
 df.GroupName = df.GroupName.astype(str)
 =====
 alpha_r<source>
@@ -474,7 +453,7 @@ for(i in 1:p$nrow) {{
                                 p[i, j]$labels$x,
                                 p[i, j]$labels$y)
             png(filename, width = 6, height = 6, unit='in', res=200)
-            sp <- p[i,j] + geom_text_repel(color = "black", alpha = 0.6, max.overlaps = Inf) +
+            sp <- p[i,j] + geom_text_repel(color = "black", alpha = 0.35, max.overlaps = Inf) +
                       theme(legend.position = 'none',
                             plot.title = element_text(hjust = 0.5),
                             plot.subtitle = element_text(hjust = 0.5)) +
