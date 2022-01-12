@@ -35,6 +35,7 @@ for group_name in metadata_discrete:
     if group_name in mdf and not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         max_colors += grouping.nunique()
+        # Total number of discrete colors == number of discrete values across all vars
 
 all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
@@ -42,6 +43,7 @@ all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 %load_ext rpy2.ipython
 =====
 py_setup_2<source>
+# Assign colors to discrete values
 color_maps = {}
 color_max = 0
 for group_name in metadata_discrete:
@@ -58,12 +60,12 @@ library(RColorBrewer)
 library(GGally)
 library(ggrepel)
 
-# Create custom color palette
+# Create custom color palette from brewer "Set1"
 myColors <- brewer.pal(8, "Set1")
-if (length(myColors) > length(unique(all_colors))) {
+if (length(myColors) >= length(unique(all_colors))) {
     allColors <- myColors[0 : length(unique(all_colors))]
-}
-else {
+} 
+else { # Greater than 8 colors, extrapolate to get more
     colorMaker <- colorRampPalette(myColors)
     allColors <- colorMaker(length(unique(all_colors)))
 }
