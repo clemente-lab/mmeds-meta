@@ -7,7 +7,7 @@ from shutil import copy, rmtree, make_archive
 
 import nbformat as nbf
 import os
-from mmeds.config import STORAGE_DIR
+from mmeds.config import STORAGE_DIR, CONTINUOUS_GRADIENTS
 from mmeds.util import load_config, setup_environment, parse_code_blocks
 from mmeds.logging import Logger
 
@@ -338,9 +338,17 @@ class MMEDSNotebook():
         # Study contains continuous variables
         if True in [val for (key, val) in self.config['metadata_continuous'].items()]:
             self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
-            for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
+            gradient_index = 0
+            for col in sorted([col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]):
                 filename = data_file.split('.')[0] + '_' + col + '.png'
-                self.add_code(self.source['alpha_r_continuous'].format(file1=filename, xaxis=xaxis, cat=col))
+                self.add_code(self.source['alpha_r_continuous'].format(
+                    file1=filename,
+                    xaxis=xaxis,
+                    cat=col,
+                    low=CONTINUOUS_GRADIENTS[gradient_index][0],
+                    high=CONTINUOUS_GRADIENTS[gradient_index][1]
+                ))
+                gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
                 self.add_code('Image("{plot}")'.format(plot=filename),
                             meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
                 self.add_markdown(self.source['page_break'])
@@ -369,8 +377,9 @@ class MMEDSNotebook():
         elif 'weighted' in data_file:
             display_name = 'Weighted UniFrac'
         else:
-            #TODO: Remove Jaccard so this isn't necessary
+            # TODO: Remove Jaccard so this isn't necessary
             return
+        gradient_index = 0
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
@@ -383,8 +392,11 @@ class MMEDSNotebook():
                 self.add_code(self.source['beta_r_continuous'].format(
                     plot=plot,
                     subplot=subplot,
-                    cat=column
+                    cat=column,
+                    low=CONTINUOUS_GRADIENTS[gradient_index][0],
+                    high=CONTINUOUS_GRADIENTS[gradient_index][1]
                 ))
+                gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
             else:
                 self.add_code(self.source['beta_py_discrete'].format(
                     file1=data_file,

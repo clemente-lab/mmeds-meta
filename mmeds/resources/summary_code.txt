@@ -28,66 +28,51 @@ metadata_columns = sorted(config['metadata'])
 metadata_discrete = sorted([x for x in config['metadata'] if not config['metadata_continuous'][x]])
 metadata_continuous = sorted([x for x in config['metadata'] if config['metadata_continuous'][x]])
 
-# Stores a list of values shared accross groups but unique within (for graphing)
+# Calculate needed number of discrete colors, equal to the number of values across all discrete variables
 max_colors = 0
-max_colors_con = 0
-# Create information for R color palettes
-for group_name in metadata_columns:
+for group_name in metadata_discrete:
     if group_name in mdf and not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
-        uni = grouping.nunique()
-        if config['metadata_continuous'][group_name]:
-            # Get the category with the most colors to use for palette creation
-            if uni > max_colors_con:
-                max_colors_con = uni
-        else:
-            # Get the category with the most colors to use for palette creation
-            if uni > max_colors:
-                max_colors = uni
+        max_colors += grouping.nunique()
 
-all_colors_con = ['con{{}}'.format(i) for i in range(max_colors_con)]
 all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
 # Load the extention for jupyter
 %load_ext rpy2.ipython
 =====
 py_setup_2<source>
+# Assign colors to discrete values
 color_maps = {}
-for group_name in metadata_columns:
+color_max = 0
+for group_name in metadata_discrete:
     if not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
-        uni = grouping.nunique() # Unique values in the column
-        if config['metadata_continuous'][group_name]:
-            inc = floor(max_colors_con / uni) # Increment to advance the color assignments
-            color_maps[group_name] = {str(x):'con{}'.format(i * inc)
-                                      for i,x in enumerate(grouping.drop_duplicates())}
-        else:
-            inc = floor(max_colors / uni) # Increment to advance the color assignments
-            color_maps[group_name] = {str(x):'color{}'.format(i * inc)
-                                      for i, x in enumerate(grouping.drop_duplicates())}
+        color_maps[group_name] = {str(x):'color{}'.format(color_max + i)
+                                      for i, x in enumerate(grouping.drop_duplicates())} 
+        color_max += grouping.nunique() # Unique grouping vals
 =====
 r_setup<source>
-%%R -i all_colors -i all_colors_con -o allRGB
+%%R -i all_colors -o allRGB
 library(ggplot2)
 library(RColorBrewer)
 library(GGally)
 library(ggrepel)
 
-# Create custom color palette
-myColors <- brewer.pal(11, "Paired")
-colorMaker <- colorRampPalette(myColors)
-allColorsDisc <- colorMaker(length(unique(all_colors)))
-# Custom continuous(ish) color palette
-myColorsCon <- brewer.pal(11, "Spectral")
-colorMakerCon <- colorRampPalette(myColorsCon)
-allColorsCon <- colorMakerCon(length(unique(all_colors_con)))
+# Create custom color palette from brewer "Set1"
+myColors <- brewer.pal(8, "Set1")
+
+# Extrapolate extra colors only if number of vars exceeds the number of colors in the initial palette
+if (length(myColors) >= length(unique(all_colors))) {
+    allColors <- myColors[0 : length(unique(all_colors))]
+} else {
+    colorMaker <- colorRampPalette(myColors)
+    allColors <- colorMaker(length(unique(all_colors)))
+}
 
 # Rename the colors to match with the groups
-names(allColorsDisc) <- all_colors
-names(allColorsCon) <- all_colors_con
+names(allColors) <- all_colors
 
 # Create the objects for graphing with the colors
-allColors <- append(allColorsDisc, allColorsCon)
 colScale <- scale_color_manual(name = ~GroupID, values = allColors)
 colFill <- scale_fill_manual(name = ~GroupID, values = allColors)
 
@@ -352,10 +337,6 @@ for group_name in metadata_continuous:
     agger = {{'Error': 'sem', 'value': 'mean'}}
     group = groups.groupby([group_name, 'variable']).agg(agger).reset_index()
 
-    # Assign information for the colors
-    colors = [color_maps[group_name][str(x)] for x in group[group_name]]
-    group = group.assign(GroupID=colors)
-
     # Assign information for grouping
     group_names = [group_name for x in group[group_name]]
     group = group.assign(GroupName=group_names)
@@ -373,7 +354,6 @@ df = pd.concat(group_means, axis=0, sort=False)
 df.SamplingDepth = df.SamplingDepth.astype(float)
 df.Error = df.Error.astype(float)
 df.AverageValue = df.AverageValue.astype(float)
-df.GroupID = df.GroupID.astype(str)
 df.GroupName = df.GroupName.astype(str)
 =====
 alpha_r<source>
@@ -409,7 +389,7 @@ p <- ggplot(data = df.var, aes(x = {xaxis}, y = AverageValue, color = Grouping,g
       theme_bw() +
       theme(legend.position = 'bottom',
             plot.title = element_text(hjust = 0.5),
-            plot.subtitle = element_text(hjust = 0.5)) + scale_color_gradient2(low="#0000FF", high="#FF0000", mid="#FFFFFF", midpoint=mean(df.var$Grouping, na.rm=TRUE), name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+            plot.subtitle = element_text(hjust = 0.5)) + scale_color_gradient(low="#{low}", high="#{high}", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
 
 # Save plots
 ggsave('{file1}', height = 6, width = 6)
@@ -474,7 +454,7 @@ for(i in 1:p$nrow) {{
                                 p[i, j]$labels$x,
                                 p[i, j]$labels$y)
             png(filename, width = 6, height = 6, unit='in', res=200)
-            sp <- p[i,j] + geom_text_repel(max.overlaps = Inf) +
+            sp <- p[i,j] + geom_text_repel(color = "black", alpha = 0.35, max.overlaps = Inf) +
                       theme(legend.position = 'none',
                             plot.title = element_text(hjust = 0.5),
                             plot.subtitle = element_text(hjust = 0.5)) +
@@ -521,14 +501,14 @@ p <- ggpairs(df[,c(1:3)],
              legend = 4,
              upper = list(continuous = "points", combo = "box_no_facet"),
              lower = list(continuous = "points", combo = "dot_no_facet"),
-             aes(color = df$variable, label = rownames(df))) +
+             aes(color = df$variable, label = rownames(df)), alpha = 1.0) +
          theme_bw() +
          theme(legend.position = 'bottom',
                plot.title = element_text(hjust = 0.5),
                plot.subtitle = element_text(hjust = 0.5)) +
          labs(title = 'PCA plot',
               subtitle = 'Colored by {cat}') +
-         scale_color_gradient2(low="#0000FF", high="#FF0000", mid="#FFFFFF", midpoint=mean(df$variable, na.rm=TRUE), name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+         scale_color_gradient(low="#{low}", high="#{high}", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
 
 print(p)
 out <- dev.off()
@@ -543,7 +523,7 @@ for(i in 1:p$nrow) {{
                                 p[i, j]$labels$x,
                                 p[i, j]$labels$y)
             png(filename, width = 6, height = 6, unit='in', res=200)
-            sp <- p[i,j] + geom_text_repel(max.overlaps = Inf) +
+            sp <- p[i,j] + geom_text_repel(color = "black", alpha = 0.35, max.overlaps = Inf) +
                       theme(legend.position = 'bottom',
                             plot.title = element_text(hjust = 0.5),
                             plot.subtitle = element_text(hjust = 0.5)) +
@@ -551,7 +531,7 @@ for(i in 1:p$nrow) {{
                                            p[i, j]$labels$x,
                                            p[i, j]$labels$y),
                            subtitle = 'Colored by {cat}') +
-                      scale_color_gradient2(low="#0000FF", high="#FF0000", mid="#FFFFFF", midpoint=mean(df$variable, na.rm=TRUE), name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
+                      scale_color_gradient(low="#{low}", high="#{high}", name = '{cat}', space = "Lab", na.value = "#888888", guide = "colorbar", aesthetics = "color")
             print(sp)
             out <- dev.off()
         }}
