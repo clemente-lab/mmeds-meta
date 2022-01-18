@@ -591,6 +591,13 @@ COLUMN_TYPES_SUBJECT = defaultdict(dict)
 COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
+# Summary Gradient Colors for use in continuous variable plots
+CONTINUOUS_GRADIENTS = [
+    ("0000FF", "FF0000"), # Blue - Red
+    ("FF9900", "9900CC"), # Orange - Purple
+    ("00FFFF", "FF33CC")  # Cyan - Pink
+]
+
 # Try connecting via the testing setup
 if IS_PRODUCTION or TESTING:
     try:
@@ -661,8 +668,8 @@ if IS_PRODUCTION or TESTING:
     }
 
     for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPECIMEN_TABLES),
-                                        (TEST_SUBJECT, COLUMN_TYPES_SUBJECT, SUBJECT_TABLES),
-                                        (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES)]:
+                                         (TEST_SUBJECT, COLUMN_TYPES_SUBJECT, SUBJECT_TABLES),
+                                         (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES)]:
         tdf = read_csv(test_file,
                        sep='\t',
                        header=[0, 1],
