@@ -28,14 +28,12 @@ metadata_columns = sorted(config['metadata'])
 metadata_discrete = sorted([x for x in config['metadata'] if not config['metadata_continuous'][x]])
 metadata_continuous = sorted([x for x in config['metadata'] if config['metadata_continuous'][x]])
 
-# Stores a list of values shared accross groups but unique within (for graphing)
+# Calculate needed number of discrete colors, equal to the number of values across all discrete variables
 max_colors = 0
-# Create information for R color palettes
 for group_name in metadata_discrete:
     if group_name in mdf and not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         max_colors += grouping.nunique()
-        # Total number of discrete colors == number of discrete values across all vars
 
 all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
@@ -62,10 +60,11 @@ library(ggrepel)
 
 # Create custom color palette from brewer "Set1"
 myColors <- brewer.pal(8, "Set1")
+
+# Extrapolate extra colors only if number of vars exceeds the number of colors in the initial palette
 if (length(myColors) >= length(unique(all_colors))) {
     allColors <- myColors[0 : length(unique(all_colors))]
-} 
-else { # Greater than 8 colors, extrapolate to get more
+} else {
     colorMaker <- colorRampPalette(myColors)
     allColors <- colorMaker(length(unique(all_colors)))
 }
