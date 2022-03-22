@@ -7,6 +7,7 @@ from math import floor
 from warnings import filterwarnings
 from IPython.display import Image
 from random import shuffle
+from statistics import mean, median
 from PIL import Image as PImage
 from PIL import ImageDraw, ImageFont
 from mmeds.util import load_config
@@ -57,6 +58,7 @@ library(ggplot2)
 library(RColorBrewer)
 library(GGally)
 library(ggrepel)
+library(gridExtra)
 
 # Create custom color palette from brewer "Set1"
 myColors <- brewer.pal(8, "Set1")
@@ -87,6 +89,28 @@ otu_py<source>
 df = pd.read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
 df.set_index('taxonomy', inplace=True)
 df.iloc[:5, :5]
+=====
+table_py<source>
+df = pd.read_csv('{file1}', sep='\t', header=0, skiprows=[1])
+# Extract table statistics
+stat_dict = {{}}
+row_list = ["Maximum", "Minumum", "Mean", "Median"]
+for col in df:
+    if not col == 'sample-id':
+        stat_dict[col] = [
+            max(df[col]),
+            min(df[col]),
+            round(mean(df[col]), 2),
+            round(median(df[col]), 2)
+        ]
+# Load stats into DataFrame
+df = pd.DataFrame(stat_dict, index=row_list)
+=====
+table_r<source>
+%%R -i df
+png('{plot}', height=200, width=1000)
+p <- tableGrob(df)
+grid.arrange(p)
 =====
 taxa_py_qiime1<source>
 df = pd.read_csv('{file1}', skiprows=1, sep='\t')
@@ -537,6 +561,12 @@ for(i in 1:p$nrow) {{
         }}
     }}
 }}
+=====
+demux_description<source>
+Demultiplexing statistics. Placeholder text.
+=====
+table_description<source>
+Table statistics. Placeholder text.
 =====
 taxa_description<source>
 Taxonomy plots represent the abundance of different taxa using stacked plots on a per-sample or per-group (averaged) basis. Data is normalized so that abundances per sample or per group add up to 100%. When using group-based taxonomy plots, it should be noted that only average abundances are shown per group and taxa: this can induce visual biases when a small number of samples in a group have significantly higher abundance of a given taxa compared to the rest of samples in the group, and give the (incorrect) impression that the group as a whole has high high abundance of the taxa.

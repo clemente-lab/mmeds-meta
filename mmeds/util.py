@@ -1119,7 +1119,7 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
     #                           TACCGTACCCGTTACGTTTACGTGACCGTAGGGCAGAAATGAACCAGTAGACCGATTACGATT
     #                           +
     #                           ABBBBBBBBBBBBBBBCC///>----A---09'
-    pattern = r'@.+:0:([ACTG]+)-([ACTG]+)\n.+\n.+\n.+\n'
+    pattern = r'@.+:0:([ACTGN]+)-([ACTGN]+)\n.+\n.+\n.+\n'
 
     # Create an iterator for which the .group method contains (whole_read, forward_barcode, reverse_barcode)
     reads = re.finditer(pattern, f.read())
