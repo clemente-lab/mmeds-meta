@@ -1354,6 +1354,25 @@ class MMEDSquery(MMEDSbase):
         cp.session['generate_sample_id'] = (AccessCode, AliquotID)
         return page
 
+@decorate_all_methods(catch_server_errors)
+class MMEDSerror(MMEDSbase):
+    """
+    Level of the web app handling responses to errors, including but not limited to
+    404 and 500
+    """
+    def __init__(self):
+        super().__init__()
+        cp.config.update({'error_page.404': self.error_page,
+                          'error_page.500': self.error_page})
+
+    @cp.expose
+    def error_page(self, status, message, traceback, version):
+        page = self.load_webpage('error_page',
+                                status=status,
+                                traceback=traceback,
+                                message=message,
+                                version=version)
+        return page
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
@@ -1373,6 +1392,7 @@ class MMEDSserver(MMEDSbase):
         self.auth = MMEDSauthentication()
         self.study = MMEDSstudy()
         self.query = MMEDSquery()
+        self.error = MMEDSerror()
         cp.log("Created sub servers")
 
     def load_webpage(self, page, **kwargs):

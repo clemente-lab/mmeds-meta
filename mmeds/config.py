@@ -11,6 +11,7 @@ import mmeds.resources as resources
 import mmeds
 import hashlib
 import re
+import os
 
 
 # Check where this code is being run
@@ -67,7 +68,6 @@ SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 # CONFIGURE SERVER GLOBALS #
 ############################
 
-
 # Configuration for the CherryPy server
 CONFIG = {
     'global': {
@@ -79,7 +79,6 @@ CONFIG = {
         'tools.sessions.on': True,
         'tools.sessions.timeout': 15,
         'tools.compress.gzip': True,
-        # 'environment' : 'production'
     },
     # Content in this directory will be made directly
     # available on the web server
@@ -155,6 +154,9 @@ HTML_PAGES = {
     'query_select_specimen_page': (HTML_DIR / 'query_select_specimen_page.html', True),
     'query_generate_aliquot_id_page': (HTML_DIR / 'query_generate_aliquot_id_page.html', True),
     'query_generate_sample_id_page': (HTML_DIR / 'query_generate_sample_id_page.html', True),
+
+    # Error Pages
+    'error_page': (HTML_DIR / 'error_page.html', True),
 }
 
 # Predefined options for formatting webpages are set here
@@ -226,6 +228,9 @@ HTML_ARGS = {
     'query_generate_aliquot_id_page': SERVER_PATH + 'query/generate_aliquot_id',
     'query_generate_sample_id_page': SERVER_PATH + 'query/generate_sample_id',
     'query_result_table': '',
+
+    # Error Pages
+    'error_page': SERVER_PATH + 'error/error_page',
 
     # Where to insert errors/warnings on a given page
     'error': '',
@@ -317,7 +322,7 @@ CONFIG_PARAMETERS = [
     'permutations',
     'type'
 ]
-CONTACT_EMAIL = 'david.wallach@mssm.edu'
+CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'

@@ -16,7 +16,3 @@ RewriteRule ^(.*)$ app.wsgi/$1 [QSA,PT,L]
 # Prevent browsers from caching webpages for more than a few seconds
 ExpiresActive On
 ExpiresDefault A1
-
-# Redirect Errors
-# TODO: Figure this out
-# ErrorDocument 404 /error/404.html
