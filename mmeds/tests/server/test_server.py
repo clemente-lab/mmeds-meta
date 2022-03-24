@@ -470,6 +470,7 @@ class TestServer(helper.CPWebCase):
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
+
         self.getPage('/upload/upload_subject_metadata?studyName=Test_DualBarcodes&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
