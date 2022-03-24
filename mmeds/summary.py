@@ -280,16 +280,11 @@ class MMEDSNotebook():
             for line in new_lines:
                 f.write(line)
 
-    def demux_stats(self):
-        """
-        Create plots and stats for demux data
-        """
-        return
-
     def table_stats(self, data_file):
         """
         Create plots and stats for asv data
         """
+        self.add_markdown("## Dada2 Stats")
         filename = "table_stats.png"
         self.add_code(self.source['table_py'].format(file1=data_file))
         self.add_code(self.source['table_r'].format(plot=filename))
@@ -472,12 +467,6 @@ class MMEDSNotebook():
                                                      titlefont='font_file_bold.otf'))
         self.add_code(self.source['r_setup'])
         self.add_code(self.source['py_setup_2'])
-
-        # Add the cells for Demultiplexing
-        self.add_markdown('# Demultiplexing Summary')
-        self.add_markdown('## Interpreting Demultiplex Statistics')
-        self.add_markdown(self.source['demux_description'])
-        self.demux_stats()
 
         # Add the cells for Table Statistics
         self.add_markdown('# Table Statistics Summary')

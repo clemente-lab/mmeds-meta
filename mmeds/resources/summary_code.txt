@@ -7,7 +7,6 @@ from math import floor
 from warnings import filterwarnings
 from IPython.display import Image
 from random import shuffle
-from statistics import mean, median
 from PIL import Image as PImage
 from PIL import ImageDraw, ImageFont
 from mmeds.util import load_config
@@ -58,7 +57,6 @@ library(ggplot2)
 library(RColorBrewer)
 library(GGally)
 library(ggrepel)
-library(gridExtra)
 
 # Create custom color palette from brewer "Set1"
 myColors <- brewer.pal(8, "Set1")
@@ -92,25 +90,50 @@ df.iloc[:5, :5]
 =====
 table_py<source>
 df = pd.read_csv('{file1}', sep='\t', header=0, skiprows=[1])
-# Extract table statistics
-stat_dict = {{}}
-row_list = ["Maximum", "Minumum", "Mean", "Median"]
-for col in df:
-    if not col == 'sample-id':
-        stat_dict[col] = [
-            max(df[col]),
-            min(df[col]),
-            round(mean(df[col]), 2),
-            round(median(df[col]), 2)
-        ]
-# Load stats into DataFrame
-df = pd.DataFrame(stat_dict, index=row_list)
+data = []
+m = 0
+# Split rows into five categories
+for i in range(len(df['sample-id'])):
+    _input = df['input'][i]
+    _filtered = df['filtered'][i]
+    _denoised = df['denoised'][i]
+    _merged = df['merged'][i]
+    _nonchimeric = df['non-chimeric'][i]
+    # Store maximum
+    if _input > m:
+        m = _input
+    # Order sections so less filtered goes at the top
+    data.append([df['sample-id'][i], _input - _filtered, "a"])
+    data.append([df['sample-id'][i], _filtered - _denoised, "b"])
+    data.append([df['sample-id'][i], _denoised - _merged, "c"])
+    data.append([df['sample-id'][i], _merged - _nonchimeric, "d"])
+    data.append([df['sample-id'][i], _nonchimeric, "e"])
+df = pd.DataFrame(data, columns=['variable', 'value', "type"])
+# Create discrete y axis vals
+count = 5
+breaks = pd.Series([int(i*(m/count)) for i in range(count+1)])
 =====
 table_r<source>
-%%R -i df
-png('{plot}', height=200, width=1000)
-p <- tableGrob(df)
-grid.arrange(p)
+%%R -i df -i breaks
+p <- ggplot(df, aes(x = reorder(variable, -value), y = value, fill = type)) +
+     geom_bar(stat = 'identity') +
+     labs(x = "Sample ID",
+          title = 'Table Read Retention') +
+     scale_y_discrete(name = "Read Count",
+                      limit = as.vector(breaks),
+                      expand = c(0, 0)) +
+     scale_fill_discrete(name = "Removed During",
+                         labels=c("Filtering", "Denoising", "Merging", "Chimera Filtering", "Retained")) +
+     theme(text = element_text(size = 8.5,
+                               face = "bold"),
+           element_line(size = 0.1),
+           legend.position = "bottom",
+           axis.text.x = element_text(angle = 290, hjust = 0),
+           plot.title = element_text(hjust = 0.5),
+           plot.subtitle = element_text(hjust = 0.5)) +
+     guides(fill = guide_legend(nrow = 1))
+
+ggsave("{plot}", height=6, width=8)
 =====
 taxa_py_qiime1<source>
 df = pd.read_csv('{file1}', skiprows=1, sep='\t')
@@ -172,7 +195,7 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
                                face = "bold"),
            element_line(size = 0.1),
            legend.position = "none",
-           axis.text.x = element_text(angle = 300),
+           axis.text.x = element_text(angle = 290, hjust = 0),
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5)) +
      guides(fill = guide_legend(ncol = 4)) +
