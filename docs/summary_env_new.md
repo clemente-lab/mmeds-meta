@@ -24,7 +24,6 @@ R
 install.packages("GGally",dependencies=TRUE)
 install.packages("ggrepel",dependencies=TRUE)
 install.packages("RColorBrewer")
-install.packages("gridExtra")
 # older versions of R
 install.packages("ggplot")
 # or for newer R versions
