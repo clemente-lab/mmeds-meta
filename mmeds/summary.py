@@ -289,6 +289,7 @@ class MMEDSNotebook():
         self.add_code(self.source['table_py'].format(file1=data_file))
         self.add_code(self.source['table_r'].format(plot=filename))
         self.add_code("Image('{plot}')".format(plot=filename))
+        self.add_markdown(self.source['page_break'])
 
     def taxa_plots(self, data_file):
         """
