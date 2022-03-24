@@ -206,6 +206,11 @@ class TestServer(helper.CPWebCase):
         self.view_analysis()
         self.logout()
 
+    def test_ed_error_404(self):
+        self.login()
+        self.get_error_page()
+        self.logout()
+
     def test_y_query(self):
         return
         self.login()
@@ -363,6 +368,23 @@ class TestServer(helper.CPWebCase):
 
         self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
+
+    def get_error_page(self):
+        Logger.debug('get 404 page')
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/error/error_page?status={}&message={}&traceback={}&version={}'
+                     .format('404+Not+Found', 'NotFound', 'Traceback', '18.6.0'), self.cookies)
+        self.assertStatus('200 OK')
+        error_page = server.load_webpage(
+            'error_page',
+            user=self.server_user,
+            home_selected='',
+            status="404 Not Found",
+            message="NotFound",
+            traceback="Traceback",
+            version="18.6.0")
+        self.assertBody(error_page)
 
     ###########
     # Uploads #

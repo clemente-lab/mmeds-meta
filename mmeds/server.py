@@ -148,7 +148,7 @@ class MMEDSbase:
                 try:
                     # Check in active dictionary
                     reset = cp.session['reset_needed']
-                except AttributeError:
+                except (AttributeError, KeyError):
                     # Check in sql database
                     if kwargs.get('user') is not None:
                         user = kwargs.get('user')
