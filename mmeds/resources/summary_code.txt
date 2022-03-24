@@ -585,9 +585,6 @@ for(i in 1:p$nrow) {{
     }}
 }}
 =====
-demux_description<source>
-Demultiplexing statistics. Placeholder text.
-=====
 table_description<source>
 Table statistics. Placeholder text.
 =====
