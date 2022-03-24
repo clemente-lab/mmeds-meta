@@ -359,7 +359,7 @@ class Validator:
                     if self.barcodes_type == 'single':
                         self.check_duplicates(col)
                     elif self.barcodes_type == 'dual':
-                        self.check_duplicates(col, self.table_df['BarcodeSequenceR'])
+                        self.check_duplicates(col, self.df['AdditionalMetaData']['BarcodeSequenceR'])
                     self.check_lengths(col)
                     self.check_barcode_chars(col)
                     self.check_NA(col)

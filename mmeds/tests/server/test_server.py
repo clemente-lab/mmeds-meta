@@ -164,9 +164,9 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_cd_dual_upload(self):
-        return
         self.login()
         self.upload_dualBarcode_metadata()
+        self.logout()
 
     def test_da_select_study(self):
         Logger.info('da view study')
@@ -476,7 +476,10 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=dual', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        self.getPage('/upload/upload_specimen_metadata?uploadType=qiime&studyName=Test_DualBarcodes', self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT_DUAL], ['text/tab-seperated-values'])
@@ -488,10 +491,13 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
+        self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
         self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
         headers, body = self.upload_files(['for_reads', 'rev_reads',
-                                           'for_barcodes', 'rev_barcodes'],
+                                           'barcodes', 'rev_barcodes'],
                                           [fig.TEST_READS, fig.TEST_REV_READS,
                                            fig.TEST_BARCODES, fig.TEST_BARCODES],
                                           ['application/gzip', 'application/gzip',
