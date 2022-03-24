@@ -11,7 +11,6 @@ import mmeds.resources as resources
 import mmeds
 import hashlib
 import re
-import os
 
 
 # Check where this code is being run
