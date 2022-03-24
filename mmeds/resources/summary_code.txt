@@ -124,6 +124,7 @@ p <- ggplot(df, aes(x = reorder(variable, -value), y = value, fill = type)) +
                       expand = c(0, 0)) +
      scale_fill_discrete(name = "Removed During",
                          labels=c("Filtering", "Denoising", "Merging", "Chimera Filtering", "Retained")) +
+     theme_bw() + 
      theme(text = element_text(size = 8.5,
                                face = "bold"),
            element_line(size = 0.1),
