@@ -284,11 +284,12 @@ class MMEDSNotebook():
         """
         Create plots and stats for asv data
         """
-        self.add_markdown("## Dada2 Stats")
+        self.add_markdown("## Dada2 Statistics")
         filename = "table_stats.png"
         self.add_code(self.source['table_py'].format(file1=data_file))
         self.add_code(self.source['table_r'].format(plot=filename))
         self.add_code("Image('{plot}')".format(plot=filename))
+        self.add_markdown(self.source['table_caption'])
         self.add_markdown(self.source['page_break'])
 
     def taxa_plots(self, data_file):
@@ -471,8 +472,6 @@ class MMEDSNotebook():
 
         # Add the cells for Table Statistics
         self.add_markdown('# Table Statistics Summary')
-        self.add_markdown('## Interpreting Table Statistics')
-        self.add_markdown(self.source['table_description'])
         self.table_stats(self.files['table'][0])
 
         # Get only files for the requested taxa levels

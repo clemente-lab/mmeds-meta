@@ -598,6 +598,9 @@ Alpha diversity estimates the amount of microbial diversity present in a sample 
 beta_description<source>
 Beta diversity estimates how similar or dissimilar samples are based on their microbiome composition. Different to alpha diversity, which is estimated per sample, beta diversity is a distance that is calculated between pairs of samples. Samples that are similar to each other in their microbiome composition will have a low distance between them based on beta diversity, while those that are very different in their composition will have a large distance. Principal Coordinate Analysis (PCoA) is an ordination technique that visually represents the samples based on their beta diversity distances to facilitate the identification of clusters or gradients of samples. By default, the first three principal coordinates are shown in PCoA plots.
 =====
+table_caption<source>
+The above plot represents number of input reads (total bar length) and retained (magenta) after quality control filtering, including denoising and chimera checking.
+=====
 taxa_caption<source>
 The above plot represents the percentage of each sample belonging to particular taxon summarized at the {level} level.
 =====
