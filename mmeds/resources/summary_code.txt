@@ -109,8 +109,9 @@ for i in range(len(df['sample-id'])):
     data.append([df['sample-id'][i], _merged - _nonchimeric, "d"])
     data.append([df['sample-id'][i], _nonchimeric, "e"])
 df = pd.DataFrame(data, columns=['variable', 'value', "type"])
-# Create discrete y axis vals
+# Set count to number of desired y-axis values-1
 count = 5
+# Create discrete y-axis values
 breaks = pd.Series([int(i*(m/count)) for i in range(count+1)])
 =====
 table_r<source>
