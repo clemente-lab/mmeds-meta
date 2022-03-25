@@ -213,9 +213,13 @@ class Validator:
             if value == 'NA':
                 self.errors.append(err.format(row=i, col=self.col_index))
 
-    def check_duplicates(self, column):
-        """ Checks for any duplicate entries in the provided column """
+    def check_duplicates(self, column, column2=None):
+        """ Checks for any duplicate entries in the provided column(s) """
         cells = defaultdict(list)
+
+        # Concatenate dual barcodes
+        if column2 is not None:
+            column = [str(c1)+str(c2) for c1, c2 in zip(column, column2)]
 
         # Add the indices of each item
         for i, cell in enumerate(column):
@@ -351,9 +355,11 @@ class Validator:
             Logger.debug("ran check_columns")
             # Perform column specific checks
             if self.cur_table == 'RawData':
-                if self.cur_col == 'BarcodeSequence' or self.cur_col == 'BarcodeSequenceR':
+                if self.cur_col == 'BarcodeSequence':
                     if self.barcodes_type == 'single':
                         self.check_duplicates(col)
+                    elif self.barcodes_type == 'dual':
+                        self.check_duplicates(col, self.df['AdditionalMetaData']['BarcodeSequenceR'])
                     self.check_lengths(col)
                     self.check_barcode_chars(col)
                     self.check_NA(col)

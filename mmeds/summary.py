@@ -124,8 +124,17 @@ def summarize_qiime2(path, files, config, study_name):
     # Setup the summary directory
     summary_files = defaultdict(list)
 
-    cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
+    # Get Table Stats
+    cmd = f"qiime tools export --input-path {str(files['stats_table'])} --output-path {str(path / 'temp')}"
+    run(cmd, env=new_env, check=True, shell=True)
+    table_stat_files = (path / 'temp').glob("stats.tsv")
+    for table_file in table_stat_files:
+        copy(table_file, files['summary'])
+        summary_files['table'].append(table_file.name)
+    rmtree(path / 'temp')
 
+    # Get Taxa
+    cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
     run(cmd, env=new_env, check=True, shell=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
@@ -271,6 +280,18 @@ class MMEDSNotebook():
             for line in new_lines:
                 f.write(line)
 
+    def table_stats(self, data_file):
+        """
+        Create plots and stats for asv data
+        """
+        self.add_markdown("## Dada2 Statistics")
+        filename = "table_stats.png"
+        self.add_code(self.source['table_py'].format(file1=data_file))
+        self.add_code(self.source['table_r'].format(plot=filename))
+        self.add_code("Image('{plot}')".format(plot=filename))
+        self.add_markdown(self.source['table_caption'])
+        self.add_markdown(self.source['page_break'])
+
     def taxa_plots(self, data_file):
         """
         Create plots for taxa summary files.
@@ -289,9 +310,11 @@ class MMEDSNotebook():
                 continue
 
             filename = '{}-{}.png'.format(data_file.split('.')[0], column)
-            self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(file1=data_file,
-                                                                                      level=self.words[level],
-                                                                                      group=column))
+            self.add_code(self.source['taxa_py_{}'.format(self.analysis_type)].format(
+                file1=data_file,
+                level=self.words[level],
+                group=column)
+            )
             # Add the code cells to define colors for each of the taxa
             if i == 0:
                 self.add_code(self.source['taxa_color_r'].format(level=self.words[level]))
@@ -350,7 +373,8 @@ class MMEDSNotebook():
                 ))
                 gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
                 self.add_code('Image("{plot}")'.format(plot=filename),
-                            meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+                              meta={column: True for column in self.config['metadata']
+                              if self.config['metadata_continuous'][column]})
                 self.add_markdown(self.source['page_break'])
 
         # Study contains discrete variables
@@ -358,7 +382,8 @@ class MMEDSNotebook():
             self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
             self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
             self.add_code('Image("{plot}")'.format(plot=filename),
-                        meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
+                          meta={column: True for column in self.config['metadata']
+                          if not self.config['metadata_continuous'][column]})
             self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
             Logger.debug('Added markdown')
             self.add_markdown(self.source['page_break'])
@@ -445,11 +470,9 @@ class MMEDSNotebook():
         self.add_code(self.source['r_setup'])
         self.add_code(self.source['py_setup_2'])
 
-        # Add the cells for Demultiplexing
-        self.add_markdown('# Demultiplexing Summary')
-
         # Add the cells for Table Statistics
         self.add_markdown('# Table Statistics Summary')
+        self.table_stats(self.files['table'][0])
 
         # Get only files for the requested taxa levels
         included_files = []

@@ -164,9 +164,9 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_cd_dual_upload(self):
-        return
         self.login()
         self.upload_dualBarcode_metadata()
+        self.logout()
 
     def test_da_select_study(self):
         Logger.info('da view study')
@@ -204,6 +204,11 @@ class TestServer(helper.CPWebCase):
         self.login()
         self.run_test_analysis()
         self.view_analysis()
+        self.logout()
+
+    def test_ed_error_404(self):
+        self.login()
+        self.get_error_page()
         self.logout()
 
     def test_y_query(self):
@@ -364,6 +369,23 @@ class TestServer(helper.CPWebCase):
         self.getPage('/login?username={}&password={}'.format(self.server_user, sec.TEST_PASS))
         self.assertStatus('200 OK')
 
+    def get_error_page(self):
+        Logger.debug('get 404 page')
+        self.getPage('/upload/upload_page', self.cookies)
+        self.assertStatus('200 OK')
+        self.getPage('/error/error_page?status={}&message={}&traceback={}&version={}'
+                     .format('404+Not+Found', 'NotFound', 'Traceback', '18.6.0'), self.cookies)
+        self.assertStatus('200 OK')
+        error_page = server.load_webpage(
+            'error_page',
+            user=self.server_user,
+            home_selected='',
+            status="404 Not Found",
+            message="NotFound",
+            traceback="Traceback",
+            version="18.6.0")
+        self.assertBody(error_page)
+
     ###########
     # Uploads #
     ###########
@@ -448,12 +470,16 @@ class TestServer(helper.CPWebCase):
     def upload_dualBarcode_metadata(self):
         self.getPage('/upload/upload_page', self.cookies)
         self.assertStatus('200 OK')
+
         self.getPage('/upload/upload_subject_metadata?studyName=Test_DualBarcodes&subjectType=human',
                      self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SUBJECT_SHORT], ['text/tab-seperated-values'])
-        self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/validate_metadata?barcodes_type=dual', headers + self.cookies, 'POST', body)
+        self.assertStatus('200 OK')
+
+        self.getPage('/upload/upload_specimen_metadata?uploadType=qiime&studyName=Test_DualBarcodes', self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN_SHORT_DUAL], ['text/tab-seperated-values'])
@@ -465,10 +491,13 @@ class TestServer(helper.CPWebCase):
         for warn in errors:
             assert not ('error' in warn or 'Error' in warn)
 
+        self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
+        self.assertStatus('200 OK')
+
         self.getPage('/upload/upload_data', self.cookies)
         self.assertStatus('200 OK')
         headers, body = self.upload_files(['for_reads', 'rev_reads',
-                                           'for_barcodes', 'rev_barcodes'],
+                                           'barcodes', 'rev_barcodes'],
                                           [fig.TEST_READS, fig.TEST_REV_READS,
                                            fig.TEST_BARCODES, fig.TEST_BARCODES],
                                           ['application/gzip', 'application/gzip',

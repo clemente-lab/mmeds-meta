@@ -148,7 +148,7 @@ class MMEDSbase:
                 try:
                     # Check in active dictionary
                     reset = cp.session['reset_needed']
-                except AttributeError:
+                except (AttributeError, KeyError):
                     # Check in sql database
                     if kwargs.get('user') is not None:
                         user = kwargs.get('user')
@@ -294,11 +294,13 @@ class MMEDSstudy(MMEDSbase):
 
         study_list = []
         for study in studies:
+            with Database(path='.', testing=self.testing) as db:
+                analyses_count = len(db.get_docs(doc_type='analysis', study_name=study.study_name))
             study_list.append(study_html.format(study_name=study.study_name,
                                                 view_study_page=SERVER_PATH + 'study/view_study',
                                                 access_code=study.access_code,
                                                 date_created=study.created,
-                                                num_analyses=0))
+                                                num_analyses=analyses_count))
 
         cp.log("Build out study list")
         page = self.load_webpage('study_select_page',
@@ -446,7 +448,6 @@ class MMEDSupload(MMEDSbase):
             cp.log(ex)
 
         cp.log('validator ran')
-
 
         # The database for any issues with previous uploads for the subject metadata
         with Database('.', owner=self.get_user(), testing=self.testing) as db:
@@ -1353,6 +1354,25 @@ class MMEDSquery(MMEDSbase):
         cp.session['generate_sample_id'] = (AccessCode, AliquotID)
         return page
 
+@decorate_all_methods(catch_server_errors)
+class MMEDSerror(MMEDSbase):
+    """
+    Level of the web app handling responses to errors, including but not limited to
+    404 and 500
+    """
+    def __init__(self):
+        super().__init__()
+        cp.config.update({'error_page.404': self.error_page,
+                          'error_page.500': self.error_page})
+
+    @cp.expose
+    def error_page(self, status, message, traceback, version):
+        page = self.load_webpage('error_page',
+                                status=status,
+                                traceback=traceback,
+                                message=message,
+                                version=version)
+        return page
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):
@@ -1372,6 +1392,7 @@ class MMEDSserver(MMEDSbase):
         self.auth = MMEDSauthentication()
         self.study = MMEDSstudy()
         self.query = MMEDSquery()
+        self.error = MMEDSerror()
         cp.log("Created sub servers")
 
     def load_webpage(self, page, **kwargs):

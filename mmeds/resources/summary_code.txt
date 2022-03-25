@@ -88,6 +88,55 @@ df = pd.read_csv('otu_table.tsv', skiprows=1, header=0, sep='\t')
 df.set_index('taxonomy', inplace=True)
 df.iloc[:5, :5]
 =====
+table_py<source>
+df = pd.read_csv('{file1}', sep='\t', header=0, skiprows=[1])
+data = []
+m = 0
+# Split rows into five categories
+for i in range(len(df['sample-id'])):
+    _input = df['input'][i]
+    _filtered = df['filtered'][i]
+    _denoised = df['denoised'][i]
+    _merged = df['merged'][i]
+    _nonchimeric = df['non-chimeric'][i]
+    # Store maximum
+    if _input > m:
+        m = _input
+    # Order sections so less filtered goes at the top
+    data.append([df['sample-id'][i], _input - _filtered, "a"])
+    data.append([df['sample-id'][i], _filtered - _denoised, "b"])
+    data.append([df['sample-id'][i], _denoised - _merged, "c"])
+    data.append([df['sample-id'][i], _merged - _nonchimeric, "d"])
+    data.append([df['sample-id'][i], _nonchimeric, "e"])
+df = pd.DataFrame(data, columns=['variable', 'value', "type"])
+# Set count to number of desired y-axis values-1
+count = 5
+# Create discrete y-axis values
+breaks = pd.Series([int(i*(m/count)) for i in range(count+1)])
+=====
+table_r<source>
+%%R -i df -i breaks
+p <- ggplot(df, aes(x = reorder(variable, -value), y = value, fill = type)) +
+     geom_bar(stat = 'identity') +
+     labs(x = "Sample ID",
+          title = 'Table Read Retention') +
+     scale_y_discrete(name = "Read Count",
+                      limit = as.vector(breaks),
+                      expand = c(0, 0)) +
+     scale_fill_discrete(name = "Removed During",
+                         labels=c("Filtering", "Denoising", "Merging", "Chimera Filtering", "Retained")) +
+     theme_bw() + 
+     theme(text = element_text(size = 8.5,
+                               face = "bold"),
+           element_line(size = 0.1),
+           legend.position = "bottom",
+           axis.text.x = element_text(angle = 290, hjust = 0),
+           plot.title = element_text(hjust = 0.5),
+           plot.subtitle = element_text(hjust = 0.5)) +
+     guides(fill = guide_legend(nrow = 1))
+
+ggsave("{plot}", height=6, width=8)
+=====
 taxa_py_qiime1<source>
 df = pd.read_csv('{file1}', skiprows=1, sep='\t')
 mdf_lite = mdf.reset_index()
@@ -148,7 +197,7 @@ p <- ggplot(df, aes(x = variable, y = value, fill = X.OTU.ID)) +
                                face = "bold"),
            element_line(size = 0.1),
            legend.position = "none",
-           axis.text.x = element_text(angle = 300),
+           axis.text.x = element_text(angle = 290, hjust = 0),
            plot.title = element_text(hjust = 0.5),
            plot.subtitle = element_text(hjust = 0.5)) +
      guides(fill = guide_legend(ncol = 4)) +
@@ -538,6 +587,9 @@ for(i in 1:p$nrow) {{
     }}
 }}
 =====
+table_description<source>
+Table statistics. Placeholder text.
+=====
 taxa_description<source>
 Taxonomy plots represent the abundance of different taxa using stacked plots on a per-sample or per-group (averaged) basis. Data is normalized so that abundances per sample or per group add up to 100%. When using group-based taxonomy plots, it should be noted that only average abundances are shown per group and taxa: this can induce visual biases when a small number of samples in a group have significantly higher abundance of a given taxa compared to the rest of samples in the group, and give the (incorrect) impression that the group as a whole has high high abundance of the taxa.
 =====
@@ -546,6 +598,9 @@ Alpha diversity estimates the amount of microbial diversity present in a sample 
 =====
 beta_description<source>
 Beta diversity estimates how similar or dissimilar samples are based on their microbiome composition. Different to alpha diversity, which is estimated per sample, beta diversity is a distance that is calculated between pairs of samples. Samples that are similar to each other in their microbiome composition will have a low distance between them based on beta diversity, while those that are very different in their composition will have a large distance. Principal Coordinate Analysis (PCoA) is an ordination technique that visually represents the samples based on their beta diversity distances to facilitate the identification of clusters or gradients of samples. By default, the first three principal coordinates are shown in PCoA plots.
+=====
+table_caption<source>
+The above plot represents number of input reads (total bar length) and retained (magenta) after quality control filtering, including denoising and chimera checking.
 =====
 taxa_caption<source>
 The above plot represents the percentage of each sample belonging to particular taxon summarized at the {level} level.
