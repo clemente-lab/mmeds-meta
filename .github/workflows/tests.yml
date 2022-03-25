@@ -13,17 +13,27 @@ jobs:
         with:
           python-version: 3.9
       - name: Install packages
-        run: sudo apt-get install tidy environment-modules -y
+        run: sudo apt-get install tidy environment-modules -y; pip install cryptography;
       - name: Start Services
         run: sudo systemctl start mysql.service; sudo systemctl start mongod.service;
       - name: Mysql Setup
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
-        run: mkdir ~/mmeds_server_data; mkdir -p ~/conda_envs/pheniqs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.; cp -r ./conda_envs/* ~/conda_envs/.;
+        run: mkdir ~/mmeds_server_data; mkdir -p ~/conda_env_files/pheniqs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.; cp -r ./conda_env_files/* ~/conda_env_files/.;
       - name: Python install
-        run: sudo python setup.py install
+        run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
       - name: install pheniqs
-        run: conda env create -f ./conda_envs/pheniqs_env.yml -p ~/conda_envs/pheniqs
+        run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_env_files/pheniqs
+      - name: install latex
+        run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_env_files/latex
+      - name: install jupyter
+        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
+      - name: install qiime
+        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_files/qiime2-2020.8
+
+      - name: Analysis Tests
+        run: ~/mmeds_server_data/test_files/test_study/test_jobfile.lsf
+
       - name: Server Tests
         run: |
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&

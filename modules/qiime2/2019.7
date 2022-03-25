@@ -1,0 +1,22 @@
+#%Module1.0
+## qiime2 modulefile
+set curMod [module-info name]
+module-info name qiime2-2019
+module-info version 2019.7
+
+set condapath /sc/orga/projects/MMEDS/anaconda3
+set qiimepath /sc/orga/projects/MMEDS/.modules/qiime2-2019.7
+
+if [ module-info mode load ] {
+    prepend-path PATH $qiimepath/bin
+    remove-path PATH $condapath/bin
+    setenv CONDA_DEFAULT_ENV qiime2
+    setenv CONDA_PREFIX $qiimepath
+    setenv CONDA_PREFIX_1 $condapath
+    setenv CONDA_PROMPT_MODIFIER (qiime2)\ 
+    setenv R_LIBS_USER $qiimepath/lib/R/library
+    setenv CONDA_SHLVL 2
+    setenv LC_ALL en_US.UTF-8
+    setenv LANG en_US.UTF-8
+    setenv MPLBACKEND Agg
+}

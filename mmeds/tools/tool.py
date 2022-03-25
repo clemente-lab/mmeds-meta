@@ -221,10 +221,11 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/mmeds-stable;')
+            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/jupyter;')
             self.jobtext.append('ml texlive/2018;')
         # Make sure the kernel is up to date
-        self.jobtext.append('python -m jupyter install --user --name mmeds-stable --display-name "MMEDS"')
+        self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name="Jupyter"')
+
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
@@ -294,7 +295,7 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('source deactivate; source activate mmeds-stable; ml texlive/2018')
+            self.jobtext.append('conda deactivate; source activate /hpc/users/mmedsadmin/.admin_modules/jupyter; ml texlive/2018')
         # Make sure the kernel is up to date
         self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name "Jupyter"')
         cmd = [

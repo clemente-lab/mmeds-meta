@@ -7,7 +7,7 @@ from shutil import copy, rmtree, make_archive
 
 import nbformat as nbf
 import os
-from mmeds.config import STORAGE_DIR
+from mmeds.config import STORAGE_DIR, CONTINUOUS_GRADIENTS
 from mmeds.util import load_config, setup_environment, parse_code_blocks
 from mmeds.logging import Logger
 
@@ -116,6 +116,7 @@ def summarize_qiime1(path, files, config, study_name):
 def summarize_qiime2(path, files, config, study_name):
     """ Create summary of the files produced by the qiime2 analysis. """
     Logger.debug('Start Qiime2 summary')
+    path = path.absolute()
 
     # Get the environment
     new_env = setup_environment('qiime2/2020.8')
@@ -123,11 +124,9 @@ def summarize_qiime2(path, files, config, study_name):
     # Setup the summary directory
     summary_files = defaultdict(list)
 
-    # Get Taxa
-    cmd = ['qiime', 'tools', 'export',
-           '--input-path', str(files['taxa_bar_plot']),
-           '--output-path', str(path / 'temp')]
-    run(cmd, env=new_env, check=True)
+    cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
+
+    run(cmd, env=new_env, check=True, shell=True)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -140,7 +139,8 @@ def summarize_qiime2(path, files, config, study_name):
         cmd = ['qiime', 'tools', 'export',
                '--input-path', str(beta_file),
                '--output-path', str(path / 'temp')]
-        run(cmd, env=new_env, check=True)
+        cmd = f"qiime tools export --input-path {str(beta_file)} --output-path {str(path / 'temp')}"
+        run(cmd, env=new_env, check=True, shell=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         Logger.debug(dest_file)
@@ -151,7 +151,8 @@ def summarize_qiime2(path, files, config, study_name):
     cmd = ['qiime', 'tools', 'export',
            '--input-path', str(files['alpha_rarefaction']),
            '--output-path', str(path / 'temp')]
-    run(cmd, env=new_env, check=True)
+    cmd = f"qiime tools export --input-path {str(files['alpha_rarefaction'])} --output-path {str(path / 'temp')}"
+    run(cmd, env=new_env, check=True, shell=True)
     for metric in ['shannon', 'faith_pd', 'observed_features']:
 
         metric_file = path / 'temp/{}.csv'.format(metric)
@@ -333,20 +334,34 @@ class MMEDSNotebook():
         else:
             display_name = 'Evenness'
         self.add_markdown('## {}'.format(display_name))
-        self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
-        for col in [col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]:
-            filename = data_file.split('.')[0] + '_' + col + '.png'
-            self.add_code(self.source['alpha_r_continuous'].format(file1=filename, xaxis=xaxis, cat=col))
+
+        # Study contains continuous variables
+        if True in [val for (key, val) in self.config['metadata_continuous'].items()]:
+            self.add_code(self.source['alpha_py_continuous'].format(file1=data_file))
+            gradient_index = 0
+            for col in sorted([col for col in self.config['metadata'] if self.config['metadata_continuous'][col]]):
+                filename = data_file.split('.')[0] + '_' + col + '.png'
+                self.add_code(self.source['alpha_r_continuous'].format(
+                    file1=filename,
+                    xaxis=xaxis,
+                    cat=col,
+                    low=CONTINUOUS_GRADIENTS[gradient_index][0],
+                    high=CONTINUOUS_GRADIENTS[gradient_index][1]
+                ))
+                gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
+                self.add_code('Image("{plot}")'.format(plot=filename),
+                            meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+                self.add_markdown(self.source['page_break'])
+
+        # Study contains discrete variables
+        if False in [val for (key, val) in self.config['metadata_continuous'].items()]:
+            self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
+            self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
             self.add_code('Image("{plot}")'.format(plot=filename),
-                        meta={column: True for column in self.config['metadata'] if self.config['metadata_continuous'][column]})
+                        meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
+            self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
+            Logger.debug('Added markdown')
             self.add_markdown(self.source['page_break'])
-        self.add_code(self.source['alpha_py_discrete_{}'.format(self.analysis_type)].format(file1=data_file))
-        self.add_code(self.source['alpha_r'].format(file1=filename, xaxis=xaxis))
-        self.add_code('Image("{plot}")'.format(plot=filename),
-                      meta={column: True for column in self.config['metadata'] if not self.config['metadata_continuous'][column]})
-        self.add_markdown(self.source['alpha_caption_{}'.format(self.analysis_type)])
-        Logger.debug('Added markdown')
-        self.add_markdown(self.source['page_break'])
 
     def beta_plots(self, data_file):
         """
@@ -362,8 +377,9 @@ class MMEDSNotebook():
         elif 'weighted' in data_file:
             display_name = 'Weighted UniFrac'
         else:
-            #TODO: Remove Jaccard so this isn't necessary
+            # TODO: Remove Jaccard so this isn't necessary
             return
+        gradient_index = 0
         for column in sorted(self.config['metadata']):
             plot = '{}-{}.png'.format(data_file.split('.')[0], column)
             subplot = '{}-%s-%s.png'.format(plot.split('.')[0])
@@ -376,8 +392,11 @@ class MMEDSNotebook():
                 self.add_code(self.source['beta_r_continuous'].format(
                     plot=plot,
                     subplot=subplot,
-                    cat=column
+                    cat=column,
+                    low=CONTINUOUS_GRADIENTS[gradient_index][0],
+                    high=CONTINUOUS_GRADIENTS[gradient_index][1]
                 ))
+                gradient_index = (gradient_index + 1) % len(CONTINUOUS_GRADIENTS)
             else:
                 self.add_code(self.source['beta_py_discrete'].format(
                     file1=data_file,
@@ -507,15 +526,14 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
+
             new_env = setup_environment('jupyter')
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
-                    run(['conda', 'install', 'rpy2', 'pandas=1.2.3.', '-y'], stdout=out, stderr=err)
-                    run(['python', '-m', 'ipykernel', 'install', '--user', '--name', 'jupyter',
-                         '--display-name', '"Jupyter"'], stdout=out, stderr=err)
-                    output = run(cmd.split(' '), check=True, env=new_env, stdout=out, stderr=err)
+                    output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
+
             # Convert to pdf
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter

@@ -1,0 +1,5 @@
+adamcantor22	adamcantor22@gmail.com	niunzoplrdclshdcpqrgjncyxhmfjffcrydzjfczghcnmcbzwa
+Key	Path
+for_reads	/sc/arion/projects/MMEDS/mmeds_server_data/studies/adamcantor22_Example_Study_0/forward_reads.fastq.gz
+barcodes	/sc/arion/projects/MMEDS/mmeds_server_data/studies/adamcantor22_Example_Study_0/barcodes.fastq.gz
+metadata	/sc/arion/projects/MMEDS/mmeds_server_data/studies/adamcantor22_Example_Study_0/full_metadata.tsv
