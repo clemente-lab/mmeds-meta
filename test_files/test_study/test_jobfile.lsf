@@ -20,6 +20,7 @@ export LC_ALL=en_US.UTF-8;
 # ml anaconda3;
 
 #TODO: get conda env file for this:
+conda env list | echo
 source activate qiime2-2020.8;
 
 test_files=~/mmeds_server_data/test_files
