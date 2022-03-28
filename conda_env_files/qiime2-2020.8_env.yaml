@@ -1,6 +1,8 @@
 name: qiime2-2020.8
 channels:
+  - qiime2/label/r2020.8
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
   - qiime2
