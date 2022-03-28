@@ -17,7 +17,7 @@ set -e
 set -o pipefail
 echo $PATH
 export LC_ALL=en_US.UTF-8;
-ml anaconda3;
+# ml anaconda3;
 
 #TODO: get conda env file for this:
 source activate qiime2-2020.8;
