@@ -21,7 +21,7 @@ export LC_ALL=en_US.UTF-8;
 
 #TODO: get conda env file for this:
 conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_files/qiime2-2020.8 --force
-source activate qiime2-2020.8;
+conda activate /home/runner/conda_env_files/qiime2-2020.8;
 
 test_files=~/mmeds_server_data/test_files
 RUN_Qiime2=$test_files/test_study/Qiime2_0
