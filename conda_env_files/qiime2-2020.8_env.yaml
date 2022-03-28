@@ -4,4 +4,3 @@ channels:
   - defaults
 dependencies:
   - qiime2
-prefix: /home/matt/anaconda3/envs/qiime2-2020.8
