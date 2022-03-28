@@ -24,12 +24,15 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
+      - name: install qiime
+        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_files/qiime2-2020.8 --force
+
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_env_files/pheniqs
       - name: install latex
         run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_env_files/latex
-      - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
+        #- name: install jupyter
+        #run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
       - name: Analysis Tests
         run: ~/mmeds_server_data/test_files/test_study/test_jobfile.lsf
 
