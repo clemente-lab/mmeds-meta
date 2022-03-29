@@ -13,7 +13,9 @@
 export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=2000]';
 #export PATH="~/Anaconda3/bin:$PATH"
 
+conda init
 source ~/.bashrc;
+
 set -e
 set -o pipefail
 echo $PATH
@@ -25,7 +27,6 @@ conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_file
 
 #conda init bash
 
-conda init
 conda activate /home/runner/conda_env_files/qiime2-2020.8;
 
 test_files=~/mmeds_server_data/test_files
