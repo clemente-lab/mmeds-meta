@@ -11,7 +11,7 @@
 #BSUB -L /bin/bash
 
 export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=2000]';
-#export PATH="~/Anaconda3/bin:$PATH"
+export PATH="~/usr/share/miniconda/bin:$PATH"
 
 conda init
 source ~/.bashrc;
