@@ -37,7 +37,7 @@ jobs:
         #- name: install jupyter
         #run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
       - name: Analysis Tests
-        run: ~/mmeds_server_data/test_files/test_study/test_jobfile.lsf
+        run: bash ~/mmeds_server_data/test_files/test_study/test_jobfile.lsf
 
       - name: Server Tests
         run: |
