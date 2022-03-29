@@ -6,3 +6,4 @@ channels:
   - defaults
 dependencies:
   - qiime2
+prefix: ~/conda_envs/qiime2-2020.8

@@ -1311,14 +1311,19 @@ def run_analysis(path, tool_type):
     """
     """
     new_env = setup_environment('qiime2_test')
+    print('env loaded')
     # new_env = setup_environment('jupyter')
 
     # create module file
     # new_env = setup_environment('latex')
 
-    gunzip_forward_barcodes = ['bash', f'{path}/job1.sh']
+    print(f'{path}')
+    gunzip_forward_barcodes = f'bash {path}/job1.sh'
     try:
-        run(gunzip_forward_barcodes, env=new_env, capture_output=True, check=True, shell=True)
+        print('run')
+        x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
+        print('ran')
+        print(x)
     except CalledProcessError as e:
         Logger.debug(e)
         print(e.output)
