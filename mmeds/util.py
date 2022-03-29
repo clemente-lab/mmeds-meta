@@ -1306,3 +1306,20 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         ret_val = validate_output
 
     return ret_val
+
+def run_analysis(path):
+    """
+    """
+    new_env = setup_environment('qiime2_test')
+    # new_env = setup_environment('jupyter')
+
+    # create module file
+    # new_env = setup_environment('latex')
+
+    gunzip_forward_barcodes = ['bash', f'{path}/job1.sh']
+    try:
+        run(gunzip_forward_barcodes, env=new_env, capture_output=True, check=True, shell=True)
+    except CalledProcessError as e:
+        Logger.debug(e)
+        print(e.output)
+        raise e

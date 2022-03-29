@@ -24,21 +24,20 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
-      - name: find anaconda
-        run: which conda
-
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_files/qiime2-2020.8 --force
 
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_env_files/pheniqs
-      - name: install latex
-        run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_env_files/latex
-        #- name: install jupyter
-        #run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
-      - name: Analysis Tests
-        run: bash ~/mmeds_server_data/test_files/test_study/test_jobfile.sh;
+      #- name: install latex
+      #  run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_env_files/latex
+      # - name: install jupyter
+      #  run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
 
+      - name: Unit Tests
+        run: |
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
       - name: Server Tests
         run: |
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
@@ -46,11 +45,7 @@ jobs:
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
       - name: Upload Server Coverage
         run: bash <(curl -s https://codecov.io/bash) -cF server;
-      - name: Unit Tests
-        run: |
-          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
-      - name: Metadata Tests
+     - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;

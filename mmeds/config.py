@@ -374,6 +374,7 @@ TEST_STRIPPED_DIRS = [
     str(TEST_PATH / 'test_stripped_2')
 ]
 TEST_PHENIQS_MAPPING = str(TEST_PATH / 'test_pheniqs_mapping_file.tsv')
+TEST_STUDY = str(TEST_PATH / 'test_study')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
 TEST_SPECIMEN_SIMPLIFIED = str(TEST_PATH / 'test_specimen_simplified.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
