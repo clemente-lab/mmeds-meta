@@ -23,20 +23,6 @@ class AnalysisTests(TestCase):
         cls.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
         cls.test_study = fig.TEST_STUDY
 
-        # temp paths for testing demultiplexing
-        cls.strip_dir = Path(cls.pheniqs_dir) / 'stripped_out/'
-        cls.out_dir = Path(cls.pheniqs_dir) / 'pheniqs_out/'
-        cls.log_dir = Path(cls.pheniqs_dir) / 'logs/'
-        cls.target_file = '240_16_S1_L001_R1_001.fastq'
-
-        # make paths we need
-        Path(cls.pheniqs_dir).mkdir(exist_ok=True)
-        cls.out_dir.mkdir(exist_ok=True)
-        cls.strip_dir.mkdir(exist_ok=True)
-        cls.log_dir.mkdir(exist_ok=True)
-        cls.out = Path(cls.pheniqs_dir) / 'pheniqs_config_test.json'
-        cls.log = Path(cls.log_dir) / 'pheniqs_report.txt'
-
     def test_analyses(self):
         """ Test pheniqs demultiplexing """
-        run_analysis(self.test_study)
+        run_analysis(self.test_study, 'qiime2')

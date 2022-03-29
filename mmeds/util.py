@@ -1307,7 +1307,7 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
 
     return ret_val
 
-def run_analysis(path):
+def run_analysis(path, tool_type):
     """
     """
     new_env = setup_environment('qiime2_test')
