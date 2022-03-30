@@ -1310,6 +1310,7 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
 def run_analysis(path, tool_type):
     """
     """
+    # import pudb; pudb.set_trace()
     new_env = setup_environment('qiime2_test')
     print('env loaded')
     # new_env = setup_environment('jupyter')
@@ -1319,9 +1320,12 @@ def run_analysis(path, tool_type):
 
     print(f'{path}')
     gunzip_forward_barcodes = f'bash {path}/job1.sh'
+    qiime = f'qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza'
+
     try:
         print('run')
-        x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
+        x = run(qiime, env=new_env, capture_output=True, shell=True, timeout=120)
+        # x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
         print('ran')
         print(x)
     except CalledProcessError as e:

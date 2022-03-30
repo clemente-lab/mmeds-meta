@@ -19,7 +19,9 @@ set -e
 set -o pipefail
 echo $PATH
 export LC_ALL=en_US.UTF-8;
+
 # ml anaconda3;
+# source activate qiime2-2020.8
 
 test_files=~/mmeds_server_data/test_files
 RUN_Qiime2=$test_files/test_study/Qiime2_0
