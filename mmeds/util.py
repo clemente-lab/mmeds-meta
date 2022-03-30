@@ -1311,7 +1311,7 @@ def run_analysis(path, tool_type):
     """
     """
     # import pudb; pudb.set_trace()
-    new_env = setup_environment('qiime2_test')
+    new_env = setup_environment('qiime2-2020.8')
     print('env loaded')
     # new_env = setup_environment('jupyter')
 
