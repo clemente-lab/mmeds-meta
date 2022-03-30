@@ -1328,6 +1328,9 @@ def run_analysis(path, tool_type):
         # x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
         print('ran')
         print(x)
+        if 'qiime: not found' in x:
+            raise Exception
+
     except CalledProcessError as e:
         Logger.debug(e)
         print(e.output)
