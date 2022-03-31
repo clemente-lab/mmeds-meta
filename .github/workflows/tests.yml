@@ -41,7 +41,7 @@ jobs:
         with:
           activate-environment: qiime2-2020.8
           environment-file: ./conda_env_files/qiime2-2020.8_env.yaml
-          python-version: 3.9
+          python-version: 3.6
           auto-activate-base: false
       - name: qiime
         run: qiime --help
