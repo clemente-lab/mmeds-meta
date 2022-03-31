@@ -37,13 +37,13 @@ jobs:
       #  run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_env_files/latex
       # - name: install jupyter
       #  run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
+      - name: qiime
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: qiime2-2020.8
           environment-file: ./conda_env_files/qiime2-2020.8_env.yaml
           python-version: 3.6
           auto-activate-base: false
-      - name: qiime
         run: |
             conda init bash
             source ~/.bashrc
