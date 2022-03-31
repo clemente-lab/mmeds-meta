@@ -8,4 +8,17 @@ module-info name qiime2-2020
 module-info version 2020.8
 
 # prepent path needs to point at the bin folder of the qiime1 conda environment
-prepend-path PATH /home/runner/conda_envs/qiime2-2020.8/bin
+# prepend-path PATH ~/conda_envs/qiime2-2020.8/bin
+set qiimepath ~/conda_envs/qiime2-2020.8
+
+prepend-path PATH $qiimepath/bin
+# remove-path PATH $condapath/bin
+setenv CONDA_DEFAULT_ENV qiime2
+setenv CONDA_PREFIX $qiimepath
+#setenv CONDA_PREFIX_1 $condapath
+setenv CONDA_PROMPT_MODIFIER (qiime2)\ 
+setenv R_LIBS_USER $qiimepath/lib/R/library
+setenv CONDA_SHLVL 2
+setenv LC_ALL en_US.UTF-8
+setenv LANG en_US.UTF-8
+setenv MPLBACKEND Agg
