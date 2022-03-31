@@ -44,7 +44,11 @@ jobs:
           python-version: 3.6
           auto-activate-base: false
       - name: qiime
-        run: conda init bash; source ~/.bashrc; conda activate qiime2-2020.8; qiime --help
+        run: |
+            conda init bash
+            source ~/.bashrc
+            conda activate qiime2-2020.8
+            qiime --help
 
       - name: Unit Tests
         run: |
