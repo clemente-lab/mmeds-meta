@@ -44,7 +44,7 @@ jobs:
           python-version: 3.6
           auto-activate-base: false
       - name: qiime
-        run: qiime --help
+        run: conda activate qiime2-2020.8; qiime --help
 
       - name: Unit Tests
         run: |
