@@ -27,8 +27,8 @@ jobs:
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
 
-      - name: find qiime
-        run: which qiime;
+      - name: qiime
+        run: conda init bash; conda activate qiime2-2020.8; qiime --help
 
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
