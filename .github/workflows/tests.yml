@@ -25,7 +25,7 @@ jobs:
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
       - name: find python
-        run: which python;
+        run: which conda;
 
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
