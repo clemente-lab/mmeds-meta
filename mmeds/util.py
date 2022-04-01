@@ -1334,7 +1334,7 @@ def run_analysis(path, tool_type):
 
         print('ran')
         print(x)
-        if 'qiime: not found' in str(x):
+        if 'qiime: not found' in str(x) or 'Unrecognized' in str(x):
             raise Exception
 
     except CalledProcessError as e:
