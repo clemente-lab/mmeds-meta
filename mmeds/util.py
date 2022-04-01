@@ -1329,7 +1329,7 @@ def run_analysis(path, tool_type):
     try:
         print('run')
         x = run(job1, env=new_env, capture_output=True, shell=True, timeout=120)
-        # y = run(job2, env=new_env, capture_output=True, shell=True, timeout=120)
+        y = run(job2, env=new_env, capture_output=True, shell=True, timeout=120)
         Logger.debug(x)
 
         print('ran')

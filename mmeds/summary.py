@@ -527,7 +527,7 @@ class MMEDSNotebook():
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
 
-            new_env = setup_environment('jupyter')
+            latex_env = setup_environment('latex')
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
@@ -538,8 +538,8 @@ class MMEDSNotebook():
             cmd = 'pdflatex {name}.tex'.format(name=self.name)
             # Run the command twice because otherwise the chapter
             # headings don't show up...
-            output = run(cmd.split(' '), check=True, capture_output=True)
-            output = run(cmd.split(' '), check=True, capture_output=True)
+            output = run(cmd.split(' '), check=True, capture_output=True, env=latex_env)
+            output = run(cmd.split(' '), check=True, capture_output=True, env=latex_env)
 
         except RuntimeError:
             Logger.debug(output)
