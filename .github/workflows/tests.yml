@@ -44,6 +44,9 @@ jobs:
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
+      - name: investigate
+        run: ls -ltR ~/mmeds_server_data/test_files/test_study
+
       - name: Server Tests
         run: |
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
