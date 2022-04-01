@@ -1324,8 +1324,8 @@ def run_analysis(path, tool_type):
 
     try:
         print('run')
-        x = run(qiime, env=new_env, capture_output=True, shell=True, timeout=120)
-        # x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
+        # x = run(qiime, env=new_env, capture_output=True, shell=True, timeout=120)
+        x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
         Logger.debug(x)
 
         print('ran')
