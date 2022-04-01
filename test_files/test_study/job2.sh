@@ -14,7 +14,7 @@ export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=20
 export PATH="~/usr/share/miniconda/bin:$PATH"
 
 # conda init
-source ~/.bashrc;
+# source ~/.bashrc;
 
 set -e
 set -o pipefail
