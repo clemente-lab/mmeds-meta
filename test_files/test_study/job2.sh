@@ -36,7 +36,7 @@ import_dir=$RUN_Qiime2/import_dir
 wait
 echo "MMEDS_STAGE_5"
 # conda deactivate; source activate jupyter; ml texlive/2018
-python -m ipykernel install --user --name jupyter --display-name "Jupyter"
+# python -m ipykernel install --user --name jupyter --display-name "Jupyter"
 summarize.py  --path "$RUN_Qiime2" --tool_type qiime2;
 zip -r $RUN_Qiime2.zip $RUN_Qiime2;
 echo "MMEDS_FINISHED"

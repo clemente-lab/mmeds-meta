@@ -1311,9 +1311,9 @@ def run_analysis(path, tool_type):
     """
     """
     # import pudb; pudb.set_trace()
-    new_env = setup_environment('qiime2-2020.8')
+    qiime_env = setup_environment('qiime2-2020.8')
     print('env loaded')
-    # new_env = setup_environment('jupyter')
+    # jupyter_env = setup_environment('jupyter')
 
     # create module file
     # new_env = setup_environment('latex')
@@ -1328,9 +1328,13 @@ def run_analysis(path, tool_type):
 
     try:
         print('run')
-        x = run(job1, env=new_env, capture_output=True, shell=True)
-        # y = run(job2, env=new_env, capture_output=True, shell=True, timeout=120)
+        x = run(job1, env=qiime_env, capture_output=True, shell=True)
+        y = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+        z = run(job2, capture_output=True, shell=True)
+
         Logger.debug(x)
+        Logger.debug(y)
+        Logger.debug(z)
 
         print('ran')
         print(x)
