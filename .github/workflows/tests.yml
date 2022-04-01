@@ -24,8 +24,8 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
-        #- name: install qiime
-        #run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
+      - name: install qiime
+        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
 
         #      - name: qiime
         #        run: conda init bash; conda activate qiime2-2020.8; qiime --help
@@ -38,17 +38,20 @@ jobs:
       # - name: install jupyter
       #  run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
       #- name: qiime
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: qiime2-2020.8
-          environment-file: ./conda_env_files/qiime2-2020.8_env.yaml
-          python-version: 3.6
-          auto-activate-base: false
-        run: |
-            conda init bash
-            source ~/.bashrc
-            conda activate qiime2-2020.8
-            qiime --help
+      # - uses: s-weigand/setup-conda@v1
+      #  with:
+      # activate-conda: false
+      #- uses: conda-incubator/setup-miniconda@v2
+      #  with:
+      #    activate-environment: qiime2-2020.8
+      #    environment-file: ./conda_env_files/qiime2-2020.8_env.yaml
+      #    python-version: 3.6
+      #    auto-activate-base: false
+      #  run: |
+      #      conda init bash
+      #      source ~/.bashrc
+      #      conda activate qiime2-2020.8
+      #      qiime --help
 
       - name: Unit Tests
         run: |

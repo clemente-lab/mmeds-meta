@@ -23,19 +23,19 @@ export LC_ALL=en_US.UTF-8;
 # ml anaconda3;
 
 #TODO: get conda env file for this:
-conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_files/qiime2-2020.8 --force
+# conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_env_files/qiime2-2020.8 --force
 
 #conda init bash
 
-conda activate /home/runner/conda_env_files/qiime2-2020.8;
+# conda activate /home/runner/conda_env_files/qiime2-2020.8;
 
 test_files=~/mmeds_server_data/test_files
 RUN_Qiime2=$test_files/test_study/Qiime2_0
 import_dir=$RUN_Qiime2/import_dir
 
-cp $test_files/forward_reads.fastq.gz $import_dir
-cp $test_files/reverse_reads.fastq.gz $import_dir
-cp $test_files/barcodes.fastq.gz $import_dir
+#cp $test_files/forward_reads.fastq.gz $import_dir
+#cp $test_files/reverse_reads.fastq.gz $import_dir
+#cp $test_files/barcodes.fastq.gz $import_dir
 
 echo "MMEDS_STAGE_0"
 qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza;
