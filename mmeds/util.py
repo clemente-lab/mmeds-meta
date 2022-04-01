@@ -1319,7 +1319,9 @@ def run_analysis(path, tool_type):
     # new_env = setup_environment('latex')
 
     print(f'{path}')
-    gunzip_forward_barcodes = f'bash {path}/job1.sh'
+    # gunzip_forward_barcodes = f'bash {path}/job1.sh'
+    gunzip_forward_barcodes = f'bash {path}/test_jobfile.sh'
+
     qiime = f'qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza'
 
     try:

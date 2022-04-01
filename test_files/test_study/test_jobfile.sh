@@ -13,7 +13,7 @@
 export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=2000]';
 export PATH="~/usr/share/miniconda/bin:$PATH"
 
-conda init
+# conda init
 source ~/.bashrc;
 
 set -e
@@ -33,9 +33,10 @@ test_files=~/mmeds_server_data/test_files
 RUN_Qiime2=$test_files/test_study/Qiime2_0
 import_dir=$RUN_Qiime2/import_dir
 
-#cp $test_files/forward_reads.fastq.gz $import_dir
-#cp $test_files/reverse_reads.fastq.gz $import_dir
-#cp $test_files/barcodes.fastq.gz $import_dir
+cp $test_files/forward_reads.fastq.gz $import_dir/sequences.fastq.gz
+cp $test_files/qiime_mapping_file.tsv $RUN_Qiime2/
+# cp $test_files/reverse_reads.fastq.gz $import_dir
+cp $test_files/barcodes.fastq.gz $import_dir
 
 echo "MMEDS_STAGE_0"
 qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza;
