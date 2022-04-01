@@ -1313,7 +1313,7 @@ def run_analysis(path, tool_type):
     # import pudb; pudb.set_trace()
     qiime_env = setup_environment('qiime2-2020.8')
     print('env loaded')
-    # jupyter_env = setup_environment('jupyter')
+    jupyter_env = setup_environment('jupyter')
 
     # create module file
     # new_env = setup_environment('latex')
