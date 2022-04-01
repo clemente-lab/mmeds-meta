@@ -30,28 +30,13 @@ jobs:
         #      - name: qiime
         #        run: conda init bash; conda activate qiime2-2020.8; qiime --help
 
-        #- name: install pheniqs
-        # run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
+      - name: install pheniqs
+        run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
 
       #- name: install latex
       #  run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_env_files/latex
       # - name: install jupyter
-      #  run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
-      #- name: qiime
-      # - uses: s-weigand/setup-conda@v1
-      #  with:
-      # activate-conda: false
-      #- uses: conda-incubator/setup-miniconda@v2
-      #  with:
-      #    activate-environment: qiime2-2020.8
-      #    environment-file: ./conda_env_files/qiime2-2020.8_env.yaml
-      #    python-version: 3.6
-      #    auto-activate-base: false
-      #  run: |
-      #      conda init bash
-      #      source ~/.bashrc
-      #      conda activate qiime2-2020.8
-      #      qiime --help
+      # - run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_env_files/jupyter
 
       - name: Unit Tests
         run: |

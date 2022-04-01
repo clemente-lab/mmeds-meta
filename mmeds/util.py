@@ -1319,15 +1319,17 @@ def run_analysis(path, tool_type):
     # new_env = setup_environment('latex')
 
     print(f'{path}')
-    # gunzip_forward_barcodes = f'bash {path}/job1.sh'
-    gunzip_forward_barcodes = f'bash {path}/test_jobfile.sh'
+    job1 = f'bash {path}/job1.sh'
+    job2 = f'bash {path}/job2.sh'
+
+    # gunzip_forward_barcodes = f'bash {path}/test_jobfile.sh'
 
     qiime = f'qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza'
 
     try:
         print('run')
-        # x = run(qiime, env=new_env, capture_output=True, shell=True, timeout=120)
-        x = run(gunzip_forward_barcodes, env=new_env, capture_output=True, shell=True, timeout=120)
+        x = run(job1, env=new_env, capture_output=True, shell=True, timeout=120)
+        y = run(job2, env=new_env, capture_output=True, shell=True, timeout=120)
         Logger.debug(x)
 
         print('ran')
