@@ -7,6 +7,7 @@ import gzip
 from pathlib import Path
 from mmeds.util import run_analysis
 from mmeds.logging import Logger
+from mmeds.summary import summarize_qiime
 
 TESTING = True
 
@@ -31,3 +32,5 @@ class AnalysisTests(TestCase):
         print("hi")
         # import pudb; pudb.set_trace()
         run_analysis(self.test_study, 'qiime2')
+        summarize_qiime(self.test_study, 'qiime2')
+
