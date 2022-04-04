@@ -1328,12 +1328,14 @@ def run_analysis(path, tool_type):
 
     try:
         print('run')
-        x = run(job1, env=qiime_env, capture_output=True, shell=True)
-        y = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+        # x = run(job1, env=qiime_env, capture_output=True, shell=True)
+        x = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+        #x = run('jupyter --help', env=jupyter_env, capture_output=True, shell=True)
+        print('install ipy')
         z = run(job2, capture_output=True, shell=True)
 
         Logger.debug(x)
-        Logger.debug(y)
+        #Logger.debug(y)
         Logger.debug(z)
 
         print('ran')
