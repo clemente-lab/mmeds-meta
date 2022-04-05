@@ -16,6 +16,7 @@ def summarize_qiime(summary_path, tool):
     """ Handle setup and running the summary for the two qiimes """
     path = Path(summary_path)
 
+    import pudb; pudb.set_trace()
     # Load the files
     files = {}
     lines = (path / 'file_index.tsv').read_text().strip().split('\n')
