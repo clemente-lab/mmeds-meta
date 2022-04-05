@@ -1,13 +1,5 @@
 adamcantor22	adamcantor22@gmail.com	niunzoplrdclshdcpqrgjncyxhmfjffcrydzjfczghcnmcbzwa
 Key	Path
-for_reads	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/forward_reads.fastq.gz
-barcodes	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/barcodes.fastq.gz
-metadata	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/metadata.tsv
-path	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/
-mapping	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/qiime_mapping_file.tsv
-demux_file	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/qiime_artifact.qza
-working_dir	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/import_dir
-working_file	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/qiime_artifact.qza
-alpha_rarefaction	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/alpha_rarefaction.qzv
-taxa_bar_plot	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/taxa_bar_plot.qzv
-core_metrics_results	/home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/core_metric_results
+for_reads	/home/runner/mmeds_server_data/test_files/test_study/forward_reads.fastq.gz
+barcodes	/home/runner/mmeds_server_data/test_files/test_study/barcodes.fastq.gz
+metadata	/home/runner/mmeds_server_data/test_files/test_study/full_metadata.tsv
