@@ -32,5 +32,5 @@ class AnalysisTests(TestCase):
         print("hi")
         # import pudb; pudb.set_trace()
         run_analysis(self.test_study, 'qiime2')
-        summarize_qiime(self.test_study, 'qiime2')
+        summarize_qiime(self.test_study, 'qiime2', testing=True)
 
