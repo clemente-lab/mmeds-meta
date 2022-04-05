@@ -27,6 +27,13 @@ test_files=~/mmeds_server_data/test_files
 RUN_Qiime2=$test_files/test_study/Qiime2_0
 import_dir=$RUN_Qiime2/import_dir
 
+mkdir $RUN_Qiime2
+mkdir $import_dir
+mkdir $RUN_Qiime2/core_metrics_results
+mkdir $RUN_Qiime2/visualizations_dir
+mkdir $RUN_Qiime2/summary
+
+
 # rm $import_dir/*
 cp $test_files/forward_reads.fastq.gz $import_dir
 mv $import_dir/forward_reads.fastq.gz $import_dir/sequences.fastq.gz

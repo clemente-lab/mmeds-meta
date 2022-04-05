@@ -12,10 +12,11 @@ from mmeds.util import load_config, setup_environment, parse_code_blocks
 from mmeds.logging import Logger
 
 
-def summarize_qiime(summary_path, tool):
+def summarize_qiime(summary_path, tool, testing=False):
     """ Handle setup and running the summary for the two qiimes """
     path = Path(summary_path)
 
+    # import pudb; pudb.set_trace()
     # Load the files
     files = {}
     lines = (path / 'file_index.tsv').read_text().strip().split('\n')
@@ -51,7 +52,7 @@ def summarize_qiime(summary_path, tool):
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
     elif tool == 'qiime2':
-        summarize_qiime2(path, files, config, study_name)
+        summarize_qiime2(path, files, config, study_name, testing)
 
 
 def summarize_qiime1(path, files, config, study_name):
@@ -113,20 +114,24 @@ def summarize_qiime1(path, files, config, study_name):
     return path / 'summary/analysis.pdf'
 
 
-def summarize_qiime2(path, files, config, study_name):
+def summarize_qiime2(path, files, config, study_name, testing=False):
     """ Create summary of the files produced by the qiime2 analysis. """
     Logger.debug('Start Qiime2 summary')
     path = path.absolute()
 
     # Get the environment
-    new_env = setup_environment('qiime2/2020.8')
+    if testing:
+        new_env = setup_environment('qiime2-2020.8')
+    else:
+        new_env = setup_environment('qiime2/2020.8')
 
     # Setup the summary directory
     summary_files = defaultdict(list)
 
     cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
 
-    run(cmd, env=new_env, check=True, shell=True)
+    x = run(cmd, env=new_env, check=True, shell=True)
+    print(x)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
