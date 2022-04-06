@@ -104,7 +104,7 @@ qiime diversity beta-group-significance --i-distance-matrix $RUN_Qiime2/core_met
 qiime diversity alpha-rarefaction --i-table $RUN_Qiime2/filtered_table.qza --i-phylogeny $RUN_Qiime2/rooted_tree.qza --p-max-depth 4000 --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --o-visualization $RUN_Qiime2/alpha_rarefaction.qzv&
 wait
 echo "MMEDS_STAGE_4"
-qiime feature-classifier classify-sklearn --i-classifier /sc/arion/projects/MMEDS/mmeds_server_data/gg-13-8-99-nb-classifier.qza --i-reads $RUN_Qiime2/rep_seqs_dada2.qza --o-classification $RUN_Qiime2/taxonomy.qza --p-n-jobs 10
+qiime feature-classifier classify-sklearn --i-classifier $test_files/gg-13-8-99-nb-classifier.qza --i-reads $RUN_Qiime2/rep_seqs_dada2.qza --o-classification $RUN_Qiime2/taxonomy.qza --p-n-jobs 10
 qiime taxa barplot --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --o-visualization $RUN_Qiime2/taxa_bar_plot.qzv
 qiime composition add-pseudocount --i-table $RUN_Qiime2/filtered_table.qza --o-composition-table $RUN_Qiime2/comp-ExampleMetaData-table.qza
 qiime composition ancom --i-table $RUN_Qiime2/comp-ExampleMetaData-table.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --p-transform-function log --m-metadata-column ExampleMetaData --o-visualization $RUN_Qiime2/ancom-ExampleMetaData.qzv
