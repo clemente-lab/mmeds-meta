@@ -1,5 +1,5 @@
 adamcantor22	adamcantor22@gmail.com	niunzoplrdclshdcpqrgjncyxhmfjffcrydzjfczghcnmcbzwa
 Key	Path
-for_reads	/home/runner/mmeds_server_data/test_files/test_study/forward_reads.fastq.gz
-barcodes	/home/runner/mmeds_server_data/test_files/test_study/barcodes.fastq.gz
+for_reads	/home/runner/mmeds_server_data/test_files/forward_reads.fastq.gz
+barcodes	/home/runner/mmeds_server_data/test_files/barcodes.fastq.gz
 metadata	/home/runner/mmeds_server_data/test_files/test_study/full_metadata.tsv
