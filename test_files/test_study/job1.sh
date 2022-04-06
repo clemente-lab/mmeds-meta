@@ -35,7 +35,7 @@ import_dir=$RUN_Qiime2/import_dir
 
 
 # rm $import_dir/*
-cp $import_dir/forward_reads.fastq.gz $import_dir/sequences.fastq.gz
+cp $test_files/forward_reads.fastq.gz $import_dir/sequences.fastq.gz
 cp $test_files/barcodes.fastq.gz $import_dir
 
 # cp $test_files/qiime_mapping_file.tsv $RUN_Qiime2/
