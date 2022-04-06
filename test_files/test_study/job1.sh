@@ -31,7 +31,7 @@ import_dir=$RUN_Qiime2/import_dir
 # mkdir $RUN_Qiime2/core_metrics_results
 # mkdir $RUN_Qiime2/visualizations_dir
 # mkdir $RUN_Qiime2/summary
-# mkdir $RUN_Qiime2/import_dir
+mkdir -p $RUN_Qiime2/import_dir
 
 
 # rm $import_dir/*
