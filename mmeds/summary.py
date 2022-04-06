@@ -132,6 +132,7 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
 
     x = run(cmd, env=new_env, check=True, shell=True)
     print(x)
+    Logger.debug(x)
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
