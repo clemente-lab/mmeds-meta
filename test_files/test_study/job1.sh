@@ -27,11 +27,11 @@ test_files=~/mmeds_server_data/test_files
 RUN_Qiime2=$test_files/test_study/Qiime2_0
 import_dir=$RUN_Qiime2/import_dir
 
-mkdir $RUN_Qiime2
+# mkdir $RUN_Qiime2
 # mkdir $RUN_Qiime2/core_metrics_results
 # mkdir $RUN_Qiime2/visualizations_dir
 # mkdir $RUN_Qiime2/summary
-mkdir $RUN_Qiime2/import_dir
+# mkdir $RUN_Qiime2/import_dir
 
 
 # rm $import_dir/*
