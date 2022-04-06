@@ -35,12 +35,11 @@ import_dir=$RUN_Qiime2/import_dir
 
 
 # rm $import_dir/*
-cp $test_files/forward_reads.fastq.gz $import_dir
-mv $import_dir/forward_reads.fastq.gz $import_dir/sequences.fastq.gz
+cp $import_dir/forward_reads.fastq.gz $import_dir/sequences.fastq.gz
+cp $test_files/barcodes.fastq.gz $import_dir
 
 # cp $test_files/qiime_mapping_file.tsv $RUN_Qiime2/
 # cp $test_files/reverse_reads.fastq.gz $import_dir
-cp $test_files/barcodes.fastq.gz $import_dir
 
 echo "MMEDS_STAGE_0"
 qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza;
