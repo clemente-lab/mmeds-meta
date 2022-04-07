@@ -1327,16 +1327,25 @@ def run_analysis(path, tool_type):
     qiime = f'qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza'
 
     try:
-        print('run')
+        Logger.debug('run')
         x = run(job1, env=qiime_env, capture_output=True, shell=True)
         # x = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
-        # x = run('jupyter --help', env=jupyter_env, capture_output=True, shell=True)
+        n_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'Nationality')
+        s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
+
+        n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
+        s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
+
+
+       # x = run('jupyter --help', env=jupyter_env, capture_output=True, shell=True)
         # print('install ipy')
-        # z = run(job2, capture_output=True, shell=True)
+
+        y = run(job2, env=qiime_env, capture_output=True, shell=True)
+        # z = run(job2, env=qiime_env, capture_output=True, shell=True)
 
         Logger.debug(x)
         #Logger.debug(y)
-        # Logger.debug(z)
+        Logger.debug(y)
 
         print('ran')
         print(x)
