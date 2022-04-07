@@ -130,7 +130,7 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
 
     cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
 
-    x = run(cmd, env=new_env, check=True, shell=True)
+    x = run(cmd, env=new_env, capture_output=True, shell=True)
     print(x)
     Logger.debug(x)
     taxa_files = (path / 'temp').glob('level*.csv')
@@ -146,7 +146,7 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
                '--input-path', str(beta_file),
                '--output-path', str(path / 'temp')]
         cmd = f"qiime tools export --input-path {str(beta_file)} --output-path {str(path / 'temp')}"
-        run(cmd, env=new_env, check=True, shell=True)
+        run(cmd, env=new_env, capture_output=True, shell=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         Logger.debug(dest_file)
@@ -561,7 +561,7 @@ class MMEDSNotebook():
         original_path = Path.cwd()
         os.chdir(self.path)
         nn = self.summarize()
-        self.write_notebook(nn, testing)
+        # self.write_notebook(nn, testing)
 
         # Switch back to the original directory
         os.chdir(original_path)
