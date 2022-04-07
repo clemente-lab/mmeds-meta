@@ -1347,7 +1347,7 @@ def run_analysis(path, tool_type):
 
         Logger.debug(x)
         Logger.debug(y)
-        Logger.debug(z)
+        # Logger.debug(z)
 
         print('ran')
         print(x)
