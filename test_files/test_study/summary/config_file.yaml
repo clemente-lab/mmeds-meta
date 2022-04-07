@@ -1,0 +1,18 @@
+abundance_threshold: 0.1
+additional_analysis: none
+font_size: 15
+iterations: 5
+metadata:
+- DaysSinceExperimentStart
+- SpecimenBodySite
+- Depth
+- SpecimenType
+- Ethnicity
+- InterventionCode
+permutations: 1
+sampling_depth: 1000
+sub_analysis: none
+taxa_levels:
+- 2
+- 6
+type: spearman

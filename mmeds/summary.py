@@ -521,10 +521,10 @@ class MMEDSNotebook():
             new_env = setup_environment('jupyter')
 
             if testing:
-                cmd = 'R; install.packages("GGally",dependencies=TRUE);'\
-                'install.packages("GGally",dependencies=TRUE);install.packages("GGally",dependencies=TRUE)install.packages("GGally",dependencies=TRUE);quit()';
-                output = run(cmd, check=True, capture_output=True, env=new_env, shell=True)
-                Logger.debug(output)
+                # cmd = 'R; install.packages("GGally",dependencies=TRUE);'\
+                # 'install.packages("GGally",dependencies=TRUE);install.packages("GGally",dependencies=TRUE)install.packages("GGally",dependencies=TRUE);quit()';
+                # output = run(cmd, check=True, capture_output=True, env=new_env, shell=True)
+                # Logger.debug(output)
 
                 output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=new_env, capture_output=True, shell=True)
                 Logger.debug(output)

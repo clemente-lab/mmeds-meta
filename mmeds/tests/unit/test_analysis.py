@@ -31,5 +31,23 @@ class AnalysisTests(TestCase):
         """ Test pheniqs demultiplexing """
         print("hi")
         # import pudb; pudb.set_trace()
-        run_analysis(self.test_study, 'qiime2')
-        summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
+
+        # run_analysis(self.test_study, 'qiime2')
+        # summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
+
+        summary = f'{self.test_study}/summary'
+        cmd = f'cd {summary}; jupyter nbconvert --to latex --template mod_revtex.tplx'
+        cmd += ' {}.ipynb'.format('mkstapylton@gmail.com-mattS-qiime2')
+        # Don't let the cells timeout, some will take a long time to process
+        cmd += ' --execute --ExecutePreprocessor.timeout=-1'
+        cmd += ' --ExecutePreprocessor.kernel_name="jupyter"'
+
+        try:
+            with open( / 'notebook.err', 'w') as err:
+                with open( / 'notebook.out', 'w') as out:
+                    output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
+        except RuntimeError:
+            Logger.debug(output)
+
+
+
