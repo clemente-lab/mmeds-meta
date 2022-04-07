@@ -1,0 +1,10 @@
+#%Module1.0
+# pheniqs modulefile
+# Note: folder containing this file needs to be in the MODULE_ROOT folder, see config.py. For me it's ~/.modules/module_files
+
+set curMod [module-info name]
+module-info name latex
+# needs to point at the bin folder of the pheniqs conda environment
+# prepend-path PATH ~/.modules/pheniqs/bin
+# prepend-path PATH /usr/share/miniconda/pheniqs/bin
+prepend-path PATH ~/conda_envs/latex/bin
