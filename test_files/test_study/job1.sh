@@ -66,11 +66,3 @@ qiime composition ancom --i-table $RUN_Qiime2/comp-Nationality-table.qza --m-met
 qiime taxa collapse --i-table $RUN_Qiime2/filtered_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --p-level 2 --o-collapsed-table $RUN_Qiime2/Nationality_table_l2.qza
 qiime composition add-pseudocount --i-table $RUN_Qiime2/filtered_table.qza --o-composition-table $RUN_Qiime2/comp-Nationality-table-l2.qza
 qiime composition ancom --i-table $RUN_Qiime2/comp-Nationality-table-l2.qza --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --p-transform-function log --m-metadata-column Nationality --o-visualization $RUN_Qiime2/ancom-Nationality-l2.qzv
-
-make_grouped_mapping_file.py --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --m-metadata-column SpecimenBodySite --o-grouped-metadata-file $RUN_Qiime2/grouped_SpecimenBodySite_mapping_file.tsv;
-make_grouped_mapping_file.py --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --m-metadata-column Nationality --o-grouped-metadata-file $RUN_Qiime2/grouped_Nationality_mapping_file.tsv;
-
-qiime feature-table group --i-table $RUN_Qiime2/filtered_table.qza --p-axis 'sample' --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --m-metadata-column SpecimenBodySite --p-mode 'mean-ceiling' --o-grouped-table $RUN_Qiime2/grouped_SpecimenBodySite_table.qza;
-qiime taxa barplot --i-table $RUN_Qiime2/grouped_SpecimenBodySite_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --m-metadata-file $RUN_Qiime2/grouped_SpecimenBodySite_mapping_file.tsv --o-visualization $RUN_Qiime2/grouped_SpecimenBodySite_taxa_bar_plot.qzv
-qiime feature-table group --i-table $RUN_Qiime2/filtered_table.qza --p-axis 'sample' --m-metadata-file $RUN_Qiime2/qiime_mapping_file.tsv --m-metadata-column Nationality --p-mode 'mean-ceiling' --o-grouped-table $RUN_Qiime2/grouped_Nationality_table.qza;
-qiime taxa barplot --i-table $RUN_Qiime2/grouped_Nationality_table.qza --i-taxonomy $RUN_Qiime2/taxonomy.qza --m-metadata-file $RUN_Qiime2/grouped_Nationality_mapping_file.tsv --o-visualization $RUN_Qiime2/grouped_Nationality_taxa_bar_plot.qzv
