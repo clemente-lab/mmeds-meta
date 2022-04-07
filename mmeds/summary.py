@@ -174,7 +174,7 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
                         name=study_name,
                         path=path / 'summary')
 
-    mnb.create_notebook()
+    mnb.create_notebook(testing)
     # Create a zip of the summary
     result = make_archive(path / 'summary',
                           format='zip',
@@ -511,7 +511,7 @@ class MMEDSNotebook():
         nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
         return nn
 
-    def write_notebook(self, nn):
+    def write_notebook(self, nn, testing=False):
         """
         Write the notebook and export it to a PDF.
         ==========================================
@@ -533,29 +533,35 @@ class MMEDSNotebook():
                 #  cmd += ' &>/dev/null;'
             Logger.debug('Convert notebook to latex')
 
-            latex_env = setup_environment('latex')
             with open(self.path / 'notebook.err', 'w') as err:
                 with open(self.path / 'notebook.out', 'w') as out:
                     output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
 
             Logger.debug('Convert latex to pdf')
 
-            # Convert to pdf
-            cmd = 'pdflatex {name}.tex'.format(name=self.name)
-            # Run the command twice because otherwise the chapter
-            # headings don't show up...
-            output = run(cmd.split(' '), check=True, capture_output=True, env=latex_env)
-            output = run(cmd.split(' '), check=True, capture_output=True, env=latex_env)
+            if testing:
+                latex_env = setup_environment('latex')
+                cmd = 'tectonic {name}.tex'.format(name=self.name)
+                # Run the command twice because otherwise the chapter
+                # headings don't show up...
+                output = run(cmd.split(' '), check=True, capture_output=True, env=latex_env)
+            else:
+                # Convert to pdf
+                cmd = 'pdflatex {name}.tex'.format(name=self.name)
+                # Run the command twice because otherwise the chapter
+                # headings don't show up...
+                output = run(cmd.split(' '), check=True, capture_output=True)
+                output = run(cmd.split(' '), check=True, capture_output=True)
 
         except RuntimeError:
             Logger.debug(output)
 
-    def create_notebook(self):
+    def create_notebook(self, testing=False):
         Logger.debug('Start summary notebook')
         original_path = Path.cwd()
         os.chdir(self.path)
         nn = self.summarize()
-        self.write_notebook(nn)
+        self.write_notebook(nn, testing)
 
         # Switch back to the original directory
         os.chdir(original_path)

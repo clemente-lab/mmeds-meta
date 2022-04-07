@@ -1329,13 +1329,14 @@ def run_analysis(path, tool_type):
     try:
         Logger.debug('run')
         x = run(job1, env=qiime_env, capture_output=True, shell=True)
-        # x = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+
         n_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'Nationality')
         s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
 
         n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
         s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
 
+        # x = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
 
        # x = run('jupyter --help', env=jupyter_env, capture_output=True, shell=True)
         # print('install ipy')
