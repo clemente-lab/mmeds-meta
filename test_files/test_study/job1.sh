@@ -23,6 +23,7 @@ RUN_Qiime2=$test_files/test_study/Qiime2_0
 import_dir=$RUN_Qiime2/import_dir
 
 mkdir -p $RUN_Qiime2/import_dir
+mkdir -p $RUN_Qiime2/temp
 
 # rm $import_dir/*
 cp $test_files/forward_reads.fastq.gz $import_dir/sequences.fastq.gz
