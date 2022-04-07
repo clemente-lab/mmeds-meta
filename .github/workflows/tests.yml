@@ -33,10 +33,10 @@ jobs:
         # - name: install pheniqs
         #run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
 
-        - name: install latex
+      - name: install latex
         run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
 
-        - name: install jupyter
+      - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
       - name: check_setup
