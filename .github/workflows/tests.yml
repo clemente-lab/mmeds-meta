@@ -31,7 +31,7 @@ jobs:
         run: R --version
 
       - name: install R dependencies
-        run: R; install.packages("GGally",dependencies=TRUE); install.packages("ggrepel",dependencies=TRUE); install.packages("RColorBrewer",dependencies=TRUE); install.packages("ggplot2",dependencies=TRUE); quit();
+        run: Rscript -e 'install.packages("GGally",dependencies=TRUE)'; Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; Rscript -e 'install.packages("ggplot2",dependencies=TRUE); quit();'
 
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
