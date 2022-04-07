@@ -519,6 +519,16 @@ class MMEDSNotebook():
         """
         try:
             new_env = setup_environment('jupyter')
+
+            if testing:
+                cmd = 'R; install.packages("GGally",dependencies=TRUE);'\
+                'install.packages("GGally",dependencies=TRUE);install.packages("GGally",dependencies=TRUE)install.packages("GGally",dependencies=TRUE);quit()';
+                 output = run(cmd, check=True, capture_output=True, env=new_env, shell=True)
+                 Logger.debug(output)
+
+                 output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=new_env, capture_output=True, shell=True)
+                 Logger.debug(output)
+
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
             cmd = 'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += ' {}.ipynb'.format(self.name)
@@ -561,7 +571,7 @@ class MMEDSNotebook():
         original_path = Path.cwd()
         os.chdir(self.path)
         nn = self.summarize()
-        # self.write_notebook(nn, testing)
+        self.write_notebook(nn, testing)
 
         # Switch back to the original directory
         os.chdir(original_path)

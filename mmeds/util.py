@@ -1342,7 +1342,7 @@ def run_analysis(path, tool_type):
         y = run(job2, env=qiime_env, capture_output=True, shell=True)
         # z = run(job2, env=qiime_env, capture_output=True, shell=True)
 
-        z = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+        # z = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
 
 
         Logger.debug(x)
