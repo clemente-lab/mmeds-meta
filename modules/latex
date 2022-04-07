@@ -1,5 +1,5 @@
 #%Module1.0
-# pheniqs modulefile
+# latex modulefile
 # Note: folder containing this file needs to be in the MODULE_ROOT folder, see config.py. For me it's ~/.modules/module_files
 
 set curMod [module-info name]
