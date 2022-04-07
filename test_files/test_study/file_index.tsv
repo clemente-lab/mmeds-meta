@@ -3,3 +3,4 @@ Key	Path
 for_reads	/home/runner/mmeds_server_data/test_files/forward_reads.fastq.gz
 barcodes	/home/runner/mmeds_server_data/test_files/barcodes.fastq.gz
 metadata	/home/runner/mmeds_server_data/test_files/test_study/full_metadata.tsv
+mapping	/home/runner/mmeds_server_data/test_files/test_study/qiime_mapping_file.tsv

@@ -1336,17 +1336,18 @@ def run_analysis(path, tool_type):
         n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
         s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
 
-        # x = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
-
        # x = run('jupyter --help', env=jupyter_env, capture_output=True, shell=True)
         # print('install ipy')
 
         y = run(job2, env=qiime_env, capture_output=True, shell=True)
         # z = run(job2, env=qiime_env, capture_output=True, shell=True)
 
+        z = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+
+
         Logger.debug(x)
-        #Logger.debug(y)
         Logger.debug(y)
+        Logger.debug(z)
 
         print('ran')
         print(x)
