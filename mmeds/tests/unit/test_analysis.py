@@ -36,6 +36,7 @@ class AnalysisTests(TestCase):
         # run_analysis(self.test_study, 'qiime2')
         # summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
         new_env = setup_environment('jupyter')
+        latex_env = setup_environment('latex')
 
         summary = f'{self.test_study}/summary'
         cmd = f'cd {summary}; jupyter nbconvert --to latex --template mod_revtex.tplx'
@@ -47,6 +48,11 @@ class AnalysisTests(TestCase):
 
         try:
             output = run(cmd, check=True, env=new_env, shell=True, capture_output=True)
+            cmd = 'tectonic {name}.tex'.format(name='test')
+                # Run the command twice because otherwise the chapter
+                # headings don't show up...
+            output = run(cmd.split(' '), check=True, capture_output=True, env=latex_env)
+
             print(output)
             Logger.debug(output)
 
