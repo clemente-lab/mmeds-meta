@@ -31,7 +31,7 @@ class AnalysisTests(TestCase):
     def test_analyses(self):
         """ Test pheniqs demultiplexing """
         print("hi")
-        import pudb; pudb.set_trace()
+        # import pudb; pudb.set_trace()
 
         # run_analysis(self.test_study, 'qiime2')
         # summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
