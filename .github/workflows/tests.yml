@@ -47,7 +47,7 @@ jobs:
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
-      - name: check study output 
+      - name: check study output
         if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_study
 

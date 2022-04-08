@@ -16,7 +16,6 @@ def summarize_qiime(summary_path, tool, testing=False):
     """ Handle setup and running the summary for the two qiimes """
     path = Path(summary_path)
 
-    # import pudb; pudb.set_trace()
     # Load the files
     files = {}
     lines = (path / 'file_index.tsv').read_text().strip().split('\n')
@@ -546,11 +545,6 @@ class MMEDSNotebook():
             latex_env = setup_environment('latex')
 
             if testing:
-                # cmd = 'R; install.packages("GGally",dependencies=TRUE);'\
-                # 'install.packages("GGally",dependencies=TRUE);install.packages("GGally",dependencies=TRUE)install.packages("GGally",dependencies=TRUE);quit()';
-                # output = run(cmd, check=True, capture_output=True, env=new_env, shell=True)
-                # Logger.debug(output)
-
                 # Need to install jupyter kernel
                 output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=new_env, capture_output=True, shell=True)
                 Logger.debug(output)
