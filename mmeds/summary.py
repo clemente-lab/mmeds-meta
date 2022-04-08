@@ -566,6 +566,7 @@ class MMEDSNotebook():
             # Also, tectonic can be installed through conda, used in place of pdflatex
             if testing:
                 output = run(cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
+                Logger.debug(output)
 
                 pdf_cmd = f'tectonic {self.name}.tex'
                 output = run(pdf_cmd, check=True, capture_output=True, env=latex_env, shell=True)
