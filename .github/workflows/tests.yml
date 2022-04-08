@@ -24,8 +24,8 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
-      - name: install latex
-        run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
+      - name: install qiime
+        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
 
       - name: install R
         run: sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common; sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'; sudo apt install r-base;
@@ -36,9 +36,20 @@ jobs:
       - name: install R dependencies
         run: sudo Rscript -e 'install.packages("GGally",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; sudo Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggplot2",dependencies=TRUE)';
 
+        #      - name: qiime
+        #        run: conda init bash; conda activate qiime2-2020.8; qiime --help
+
+        # - name: install pheniqs
+        #run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
+
+      - name: install latex
+        run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
+
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
+      - name: check_setup
+        run: ls -ltR ~/mmeds_server_data/test_files/test_study
 
       - name: Unit Tests
         run: python -m unittest ./mmeds/tests/unit/test_analysis.py
@@ -51,3 +62,15 @@ jobs:
 
       - name: investigate2
         run: ls -ltR ~/mmeds_server_data/test_files/test_study/Qiime2_0
+
+      - name: Server Tests
+        run: |
+          pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
+          sleep 1;
+          pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
+      - name: Upload Server Coverage
+        run: bash <(curl -s https://codecov.io/bash) -cF server;
+      - name: Metadata Tests
+        run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
+      - name: Upload Unit coverage
+        run: bash <(curl -s https://codecov.io/bash) -cF unit;
