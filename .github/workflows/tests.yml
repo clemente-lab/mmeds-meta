@@ -58,9 +58,11 @@ jobs:
         # coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
       - name: investigate
+        if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_study
 
       - name: investigate2
+        if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_study/Qiime2_0
 
       - name: Server Tests

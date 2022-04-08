@@ -530,7 +530,7 @@ class MMEDSNotebook():
                 Logger.debug(output)
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = f'cd {self.path}; jupyter nbconvert --to latex --template mod_revtex.tplx'
+            cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += ' {}.ipynb'.format(self.name)
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
@@ -551,7 +551,7 @@ class MMEDSNotebook():
 
             if testing:
                 latex_env = setup_environment('latex')
-                cmd = f'cd {self.path}; tectonic {self.name}.tex'
+                cmd = f'tectonic {self.name}.tex'
                 # Run the command twice because otherwise the chapter
                 # headings don't show up...
                 output = run(cmd, check=True, capture_output=True, env=latex_env, shell=True)
