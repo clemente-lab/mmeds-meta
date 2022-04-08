@@ -589,6 +589,8 @@ class MMEDSNotebook():
 
         except (RuntimeError, CalledProcessError) as e:
             Logger.debug(e.output)
+            print(e.output)
+            raise e
 
     def create_notebook(self, testing=False):
         Logger.debug('Start summary notebook')
