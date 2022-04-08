@@ -59,64 +59,106 @@ let length = document.getElementById("length");
 let match = document.getElementById("match");
 
 // When the user clicks outside of the password field, hide the message box
-myInput.onkeyup = function() {
-    // Validate lowercase letters
-    var lowerCaseCharacters = /[a-z]/g;
-    if(myInput.value.match(lowerCaseCharacters)) {
-        letter.classList.remove("invalid");
-        letter.classList.add("valid");
-    } else {
-        letter.classList.remove("valid");
-        letter.classList.add("invalid")
-    }
-    
-    // Validate lowercase letters
-    var upperCaseCharacters = /[A-Z]/g;
-    if(myInput.value.match(upperCaseCharacters)) {
-        capital.classList.remove("invalid");
-        capital.classList.add("valid");
-    } else {
-        capital.classList.remove("valid");
-        capital.classList.add("invalid")
+if(myInput != null) {
+    myInput.onkeyup = function() {
+        // Validate lowercase letters
+        var lowerCaseCharacters = /[a-z]/g;
+        if(myInput.value.match(lowerCaseCharacters)) {
+            letter.classList.remove("invalid");
+            letter.classList.add("valid");
+        } else {
+            letter.classList.remove("valid");
+            letter.classList.add("invalid")
+        }
+        
+        // Validate lowercase letters
+        var upperCaseCharacters = /[A-Z]/g;
+        if(myInput.value.match(upperCaseCharacters)) {
+            capital.classList.remove("invalid");
+            capital.classList.add("valid");
+        } else {
+            capital.classList.remove("valid");
+            capital.classList.add("invalid")
+        }
+
+        // Validate lowercase letters
+        var numbers = /[0-9]/g;
+        if(myInput.value.match(numbers)) {
+            num.classList.remove("invalid");
+            num.classList.add("valid");
+        } else {
+            num.classList.remove("valid");
+            num.classList.add("invalid")
+        }
+
+        // Validate lowercase letters
+        var symbols = /[!@#$%^&*~`_+=-]/g;
+        if(myInput.value.match(symbols)) {
+            symbol.classList.remove("invalid");
+            symbol.classList.add("valid");
+        } else {
+            symbol.classList.remove("valid");
+            symbol.classList.add("invalid")
+        }
+
+        // Validate lowercase letters
+        if(myInput.value.length >= 10) {
+            length.classList.remove("invalid");
+            length.classList.add("valid");
+        } else {
+            length.classList.remove("valid");
+            length.classList.add("invalid")
+        }
     }
 
-    // Validate lowercase letters
-    var numbers = /[0-9]/g;
-    if(myInput.value.match(numbers)) {
-        num.classList.remove("invalid");
-        num.classList.add("valid");
-    } else {
-        num.classList.remove("valid");
-        num.classList.add("invalid")
-    }
-
-    // Validate lowercase letters
-    var symbols = /[!@#$%^&*~`_+=-]/g;
-    if(myInput.value.match(symbols)) {
-        symbol.classList.remove("invalid");
-        symbol.classList.add("valid");
-    } else {
-        symbol.classList.remove("valid");
-        symbol.classList.add("invalid")
-    }
-
-    // Validate lowercase letters
-    if(myInput.value.length >= 10) {
-        length.classList.remove("invalid");
-        length.classList.add("valid");
-    } else {
-        length.classList.remove("valid");
-        length.classList.add("invalid")
+    myInput2.onkeyup = function() {
+        // Validate matching passwords
+        if(myInput.value === myInput2.value) {
+            match.classList.remove("invalid");
+            match.classList.add("valid");
+        } else {
+            match.classList.remove("valid");
+            match.classList.add("invalid");
+        }
     }
 }
+// Password validation end
 
-myInput2.onkeyup = function() {
-    // Validate matching passwords
-    if(myInput.value === myInput2.value) {
-        match.classList.remove("invalid");
-        match.classList.add("valid");
-    } else {
-        match.classList.remove("valid");
-        match.classList.add("invalid");
+// Cookie compliancy begin
+// Cookies notification based on 
+//      https://html-online.com/articles/cookie-warning-widget-with-javascript/
+function GetCookie(name) {
+    var arg=name+"=";
+    var alen=arg.length;
+    var clen=document.cookie.length;
+    var i=0;
+    while (i<clen) {
+        var j=i+alen;
+        if (document.cookie.substring(i,j)==arg)
+            return "here";
+        i=document.cookie.indexOf(" ",i)+1;
+        if (i==0) break;
     }
+    return null;
 }
+
+function testFirstCookie() {
+    var visit=GetCookie("cookieCompliancyAccepted");
+    if (visit==null) {
+        $("#myCookieConsent").fadeIn(400);   // Show warning
+    } else {
+                // Already accepted
+    }        
+}
+
+$(document).ready(function(){
+    $("#cookieButton").click(function(){
+        console.log('Understood');
+        var expire=new Date();
+        expire=new Date(expire.getTime()+7776000000); // Check again after 90 days
+        document.cookie="cookieCompliancyAccepted=here; expires="+expire+";path=/";
+      $("#myCookieConsent").hide(400);
+    });
+    testFirstCookie();
+});
+// Cookie Compliancy END
