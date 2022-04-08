@@ -110,7 +110,6 @@ class DemultiplexTests(TestCase):
         gunzip_reverse_barcodes = ['gunzip', f'{self.rev_barcodes}.gz']
 
         try:
-            # import pudb; pudb.set_trace()
             run(pheniqs_demultiplex, capture_output=True, env=new_env, check=True, timeout=120)
 
         except (CalledProcessError, TimeoutExpired) as e:
