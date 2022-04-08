@@ -121,8 +121,10 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
 
     # Get the environment
     if testing:
+        # This module file is setup for running on github actions
         new_env = setup_environment('qiime2-2020.8')
     else:
+        # This module file is setup for running on minerva
         new_env = setup_environment('qiime2/2020.8')
 
     # Setup the summary directory
@@ -518,7 +520,7 @@ class MMEDSNotebook():
         :nn: A python notebook object.
         """
         try:
-            new_env = setup_environment('jupyter')
+            jupyter_env = setup_environment('jupyter')
             latex_env = setup_environment('latex')
 
             if testing:
@@ -527,6 +529,7 @@ class MMEDSNotebook():
                 # output = run(cmd, check=True, capture_output=True, env=new_env, shell=True)
                 # Logger.debug(output)
 
+                # Need to install jupyter kernel
                 output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=new_env, capture_output=True, shell=True)
                 Logger.debug(output)
 
@@ -543,8 +546,10 @@ class MMEDSNotebook():
                 # Mute output
                 #  cmd += ' &>/dev/null;'
 
+            # For testing, we don't want the output written to disk
+            # Also, tectonic can be installed through conda, used in place of pdflatex
             if testing:
-                output = run(cmd, check=True, env=new_env, shell=True, capture_output=True)
+                output = run(cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
 
                 pdf_cmd = f'tectonic {self.name}.tex'
                 output = run(pdf_cmd, check=True, capture_output=True, env=latex_env, shell=True)
@@ -554,7 +559,7 @@ class MMEDSNotebook():
 
                 with open(self.path / 'notebook.err', 'w') as err:
                     with open(self.path / 'notebook.out', 'w') as out:
-                        output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
+                        output = run(cmd, check=True, env=jupyter_env, shell=True, stdout=out, stderr=err)
 
                 Logger.debug('Convert latex to pdf')
 

@@ -33,7 +33,6 @@ jobs:
       - name: install R dependencies
         run: sudo Rscript -e 'install.packages("GGally",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; sudo Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggplot2",dependencies=TRUE)';
 
-
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
 

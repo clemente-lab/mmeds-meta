@@ -1309,30 +1309,44 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
 
 def run_analysis(path, tool_type, testing=False):
     """
+    Run analysis for one of MMEDs tools
+    Currently only setup for qiime2
+
+    path: path to analysis folder i.e. Study/Qiime2_0)
+    tool_type: tool to use. qiime1, qiime2, lefse, etc
     """
-    qiime_env = setup_environment('qiime2-2020.8')
+    if testing:
+        # This module file is setup for running on github actions
+        qiime_env = setup_environment('qiime2-2020.8')
+    else:
+        # This module file is setup for running on minerva
+        qiime_env = setup_environment('qiime2/2020.8')
+
     print('env loaded')
     jupyter_env = setup_environment('jupyter')
 
-    job1 = f'bash {path}/run_qiime_part1.sh'
-    job2 = f'bash {path}/run_qiime_part2.sh'
+    qiime_p1 = f'bash {path}/run_qiime_part1.sh'
+    qiime_p2 = f'bash {path}/run_qiime_part2.sh'
 
     qiime = f'qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza'
 
     try:
-        x = run(job1, env=qiime_env, capture_output=True, shell=True)
+        output1 = run(qiime_p1, env=qiime_env, capture_output=True, shell=True)
 
         if testing:
+            # TODO: Need to generalize this and see how the summary jupyter files are created
+            # Hard coded values are needed for current qiime2 test
+            # Which just runs existing test files with default config
             n_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'Nationality')
             s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
 
             n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
             s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
 
-        y = run(job2, env=qiime_env, capture_output=True, shell=True)
+        output2 = run(qiime_p2, env=qiime_env, capture_output=True, shell=True)
 
-        Logger.debug(x)
-        Logger.debug(y)
+        Logger.debug(output1)
+        Logger.debug(output2)
 
     except CalledProcessError as e:
         Logger.debug(e)

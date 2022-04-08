@@ -6,22 +6,15 @@ from mmeds.summary import summarize_qiime
 
 
 class AnalysisTests(TestCase):
-    """ Test run analysis """
+    """ Test running analyses """
     @classmethod
     def setUpClass(cls):
         """ Set up tests """
-        # paths in config.py
-        cls.mapping = fig.TEST_MAPPING_DUAL
-        cls.for_reads = fig.TEST_READS_DUAL
-        cls.rev_reads = fig.TEST_REV_READS_DUAL
-        cls.for_barcodes = fig.TEST_BARCODES_DUAL
-        cls.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
+        # path to an example study, created from a MMEDs upload of existing test files
+        # definied in config.py
         cls.test_study = fig.TEST_STUDY
 
-    def test_analyses(self):
-        """ Test pheniqs demultiplexing """
-        print("hi")
-        # import pudb; pudb.set_trace()
-
+    def test_qiime2(self):
+        """ Test running a qiime2 analysis """
         run_analysis(self.test_study, 'qiime2', testing=True)
         summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
