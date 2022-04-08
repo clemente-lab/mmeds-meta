@@ -17,12 +17,11 @@ class AnalysisTests(TestCase):
         cls.for_barcodes = fig.TEST_BARCODES_DUAL
         cls.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
         cls.test_study = fig.TEST_STUDY
-        print("ho")
 
     def test_analyses(self):
         """ Test pheniqs demultiplexing """
         print("hi")
         # import pudb; pudb.set_trace()
 
-        run_analysis(self.test_study, 'qiime2')
+        run_analysis(self.test_study, 'qiime2', testing=True)
         summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)

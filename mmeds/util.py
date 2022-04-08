@@ -1307,52 +1307,32 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
 
     return ret_val
 
-def run_analysis(path, tool_type):
+def run_analysis(path, tool_type, testing=False):
     """
     """
-    # import pudb; pudb.set_trace()
     qiime_env = setup_environment('qiime2-2020.8')
     print('env loaded')
     jupyter_env = setup_environment('jupyter')
 
-    # create module file
-    # new_env = setup_environment('latex')
-
-    print(f'{path}')
-    job1 = f'bash {path}/job1.sh'
-    job2 = f'bash {path}/job2.sh'
-
-    # gunzip_forward_barcodes = f'bash {path}/test_jobfile.sh'
+    job1 = f'bash {path}/run_qiime_part1.sh'
+    job2 = f'bash {path}/run_qiime_part2.sh'
 
     qiime = f'qiime tools import --type EMPSingleEndSequences --input-path $RUN_Qiime2/import_dir --output-path $RUN_Qiime2/qiime_artifact.qza'
 
     try:
-        Logger.debug('run')
         x = run(job1, env=qiime_env, capture_output=True, shell=True)
 
-        n_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'Nationality')
-        s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
+        if testing:
+            n_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'Nationality')
+            s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
 
-        n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
-        s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
-
-       # x = run('jupyter --help', env=jupyter_env, capture_output=True, shell=True)
-        # print('install ipy')
+            n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
+            s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
 
         y = run(job2, env=qiime_env, capture_output=True, shell=True)
-        # z = run(job2, env=qiime_env, capture_output=True, shell=True)
-
-        # z = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
-
 
         Logger.debug(x)
         Logger.debug(y)
-        # Logger.debug(z)
-
-        print('ran')
-        print(x)
-        if 'qiime: not found' in str(x) or 'Unrecognized' in str(x):
-            raise Exception
 
     except CalledProcessError as e:
         Logger.debug(e)
