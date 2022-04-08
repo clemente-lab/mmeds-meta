@@ -46,7 +46,7 @@ class AnalysisTests(TestCase):
 
         output = run(cmd, check=True, env=new_env, shell=True, capture_output=True)
         print(output)
-        Logger.debug(output)
+        # Logger.debug(output)
 
 
 
