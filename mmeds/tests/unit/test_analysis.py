@@ -1,20 +1,12 @@
 from unittest import TestCase
 import mmeds.config as fig
-import pandas as pd
-from subprocess import run, CalledProcessError, TimeoutExpired
-import gzip
 
-from pathlib import Path
-from mmeds.util import run_analysis, setup_environment
-from mmeds.logging import Logger
+from mmeds.util import run_analysis
 from mmeds.summary import summarize_qiime
-from mmeds.logging import Logger
-
-TESTING = True
 
 
 class AnalysisTests(TestCase):
-    """ Tests of scripts """
+    """ Test run analysis """
     @classmethod
     def setUpClass(cls):
         """ Set up tests """
@@ -26,7 +18,6 @@ class AnalysisTests(TestCase):
         cls.rev_barcodes = fig.TEST_REV_BARCODES_DUAL
         cls.test_study = fig.TEST_STUDY
         print("ho")
-
 
     def test_analyses(self):
         """ Test pheniqs demultiplexing """

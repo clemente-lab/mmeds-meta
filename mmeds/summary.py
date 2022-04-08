@@ -519,6 +519,7 @@ class MMEDSNotebook():
         """
         try:
             new_env = setup_environment('jupyter')
+            latex_env = setup_environment('latex')
 
             if testing:
                 # cmd = 'R; install.packages("GGally",dependencies=TRUE);'\
@@ -541,30 +542,31 @@ class MMEDSNotebook():
                 # run correctly it can make logs harder to parse for other things.
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-            Logger.debug('Convert notebook to latex')
-
-            with open(self.path / 'notebook.err', 'w') as err:
-                with open(self.path / 'notebook.out', 'w') as out:
-                    output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
-
-            Logger.debug('Convert latex to pdf')
 
             if testing:
-                latex_env = setup_environment('latex')
-                cmd = f'tectonic {self.name}.tex'
-                # Run the command twice because otherwise the chapter
-                # headings don't show up...
-                output = run(cmd, check=True, capture_output=True, env=latex_env, shell=True)
-            else:
-                # Convert to pdf
-                cmd = 'pdflatex {name}.tex'.format(name=self.name)
-                # Run the command twice because otherwise the chapter
-                # headings don't show up...
-                output = run(cmd.split(' '), check=True, capture_output=True)
-                output = run(cmd.split(' '), check=True, capture_output=True)
+                output = run(cmd, check=True, env=new_env, shell=True, capture_output=True)
 
-        except RuntimeError:
-            Logger.debug(output)
+                pdf_cmd = f'tectonic {self.name}.tex'
+                output = run(pdf_cmd, check=True, capture_output=True, env=latex_env, shell=True)
+            else:
+
+                Logger.debug('Convert notebook to latex')
+
+                with open(self.path / 'notebook.err', 'w') as err:
+                    with open(self.path / 'notebook.out', 'w') as out:
+                        output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
+
+                Logger.debug('Convert latex to pdf')
+
+                # Convert to pdf
+                pdf_cmd = 'pdflatex {name}.tex'.format(name=self.name)
+                # Run the command twice because otherwise the chapter
+                # headings don't show up...
+                output = run(pdf_cmd.split(' '), check=True, capture_output=True)
+                output = run(pdf_cmd.split(' '), check=True, capture_output=True)
+
+        except (RuntimeError, CalledProcessError) as e:
+            Logger.debug(e.output)
 
     def create_notebook(self, testing=False):
         Logger.debug('Start summary notebook')
