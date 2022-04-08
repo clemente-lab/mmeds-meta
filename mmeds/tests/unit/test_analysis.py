@@ -20,5 +20,5 @@ class AnalysisTests(TestCase):
         run_analysis(self.test_study, 'qiime2', testing=True)
         summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
 
-        pdf_output = Path(f'{self.test_study}/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf')
+        pdf_output = Path(f'{self.test_study}/Qiime2_0/summary.zip')
         self.assertTrue(pdf_output.exists())
