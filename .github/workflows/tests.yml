@@ -31,7 +31,7 @@ jobs:
         run: R --version
 
       - name: install R dependencies
-        run: Rscript -e 'install.packages("GGally",dependencies=TRUE)'; Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; Rscript -e 'install.packages("ggplot2",dependencies=TRUE); quit();'
+        run: sudo Rscript -e 'install.packages("GGally",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; sudo Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggplot2",dependencies=TRUE)';
 
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
