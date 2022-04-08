@@ -5,9 +5,10 @@ from subprocess import run, CalledProcessError, TimeoutExpired
 import gzip
 
 from pathlib import Path
-from mmeds.util import run_analysis
+from mmeds.util import run_analysis, setup_environment
 from mmeds.logging import Logger
 from mmeds.summary import summarize_qiime
+from mmeds.logging import Logger
 
 TESTING = True
 
@@ -34,6 +35,7 @@ class AnalysisTests(TestCase):
 
         # run_analysis(self.test_study, 'qiime2')
         # summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
+        new_env = setup_environment('jupyter')
 
         summary = f'{self.test_study}/summary'
         cmd = f'cd {summary}; jupyter nbconvert --to latex --template mod_revtex.tplx'
@@ -42,12 +44,9 @@ class AnalysisTests(TestCase):
         cmd += ' --execute --ExecutePreprocessor.timeout=-1'
         cmd += ' --ExecutePreprocessor.kernel_name="jupyter"'
 
-        try:
-            with open( / 'notebook.err', 'w') as err:
-                with open( / 'notebook.out', 'w') as out:
-                    output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
-        except RuntimeError:
-            Logger.debug(output)
+        output = run(cmd, check=True, env=new_env, shell=True, capture_output=True)
+        print(output)
+        Logger.debug(output)
 
 
 
