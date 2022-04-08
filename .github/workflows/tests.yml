@@ -42,22 +42,14 @@ jobs:
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
-      - name: check_setup
-        run: ls -ltR ~/mmeds_server_data/test_files/test_study
-
       - name: Unit Tests
-        run: python -m unittest ./mmeds/tests/unit/test_analysis.py
+        run: |
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
-        # coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-        # coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
-
-      - name: investigate
+      - name: check study output 
         if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_study
-
-      - name: investigate2
-        if: always()
-        run: ls -ltR ~/mmeds_server_data/test_files/test_study/Qiime2_0
 
       - name: Server Tests
         run: |

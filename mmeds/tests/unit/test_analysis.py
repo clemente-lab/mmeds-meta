@@ -1,4 +1,5 @@
 from unittest import TestCase
+from pathlib import Path
 import mmeds.config as fig
 
 from mmeds.util import run_analysis
@@ -18,3 +19,6 @@ class AnalysisTests(TestCase):
         """ Test running a qiime2 analysis """
         run_analysis(self.test_study, 'qiime2', testing=True)
         summarize_qiime(f'{self.test_study}/Qiime2_0', 'qiime2', testing=True)
+
+        pdf_output = Path(f'{self.test_study}/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf')
+        self.assertTrue(pdf_output.exists())
