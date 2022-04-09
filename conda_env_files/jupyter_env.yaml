@@ -9,3 +9,4 @@ dependencies:
   - ipykernel
   - pandas=1.2.3
   - pillow
+  - ipython=3.2.1
