@@ -546,7 +546,7 @@ class MMEDSNotebook():
 
             if testing:
                 # Need to install jupyter kernel
-                output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=new_env, capture_output=True, shell=True)
+                output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
                 Logger.debug(output)
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
