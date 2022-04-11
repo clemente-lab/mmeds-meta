@@ -42,6 +42,9 @@ jobs:
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
+      - name: install nbconvert
+        run: conda env create -f ./conda_env_files/nbconvert_env.yaml -p ~/conda_envs/nbconvert
+
       - name: Unit Tests
         run: |
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&

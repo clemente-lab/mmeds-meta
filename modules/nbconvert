@@ -1,0 +1,11 @@
+#%Module1.0
+## nbconvert modulefile
+## Note: folder containing this file needs to be in the MODULE_ROOT folder, see config.py. For me it's ~/.modules/module_files
+
+
+set curMod [module-info name]
+module-info name nbconvert
+module-info version 5.6.1
+
+# prepent path needs to point at the bin folder of the nbconvert conda environment
+prepend-path PATH ~/conda_envs/nbconvert/bin
