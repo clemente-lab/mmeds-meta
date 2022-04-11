@@ -42,9 +42,6 @@ jobs:
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
-      - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
-
       - name: Unit Tests
         run: |
           coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
