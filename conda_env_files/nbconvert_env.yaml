@@ -1,6 +1,8 @@
 name: nbconvert
 channels:
   - defaults
+  - esri
+  - conda-forge
 dependencies:
   - nbconvert
   - jupyter_client
