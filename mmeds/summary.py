@@ -4,6 +4,7 @@ from collections import defaultdict
 from subprocess import run, CalledProcessError
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
+import traceback
 
 import nbformat as nbf
 import os
@@ -552,7 +553,7 @@ class MMEDSNotebook():
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
             cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
-            cmd += ' {}.ipynb'.format(self.name)
+            cmd += f' {self.path}/{self.name}.ipynb'
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
                 cmd += ' --execute --ExecutePreprocessor.timeout=-1'
@@ -594,8 +595,10 @@ class MMEDSNotebook():
         except (RuntimeError, CalledProcessError) as e:
             Logger.debug("Error thrown running nbconvert")
             Logger.debug(e.output)
+            Logger.debug(traceback.print_exc())
+
             print(e.output)
-            raise e
+            # raise e
 
     def create_notebook(self, testing=False):
         Logger.debug('Start summary notebook')
