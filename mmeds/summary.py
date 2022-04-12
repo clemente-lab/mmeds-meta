@@ -543,12 +543,12 @@ class MMEDSNotebook():
         try:
             jupyter_env = setup_environment('jupyter')
             latex_env = setup_environment('latex')
-            nbconvert_env = setup_environment('nbconvert')
+            # nbconvert_env = setup_environment('nbconvert')
 
-            if testing:
+            # if testing:
                 # Need to install jupyter kernel
-                output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
-                Logger.debug(output)
+                # output = run('python -m ipykernel install --user --name jupyter --display-name "Jupyter"', env=jupyter_env, capture_output=True, shell=True)
+                # Logger.debug(output)
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
             cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
@@ -566,8 +566,8 @@ class MMEDSNotebook():
             # For testing, we don't want the output written to disk
             # Also, tectonic can be installed through conda, used in place of pdflatex
             if testing:
-                # cmd =  'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; ' + cmd
-                output = run(cmd, check=True, env=nbconvert_env, shell=True, capture_output=True)
+                cmd =  'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; ' + cmd
+                output = run(cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
                 Logger.debug(output)
 
                 pdf_cmd = f'tectonic {self.name}.tex'
