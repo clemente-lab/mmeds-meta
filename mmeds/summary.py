@@ -557,6 +557,8 @@ class MMEDSNotebook():
                 # Don't let the cells timeout, some will take a long time to process
                 cmd += ' --execute --ExecutePreprocessor.timeout=-1'
                 cmd += ' --ExecutePreprocessor.kernel_name="jupyter"'
+                cmd += ' --ExecutePreprocessor.allow_errors=True'
+
                 # This should probably be behind some kind of debugging flag.
                 # The output is obviously helpful if there's an issue, but if the summaries
                 # run correctly it can make logs harder to parse for other things.
@@ -590,6 +592,7 @@ class MMEDSNotebook():
                 output = run(pdf_cmd.split(' '), check=True, capture_output=True)
 
         except (RuntimeError, CalledProcessError) as e:
+            Logger.debug("Error thrown running nbconvert")
             Logger.debug(e.output)
             print(e.output)
             raise e
