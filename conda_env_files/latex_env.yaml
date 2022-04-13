@@ -47,4 +47,3 @@ dependencies:
   - xorg-xextproto=7.3.0=h7f98852_1002
   - xorg-xproto=7.0.31=h7f98852_1007
   - zlib=1.2.11=h166bdaf_1014
-prefix: ~/conda_envs/latex
