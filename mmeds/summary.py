@@ -546,11 +546,11 @@ class MMEDSNotebook():
             latex_env = setup_environment('latex')
             # nbconvert_env = setup_environment('nbconvert')
 
-            if testing:
+            # if testing:
                 # Need to install jupyter kernel
-                output = run('python -m ipykernel install --name jupyter --display-name "Jupyter"',
-                             env=jupyter_env, check=True, capture_output=True, shell=True)
-                Logger.debug(output)
+                #output = run('python -m ipykernel install --name jupyter --display-name "Jupyter"',
+                #             env=jupyter_env, check=True, capture_output=True, shell=True)
+                #Logger.debug(output)
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
             cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
