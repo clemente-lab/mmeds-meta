@@ -1,9 +1,10 @@
 from mmeds import spawn
 from mmeds.authentication import add_user, remove_user
 from mmeds.summary import summarize_qiime
-from mmeds.util import log, load_config
-from mmeds.database import Database
+from mmeds.util import load_config
+from mmeds.database.database import Database
 from mmeds.tools.qiime1 import Qiime1
+from mmeds.logging import Logger
 from unittest import TestCase
 from pathlib import Path
 from time import sleep
@@ -55,7 +56,7 @@ class AnalysisTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_qiime1_with_children(self):
-        log('after data modification')
+        Logger.debug('after data modification')
         with Database('.', owner=fig.TEST_USER, testing=self.testing) as db:
             files, path = db.get_mongo_files(self.code)
         config = load_config(Path(fig.TEST_CONFIG_SUB), files['metadata'])
@@ -66,7 +67,7 @@ class AnalysisTests(TestCase):
         while p.is_alive():
             print('{}: Waiting on process: {}:{}'.format(datetime.now(), p.name, p.pid))
             sleep(20)
-        log('analysis finished')
+        Logger.debug('analysis finished')
         self.assertEqual(p.exitcode, 0)
         self.assertTrue((Path(p.doc.path) /
                          'summary/mmeds.tester@outlook.com-{}-{}.pdf'.format(fig.TEST_USER,
