@@ -60,6 +60,16 @@ jobs:
         #coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
         # coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: ../../../conda_env_files/jupyter_env.yaml
+          activate-environment: jupyter
+          auto-activate-base: false
+      - name: jupyter run notebook
+        if: always()
+        run: jupyter nbconvert --to latex --template mod_revtex.tplx ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb --execute --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name="jupyter"
+
       - name: check study output
         if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_study
