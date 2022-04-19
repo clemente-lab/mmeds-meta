@@ -1343,7 +1343,7 @@ def run_analysis(path, tool_type, testing=False):
             n_grouped_metadata_df.to_csv(f'{path}/grouped_Nationality_mapping_file.tsv', sep='\t', index=False)
             s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
 
-        output2 = run(qiime_p2, env=qiime_env, capture_output=True, shell=True)
+        #output2 = run(qiime_p2, env=qiime_env, capture_output=True, shell=True)
 
         Logger.debug(output1)
         Logger.debug(output2)
