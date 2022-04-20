@@ -55,6 +55,10 @@ jobs:
         if: always()
         run: ls -ltR ~/mmeds_server_data/test_files/test_study
 
+      - name: check log output
+        if: always()
+        run: cat ~/mmeds_server_data/MMEDS_log.txt
+
       - name: check jupyter output
         if: always()
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb
@@ -65,9 +69,9 @@ jobs:
           environment-file: ../../../conda_env_files/jupyter_env.yaml
           activate-environment: jupyter
           auto-activate-base: false
-      - name: jupyter create kernel
+      - name: jupyter test running directly
         if: always()
-        run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; jupyter nbconvert --to-notebook --allow-errors --debug --inplace --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
+        run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; jupyter nbconvert --to notebook --allow-errors --debug --inplace --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
 
       - name: check jupyter output
         if: always()
