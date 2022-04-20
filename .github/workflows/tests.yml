@@ -67,7 +67,11 @@ jobs:
           auto-activate-base: false
       - name: jupyter create kernel
         if: always()
-        run: 'jupyter nbconvert --to-notebook --inplace --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
+        run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; jupyter nbconvert --to-notebook --allow-errors --debug --inplace --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
+
+      - name: check jupyter output
+        if: always()
+        run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb
 
       - name: check notebook output
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.tex
