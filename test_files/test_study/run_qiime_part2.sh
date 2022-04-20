@@ -12,7 +12,7 @@
 
 export QIIME_BSUB_OPTIONS='-q premium -P acc_MMEDS -W 2:00 -n 1 -R rusage[mem=2000]';
 
-source ~/.bashrc;
+#source ~/.bashrc;
 set -e
 set -o pipefail
 echo $PATH
