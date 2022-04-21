@@ -10,4 +10,3 @@ dependencies:
   - ipykernel
   - pandas=1.2.3
   - pillow
-  - pandoc
