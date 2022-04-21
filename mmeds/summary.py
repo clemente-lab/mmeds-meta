@@ -599,7 +599,7 @@ class MMEDSNotebook():
             Logger.debug(traceback.print_exc())
 
             print(e.output)
-            # raise e
+            raise e
 
     def create_notebook(self, testing=False):
         Logger.debug('Start summary notebook')
