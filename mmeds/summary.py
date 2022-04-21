@@ -553,7 +553,7 @@ class MMEDSNotebook():
                 #Logger.debug(output)
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
+            cmd = f'jupyter nbconvert --to latex --template {self.path}/mod_revtex.tplx'
             cmd += f' {self.path}/{self.name}.ipynb'
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
