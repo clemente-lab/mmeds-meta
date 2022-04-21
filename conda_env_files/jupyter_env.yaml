@@ -11,5 +11,3 @@ dependencies:
   - pandas=1.2.3
   - pillow
   - pandoc
-  - pip:
-      - nb-pdf-template
