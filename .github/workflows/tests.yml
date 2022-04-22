@@ -27,8 +27,17 @@ jobs:
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: ../../../conda_env_files/jupyter_env.yaml
+          activate-environment: jupyter
+          auto-activate-base: false
+      - name: jupyter test running directly
+        run: 'jupyter nbconvert -V'
+
       - name: test nbconvert
-        run: jupyter nbconvert -V
+        run: sudo apt remove jupyter-nbconvert; jupyter nbconvert -V
 
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
