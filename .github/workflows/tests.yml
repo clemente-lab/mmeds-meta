@@ -34,7 +34,7 @@ jobs:
           activate-environment: jupyter
           auto-activate-base: false
       - name: jupyter test running directly
-        run: 'jupyter nbconvert -V; conda env export > jupyter.yaml; cat jupyter.yaml'
+        run: 'jupyter nbconvert -V; conda activate jupyter; conda env export > jupyter.yaml; cat jupyter.yaml'
 
       - name: test nbconvert
         run: sudo apt remove jupyter-nbconvert; jupyter nbconvert -V
@@ -86,7 +86,7 @@ jobs:
           auto-activate-base: false
       - name: jupyter test running directly
         if: always()
-        run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; jupyter nbconvert --to latex --allow-errors --debug --template ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mod_revtex.tplx --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
+        run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; conda activate jupyter; jupyter nbconvert --to latex --allow-errors --debug --template ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mod_revtex.tplx --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
 
       - name: check jupyter output
         if: always()
