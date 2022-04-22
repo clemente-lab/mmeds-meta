@@ -24,8 +24,8 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
-      - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
+        # - name: install jupyter
+        # run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
@@ -34,7 +34,7 @@ jobs:
           activate-environment: jupyter
           auto-activate-base: false
       - name: jupyter test running directly
-        run: 'jupyter nbconvert -V'
+        run: 'jupyter nbconvert -V; conda export env > jupyter.yaml; cat jupyter.yaml'
 
       - name: test nbconvert
         run: sudo apt remove jupyter-nbconvert; jupyter nbconvert -V
