@@ -34,7 +34,7 @@ jobs:
           activate-environment: jupyter
           auto-activate-base: false
       - name: jupyter test running directly
-        run: 'jupyter nbconvert -V; conda export env > jupyter.yaml; cat jupyter.yaml'
+        run: 'jupyter nbconvert -V; conda env export > jupyter.yaml; cat jupyter.yaml'
 
       - name: test nbconvert
         run: sudo apt remove jupyter-nbconvert; jupyter nbconvert -V
