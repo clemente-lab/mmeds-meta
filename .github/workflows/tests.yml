@@ -30,8 +30,8 @@ jobs:
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
 
-      - name: install nbconvert dependencies
-        run: sudo apt-get install pandoc;
+      - name: install nbconvert plus dependencies
+        run: pip install nbconvert==5.6.1; sudo apt-get install pandoc; jupyter nbconvert -V
 
       - name: install R
         run: sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common; sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'; sudo apt install r-base;
@@ -66,12 +66,6 @@ jobs:
         if: always()
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb
 
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: ../../../conda_env_files/jupyter_env.yaml
-          activate-environment: jupyter
-          auto-activate-base: false
       - name: jupyter test running directly
         if: always()
         run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; conda activate jupyter; jupyter nbconvert --to latex --allow-errors --debug --template ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mod_revtex.tplx --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
