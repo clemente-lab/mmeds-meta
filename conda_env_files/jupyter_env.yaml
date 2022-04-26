@@ -10,3 +10,5 @@ dependencies:
   - ipykernel
   - pandas=1.2.3
   - pillow
+  - ipython_genutils=0.2.0
+  - Jinja2=3.0
