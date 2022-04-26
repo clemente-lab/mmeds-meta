@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.9
       - name: Install packages
         run: pip install cryptography; pip install jupyter_client==6.1.12; pip install ipython_genutils==0.2.0; pip install nbconvert==5.6.1; pip install rpy2; pip install ipykernel; pip install pandas==1.2.3; pip install pillow; pip install -U Jinja2==3.0
 
