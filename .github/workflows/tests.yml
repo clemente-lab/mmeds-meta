@@ -13,11 +13,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install packages
-        run: pip install cryptography; pip install jupyter_client==6.1.12; pip install ipython_genutils==0.2.0; pip install nbconvert==5.6.1; pip install rpy2; pip install ipykernel; pip install pandas==1.2.3; pip install pillow; pip install -U Jinja2==3.0
-
-        # run: pip install cryptography; pip install ipython_genutils; pip install nbconvert==5.6.1; sudo apt-get install pandoc; jupyter nbconvert -V
-        # run: pip install cryptography; pip install ipython_genutils; pip install --upgrade nbconvert==5.6.1; sudo apt-get install pandoc; jupyter nbconvert -V
-        #run: sudo apt-get install tidy environment-modules -y; pip install cryptography; pip install jupyter; pip install nbconvert==5.6.1; pip install ipython; sudo apt-get install pandoc; jupyter nbconvert -v
+        run: pip install cryptography;
 
       - name: install pandoc
         run: sudo apt-get install pandoc; jupyter nbconvert -V
@@ -37,9 +33,6 @@ jobs:
 
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
-
-        #       - name: install nbconvert plus dependencies
-        #        run: pip install nbconvert==5.6.1; sudo apt-get install pandoc; jupyter nbconvert -v
 
       - name: install R
         run: sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common; sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'; sudo apt install r-base;
@@ -73,10 +66,6 @@ jobs:
       - name: check jupyter output
         if: always()
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb
-
-      - name: jupyter test running directly
-        if: always()
-        run: 'python -m ipykernel install --name jupyter --display-name "Jupyter" --user; jupyter nbconvert --to latex --allow-errors --debug --template ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mod_revtex.tplx --execute ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb'
 
       - name: check jupyter output
         if: always()
