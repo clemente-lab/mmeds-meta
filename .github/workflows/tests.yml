@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install packages
-        run: pip install cryptography;
+        run: sudo apt-get install tidy environment-modules -y; pip install cryptography;
 
       - name: install pandoc
         run: sudo apt-get install pandoc;
@@ -28,11 +28,11 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
-      - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
-
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
+
+      - name: install jupyter
+        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
 
       - name: install R
         run: sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common; sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'; sudo apt install r-base;
