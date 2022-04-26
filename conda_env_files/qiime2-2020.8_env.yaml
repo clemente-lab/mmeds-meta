@@ -284,7 +284,7 @@ dependencies:
   - q2-vsearch=2020.8.0=py36_0
   - q2cli=2020.8.0=py36_0
   - q2templates=2020.8.0=py36_0
-  - qiime2=2020.8.0=py36_0
+  - qiime2=2020.8.0
   - r-assertthat=0.2.1=r35h6115d3f_1
   - r-backports=1.1.6=r35hcdcec82_1
   - r-base=3.5.1=hc461eb7_1012
