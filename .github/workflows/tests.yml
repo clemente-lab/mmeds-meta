@@ -70,11 +70,8 @@ jobs:
         if: always()
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb
 
-      - name: check jupyter output
-        if: always()
-        run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb
-
       - name: check notebook output
+        if: always()
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.tex
 
       - name: Server Tests
