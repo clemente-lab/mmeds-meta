@@ -29,7 +29,7 @@ jobs:
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
       - name: fix conda
-        run: conda config --remove-key channels; conda config --append channels conda-forge --append channels bioconda --append channels defaults
+        run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
 
