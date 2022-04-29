@@ -12,3 +12,6 @@ dependencies:
   - pillow
   - ipython_genutils=0.2.0
   - Jinja2=3.0
+  - pip:
+      - git+https://github.com/clemente-lab/mmeds-meta
+
