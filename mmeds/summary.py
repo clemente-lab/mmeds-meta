@@ -187,7 +187,6 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
     mnb.create_notebook(testing)
     # Create a zip of the summary
     result = make_archive(path / 'summary',
-                          format='zip',
                           root_dir=path,
                           base_dir='summary')
     Logger.debug('Create archive of summary')
