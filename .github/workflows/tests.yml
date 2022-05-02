@@ -68,9 +68,10 @@ jobs:
         if: always()
         run: cat ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.tex
 
-      - name: check pdf output
-        if: always()
-        run: less -f ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
+      - uses: actions/upload-artifact@v3
+        with:
+            name: summary-pdf-output
+            path: ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
 
       - name: Server Tests
         run: |
