@@ -1,0 +1,6 @@
+name: latex
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - tectonic=0.8.2
