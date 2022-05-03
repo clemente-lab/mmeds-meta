@@ -544,18 +544,11 @@ class MMEDSNotebook():
         try:
             jupyter_env = setup_environment('jupyter')
             latex_env = setup_environment('latex')
-            # nbconvert_env = setup_environment('nbconvert')
-
-            # if testing:
-                # Need to install jupyter kernel
-                #output = run('python -m ipykernel install --name jupyter --display-name "Jupyter"',
-                #             env=jupyter_env, check=True, capture_output=True, shell=True)
-                #Logger.debug(output)
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            # cmd = f'jupyter nbconvert --to latex --template {self.path}/mod_revtex.tplx'
-            # cmd += f' {self.path}/{self.name}.ipynb'
-            cmd = f'cd {self.path}; jupyter nbconvert --to latex --template mod_revtex.tplx'
+
+            # cmd = f'cd {self.path}; jupyter nbconvert --to latex --template mod_revtex.tplx'
+            cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += f' {self.name}.ipynb'
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
