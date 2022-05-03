@@ -42,15 +42,11 @@ jobs:
       - name: install latex
         run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
 
-        # - name: install nbconvert
-        # run: conda env create -f ./conda_env_files/nbconvert_env.yaml -p ~/conda_envs/nbconvert;
-
       - name: Unit Tests
         if: always()
-        run: python -m unittest ./mmeds/tests/unit/test_analysis.py
-        # |
-        #coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-        # coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
+        run: |
+         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
       - name: check study output
         if: always()
