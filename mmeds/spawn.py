@@ -374,7 +374,7 @@ class Watcher(BaseManager):
             self.count += 1
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                if self.count == 20:
+                if self.count >= 20:
                     self.count = 0
                 sleep(3)
             else:
