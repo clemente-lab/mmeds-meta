@@ -565,6 +565,7 @@ class MMEDSNotebook():
             # For testing, we don't want the output written to disk
             # Also, tectonic can be installed through conda, used in place of pdflatex
             if testing:
+                # We install the jupyter kernel here because the jobfile only runs qiime stuff now
                 cmd =  'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; ' + cmd
                 output = run(cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
                 Logger.debug(output)
