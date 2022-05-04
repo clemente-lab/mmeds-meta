@@ -547,7 +547,6 @@ class MMEDSNotebook():
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
 
-            # cmd = f'cd {self.path}; jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
             cmd += f' {self.name}.ipynb'
             if self.execute:
@@ -565,11 +564,12 @@ class MMEDSNotebook():
             # For testing, we don't want the output written to disk
             # Also, tectonic can be installed through conda, used in place of pdflatex
             if testing:
-                # We install the jupyter kernel here because the jobfile only runs qiime stuff now
-                cmd =  'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; ' + cmd
-                output = run(cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
-                Logger.debug(output)
+                # We install the jupyter kernel here because the test jobfile only runs qiime stuff
+                # This consolidates the jupyter commands that need to be run here.
+                nbconvert_cmd =  f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
+                output = run(nbconvert_cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
 
+                # tectonic is an alternative to texlive that can be installed via conda
                 pdf_cmd = f'tectonic {self.name}.tex'
                 output = run(pdf_cmd, check=True, capture_output=True, env=latex_env, shell=True)
             else:

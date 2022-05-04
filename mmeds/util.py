@@ -1322,35 +1322,18 @@ def run_analysis(path, tool_type, testing=False):
         # This module file is setup for running on minerva
         qiime_env = setup_environment('qiime2/2020.8')
 
-    #print('env loaded')
-    # jupyter_env = setup_environment('jupyter')
-
     qiime = f'bash {path}/jobfile_test.sh'
-    qiime_p1 = f'bash {path}/run_qiime_part1.sh'
-    qiime_p2 = f'bash {path}/run_qiime_part2.sh'
 
+    # TODO: Need to generalize this and see how the summary files are created
+    # Hard coded values are needed for current qiime2 test
+    # Note that while this usually appears in the jobfile, it could be part of setting up the analysis directory
     s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
     s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
 
     try:
-        # output1 = run(qiime_p1, env=qiime_env, capture_output=True, shell=True)
         output = run(qiime, env=qiime_env, capture_output=True, shell=True)
 
-        #if testing:
-            # TODO: Need to generalize this and see how the summary files are created
-            # Hard coded values are needed for current qiime2 test
-            # Which just runs existing test files with default config
-        #    s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
-
-        #    s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
-
-        #output2 = run(qiime_p2, env=qiime_env, capture_output=True, shell=True)
-
-        Logger.debug(output)
-        #Logger.debug(output1)
-        #Logger.debug(output2)
-
     except CalledProcessError as e:
+        Logger.debug(e.output)
         Logger.debug(e)
-        print(e.output)
         raise e

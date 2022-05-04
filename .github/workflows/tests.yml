@@ -15,7 +15,7 @@ jobs:
       - name: Install packages
         run: sudo apt-get install tidy environment-modules -y; pip install cryptography;
 
-      - name: install pandoc
+      - name: install pandoc for nbconvert
         run: sudo apt-get install pandoc;
 
       - name: Start Services
@@ -30,8 +30,9 @@ jobs:
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
 
-      - name: fix conda
+      - name: add bioconda channel for qiime
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
+
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
 
@@ -45,7 +46,6 @@ jobs:
         run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
 
       - name: Unit Tests
-        if: always()
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
@@ -60,9 +60,12 @@ jobs:
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
           sleep 1;
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
+
       - name: Upload Server Coverage
         run: bash <(curl -s https://codecov.io/bash) -cF server;
+
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
+
       - name: Upload Unit coverage
         run: bash <(curl -s https://codecov.io/bash) -cF unit;
