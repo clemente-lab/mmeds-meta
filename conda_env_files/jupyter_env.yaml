@@ -1,11 +1,20 @@
 name: jupyter
 channels:
   - conda-forge
+  - esri
   - defaults
 dependencies:
-  - nbconvert=5.6.1
   - jupyter_client=6.1.12
+  - nbconvert=5.6.1
   - rpy2
   - ipykernel
   - pandas=1.2.3
   - pillow
+  - ipython_genutils=0.2.0
+  - Jinja2=3.0
+  - r-base=4.1
+  - r-ggrepel
+  - r-GGally
+  - r-ggplot2
+  - pip:
+      - git+https://github.com/clemente-lab/mmeds-meta

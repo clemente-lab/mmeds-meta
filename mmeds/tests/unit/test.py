@@ -180,6 +180,7 @@ def main():
 
     if not tests:
         tests = [
+            'analysis',
             'authentication',
             'database',
             'documents',

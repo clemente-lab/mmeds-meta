@@ -1,0 +1,25 @@
+#%Module1.0
+## qiime2 modulefile
+## Note: folder containing this file needs to be in the MODULE_ROOT folder, see config.py. For me it's ~/.modules/module_files
+
+
+set curMod [module-info name]
+module-info name qiime2-2020
+module-info version 2020.8
+
+# prepent path needs to point at the bin folder of the qiime1 conda environment
+# prepend-path PATH ~/conda_envs/qiime2-2020.8/bin
+set qiimepath ~/conda_envs/qiime2-2020.8
+set condapath /opt/hostedtoolcache/Python/3.9.10/x64/bin/python
+
+prepend-path PATH $qiimepath/bin
+remove-path PATH $condapath/bin
+setenv CONDA_DEFAULT_ENV qiime2
+setenv CONDA_PREFIX $qiimepath
+setenv CONDA_PREFIX_1 $condapath
+setenv CONDA_PROMPT_MODIFIER (qiime2)\ 
+setenv R_LIBS_USER $qiimepath/lib/R/library
+setenv CONDA_SHLVL 2
+setenv LC_ALL en_US.UTF-8
+setenv LANG en_US.UTF-8
+setenv MPLBACKEND Agg

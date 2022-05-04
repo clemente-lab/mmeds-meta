@@ -12,7 +12,7 @@ from mmeds.util import load_config, setup_environment, parse_code_blocks
 from mmeds.logging import Logger
 
 
-def summarize_qiime(summary_path, tool):
+def summarize_qiime(summary_path, tool, testing=False):
     """ Handle setup and running the summary for the two qiimes """
     path = Path(summary_path)
 
@@ -51,7 +51,7 @@ def summarize_qiime(summary_path, tool):
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
     elif tool == 'qiime2':
-        summarize_qiime2(path, files, config, study_name)
+        summarize_qiime2(path, files, config, study_name, testing)
 
 
 def summarize_qiime1(path, files, config, study_name):
@@ -113,13 +113,18 @@ def summarize_qiime1(path, files, config, study_name):
     return path / 'summary/analysis.pdf'
 
 
-def summarize_qiime2(path, files, config, study_name):
+def summarize_qiime2(path, files, config, study_name, testing=False):
     """ Create summary of the files produced by the qiime2 analysis. """
     Logger.debug('Start Qiime2 summary')
     path = path.absolute()
 
     # Get the environment
-    new_env = setup_environment('qiime2/2020.8')
+    if testing:
+        # This module file is setup for running on github actions
+        new_env = setup_environment('qiime2-2020.8')
+    else:
+        # This module file is setup for running on minerva
+        new_env = setup_environment('qiime2/2020.8')
 
     # Setup the summary directory
     summary_files = defaultdict(list)
@@ -136,6 +141,7 @@ def summarize_qiime2(path, files, config, study_name):
     # Get Taxa
     cmd = f"qiime tools export --input-path {str(files['taxa_bar_plot'])} --output-path {str(path / 'temp')}"
     run(cmd, env=new_env, check=True, shell=True)
+
     taxa_files = (path / 'temp').glob('level*.csv')
     for taxa_file in taxa_files:
         copy(taxa_file, files['summary'])
@@ -149,7 +155,7 @@ def summarize_qiime2(path, files, config, study_name):
                '--input-path', str(beta_file),
                '--output-path', str(path / 'temp')]
         cmd = f"qiime tools export --input-path {str(beta_file)} --output-path {str(path / 'temp')}"
-        run(cmd, env=new_env, check=True, shell=True)
+        run(cmd, env=new_env, capture_output=True, shell=True)
         dest_file = files['summary'] / (beta_file.name.split('.')[0] + '.txt')
         copy(path / 'temp' / 'ordination.txt', dest_file)
         Logger.debug(dest_file)
@@ -177,7 +183,7 @@ def summarize_qiime2(path, files, config, study_name):
                         name=study_name,
                         path=path / 'summary')
 
-    mnb.create_notebook()
+    mnb.create_notebook(testing)
     # Create a zip of the summary
     result = make_archive(path / 'summary',
                           format='zip',
@@ -528,51 +534,72 @@ class MMEDSNotebook():
         nn = nbf.v4.new_notebook(cells=self.cells, metadata=meta)
         return nn
 
-    def write_notebook(self, nn):
+    def write_notebook(self, nn, testing=False):
         """
         Write the notebook and export it to a PDF.
         ==========================================
         :nn: A python notebook object.
         """
         try:
-            new_env = setup_environment('jupyter')
+            jupyter_env = setup_environment('jupyter')
+            latex_env = setup_environment('latex')
+
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
-            cmd = 'jupyter nbconvert --to latex --template mod_revtex.tplx'
-            cmd += ' {}.ipynb'.format(self.name)
+
+            cmd = f'jupyter nbconvert --to latex --template mod_revtex.tplx'
+            cmd += f' {self.name}.ipynb'
             if self.execute:
                 # Don't let the cells timeout, some will take a long time to process
                 cmd += ' --execute --ExecutePreprocessor.timeout=-1'
                 cmd += ' --ExecutePreprocessor.kernel_name="jupyter"'
+
                 # This should probably be behind some kind of debugging flag.
                 # The output is obviously helpful if there's an issue, but if the summaries
                 # run correctly it can make logs harder to parse for other things.
                 # Mute output
                 #  cmd += ' &>/dev/null;'
-            Logger.debug('Convert notebook to latex')
 
-            new_env = setup_environment('jupyter')
-            with open(self.path / 'notebook.err', 'w') as err:
-                with open(self.path / 'notebook.out', 'w') as out:
-                    output = run(cmd, check=True, env=new_env, shell=True, stdout=out, stderr=err)
+            # For testing, we don't want the output written to disk
+            # Also, tectonic can be installed through conda, used in place of pdflatex
+            if testing:
+                # We install the jupyter kernel here because the test jobfile only runs qiime stuff
+                # This consolidates the jupyter commands that need to be run here.
+                nbconvert_cmd =  f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
+                output = run(nbconvert_cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
 
-            Logger.debug('Convert latex to pdf')
+                # tectonic is an alternative to texlive that can be installed via conda
+                pdf_cmd = f'tectonic {self.name}.tex'
+                output = run(pdf_cmd, check=True, capture_output=True, env=latex_env, shell=True)
+            else:
 
-            # Convert to pdf
-            cmd = 'pdflatex {name}.tex'.format(name=self.name)
-            # Run the command twice because otherwise the chapter
-            # headings don't show up...
-            output = run(cmd.split(' '), check=True, capture_output=True)
-            output = run(cmd.split(' '), check=True, capture_output=True)
+                Logger.debug('Convert notebook to latex')
 
-        except RuntimeError:
-            Logger.debug(output)
+                with open(self.path / 'notebook.err', 'w') as err:
+                    with open(self.path / 'notebook.out', 'w') as out:
+                        output = run(cmd, check=True, env=jupyter_env, shell=True, stdout=out, stderr=err)
 
-    def create_notebook(self):
+                Logger.debug('Convert latex to pdf')
+
+                # Convert to pdf
+                pdf_cmd = 'pdflatex {name}.tex'.format(name=self.name)
+                # Run the command twice because otherwise the chapter
+                # headings don't show up...
+                output = run(pdf_cmd.split(' '), check=True, capture_output=True)
+                output = run(pdf_cmd.split(' '), check=True, capture_output=True)
+
+        except (RuntimeError, CalledProcessError) as e:
+            Logger.debug("Error thrown running nbconvert")
+            Logger.debug(e.output)
+
+            print(e.output)
+            raise e
+
+    def create_notebook(self, testing=False):
         Logger.debug('Start summary notebook')
         original_path = Path.cwd()
         os.chdir(self.path)
         nn = self.summarize()
-        self.write_notebook(nn)
+        self.write_notebook(nn, testing)
 
         # Switch back to the original directory
         os.chdir(original_path)
