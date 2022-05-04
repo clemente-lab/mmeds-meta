@@ -393,6 +393,8 @@ class Watcher(BaseManager):
                         self.logger.error('Killing process {}'.format(process))
                         while process.is_alive():
                             process.kill()
+                    # Send email notification of watcher termination to admin
+                    send_email(fig.CONTACT_EMAIL, 'admin', 'watcher_termination')
                     # Notify other processes the watcher is exiting
                     self.pipe.send('Watcher exiting')
                     exit()

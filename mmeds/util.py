@@ -741,6 +741,11 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'Either submit a new analysis to the queue or wait until others finish.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Not Started'
+    elif message == 'watcher_termination':
+        body = 'Hello Admin,\nThe watcher process on minerva has been terminated and needs to be restarted.\n' +\
+               'Please delegate or do this as soon as possible.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Watcher Termination'
 
     email_body = body.format(
         user=user,
@@ -1268,7 +1273,6 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     # to create the fasta file, on every line mod4 = 1, replace @ with >
     # then on every line mod4 = 2, print the line. then skip all other lines.
     create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{test_file}']
-
 
     # Call qiime1 validate demultiplex script
     if on_chimera:
