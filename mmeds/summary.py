@@ -4,7 +4,6 @@ from collections import defaultdict
 from subprocess import run, CalledProcessError
 from itertools import combinations
 from shutil import copy, rmtree, make_archive
-import traceback
 
 import nbformat as nbf
 import os
@@ -591,7 +590,6 @@ class MMEDSNotebook():
         except (RuntimeError, CalledProcessError) as e:
             Logger.debug("Error thrown running nbconvert")
             Logger.debug(e.output)
-            Logger.debug(traceback.print_exc())
 
             print(e.output)
             raise e
