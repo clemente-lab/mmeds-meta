@@ -25,7 +25,7 @@ jobs:
         run: mysql -u root -proot < setup.sql
 
       - name: Server data setup
-        run: mkdir ~/mmeds_server_data; mkdir ~/conda_envs; mkdir -p ~/conda_env_files/pheniqs; mkdir -p ~/.modules/modulefiles; cp -r ./test_files ~/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml ~/mmeds_server_data/.; cp -r ./modules/* ~/.modules/modulefiles/.; cp -r ./conda_env_files/* ~/conda_env_files/.;
+        run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.;
 
       - name: Python install
         run: sudo python setup.py install; pip install git+https://github.com/clemente-lab/mmeds-meta;
@@ -34,16 +34,16 @@ jobs:
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
 
       - name: install qiime
-        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p ~/conda_envs/qiime2-2020.8
+        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p /home/runner/conda_envs/qiime2-2020.8
 
       - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p ~/conda_envs/jupyter
+        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p /home/runner/conda_envs/jupyter
 
       - name: install pheniqs
-        run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p ~/conda_envs/pheniqs
+        run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
 
       - name: install latex
-        run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
+        run: conda env create -f ./conda_env_files/latex_env.yaml -p /home/runner/conda_envs/latex
 
       - name: Unit Tests
         run: |
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
             name: summary-pdf-output
-            path: ~/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
+            path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
 
       - name: Server Tests
         run: |

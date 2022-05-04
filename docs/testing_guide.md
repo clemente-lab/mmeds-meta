@@ -28,6 +28,6 @@ One of the most common errors from these tests is having a page that doesn't mat
 
 ## Notes on github actions
 location: .github/workflows/tests.yml
-Can't activate conda environments through github actions, have to use utils.setup_environment() to utilyze conda environments
+Can't activate conda environments through github actions, have to use utils.setup_environment() to utilize conda environments
 
 A little unclear what persists on github actions between jobs, seems like there are workarounds but have to be wary.
