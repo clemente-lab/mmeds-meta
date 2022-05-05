@@ -39,6 +39,9 @@ jobs:
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p /home/runner/conda_envs/jupyter
 
+      - name: test_jupyter
+        run: jupyter nbconvert -V
+
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
 
@@ -46,6 +49,7 @@ jobs:
         run: conda env create -f ./conda_env_files/latex_env.yaml -p /home/runner/conda_envs/latex
 
       - name: Unit Tests
+        if: always()
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
