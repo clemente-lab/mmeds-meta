@@ -61,6 +61,7 @@ else:
 
 
 STUDIES_DIR = DATABASE_DIR / 'studies'
+SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 
 ############################
@@ -281,6 +282,12 @@ if not DATABASE_DIR.exists():
 if not STUDIES_DIR.exists():
     try:
         STUDIES_DIR.mkdir()
+    except FileExistsError:
+        pass
+
+if not SEQUENCING_DIR.exists():
+    try:
+        SEQUENCING_DIR.mkdir()
     except FileExistsError:
         pass
 
