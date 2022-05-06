@@ -12,9 +12,9 @@ dependencies:
   - pillow
   - ipython_genutils=0.2.0
   - Jinja2=3.0
-  - r-base=4.1
-  - r-ggrepel=0.9.1
-  - r-GGally=2.1.2
-  - r-ggplot2=3.3.5
+  - r-base
+  - r-ggrepel
+  - r-GGally
+  - r-ggplot2
   - pip:
       - git+https://github.com/clemente-lab/mmeds-meta
