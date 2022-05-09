@@ -565,7 +565,10 @@ class MMEDSNotebook():
                 # We install the jupyter kernel here because the test jobfile only runs qiime stuff
                 # This consolidates the jupyter commands that need to be run here.
                 nbconvert_cmd =  f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
-                output = run(nbconvert_cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
+                output = run(nbconvert_cmd, check=True, shell=True, capture_output=True)
+                # output = run(nbconvert_cmd, check=True, env=jupyter_env, shell=True, capture_output=True)
+
+
 
                 # tectonic is an alternative to texlive that can be installed via conda
                 pdf_cmd = f'tectonic {self.name}.tex'
