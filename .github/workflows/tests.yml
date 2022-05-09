@@ -46,7 +46,7 @@ jobs:
       - name: install latex
         run: conda env create -f ./conda_env_files/latex_env.yaml -p ~/conda_envs/latex
 
-     - name: Unit Tests
+      - name: Unit Tests
         if: always()
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
