@@ -12,7 +12,7 @@ dependencies:
   - pillow
   - ipython_genutils=0.2.0
   - Jinja2=3.0
-  - r-base
+  - r-base=4.0.5
   - r-ggrepel
   - r-GGally
   - r-ggplot2
