@@ -13,6 +13,7 @@ import mmeds.secrets as sec
 from mmeds.util import create_local_copy, load_config, send_email
 from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
+from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.error import AnalysisError, MissingUploadError
 from mmeds.tools.qiime1 import Qiime1
@@ -386,7 +387,7 @@ class Watcher(BaseManager):
                 self.logger.error(process)
                 # Whenever it's acceptable to move to Python 3.10 this needs to be turned into a switch statement
                 # If the watcher needs to shut down
-                if process[0] == 'terminate':
+                if process == 'terminate':
                     self.logger.error('Terminating')
                     # Kill all the processes currently running
                     for process in self.processes:
