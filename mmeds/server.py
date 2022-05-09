@@ -800,6 +800,27 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
+    def process_sequencing_run(self, public=False, **kwargs):
+        if cp.session['barcodes_type'].startswith('dual'):
+            cp.log("Upload is Qiime Dual Barcodes")
+            # If have dual barcodes, don't have a reads_type in kwargs so must set it
+            datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                             rev_reads=kwargs['rev_reads'],
+                                             for_barcodes=kwargs['barcodes'],
+                                             rev_barcodes=kwargs['rev_barcodes'])
+            reads_type = 'paired_end'
+            barcodes_type = 'dual_barcodes'
+            if cp.session['barcodes_type'].endswith('x'):
+                barcodes_type += '_legacy'
+        else:
+            cp.log("Upload is Qiime Single Barcodes")
+            barcodes_type = 'single_barcodes'
+            datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                             rev_reads=kwargs['rev_reads'],
+                                             barcodes=kwargs['barcodes'])
+            reads_type = kwargs['reads_type']
+
+    @cp.expose
     def process_data(self, public=False, **kwargs):
         """ The page for loading data files into the database """
         # Create a unique dir for handling files uploaded by this user
@@ -1354,6 +1375,7 @@ class MMEDSquery(MMEDSbase):
         cp.session['generate_sample_id'] = (AccessCode, AliquotID)
         return page
 
+
 @decorate_all_methods(catch_server_errors)
 class MMEDSerror(MMEDSbase):
     """
@@ -1362,17 +1384,19 @@ class MMEDSerror(MMEDSbase):
     """
     def __init__(self):
         super().__init__()
+        # To add other error codes, include here in format 'error_page.xxx': self.error_page
         cp.config.update({'error_page.404': self.error_page,
                           'error_page.500': self.error_page})
 
     @cp.expose
     def error_page(self, status, message, traceback, version):
         page = self.load_webpage('error_page',
-                                status=status,
-                                traceback=traceback,
-                                message=message,
-                                version=version)
+                                 status=status,
+                                 traceback=traceback,
+                                 message=message,
+                                 version=version)
         return page
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):

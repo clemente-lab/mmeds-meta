@@ -320,9 +320,22 @@ class Watcher(BaseManager):
         # If there is nothing uploading currently start the new upload process
         if self.current_upload is None:
             # Check what type of upload this is
+
+            # Add metadata to existing study
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
                 p = MetaDataAdder(owner, access_code, aliquot_table, id_type, generate_id, self.testing)
+
+            # Add new sequencing run
+            elif 'run' in process[0]:
+                (ptype, sequencing_run_name, username, reads_type, barcodes_type,
+                 datafiles, temporary, public) = process
+
+                p = DataUploader(username, reads_type, barcodes_type, datafiles,
+                                 public, self.testing)
+                self.db_lock.acquire()
+
+            # Add new study
             else:
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
                  username, reads_type, barcodes_type, datafiles, temporary, public) = process
