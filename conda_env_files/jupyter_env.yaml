@@ -16,5 +16,6 @@ dependencies:
   - r-GGally
   - r-ggplot2
   - sqlite=3.38.3
+  - pip
   - pip:
       - git+https://github.com/clemente-lab/mmeds-meta
