@@ -15,6 +15,7 @@ dependencies:
   - r-ggrepel
   - r-GGally
   - r-ggplot2
+  - r-rcolorbrewer
   - sqlite=3.38.3
   - pip
   - pip:
