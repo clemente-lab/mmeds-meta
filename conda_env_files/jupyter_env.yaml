@@ -14,6 +14,6 @@ dependencies:
   - r-base
   - r-ggrepel
   - r-GGally
-  - r-ggplot
+  - ggplot
   - pip:
       - git+https://github.com/clemente-lab/mmeds-meta
