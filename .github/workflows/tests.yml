@@ -52,6 +52,13 @@ jobs:
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py;
 
       - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+            name: summary-dir
+            path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/
+
+
+      - uses: actions/upload-artifact@v3
         with:
             name: summary-pdf-output
             path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
