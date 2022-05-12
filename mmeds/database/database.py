@@ -970,6 +970,13 @@ class Database:
         if MMEDSDoc.objects(study_name=study_name):
             raise StudyNameError(f"Study name {study_name} already in use")
 
+    def check_sequencing_run_name(self, run_name):
+        """ Verifies the provided study name is valid and not already in use. """
+        if not run_name.replace('_', '').isalnum():
+            raise StudyNameError("Only alpha-numeric characters and '_' are allowed in the sequencing run name")
+        if MMEDSDoc.objects(study_name=run_name, doc_type='sequencing_run'):
+            raise StudyNameError(f"Sequencing Run name {run_name} already in use")
+
     def get_all_studies(self):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(doc_type='study')

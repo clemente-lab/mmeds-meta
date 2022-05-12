@@ -800,7 +800,41 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
+    def upload_sequencing_run(self, barcodes_type=None, run_name=None):
+        """
+        Page for uploading sequencing run data.
+        """
+
+        if barcodes_type is None and run_name is None:
+            # If neither of these value are being passed in from the webpage then the
+            # page is being reset to here from a further point in the upload process,
+            # pull data from cp.session and proceed.
+            barcodes_type = cp.session['barcodes_type']
+            run_name = cp.session['run_name']
+
+        try:
+            cp.session['run_name'] = run_name
+            cp.session['barcodes_type'] = barcodes_type
+
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                db.check_sequencing_run_name(run_name)
+                page = self.load_webpage('upload_sequencing_run',
+                                         title='Upload Sequencing Run')
+
+        # If the study name is already in use instruct the user to try something else.
+        except(err.StudyNameError) as e:
+            with Database(testing=self.testing) as db:
+                studies = db.get_all_user_studies(self.get_user())
+                study_dropdown = fmt.build_study_code_dropdown(studies)
+                page = self.load_webpage('upload_select_page',
+                                         title='Upload Type',
+                                         user_studies=study_dropdown,
+                                         error=e.message)
+        return page
+
+    @cp.expose
     def process_sequencing_run(self, public=False, **kwargs):
+        """ The page for uploading sequencing run into the database """
         if cp.session['barcodes_type'].startswith('dual'):
             cp.log("Upload is Qiime Dual Barcodes")
             # If have dual barcodes, don't have a reads_type in kwargs so must set it
@@ -819,6 +853,14 @@ class MMEDSupload(MMEDSbase):
                                              rev_reads=kwargs['rev_reads'],
                                              barcodes=kwargs['barcodes'])
             reads_type = kwargs['reads_type']
+
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload-run', cp.session['run_name'], self.get_user(),
+                    reads_type, barcodes_type, datafiles, public))
+
+        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 
     @cp.expose
     def process_data(self, public=False, **kwargs):

@@ -329,10 +329,10 @@ class Watcher(BaseManager):
             # Add new sequencing run
             elif 'run' in process[0]:
                 (ptype, sequencing_run_name, username, reads_type, barcodes_type,
-                 datafiles, temporary, public) = process
+                 datafiles, public) = process
 
-                p = DataUploader(username, reads_type, barcodes_type, datafiles,
-                                 public, self.testing)
+                p = DataUploader(username, reads_type, barcodes_type, sequencing_run_name,
+                                 datafiles, public, self.testing)
                 self.db_lock.acquire()
 
             # Add new study

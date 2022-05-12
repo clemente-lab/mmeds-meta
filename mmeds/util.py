@@ -702,6 +702,11 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'New Data Uploaded'
+    elif message == 'upload-run':
+        body = 'Hello {email}, \nthe user {user} uploaded data for the {run} sequencing run to the mmeds ' +\
+               'database server.\nThis run can now be assigned during a study upload.' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'New Sequencing Run Uploaded'
     elif message == 'ids_generated':
         body = 'Hello {email},\nthe user {user} uploaded {id_type}s for the study {study}. \n' +\
                'The aliquots are added and the IDs have been generated.\n\nBest,\nMmeds Team\n\n' +\

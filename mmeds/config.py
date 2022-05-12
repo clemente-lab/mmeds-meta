@@ -131,6 +131,7 @@ HTML_PAGES = {
     # Upload Pages
     'user_guide': (HTML_DIR / 'user_guide.html', True),
     'simple_guide': (HTML_DIR / 'simple_guide.html', True),
+    'upload_sequencing_run': (HTML_DIR / 'upload_sequencing_run.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_specimen_file': (HTML_DIR / 'upload_specimen_file.html', True),
     'upload_subject_file': (HTML_DIR / 'upload_subject_file.html', True),
@@ -192,9 +193,11 @@ HTML_ARGS = {
     'settings_page': '#',
 
     # Upload Pages
+    'upload_sequencing_run_page': SERVER_PATH + 'upload/upload_sequencing_run',
     'upload_subject_metadata_page': SERVER_PATH + 'upload/upload_subject_metadata',
     'upload_specimen_metadata_page': SERVER_PATH + 'upload/upload_specimen_metadata',
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
+    'process_sequencing_run_page': SERVER_PATH + 'upload/process_sequencing_run',
     'process_data_page': SERVER_PATH + 'upload/process_data',
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
     'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
