@@ -565,8 +565,7 @@ class MMEDSNotebook():
                 # We install the jupyter kernel here because the test jobfile only runs qiime stuff
                 # This consolidates the jupyter commands that need to be run here.
                 # Running outside of conda environment, not working with github actions currently
-                #TODO: add env=jupyter argument back and uncomment once fixed
-                # nbconvert_cmd =  f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
+                nbconvert_cmd =  f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
                 output = run(nbconvert_cmd, check=True, shell=True, capture_output=True)
 
 
