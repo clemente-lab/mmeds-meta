@@ -967,11 +967,11 @@ class Database:
         """ Verifies the provided study name is valid and not already in use. """
         if not study_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
-        if MMEDSDoc.objects(study_name=study_name):
+        if MMEDSDoc.objects(study_name=study_name, doc_type='study'):
             raise StudyNameError(f"Study name {study_name} already in use")
 
     def check_sequencing_run_name(self, run_name):
-        """ Verifies the provided study name is valid and not already in use. """
+        """ Verifies the provided sequencing run name is valid and not already in use. """
         if not run_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha-numeric characters and '_' are allowed in the sequencing run name")
         if MMEDSDoc.objects(study_name=run_name, doc_type='sequencing_run'):
@@ -984,6 +984,14 @@ class Database:
     def get_all_analyses(self):
         """ Return all analyses currently stored in the database. """
         return MMEDSDoc.objects(doc_type='analysis')
+
+    def get_all_sequencing_runs(self):
+        """ Return all sequencing runs currently stored in the database. """
+        return MMEDSDoc.objects(doc_type='sequencing_run')
+
+    def get_all_user_sequencing_runs(self, user):
+        """ Return all sequencing runs currently stored in the database owned by USER. """
+        return MMEDSDoc.objects(doc_type='sequencing_run', owner=user)
 
     def get_all_user_studies(self, user):
         """ Return all studies currently stored in the database owned by USER. """

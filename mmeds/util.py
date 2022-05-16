@@ -540,7 +540,7 @@ def is_numeric(s):
     return result
 
 
-def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
+def create_local_copy(fp, filename, path=fig.STORAGE_DIR, check_exists=True):
     """ Create a local copy of the file provided. """
     # If the fp is None return None
     if fp is None or fp == '':
@@ -550,10 +550,11 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     file_copy = Path(path) / Path(filename).name
 
     # Ensure there is not already a file with the same name
-    while file_copy.is_file():
+    while check_exists and file_copy.is_file():
         file_copy = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
 
     # Write the data to a new file stored on the server
+    Logger.debug(f'file_copy: {file_copy}\n{type(fp)}\nfilename: {filename}\npath: {path}')
     with open(file_copy, 'wb') as nf:
         if isinstance(fp, bytes):
             nf.write(fp)

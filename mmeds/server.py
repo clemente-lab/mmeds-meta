@@ -282,14 +282,21 @@ class MMEDSstudy(MMEDSbase):
             <td>{date_created}</td>
             <td>{num_analyses}</td>
         </tr> '''
+        run_html = ''' <tr class="w3-hover-blue">
+            <td>{sequencing_run}</td>
+            <td>{date_created}</td>
+            <td>{num_analyses}</td>
+        </tr> '''
         # If user has elevated privileges show them all uploaded studies
         if check_privileges(self.get_user(), self.testing):
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_studies()
+                runs = db.get_all_sequencing_runs()
         # Otherwise only show studies they've uploaded
         else:
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
+                runs = db.get_all_user_sequencing_runs(self.get_user())
         cp.log("Found {} studies".format(len(studies)))
 
         study_list = []
@@ -301,12 +308,18 @@ class MMEDSstudy(MMEDSbase):
                                                 access_code=study.access_code,
                                                 date_created=study.created,
                                                 num_analyses=analyses_count))
+        run_list = []
+        for run in runs:
+            run_list.append(run_html.format(sequencing_run=run.study_name,
+                                            date_created=run.created,
+                                            num_analyses=0))
 
         cp.log("Build out study list")
         page = self.load_webpage('study_select_page',
                                  title='Select Study',
                                  user_studies='\n'.join(study_list),
-                                 public_studies="")
+                                 public_studies="",
+                                 user_sequencing_runs='\n'.join(run_list))
 
         cp.log("Built out page")
         return page
@@ -436,7 +449,9 @@ class MMEDSupload(MMEDSbase):
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
                           cp.session['subject_type'],
-                          cp.session.get('barcodes_type'))
+                          cp.session.get('barcodes_type'),
+                          user=self.get_user(),
+                          testing=self.testing)
         cp.log('before validator run')
 
         # Check the metadata file for errors
@@ -470,6 +485,7 @@ class MMEDSupload(MMEDSbase):
         files = {}
         for key, value in kwargs.items():
             if value is not None:
+                Logger.debug(f"load_data_files: \n{value}\n{value.filename}\n{self.get_dir()}")
                 file_copy = create_local_copy(value.file, value.filename, self.get_dir())
                 files[key] = file_copy
         return files

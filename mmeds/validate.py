@@ -9,6 +9,7 @@ from mmeds.error import InvalidMetaDataFileError
 from datetime import datetime
 
 from mmeds.logging import Logger
+from mmeds.database.database import Database
 
 
 NAs = ['n/a', 'n.a.', 'n_a', 'na', 'N/A', 'N.A.', 'N_A']
@@ -21,13 +22,13 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subject_type, delimiter='\t'):
+def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subject_type, delimiter='\t', user='', testing=False):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, study_name, metadata_type, subject_ids, subject_type, sep=delimiter)
+    valid = Validator(file_fp, study_name, metadata_type, subject_ids, subject_type, sep=delimiter, user=user, testing=testing)
     return valid.run()
 
 
@@ -98,7 +99,7 @@ def cast_columns(df, cols, file_cols):
 
 class Validator:
 
-    def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, barcodes_type='single', sep='\t'):
+    def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, barcodes_type='single', sep='\t', user='', testing=False):
         """ Initialize the validator object. """
         self.study_name = study_name
         self.metadata_type = metadata_type
@@ -128,6 +129,9 @@ class Validator:
         # List of ids found in subject metadata
         # used when validating specimen metadata
         self.subject_ids = subject_ids
+
+        self.user = user
+        self.testing = testing
 
     def check_number_column(self, column):
         """ Check for mixed types and values outside two standard deviations. """
@@ -232,6 +236,23 @@ class Validator:
             for val in value[1:]:
                 if not pd.isnull(dup_key):
                     self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
+
+    def check_sequencing_runs(self, column):
+        """ Check that the sequening runs exist and are accessible to the user """
+        # Get sequencing runs from db
+        with Database(owner=self.user, testing=self.testing) as db:
+            runs = db.get_all_sequencing_runs()
+
+        # Grab run names
+        run_names = []
+        for r in runs:
+            run_names.append(r.study_name)
+
+        # Confirm metadata run names exist in the db run names
+        err_str = '{}\t{}\tSequencing Run Error: Value {} of row {} in column {} does not exist as an uploaded sequencing run.'
+        for i, cell in enumerate(column):
+            if cell not in run_names:
+                self.errors.append(err_str.format(i, self.col_index, cell, i, self.cur_col))
 
     def check_cell(self, row_index, cell, check_date=False):
         """
@@ -374,6 +395,8 @@ class Validator:
                 self.check_NA(col)
             elif self.cur_col == 'IllnessInstanceID':
                 self.check_duplicates(col)
+            elif self.cur_col == 'RawDataProtocolID':
+                self.check_sequencing_runs(col)
             Logger.debug("finished check_table_column")
 
     def check_table(self):
