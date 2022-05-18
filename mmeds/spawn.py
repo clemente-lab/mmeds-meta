@@ -9,13 +9,14 @@ from multiprocessing.managers import BaseManager
 
 import mmeds.config as fig
 import mmeds.secrets as sec
-
 from mmeds.util import create_local_copy, load_config, send_email
+
 from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.error import AnalysisError, MissingUploadError
+
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
 from mmeds.tools.sparcc import SparCC
@@ -338,10 +339,10 @@ class Watcher(BaseManager):
             # Add new study
             else:
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
-                 username, reads_type, barcodes_type, datafiles, temporary, public) = process
+                 username, datafiles, temporary, public) = process
                 # Start a process to handle loading the data
-                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', reads_type,
-                                     barcodes_type, study_name, temporary, datafiles, public, self.testing)
+                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime',
+                                     study_name, temporary, public, self.testing, datafiles)
                 self.db_lock.acquire()
             p.start()
             self.add_process(ptype, p.access_code)

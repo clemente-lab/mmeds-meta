@@ -18,8 +18,6 @@ import numpy as np
 import Levenshtein as lev
 import mmeds.config as fig
 from mmeds.logging import Logger
-from mmeds.database.database import Database
-from mmeds.database.documents import MMEDSDoc
 from subprocess import CalledProcessError
 
 
@@ -1318,6 +1316,12 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         ret_val = validate_output
 
     return ret_val
+
+
+# TODO: These are down here to prevent recursive import errors when starting the watcher. Find a better solution.
+from mmeds.database.database import Database
+from mmeds.database.documents import MMEDSDoc
+
 
 def get_sequencing_run_locations(metadata, user, column=("RawDataProtocol", "RawDataProtocolID")):
     """ Returns the list of sequencing runs as a dict of dir paths """

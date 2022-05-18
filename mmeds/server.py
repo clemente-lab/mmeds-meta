@@ -557,7 +557,7 @@ class MMEDSupload(MMEDSbase):
             elif cp.session['metadata_type'] == 'specimen':
                 # If it's the specimen metadata file, save the type of barcodes
                 # And return the page for uploading data files
-                page = self.upload_data()
+                page = self.process_study()
         return page
 
     ########################
@@ -732,11 +732,7 @@ class MMEDSupload(MMEDSbase):
         # Move on to uploading data files
         if cp.session['metadata_type'] == 'specimen':
             # The case for handling uploads of fastq files
-            page = self.load_webpage(
-                'upload_data_files',
-                title='Upload Data',
-                success=alert
-            )
+            page = self.process_study()
         # Move on to uploading specimen metadata
         else:
             cp.session['metadata_type'] = 'specimen'
