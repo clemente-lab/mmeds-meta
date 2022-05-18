@@ -104,7 +104,7 @@ class DataUploader(Process):
         """ Method to return a dictionary of relevant info for the process log """
         info = {
             'created': self.created,
-            'type': 'upload-seq',
+            'type': 'upload-run',
             'owner': self.owner,
             'pid': self.pid,
             'name': self.name,
@@ -144,6 +144,8 @@ class DataUploader(Process):
 
         if not self.path.is_dir():
             self.path.mkdir()
+        self.mdata.update(path=str(self.path.parent))
+        self.mdata.save()
 
         # Create a copy of the Data files
         datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),

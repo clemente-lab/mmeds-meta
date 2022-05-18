@@ -879,8 +879,26 @@ class MMEDSupload(MMEDSbase):
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 
     @cp.expose
+    def process_study(self, public=False, **kwargs):
+        # Create a unique dir for handling files uploaded by this user
+        subject_metadata = Path(cp.session['uploaded_files']['subject'])
+        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
+
+        run_paths = util.get_sequencing_run_locations(specimen_metadata, self.get_user())
+
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
+                    specimen_metadata, self.get_user(), run_paths, cp.session['subject_type'], public))
+
+        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+
+    @cp.expose
     def process_data(self, public=False, **kwargs):
         """ The page for loading data files into the database """
+        # TODO: We're completely redoing this. No more sequencing runs uploaded with a study
+        #   we have to now connect to sequencing run(s) already in the database/server
         # Create a unique dir for handling files uploaded by this user
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])

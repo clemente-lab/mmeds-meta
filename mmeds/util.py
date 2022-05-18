@@ -18,6 +18,8 @@ import numpy as np
 import Levenshtein as lev
 import mmeds.config as fig
 from mmeds.logging import Logger
+from mmeds.database.database import Database
+from mmeds.database.documents import MMEDSDoc
 from subprocess import CalledProcessError
 
 
@@ -1316,3 +1318,25 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         ret_val = validate_output
 
     return ret_val
+
+def get_sequencing_run_locations(metadata, user, column=("RawDataProtocol", "RawDataProtocolID")):
+    """ Returns the list of sequencing runs as a dict of dir paths """
+    df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+
+    # Store run names from metadata
+    runs = []
+    for run in df[column]:
+        if run not in runs:
+            runs.append(run)
+
+    # Get paths, these should exist due to already checking during validation
+    run_paths = {}
+    for run in runs:
+        try:
+            with Database(testing=self.testing, owner=user) as db:
+                doc = db.get_docs(doc_type='sequencing_run', study_name=run, owner=user).first()
+                run_paths[run] = Path(doc.path)
+        except Exception as e:
+            Logger.debug(e)
+
+    return run_paths
