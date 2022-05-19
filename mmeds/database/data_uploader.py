@@ -153,6 +153,11 @@ class DataUploader(Process):
                            for key, filepath in self.datafiles.items()
                            if filepath is not None}
 
+        # Create sequencing run directory file
+        with open(self.path.parent / "directory.txt", "wt") as f:
+            for key, filepath in self.datafiles.items():
+                f.write(f"{key}: {Path(filepath).name}\n")
+
         self.mongo_import(**datafile_copies)
 
         # Send the confirmation email
