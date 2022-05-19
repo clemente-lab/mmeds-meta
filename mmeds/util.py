@@ -1323,7 +1323,7 @@ from mmeds.database.database import Database
 from mmeds.database.documents import MMEDSDoc
 
 
-def get_sequencing_run_locations(metadata, user, column=("RawDataProtocol", "RawDataProtocolID")):
+def get_sequencing_run_locations(metadata, user, testing, column=("RawDataProtocol", "RawDataProtocolID")):
     """ Returns the list of sequencing runs as a dict of dir paths """
     df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
 
@@ -1336,8 +1336,9 @@ def get_sequencing_run_locations(metadata, user, column=("RawDataProtocol", "Raw
     # Get paths, these should exist due to already checking during validation
     run_paths = {}
     for run in runs:
+        Logger.debug(run)
         try:
-            with Database(testing=self.testing, owner=user) as db:
+            with Database(testing=testing, owner=user) as db:
                 doc = db.get_docs(doc_type='sequencing_run', study_name=run, owner=user).first()
                 run_paths[run] = Path(doc.path)
         except Exception as e:

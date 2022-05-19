@@ -880,7 +880,7 @@ class MMEDSupload(MMEDSbase):
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
-        run_paths = util.get_sequencing_run_locations(specimen_metadata, self.get_user())
+        run_paths = util.get_sequencing_run_locations(specimen_metadata, self.get_user(), self.testing)
 
         cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads

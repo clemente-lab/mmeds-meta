@@ -198,18 +198,17 @@ class MetaDataUploader(Process):
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
         # Create symbolic links to data file directories
-
-
-        # Create a copy of the Data file
-        datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),
-                                                  filepath, self.path.parent)
-                           for key, filepath in self.datafiles.items()
-                           if filepath is not None}
-        self.import_metadata(**datafile_copies)
+        Logger.debug(self.datafiles)
+        for run, path in self.datafiles.items():
+            sym = self.path.parent / f"run_{run}"
+            Logger.debug(sym)
+            sym.symlink_to(path, True)
+            sym.resolve()
 
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
                    code=self.access_code, testing=self.testing)
+
         # Update the doc to reflect the successful upload
         self.mdata.update(is_alive=False, exit_code=0)
         self.mdata.save()
