@@ -1318,30 +1318,16 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     return ret_val
 
 
-# TODO: These are down here to prevent recursive import errors when starting the watcher. Find a better solution.
-from mmeds.database.database import Database
-from mmeds.database.documents import MMEDSDoc
-
-
-def get_sequencing_run_locations(metadata, user, testing, column=("RawDataProtocol", "RawDataProtocolID")):
-    """ Returns the list of sequencing runs as a dict of dir paths """
-    df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
-
-    # Store run names from metadata
-    runs = []
-    for run in df[column]:
-        if run not in runs:
-            runs.append(run)
-
-    # Get paths, these should exist due to already checking during validation
-    run_paths = {}
-    for run in runs:
-        Logger.debug(run)
-        try:
-            with Database(testing=testing, owner=user) as db:
-                doc = db.get_docs(doc_type='sequencing_run', study_name=run, owner=user).first()
-                run_paths[run] = Path(doc.path)
-        except Exception as e:
-            Logger.debug(e)
-
-    return run_paths
+def get_file_paths_from_sequencing_run(run_path):
+    """
+    Returns a dictionary of the individual locations of sequencing run files on the server
+    """
+    directory = run_path / "directory.txt"
+    file_paths = {}
+    with open(directory, "rt") as f:
+        content = f.readlines()
+        for line in content:
+            if ":" in line:
+                key, val = line.split(": ")
+                file_paths[key] = run_path / val
+    return file_paths

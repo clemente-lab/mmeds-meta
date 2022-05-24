@@ -18,6 +18,7 @@ from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
+from mmeds.database.documents import MMEDSDoc
 from mmeds.spawn import handle_modify_data, Watcher
 from mmeds.logging import Logger
 
@@ -880,7 +881,13 @@ class MMEDSupload(MMEDSbase):
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
-        run_paths = util.get_sequencing_run_locations(specimen_metadata, self.get_user(), self.testing)
+        # Get paths to sequencing run directories
+        try:
+            with Database(testing=self.testing, owner=self.get_user()) as db:
+                run_paths = db.get_sequencing_run_locations(specimen_metadata, self.get_user())
+        #TODO: more specific Exception
+        except Exception as e:
+            cp.log("Error while attempting to get sequencing run locations")
 
         cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
@@ -892,10 +899,12 @@ class MMEDSupload(MMEDSbase):
 
     @cp.expose
     def process_data(self, public=False, **kwargs):
-        """ The page for loading data files into the database """
-        # TODO: We're completely redoing this. No more sequencing runs uploaded with a study
-        #   we have to now connect to sequencing run(s) already in the database/server
-        # Create a unique dir for handling files uploaded by this user
+        """
+        The page for loading data files into the database
+        -------------------------------------------------------------------------------------------
+        This function is not currently in use, having been restructured regarding the separation of
+        studies and sequencing runs. Keeping here for future reference for sparcc and lefse uploads
+        """
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
@@ -1175,7 +1184,7 @@ class MMEDSanalysis(MMEDSbase):
 
             # -1 is the kill_stage (used when testing)
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
-                        analysis_type, config_path, -1, runOnNode))
+                        analysis_type, config_path, sequencing_runs, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
                                      success='Analysis started you will recieve an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,

@@ -199,11 +199,19 @@ class MetaDataUploader(Process):
 
         # Create symbolic links to data file directories
         Logger.debug(self.datafiles)
+        seq_content = ""
         for run, path in self.datafiles.items():
             sym = self.path.parent / f"run_{run}"
-            Logger.debug(sym)
             sym.symlink_to(path, True)
             sym.resolve()
+
+            seq_content += f"{run}: {sym}\n"
+
+        # Create directory file to establish what sequencing runs belong to which symlinks
+        seq_path = self.path.parent / "directory.txt"
+        seq_path.touch()
+        with open(seq_path, "wt") as f:
+            f.write(seq_content)
 
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,

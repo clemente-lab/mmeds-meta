@@ -978,6 +978,24 @@ class Database:
         if MMEDSDoc.objects(study_name=run_name, doc_type='sequencing_run'):
             raise StudyNameError(f"Sequencing Run name {run_name} already in use")
 
+    def get_sequencing_run_locations(self, metadata, user, column=("RawDataProtocol", "RawDataProtocolID")):
+        """ Returns the list of sequencing runs as a dict of dir paths """
+        df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+
+        # Store run names from metadata
+        runs = []
+        for run in df[column]:
+            if run not in runs:
+                runs.append(run)
+
+        # Get paths, these should exist due to already checking during validation
+        run_paths = {}
+        for run in runs:
+            doc = MMEDSDoc.objects(doc_type='sequencing_run', study_name=run, owner=user).first()
+            run_paths[run] = Path(doc.path)
+
+        return run_paths
+
     def get_all_studies(self):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(doc_type='study')
