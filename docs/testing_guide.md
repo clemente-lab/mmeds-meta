@@ -25,3 +25,9 @@ To run the server tests, start the watcher then execute `pt mmeds/tests/server/t
 
 Note:
 One of the most common errors from these tests is having a page that doesn't match what's expected. If this happens the test window will output the html from each page to the terminal and say they don't match. This is very hard to read as a human, so I setup the tests to write the html to a file when it's comparing the pages. While the tests are still stopped at the pages that don't match run the command `vim -d /tmp/good_page.html /tmp/bad_page.html`. This will open both the desired html (good_page.html) and the actual html produced by the server (bad_page) in vim with the differences between them highlighted.
+
+## Notes on github actions
+location: .github/workflows/tests.yml
+Can't activate conda environments through github actions, have to use utils.setup_environment() to utilize conda environments
+
+A little unclear what persists on github actions between jobs, seems like there are workarounds but have to be wary.

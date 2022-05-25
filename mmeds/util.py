@@ -1330,3 +1330,34 @@ def get_mapping_file_subset(metadata, selection, column="RawDataProtocolID"):
     df.drop(df.index[drops], inplace=True)
     return df
 
+
+def run_analysis(path, tool_type, testing=False):
+    """
+    Run analysis for one of MMEDs tools
+    Currently only setup for qiime2
+
+    path: path to analysis folder i.e. Study/Qiime2_0)
+    tool_type: tool to use. qiime1, qiime2, lefse, etc
+    """
+    if testing:
+        # This module file is setup for running on github actions
+        qiime_env = setup_environment('qiime2-2020.8')
+    else:
+        # This module file is setup for running on minerva
+        qiime_env = setup_environment('qiime2/2020.8')
+
+    qiime = f'bash {path}/jobfile_test.sh'
+
+    # TODO: Need to generalize this and see how the summary files are created
+    # Hard coded values are needed for current qiime2 test
+    # Note that while this usually appears in the jobfile, it could be part of setting up the analysis directory
+    s_grouped_metadata_df = make_grouped_mapping_file(f'{path}/qiime_mapping_file.tsv', 'SpecimenBodySite')
+    s_grouped_metadata_df.to_csv(f'{path}/grouped_SpecimenBodySite_mapping_file.tsv', sep='\t', index=False)
+
+    try:
+        output = run(qiime, env=qiime_env, capture_output=True, shell=True)
+
+    except CalledProcessError as e:
+        Logger.debug(e.output)
+        Logger.debug(e)
+        raise e

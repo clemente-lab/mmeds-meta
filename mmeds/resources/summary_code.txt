@@ -97,7 +97,8 @@ for i in range(len(df['sample-id'])):
     _input = df['input'][i]
     _filtered = df['filtered'][i]
     _denoised = df['denoised'][i]
-    _merged = df['merged'][i]
+    if 'merged' in df:
+        _merged = df['merged'][i]
     _nonchimeric = df['non-chimeric'][i]
     # Store maximum
     if _input > m:
@@ -105,8 +106,11 @@ for i in range(len(df['sample-id'])):
     # Order sections so less filtered goes at the top
     data.append([df['sample-id'][i], _input - _filtered, "a"])
     data.append([df['sample-id'][i], _filtered - _denoised, "b"])
-    data.append([df['sample-id'][i], _denoised - _merged, "c"])
-    data.append([df['sample-id'][i], _merged - _nonchimeric, "d"])
+    if 'merged' in df:
+        data.append([df['sample-id'][i], _denoised - _merged, "c"])
+        data.append([df['sample-id'][i], _merged - _nonchimeric, "d"])
+    else:
+        data.append([df['sample-id'][i], _denoised - _nonchimeric, "c"])
     data.append([df['sample-id'][i], _nonchimeric, "e"])
 df = pd.DataFrame(data, columns=['variable', 'value', "type"])
 # Set count to number of desired y-axis values-1
