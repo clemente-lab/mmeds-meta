@@ -992,7 +992,14 @@ class Database:
         run_paths = {}
         for run in runs:
             doc = MMEDSDoc.objects(doc_type='sequencing_run', study_name=run, owner=user).first()
-            run_paths[run] = Path(doc.path)
+            run_paths[run] = {}
+            # Get individual files within sequencing run directories
+            with open(Path(doc.path) / "directory.txt", "rt") as f:
+                content = f.read().split('\n')
+                for line in content:
+                    if ": " in line:
+                        key, val = line.split(": ")
+                        run_paths[run][key] = Path(doc.path) / val
 
         return run_paths
 

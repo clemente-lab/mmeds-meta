@@ -881,19 +881,11 @@ class MMEDSupload(MMEDSbase):
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
-        # Get paths to sequencing run directories
-        try:
-            with Database(testing=self.testing, owner=self.get_user()) as db:
-                run_paths = db.get_sequencing_run_locations(specimen_metadata, self.get_user())
-        #TODO: more specific Exception
-        except Exception as e:
-            cp.log("Error while attempting to get sequencing run locations")
-
         cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, self.get_user(), run_paths, cp.session['subject_type'], public))
+                    specimen_metadata, self.get_user(), cp.session['subject_type'], public))
 
         return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
 
@@ -1168,9 +1160,15 @@ class MMEDSanalysis(MMEDSbase):
                 access_code = db.get_access_code_from_study_name(studyName, self.get_user())
                 Logger.error(access_code)
 
+
             # Check that the requested upload exists
             # Getting the files to check the config options match the provided metadata
             files = self.check_upload(access_code)
+            Logger.debug(files)
+            with Database(testing=self.testing) as db:
+                sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
+
+            Logger.debug(sequencing_runs)
 
             if isinstance(config, str):
                 config_path = config

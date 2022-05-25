@@ -169,21 +169,6 @@ class Tool(mp.Process):
                 file_path = self.run_dir / '..' / Path(self.doc.files[key]).relative_to(self.path.parent)
         return file_path
 
-    def get_sequencing_file(self, sequencing_run, key):
-        """
-        Return a file from a particular sequencing run
-        """
-        seq_dir = Path(seq_dir)
-        map_file = seq_dir / "directory.txt"
-        file_paths = {}
-        with open(map_file, "rt") as f:
-            content = f.readlines()
-            Logger.debug(content)
-            for line in content:
-                key, val = line.split(": ")
-                file_paths[key] = seq_dir / val
-        return file_paths
-
     def validate_mapping(self):
         """ Run validation on the Qiime mapping file """
         cmd = 'validate_mapping_file.py -s -m {} -o {};'.format(self.get_file('mapping', True), self.path)

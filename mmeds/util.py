@@ -1318,16 +1318,15 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     return ret_val
 
 
-def get_file_paths_from_sequencing_run(run_path):
-    """
-    Returns a dictionary of the individual locations of sequencing run files on the server
-    """
-    directory = run_path / "directory.txt"
-    file_paths = {}
-    with open(directory, "rt") as f:
-        content = f.readlines()
-        for line in content:
-            if ":" in line:
-                key, val = line.split(": ")
-                file_paths[key] = run_path / val
-    return file_paths
+def get_mapping_file_subset(metadata, selection, column="RawDataProtocolID"):
+    """ Create a sub-mapping file with only a certain selection included. For use splitting sequencing runs. """
+    Logger.debug(metadata)
+    df = pd.read_csv(metadata, sep='\t', header=[0])
+    drops = []
+    for i in range(1, len(df[column])):
+        if df[column][i] != selection:
+            drops.insert(0, i)
+
+    df.drop(df.index[drops], inplace=True)
+    return df
+

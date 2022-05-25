@@ -339,10 +339,10 @@ class Watcher(BaseManager):
             # Add new study
             else:
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
-                 username, datafiles, temporary, public) = process
+                 username, temporary, public) = process
                 # Start a process to handle loading the data
                 p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime',
-                                     study_name, temporary, public, self.testing, datafiles)
+                                     study_name, temporary, public, self.testing)
                 self.db_lock.acquire()
             p.start()
             self.add_process(ptype, p.access_code)

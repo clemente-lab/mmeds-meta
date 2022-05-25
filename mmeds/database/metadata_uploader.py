@@ -23,7 +23,7 @@ class MetaDataUploader(Process):
     This class handles the yprocessing and uploading of mmeds metadata files into the MySQL database.
     """
     def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
-                 study_name, temporary, public, testing, data_files, access_code=None):
+                 study_name, temporary, public, testing, access_code=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -44,7 +44,6 @@ class MetaDataUploader(Process):
             'study_type': study_type,
             'study_name': study_name,
             'temporary': temporary,
-            'data_files': data_files,
             'public': public,
             'testing': testing
         })
@@ -59,7 +58,6 @@ class MetaDataUploader(Process):
         self.study_name = study_name
         self.temporary = temporary
         self.public = public
-        self.datafiles = data_files
         self.created = datetime.now()
 
         # Like Database, this should be replaced with a switch statement
@@ -198,6 +196,8 @@ class MetaDataUploader(Process):
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
         # Create symbolic links to data file directories
+        self.mongo_import()
+        """
         Logger.debug(self.datafiles)
         seq_content = ""
         for run, path in self.datafiles.items():
@@ -212,7 +212,7 @@ class MetaDataUploader(Process):
         seq_path.touch()
         with open(seq_path, "wt") as f:
             f.write(seq_content)
-
+        """
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
                    code=self.access_code, testing=self.testing)

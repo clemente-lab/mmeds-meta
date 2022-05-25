@@ -1,9 +1,9 @@
 from subprocess import run
 from shutil import rmtree
-from pandas import read_csv
+import pandas as pd
 
 from mmeds.config import DATABASE_DIR
-from mmeds.util import setup_environment
+from mmeds.util import setup_environment, get_mapping_file_subset
 from mmeds.error import AnalysisError
 from mmeds.tools.tool import Tool
 from mmeds.logging import Logger
@@ -15,10 +15,10 @@ class Qiime2(Tool):
     # The default classifier for Q2 analysis
     classifier = DATABASE_DIR / 'gg-13-8-99-nb-classifier.qza'
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
-                 run_on_node=False, analysis=True, restart_stage=0, kill_stage=-1, child=False):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
-                         run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+                 sequencing_runs, run_on_node=False, analysis=True, restart_stage=0, kill_stage=-1, child=False):
+        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+                         sequencing_runs, run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
                          kill_stage=kill_stage, child=child)
         if testing:
             load = 'module use {}/.modules/modulefiles; module load qiime2/2019.7;'.format(DATABASE_DIR.parent)
@@ -42,6 +42,24 @@ class Qiime2(Tool):
             full_env = env
         cmd = 'source activate {};'.format(full_env)
         self.jobtext.append(cmd)
+
+    def split_by_sequencing_run(self):
+        """ Separate metadata into sub-folders for each sequencing run """
+        for run in self.sequencing_runs:
+            # Create sub-folders
+            self.add_path(self.path / f"section_{run}", key=f"section_{run}")
+
+            if not self.get_file(f"section_{run}", True).is_dir():
+                self.get_file(f"section_{run}", True).mkdir()
+
+            # Create symlinks to each file of each sequencing run
+            for f in self.sequencing_runs[run]:
+                (self.get_file(f"section_{run}", True) / f"{f}.fastq.gz").symlink_to(self.sequencing_runs[run][f])
+
+            # Create sub-mapping file that only includes samples for this sequencing run
+            self.add_path(self.get_file(f"section_{run}", absolute=True) / f"qiime_mapping_file_{run}.tsv", key=f"mapping_{run}")
+            df = get_mapping_file_subset(self.get_file("mapping", absolute=True), run)
+            df.to_csv(self.get_file(f"mapping_{run}", absolute=True), sep='\t', index=False)
 
     def qimport(self, write=True):
         """ Split the libraries and perform quality analysis. """
@@ -581,7 +599,7 @@ class Qiime2(Tool):
                '--output-path', str(self.path / 'temp')]
         run(cmd, check=True, env=new_env)
 
-        df = read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
+        df = pd.read_csv(self.path / 'temp' / 'per-sample-fastq-counts.csv', sep=',', header=0)
         initial_count = sum(df['Sequence count'])
         rmtree(self.path / 'temp')
 
@@ -608,6 +626,7 @@ class Qiime2(Tool):
 
     def setup_stage_0(self):
         self.set_stage(0)
+        self.split_by_sequencing_run()
         # Only the primary analysis runs these commands
         if not self.doc.sub_analysis:
             if 'demuxed' in self.doc.reads_type:
