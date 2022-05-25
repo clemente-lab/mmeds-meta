@@ -17,7 +17,8 @@ class DataUploader(Process):
     """
     This class handles the processing and uploading of fastq sequencing run files into the MySQL database.
     """
-    def __init__(self, owner, reads_type, barcodes_type, sequencing_run_name, data_files, public, testing, access_code=None):
+    def __init__(self, owner, reads_type, barcodes_type, sequencing_run_name,
+                 data_files, public, testing, access_code=None):
         warnings.simplefilter('ignore')
         super().__init__()
         Logger.debug('DataUploader created with params')
@@ -156,7 +157,12 @@ class DataUploader(Process):
         # Create sequencing run directory file
         with open(self.path.parent / "directory.txt", "wt") as f:
             for key, filepath in self.datafiles.items():
-                f.write(f"{key}: {Path(filepath).name}\n")
+                adjusted = key
+                if key == 'for_reads':
+                    adjusted = 'forward'
+                elif key == 'rev_reads':
+                    adjusted = 'reverse'
+                f.write(f"{adjusted}: {Path(filepath).name}\n")
 
         self.mongo_import(**datafile_copies)
 

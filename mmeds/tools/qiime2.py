@@ -27,6 +27,22 @@ class Qiime2(Tool):
         self.module = load
         self.jobtext.append(load)
 
+    # ============== #
+    # Helper Methods #
+    # ============== #
+
+    def reads_type(self, run):
+        """ Get reads type of current sequencing run """
+        if 'reverse' in self.sequencing_runs[run]:
+            return 'paired'
+        return 'single'
+
+    def barcodes_type(self, run):
+        """ Get barcodes type of current sequencing run """
+        if 'rev_barcodes' in self.sequencing_runs[run]:
+            return 'dual'
+        return 'single'
+
     # =============== #
     # Qiime2 Commands #
     # =============== #
@@ -46,26 +62,35 @@ class Qiime2(Tool):
     def split_by_sequencing_run(self):
         """ Separate metadata into sub-folders for each sequencing run """
         for run in self.sequencing_runs:
-            # Create sub-folders
+            # Create sequencing run folder
             self.add_path(self.path / f"section_{run}", key=f"section_{run}")
+            run_dir = self.get_file(f"section_{run}", True)
+            if not run_dir.is_dir():
+                run_dir.mkdir()
 
-            if not self.get_file(f"section_{run}", True).is_dir():
-                self.get_file(f"section_{run}", True).mkdir()
+            # Create sub-import folder
+            self.add_path(run_dir / 'import_dir', key=f'working_dir_{run}')
+            working_dir = self.get_file(f"working_dir_{run}", True)
+            if not working_dir.is_dir():
+                working_dir.mkdir()
 
             # Create symlinks to each file of each sequencing run
             for f in self.sequencing_runs[run]:
-                (self.get_file(f"section_{run}", True) / f"{f}.fastq.gz").symlink_to(self.sequencing_runs[run][f])
+                self.add_path(working_dir / f"{f}", ".fastq.gz", key=f'{f}_{run}')
+                self.get_file(f"{f}_{run}", True).symlink_to(self.sequencing_runs[run][f])
 
             # Create sub-mapping file that only includes samples for this sequencing run
-            self.add_path(self.get_file(f"section_{run}", absolute=True) / f"qiime_mapping_file_{run}.tsv", key=f"mapping_{run}")
-            df = get_mapping_file_subset(self.get_file("mapping", absolute=True), run)
-            df.to_csv(self.get_file(f"mapping_{run}", absolute=True), sep='\t', index=False)
+            self.add_path(run_dir / f"qiime_mapping_file_{run}", ".tsv", key=f"mapping_{run}")
+            df = get_mapping_file_subset(self.get_file("mapping", True), run)
+            df.to_csv(self.get_file(f"mapping_{run}", True), sep='\t', index=False)
 
-    def qimport(self, write=True):
+    def qimport(self, run, write=True):
         """ Split the libraries and perform quality analysis. """
+        run_dir = self.get_file(f"section_{run}", True)
 
-        self.add_path(self.path / 'qiime_artifact.qza', key='demux_file')
+        self.add_path(run_dir / 'qiime_artifact.qza', key=f'demux_file_{run}')
 
+        """
         if 'demuxed' in self.doc.reads_type:
             # If the reads are already demultiplexed import the whole directory
             cmd = [
@@ -76,126 +101,93 @@ class Qiime2(Tool):
                 '--output-path {};'.format(self.get_file('demux_file'))
             ]
             command = ' '.join(cmd)
+        """
+
+        # Create a directory to import as a Qiime2 object
+        self.add_path(run_dir / 'qiime_artifact.qza', key=f'working_file_{run}')
+
+        cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
+        if self.reads_type(run) == 'single':
+            command = cmd.format('EMPSingleEndSequences',
+                                 self.get_file(f'working_dir_{run}'),
+                                 self.get_file(f'working_file_{run}'))
+        elif self.barcodes_type(run) == 'single':
+            command = cmd.format('EMPPairedEndSequences',
+                                 self.get_file(f'working_dir_{run}'),
+                                 self.get_file(f'working_file_{run}'))
         else:
-            # Create a directory to import as a Qiime2 object
-            self.add_path(self.path / 'import_dir', key='working_dir')
-            self.add_path(self.path / 'qiime_artifact.qza', key='working_file')
-
-            if not self.get_file('working_dir', True).is_dir():
-                self.get_file('working_dir', True).mkdir()
-
-            # Clean up any existing files
-            old_files = self.get_file('working_dir', True).glob('*')
-            for old_file in old_files:
-                old_file.unlink()
-
-            cmd = 'qiime tools import --type {} --input-path {} --output-path {};'
-            if 'single_end' == self.doc.reads_type:
-                # Link the barcodes
-                (self.get_file('working_dir', True) / 'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
-
-                # Create links to the data in the qiime2 import directory
-                (self.get_file('working_dir', True) / 'sequences.fastq.gz').symlink_to(self.get_file('for_reads', True))
-
-                # Run the script
-                command = cmd.format('EMPSingleEndSequences',
-                                     self.get_file('working_dir'),
-                                     self.get_file('working_file'))
-            elif 'paired_end' == self.doc.reads_type:
-
-                # Create links to the data in the qiime2 import directory
-                (self.get_file('working_dir', True) /
-                 'forward.fastq.gz').symlink_to(self.get_file('for_reads', True))
-                (self.get_file('working_dir', True) /
-                 'reverse.fastq.gz').symlink_to(self.get_file('rev_reads', True))
-
-                if 'single_barcodes' == self.doc.barcodes_type:
-                    # Link the barcodes
-                    (self.get_file('working_dir', True) /
-                     'barcodes.fastq.gz').symlink_to(self.get_file('barcodes', True))
-
-                    # Run the script
-                    command = cmd.format('EMPPairedEndSequences',
-                                         self.get_file('working_dir'),
-                                         self.get_file('working_file'))
-                else:
-                    # Link the barcodes
-                    (self.get_file('working_dir', True) /
-                     'forward_barcodes.fastq.gz').symlink_to(self.get_file('for_barcodes', True))
-                    (self.get_file('working_dir', True) /
-                     'reverse_barcodes.fastq.gz').symlink_to(self.get_file('rev_barcodes', True))
-
-                    # Run the script
-                    command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
-                                         self.get_file('working_dir'),
-                                         self.get_file('working_file'))
+            command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
+                                 self.get_file(f'working_dir_{run}'),
+                                 self.get_file('working_file_{run}'))
         if write:
             self.jobtext.append(command)
 
-    def qimport_demultiplexed(self):
+    def qimport_demultiplexed(self, run):
         """ Import the demultiplexed dual_barcode files """
         cmd = [
             'qiime tools import',
             '--type {}'.format('"SampleData[PairedEndSequencesWithQuality]"'),
-            '--input-path {}'.format(self.get_file('stripped_dir')),
+            '--input-path {}'.format(self.get_file(f'stripped_dir_{run}')),
             '--input-format {}'.format('CasavaOneEightSingleLanePerSampleDirFmt'),
-            '--output-path {};'.format(self.get_file('demux_file'))
+            '--output-path {};'.format(self.get_file(f'demux_file_{run}'))
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def demultiplex(self):
+    def demultiplex(self, run):
         """
         Demultiplex the reads.
         NOTE: Great place to put a switch statement.
         """
+        run_dir = self.get_file(f"section_{run}", True)
+
         # Add the otu directory to the MetaData object
-        self.add_path('demux_file', '.qza')
-        self.add_path('error_correction', '.qza')
+        self.add_path(run_dir / 'demux_file', '.qza', key=f'demux_file_{run}')
+        self.add_path(run_dir / 'error_correction', '.qza', key=f'error_correction_{run}')
 
         # Run the script
-        if 'single_barcodes' == self.doc.barcodes_type:
+        if self.barcodes_type(run) == 'single':
             cmd = [
                 # Either emp-single or emp-paired depending on the reads_type
-                'qiime demux emp-{}'.format(self.doc.reads_type.split('_')[0]),
-                '--i-seqs {}'.format(self.get_file('working_file')),
-                '--m-barcodes-file {}'.format(self.get_file('mapping')),
+                'qiime demux emp-{}'.format(self.reads_type(run)),
+                '--i-seqs {}'.format(self.get_file(f'working_file_{run}')),
+                '--m-barcodes-file {}'.format(self.get_file(f'mapping_{run}')),
                 '--m-barcodes-column {}'.format('BarcodeSequence'),
-                '--o-error-correction-details {}'.format(self.get_file('error_correction')),
-                '--o-per-sample-sequences {};'.format(self.get_file('demux_file'))
+                '--o-error-correction-details {}'.format(self.get_file(f'error_correction_{run}')),
+                '--o-per-sample-sequences {};'.format(self.get_file(f'demux_file_{run}'))
             ]
             # Reverse compliment the barcodes in the mapping file if using paired reads
-            if 'paired_end' == self.doc.reads_type:
+            if self.reads_type(run) == 'paired':
                 cmd = cmd[:3] + ['--p-rev-comp-mapping-barcodes '] + cmd[3:]
             self.jobtext.append(' '.join(cmd))
 
-        elif 'dual_barcodes':
-            self.add_path('pheniqs_config', '.json')
-            self.add_path(self.path / 'pheniqs_output', key='pheniqs_dir')
-            self.add_path(self.path / 'stripped_output', key='stripped_dir')
+        elif 'dual':
+            self.add_path(run_dir / 'pheniqs_config', '.json', key=f'pheniqs_config_{run}')
+            self.add_path(run_dir / 'pheniqs_output', key=f'pheniqs_dir_{run}')
+            self.add_path(run_dir / 'stripped_output', key=f'stripped_dir_{run}')
 
-            if not self.get_file('pheniqs_dir', True).is_dir():
-                self.get_file('pheniqs_dir', True).mkdir()
+            if not self.get_file(f'pheniqs_dir_{run}', True).is_dir():
+                self.get_file(f'pheniqs_dir_{run}', True).mkdir()
 
-            if not self.get_file('stripped_dir', True).is_dir():
-                self.get_file('stripped_dir', True).mkdir()
+            if not self.get_file(f'stripped_dir_{run}', True).is_dir():
+                self.get_file(f'stripped_dir_{run}', True).mkdir()
 
             # Create pheniqs configuration file
             self.source_activate('mmeds')
             cmd = [
                 'make_pheniqs_config.py',
-                '--reads-forward {}'.format(self.get_file('for_reads')),
-                '--reads-reverse {}'.format(self.get_file('rev_reads')),
-                '--barcodes-forward {}'.format(self.get_file('for_barcodes')),
-                '--barcodes-reverse {}'.format(self.get_file('rev_barcodes')),
-                '--mapping-file {}'.format(self.get_file('mapping')),
-                '--o-config {}'.format(self.get_file('pheniqs_config')),
-                '--o-directory {};'.format(self.get_file('pheniqs_dir'))
+                '--reads-forward {}'.format(self.get_file(f'forward_{run}')),
+                '--reads-reverse {}'.format(self.get_file(f'reverse_{run}')),
+                '--barcodes-forward {}'.format(self.get_file(f'barcodes_{run}')),
+                '--barcodes-reverse {}'.format(self.get_file(f'rev_barcodes_{run}')),
+                '--mapping-file {}'.format(self.get_file(f'mapping_{run}')),
+                '--o-config {}'.format(self.get_file(f'pheniqs_config_{run}')),
+                '--o-directory {};'.format(self.get_file(f'pheniqs_dir_{run}'))
             ]
             self.jobtext.append(' '.join(cmd))
 
             # Run pheniqs demultiplexing
             self.source_activate('pheniqs')
-            cmd = 'pheniqs mux --config {};'.format(self.get_file('pheniqs_config'))
+            cmd = 'pheniqs mux --config {};'.format(self.get_file(f'pheniqs_config_{run}'))
             self.jobtext.append(cmd)
 
             # Edit out pheniqs errors greater than --num-allowed-errors
@@ -203,14 +195,16 @@ class Qiime2(Tool):
             cmd = [
                 'strip_error_barcodes.py',
                 '--num-allowed-errors {}'.format(1),
-                '--m-mapping-file {}'.format(self.get_file('mapping')),
-                '--i-directory {}'.format(self.get_file('pheniqs_dir')),
-                '--o-directory {};'.format(self.get_file('stripped_dir'))
+                '--m-mapping-file {}'.format(self.get_file(f'mapping_{run}')),
+                '--i-directory {}'.format(self.get_file(f'pheniqs_dir_{run}')),
+                '--o-directory {};'.format(self.get_file(f'stripped_dir_{run}'))
             ]
             self.jobtext.append(' '.join(cmd))
 
             self.source_activate('qiime')
 
+        # TODO: decide to permanently remove
+        """
         elif 'dual_barcodes_legacy':
             self.add_path('unmatched_demuxed', '.qza')
             self.add_path('demux_log', '.txt')
@@ -228,6 +222,7 @@ class Qiime2(Tool):
             ]
 
             self.jobtext.append(' '.join(cmd))
+        """
 
     def filter_by_metadata(self, column=None, value=None):
         """
@@ -259,58 +254,88 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def demux_visualize(self):
+    def demux_visualize(self, run):
         """ Create visualization summary for the demux file. """
-        self.add_path('demux_viz', '.qzv')
+        run_dir = self.get_file(f"section_{run}", True)
+        self.add_path(run_dir / 'demux_viz', '.qzv', key=f"demux_viz_{run}")
 
         # Run the script
         cmd = [
             'qiime demux summarize',
-            '--i-data {}'.format(self.get_file('demux_file')),
-            '--o-visualization {};'.format(self.get_file('demux_viz'))
+            '--i-data {}'.format(self.get_file(f'demux_file_{run}')),
+            '--o-visualization {};'.format(self.get_file(f'demux_viz_{run}'))
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def tabulate(self):
+    def merge_runs(self):
+        """ Merge sequences and tables of individual sequencing runs """
+        self.add_path('otu_table', '.qzv')
+        self.add_path('rep_seqs_table', '.qza')
+
+        tables = []
+        seqs = []
+        for run in self.sequencing_runs:
+            tables.append(str(self.get_file(f"otu_table_{run}")))
+            seqs.append(str(self.get_file(f"rep_seqs_table_{run}")))
+
+        cmd = [
+            'qiime feature-table merge',
+            '--i-tables {}'.format(' '.join(tables)),
+            '--o-merged-table {}'.format(self.get_file('otu_table'))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+        cmd = [
+            'qiime feature-table merge-seqs',
+            '--i-data {}'.format(' '.join(seqs)),
+            '--o-merged-data {}'.format(self.get_file('rep_seqs_table'))
+        ]
+        self.jobtext.append(' '.join(cmd))
+
+    def tabulate(self, run):
         """ Run tabulate visualization. """
-        self.add_path('stats_{}_visual'.format(self.doc.analysis_type), '.qzv')
-        viz_file = 'stats_{}_visual'.format(self.doc.analysis_type)
+        run_dir = self.get_file(f"section_{run}", True)
+
+        self.add_path(run_dir / 'stats_{}_visual'.format(self.doc.analysis_type), '.qzv', key=f'stats_visual_{run}')
+
         cmd = [
             'qiime metadata tabulate',
-            '--m-input-file {}'.format(self.get_file('stats_table')),
-            '--o-visualization {};'.format(self.get_file(viz_file))
+            '--m-input-file {}'.format(self.get_file(f'stats_table_{run}')),
+            '--o-visualization {};'.format(self.get_file(f'stats_visual_{run}'))
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def dada2(self, p_trim_left=0, p_trunc_len=0):
+    def dada2(self, run, p_trim_left=0, p_trunc_len=0):
         """ Run DADA2 analysis on the demultiplexed file. """
-        # Index new files
-        self.add_path('rep_seqs_dada2', '.qza', key='rep_seqs_table')
-        self.add_path('table_dada2', '.qza', key='otu_table')
-        self.add_path('stats_dada2', '.qza', key='stats_table')
+        run_dir = self.get_file(f"section_{run}", True)
 
-        if 'single' in self.doc.reads_type:
+        # Index new files
+        self.add_path(run_dir / 'rep_seqs_dada2', '.qza', key=f'rep_seqs_table_{run}')
+        self.add_path(run_dir / 'table_dada2', '.qza', key=f'otu_table_{run}')
+        self.add_path(run_dir / 'stats_dada2', '.qza', key=f'stats_table_{run}')
+
+        if self.reads_type(run) == 'single':
             cmd = [
                 'qiime dada2 denoise-single',
-                '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
+                '--i-demultiplexed-seqs {}'.format(self.get_file(f'demux_file_{run}')),
                 '--p-trim-left {}'.format(p_trim_left),
                 '--p-trunc-len {}'.format(p_trunc_len),
-                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
-                '--o-table {}'.format(self.get_file('otu_table')),
-                '--o-denoising-stats {}'.format(self.get_file('stats_table')),
+                '--o-representative-sequences {}'.format(self.get_file(f'rep_seqs_table_{run}')),
+                '--o-table {}'.format(self.get_file(f'otu_table_{run}')),
+                '--o-denoising-stats {}'.format(self.get_file(f'stats_table_{run}')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
-        elif 'paired' in self.doc.reads_type:
+        else:
             cmd = [
                 'qiime dada2 denoise-paired',
-                '--i-demultiplexed-seqs {}'.format(self.get_file('demux_file')),
+                '--i-demultiplexed-seqs {}'.format(self.get_file(f'demux_file_{run}')),
                 '--p-trim-left-f {}'.format(p_trim_left),
                 '--p-trim-left-r {}'.format(p_trim_left),
                 '--p-trunc-len-f {}'.format(p_trunc_len),
                 '--p-trunc-len-r {}'.format(p_trunc_len),
-                '--o-representative-sequences {}'.format(self.get_file('rep_seqs_table')),
-                '--o-table {}'.format(self.get_file('otu_table')),
-                '--o-denoising-stats {}'.format(self.get_file('stats_table')),
+                '--o-representative-sequences {}'.format(self.get_file(f'rep_seqs_table_{run}')),
+                '--o-table {}'.format(self.get_file(f'otu_table_{run}')),
+                '--o-denoising-stats {}'.format(self.get_file(f'stats_table_{run}')),
                 '--p-n-threads {};'.format(self.num_jobs)
             ]
         self.jobtext.append(' '.join(cmd))
@@ -629,30 +654,36 @@ class Qiime2(Tool):
         self.split_by_sequencing_run()
         # Only the primary analysis runs these commands
         if not self.doc.sub_analysis:
+            # TODO: Re-introduce already-demuxed functionality
+            """
             if 'demuxed' in self.doc.reads_type:
                 self.unzip()
-            if 'dual_barcodes' == self.doc.barcodes_type:
-                self.qimport(False)
-                self.demultiplex()
-                self.qimport_demultiplexed()
-            else:
-                self.qimport(True)
+            """
+            for run in self.sequencing_runs:
+                if self.barcodes_type(run) == 'dual':
+                    self.qimport(run, False)
+                    self.demultiplex(run)
+                    self.qimport_demultiplexed(run)
+                else:
+                    self.qimport(run, True)
 
     def setup_stage_1(self):
         self.set_stage(1)
         if not self.doc.sub_analysis:
-            if 'demuxed' not in self.doc.reads_type and not 'dual_barcodes' == self.doc.barcodes_type:
-                self.demultiplex()
-                self.demux_visualize()
-            if 'deblur' == self.doc.analysis_type:
-                self.deblur_filter()
-                self.deblur_denoise()
-                self.deblur_visualize()
-            elif 'dada2' == self.doc.analysis_type:
-                self.dada2()
-                self.tabulate()
-            if self.kill_stage == 1:
-                self.jobtext.append('exit 1')
+            for run in self.sequencing_runs:
+                if not self.barcodes_type(run) == 'dual':
+                    self.demultiplex(run)
+                    self.demux_visualize(run)
+                if 'deblur' == self.doc.analysis_type:
+                    self.deblur_filter()
+                    self.deblur_denoise()
+                    self.deblur_visualize()
+                elif 'dada2' == self.doc.analysis_type:
+                    self.dada2(run)
+                    self.tabulate(run)
+                if self.kill_stage == 1:
+                    self.jobtext.append('exit 1')
+            self.merge_runs()
         else:
             del self.jobtext[-1]
 
