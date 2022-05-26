@@ -269,7 +269,7 @@ class Qiime2(Tool):
 
     def merge_runs(self):
         """ Merge sequences and tables of individual sequencing runs """
-        self.add_path('otu_table', '.qzv')
+        self.add_path('otu_table', '.qza')
         self.add_path('rep_seqs_table', '.qza')
 
         tables = []
