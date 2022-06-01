@@ -788,7 +788,7 @@ class MMEDSupload(MMEDSbase):
                 # Pass it to the watcher
                 self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType, generateID))
                 success = f'{idType.capitalize()} Data Upload Initiated.' +\
-                    'You will recieve an email when it finishes'
+                    'You will receive an email when it finishes'
             else:
                 error = f'There was an issue with your {idType} file. Please check the example.'
         return self.load_webpage('home', success=success, error=error)
@@ -873,7 +873,7 @@ class MMEDSupload(MMEDSbase):
         self.q.put(('upload-run', cp.session['run_name'], self.get_user(),
                     reads_type, barcodes_type, datafiles, public))
 
-        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+        return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 
     @cp.expose
     def process_study(self, public=False, **kwargs):
@@ -887,7 +887,7 @@ class MMEDSupload(MMEDSbase):
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
                     specimen_metadata, self.get_user(), cp.session['subject_type'], public))
 
-        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+        return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 
     @cp.expose
     def process_data(self, public=False, **kwargs):
@@ -955,7 +955,7 @@ class MMEDSupload(MMEDSbase):
                     specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
                     cp.session['subject_type'], public))
 
-        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+        return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 
 
 @decorate_all_methods(catch_server_errors)
@@ -1184,7 +1184,7 @@ class MMEDSanalysis(MMEDSbase):
             self.q.put(('analysis', self.get_user(), access_code, tool_type,
                         analysis_type, config_path, sequencing_runs, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
-                                     success='Analysis started you will recieve an email shortly')
+                                     success='Analysis started you will receive an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,
                 err.UploadInUseError, err.PrivilegeError) as e:
             page = self.load_webpage('analysis_select_tool', title='Select Analysis', error=e.message)

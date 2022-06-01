@@ -725,7 +725,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         subject = 'Password Change'
     elif message == 'analysis_start':
         body = 'Hello {user},\nYour requested {analysis} analysis on study {study} has started.\n' +\
-               'You will recieve another email when this analysis completes.\n' +\
+               'You will receive another email when this analysis completes.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Started'
@@ -775,7 +775,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(user, message, text, max_count=120):
+def receive_email(user, message, text, max_count=120):
     """
     Checks for a email for USER of type MESSAGE containing TEXT
     COUNT: How many seconds to wait

@@ -9,7 +9,7 @@ import mmeds.config as fig
 import mmeds.secrets as sec
 import mmeds.error as err
 from mmeds.authentication import add_user, remove_user
-from mmeds.util import recieve_email, send_email
+from mmeds.util import receive_email, send_email
 from mmeds.spawn import Watcher
 from mmeds.logging import Logger
 from mmeds.database.database import Database
@@ -331,7 +331,7 @@ class TestServer(helper.CPWebCase):
         pass_page = server.load_webpage('login', success='A new password has been sent to your email.')
         self.assertBody(pass_page)
 
-        mail = recieve_email(self.server_user, 'reset', 'Your password has been reset.')
+        mail = receive_email(self.server_user, 'reset', 'Your password has been reset.')
         new_pass = mail.split('password is:')[1].splitlines()[1].strip()
         return new_pass
 
@@ -433,7 +433,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        assert recieve_email(self.server_user, 'upload',
+        assert receive_email(self.server_user, 'upload',
                              'user {} uploaded data for the {}'.format(self.server_user, 'Good_Study'))
 
     def upload_lefse(self):
@@ -464,7 +464,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
 
         # Search arguments for retrieving emails with access codes
-        assert recieve_email(self.server_user, 'upload',
+        assert receive_email(self.server_user, 'upload',
                              'user {} uploaded data for the {}'.format(self.server_user, 'Test_Lefse'))
 
     def upload_dualBarcode_metadata(self):
@@ -505,7 +505,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        assert recieve_email(self.server_user, 'upload',
+        assert receive_email(self.server_user, 'upload',
                              'user {} uploaded data for the {}'.format(self.server_user, 'Test_DualBarcodes'))
 
     def upload_metadata_fail(self):
@@ -680,7 +680,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        mail = recieve_email(self.server_user, 'upload',
+        mail = receive_email(self.server_user, 'upload',
                              'user {} uploaded data for the Validate_Study'.format(self.server_user))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
 
@@ -791,7 +791,7 @@ class TestServer(helper.CPWebCase):
                                    analysis_selected='w3-blue',
                                    privilege='',
                                    title='Welcome to MMEDS',
-                                   success='Analysis started you will recieve an email shortly')
+                                   success='Analysis started you will receive an email shortly')
         self.assertBody(page)
         sleep(20)
 
