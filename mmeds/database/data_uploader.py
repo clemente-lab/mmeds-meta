@@ -155,7 +155,7 @@ class DataUploader(Process):
                            if filepath is not None}
 
         # Create sequencing run directory file
-        with open(self.path.parent / "directory.txt", "wt") as f:
+        with open(self.path.parent / fig.SEQUENCING_DIRECTORY_FILE, "wt") as f:
             for key, filepath in self.datafiles.items():
                 adjusted = key
                 if key == 'for_reads':

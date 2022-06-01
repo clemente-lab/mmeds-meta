@@ -22,13 +22,15 @@ ILLEGAL_IN_HEADER = set('/\\ *?_.,')  # Limit to alpha numeric, hyphen, has to s
 ILLEGAL_IN_CELL = set(str(ILLEGAL_IN_HEADER))
 
 
-def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids, subject_type, delimiter='\t', user='', testing=False):
+def validate_mapping_file(file_fp, study_name, metadata_type, subject_ids,
+                          subject_type, delimiter='\t', user='', testing=False):
     """
     Checks the mapping file at file_fp for any errors.
     Returns a list of the errors and warnings,
     an empty list means there were no issues.
     """
-    valid = Validator(file_fp, study_name, metadata_type, subject_ids, subject_type, sep=delimiter, user=user, testing=testing)
+    valid = Validator(file_fp, study_name, metadata_type, subject_ids,
+                      subject_type, sep=delimiter, user=user, testing=testing)
     return valid.run()
 
 
@@ -51,7 +53,7 @@ def valid_additional_file(file_fp, data_table, generate=True):
     else:
         raise InvalidMetaDataFileError(f"The provided file type ({data_table}) is not valid")
 
-    #Logger.error(f'Generate: {generate}')
+    Logger.error(f'Generate: {generate}')
     # IF the ID is not being generated add it to the dict
     if not generate:
         cols[f'{data_table.capitalize()}ID'] = str
@@ -97,7 +99,8 @@ def cast_columns(df, cols, file_cols):
 
 class Validator:
 
-    def __init__(self, file_fp, study_name, metadata_type, subject_ids, subject_type, barcodes_type='single', sep='\t', user='', testing=False):
+    def __init__(self, file_fp, study_name, metadata_type, subject_ids,
+                 subject_type, barcodes_type='single', sep='\t', user='', testing=False):
         """ Initialize the validator object. """
         self.study_name = study_name
         self.metadata_type = metadata_type
@@ -133,31 +136,31 @@ class Validator:
 
     def check_number_column(self, column):
         """ Check for mixed types and values outside two standard deviations. """
-        #Logger.debug("check number column")
+        Logger.debug("check number column")
         filtered = [self.col_type(x) for x in column.tolist() if is_numeric(x)]
         Logger.debug("Filtered")
         Logger.debug(filtered)
         stddev = std(filtered)
         avg = mean(filtered)
         for i, cell in enumerate(filtered):
-            # Logger.debug(f"{i}: {cell}")
+            Logger.debug(f"{i}: {cell}")
             if (cell > avg + (2 * stddev) or cell < avg - (2 * stddev)):
-                #Logger.debug("Outside stddev")
+                Logger.debug("Outside stddev")
                 text = '{}\t{}\tStdDev Warning: Value {} outside of two standard deviations of mean in column {}'
                 self.warnings.append(text.format(i, self.col_index, cell, self.col_index))
-        #Logger.debug("Finished check number column")
+        Logger.debug("Finished check number column")
 
     def check_string_column(self, column):
         """ Check for categorical data. """
-        #Logger.debug("In check string column")
+        Logger.debug("In check string column")
         counts = column.value_counts()
         stddev = std(counts.values)
         avg = mean(counts.values)
-        #Logger.debug('Got counts')
+        Logger.debug('Got counts')
         for val, count in counts.iteritems():
-            # Logger.debug(f'{val}: {count}')
+            Logger.debug(f'{val}: {count}')
             if count < (avg - stddev) and count < 3:
-                #Logger.debug("Potential categorical data")
+                Logger.debug("Potential categorical data")
                 text = ('{}\t{}\tCategorical Data Warning: Potential categorical data detected.' +
                         ' Value {} may be in error, only {} found.')
                 self.warnings.append(text.format(-1, self.col_index, val, count))
@@ -247,7 +250,8 @@ class Validator:
             run_names.append(r.study_name)
 
         # Confirm metadata run names exist in the db run names
-        err_str = '{}\t{}\tSequencing Run Error: Value {} of row {} in column {} does not exist as an uploaded sequencing run.'
+        err_str = '{}\t{}\tSequencing Run Error: Value {} of row {} in column {} \
+            does not exist as an uploaded sequencing run.'
         for i, cell in enumerate(column):
             if cell not in run_names and not self.testing:
                 self.errors.append(err_str.format(i, self.col_index, cell, i, self.cur_col))
@@ -303,12 +307,12 @@ class Validator:
         # Get the header
         header = column.name
 
-        #Logger.debug("iterate over cells")
+        Logger.debug("iterate over cells")
         if column.isna().all():
             if (not self.cur_table == 'AdditionalMetaData' and
                     self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
 
-                #Logger.debug("Column shouldn't be NA")
+                Logger.debug("Column shouldn't be NA")
                 err = '{}\t{}\tMissing Required Value Error in Column {}'
                 self.errors.append(err.format(-1, self.seen_cols.index(self.cur_col), self.cur_col))
         else:
@@ -318,7 +322,7 @@ class Validator:
                     # Check for missing required fields
                     if not self.cur_table == 'AdditionalMetaData' and\
                             self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
-                        #Logger.debug(f"Cell shouldn't be NA: {self.cur_col}")
+                        Logger.debug(f"Cell shouldn't be NA: {self.cur_col}")
                         err = f'{{}}\t{{}}\tMissing Required Value Error: {self.cur_col}'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
                 else:
@@ -328,15 +332,15 @@ class Validator:
             if header == 'StudyName' and len(set(column.tolist())) > 1:
                 self.errors.append('-1\t-1\tMultiple Studies Error: Multiple studies in one metadata file')
 
-            #Logger.debug("Checked StudyName")
+            Logger.debug("Checked StudyName")
 
             # Check that values fall within standard deviation
             if self.col_type == int or self.col_type == float:
-                ###Logger.debug("check number column")
+                Logger.debug("check number column")
                 self.check_number_column(column)
             # Check for categorical data
             elif self.col_type == str and not header == 'ICDCode':
-                #Logger.debug("Check string column")
+                Logger.debug("Check string column")
                 self.check_string_column(column)
 
     def check_dates(self, start, end):
@@ -355,23 +359,23 @@ class Validator:
 
     def check_table_column(self):
         """ Check the columns of a particular table """
-        #Logger.debug("In check table column")
+        Logger.debug("In check table column")
         self.col_index = self.columns.index(self.cur_col)
         if not self.cur_table == 'AdditionalMetaData' and self.cur_col not in fig.TABLE_COLS[self.cur_table]:
-            #Logger.debug("If not additional metadata and col not in table")
+            Logger.debug("If not additional metadata and col not in table")
             # If the column shouldn't be in the table stop checking it
             err_message = '-1\t{}\tIllegal Column Error: Column {} should not be in table {}'
             self.errors.append(err_message.format(self.col_index, self.cur_col, self.cur_table))
         else:
-            #Logger.debug("If additional metadata")
+            Logger.debug("If additional metadata")
             # Check the header
             self.check_header()
 
             col = self.table_df[self.cur_col]
-            #Logger.debug("run check_column")
+            Logger.debug("run check_column")
             # Check the column itself
             self.check_column(col)
-            #Logger.debug("ran check_columns")
+            Logger.debug("ran check_columns")
             # Perform column specific checks
             if self.cur_table == 'RawData':
                 if self.cur_col == 'BarcodeSequence':
@@ -395,7 +399,7 @@ class Validator:
                 self.check_duplicates(col)
             elif self.cur_col == 'RawDataProtocolID':
                 self.check_sequencing_runs(col)
-            #Logger.debug("finished check_table_column")
+            Logger.debug("finished check_table_column")
 
     def check_table(self):
         """
@@ -405,11 +409,11 @@ class Validator:
         """
         start_col = None
         end_col = None
-        #Logger.debug(f"Checking table {self.cur_table}")
+        Logger.debug(f"Checking table {self.cur_table}")
         # Get the table from the metadata being validated
         try:
             self.table_df = self.df[self.cur_table]
-            #Logger.debug("got table df")
+            Logger.debug("got table df")
         # If it doesn't exist in the metadata
         except KeyError:
             Logger.debug("Table not in metadata")
@@ -421,19 +425,19 @@ class Validator:
         else:
             # For the built in table, ensure all columns are present
             if not self.cur_table == 'AdditionalMetaData':
-                #Logger.debug("Not additional metadata")
+                Logger.debug("Not additional metadata")
                 missing_cols = set(fig.TABLE_COLS[self.cur_table]).difference(set(self.table_df.columns))
                 if missing_cols:
-                    #Logger.debug(f"Missing columns {missing_cols}")
+                    Logger.debug(f"Missing columns {missing_cols}")
                     text = '-1\t-1\tMissing Column Error: Columns {} missing from table {}'
                     self.errors.append(text.format(', '.join(missing_cols), self.cur_table))
             # Check that subjects match
             elif self.metadata_type == 'specimen':
                 self.check_matching_subjects()
 
-            #Logger.debug("Iterate over columns")
+            Logger.debug("Iterate over columns")
             for i, column in enumerate(self.table_df.columns):
-                #Logger.debug(f"Check column {column}")
+                Logger.debug(f"Check column {column}")
                 # Track what column is being validated
                 self.seen_cols.append(column)
                 self.cur_col = column
@@ -443,7 +447,7 @@ class Validator:
                     start_col = column
                 elif re.match(r'\w*EndDate\w*', column):
                     end_col = column
-                #Logger.debug("regex matched dates")
+                Logger.debug("regex matched dates")
                 self.check_table_column()
 
             # Compare the start and end dates
@@ -451,12 +455,12 @@ class Validator:
                     pd.api.types.is_datetime64_ns_dtype(self.df[(self.cur_table, start_col)]) and\
                     pd.api.types.is_datetime64_ns_dtype(self.df[(self.cur_table, end_col)]):
                 self.check_dates(start_col, end_col)
-            #Logger.debug("checked dates")
+            Logger.debug("checked dates")
 
             # Get the study name from that table
             if self.cur_table == 'Study':
                 self.study_name = self.table_df['StudyName'][0]
-            #Logger.debug("Got study name")
+            Logger.debug("Got study name")
 
     def check_header(self):
         """ Check the header field to ensure it complies with MMEDS requirements. """
