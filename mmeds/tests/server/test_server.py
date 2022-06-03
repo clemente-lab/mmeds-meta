@@ -779,6 +779,7 @@ class TestServer(helper.CPWebCase):
         # Grab the access code
         data = re.findall('access_code=(.+?)"> (.+?) <', body)
         study_name = data[0][1]
+        Logger.debug(study_name)
         self.analyzed_study_code = data[0][0].strip('"')
         # Load the test config for animal subjects
         headers, body = self.upload_files(['config'], [fig.TEST_ANIMAL_CONFIG], ['text/tab-seperated-values'])
