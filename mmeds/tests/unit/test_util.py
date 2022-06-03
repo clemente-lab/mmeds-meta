@@ -25,12 +25,14 @@ class UtilTests(TestCase):
                                                             df2['Study']['StudyName'][4],
                                                             'subject',
                                                             [],
-                                                            'human')
+                                                            'human',
+                                                            user=fig.TEST_USER)
         errors, warnings, subjects = validate_mapping_file('/tmp/specimen_df.tsv',
                                                            df2['Study']['StudyName'][5],
                                                            'specimen',
                                                            subjects,
-                                                           'human')
+                                                           'human',
+                                                           user=fig.TEST_USER)
         for error in errors:
             print(error)
         for warning in warnings:

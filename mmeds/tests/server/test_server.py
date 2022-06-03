@@ -145,16 +145,18 @@ class TestServer(helper.CPWebCase):
         Logger.info('ca animal upload')
         self.login()
         self.upload_animal_metadata()
-        self.upload_otu_data()
+        # OTU uploads removed in study-sequencing run separataion
+        # self.upload_otu_data()
         self.logout()
 
     def test_cb_upload(self):
         Logger.info('cb upload')
         self.login()
+        self.upload_sequencing_run()
         self.upload_metadata_fail()
         self.upload_metadata()
-        self.upload_data()
-        self.modify_upload()
+        # No longer the way to modify data
+        # self.modify_upload()
         self.logout()
 
     def test_cc_lefse_upload(self):
@@ -165,7 +167,8 @@ class TestServer(helper.CPWebCase):
 
     def test_cd_dual_upload(self):
         self.login()
-        self.upload_dualBarcode_metadata()
+        # uploads do not occur like this
+        # self.upload_dualBarcode_metadata()
         self.logout()
 
     def test_da_select_study(self):
@@ -659,29 +662,27 @@ class TestServer(helper.CPWebCase):
         # Continue with warnings
         self.getPage('/upload/continue_metadata_upload', self.cookies, 'POST')
         self.assertStatus('200 OK')
-        page = server.load_webpage('upload_data_files',
+        page = server.load_webpage('home',
                                    user=self.server_user,
                                    upload_selected='w3-blue',
-                                   success='Specimen metadata uploaded successfully',
-                                   dual_barcodes='style="display:none"',
-                                   home_selected='',
-                                   table_type_lower='otu')
+                                   success='Upload Initiated. You will receive an email when this finishes',
+                                   home_selected='')
 
         self.assertBody(page)
         Logger.debug('Checked a metadata file with no problems')
 
-    def upload_data(self):
-        self.getPage('/upload/upload_data', self.cookies)
+    def upload_sequencing_run(self):
+        self.getPage('/upload/upload_sequencing_run?barcodes_type=single&run_name=TEST_RUN', self.cookies)
         self.assertStatus('200 OK')
         headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes', 'reads_type'],
-                                          [fig.TEST_READS, '', fig.TEST_BARCODES, 'single_end'],
+                                          [fig.TEST_READS, fig.TEST_REV_READS, fig.TEST_BARCODES, 'paired_end'],
                                           ['application/gzip', 'application/octet-stream',
                                            'application/gzip', ''])
-        self.getPage('/upload/process_data', headers + self.cookies, 'POST', body)
+        self.getPage('/upload/process_sequencing_run', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        mail = receive_email(self.server_user, 'upload',
-                             'user {} uploaded data for the Validate_Study'.format(self.server_user))
+        mail = receive_email(self.server_user, 'upload-run',
+                             'user {} uploaded data for the {}'.format(self.server_user, 'TEST_RUN'))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
 
     def modify_upload(self):
@@ -825,13 +826,14 @@ class TestServer(helper.CPWebCase):
         self.getPage("/study/select_study", headers=self.cookies)
         # Parse the body of the page
         body = self.body.decode('utf-8')
+        Logger.debug(body)
         # Grab the access code
         code = re.findall('access_code=(.+?)">', body)
         # Check that it works to access the view_study page
         self.getPage("/study/view_study?access_code={}".format(code[0]), headers=self.cookies)
         self.assertStatus('200 OK')
 
-        address = '/download/download_file?file_name=otu_table'
+        address = '/download/download_file?file_name=metadata'
         self.getPage(address, headers=self.cookies)
         self.assertStatus('200 OK')
 

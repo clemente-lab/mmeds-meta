@@ -706,6 +706,8 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
     elif message == 'upload-run':
         body = 'Hello {email}, \nthe user {user} uploaded data for the {run} sequencing run to the mmeds ' +\
                'database server.\nThis run can now be assigned during a study upload.' +\
+               'In order to gain access to this data without the password to\n{user} you must provide ' +\
+               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'New Sequencing Run Uploaded'
     elif message == 'ids_generated':
@@ -759,6 +761,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         email=toaddr,
         id_type=kwargs.get('id_type'),
         study=kwargs.get('study'),
+        run=kwargs.get('run'),
         code=kwargs.get('code'),
         analysis=kwargs.get('analysis'),
         password=kwargs.get('password'),

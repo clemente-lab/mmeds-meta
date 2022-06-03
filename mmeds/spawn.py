@@ -316,6 +316,7 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of uploader processes
         """
+        Logger.debug("HANDLING UPLOAD")
         self.check_upload()
 
         # If there is nothing uploading currently start the new upload process
@@ -338,6 +339,7 @@ class Watcher(BaseManager):
 
             # Add new study
             else:
+                Logger.debug(f"length: {len(process)}")
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
                  username, temporary, public) = process
                 # Start a process to handle loading the data

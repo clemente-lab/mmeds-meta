@@ -167,8 +167,8 @@ class DataUploader(Process):
         self.mongo_import(**datafile_copies)
 
         # Send the confirmation email
-        send_email(self.email, self.owner, message='upload', run=self.sequencing_run_name,
-                   testing=self.testing)
+        send_email(self.email, self.owner, message='upload-run', run=self.sequencing_run_name,
+                   code=self.access_code, testing=self.testing)
         # Update the doc to reflect the successful upload
         self.mdata.update(is_alive=False, exit_code=0)
         self.mdata.save()

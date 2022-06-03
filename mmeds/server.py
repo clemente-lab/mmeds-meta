@@ -233,6 +233,7 @@ class MMEDSdownload(MMEDSbase):
         the `cp.session['download_files']` dictionary with the `file_name` as the key and
         the path to the file on disk as the value.
         """
+        Logger.debug(f"avail: {cp.session['download_files']}")
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
 
@@ -730,11 +731,11 @@ class MMEDSupload(MMEDSbase):
         # Only arrive here if there are no errors or warnings proceed to upload the data files
         alert = '{} metadata uploaded successfully'.format(cp.session['metadata_type'].capitalize())
 
-        # Move on to uploading data files
+        # Both metadata files have been uploaded, continue to processing
         if cp.session['metadata_type'] == 'specimen':
             # The case for handling uploads of fastq files
             page = self.process_study()
-        # Move on to uploading specimen metadata
+        # Only subject file has been uploaded, load specimen upload page
         else:
             cp.session['metadata_type'] = 'specimen'
             page = self.load_webpage('upload_specimen_file',
@@ -884,8 +885,14 @@ class MMEDSupload(MMEDSbase):
         cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
         # This will be handled by the Watcher class found in spawn.py
+        Logger.debug(f"\nstudy_name: {cp.session['study_name']}\n \
+                     subject_metadata: {subject_metadata.name}\n \
+                     subject_type: {cp.session['subject_type']}\n \
+                     specimen_metadata: {specimen_metadata.name}\n \
+                     user: {self.get_user()}\n \
+                     ")
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, self.get_user(), cp.session['subject_type'], public))
+                    specimen_metadata, self.get_user(), False, public))
 
         return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 
@@ -1159,7 +1166,6 @@ class MMEDSanalysis(MMEDSbase):
             with Database(testing=self.testing) as db:
                 access_code = db.get_access_code_from_study_name(studyName, self.get_user())
                 Logger.error(access_code)
-
 
             # Check that the requested upload exists
             # Getting the files to check the config options match the provided metadata
