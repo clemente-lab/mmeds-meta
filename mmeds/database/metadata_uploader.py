@@ -196,7 +196,7 @@ class MetaDataUploader(Process):
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
         # Save files to document
-        self.mongo_import()
+        self.import_metadata()
 
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,

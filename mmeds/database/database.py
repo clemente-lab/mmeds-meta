@@ -31,17 +31,10 @@ def upload_metadata(args):
     This function wraps the metadatauploader class for when you want to run the upload
     in the current process rather than spinning up a new one
     """
-    (subject_metadata, subject_type, specimen_metadata, path, owner, study_name,
-     reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code, testing) = args
-    if for_reads is not None and 'zip' in for_reads:
-        datafiles = {'data': for_reads,
-                     'barcodes': barcodes}
-    else:
-        datafiles = {'for_reads': for_reads,
-                     'rev_reads': rev_reads,
-                     'barcodes': barcodes}
-    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime', reads_type,
-                         barcodes_type, study_name, False, datafiles, False, testing, access_code)
+    (subject_metadata, subject_type, specimen_metadata, owner, study_name, testing, access_code) = args
+
+    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime',
+                         study_name, False, False, testing, access_code)
     return p.run()
 
 
