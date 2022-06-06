@@ -28,23 +28,23 @@ jobs:
         run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.;
 
       - name: Python install
-        run: pip install git+https://github.com/clemente-lab/mmeds-meta; sudo python setup.py install;
+        run: pip install git+https://github.com/clemente-lab/mmeds-meta; sudo python setup.py install --verbose;
 
       - name: add bioconda channel for qiime
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
+      
+        #- name: install qiime
+        #run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p /home/runner/conda_envs/qiime2-2020.8
 
-      - name: install qiime
-        run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p /home/runner/conda_envs/qiime2-2020.8
+        #- name: install jupyter
+        #run: conda env create -f ./conda_env_files/jupyter_env.yaml -p /home/runner/conda_envs/jupyter
 
-      - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p /home/runner/conda_envs/jupyter
+        #- name: install pheniqs
+        #run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
 
-      - name: install pheniqs
-        run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
-
-      - name: install latex
-        run: conda env create -f ./conda_env_files/latex_env.yaml -p /home/runner/conda_envs/latex
-
+        #- name: install latex
+        #run: conda env create -f ./conda_env_files/latex_env.yaml -p /home/runner/conda_envs/latex
+      
       - name: Unit Tests
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
