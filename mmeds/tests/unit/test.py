@@ -110,6 +110,7 @@ def setup_tests(tests):
 
 
 def run_tests(tests, pudb):
+    print("running tests")
     test_class = []
     for test in tests:
         test_class.append(test.capitalize() + 'Test')
@@ -163,7 +164,6 @@ def main():
         ]
 
     users_added = add_users(tests)
-
     # Logic to allow for setting up or cleaning up tests without running them
     if not cleanup:
         setup_tests(tests)

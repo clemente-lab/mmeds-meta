@@ -73,6 +73,7 @@ class DatabaseTests(TestCase):
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
         del tables[tables.index('ICDCode')]
+        Logger.info("tables: ", tables)
         for row in range(len(self.df)):
             for table in tables:
                 Logger.info('Query table {}'.format(table))
