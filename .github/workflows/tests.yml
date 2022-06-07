@@ -28,7 +28,7 @@ jobs:
         run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.;
 
       - name: Python install
-        run: pip install git+https://github.com/clemente-lab/mmeds-meta; sudo python setup.py install --verbose;
+        run: pip install git+https://github.com/clemente-lab/mmeds-meta; pip install wheel; sudo python setup.py install --verbose;
 
       - name: add bioconda channel for qiime
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
