@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install packages
-        run: sudo apt-get install tidy environment-modules -y; python -m pip install --upgrade pip; pip install cryptography;
+        run: sudo apt-get install tidy environment-modules -y; pip install -U pip; pip install cryptography;
 
       - name: install pandoc for nbconvert
         run: sudo apt-get install pandoc;
