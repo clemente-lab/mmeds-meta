@@ -18,6 +18,7 @@ class UtilTests(TestCase):
     def test_load_stats(self):
         util.load_mmeds_stats()
 
+    @skip
     def test_simplified_to_full(self):
         df = util.simplified_to_full(fig.TEST_SUBJECT_SIMPLIFIED, '/tmp/subject_df.tsv', 'subject')
         df2 = util.simplified_to_full(fig.TEST_SPECIMEN_SIMPLIFIED, '/tmp/specimen_df.tsv', 'specimen')
