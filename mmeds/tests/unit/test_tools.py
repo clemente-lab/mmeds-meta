@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from shutil import rmtree
 from pathlib import Path
 from multiprocessing import Queue
@@ -30,15 +30,24 @@ class ToolsTests(TestCase):
         self.assertEqual(qiime.doc.reads_type, data_type)
         rmtree(qiime.path)
 
+    """
+    These next few tests that are skipped have removed functionality.
+    TODO: Decide which should be re-added
+    """
+
+    @skip
     def test_sparcc_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_OTU, 'sparcc', 'default', 'otu_table', SparCC)
 
+    @skip
     def test_lefse_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_LEFSE, 'lefse', 'default', 'lefse_table', Lefse)
 
+    @skip
     def test_picrust1_setup_analysis(self):
         self.run_qiime(fig.TEST_CODE_OTU, 'picrust1', 'default', 'otu_table', PiCRUSt1)
 
+    @skip
     def test_qiime1_setup_analysis(self):
         for tool_type, analysis_type in [('qiime1', 'open'), ('qiime1', 'closed')]:
             for data_type, code in [('single_end', fig.TEST_CODE_SHORT),
@@ -65,6 +74,7 @@ class ToolsTests(TestCase):
 
         rmtree(q2.path)
 
+    @skip
     def test_lefse_sub_analysis(self):
         # TODO: Implement conversion from otu table to lefse table so Lefse can be run as a sub analysis
         return
@@ -76,6 +86,7 @@ class ToolsTests(TestCase):
         q2.create_analysis(Lefse)
         rmtree(q2.path)
 
+    @skip
     def test_sparcc_sub_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG), fig.TEST_METADATA)
         q2 = Qiime2(self.q, fig.TEST_USER, 'random_new_code', fig.TEST_CODE_SHORT, 'qiime2',
