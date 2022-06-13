@@ -350,6 +350,7 @@ class Watcher(BaseManager):
             self.add_process(ptype, p.access_code)
             with Database(testing=self.testing) as db:
                 doc = db.get_doc(p.access_code, False)
+            Logger.debug(doc.get_info())
             self.pipe.send(doc.get_info())
             # Keep track of this new process
             self.started.append(p.access_code)

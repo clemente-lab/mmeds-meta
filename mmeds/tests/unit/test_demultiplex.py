@@ -1,6 +1,7 @@
 from unittest import TestCase
 import mmeds.config as fig
 import pandas as pd
+import os
 from subprocess import run, CalledProcessError, TimeoutExpired
 import gzip
 
@@ -104,7 +105,7 @@ class DemultiplexTests(TestCase):
         """ Test pheniqs demultiplexing """
         create_pheniqs_config(self)
         new_env = setup_environment('pheniqs/2.1.0')
-
+        print("this is self OUT :", self.out)
         pheniqs_demultiplex = ['pheniqs', 'mux', '--config', f'{self.out}']
         gunzip_forward_barcodes = ['gunzip', f'{self.for_barcodes}.gz']
         gunzip_reverse_barcodes = ['gunzip', f'{self.rev_barcodes}.gz']

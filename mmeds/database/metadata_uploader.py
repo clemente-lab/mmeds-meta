@@ -197,7 +197,6 @@ class MetaDataUploader(Process):
 
         # Save files to document
         self.import_metadata()
-
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
                    code=self.access_code, testing=self.testing)
@@ -237,7 +236,6 @@ class MetaDataUploader(Process):
                 if not table == 'AdditionalMetaData':
                     self.create_import_data(table)
                     filename = self.create_import_file(table)
-
                     if isinstance(filename, WindowsPath):
                         filename = str(filename).replace('\\', '\\\\')
                     # Load the newly created file into the database
