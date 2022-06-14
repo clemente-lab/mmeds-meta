@@ -1187,8 +1187,9 @@ class MMEDSanalysis(MMEDSbase):
             util.load_config(config_path, files['metadata'])
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool_type,
-                        analysis_type, config_path, sequencing_runs, -1, runOnNode))
+            if not analysis_method == 'test':
+                self.q.put(('analysis', self.get_user(), access_code, tool_type,
+                            analysis_type, config_path, sequencing_runs, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
                                      success='Analysis started you will receive an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,

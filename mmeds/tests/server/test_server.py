@@ -210,6 +210,7 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_ed_error_404(self):
+        Logger.error("ed error 404")
         self.login()
         self.get_error_page()
         self.logout()
@@ -222,6 +223,7 @@ class TestServer(helper.CPWebCase):
         self.execute_query()
 
     def test_z_cleanup(self):
+        Logger.error("z cleanup")
         remove_user(self.server_user, testing=testing)
         remove_user(self.lab_user, testing=testing)
         # Send an email at the end to ensure there aren't issues with
