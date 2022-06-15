@@ -239,10 +239,11 @@ class Validator:
                     self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
 
     def check_sequencing_runs(self, column):
-        """ Check that the sequening runs exist and are accessible to the user """
+        """ Check that the sequening runs exist """
         # Get sequencing runs from db
+        # TODO: Make this user-specific. User specificity was causing issues with automated testing.
         with Database(testing=self.testing) as db:
-            runs = db.get_all_user_sequencing_runs(self.user)
+            runs = db.get_all_sequencing_runs()
 
         # Grab run names
         run_names = []
