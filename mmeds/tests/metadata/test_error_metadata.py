@@ -65,7 +65,8 @@ class ErrorTests(TestCase):
                 if test_file.parent.name == 'subject':
                     try:
                         errors, warnings, subjects = valid.validate_mapping_file(test_file, 'Good_Study22', 'subject',
-                                                                                 None, 'human', user=fig.TEST_USER)
+                                                                                 None, 'human',
+                                                                                 user=fig.SERVER_USER, testing=True)
                         if VERBOSE:
                             self.print_messages(test_file, errors, warnings)
 
@@ -80,7 +81,7 @@ class ErrorTests(TestCase):
                     try:
                         errors, warnings, subjects = valid.validate_mapping_file(test_file, 'Short_Study', 'specimen',
                                                                                  good_subjects, 'human',
-                                                                                 user=fig.TEST_USER)
+                                                                                 user=fig.SERVER_USER, testing=True)
                         if VERBOSE:
                             self.print_messages(test_file, errors, warnings)
 
