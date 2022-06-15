@@ -3,14 +3,14 @@ Ethnicity	Genotype	Height	HeightDateCollected	ICDCode	IllnessNotes	IllnessEndDat
 Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Optional	Required	Optional	Optional	Required	Optional	Optional
 Text	Text	Number	Date	Text	Text	Date	Date	Date	Text	Date	Date	Text	Text	Text	Number	Text	Text	Text	Text	Number	Date
 Limit 45 Characters	Limit 180 Characters	Meters	Year-Month-Day	Limit 8 Characters	Limit 256 Characters	Year-Month-Day	Limit 256 Characters	Year-Month-Day	Limit 256 characters	Year-Month-Day	Year-Month-Day	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Year	Limit 256 Characters	Limit 45 Characters	Limit 45 Characters	Limit 45 Characters	Kilogram	Year-Month-Day
-Caucasian	Charles	63	2018-01-05	1479	Good	2018-12-01	1	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Fecal Transplant	Surgery	1905	1	American	M	Human	124	2018-01-05
-Caucasian	Lucy	63	2018-01-05	1219	Good	2018-12-01	2	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Fecal Transplant	Surgery	1905	2	American	M	Human	124	2018-01-05
-African American	Lucy	63	2018-01-19	1500	Bad	2018-12-15	3	2017-03-07	Helpful	2018-03-08	2018-03-07	Heart Transplant	200	Surgery	1919	10	Spanish	F	Human	138	2018-01-19
-East Asian	Lucy	63	2018-02-07	1877	Bad	2018-01-03	4	2017-03-26	Helpful	2007-03-27	2007-03-27	Fecal Transplant	200	Surgery	1912	11	Spanish	M	Human	157	2018-02-07
-Caucasian	Charles	63	2018-01-05	864	Good	2018-12-01	5	2017-02-21	Quality of life improvement	2018-02-22	2018-02-21	Rotator-Cuff Replacement	Rotator-Cuff Replacement	Surgery	1905	3	American	M	Human	50	2018-01-05
-Caucasian	Charles	63	2018-01-05	685	Good	2018-12-01	6	2017-02-21	Quality of life improvement	2015-02-15	2015-02-14	Knee Replacement	Knee Replacement	Surgery	1905	4	American	M	Human	51	2018-01-05
-Caucasian	Charles	63	2018-01-05	1879	Good	2018-12-01	7	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Bionic Eye	Surgery	1900	5	American	M	Human	52	2018-01-05
-Caucasian	Charles	63	2018-01-05	1212	Good	2018-12-01	8	2017-02-21	Quality of life improvement	2018-02-22	2018-02-21	Rotator-Cuff Replacement	Rotator-Cuff Replacement	Surgery	1900	6	American	M	Human	50	2018-01-05
-Caucasian	Charles	63	2018-01-05	1077	Good	2018-12-01	9	2017-02-21	Quality of life improvement	2015-02-15	2015-02-14	Knee Replacement	Knee Replacement	Surgery	1905	7	American	M	Human	51	2018-01-05
-Caucasian	Charles	63	2018-01-05	290	Good	2018-12-01	10	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Bionic Eye	Surgery	1905	8	American	M	Human	52	2018-01-05
-East Asian	Lucy	63	2018-02-06	750	Bad	2018-01-02	11	2017-03-25	Helpful	2018-03-26	2018-03-25	Heart Transplant	200	Surgery	1920	9	Spanish	M	Human	62	2018-02-06
+Caucasian	Charles	63	2018-01-05	1748	Good	2018-12-01	1	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Fecal Transplant	Surgery	1905	1	American	M	Human	124	2018-01-05
+Caucasian	Lucy	63	2018-01-05	414	Good	2018-12-01	2	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Fecal Transplant	Surgery	1905	2	American	M	Human	124	2018-01-05
+African American	Lucy	63	2018-01-19	1409	Bad	2018-12-15	3	2017-03-07	Helpful	2018-03-08	2018-03-07	Heart Transplant	200	Surgery	1919	10	Spanish	F	Human	138	2018-01-19
+East Asian	Lucy	63	2018-02-07	880	Bad	2018-01-03	4	2017-03-26	Helpful	2007-03-27	2007-03-27	Fecal Transplant	200	Surgery	1912	11	Spanish	M	Human	157	2018-02-07
+Caucasian	Charles	63	2018-01-05	239	Good	2018-12-01	5	2017-02-21	Quality of life improvement	2018-02-22	2018-02-21	Rotator-Cuff Replacement	Rotator-Cuff Replacement	Surgery	1905	3	American	M	Human	50	2018-01-05
+Caucasian	Charles	63	2018-01-05	100	Good	2018-12-01	6	2017-02-21	Quality of life improvement	2015-02-15	2015-02-14	Knee Replacement	Knee Replacement	Surgery	1905	4	American	M	Human	51	2018-01-05
+Caucasian	Charles	63	2018-01-05	1430	Good	2018-12-01	7	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Bionic Eye	Surgery	1900	5	American	M	Human	52	2018-01-05
+Caucasian	Charles	63	2018-01-05	314	Good	2018-12-01	8	2017-02-21	Quality of life improvement	2018-02-22	2018-02-21	Rotator-Cuff Replacement	Rotator-Cuff Replacement	Surgery	1900	6	American	M	Human	50	2018-01-05
+Caucasian	Charles	63	2018-01-05	695	Good	2018-12-01	9	2017-02-21	Quality of life improvement	2015-02-15	2015-02-14	Knee Replacement	Knee Replacement	Surgery	1905	7	American	M	Human	51	2018-01-05
+Caucasian	Charles	63	2018-01-05	1659	Good	2018-12-01	10	2017-02-21	Top Secret	2000-01-02	2000-01-02	Fecal Transplant	Bionic Eye	Surgery	1905	8	American	M	Human	52	2018-01-05
+East Asian	Lucy	63	2018-02-06	514	Bad	2018-01-02	11	2017-03-25	Helpful	2018-03-26	2018-03-25	Heart Transplant	200	Surgery	1920	9	Spanish	M	Human	62	2018-02-06

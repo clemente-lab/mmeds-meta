@@ -241,8 +241,8 @@ class Validator:
     def check_sequencing_runs(self, column):
         """ Check that the sequening runs exist and are accessible to the user """
         # Get sequencing runs from db
-        with Database(owner=self.user, testing=self.testing) as db:
-            runs = db.get_all_sequencing_runs()
+        with Database(testing=self.testing) as db:
+            runs = db.get_all_user_sequencing_runs(self.user)
 
         # Grab run names
         run_names = []
