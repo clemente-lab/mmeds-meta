@@ -161,6 +161,7 @@ def main():
             'formatter',
             'adder',
             'uploader'
+            'error'
         ]
 
     users_added = add_users(tests)
