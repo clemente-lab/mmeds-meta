@@ -150,7 +150,7 @@ class DataUploader(Process):
 
         # Create a copy of the Data files
         datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),
-                                                  f"{key}.fastq.gz", self.path.parent, False)
+                                                  f"{Path(filepath).name}", self.path.parent, False)
                            for key, filepath in self.datafiles.items()
                            if filepath is not None}
 
