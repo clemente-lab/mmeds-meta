@@ -102,11 +102,6 @@ jobs:
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter spawn tool tools uploader util validate;
 
-      - uses: actions/upload-artifact@v3
-        with:
-            name: summary-pdf-output
-            path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
-
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
 
