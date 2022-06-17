@@ -177,7 +177,7 @@ class Qiime2(Tool):
                 'make_pheniqs_config.py',
                 '--reads-forward {}'.format(self.get_file(f'forward_{run}')),
                 '--reads-reverse {}'.format(self.get_file(f'reverse_{run}')),
-                '--barcodes-forward {}'.format(self.get_file(f'barcodes_{run}')),
+                '--barcodes-forward {}'.format(self.get_file(f'for_barcodes_{run}')),
                 '--barcodes-reverse {}'.format(self.get_file(f'rev_barcodes_{run}')),
                 '--mapping-file {}'.format(self.get_file(f'mapping_{run}')),
                 '--o-config {}'.format(self.get_file(f'pheniqs_config_{run}')),
