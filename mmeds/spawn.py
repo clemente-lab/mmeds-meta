@@ -63,6 +63,7 @@ class Watcher(BaseManager):
         """
         super().__init__(address, authkey)
         self.testing = fig.TESTING
+        Logger.debug(f"WATCHER SELF.TESTING: {self.testing}")
         self.count = 0
         self.processes = []
         self.running_processes = []
