@@ -118,7 +118,7 @@ class Qiime2(Tool):
         else:
             command = cmd.format('MultiplexedPairedEndBarcodeInSequence',
                                  self.get_file(f'working_dir_{run}'),
-                                 self.get_file('working_file_{run}'))
+                                 self.get_file(f'working_file_{run}'))
         if write:
             self.jobtext.append(command)
 
