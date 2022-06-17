@@ -682,7 +682,7 @@ class TestServer(helper.CPWebCase):
                                            'application/gzip', ''])
         self.getPage('/upload/process_sequencing_run', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-
+        sleep(5)
         mail = receive_email(self.server_user, 'upload-run',
                              'user {} uploaded data for the {}'.format(self.server_user, 'TEST_RUN'))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
