@@ -160,7 +160,7 @@ def main():
             'validate',
             'formatter',
             'adder',
-            'uploader'
+            'uploader',
             'error'
         ]
 
