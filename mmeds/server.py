@@ -866,10 +866,10 @@ class MMEDSupload(MMEDSbase):
             try:
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
                                                 rev_reads=kwargs['rev_reads'],
-                                                for_barcodes=kwargs['barcodes'])
+                                                barcodes=kwargs['barcodes'])
             except KeyError:
                 datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                for_barcodes=kwargs['barcodes'])
+                                                barcodes=kwargs['barcodes'])
             reads_type = kwargs['reads_type']
 
         cp.log("Server putting upload in queue {}".format(id(self.q)))
