@@ -361,6 +361,7 @@ if not TEST_DIR_0.exists():
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
 TEST_USER_0 = 'testuser0'
+REUPLOAD_USER = 'reupload'
 TEST_CODE = 'singlereads'
 TEST_CODE_SHORT = 'singlereadsshort'
 TEST_CODE_PAIRED = 'pairedreads'
