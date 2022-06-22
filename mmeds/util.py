@@ -17,7 +17,6 @@ import pandas as pd
 import numpy as np
 import Levenshtein as lev
 import mmeds.config as fig
-from mmeds.spawn import Watcher
 from mmeds.logging import Logger
 from subprocess import CalledProcessError
 
@@ -1367,29 +1366,19 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def watcher_connect():
+def upload_study_directly(queue, study_name, subject, subject_type, specimen, user):
     """
-    Connect to the watcher for direct upload
+    # Directly upload a study using the watcher, bypassing the server
     """
-    watcher = Watcher()
-    watcher.connect()
-    queue = watcher.get_queue()
-    return queue
-
-
-def upload_study_directly(study_name, subject, subject_type, specimen, user):
-    """
-    Directly upload a study using the watcher, bypassing the server
-    """
-    queue = watcher_connect()
     queue.put(('upload', study_name, subject, subject_type, specimen, user, False, False))
+    Logger.debug("Study sent to queue directly")
     return 0
 
 
-def upload_sequencing_run_directly(run_name, user, datafiles, reads_type, barcodes_type):
+def upload_sequencing_run_directly(queue, run_name, user, datafiles, reads_type, barcodes_type):
     """
-    Directly upload a sequencing run using the watcher, bypassing the server
+    # Directly upload a sequencing run using the watcher, bypassing the server
     """
-    queue = watcher_connect()
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
+    Logger.debug("Sequencing run sent to queue directly")
     return 0

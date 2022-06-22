@@ -23,5 +23,6 @@ EMAIL_PASS = ''
 TEST_PASS = 'testpassL33TG@m3r'
 TEST_USER_PASS = 'password'
 TEST_ROOT_PASS = 'root'
+REUPLOAD_PASS = 'r3Up10@D'
 AUTH_KEY = b'F1ndTh3W@tch3r'
 WATCHER_PORT = 52953
