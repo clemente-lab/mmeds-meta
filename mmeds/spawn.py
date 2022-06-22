@@ -37,6 +37,9 @@ TOOLS = {
     'test': TestTool
 }
 
+# The amount of steps with no jobs before the watcher will sleep
+TIMEOUT = 20
+
 
 def handle_modify_data(access_code, myData, user, data_type, testing):
     with Database(owner=user, testing=testing) as db:
@@ -393,7 +396,7 @@ class Watcher(BaseManager):
             self.count += 1
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                if self.count >= 20:
+                if self.count >= TIMEOUT:
                     self.count = 0
                 sleep(3)
             else:
@@ -405,7 +408,7 @@ class Watcher(BaseManager):
                 self.logger.error(process)
                 # Whenever it's acceptable to move to Python 3.10 this needs to be turned into a switch statement
                 # If the watcher needs to shut down
-                if process == 'terminate' or process[0] == 'terminate':
+                if process[0] == 'terminate':
                     self.logger.error('Terminating')
                     # Kill all the processes currently running
                     for process in self.processes:

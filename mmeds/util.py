@@ -1326,6 +1326,8 @@ def get_mapping_file_subset(metadata, selection, column="RawDataProtocolID"):
     Logger.debug(metadata)
     df = pd.read_csv(metadata, sep='\t', header=[0])
     drops = []
+
+    # Create list of 'drops' that do not match the selection
     for i in range(1, len(df[column])):
         if df[column][i] != selection:
             drops.insert(0, i)

@@ -989,7 +989,9 @@ class Database:
             # Get individual files within sequencing run directories
             with open(Path(doc.path) / fig.SEQUENCING_DIRECTORY_FILE, "rt") as f:
                 content = f.read().split('\n')
+                # Read the key value pair of datafile type and file location
                 for line in content:
+                    # Ensure the line is consistent with the expected format
                     if ": " in line:
                         key, val = line.split(": ")
                         run_paths[run][key] = Path(doc.path) / val

@@ -441,6 +441,7 @@ QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
 QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
 FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
 SEQUENCING_DIRECTORY_FILE = 'directory.txt'
+QUEUE_TIMEOUT = 20
 
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
