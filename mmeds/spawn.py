@@ -408,7 +408,7 @@ class Watcher(BaseManager):
                 self.logger.error(process)
                 # Whenever it's acceptable to move to Python 3.10 this needs to be turned into a switch statement
                 # If the watcher needs to shut down
-                if process[0] == 'terminate':
+                if process == 'terminate':
                     self.logger.error('Terminating')
                     # Kill all the processes currently running
                     for process in self.processes:
