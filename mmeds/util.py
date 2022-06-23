@@ -540,7 +540,7 @@ def is_numeric(s):
     return result
 
 
-def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
+def create_local_copy(fp, filename, path=fig.STORAGE_DIR, check_exists=True):
     """ Create a local copy of the file provided. """
     # If the fp is None return None
     if fp is None or fp == '':
@@ -550,10 +550,11 @@ def create_local_copy(fp, filename, path=fig.STORAGE_DIR):
     file_copy = Path(path) / Path(filename).name
 
     # Ensure there is not already a file with the same name
-    while file_copy.is_file():
+    while check_exists and file_copy.is_file():
         file_copy = Path(path) / '_'.join([fig.get_salt(5), Path(filename).name])
 
     # Write the data to a new file stored on the server
+    Logger.debug(f'file_copy: {file_copy}\n{type(fp)}\nfilename: {filename}\npath: {path}')
     with open(file_copy, 'wb') as nf:
         if isinstance(fp, bytes):
             nf.write(fp)
@@ -702,6 +703,13 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'New Data Uploaded'
+    elif message == 'upload-run':
+        body = 'Hello {email}, \nthe user {user} uploaded data for the {run} sequencing run to the mmeds ' +\
+               'database server.\nThis run can now be assigned during a study upload.' +\
+               'In order to gain access to this data without the password to\n{user} you must provide ' +\
+               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'New Sequencing Run Uploaded'
     elif message == 'ids_generated':
         body = 'Hello {email},\nthe user {user} uploaded {id_type}s for the study {study}. \n' +\
                'The aliquots are added and the IDs have been generated.\n\nBest,\nMmeds Team\n\n' +\
@@ -719,7 +727,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         subject = 'Password Change'
     elif message == 'analysis_start':
         body = 'Hello {user},\nYour requested {analysis} analysis on study {study} has started.\n' +\
-               'You will recieve another email when this analysis completes.\n' +\
+               'You will receive another email when this analysis completes.\n' +\
                'If you did not do this contact us immediately.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Started'
@@ -741,6 +749,11 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'Either submit a new analysis to the queue or wait until others finish.\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'Analysis Not Started'
+    elif message == 'watcher_termination':
+        body = 'Hello Admin,\nThe watcher process on minerva has been terminated and needs to be restarted.\n' +\
+               'Please delegate or do this as soon as possible.\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'Watcher Termination'
 
     email_body = body.format(
         user=user,
@@ -748,6 +761,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         email=toaddr,
         id_type=kwargs.get('id_type'),
         study=kwargs.get('study'),
+        run=kwargs.get('run'),
         code=kwargs.get('code'),
         analysis=kwargs.get('analysis'),
         password=kwargs.get('password'),
@@ -764,7 +778,7 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
         run(['/bin/bash', '-c', cmd], check=True)
 
 
-def recieve_email(user, message, text, max_count=120):
+def receive_email(user, message, text, max_count=120):
     """
     Checks for a email for USER of type MESSAGE containing TEXT
     COUNT: How many seconds to wait
@@ -1269,7 +1283,6 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     # then on every line mod4 = 2, print the line. then skip all other lines.
     create_fasta_file = ['sed', '-n', '-i', '1~4s/^@/>/p;2~4p', f'{test_file}']
 
-
     # Call qiime1 validate demultiplex script
     if on_chimera:
         validate_demux_file = f'ml python/2.7.9-UCS4; validate_demultiplexed_fasta.py -b -a\
@@ -1306,6 +1319,22 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
         ret_val = validate_output
 
     return ret_val
+
+
+def get_mapping_file_subset(metadata, selection, column="RawDataProtocolID"):
+    """ Create a sub-mapping file with only a certain selection included. For use splitting sequencing runs. """
+    Logger.debug(metadata)
+    df = pd.read_csv(metadata, sep='\t', header=[0])
+    drops = []
+
+    # Create list of 'drops' that do not match the selection
+    for i in range(1, len(df[column])):
+        if df[column][i] != selection:
+            drops.insert(0, i)
+
+    df.drop(df.index[drops], inplace=True)
+    return df
+
 
 def run_analysis(path, tool_type, testing=False):
     """

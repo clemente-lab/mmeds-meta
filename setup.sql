@@ -8,3 +8,5 @@ source sql/protected_views.sql;
 source sql/null_entries.sql;
 source sql/views.sql;
 source sql/triggers.sql;
+
+SET GLOBAL local_infile = true;

@@ -9,12 +9,14 @@ from multiprocessing.managers import BaseManager
 
 import mmeds.config as fig
 import mmeds.secrets as sec
-
 from mmeds.util import create_local_copy, load_config, send_email
+
 from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
+from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.error import AnalysisError, MissingUploadError
+
 from mmeds.tools.qiime1 import Qiime1
 from mmeds.tools.qiime2 import Qiime2
 from mmeds.tools.sparcc import SparCC
@@ -34,6 +36,9 @@ TOOLS = {
     'picrust1': PiCRUSt1,
     'test': TestTool
 }
+
+# The amount of steps with no jobs before the watcher will sleep
+TIMEOUT = 20
 
 
 def handle_modify_data(access_code, myData, user, data_type, testing):
@@ -61,6 +66,7 @@ class Watcher(BaseManager):
         """
         super().__init__(address, authkey)
         self.testing = fig.TESTING
+        Logger.debug(f"WATCHER SELF.TESTING: {self.testing}")
         self.count = 0
         self.processes = []
         self.running_processes = []
@@ -94,7 +100,7 @@ class Watcher(BaseManager):
             sleep(1)
 
     def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
-                       config_file, testing, run_on_node, kill_stage=-1):
+                       config_file, testing, sequencing_runs, run_on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
         # Create access code for this analysis
         with Database('.', owner=user, testing=testing) as db:
@@ -105,7 +111,7 @@ class Watcher(BaseManager):
         # Switch statment will go here
         try:
             tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type,
-                                    analysis_type, config, testing, run_on_node,
+                                    analysis_type, config, testing, sequencing_runs, run_on_node,
                                     kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
@@ -280,7 +286,7 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of analysis processes
         """
-        ptype, user, access_code, tool_type, analysis_type, config, kill_stage, run_on_node = process
+        ptype, user, access_code, tool_type, analysis_type, config, sequencing_runs, kill_stage, run_on_node = process
 
         # If running directly on the server node
         if run_on_node:
@@ -294,7 +300,7 @@ class Watcher(BaseManager):
 
         # Otherwise continue
         p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
-                                config, self.testing, kill_stage, run_on_node)
+                                config, self.testing, sequencing_runs, kill_stage, run_on_node)
         # Start the analysis running
         p.start()
         sleep(1)
@@ -314,25 +320,41 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of uploader processes
         """
+        Logger.debug("HANDLING UPLOAD")
         self.check_upload()
 
         # If there is nothing uploading currently start the new upload process
         if self.current_upload is None:
             # Check what type of upload this is
+
+            # Add metadata to existing study
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
                 p = MetaDataAdder(owner, access_code, aliquot_table, id_type, generate_id, self.testing)
+
+            # Add new sequencing run
+            elif 'run' in process[0]:
+                (ptype, sequencing_run_name, username, reads_type, barcodes_type,
+                 datafiles, public) = process
+
+                p = DataUploader(username, reads_type, barcodes_type, sequencing_run_name,
+                                 datafiles, public, self.testing)
+                self.db_lock.acquire()
+
+            # Add new study
             else:
+                Logger.debug(f"length: {len(process)}")
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
-                 username, reads_type, barcodes_type, datafiles, temporary, public) = process
+                 username, temporary, public) = process
                 # Start a process to handle loading the data
-                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', reads_type,
-                                     barcodes_type, study_name, temporary, datafiles, public, self.testing)
+                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime',
+                                     study_name, temporary, public, self.testing)
                 self.db_lock.acquire()
             p.start()
             self.add_process(ptype, p.access_code)
             with Database(testing=self.testing) as db:
                 doc = db.get_doc(p.access_code, False)
+            Logger.debug(doc.get_info())
             self.pipe.send(doc.get_info())
             # Keep track of this new process
             self.started.append(p.access_code)
@@ -374,7 +396,7 @@ class Watcher(BaseManager):
             self.count += 1
             # If there is nothing in the process queue, sleep
             if self.q.empty():
-                if self.count == 20:
+                if self.count >= TIMEOUT:
                     self.count = 0
                 sleep(3)
             else:
@@ -395,6 +417,8 @@ class Watcher(BaseManager):
                             process.kill()
                     # Notify other processes the watcher is exiting
                     self.pipe.send('Watcher exiting')
+                    # Send email notification of watcher termination to admin
+                    send_email(fig.CONTACT_EMAIL, 'admin', 'watcher_termination')
                     exit()
                 # If it's an analysis
                 elif process[0] == 'analysis':

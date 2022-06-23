@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from mmeds.logging import Logger
+from mmeds.database.database import Database
 import mmeds.config as fig
 import mmeds.spawn as sp
 
@@ -26,14 +27,12 @@ class SpawnTests(TestCase):
 
     def test_a_upload_data(self):
         """ Test uploading data through the queue """
-        test_files = {'for_reads': fig.TEST_READS, 'barcodes': fig.TEST_BARCODES}
-
         # Add multiple uploads from different users
         self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER, 'single_end', 'single_barcodes', test_files, False, False))
+                    fig.TEST_USER, False, False))
 
         self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER_0, 'single_end', 'single_barcodes', test_files, False, False))
+                    fig.TEST_USER_0, False, False))
 
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time
@@ -63,7 +62,7 @@ class SpawnTests(TestCase):
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, True, -1))
+            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, {}, True, -1))
 
         Logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
@@ -83,8 +82,10 @@ class SpawnTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
         self.assertEqual(self.pipe.recv(), 0)
 
+    @skip
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
+        Logger.info("restarting analysis")
         for proc in self.analyses:
             self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
             # Get the test tool
@@ -93,14 +94,16 @@ class SpawnTests(TestCase):
         self.assertEqual(self.pipe.recv(), 0)
 
     def test_d_node_analysis(self):
+        Logger.info("node analysis")
         for i in range(3):
-            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, True, -1))
+            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, {}, True, -1))
         for i in range(3):
             result = self.pipe.recv()
             Logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')
 
     def test_e_generate_ids(self):
+        Logger.info("generate ids")
         # Get the initial results
         for (utype, ufile) in [('aliquot', fig.TEST_ALIQUOT_UPLOAD), ('sample', fig.TEST_SAMPLE_UPLOAD)]:
             self.q.put(('upload-ids',

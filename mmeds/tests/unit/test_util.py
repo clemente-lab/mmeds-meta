@@ -18,6 +18,7 @@ class UtilTests(TestCase):
     def test_load_stats(self):
         util.load_mmeds_stats()
 
+    @skip
     def test_simplified_to_full(self):
         df = util.simplified_to_full(fig.TEST_SUBJECT_SIMPLIFIED, '/tmp/subject_df.tsv', 'subject')
         df2 = util.simplified_to_full(fig.TEST_SPECIMEN_SIMPLIFIED, '/tmp/specimen_df.tsv', 'specimen')
@@ -25,12 +26,14 @@ class UtilTests(TestCase):
                                                             df2['Study']['StudyName'][4],
                                                             'subject',
                                                             [],
-                                                            'human')
+                                                            'human',
+                                                            user=fig.TEST_USER)
         errors, warnings, subjects = validate_mapping_file('/tmp/specimen_df.tsv',
                                                            df2['Study']['StudyName'][5],
                                                            'specimen',
                                                            subjects,
-                                                           'human')
+                                                           'human',
+                                                           user=fig.TEST_USER)
         for error in errors:
             print(error)
         for warning in warnings:

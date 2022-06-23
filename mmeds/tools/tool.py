@@ -27,7 +27,7 @@ class Tool(mp.Process):
     will happen in seperate processes when Process.start() is called.
     """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
                  run_on_node, threads=10, analysis=True, child=False, restart_stage=0, kill_stage=-1):
         """
         Setup the Tool class
@@ -37,6 +37,7 @@ class Tool(mp.Process):
         :atype: A string. The type of analysis to perform. Qiime1 or 2, DADA2 or DeBlur.
         :config: A file object. A custom config file, may be None.
         :testing: A boolean. If True run with configurations for a local server.
+        :runs: a dictionary of sequencing runs with their paths and files
         :threads: An int. The number of threads to use during analysis, is overwritten if testing==True.
         :analysis: A boolean. If True run a new analysis, if false just summarize the previous analysis.
         :child: A boolean. If True this Tool object is the child of another tool.
@@ -74,6 +75,7 @@ class Tool(mp.Process):
         self.config = config
         self.kill_stage = kill_stage
         self.access_code = access_code
+        self.sequencing_runs = runs
 
         if testing:
             self.num_jobs = 2
@@ -792,10 +794,10 @@ class TestTool(Tool):
     A class for running tool methods during testing with minimal overhead
     """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
-                 analysis=True, restart_stage=0, kill_stage=-1, time=10):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
-                         analysis=analysis, restart_stage=restart_stage)
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+                 run_on_node, analysis=True, restart_stage=0, kill_stage=-1, time=10):
+        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+                         run_on_node, analysis=analysis, restart_stage=restart_stage)
         print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))
         self.time = time
 

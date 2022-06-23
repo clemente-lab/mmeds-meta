@@ -35,7 +35,7 @@ class MMEDSDoc(men.Document):
     barcodes_type = men.StringField(max_length=45)  # Single or Paired
     data_type = men.StringField(max_length=45)  #
     tool_type = men.StringField(max_length=45)  # Type of tool
-    doc_type = men.StringField(max_length=45)  # Study or Analysis
+    doc_type = men.StringField(max_length=45)  # Study, Analysis, or SequencingRun
     analysis_type = men.StringField(max_length=45)
 
     # Stages: created, started, <Name of last method>, finished, errored

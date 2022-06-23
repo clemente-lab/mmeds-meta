@@ -16,11 +16,6 @@ class cleanProject(install):
     """Custom clean command to tidy up the project root."""
     def run(self):
         install.run(self)
-        print('Cleaning out build artifacts')
-        try:
-            shutil.rmtree('build')
-        except FileNotFoundError:
-            print('no build folder to remove')
 
         try:
             shutil.rmtree('dist')
@@ -32,9 +27,17 @@ class cleanProject(install):
         except FileNotFoundError:
             print('no egg-info folder to remove')
 
+        """
+        print('Cleaning out build artifacts')
+        try:
+            shutil.rmtree('build')
+        except FileNotFoundError:
+            print('no build folder to remove')
+        """
+
 
 setup(name='mmeds',
-      version='0.6.0',
+      version='0.7.1',
       description='',
       classifiers=[
           'Development Status :: 3 - Alpha',
@@ -57,10 +60,9 @@ setup(name='mmeds',
           'cherrypy==18.6.0',
           'codecov==2.1.11',
           'setuptools>=46.4.0',
-          'jupyter==1.0.0',
-          'jupyter-client<7.0.0',
           'mongoengine==0.23.0',
           'numpy==1.21.0',
+          'nbformat',
           'pandas==1.2.3',
           'pandoc==2.0a4',
           'pint==0.17',

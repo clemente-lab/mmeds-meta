@@ -3,12 +3,17 @@
         <h5><b><i class="fas fa-server" aria-hidden="true"></i> Select Upload Operation </b></h5>
     </header>
     <div class="w3-bar w3-card-4 w3-dark-grey">
-        <button onclick="openStudyAction(event, 'NewUpload')" class="action-link w3-half w3-button">
+        <button onclick="openStudyAction(event, 'NewSequencingRun')" class="action-link w3-third w3-button">
             <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
             <div class="w3-clear"></div>
-            <h4>Upload New Dataset</h4>
+            <h4>Upload New Sequencing Run</h4>
         </button>
-        <button onclick="openStudyAction(event, 'AddData')" class="action-link w3-half w3-button">
+        <button onclick="openStudyAction(event, 'NewUpload')" class="action-link w3-third w3-button">
+            <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
+            <div class="w3-clear"></div>
+            <h4>Upload New Study</h4>
+        </button>
+        <button onclick="openStudyAction(event, 'AddData')" class="action-link w3-third w3-button">
             <i class="fa fa-eye w3-xxxlarge" aria-hidden="true"></i>
             <div class="w3-clear"></div>
             <h4>Add Data to Study</h4>
@@ -18,6 +23,30 @@
     <hr>
 
     <!-- Sections of the page that only appear upon selection -->
+    <div id="NewSequencingRun" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
+        <!-- Header -->
+        <header class="w3-container w3-padding-top">
+            <h5><b> <i class="fa fa-cloud-upload "></i> Upload Sequencing Run</b></h5>
+        </header>
+
+        <!-- Upload Form-->
+        <form class="w3-container w3-padding" action="{upload_sequencing_run_page}" method="post" enctype="multipart/form-data" id="run_upload_form">
+            <p>
+            <label><b>Barcodes Type</b></label>
+            <select class="w3-select w3-border" name="barcodes_type" form="run_upload_form" required>
+                <option value='single' selected='selected'>Single Barcode</option>
+                <option value='dual'>Dual Barcodes (MTC Pheniqs)</option>
+                <option value='dual_x'>Dual Barcodes (Legacy Cutadapt)</option>
+                <option value='other'>No Barcodes (Already Demultiplexed)</option>
+            </select>
+            </p>
+            <p>
+            <label><b>Sequencing Run Name</b></label>
+            <input class="w3-input w3-border" type="text" name="run_name" required>
+            </p>
+            <p><button class="w3-btn w3-dark-grey" type="submit" method="post">Begin Upload</button></p>
+        </form>
+    </div>
     <div id="NewUpload" class="study-action w3-container w3-row-padding w3-margin-bottom" style="display:none">
         <!-- Header -->
         <header class="w3-container w3-padding-top">

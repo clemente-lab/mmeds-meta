@@ -18,6 +18,7 @@ from mmeds.config import UPLOADED_FP, HTML_PAGES, HTML_ARGS, SERVER_PATH
 from mmeds.authentication import (validate_password, check_username, check_password, check_privileges,
                                   add_user, reset_password, change_password)
 from mmeds.database.database import Database
+from mmeds.database.documents import MMEDSDoc
 from mmeds.spawn import handle_modify_data, Watcher
 from mmeds.logging import Logger
 
@@ -232,6 +233,7 @@ class MMEDSdownload(MMEDSbase):
         the `cp.session['download_files']` dictionary with the `file_name` as the key and
         the path to the file on disk as the value.
         """
+        Logger.debug(f"avail: {cp.session['download_files']}")
         return static.serve_file(cp.session['download_files'][file_name], 'application/x-download',
                                  'attachment', Path(cp.session['download_files'][file_name]).name)
 
@@ -282,14 +284,21 @@ class MMEDSstudy(MMEDSbase):
             <td>{date_created}</td>
             <td>{num_analyses}</td>
         </tr> '''
+        run_html = ''' <tr class="w3-hover-blue">
+            <td>{sequencing_run}</td>
+            <td>{date_created}</td>
+            <td>{num_analyses}</td>
+        </tr> '''
         # If user has elevated privileges show them all uploaded studies
         if check_privileges(self.get_user(), self.testing):
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_studies()
+                runs = db.get_all_sequencing_runs()
         # Otherwise only show studies they've uploaded
         else:
             with Database(path='.', testing=self.testing) as db:
                 studies = db.get_all_user_studies(self.get_user())
+                runs = db.get_all_user_sequencing_runs(self.get_user())
         cp.log("Found {} studies".format(len(studies)))
 
         study_list = []
@@ -301,12 +310,18 @@ class MMEDSstudy(MMEDSbase):
                                                 access_code=study.access_code,
                                                 date_created=study.created,
                                                 num_analyses=analyses_count))
+        run_list = []
+        for run in runs:
+            run_list.append(run_html.format(sequencing_run=run.study_name,
+                                            date_created=run.created,
+                                            num_analyses=0))
 
         cp.log("Build out study list")
         page = self.load_webpage('study_select_page',
                                  title='Select Study',
                                  user_studies='\n'.join(study_list),
-                                 public_studies="")
+                                 public_studies="",
+                                 user_sequencing_runs='\n'.join(run_list))
 
         cp.log("Built out page")
         return page
@@ -436,7 +451,9 @@ class MMEDSupload(MMEDSbase):
                           cp.session['metadata_type'],
                           cp.session['subject_ids'],
                           cp.session['subject_type'],
-                          cp.session.get('barcodes_type'))
+                          cp.session.get('barcodes_type'),
+                          user=self.get_user(),
+                          testing=self.testing)
         cp.log('before validator run')
 
         # Check the metadata file for errors
@@ -470,6 +487,7 @@ class MMEDSupload(MMEDSbase):
         files = {}
         for key, value in kwargs.items():
             if value is not None:
+                Logger.debug(f"load_data_files: \n{value}\n{value.filename}\n{self.get_dir()}")
                 file_copy = create_local_copy(value.file, value.filename, self.get_dir())
                 files[key] = file_copy
         return files
@@ -541,7 +559,7 @@ class MMEDSupload(MMEDSbase):
             elif cp.session['metadata_type'] == 'specimen':
                 # If it's the specimen metadata file, save the type of barcodes
                 # And return the page for uploading data files
-                page = self.upload_data()
+                page = self.process_study()
         return page
 
     ########################
@@ -713,15 +731,11 @@ class MMEDSupload(MMEDSbase):
         # Only arrive here if there are no errors or warnings proceed to upload the data files
         alert = '{} metadata uploaded successfully'.format(cp.session['metadata_type'].capitalize())
 
-        # Move on to uploading data files
+        # Both metadata files have been uploaded, continue to processing
         if cp.session['metadata_type'] == 'specimen':
             # The case for handling uploads of fastq files
-            page = self.load_webpage(
-                'upload_data_files',
-                title='Upload Data',
-                success=alert
-            )
-        # Move on to uploading specimen metadata
+            page = self.process_study()
+        # Only subject file has been uploaded, load specimen upload page
         else:
             cp.session['metadata_type'] = 'specimen'
             page = self.load_webpage('upload_specimen_file',
@@ -775,7 +789,7 @@ class MMEDSupload(MMEDSbase):
                 # Pass it to the watcher
                 self.q.put(('upload-ids', self.get_user(), accessCode, data_file['idFile'], idType, generateID))
                 success = f'{idType.capitalize()} Data Upload Initiated.' +\
-                    'You will recieve an email when it finishes'
+                    'You will receive an email when it finishes'
             else:
                 error = f'There was an issue with your {idType} file. Please check the example.'
         return self.load_webpage('home', success=success, error=error)
@@ -800,9 +814,100 @@ class MMEDSupload(MMEDSbase):
         return page
 
     @cp.expose
-    def process_data(self, public=False, **kwargs):
-        """ The page for loading data files into the database """
+    def upload_sequencing_run(self, barcodes_type=None, run_name=None):
+        """
+        Page for uploading sequencing run data.
+        """
+
+        if barcodes_type is None and run_name is None:
+            # If neither of these value are being passed in from the webpage then the
+            # page is being reset to here from a further point in the upload process,
+            # pull data from cp.session and proceed.
+            barcodes_type = cp.session['barcodes_type']
+            run_name = cp.session['run_name']
+
+        try:
+            cp.session['run_name'] = run_name
+            cp.session['barcodes_type'] = barcodes_type
+
+            with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
+                db.check_sequencing_run_name(run_name)
+                page = self.load_webpage('upload_sequencing_run',
+                                         title='Upload Sequencing Run')
+
+        # If the study name is already in use instruct the user to try something else.
+        except(err.StudyNameError) as e:
+            with Database(testing=self.testing) as db:
+                studies = db.get_all_user_studies(self.get_user())
+                study_dropdown = fmt.build_study_code_dropdown(studies)
+                page = self.load_webpage('upload_select_page',
+                                         title='Upload Type',
+                                         user_studies=study_dropdown,
+                                         error=e.message)
+        return page
+
+    @cp.expose
+    def process_sequencing_run(self, public=False, **kwargs):
+        """ The page for uploading sequencing run into the database """
+        if cp.session['barcodes_type'].startswith('dual'):
+            cp.log("Upload is Qiime Dual Barcodes")
+            # If have dual barcodes, don't have a reads_type in kwargs so must set it
+            datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                             rev_reads=kwargs['rev_reads'],
+                                             for_barcodes=kwargs['barcodes'],
+                                             rev_barcodes=kwargs['rev_barcodes'])
+            reads_type = 'paired_end'
+            barcodes_type = 'dual_barcodes'
+            if cp.session['barcodes_type'].endswith('x'):
+                barcodes_type += '_legacy'
+        else:
+            cp.log("Upload is Qiime Single Barcodes")
+            barcodes_type = 'single_barcodes'
+            try:
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                rev_reads=kwargs['rev_reads'],
+                                                barcodes=kwargs['barcodes'])
+            except KeyError:
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                barcodes=kwargs['barcodes'])
+            reads_type = kwargs['reads_type']
+
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        self.q.put(('upload-run', cp.session['run_name'], self.get_user(),
+                    reads_type, barcodes_type, datafiles, public))
+
+        return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
+
+    @cp.expose
+    def process_study(self, public=False, **kwargs):
         # Create a unique dir for handling files uploaded by this user
+        subject_metadata = Path(cp.session['uploaded_files']['subject'])
+        specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
+
+        cp.log("Server putting upload in queue {}".format(id(self.q)))
+        # Add the files to be uploaded to the queue for uploads
+        # This will be handled by the Watcher class found in spawn.py
+        Logger.debug(f"\nstudy_name: {cp.session['study_name']}\n \
+                     subject_metadata: {subject_metadata.name}\n \
+                     subject_type: {cp.session['subject_type']}\n \
+                     specimen_metadata: {specimen_metadata.name}\n \
+                     user: {self.get_user()}\n \
+                     ")
+        self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
+                    specimen_metadata, self.get_user(), False, public))
+
+        return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
+
+    @cp.expose
+    def process_data(self, public=False, **kwargs):
+        """
+        The page for loading data files into the database
+        -------------------------------------------------------------------------------------------
+        This function is not currently in use, having been restructured regarding the separation of
+        studies and sequencing runs. Keeping here for future reference for sparcc and lefse uploads
+        """
         subject_metadata = Path(cp.session['uploaded_files']['subject'])
         specimen_metadata = Path(cp.session['uploaded_files']['specimen'])
 
@@ -861,7 +966,7 @@ class MMEDSupload(MMEDSbase):
                     specimen_metadata, self.get_user(), reads_type, barcodes_type, datafiles,
                     cp.session['subject_type'], public))
 
-        return self.load_webpage('home', success='Upload Initiated. You will recieve an email when this finishes')
+        return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 
 
 @decorate_all_methods(catch_server_errors)
@@ -1069,6 +1174,11 @@ class MMEDSanalysis(MMEDSbase):
             # Check that the requested upload exists
             # Getting the files to check the config options match the provided metadata
             files = self.check_upload(access_code)
+            Logger.debug(files)
+            with Database(testing=self.testing) as db:
+                sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
+
+            Logger.debug(sequencing_runs)
 
             if isinstance(config, str):
                 config_path = config
@@ -1081,10 +1191,11 @@ class MMEDSanalysis(MMEDSbase):
             util.load_config(config_path, files['metadata'])
 
             # -1 is the kill_stage (used when testing)
-            self.q.put(('analysis', self.get_user(), access_code, tool_type,
-                        analysis_type, config_path, -1, runOnNode))
+            if not analysis_method == 'test':
+                self.q.put(('analysis', self.get_user(), access_code, tool_type,
+                            analysis_type, config_path, sequencing_runs, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
-                                     success='Analysis started you will recieve an email shortly')
+                                     success='Analysis started you will receive an email shortly')
         except (err.InvalidConfigError, err.MissingUploadError,
                 err.UploadInUseError, err.PrivilegeError) as e:
             page = self.load_webpage('analysis_select_tool', title='Select Analysis', error=e.message)
@@ -1354,6 +1465,7 @@ class MMEDSquery(MMEDSbase):
         cp.session['generate_sample_id'] = (AccessCode, AliquotID)
         return page
 
+
 @decorate_all_methods(catch_server_errors)
 class MMEDSerror(MMEDSbase):
     """
@@ -1362,17 +1474,19 @@ class MMEDSerror(MMEDSbase):
     """
     def __init__(self):
         super().__init__()
+        # To add other error codes, include here in format 'error_page.xxx': self.error_page
         cp.config.update({'error_page.404': self.error_page,
                           'error_page.500': self.error_page})
 
     @cp.expose
     def error_page(self, status, message, traceback, version):
         page = self.load_webpage('error_page',
-                                status=status,
-                                traceback=traceback,
-                                message=message,
-                                version=version)
+                                 status=status,
+                                 traceback=traceback,
+                                 message=message,
+                                 version=version)
         return page
+
 
 @decorate_all_methods(catch_server_errors)
 class MMEDSserver(MMEDSbase):

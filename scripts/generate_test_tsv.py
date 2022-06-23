@@ -20,7 +20,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('-p', '--path', default='../test_files/', show_default=True, 
+@click.option('-p', '--path', default='../test_files/', show_default=True,
         type=click.Path(exists=True), help='Path to put the created test files')
 
 def main(path):
@@ -37,7 +37,7 @@ def main(path):
     #Create the specimens' test files
     spec_df = pd.read_csv(fig.TEST_SPECIMEN_SHORT, sep='\t', header=[0,1], na_filter=False)
     write_error_files(spec_df, 'specimen', file_path)
- 
+
 def write_test_metadata(df, output_path, output_name):
     """
     Write a dataframe or dictionary to a mmeds format metadata file.
@@ -65,11 +65,11 @@ def write_test_metadata(df, output_path, output_name):
     output = Path(output_path) / output_name
     if not output.exists():
         output.touch()
+    print("writing", output_name)
     output.write_text('\n'.join(lines) + '\n')
 
 
 def write_error_files(df, file_type, file_path):
-    
     # Get headers and prepare replacement length
     headers = df.columns
     headerCount = 3
@@ -79,7 +79,6 @@ def write_error_files(df, file_type, file_path):
     for header in headers:
         blank_column = df.copy(deep=True)
         blank_column.loc[headerCount:len(df), header] = np.array([''] * diff)
-        
         write_test_metadata(blank_column, file_path / 'blank_column_tests' / file_type, f'blank_{header[1]}.tsv')
 
     # NA data columns
@@ -92,7 +91,6 @@ def write_error_files(df, file_type, file_path):
     # Other data columns
     for header in headers:
         other_column = df.copy(deep=True)
-        
         # Get another column, ensure it is not the same as being tested
         while True:
             other_header = headers[randrange(len(headers))]

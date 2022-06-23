@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from prettytable import PrettyTable, ALL
 from collections import defaultdict
+
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError, StudyNameError,
                          MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes)
@@ -30,17 +31,10 @@ def upload_metadata(args):
     This function wraps the metadatauploader class for when you want to run the upload
     in the current process rather than spinning up a new one
     """
-    (subject_metadata, subject_type, specimen_metadata, path, owner, study_name,
-     reads_type, barcodes_type, for_reads, rev_reads, barcodes, access_code, testing) = args
-    if for_reads is not None and 'zip' in for_reads:
-        datafiles = {'data': for_reads,
-                     'barcodes': barcodes}
-    else:
-        datafiles = {'for_reads': for_reads,
-                     'rev_reads': rev_reads,
-                     'barcodes': barcodes}
-    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime', reads_type,
-                         barcodes_type, study_name, False, datafiles, False, testing, access_code)
+    (subject_metadata, subject_type, specimen_metadata, owner, study_name, testing, access_code) = args
+
+    p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime',
+                         study_name, False, False, testing, access_code)
     return p.run()
 
 
@@ -967,8 +961,42 @@ class Database:
         """ Verifies the provided study name is valid and not already in use. """
         if not study_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
-        if MMEDSDoc.objects(study_name=study_name):
+        if MMEDSDoc.objects(study_name=study_name, doc_type='study'):
             raise StudyNameError(f"Study name {study_name} already in use")
+
+    def check_sequencing_run_name(self, run_name):
+        """ Verifies the provided sequencing run name is valid and not already in use. """
+        if not run_name.replace('_', '').isalnum():
+            raise StudyNameError("Only alpha-numeric characters and '_' are allowed in the sequencing run name")
+        if MMEDSDoc.objects(study_name=run_name, doc_type='sequencing_run'):
+            raise StudyNameError(f"Sequencing Run name {run_name} already in use")
+
+    def get_sequencing_run_locations(self, metadata, user, column=("RawDataProtocol", "RawDataProtocolID")):
+        """ Returns the list of sequencing runs as a dict of dir paths """
+        df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+
+        # Store run names from metadata
+        runs = []
+        for run in df[column]:
+            if run not in runs:
+                runs.append(run)
+
+        # Get paths, these should exist due to already checking during validation
+        run_paths = {}
+        for run in runs:
+            doc = MMEDSDoc.objects(doc_type='sequencing_run', study_name=run, owner=user).first()
+            run_paths[run] = {}
+            # Get individual files within sequencing run directories
+            with open(Path(doc.path) / fig.SEQUENCING_DIRECTORY_FILE, "rt") as f:
+                content = f.read().split('\n')
+                # Read the key value pair of datafile type and file location
+                for line in content:
+                    # Ensure the line is consistent with the expected format
+                    if ": " in line:
+                        key, val = line.split(": ")
+                        run_paths[run][key] = Path(doc.path) / val
+
+        return run_paths
 
     def get_all_studies(self):
         """ Return all studies currently stored in the database. """
@@ -977,6 +1005,14 @@ class Database:
     def get_all_analyses(self):
         """ Return all analyses currently stored in the database. """
         return MMEDSDoc.objects(doc_type='analysis')
+
+    def get_all_sequencing_runs(self):
+        """ Return all sequencing runs currently stored in the database. """
+        return MMEDSDoc.objects(doc_type='sequencing_run')
+
+    def get_all_user_sequencing_runs(self, user):
+        """ Return all sequencing runs currently stored in the database owned by USER. """
+        return MMEDSDoc.objects(doc_type='sequencing_run', owner=user)
 
     def get_all_user_studies(self, user):
         """ Return all studies currently stored in the database owned by USER. """

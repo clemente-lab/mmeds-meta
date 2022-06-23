@@ -23,8 +23,7 @@ class MetaDataUploader(Process):
     This class handles the yprocessing and uploading of mmeds metadata files into the MySQL database.
     """
     def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
-                 reads_type, barcodes_type, study_name, temporary, data_files,
-                 public, testing, access_code=None):
+                 study_name, temporary, public, testing, access_code=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -43,11 +42,8 @@ class MetaDataUploader(Process):
             'specimen_metadata': specimen_metadata,
             'owner': owner,
             'study_type': study_type,
-            'reads_type': reads_type,
-            'barcodes_type': barcodes_type,
             'study_name': study_name,
             'temporary': temporary,
-            'data_files': data_files,
             'public': public,
             'testing': testing
         })
@@ -57,14 +53,11 @@ class MetaDataUploader(Process):
         self.owner = owner
         self.testing = testing
         self.study_type = study_type
-        self.reads_type = reads_type
-        self.barcodes_type = barcodes_type
         self.subject_metadata = Path(subject_metadata)
         self.specimen_metadata = Path(specimen_metadata)
         self.study_name = study_name
         self.temporary = temporary
         self.public = public
-        self.datafiles = data_files
         self.created = datetime.now()
 
         # Like Database, this should be replaced with a switch statement
@@ -109,8 +102,6 @@ class MetaDataUploader(Process):
                               testing=self.testing,
                               doc_type='study',
                               tool_type=self.study_type,
-                              reads_type=self.reads_type,
-                              barcodes_type=self.barcodes_type,
                               study_name=self.study_name,
                               access_code=self.access_code,
                               owner=self.owner,
@@ -204,16 +195,12 @@ class MetaDataUploader(Process):
             self.user_id = 1
         self.check_file = fig.DATABASE_DIR / 'last_check.dat'
 
-        # Create a copy of the Data file
-        datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),
-                                                  filepath, self.path.parent)
-                           for key, filepath in self.datafiles.items()
-                           if filepath is not None}
-        self.import_metadata(**datafile_copies)
-
+        # Save files to document
+        self.import_metadata()
         # Send the confirmation email
         send_email(self.email, self.owner, message='upload', study=self.study_name,
                    code=self.access_code, testing=self.testing)
+
         # Update the doc to reflect the successful upload
         self.mdata.update(is_alive=False, exit_code=0)
         self.mdata.save()
@@ -249,7 +236,6 @@ class MetaDataUploader(Process):
                 if not table == 'AdditionalMetaData':
                     self.create_import_data(table)
                     filename = self.create_import_file(table)
-
                     if isinstance(filename, WindowsPath):
                         filename = str(filename).replace('\\', '\\\\')
                     # Load the newly created file into the database

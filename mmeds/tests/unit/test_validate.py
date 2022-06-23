@@ -1,6 +1,7 @@
 from unittest import TestCase
 import mmeds.validate as valid
 import mmeds.config as fig
+from mmeds.logging import Logger
 from pathlib import Path
 
 class ValidateTests(TestCase):
@@ -10,7 +11,9 @@ class ValidateTests(TestCase):
                                                                  'Good_Study',
                                                                  'subject',
                                                                  None,
-                                                                 'animal')
+                                                                 'animal',
+                                                                 user=fig.TEST_USER,
+                                                                 testing=True)
         assert not errors
         assert not warnings
 
@@ -18,7 +21,9 @@ class ValidateTests(TestCase):
                                                                  'Good_Study',
                                                                  'specimen',
                                                                  subjects,
-                                                                 'animal')
+                                                                 'animal',
+                                                                 user=fig.TEST_USER,
+                                                                 testing=True)
         assert not errors
         assert not warnings
 
@@ -26,7 +31,9 @@ class ValidateTests(TestCase):
                                                                  'Good_Study',
                                                                  'subject',
                                                                  None,
-                                                                 'human')
+                                                                 'human',
+                                                                 user=fig.TEST_USER,
+                                                                 testing=True)
         assert not errors
         assert not warnings
 
@@ -34,7 +41,9 @@ class ValidateTests(TestCase):
                                                                  'Good_Study',
                                                                  'specimen',
                                                                  subjects,
-                                                                 'human')
+                                                                 'human',
+                                                                 user=fig.TEST_USER,
+                                                                 testing=True)
         assert not errors
         assert not warnings
 
@@ -52,7 +61,9 @@ class ValidateTests(TestCase):
                                                                          'Validate_Study',
                                                                          metadata_type,
                                                                          subject_ids,
-                                                                         'human')
+                                                                         'human',
+                                                                         user=fig.TEST_USER,
+                                                                         testing=True)
                 if subject_ids is None:
                     subject_ids = subjects
 
@@ -73,11 +84,14 @@ class ValidateTests(TestCase):
             for test_file in warning_files:
                 name = Path(test_file).name
                 warning = ' '.join(name.split('.')[0].split('_')[3:])
+                Logger.debug(f'filename: {test_file}')
                 warnings, warnings, subjects = valid.validate_mapping_file(test_file,
                                                                            'Validate_Study',
                                                                            metadata_type,
                                                                            subject_ids,
-                                                                           'human')
+                                                                           'human',
+                                                                           user=fig.TEST_USER,
+                                                                           testing=True)
                 if subject_ids is None:
                     subject_ids = subjects
 

@@ -46,4 +46,6 @@ class UploaderTests(TestCase):
         assert 0 == upload_metadata(self.test_fastq)
 
     def test_uploader(self):
+        # Not running this test, this functionality at present has been removed
+        return
         assert 0 == upload_otu(self.test_otu)

@@ -61,6 +61,7 @@ else:
 
 
 STUDIES_DIR = DATABASE_DIR / 'studies'
+SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 
 ############################
@@ -130,6 +131,7 @@ HTML_PAGES = {
     # Upload Pages
     'user_guide': (HTML_DIR / 'user_guide.html', True),
     'simple_guide': (HTML_DIR / 'simple_guide.html', True),
+    'upload_sequencing_run': (HTML_DIR / 'upload_sequencing_run.html', True),
     'upload_metadata_error': (HTML_DIR / 'upload_metadata_error.html', True),
     'upload_specimen_file': (HTML_DIR / 'upload_specimen_file.html', True),
     'upload_subject_file': (HTML_DIR / 'upload_subject_file.html', True),
@@ -191,9 +193,11 @@ HTML_ARGS = {
     'settings_page': '#',
 
     # Upload Pages
+    'upload_sequencing_run_page': SERVER_PATH + 'upload/upload_sequencing_run',
     'upload_subject_metadata_page': SERVER_PATH + 'upload/upload_subject_metadata',
     'upload_specimen_metadata_page': SERVER_PATH + 'upload/upload_specimen_metadata',
     'validate_metadata_page': SERVER_PATH + 'upload/validate_metadata',
+    'process_sequencing_run_page': SERVER_PATH + 'upload/process_sequencing_run',
     'process_data_page': SERVER_PATH + 'upload/process_data',
     'retry_upload_page': SERVER_PATH + 'upload/retry_upload',
     'continue_metadata_upload': SERVER_PATH + 'upload/continue_metadata_upload',
@@ -281,6 +285,12 @@ if not DATABASE_DIR.exists():
 if not STUDIES_DIR.exists():
     try:
         STUDIES_DIR.mkdir()
+    except FileExistsError:
+        pass
+
+if not SEQUENCING_DIR.exists():
+    try:
+        SEQUENCING_DIR.mkdir()
     except FileExistsError:
         pass
 
@@ -425,11 +435,12 @@ SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 CONFIG_EXAMPLE = str(TEST_PATH / 'config_example.yaml')
 
 
-# Demultiplexing Qiime Defaults
+# Defaults
 QIIME_SAMPLE_ID_CATS = ('#SampleID', '#q2:types')
 QIIME_FORWARD_BARCODE_CATS = ('BarcodeSequence', 'categorical')
 QIIME_REVERSE_BARCODE_CATS = ('BarcodeSequenceR', 'categorical')
 FASTQ_FILENAME_TEMPLATE = '{}_S1_L001_R{}_001.fastq.gz'
+SEQUENCING_DIRECTORY_FILE = 'directory.txt'
 
 TEST_FILES = {
     'barcodes': TEST_BARCODES,
