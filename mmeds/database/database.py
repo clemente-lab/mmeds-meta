@@ -998,20 +998,6 @@ class Database:
 
         return run_paths
 
-    def get_sequencing_run_from_name(self, run_name):
-        doc = MMEDSDoc.objects(doc_type='sequencing_run', study_name=run_name).first()
-        run_paths = {'name': run_name}
-
-        # Get individual files within sequencing run directory
-        with open(Path(doc.path) / fig.SEQUENCING_DIRECTORY_FILE, "rt") as f:
-            content = f.read().split('\n')
-            for line in content:
-                if ": " in line:
-                    key, val = line.split(": ")
-                    run_paths[key] = Path(doc.path) / val
-
-        return run_paths
-
     def get_all_studies(self):
         """ Return all studies currently stored in the database. """
         return MMEDSDoc.objects(doc_type='study')
