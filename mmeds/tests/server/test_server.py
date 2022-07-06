@@ -599,7 +599,7 @@ class TestServer(helper.CPWebCase):
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
         self.getPage('/upload/validate_metadata?barcodes_type=single', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
-        standard_error = ('-1\t-1\tIllegal Table Error: Table {} should not be the metadata')
+        standard_error = ('-1\t-1\tIllegal Table Error: Table {} should not be in the metadata')
         error_message = [('-1\t-1\tMissing Table Error: Missing tables Ethnicity, Genotypes, Heights, ICDCode,' +
                           ' Illness, Intervention, Interventions, SubjectType, Subjects, Weights')]
         error_categories = ['Aliquot',
