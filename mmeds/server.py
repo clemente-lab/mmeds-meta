@@ -472,7 +472,19 @@ class MMEDSupload(MMEDSbase):
                 # Perform additional checks that the Validator has insufficient information
                 # to perform during it's run
                 if cp.session['metadata_type'] == 'subject':
-                    warnings += db.check_repeated_subjects(subjects, cp.session['subject_type'])
+                    # Give separate subject tables for animal and human
+                    if cp.session['subject_type'] == 'mixed':
+                        human_df = subjects.iloc[:, 0:4]
+                        animal_df = subjects.iloc[:, 4:8]
+                        # Drop rows of other DF
+                        human_df.dropna(how='all')
+                        animal_df.dropna(how='all')
+
+                        warnings += db.check_repeated_subjects(human_df, 'human')
+                        warnings += db.check_repeated_subjects(animal_df, 'animal')
+
+                    else:
+                        warnings += db.check_repeated_subjects(subjects, cp.session['subject_type'])
                     cp.session['subject_ids'] = subjects
                 elif cp.session['metadata_type'] == 'specimen':
                     errors += db.check_user_study_name(cp.session['study_name'])

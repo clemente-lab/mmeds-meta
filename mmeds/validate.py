@@ -300,7 +300,7 @@ class Validator:
             err = 'Cell Wrong Type Error: Cell {} contains the wrong type of values'
             self.errors.append(row_col + err.format(cell))
 
-    def check_column(self, column):
+    def check_column(self, column, complement=None):
         """
         Validate that there are no issues with the provided column of metadata.
         =======================================================================
@@ -324,8 +324,10 @@ class Validator:
             for i, cell in enumerate(column):
                 if pd.isna(cell):
                     # Check for missing required fields
+                    # Subject ID allowed to be NA if non-NA Subject ID of another type in the same row
                     if not self.cur_table == 'AdditionalMetaData' and\
-                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required' and\
+                            not (complement is not None and not pd.isna(complement[i])):
                         Logger.debug(f"Cell shouldn't be NA: {self.cur_col}")
                         err = f'{{}}\t{{}}\tMissing Required Value Error: {self.cur_col}'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
@@ -378,7 +380,15 @@ class Validator:
             col = self.table_df[self.cur_col]
             Logger.debug("run check_column")
             # Check the column itself
-            self.check_column(col)
+            if self.subject_type == 'mixed':
+                if self.cur_col == 'AnimalSubjectID':
+                    self.check_column(col, complement=self.df['Subjects']['HostSubjectId'])
+                elif self.cur_col == 'HostSubjectId':
+                    self.check_column(col, complement=self.df['AnimalSubjects']['AnimalSubjectID'])
+                else:
+                    self.check_column(col)
+            else:
+                self.check_column(col)
             Logger.debug("ran check_columns")
             # Perform column specific checks
             if self.cur_table == 'RawData':
@@ -522,6 +532,11 @@ class Validator:
                                                         sep=self.sep,
                                                         header=[0, 1],
                                                         nrows=3)
+                elif self.subject_type == 'mixed':
+                    self.reference_header = pd.read_csv(fig.TEST_MIXED_SUBJECT,
+                                                        sep=self.sep,
+                                                        header=[0, 1],
+                                                        nrows=3)
             elif self.metadata_type == 'specimen':
                 self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
                                                     sep=self.sep,
@@ -545,6 +560,9 @@ class Validator:
                 col_types = fig.COLUMN_TYPES_SUBJECT
             elif self.subject_type == 'animal':
                 col_types = fig.COLUMN_TYPES_ANIMAL_SUBJECT
+            elif self.subject_type == 'mixed':
+                col_types = fig.COLUMN_TYPES_SUBJECT
+                Logger.debug(f"column types: {col_types}")
         else:
             col_types = fig.COLUMN_TYPES_SPECIMEN
 
@@ -621,10 +639,23 @@ class Validator:
             self.errors.append(f'-1\t-1\tStudy Name Error: The study name in the metadata ({df_study_name})' +
                                f' does not match the name provided for this upload ({self.study_name})')
 
+    def get_subjects(self):
+        Logger.debug("getting subjects")
+        subjects = pd.DataFrame()
+        if self.subject_type == 'human' and 'Subjects' in self.df.keys():
+            subjects = self.df['Subjects']
+        elif self.subject_type == 'animal' and 'AnimalSubjects' in self.df.keys():
+            subjects = self.df['AnimalSubjects']
+        elif self.subject_type == 'mixed':
+            Logger.debug(f"subjects:\n{self.df['Subjects']}\nanimals:\n{self.df['AnimalSubjects']}")
+            if 'Subjects' in self.df.keys() and 'AnimalSubjects' in self.df.keys():
+                subjects = pd.concat([self.df['Subjects'], self.df['AnimalSubjects']], axis=1)
+        Logger.debug("Subjects defined")
+        return subjects
+
     def run(self):
         """ Perform the validation. """
         Logger.debug("Running metadata validation")
-        subjects = pd.DataFrame()
         # Try loading the metadata to be validated
         try:
             self.load_mapping_file(self.file_fp, self.sep)
@@ -641,15 +672,16 @@ class Validator:
                 if self.subject_type == 'human':
                     Logger.debug("Subject Type Human")
                     tables = fig.SUBJECT_TABLES
-                    if 'Subjects' in self.df.keys():
-                        # Only define subjects if subject table is correctly uploaded
-                        subjects = self.df['Subjects']
+                    subjects = self.get_subjects()
                     Logger.debug("Subjects defined")
                 elif self.subject_type == 'animal':
+                    Logger.debug("Subject Type Animal")
                     tables = fig.ANIMAL_SUBJECT_TABLES
-                    if 'AnimalSubjects' in self.df.keys():
-                        # Only define subjects if subject table is correctly uploaded
-                        subjects = self.df['AnimalSubjects']
+                    subjects = self.get_subjects()
+                elif self.subject_type == 'mixed':
+                    Logger.debug("Subject Type Mixed")
+                    tables = fig.MIXED_SUBJECT_TABLES
+                    subjects = self.get_subjects()
             elif self.metadata_type == 'specimen':
                 self.check_study_name()
                 tables = fig.SPECIMEN_TABLES
@@ -673,7 +705,8 @@ class Validator:
                     self.seen_tables.append(table)
                     self.check_table()
                 else:
-                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
+                    self.errors.append(
+                        '-1\t-1\tIllegal Table Error: Table {} should not be in the metadata'.format(table))
             Logger.debug("Done")
 
         return self.errors, self.warnings, subjects
