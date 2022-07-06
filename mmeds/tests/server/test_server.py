@@ -156,7 +156,7 @@ class TestServer(helper.CPWebCase):
         self.upload_metadata_fail()
         # TODO: Repair this test. This function is working in production and when testing locally,
         #       but github actions gets an 'InvalidSQL' error here
-        # self.upload_metadata()
+        self.upload_metadata()
         self.logout()
 
     def test_cc_lefse_upload(self):
