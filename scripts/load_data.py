@@ -59,7 +59,7 @@ def load(input_zip):
             barcodes_type = 'single_barcodes'
 
         # Call upload sequencing run
-        result = util.upload_sequencing_run_directly(queue, run.name, fig.REUPLOAD_USER,
+        result = util.upload_sequencing_run_local(queue, run.name, fig.REUPLOAD_USER,
                                                      paths, reads_type, barcodes_type)
         # Check upload was placed in queue successfully
         if not result == 0:
@@ -81,7 +81,7 @@ def load(input_zip):
             i += 1
 
         # Call upload study
-        result = util.upload_study_directly(queue, study.name, subject, subject_type, specimen, fig.REUPLOAD_USER)
+        result = util.upload_study_local(queue, study.name, subject, subject_type, specimen, fig.REUPLOAD_USER)
 
         # Check upload was placed in queue successfully
         if not result == 0:

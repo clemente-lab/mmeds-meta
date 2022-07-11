@@ -325,7 +325,6 @@ class Validator:
                 if pd.isna(cell):
                     # Check for missing required fields
                     # Subject ID allowed to be NA if non-NA Subject ID of another type in the same row
-                    Logger.debug(f"complement: {complement}")
                     if not self.cur_table == 'AdditionalMetaData' and\
                             self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required' and\
                             not (complement is not None and not pd.isna(complement[i])):
@@ -646,6 +645,7 @@ class Validator:
                                f' does not match the name provided for this upload ({self.study_name})')
 
     def get_subjects(self):
+        """ Get the table(s) from the dataframe that define subjects """
         Logger.debug("getting subjects")
         subjects = pd.DataFrame()
         if self.subject_type == 'human' and 'Subjects' in self.df.keys():
@@ -656,6 +656,8 @@ class Validator:
             Logger.debug(f"subjects:\n{self.df['Subjects']}\nanimals:\n{self.df['AnimalSubjects']}")
             if 'Subjects' in self.df.keys() and 'AnimalSubjects' in self.df.keys():
                 subjects = pd.concat([self.df['Subjects'], self.df['AnimalSubjects']], axis=1)
+        else:
+            raise ValueError("Could not define subjects")
         Logger.debug("Subjects defined")
         return subjects
 

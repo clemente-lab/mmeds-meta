@@ -1383,18 +1383,18 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def upload_study_directly(queue, study_name, subject, subject_type, specimen, user):
+def upload_study_local(queue, study_name, subject, subject_type, specimen, user):
     """
-    # Directly upload a study using the watcher, bypassing the server
+    # Directly upload a local study using the watcher, bypassing the server
     """
     queue.put(('upload', study_name, subject, subject_type, specimen, user, False, False))
     Logger.debug("Study sent to queue directly")
     return 0
 
 
-def upload_sequencing_run_directly(queue, run_name, user, datafiles, reads_type, barcodes_type):
+def upload_sequencing_run_local(queue, run_name, user, datafiles, reads_type, barcodes_type):
     """
-    # Directly upload a sequencing run using the watcher, bypassing the server
+    # Directly upload a local sequencing run using the watcher, bypassing the server
     """
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
     Logger.debug("Sequencing run sent to queue directly")
