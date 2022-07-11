@@ -142,6 +142,8 @@ def load_subject_template(subject_type):
         df = pd.read_csv(fig.TEST_SUBJECT, header=[0, 1], nrows=3, sep='\t')
     elif subject_type == 'animal':
         df = pd.read_csv(fig.TEST_ANIMAL_SUBJECT, header=[0, 1], nrows=3, sep='\t')
+    elif subject_type == 'mixed':
+        df = pd.read_csv(fig.TEST_MIXED_SUBJECT, header=[0, 1], nrows=3, sep='\t')
     return df
 
 
@@ -155,6 +157,8 @@ def load_metadata_template(subject_type):
         df = pd.read_csv(fig.TEST_METADATA, header=[0, 1], nrows=3, sep='\t')
     elif subject_type == 'animal':
         df = pd.read_csv(fig.TEST_ANIMAL_METADATA, header=[0, 1], nrows=3, sep='\t')
+    elif subject_type == 'mixed':
+        df = pd.read_csv(fig.TEST_MIXED_METADATA, header=[0, 1], nrows=3, sep='\t')
     return df
 
 
@@ -164,6 +168,13 @@ def join_metadata(subject, specimen, subject_type):
         subject[('Subjects', 'SubjectIdCol')] = subject[('Subjects', 'HostSubjectId')]
     elif subject_type == 'animal':
         subject[('Subjects', 'SubjectIdCol')] = subject[('AnimalSubjects', 'AnimalSubjectID')]
+    elif subject_type == 'mixed':
+        # Combines the two ID columns, removing NAs
+        subject[('Subjects', 'SubjectIdCol')] = subject[[
+            ('Subjects', 'HostSubjectId'),
+            ('AnimalSubjects', 'AnimalSubjectID')
+        ]].bfill(axis=1).iloc[:, 0]
+
     subject.set_index(('Subjects', 'SubjectIdCol'), inplace=True)
     specimen.set_index(('AdditionalMetaData', 'SubjectIdCol'), inplace=True)
     df = subject.join(specimen, how='outer')
@@ -188,9 +199,13 @@ def write_metadata(df, output_path):
     else:
         unsorted = df
 
-    if ('Subjects', 'HostSubjectId') in unsorted.keys():
+    human = ('Subjects', 'HostSubjectId') in unsorted.keys()
+    animal = ('AnimalSubjects', 'AnimalSubjectID') in unsorted.keys()
+    if human and animal:
+        subject_type = 'mixed'
+    elif human:
         subject_type = 'human'
-    elif ('AnimalSubjects', 'AnimalSubjectID') in unsorted.keys():
+    elif animal:
         subject_type = 'animal'
 
     template = load_metadata_template(subject_type)
@@ -497,12 +512,12 @@ def parse_ICD_codes(df):
     for code in codes:
         try:
             parts = code.split('.')
+            # Gets the final character
+            IDe.append(parts[1][-1])
             # Gets the first character
             IBC.append(parts[0][0])
             # Gets the next 4th, 5th, and 6th characters
             ID.append(parts[1][:-1])
-            # Gets the final character
-            IDe.append(parts[1][-1])
             # Tries to add the 2nd and 3rd numbers
             # adds NA if 'XX'
             IC.append(int(parts[0][1:]))
