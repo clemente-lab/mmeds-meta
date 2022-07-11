@@ -386,6 +386,8 @@ class Validator:
                     self.check_column(col, complement=self.df['Subjects']['HostSubjectId'])
                 elif self.cur_col == 'HostSubjectId':
                     self.check_column(col, complement=self.df['AnimalSubjects']['AnimalSubjectID'])
+                else:
+                    self.check_column(col)
             else:
                 self.check_column(col)
             Logger.debug("ran check_columns")
