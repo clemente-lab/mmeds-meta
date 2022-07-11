@@ -381,13 +381,10 @@ class Validator:
             col = self.table_df[self.cur_col]
             Logger.debug("run check_column")
             # Check the column itself and subject complements
-            if self.subject_type == 'mixed':
-                if self.cur_col == 'AnimalSubjectID':
-                    self.check_column(col, complement=self.df['Subjects']['HostSubjectId'])
-                elif self.cur_col == 'HostSubjectId':
-                    self.check_column(col, complement=self.df['AnimalSubjects']['AnimalSubjectID'])
-                else:
-                    self.check_column(col)
+            if self.subject_type == 'mixed' and self.cur_col == 'AnimalSubjectID':
+                self.check_column(col, complement=self.df['Subjects']['HostSubjectId'])
+            elif self.subject_type == 'mixed' and self.cur_col == 'HostSubjectId':
+                self.check_column(col, complement=self.df['AnimalSubjects']['AnimalSubjectID'])
             else:
                 self.check_column(col)
             Logger.debug("ran check_columns")
