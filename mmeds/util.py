@@ -9,6 +9,7 @@ from numpy import nan, int64, float64, datetime64
 from tempfile import gettempdir
 from re import sub
 from time import sleep
+from shutil import copy
 
 import yaml
 import gzip
@@ -1399,3 +1400,183 @@ def upload_sequencing_run_local(queue, run_name, user, datafiles, reads_type, ba
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
     Logger.debug("Sequencing run sent to queue directly")
     return 0
+
+
+def process_sequencing_runs_local(runs_path, queue):
+    """ Uploads sequencing runs included in a dump file """
+    for run in runs_path.glob("*"):
+        # Open directory file and extract paths
+        dir_file = run / fig.SEQUENCING_DIRECTORY_FILE
+        paths = {}
+        with open(dir_file, "r") as f:
+            content = f.read().split('\n')
+            for line in content:
+                if ": " in line:
+                    key, val = line.split(": ")
+                    paths[key] = str(run / val)
+
+        # Evaluate reads type and barcodes type
+        if 'reverse' in paths:
+            reads_type = 'paired_end'
+        else:
+            reads_type = 'single_end'
+        if 'rev_barcodes' in paths:
+            barcodes_type = 'dual_barcodes'
+        else:
+            barcodes_type = 'single_barcodes'
+
+        # Call upload sequencing run
+        result = upload_sequencing_run_local(queue, run.name, fig.REUPLOAD_USER, paths, reads_type, barcodes_type)
+        assert result == 0
+    return 0
+
+
+def process_studies_local(studies_path, queue):
+    """ Uploads studies included in a dump file """
+    for study in studies_path.glob("*"):
+        # Get metadata
+        subject = study / 'subject.tsv'
+        specimen = study / 'specimen.tsv'
+        subject_type = get_subject_type(subject)
+
+        # Get analysis config files
+        i = 0
+        configs = []
+        while (study / f'config_file_{i}.yaml').is_file():
+            configs.append(study / f'config_file_{i}.yaml')
+            i += 1
+
+        # Call upload study
+        result = upload_study_local(queue, study.name, subject, subject_type, specimen, fig.REUPLOAD_USER)
+        assert result == 0
+
+        # Wait for study upload to complete
+        # TODO: This number is arbitrary and could be insufficient for the upload to complete in some cases, fix
+        sleep(10)
+
+        # The reupload can have occurred multiple times, make sure we get the most recent
+        new_studies = [study.name for study in list(fig.STUDIES_DIR.glob(f"reupload_{study.name}_*"))]
+        new_studies.sort()
+        new_study_dir = fig.STUDIES_DIR / new_studies[-1]
+
+        # Copy configs to new study location
+        for config in configs:
+            copy(config, new_study_dir)
+    return 0
+
+
+def get_study_components(study_dirs):
+    """
+    Loop through each included study and collect:
+        -subject/specimen metadata
+        -used sequencing runs
+        -analysis configs
+    """
+    directory_info = {}
+    for study in study_dirs:
+        directory_info[study] = {}
+
+        # Get subject file
+        subj = list(study.glob("*subj*"))
+        if not len(subj) == 1:
+            raise ValueError(f"Found {len(subj)} in {study} with name 'subj', need exactly 1")
+        directory_info[study]['subject'] = subj[0]
+
+        # Get specimen file
+        spec = list(study.glob("*spec*"))
+        if not len(spec) == 1:
+            raise ValueError(f"Found {len(spec)} in {study} with name 'spec', need exactly 1")
+        directory_info[study]['specimen'] = spec[0]
+
+        # Collect names of used sequencing runs
+        runs = []
+        df = pd.read_csv(directory_info[study]['specimen'], sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+        for run in df['RawDataProtocol']['RawDataProtocolID']:
+            if run not in runs:
+                runs.append(run)
+        directory_info[study]['runs'] = runs
+        directory_info[study]['name'] = df['Study']['StudyName'][0]
+
+        # Collect analysis configs
+        configs = []
+        # TODO: Allow for analysis tools other than Qiime2?
+        analyses = list(study.glob("*Qiime2*"))
+        for a in analyses:
+            config = a / "config_file.yaml"
+            if not config.is_file():
+                raise ValueError(f"No configuration file found for study {study} in analysis {a}")
+            configs.append(config)
+        directory_info[study]['configs'] = configs
+
+    return directory_info
+
+
+def get_sequencing_run_locations(runs):
+    """
+    Get file locations of sequencing runs, for use with dump & load
+    """
+    run_locations = {}
+    for run in runs:
+        dirs = list(Path(fig.SEQUENCING_DIR).glob(f"*{run}*"))
+        if len(dirs) == 0:
+            raise ValueError(f"No sequencing run directory for run {run}")
+
+        if len(dirs) > 1:
+            # Narrow down to most likely directory
+            for d in dirs:
+                if user in str(d) and str(d).endswith(f"{run}_0"):
+                    dirs = [d]
+                    break
+        run_locations[run] = dirs[0]
+
+    return run_locations
+
+
+def populate_dump_dir(run_locations, directory_info, zip_path):
+    """
+    Copies metadata, sequencing runs, and config files to dump folder
+    """
+    # Create file structure for studies and sequencing runs
+    runs_path = zip_path / "sequencing_runs"
+    runs_path.mkdir()
+    studies_path = zip_path / "studies"
+    studies_path.mkdir()
+
+    # Populate sequencing run directory
+    for run in run_locations:
+        run_path = runs_path / run
+        run_path.mkdir()
+
+        # Copy each datafile and directory file to zip path
+        for f in run_locations[run].glob("*"):
+            if not Path(f).is_dir():
+                to_file = run_path / f.name
+                copy(f, to_file)
+
+    # Populate study directory
+    for study in directory_info:
+        study_path = studies_path / directory_info[study]['name']
+        study_path.mkdir()
+
+        # Copy each metadata file to zip path
+        subj_dest = study_path / "subject.tsv"
+        spec_dest = study_path / "specimen.tsv"
+        copy(directory_info[study]['subject'], subj_dest)
+        copy(directory_info[study]['specimen'], spec_dest)
+
+        # Copy config files to zip path
+        for i, config in enumerate(directory_info[study]['configs']):
+            config_path = study_path / f"config_file_{i}.yaml"
+            copy(config, config_path)
+
+    return 0
+
+
+def get_subject_type(subject_file):
+    """ Get value from subject type column. If multiple values, return 'mixed'. """
+    df = pd.read_csv(subject_file, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
+    subject_type = df['SubjectType']['SubjectType'][0]
+    for sub_type in df['SubjectType']['SubjectType']:
+        if not sub_type == subject_type:
+            subject_type = 'mixed'
+    return subject_type.lower()

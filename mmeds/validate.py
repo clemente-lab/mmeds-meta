@@ -648,16 +648,17 @@ class Validator:
         """ Get the table(s) from the dataframe that define subjects """
         Logger.debug("getting subjects")
         subjects = pd.DataFrame()
-        if self.subject_type == 'human' and 'Subjects' in self.df.keys():
-            subjects = self.df['Subjects']
-        elif self.subject_type == 'animal' and 'AnimalSubjects' in self.df.keys():
-            subjects = self.df['AnimalSubjects']
+        # If the tables do not exist, an error will be caught in the missing tables section
+        if self.subject_type == 'human':
+            if 'Subjects' in self.df.keys():
+                subjects = self.df['Subjects']
+        elif self.subject_type == 'animal':
+            if 'AnimalSubjects' in self.df.keys():
+                subjects = self.df['AnimalSubjects']
         elif self.subject_type == 'mixed':
             Logger.debug(f"subjects:\n{self.df['Subjects']}\nanimals:\n{self.df['AnimalSubjects']}")
             if 'Subjects' in self.df.keys() and 'AnimalSubjects' in self.df.keys():
                 subjects = pd.concat([self.df['Subjects'], self.df['AnimalSubjects']], axis=1)
-        else:
-            raise ValueError("Could not define subjects")
         Logger.debug("Subjects defined")
         return subjects
 
