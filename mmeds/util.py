@@ -1518,7 +1518,7 @@ def get_sequencing_run_locations(runs):
     run_locations = {}
     for run in runs:
         dirs = list(Path(fig.SEQUENCING_DIR).glob(f"*{run}*"))
-        if len(dirs) == 0:
+        if not dirs:
             raise ValueError(f"No sequencing run directory for run {run}")
 
         if len(dirs) > 1:
