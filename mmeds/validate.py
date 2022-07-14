@@ -213,15 +213,15 @@ class Validator:
 
     def check_NA(self, column):
         """ Checks for any NA values in the provided column """
+        Logger.debug(f"Checking for NA in col {column}")
         err = '{row}\t{col}\tNA Value Error: No NAs allowed in column {col}'
         for i, value in enumerate(column):
-            if value == 'NA':
+            if pd.isna(value):
                 self.errors.append(err.format(row=i, col=self.col_index))
 
     def check_duplicates(self, column, column2=None):
         """ Checks for any duplicate entries in the provided column(s) """
         cells = defaultdict(list)
-
         # Concatenate dual barcodes
         if column2 is not None:
             column = [str(c1)+str(c2) for c1, c2 in zip(column, column2)]
@@ -300,7 +300,7 @@ class Validator:
             err = 'Cell Wrong Type Error: Cell {} contains the wrong type of values'
             self.errors.append(row_col + err.format(cell))
 
-    def check_column(self, column):
+    def check_column(self, column, complement=None):
         """
         Validate that there are no issues with the provided column of metadata.
         =======================================================================
@@ -311,7 +311,7 @@ class Validator:
         # Get the header
         header = column.name
 
-        Logger.debug("iterate over cells")
+        Logger.debug(f"iterate over cells of column {self.cur_col}")
         if column.isna().all():
             if (not self.cur_table == 'AdditionalMetaData' and
                     self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required'):
@@ -324,8 +324,10 @@ class Validator:
             for i, cell in enumerate(column):
                 if pd.isna(cell):
                     # Check for missing required fields
+                    # Subject ID allowed to be NA if non-NA Subject ID of another type in the same row
                     if not self.cur_table == 'AdditionalMetaData' and\
-                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required':
+                            self.reference_header[self.cur_table][self.cur_col].iloc[0] == 'Required' and\
+                            not (complement is not None and not pd.isna(complement[i])):
                         Logger.debug(f"Cell shouldn't be NA: {self.cur_col}")
                         err = f'{{}}\t{{}}\tMissing Required Value Error: {self.cur_col}'
                         self.errors.append(err.format(i, self.seen_cols.index(self.cur_col)))
@@ -377,8 +379,13 @@ class Validator:
 
             col = self.table_df[self.cur_col]
             Logger.debug("run check_column")
-            # Check the column itself
-            self.check_column(col)
+            # Check the column itself and subject complements
+            if self.subject_type == 'mixed' and self.cur_col == 'AnimalSubjectID':
+                self.check_column(col, complement=self.df['Subjects']['HostSubjectId'])
+            elif self.subject_type == 'mixed' and self.cur_col == 'HostSubjectId':
+                self.check_column(col, complement=self.df['AnimalSubjects']['AnimalSubjectID'])
+            else:
+                self.check_column(col)
             Logger.debug("ran check_columns")
             # Perform column specific checks
             if self.cur_table == 'RawData':
@@ -397,8 +404,12 @@ class Validator:
                     self.check_lengths(col)
             elif self.cur_table == 'ICDCode':
                 self.check_ICD_codes(col)
+            elif self.cur_col == 'AnimalSubjectID':
+                self.check_duplicates(col)
             elif self.cur_col == 'HostSubjectId':
-                self.check_NA(col)
+                self.check_duplicates(col)
+                if self.subject_type == 'mixed':
+                    self.check_duplicates(col.append(self.df['AnimalSubjects']['AnimalSubjectID']))
             elif self.cur_col == 'IllnessInstanceID':
                 self.check_duplicates(col)
             elif self.cur_col == 'RawDataProtocolID':
@@ -522,6 +533,11 @@ class Validator:
                                                         sep=self.sep,
                                                         header=[0, 1],
                                                         nrows=3)
+                elif self.subject_type == 'mixed':
+                    self.reference_header = pd.read_csv(fig.TEST_MIXED_SUBJECT,
+                                                        sep=self.sep,
+                                                        header=[0, 1],
+                                                        nrows=3)
             elif self.metadata_type == 'specimen':
                 self.reference_header = pd.read_csv(fig.TEST_SPECIMEN,
                                                     sep=self.sep,
@@ -545,6 +561,9 @@ class Validator:
                 col_types = fig.COLUMN_TYPES_SUBJECT
             elif self.subject_type == 'animal':
                 col_types = fig.COLUMN_TYPES_ANIMAL_SUBJECT
+            elif self.subject_type == 'mixed':
+                col_types = fig.COLUMN_TYPES_SUBJECT
+                Logger.debug(f"column types: {col_types}")
         else:
             col_types = fig.COLUMN_TYPES_SPECIMEN
 
@@ -598,10 +617,14 @@ class Validator:
         # Get the subjects identified in the specimen metadata
         specimen_subs = self.df['AdditionalMetaData']['SubjectIdCol'].tolist()
         if self.subject_type == 'human':
-            check_subs = self.subject_ids['HostSubjectId']
+            check_subs = self.subject_ids['HostSubjectId'].tolist()
         elif self.subject_type == 'animal':
-            check_subs = self.subject_ids['AnimalSubjectID']
+            check_subs = self.subject_ids['AnimalSubjectID'].tolist()
+        elif self.subject_type == 'mixed':
+            check_subs = self.subject_ids['HostSubjectId'].append(self.subject_ids['AnimalSubjectID'])
+            check_subs = check_subs.dropna().tolist()
         diff = set(check_subs).symmetric_difference(set(specimen_subs))
+        Logger.error(f"check_subs: \n{check_subs}\n\nspec_subs: \n{specimen_subs}")
         err = '{}\t{}\tMissing Subject Error: Subject with ID {} found in {} metadata file but not {} metadata'
         for sub in diff:
             try:
@@ -609,7 +632,7 @@ class Validator:
                 found = 'specimen'
                 other = 'subject'
             except ValueError:
-                row_index = self.subject_ids['HostSubjectId'].tolist().index(sub)
+                row_index = check_subs.index(sub)
                 found = 'subject'
                 other = 'specimen'
             self.errors.append(err.format(row_index, self.col_index, sub, found, other))
@@ -620,6 +643,24 @@ class Validator:
         if not self.study_name == df_study_name:
             self.errors.append(f'-1\t-1\tStudy Name Error: The study name in the metadata ({df_study_name})' +
                                f' does not match the name provided for this upload ({self.study_name})')
+
+    def get_subjects(self):
+        """ Get the table(s) from the dataframe that define subjects """
+        Logger.debug("getting subjects")
+        subjects = pd.DataFrame()
+        # If the tables do not exist, an error will be caught in the missing tables section
+        if self.subject_type == 'human':
+            if 'Subjects' in self.df.keys():
+                subjects = self.df['Subjects']
+        elif self.subject_type == 'animal':
+            if 'AnimalSubjects' in self.df.keys():
+                subjects = self.df['AnimalSubjects']
+        elif self.subject_type == 'mixed':
+            Logger.debug(f"subjects:\n{self.df['Subjects']}\nanimals:\n{self.df['AnimalSubjects']}")
+            if 'Subjects' in self.df.keys() and 'AnimalSubjects' in self.df.keys():
+                subjects = pd.concat([self.df['Subjects'], self.df['AnimalSubjects']], axis=1)
+        Logger.debug("Subjects defined")
+        return subjects
 
     def run(self):
         """ Perform the validation. """
@@ -641,15 +682,16 @@ class Validator:
                 if self.subject_type == 'human':
                     Logger.debug("Subject Type Human")
                     tables = fig.SUBJECT_TABLES
-                    if 'Subjects' in self.df.keys():
-                        # Only define subjects if subject table is correctly uploaded
-                        subjects = self.df['Subjects']
+                    subjects = self.get_subjects()
                     Logger.debug("Subjects defined")
                 elif self.subject_type == 'animal':
+                    Logger.debug("Subject Type Animal")
                     tables = fig.ANIMAL_SUBJECT_TABLES
-                    if 'AnimalSubjects' in self.df.keys():
-                        # Only define subjects if subject table is correctly uploaded
-                        subjects = self.df['AnimalSubjects']
+                    subjects = self.get_subjects()
+                elif self.subject_type == 'mixed':
+                    Logger.debug("Subject Type Mixed")
+                    tables = fig.MIXED_SUBJECT_TABLES
+                    subjects = self.get_subjects()
             elif self.metadata_type == 'specimen':
                 self.check_study_name()
                 tables = fig.SPECIMEN_TABLES
@@ -673,7 +715,8 @@ class Validator:
                     self.seen_tables.append(table)
                     self.check_table()
                 else:
-                    self.errors.append('-1\t-1\tIllegal Table Error: Table {} should not be the metadata'.format(table))
+                    self.errors.append(
+                        '-1\t-1\tIllegal Table Error: Table {} should not be in the metadata'.format(table))
             Logger.debug("Done")
 
         return self.errors, self.warnings, subjects

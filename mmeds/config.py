@@ -361,6 +361,7 @@ if not TEST_DIR_0.exists():
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
 TEST_USER_0 = 'testuser0'
+REUPLOAD_USER = 'reupload'
 TEST_CODE = 'singlereads'
 TEST_CODE_SHORT = 'singlereadsshort'
 TEST_CODE_PAIRED = 'pairedreads'
@@ -401,6 +402,7 @@ TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
 TEST_SUBJECT_SIMPLIFIED = str(TEST_PATH / 'test_subject_simplified.tsv')
 TEST_ADD_SUBJECT = str(TEST_PATH / 'test_add_subject.tsv')
 TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
+TEST_MIXED_SUBJECT = str(TEST_PATH / 'test_mixed_subject.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
 TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
 TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
@@ -408,6 +410,7 @@ TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
 TEST_ANIMAL_METADATA = str(TEST_PATH / 'test_animal_metadata.tsv')
+TEST_MIXED_METADATA = str(TEST_PATH / 'test_mixed_metadata.tsv')
 TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')
 TEST_METADATA_WARN = str(TEST_PATH / 'validation_files/test_metadata_warn.tsv')
 TEST_METADATA_SHORT = str(TEST_PATH / 'short_metadata.tsv')
@@ -542,6 +545,8 @@ ANIMAL_SUBJECT_TABLES = {
     'AdditionalMetaData'
 }
 
+MIXED_SUBJECT_TABLES = SUBJECT_TABLES.union(ANIMAL_SUBJECT_TABLES)
+
 # Tables that should exist in the specimen metadata
 SPECIMEN_TABLES = ((set(TABLE_ORDER) - SUBJECT_TABLES) - ANIMAL_SUBJECT_TABLES) | {'AdditionalMetaData'}
 
@@ -592,7 +597,6 @@ USER_FILES = set(map(
 
 ICD_TABLES = {'IllnessBroadCategory', 'IllnessCategory', 'IllnessDetails'}
 
-
 # These are the tables that users are given direct access to
 PUBLIC_TABLES = set(set(TABLE_ORDER) - set(PROTECTED_TABLES) - set(['AdditionalMetaData', 'ICDCode']))
 
@@ -605,13 +609,14 @@ COL_SIZES = {}
 COLUMN_TYPES_SPECIMEN = defaultdict(dict)
 COLUMN_TYPES_SUBJECT = defaultdict(dict)
 COLUMN_TYPES_ANIMAL_SUBJECT = defaultdict(dict)
+COLUMN_TYPES_MIXED_SUBJECT = defaultdict(dict)
 COL_TO_TABLE = {}
 
 # Summary Gradient Colors for use in continuous variable plots
 CONTINUOUS_GRADIENTS = [
-    ("0000FF", "FF0000"), # Blue - Red
-    ("FF9900", "9900CC"), # Orange - Purple
-    ("00FFFF", "FF33CC")  # Cyan - Pink
+    ("0000FF", "FF0000"),  # Blue - Red
+    ("FF9900", "9900CC"),  # Orange - Purple
+    ("00FFFF", "FF33CC")   # Cyan - Pink
 ]
 
 # Try connecting via the testing setup
@@ -685,7 +690,8 @@ if IS_PRODUCTION or TESTING:
 
     for test_file, col_types, tables in [(TEST_SPECIMEN, COLUMN_TYPES_SPECIMEN, SPECIMEN_TABLES),
                                          (TEST_SUBJECT, COLUMN_TYPES_SUBJECT, SUBJECT_TABLES),
-                                         (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES)]:
+                                         (TEST_ANIMAL_SUBJECT, COLUMN_TYPES_ANIMAL_SUBJECT, ANIMAL_SUBJECT_TABLES),
+                                         (TEST_MIXED_SUBJECT, COLUMN_TYPES_MIXED_SUBJECT, MIXED_SUBJECT_TABLES)]:
         tdf = read_csv(test_file,
                        sep='\t',
                        header=[0, 1],

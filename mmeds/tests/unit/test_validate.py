@@ -68,6 +68,7 @@ class ValidateTests(TestCase):
                     subject_ids = subjects
 
                 # Check the correct error is raised
+                Logger.debug(f"name: {name}\nexpected error: {error}\nactual errors: {errors}")
                 assert error in errors[0].lower()
 
                 # Check the messages are foramtted correctly

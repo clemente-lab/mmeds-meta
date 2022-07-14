@@ -105,7 +105,9 @@ def setup_tests(tests):
                            'Test_Single_0',
                            testing,
                            fig.TEST_CODE + '0'))
+
     for setup in test_setup:
+        print(setup)
         assert 0 == upload_metadata(setup)
 
 

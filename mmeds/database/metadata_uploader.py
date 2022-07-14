@@ -166,7 +166,7 @@ class MetaDataUploader(Process):
 
         if not self.temporary:
             # Read in the metadata file to import
-            if self.subject_type == 'human':
+            if self.subject_type == 'human' or self.subject_type == 'mixed':
                 df = parse_ICD_codes(load_metadata(metadata_copy))
             elif self.subject_type == 'animal':
                 df = load_metadata(metadata_copy)
