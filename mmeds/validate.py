@@ -219,24 +219,37 @@ class Validator:
             if pd.isna(value):
                 self.errors.append(err.format(row=i, col=self.col_index))
 
-    def check_duplicates(self, column, column2=None):
+    def check_duplicates(self, column, runs=None, column2=None):
         """ Checks for any duplicate entries in the provided column(s) """
         cells = defaultdict(list)
         # Concatenate dual barcodes
         if column2 is not None:
             column = [str(c1)+str(c2) for c1, c2 in zip(column, column2)]
+        if runs is None:
+            runs = ["run" for i in range(len(column))]
 
-        # Add the indices of each item
-        for i, cell in enumerate(column):
-            cells[cell].append(i)
-        # Find any duplicates
-        dups = {k: v for k, v in cells.items() if len(v) > 1}
-        err_str = '{}\t{}\tDuplicate Value Error: Duplicate value {} of row {} in row {} in column {}.'
-        for dup_key in dups.keys():
-            value = dups[dup_key]
-            for val in value[1:]:
-                if not pd.isnull(dup_key):
-                    self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
+        # Create dictionary of which indecies should be checked per-run
+        ranges = {}
+        for i, cell in enumerate(runs):
+            if cell not in ranges:
+                ranges[cell] = [i]
+            else:
+                ranges[cell].append(i)
+
+        # Check duplicates per-sequencing run
+        for run in ranges:
+            # Add the indices of each item
+            for i, cell in enumerate(column):
+                if i in ranges[run]:
+                    cells[cell].append(i)
+            # Find any duplicates
+            dups = {k: v for k, v in cells.items() if len(v) > 1}
+            err_str = '{}\t{}\tDuplicate Value Error: Duplicate value {} of row {} in row {} in column {}.'
+            for dup_key in dups.keys():
+                value = dups[dup_key]
+                for val in value[1:]:
+                    if not pd.isnull(dup_key):
+                        self.errors.append(err_str.format(val, self.col_index, dup_key, value[0], val, self.cur_col))
 
     def check_sequencing_runs(self, column):
         """ Check that the sequening runs exist """
@@ -391,9 +404,10 @@ class Validator:
             if self.cur_table == 'RawData':
                 if self.cur_col == 'BarcodeSequence':
                     if self.barcodes_type == 'single':
-                        self.check_duplicates(col)
+                        self.check_duplicates(col, self.df['RawDataProtocol']['RawDataProtocolID'])
                     elif self.barcodes_type == 'dual':
-                        self.check_duplicates(col, self.df['AdditionalMetaData']['BarcodeSequenceR'])
+                        self.check_duplicates(col, self.df['RawDataProtocol']['RawDataProtocolID'],
+                                              self.df['AdditionalMetaData']['BarcodeSequenceR'])
                     self.check_lengths(col)
                     self.check_barcode_chars(col)
                     self.check_NA(col)

@@ -378,7 +378,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
             # Ensure there aren't any invalid columns specified to be included in the analysis
             try:
                 # If 'all' only select columns that don't have all the same or all unique values
-                if df[col].isnull().all() or df[col].nunique() == 1 or df[col].nunique() == len(df[col]):
+                if df[col].isnull().all() or df[col].nunique() == 1:
                     if col in ['Together', 'Separate']:
                         summary_cols.append(col)
                         col_types[col] = False
@@ -389,8 +389,11 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
                 # If the columns is explicitly specified only check that it exists in the metadata
                 else:
                     assert df[col].any()
-                    summary_cols.append(col)
-                    col_types[col] = pd.api.types.is_numeric_dtype(df[col])
+                    col_type = pd.api.types.is_numeric_dtype(df[col])
+                    # Continue if metadata is continuous or, if categorical, not all unique vals
+                    if col_types[col] or not df[col].nunique() == len(df[col]):
+                        summary_cols.append(col)
+                        col_types[col] = col_type
             except KeyError:
                 if not ignore_bad_cols:
                     raise InvalidConfigError('Invalid metadata column {} in config file'.format(col))

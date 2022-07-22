@@ -130,8 +130,10 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
     summary_files = defaultdict(list)
 
     # Get Table Stats
-    cmd = f"qiime tools export --input-path {str(files['stats_table'])} --output-path {str(path / 'temp')}"
-    run(cmd, env=new_env, check=True, shell=True)
+    for key in files:
+        if 'stats_table' in key:
+            cmd = f"qiime tools export --input-path {str(files[key])} --output-path {str(path / 'temp')}"
+            run(cmd, env=new_env, check=True, shell=True)
     table_stat_files = (path / 'temp').glob("stats.tsv")
     for table_file in table_stat_files:
         copy(table_file, files['summary'])
