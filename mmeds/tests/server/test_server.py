@@ -152,7 +152,8 @@ class TestServer(helper.CPWebCase):
     def test_cb_upload(self):
         Logger.info('cb upload')
         self.login()
-        self.upload_sequencing_run()
+        self.upload_sequencing_run('TEST_RUN')
+        self.upload_sequencing_run('TEST_RUN_ALT')
         self.upload_metadata_fail()
         # TODO: Repair this test. This function is working in production and when testing locally,
         #       but github actions gets an 'InvalidSQL' error here
@@ -673,8 +674,8 @@ class TestServer(helper.CPWebCase):
         self.assertBody(page)
         Logger.debug('Checked a metadata file with no problems')
 
-    def upload_sequencing_run(self):
-        self.getPage('/upload/upload_sequencing_run?barcodes_type=single&run_name=TEST_RUN', self.cookies)
+    def upload_sequencing_run(self, run_name):
+        self.getPage(f'/upload/upload_sequencing_run?barcodes_type=single&run_name={run_name}', self.cookies)
         self.assertStatus('200 OK')
         headers, body = self.upload_files(['for_reads', 'rev_reads', 'barcodes', 'reads_type'],
                                           [fig.TEST_READS, fig.TEST_REV_READS, fig.TEST_BARCODES, 'paired_end'],
@@ -684,7 +685,7 @@ class TestServer(helper.CPWebCase):
         self.assertStatus('200 OK')
         sleep(5)
         mail = receive_email(self.server_user, 'upload-run',
-                             'user {} uploaded data for the {}'.format(self.server_user, 'TEST_RUN'))
+                             'user {} uploaded data for the {}'.format(self.server_user, run_name))
         self.access_code = mail.split('access code:')[1].splitlines()[1]
 
     def modify_upload(self):
