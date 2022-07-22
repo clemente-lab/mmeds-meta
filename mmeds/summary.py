@@ -544,7 +544,8 @@ class MMEDSNotebook():
         """
         try:
             jupyter_env = setup_environment('jupyter')
-            latex_env = setup_environment('latex')
+            if testing:
+                latex_env = setup_environment('latex')
 
             nbf.write(nn, str(self.path / '{}.ipynb'.format(self.name)))
 
