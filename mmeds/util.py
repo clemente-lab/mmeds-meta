@@ -391,7 +391,7 @@ def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
                     assert df[col].any()
                     col_type = pd.api.types.is_numeric_dtype(df[col])
                     # Continue if metadata is continuous or, if categorical, not all unique vals
-                    if col_types[col] or not df[col].nunique() == len(df[col]):
+                    if col_type or not df[col].nunique() == len(df[col]):
                         summary_cols.append(col)
                         col_types[col] = col_type
             except KeyError:
