@@ -221,7 +221,6 @@ class Validator:
 
     def check_duplicates(self, column, runs=None, column2=None):
         """ Checks for any duplicate entries in the provided column(s) """
-        cells = defaultdict(list)
         # Concatenate dual barcodes
         if column2 is not None:
             column = [str(c1)+str(c2) for c1, c2 in zip(column, column2)]
@@ -238,6 +237,7 @@ class Validator:
 
         # Check duplicates per-sequencing run
         for run in ranges:
+            cells = defaultdict(list)
             # Add the indices of each item
             for i, cell in enumerate(column):
                 if i in ranges[run]:
