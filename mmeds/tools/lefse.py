@@ -1,5 +1,6 @@
 from mmeds.config import DATABASE_DIR
 from mmeds.tools.tool import Tool
+from mmeds.util import get_file_index_entry_location
 
 
 class Lefse(Tool):
@@ -12,7 +13,7 @@ class Lefse(Tool):
         if testing:
             load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
         else:
-            load = 'ml lefse;'
+            load = 'ml anaconda3;\nsource activate lefse;'
         self.jobtext.append(load)
         self.module = load
 

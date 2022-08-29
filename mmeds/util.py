@@ -1583,3 +1583,32 @@ def get_subject_type(subject_file):
         if not sub_type == subject_type:
             subject_type = 'mixed'
     return subject_type.lower()
+
+
+def get_file_index_entry_location(path, tool, entry):
+    """ Get entry from a non-active Tool's file_index.tsv file, for use in cross-tool analysis """
+    # Collect possible analysis dirs for given tool
+    dirs = path.glob(f"{tool}_*")
+    highest = 0
+    for d in dirs:
+        cur = int(d.split("_")[-1])
+        if cur > highest:
+            highest = cur
+
+    # Check for entry, with highest count dir first (e.g. search Qiime2_1 over Qiime2_0 first)
+    entry_exists = False
+    out_path = ""
+    while not entry_exists and highest >= 0:
+        index = path / f"{tool}_{highest}" / "file_index.tsv"
+        if index.exists():
+            df = pd.read_csv(index, sep='\t', skiprows=0, header=[0], index_col=0)
+            if entry in df['Key']:
+                entry_exists = True
+                out_path = df.at[entry, "Path"]
+        if not entry_exists:
+            highest -= 1
+
+    if entry_exists:
+        return Path(out_path)
+    else:
+        raise KeyError(f"No entry for {entry} in directory {path}")

@@ -46,8 +46,9 @@ class Qiime2(Tool):
     # =============== #
     # Qiime2 Commands #
     # =============== #
+    """
+    moved to parent class
     def source_activate(self, env):
-        """ Change anaconda3 environment """
         # possible envs: ['qiime', 'pheniqs', 'mmeds']
         full_env = ''
         if env == 'qiime':
@@ -58,6 +59,7 @@ class Qiime2(Tool):
             full_env = env
         cmd = 'source activate {};'.format(full_env)
         self.jobtext.append(cmd)
+    """
 
     def split_by_sequencing_run(self):
         """ Separate metadata into sub-folders for each sequencing run """

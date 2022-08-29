@@ -235,6 +235,17 @@ class Tool(mp.Process):
         ]
         self.jobtext.append(' '.join(cmd))
 
+    def source_activate(self, env):
+        """ Change anaconda3 environment """
+        # Some possible envs: 'qiime', 'pheniqs', 'mmeds'
+        full_env = env
+        if env == 'qiime':
+            full_env = 'qiime2-2020.8.0'
+        elif env == 'mmeds':
+            full_env = '/sc/arion/projects/MMEDS/admin_modules/mmeds-stable'
+        cmd = f'source activate {full_env};'
+        self.jobtext.append(cmd)
+
     ############################
     # Analysis File Management #
     ############################

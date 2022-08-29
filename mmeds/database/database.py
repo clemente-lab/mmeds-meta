@@ -1020,7 +1020,7 @@ class Database:
 
     def get_all_analyses_from_study(self, access_code):
         """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(study_code=access_code)
+        return MMEDSDoc.objects(study_code=access_code, doc_type='analysis')
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
