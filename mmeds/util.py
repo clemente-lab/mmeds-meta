@@ -1391,7 +1391,7 @@ def start_analysis_local(queue, access_code, tool_type, user):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
-    queue.put(('analysis', user, access_code, tool_type, 'default', 'test', {}, -1, False))
+    queue.put(('analysis', user, access_code, tool_type, 'default', fig.DEFAULT_CONFIG, {}, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 
