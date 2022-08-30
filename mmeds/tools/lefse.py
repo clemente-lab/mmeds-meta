@@ -20,6 +20,22 @@ class Lefse(Tool):
         self.subclass = None
         self.subjects = None
 
+    def extract_feature_table(self):
+        self.add_path('tmp_unzip')
+        self.add_path('biom_feature', '.biom')
+        self.add_path('feature_table', '.tsv')
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'filtered_table')
+        self.unzip_general(table, self.get_file('tmp_unzip'))
+        self.move_general(self.get_file('tmp_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))
+        self.source_activate("qiime")
+        self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
+
+    def process_qiime_input(self):
+        """ Generate table that LEfSe can read from qiime output using MMEDS script """
+
+        self.add_path('lefse_table', '.tsv')
+        self.source_activate("mmeds")
+
     def format_input(self):
         """ Convert uploaded .txt file into file type usable by LEfSe """
 
@@ -83,6 +99,7 @@ class Lefse(Tool):
         self.subclass = 'subclass' in self.doc.reads_type
         self.subjects = 'subjects' in self.doc.reads_type
         self.set_stage(0)
+        self.extract_feature_table()
         self.format_input()
         self.set_stage(1)
         self.lefse()

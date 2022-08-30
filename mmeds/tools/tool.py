@@ -246,6 +246,40 @@ class Tool(mp.Process):
         cmd = f'source activate {full_env};'
         self.jobtext.append(cmd)
 
+    def unzip_general(self, from_file, to_file):
+        """
+        A general unzip command for unzipping any artifact into a specified directory
+        """
+        cmd = 'unzip {} -d {}'.format(from_file,
+                                      to_file)
+
+        self.jobtext.append(cmd)
+
+    def move_general(self, from_file, to_file):
+        """
+        A general move for moving a file from one location to another
+        """
+        cmd = 'mv {} {}'.format(from_file,
+                                to_file)
+
+        self.jobtext.append(cmd)
+
+    def biom_convert(self, from_file, to_file, to_tsv=True):
+        """
+        Perform a biom convert either to .biom or to .tsv
+        Requires biom library in active environment
+        """
+        if to_tsv:
+            to = '--to-tsv'
+        else:
+            to = '--to-hdf5'
+
+        cmd = 'biom convert -i {} -o {} {}'.format(from_file,
+                                                   to_file,
+                                                   to)
+
+        self.jobtext.append(cmd)
+
     ############################
     # Analysis File Management #
     ############################
@@ -308,7 +342,8 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('conda deactivate; source activate /hpc/users/mmedsadmin/.admin_modules/jupyter; ml texlive/2018')
+            self.jobtext.append(
+                'conda deactivate; source activate /hpc/users/mmedsadmin/.admin_modules/jupyter; ml texlive/2018')
         # Make sure the kernel is up to date
         self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name "Jupyter"')
         cmd = [
