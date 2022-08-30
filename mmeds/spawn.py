@@ -298,11 +298,13 @@ class Watcher(BaseManager):
                 self.pipe.send('Analysis Not Started')
                 return
 
+        self.logger.debug("spawn analysis")
         # Otherwise continue
         p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
                                 config, self.testing, sequencing_runs, kill_stage, run_on_node)
         # Start the analysis running
         p.start()
+        self.logger.debug("analysis started")
         sleep(1)
         with Database(testing=self.testing, owner=user) as db:
             doc = db.get_doc(p.access_code)
