@@ -1387,11 +1387,11 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, path, tool_type):
+def start_analysis_local(queue, access_code, tool_type):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
-    queue.put(('analysis', user, access_code, tool_type, analysis_type, config, sequencing_runs, kill_stage, run_on_node))
+    queue.put(('analysis', user, access_code, tool_type, 'default', config, {}, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 

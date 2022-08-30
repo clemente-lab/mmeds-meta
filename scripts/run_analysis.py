@@ -17,7 +17,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Name of study on which to perform analysis')
 @click.option('-t', '--tool_type', required=True,
               help='Type of tools to perform summary for')
-@click.optin('-u', '--user', required=True,
+@click.option('-u', '--user', required=True,
              help='Owner of the study')
 def run_analysis(study_name, tool_type, user):
     """
