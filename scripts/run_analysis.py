@@ -13,7 +13,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='0.1')
-@click.option('-n', '--study-name', required=True)
+@click.option('-n', '--study-name', required=True,
               help='Name of study on which to perform analysis')
 @click.option('-t', '--tool_type', required=True,
               help='Type of tools to perform summary for')
