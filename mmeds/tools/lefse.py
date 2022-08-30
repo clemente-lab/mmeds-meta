@@ -6,10 +6,11 @@ from mmeds.util import get_file_index_entry_location
 class Lefse(Tool):
     """ A class for LEfSe analysis of uploaded studies. """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type,  config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type,  config, testing, runs,
                  run_on_node, analysis=True, child=False, restart_stage=0, kill_stage=-1):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
-                         analysis=analysis, child=child, restart_stage=restart_stage, kill_stage=kill_stage)
+        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+                         run_on_node, analysis=analysis, child=child, restart_stage=restart_stage,
+                         kill_stage=kill_stage)
         if testing:
             load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
         else:
@@ -21,6 +22,7 @@ class Lefse(Tool):
         self.subjects = None
 
     def extract_feature_table(self):
+        """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
         self.add_path('tmp_unzip')
         self.add_path('biom_feature', '.biom')
         self.add_path('feature_table', '.tsv')
@@ -30,11 +32,18 @@ class Lefse(Tool):
         self.source_activate("qiime")
         self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
 
-    def process_qiime_input(self):
+    def preprocess_feature_table(self):
         """ Generate table that LEfSe can read from qiime output using MMEDS script """
-
         self.add_path('lefse_table', '.tsv')
         self.source_activate("mmeds")
+
+        cmd = 'format_lefse.py -i {} -m {} -c {} -s {} -u {} -o {}'
+        self.jobtext.append(cmd.format(self.get_file('feature_table'),
+                                       self.get_file('mapping'),
+                                       'class',
+                                       'subclass',
+                                       'subject',
+                                       self.get_file('lefse_table')))
 
     def format_input(self):
         """ Convert uploaded .txt file into file type usable by LEfSe """
@@ -100,10 +109,12 @@ class Lefse(Tool):
         self.subjects = 'subjects' in self.doc.reads_type
         self.set_stage(0)
         self.extract_feature_table()
-        self.format_input()
         self.set_stage(1)
-        self.lefse()
+        self.preprocess_feature_table()
+        self.format_input()
         self.set_stage(2)
+        self.lefse()
+        self.set_stage(3)
         self.plot_results()
         self.cladogram()
         self.features()

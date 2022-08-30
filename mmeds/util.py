@@ -1600,7 +1600,7 @@ def get_file_index_entry_location(path, tool, entry):
     dirs = path.glob(f"{tool}_*")
     highest = 0
     for d in dirs:
-        cur = int(d.split("_")[-1])
+        cur = int(d.name.split("_")[-1])
         if cur > highest:
             highest = cur
 
@@ -1610,8 +1610,8 @@ def get_file_index_entry_location(path, tool, entry):
     while not entry_exists and highest >= 0:
         index = path / f"{tool}_{highest}" / "file_index.tsv"
         if index.exists():
-            df = pd.read_csv(index, sep='\t', skiprows=0, header=[0], index_col=0)
-            if entry in df['Key']:
+            df = pd.read_csv(index, sep='\t', skiprows=[0], header=[0], index_col=0)
+            if entry in df.index:
                 entry_exists = True
                 out_path = df.at[entry, "Path"]
         if not entry_exists:

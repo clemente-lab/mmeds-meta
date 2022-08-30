@@ -24,7 +24,7 @@ def run_analysis(study_name, tool_type, user):
     Checks the number of reads per sample in a multiplexed file.
     """
     q = get_queue()
-    with Database(testing=False) as db:
+    with Database(testing=True) as db:
         access_code = db.get_access_code_from_study_name(study_name, user)
     ret = start_analysis_local(q, access_code, tool_type, user)
 
