@@ -1387,9 +1387,18 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
+def start_analysis_local(queue, path, tool_type):
+    """
+    Directly start an analysis using the watcher, bypassing the server
+    """
+    queue.put(('analysis', user, access_code, tool_type, analysis_type, config, sequencing_runs, kill_stage, run_on_node))
+    Logger.debug("Analysis sent to queue directly")
+    return 0
+
+
 def upload_study_local(queue, study_name, subject, subject_type, specimen, user):
     """
-    # Directly upload a local study using the watcher, bypassing the server
+    Directly upload a local study using the watcher, bypassing the server
     """
     queue.put(('upload', study_name, subject, subject_type, specimen, user, False, False))
     Logger.debug("Study sent to queue directly")
