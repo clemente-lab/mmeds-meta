@@ -38,7 +38,7 @@ def get_queue():
     """ Creates a watcher queue to be sent to the analysis function in util.py. Those functions
     cannot create their own Watcher queue due to their needing a recursive import
     """
-    wathcer = Watcher()
+    watcher = Watcher()
     watcher.connect()
     queue = watcher.get_queue()
     return queue
