@@ -18,15 +18,17 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-t', '--tool_type', required=True,
               help='Type of tools to perform summary for')
 @click.option('-u', '--user', required=True,
-             help='Owner of the study')
-def run_analysis(study_name, tool_type, user):
+              help='Owner of the study')
+@click.option('-c', '--config', required=False,
+              help='analysis config yaml file')
+def run_analysis(study_name, tool_type, user, config):
     """
     Checks the number of reads per sample in a multiplexed file.
     """
     q = get_queue()
     with Database(testing=True) as db:
         access_code = db.get_access_code_from_study_name(study_name, user)
-    ret = start_analysis_local(q, access_code, tool_type, user)
+    ret = start_analysis_local(q, access_code, tool_type, user, config)
 
     assert ret == 0
 

@@ -319,18 +319,23 @@ if not LOG_DIR.exists():
     except FileExistsError:
         pass
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
-CONFIG_PARAMETERS = [
-    'sampling_depth',
-    'metadata',
-    'taxa_levels',
-    'abundance_threshold',
-    'font_size',
-    'sub_analysis',
-    'additional_analysis',
-    'iterations',
-    'permutations',
-    'type'
-]
+CONFIG_PARAMETERS = {
+    'qiime2': [
+        'sampling_depth',
+        'metadata',
+        'taxa_levels',
+        'abundance_threshold',
+        'font_size',
+        'sub_analysis',
+        'additional_analysis',
+        'iterations',
+        'permutations',
+        'type'],
+    'lefse': [
+        'class',
+        'subclass',
+        'subjects']
+}
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'

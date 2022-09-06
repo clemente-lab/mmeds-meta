@@ -106,7 +106,7 @@ class Watcher(BaseManager):
         with Database('.', owner=user, testing=testing) as db:
             files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
-        config = load_config(config_file, files['metadata'])
+        config = load_config(config_file, files['metadata'], tool_type)
 
         # Switch statment will go here
         try:

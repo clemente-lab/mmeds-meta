@@ -10,7 +10,8 @@ from datetime import datetime
 
 from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
-                        load_metadata, write_metadata, camel_case)
+                        load_metadata, write_metadata, camel_case,
+                        get_file_index_entry_location)
 from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 from mmeds.logging import Logger
@@ -264,7 +265,7 @@ class Tool(mp.Process):
 
         self.jobtext.append(cmd)
 
-    def biom_convert(self, from_file, to_file, to_tsv=True):
+    def biom_convert(self, from_file, to_file, to_tsv=True, sanitize=True):
         """
         Perform a biom convert either to .biom or to .tsv
         Requires biom library in active environment
@@ -277,8 +278,23 @@ class Tool(mp.Process):
         cmd = 'biom convert -i {} -o {} {}'.format(from_file,
                                                    to_file,
                                                    to)
-
         self.jobtext.append(cmd)
+
+        if sanitize:
+            cmd = "sed -i '1d' {}".format(to_file)
+            self.jobtext.append(cmd)
+
+    def extract_qiime2_feature_table(self):
+        """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
+        self.add_path('tmp_unzip')
+        self.add_path('biom_feature', '.biom')
+        self.add_path('feature_table', '.tsv')
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'filtered_table')
+
+        self.unzip_general(table, self.get_file('tmp_unzip'))
+        self.move_general(self.get_file('tmp_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))
+        self.source_activate('qiime')
+        self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
 
     ############################
     # Analysis File Management #
@@ -690,9 +706,8 @@ class Tool(mp.Process):
             jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
 
-            self.logger.debug(self.doc.config['sub_analysis'])
             # Start the sub analyses if so configured
-            if not self.doc.config['sub_analysis'] == 'None':
+            if 'sub_analysis' in self.doc.config and not self.doc.config['sub_analysis'] == 'None':
                 self.logger.debug('I am not a sub analysis {}'.format(self.name))
                 self.create_children()
                 self.start_children()

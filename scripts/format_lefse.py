@@ -32,7 +32,7 @@ def format_table(i_table, metadata_file, metadata_column_class, metadata_column_
         if i == 0:
             continue
         t.append(categories[cell][metadata_column_class])
-    path_df.loc[len(path_df.index)] = t
+    path_df.loc[1.5] = t
 
     if metadata_column_subclass:
         t = [metadata_column_subclass]
@@ -40,7 +40,7 @@ def format_table(i_table, metadata_file, metadata_column_class, metadata_column_
             if i == 0:
                 continue
             t.append(categories[cell][metadata_column_subclass])
-        path_df.loc[len(path_df.index)] = t
+        path_df.loc[1.6] = t
 
     if metadata_column_subjects:
         t = [metadata_column_subjects]
@@ -48,8 +48,9 @@ def format_table(i_table, metadata_file, metadata_column_class, metadata_column_
             if i == 0:
                 continue
             t.append(categories[cell][metadata_column_subjects])
-        path_df.loc[len(path_df.index)] = t
+        path_df.loc[1.7] = t
 
+    path_df = path_df.sort_index().reset_index(drop=True)
     path_df.to_csv(o_table, sep='\t', index=False, na_rep='nan')
 
 

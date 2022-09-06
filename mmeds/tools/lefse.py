@@ -14,23 +14,12 @@ class Lefse(Tool):
         if testing:
             load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
         else:
-            load = 'ml anaconda3;\nsource activate lefse;'
+            load = 'ml anaconda3;'
         self.jobtext.append(load)
         self.module = load
 
         self.subclass = None
         self.subjects = None
-
-    def extract_feature_table(self):
-        """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
-        self.add_path('tmp_unzip')
-        self.add_path('biom_feature', '.biom')
-        self.add_path('feature_table', '.tsv')
-        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'filtered_table')
-        self.unzip_general(table, self.get_file('tmp_unzip'))
-        self.move_general(self.get_file('tmp_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))
-        self.source_activate("qiime")
-        self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
 
     def preprocess_feature_table(self):
         """ Generate table that LEfSe can read from qiime output using MMEDS script """
@@ -40,16 +29,16 @@ class Lefse(Tool):
         cmd = 'format_lefse.py -i {} -m {} -c {} -s {} -u {} -o {}'
         self.jobtext.append(cmd.format(self.get_file('feature_table'),
                                        self.get_file('mapping'),
-                                       'class',
-                                       'subclass',
-                                       'subject',
+                                       self.lefse_class,
+                                       self.subclass,
+                                       self.subjects,
                                        self.get_file('lefse_table')))
 
     def format_input(self):
         """ Convert uploaded .txt file into file type usable by LEfSe """
 
-        self.add_path('lefse_input', '.in')
-        cmd = 'format_input.py {data} {output} -c 1'
+        self.add_path('lefse_input', '.lefse')
+        cmd = 'lefse_format_input.py {data} {output} -c 1'
 
         if self.subclass:
             cmd += ' -s 2'
@@ -66,7 +55,7 @@ class Lefse(Tool):
         """ Perform the analysis """
 
         self.add_path('lefse_results', '.res')
-        cmd = 'run_lefse.py {input_file} {output_file};'
+        cmd = 'lefse_run.py {input_file} {output_file};'
         self.jobtext.append(cmd.format(input_file=self.get_file('lefse_input'),
                                        output_file=self.get_file('lefse_results')))
 
@@ -74,7 +63,7 @@ class Lefse(Tool):
         """ Create basic plot of the results """
 
         self.add_path('results_plot', '.png')
-        cmd = 'plot_res.py {input_file} {plot};'
+        cmd = 'lefse_plot_res.py {input_file} {plot} --format svg;'
         self.jobtext.append(cmd.format(input_file=self.get_file('lefse_results'),
                                        plot=self.get_file('results_plot')))
 
@@ -82,7 +71,7 @@ class Lefse(Tool):
         """ Create cladogram of the results """
 
         self.add_path('results_cladogram', '.png')
-        cmd = 'plot_cladogram.py {input_file} {cladogram} --format png;'
+        cmd = 'lefse_plot_cladogram.py {input_file} {cladogram} --format svg;'
         self.jobtext.append(cmd.format(input_file=self.get_file('lefse_results'),
                                        cladogram=self.get_file('results_cladogram')))
 
@@ -94,7 +83,7 @@ class Lefse(Tool):
 
         self.add_path('features_biomarkers', '.zip')
         self.add_path('features_all', '.zip')
-        cmd = 'plot_features.py -f {features} --archive zip {input_1} {input_2} {output};'
+        cmd = 'lefse_plot_features.py --format svg -f {features} --archive zip {input_1} {input_2} {output};'
         self.jobtext.append(cmd.format(features='diff',
                                        input_1=self.get_file('lefse_input'),
                                        input_2=self.get_file('lefse_results'),
@@ -105,12 +94,14 @@ class Lefse(Tool):
                                        output=self.get_file('features_all')))
 
     def setup_analysis(self, summary=False):
-        self.subclass = 'subclass' in self.doc.reads_type
-        self.subjects = 'subjects' in self.doc.reads_type
+        self.lefse_class = self.config['class']
+        self.subclass = self.config['subclass']
+        self.subjects = self.config['subjects']
         self.set_stage(0)
-        self.extract_feature_table()
+        self.extract_qiime2_feature_table()
         self.set_stage(1)
         self.preprocess_feature_table()
+        self.source_activate('lefse')
         self.format_input()
         self.set_stage(2)
         self.lefse()

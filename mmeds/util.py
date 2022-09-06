@@ -266,7 +266,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        keep_default_na=keep_default_na)
 
 
-def load_config(config_file, metadata, ignore_bad_cols=False):
+def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
     """
     Read the provided config file to determine settings for the analysis.
     ====================================================================
@@ -298,11 +298,12 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
     # Check if columns == 'all'
     for param in ['metadata', 'taxa_levels', 'sub_analysis']:
-        config['{}_all'.format(param)] = (config[param] == 'all')
-    return parse_parameters(config, metadata, ignore_bad_cols=ignore_bad_cols)
+        if param in config:
+            config['{}_all'.format(param)] = (config[param] == 'all')
+    return parse_parameters(config, metadata, tool_type, ignore_bad_cols=ignore_bad_cols)
 
 
-def parse_parameters(config, metadata, ignore_bad_cols=False):
+def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
     """
     Helper function for load_config. This parses the individual options provided in
     the config file. For example, the user can put 'all' as the taxa column option
@@ -311,13 +312,13 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS)
+    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS[tool_type])
             if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
-        for option in fig.CONFIG_PARAMETERS:
+        for option in fig.CONFIG_PARAMETERS[tool_type]:
             Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata' or option == 'sub_analysis':
@@ -339,7 +340,8 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
-        if config['sub_analysis'] and len(config['metadata']) == 1:
+        if 'sub_analysis' in config and 'metadata' in config and \
+            config['sub_analysis'] and len(config['metadata']) == 1:
             raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
@@ -1387,11 +1389,13 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, tool_type, user):
+def start_analysis_local(queue, access_code, tool_type, user, config):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
-    queue.put(('analysis', user, access_code, tool_type, 'default', fig.DEFAULT_CONFIG, {}, -1, False))
+    if not config:
+        config = fig.DEFAULT_CONFIG
+    queue.put(('analysis', user, access_code, tool_type, 'default', config, {}, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 
