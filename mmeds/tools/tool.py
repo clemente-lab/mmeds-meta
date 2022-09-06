@@ -181,12 +181,12 @@ class Tool(mp.Process):
         is used for every analysis but potentially in future these could be set via the config file.
         """
         params = {
-            'walltime': '6:00',
+            'walltime': '20:00',
             'walltime2': '2:00',
             'jobname': '{}-{}'.format(self.owner, self.doc.name),
             'path': self.path,
             'nodes': self.num_jobs,
-            'memory': 10000,
+            'memory': 50000,
             'queue': 'premium'
         }
         return params
@@ -265,6 +265,13 @@ class Tool(mp.Process):
 
         self.jobtext.append(cmd)
 
+    def remove_general(self, rm_path):
+        """
+        A general remove for forcing the recursive deletion at a path
+        """
+        cmd = 'rm -rf {}'.format(rm_path)
+        self.jobtext.append(cmd)
+
     def biom_convert(self, from_file, to_file, to_tsv=True, sanitize=True):
         """
         Perform a biom convert either to .biom or to .tsv
@@ -284,17 +291,31 @@ class Tool(mp.Process):
             cmd = "sed -i '1d' {}".format(to_file)
             self.jobtext.append(cmd)
 
-    def extract_qiime2_feature_table(self):
+    def extract_qiime2_feature_table(self, clean=True):
         """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
-        self.add_path('tmp_unzip')
+        self.add_path('tmp_feature_unzip')
         self.add_path('biom_feature', '.biom')
         self.add_path('feature_table', '.tsv')
         table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'filtered_table')
 
-        self.unzip_general(table, self.get_file('tmp_unzip'))
-        self.move_general(self.get_file('tmp_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))
+        self.unzip_general(table, self.get_file('tmp_feature_unzip'))
+        self.move_general(self.get_file('tmp_feature_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))
         self.source_activate('qiime')
         self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
+        if clean:
+            self.remove_general(self.get_file('tmp_feature_unzip'))
+
+    def extract_qiime2_rep_seqs(self, clean=True):
+        """ Unzip qiime2 representative sequences artifact from previous analysis """
+        self.add_path('tmp_seqs_unzip')
+        self.add_path('rep_seqs', '.fasta')
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'rep_seqs_table')
+
+        self.unzip_general(table, self.get_file('tmp_seqs_unzip'))
+        self.move_general(self.get_file('tmp_seqs_unzip') / 'data' / 'dna-sequences.fasta', self.get_file('rep_seqs'))
+
+        if clean:
+            self.remove_general(self.get_file('tmp_seqs_unzip'))
 
     ############################
     # Analysis File Management #

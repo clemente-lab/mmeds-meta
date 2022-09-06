@@ -22,6 +22,7 @@ from mmeds.tools.qiime2 import Qiime2
 from mmeds.tools.sparcc import SparCC
 from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
+from mmeds.tools.picrust2 import PiCRUSt2
 from mmeds.tools.tool import TestTool
 from mmeds.logging import Logger
 
@@ -34,6 +35,7 @@ TOOLS = {
     'sparcc': SparCC,
     'lefse': Lefse,
     'picrust1': PiCRUSt1,
+    'picrust2': PiCRUSt2,
     'test': TestTool
 }
 

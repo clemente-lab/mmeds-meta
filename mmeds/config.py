@@ -268,6 +268,7 @@ TOOL_FILES = {
     'sparcc': ['otu_table'],
     'lefse': ['lefse_table'],
     'picrust1': ['otu_table'],
+    'picrust2': ['otu_table'],
     'test': []
 }
 
@@ -334,7 +335,10 @@ CONFIG_PARAMETERS = {
     'lefse': [
         'class',
         'subclass',
-        'subjects']
+        'subjects'],
+    'picrust2': [
+        'stratified',
+        'per_sequence_contrib']
 }
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
