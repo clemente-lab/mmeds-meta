@@ -338,7 +338,11 @@ CONFIG_PARAMETERS = {
         'subjects'],
     'picrust2': [
         'stratified',
-        'per_sequence_contrib']
+        'per_sequence_contrib'],
+    'sparcc': [
+        'statistic',
+        'iterations',
+        'permutations']
 }
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'

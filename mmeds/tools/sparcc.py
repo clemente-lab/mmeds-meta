@@ -5,15 +5,15 @@ from mmeds.tools.tool import Tool
 class SparCC(Tool):
     """ A class for SparCC analysis of uploaded studies. """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, run_on_node,
-                 analysis=True, restart_stage=0, kill_stage=-1, child=False):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing,
+    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+                 run_on_node, analysis=True, restart_stage=0, kill_stage=-1, child=False):
+        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
                          kill_stage=kill_stage, child=child)
         if testing:
             load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
         else:
-            load = 'module load sparcc;'
+            load = 'module load sparcc/2016-10-17;'
         self.jobtext.append(load)
         self.module = load
 
@@ -21,14 +21,11 @@ class SparCC(Tool):
         """ Quantify the correlation between all OTUs """
 
         if data_permutation is None:
-            data_file = self.get_file('otu_table')
+            data_file = self.get_file('feature_table')
             self.add_path('correlation', '.out')
         else:
             data_file = data_permutation
-        cmd = 'SparCC.py {data} -i {iterations} --cor_file={output}'
-
-        if self.doc.config.get('stat') is not None:
-            cmd += ' -a {stat}'
+        cmd = 'SparCC.py {data} -i {iterations} --cor_file={output} -a {stat}'
 
         # If running on permutations have commands execute in parallel
         if data_permutation is None:
@@ -36,9 +33,9 @@ class SparCC(Tool):
         else:
             cmd += '&'
         self.jobtext.append(cmd.format(data=data_file,
-                                       iterations=self.doc.config['iterations'],
+                                       iterations=self.iterations,
                                        output=self.get_file('correlation'),
-                                       stat=self.doc.config.get('stat')))
+                                       stat=self.stat))
 
     def make_bootstraps(self):
         """ Create the shuffled datasets """
@@ -47,7 +44,7 @@ class SparCC(Tool):
         if not self.get_file('pvals', True).is_dir():
             self.get_file('pvals', True).mkdir()
         self.jobtext.append(cmd.format(data=self.get_file('correlation'),
-                                       permutations=self.doc.config['permutations'],
+                                       permutations=self.permutations,
                                        pvals=self.get_file('pvals')))
 
     def pseudo_pvals(self, sides='two'):
@@ -56,12 +53,16 @@ class SparCC(Tool):
         cmd = 'PseudoPvals.py {data} {perm} {iterations} -o {output} -t {sides}_sided'
         self.jobtext.append(cmd.format(data=self.get_file('correlation'),
                                        perm=self.get_file('pvals') / 'permutation_#.txt',
-                                       iterations=self.doc.config['iterations'],
+                                       iterations=self.iterations,
                                        output=self.get_file('PseudoPval'),
                                        sides=sides))
 
     def setup_analysis(self, summary=False):
+        self.stat = self.config['statistic']
+        self.iterations = self.config['iterations']
+        self.permutations = self.config['permutations']
         self.set_stage(0)
+        self.extract_qiime2_feature_table()
         self.sparcc()
         self.set_stage(1)
         self.make_bootstraps()
