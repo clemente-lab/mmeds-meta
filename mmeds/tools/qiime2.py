@@ -521,29 +521,30 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def add_pseudocount(self, category, level=None):
+    def add_pseudocount(self, level=None):
         """ Add composition pseudocount """
         if level is None:
-            new_file = 'comp-{}-table'.format(category)
+            new_file = 'comp-table-overall'
+            infile = 'filtered_table'
         else:
-            new_file = 'comp-{}-table-l{}'.format(category, level)
+            new_file = 'comp-table-L{}'.format(level)
+            infile = 'taxa_collapsed_table_L{}'.format(level)
         self.add_path(new_file, '.qza')
         cmd = [
             'qiime composition add-pseudocount',
-            '--i-table {}'.format(self.get_file('filtered_table')),
+            '--i-table {}'.format(self.get_file(infile)),
             '--o-composition-table {}'.format(self.get_file(new_file))
         ]
         self.jobtext.append(' '.join(cmd))
 
     def composition_ancom(self, category, level=None):
         """ Add composition ancom """
-
         if level is None:
             new_file = 'ancom-{}'.format(category)
-            infile = 'comp-{}-table'.format(category)
+            infile = 'comp-table-overall'
         else:
-            new_file = 'ancom-{}-l{}'.format(category, level)
-            infile = 'comp-{}-table-l{}'.format(category, level)
+            new_file = 'ancom-{}-L{}'.format(category, level)
+            infile = 'comp-table-L{}'.format(level)
 
         self.add_path(new_file, '.qzv')
         cmd = [
@@ -556,25 +557,49 @@ class Qiime2(Tool):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def taxa_collapse(self, category, taxa_level):
-        """ Collapse taxonomy to the specified level """
-        new_file = '{}_table_l{}'.format(category, taxa_level)
-        self.add_path(new_file, '.qza')
+    def collapse_all_taxa_relative(self, taxa_levels=(1, 6)):
+        """ Collapse taxonomy at the specified levels, merge, and convert to relative abundance """
+        self.taxa_collapse(taxa_levels)
+        self.merge_collapsed_taxa(taxa_levels)
+        self.taxa_absolute_to_relative_abundance()
+
+    def taxa_collapse(self, taxa_levels):
+        """ Collapse taxonomy at specified taxa levels (inclusive) """
+        for taxa_level in range(taxa_levels[0], taxa_levels[1]+1):
+            new_file = 'taxa_collapsed_table_L{}'.format(taxa_level)
+            self.add_path(new_file, '.qza')
+            cmd = [
+                'qiime taxa collapse',
+                '--i-table {}'.format(self.get_file('filtered_table')),
+                '--i-taxonomy {}'.format(self.get_file('taxonomy')),
+                '--p-level {}'.format(taxa_level),
+                '--o-collapsed-table {}'.format(self.get_file(new_file))
+            ]
+            self.jobtext.append(' '.join(cmd))
+
+    def merge_collapsed_taxa(self, taxa_levels):
+        """ Merge collapsed taxa files to make one complete collapsed file as in qiime1's summarize_taxa.py """
+        collapsed_tables = []
+        for taxa_level in range(taxa_levels[0], taxa_levels[1]+1):
+            collapsed_tables.append(str(self.get_file(f'taxa_collapsed_table_L{taxa_level}')))
+
+        self.add_path('taxa_collapsed_merged_table', '.qza')
         cmd = [
-            'qiime taxa collapse',
-            '--i-table {}'.format(self.get_file('filtered_table')),
-            '--i-taxonomy {}'.format(self.get_file('taxonomy')),
-            '--p-level {}'.format(taxa_level),
-            '--o-collapsed-table {}'.format(self.get_file(new_file))
+            'qiime feature-table merge',
+            '--i-tables {}'.format(' '.join(collapsed_tables)),
+            '--o-merged-table {}'.format(self.get_file('taxa_collapsed_merged_table'))
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def group_significance(self, category, level=None):
-        """ Run all the commands related to calculating group_significance """
-        if level is not None:
-            self.taxa_collapse(category, level)
-        self.add_pseudocount(category, level)
-        self.composition_ancom(category, level)
+    def taxa_absolute_to_relative_abundance(self):
+        """ Convert taxa-collapsed FeatureTable[Frequency] artifact into a FeatureTable[RelativeFrequency] artifact """
+        self.add_path('taxa_collapsed_relative_table', '.qza')
+        cmd = [
+            'qiime feature-table relative-frequency',
+            '--i-table {}'.format(self.get_file('taxa_collapsed_merged_table')),
+            '--o-relative-frequency-table {}'.format(self.get_file('taxa_collapsed_relative_table'))
+        ]
+        self.jobtext.append(' '.join(cmd))
 
     def group_feature_table(self, category):
         """ Group feature table by specified metadata category """
@@ -721,14 +746,19 @@ class Qiime2(Tool):
         self.set_stage(4)
         self.classify_taxa()
         self.taxa_diversity()
-        # Calculate group significance
+        self.collapse_all_taxa_relative()
+        self.add_pseudocount()
+        # Only add pseudocounts once for each level
+        for level in self.doc.config['taxa_levels']:
+            self.add_pseudocount(level)
+        # Calculate ancom group significance
         for col in self.doc.config['metadata']:
             # Do not group if the metadata is continuous
             if not self.doc.config['metadata_continuous'][col]:
-                self.group_significance(col)
+                self.composition_ancom(col)
                 # For the requested taxanomic levels
                 for level in self.doc.config['taxa_levels']:
-                    self.group_significance(col, level)
+                    self.composition_ancom(col, level)
         # Calculate mean taxas
         self.mean_taxa(self.doc.config['metadata'], self.doc.config['metadata_continuous'])
         self.jobtext.append('wait')
