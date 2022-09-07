@@ -18,11 +18,16 @@ class PiCRUSt2(Tool):
         self.jobtext.append(load)
         self.module = load
 
+        self.stratified = self.config['stratified']
+        self.per_seq_contrib = self.config['per_sequence_contrib']
+
     def extract_picrust_input(self):
+        """ Extract the filtered table and representative sequences data from Qiime2 """
         self.extract_qiime2_feature_table()
         self.extract_qiime2_rep_seqs()
 
     def picrust_pipeline(self):
+        """ Run the picrust2 analysis """
         self.add_path('picrust2_out')
         cmd = 'picrust2_pipeline.py -s {} -i {} -o {}'.format(
             self.get_file('rep_seqs'),
@@ -35,8 +40,6 @@ class PiCRUSt2(Tool):
         self.jobtext.append(cmd)
 
     def setup_analysis(self, summary=False):
-        self.stratified = self.config['stratified']
-        self.per_seq_contrib = self.config['per_sequence_contrib']
         self.set_stage(0)
         self.extract_picrust_input()
         self.set_stage(1)

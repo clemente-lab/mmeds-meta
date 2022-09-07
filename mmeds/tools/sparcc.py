@@ -17,15 +17,45 @@ class SparCC(Tool):
         self.jobtext.append(load)
         self.module = load
 
+        self.stat = self.config['statistic']
+        self.iterations = self.config['iterations']
+        self.permutations = self.config['permutations']
+
+    def create_sub_folders(self):
+        """ Create the necessary sub-folders for SparCC analysis """
+        self.add_path('pvals')
+        if not self.get_file('pvals', True).is_dir():
+            self.get_file('pvals', True).mkdir()
+
+        self.add_path('correlations')
+        if not self.get_file('correlations', True).is_dir():
+            self.get_file('correlations', True).mkdir()
+
+        self.add_path('covariances')
+        if not self.get_file('covariances', True).is_dir():
+            self.get_file('covariances', True).mkdir()
+
     def sparcc(self, data_permutation=None):
         """ Quantify the correlation between all OTUs """
 
         if data_permutation is None:
             data_file = self.get_file('feature_table')
-            self.add_path('correlation', '.out')
+            cor = 'correlation'
+            cov = 'covariance'
+            cor_dir = self.path
+            cov_dir = self.path
         else:
+            permutation_num = data_permutation.stem.split('_')[-1]
             data_file = data_permutation
-        cmd = 'SparCC.py {data} -i {iterations} --cor_file={output} -a {stat}'
+            cor = f'correlation_perm_{permutation_num}'
+            cov = f'covariance_perm_{permutation_num}'
+            cor_dir = self.get_file('correlations', True)
+            cov_dir = self.get_file('covariances', True)
+
+        self.add_path(cor_dir / cor, '.out', key=cor)
+        self.add_path(cov_dir / cov, '.out', key=cov)
+
+        cmd = 'SparCC.py {data} -i {iterations} -c{cor_output} -v {cov_output} -a {stat}'
 
         # If running on permutations have commands execute in parallel
         if data_permutation is None:
@@ -34,15 +64,19 @@ class SparCC(Tool):
             cmd += '&'
         self.jobtext.append(cmd.format(data=data_file,
                                        iterations=self.iterations,
-                                       output=self.get_file('correlation'),
+                                       output=self.get_file(cor),
                                        stat=self.stat))
+
+    def sparcc_permutations(self):
+        """ Run sparcc on each generated permutation """
+        files = [self.get_file('pvals') / 'perm_cor_{}.txt'.format(i)
+                 for i in range(int(self.doc.config['permutations']))]
+        for pfile in files:
+            self.sparcc(pfile)
 
     def make_bootstraps(self):
         """ Create the shuffled datasets """
         cmd = 'MakeBootstraps.py {data} -n {permutations} -t permutation_#.txt -p {pvals}/'
-        self.add_path('pvals')
-        if not self.get_file('pvals', True).is_dir():
-            self.get_file('pvals', True).mkdir()
         self.jobtext.append(cmd.format(data=self.get_file('correlation'),
                                        permutations=self.permutations,
                                        pvals=self.get_file('pvals')))
@@ -58,19 +92,14 @@ class SparCC(Tool):
                                        sides=sides))
 
     def setup_analysis(self, summary=False):
-        self.stat = self.config['statistic']
-        self.iterations = self.config['iterations']
-        self.permutations = self.config['permutations']
         self.set_stage(0)
+        self.create_sub_folders()
         self.extract_qiime2_feature_table()
         self.sparcc()
         self.set_stage(1)
         self.make_bootstraps()
         self.set_stage(2)
-        files = [self.get_file('pvals') / 'perm_cor_{}.txt'.format(i)
-                 for i in range(int(self.doc.config['permutations']))]
-        for pfile in files:
-            self.sparcc(pfile)
+        self.sparcc_permutations()
         self.set_stage(3)
         self.pseudo_pvals()
         self.write_file_locations()
