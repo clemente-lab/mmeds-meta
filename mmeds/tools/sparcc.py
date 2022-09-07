@@ -27,13 +27,13 @@ class SparCC(Tool):
         if not self.get_file('pvals', True).is_dir():
             self.get_file('pvals', True).mkdir()
 
-        self.add_path('correlations')
-        if not self.get_file('correlations', True).is_dir():
-            self.get_file('correlations', True).mkdir()
+        self.add_path('pcorrelations')
+        if not self.get_file('pcorrelations', True).is_dir():
+            self.get_file('pcorrelations', True).mkdir()
 
-        self.add_path('covariances')
-        if not self.get_file('covariances', True).is_dir():
-            self.get_file('covariances', True).mkdir()
+        self.add_path('pcovariances')
+        if not self.get_file('pcovariances', True).is_dir():
+            self.get_file('pcovariances', True).mkdir()
 
     def sparcc(self, data_permutation=None):
         """ Quantify the correlation between all OTUs """
@@ -45,17 +45,17 @@ class SparCC(Tool):
             cor_dir = self.path
             cov_dir = self.path
         else:
-            permutation_num = data_permutation.stem.split('_')[-1]
             data_file = data_permutation
+            permutation_num = data_permutation.stem.split('_')[-1]
             cor = f'correlation_perm_{permutation_num}'
             cov = f'covariance_perm_{permutation_num}'
-            cor_dir = self.get_file('correlations', True)
-            cov_dir = self.get_file('covariances', True)
+            cor_dir = self.get_file('pcorrelations', True)
+            cov_dir = self.get_file('pcovariances', True)
 
-        self.add_path(cor_dir / cor, '.out', key=cor)
-        self.add_path(cov_dir / cov, '.out', key=cov)
+        self.add_path(cor_dir / cor, '.txt', key=cor)
+        self.add_path(cov_dir / cov, '.txt', key=cov)
 
-        cmd = 'SparCC.py {data} -i {iterations} -c{cor_output} -v {cov_output} -a {stat}'
+        cmd = 'SparCC.py {data} -i {iterations} -c {cor_output} -v {cov_output} -a {stat}'
 
         # If running on permutations have commands execute in parallel
         if data_permutation is None:
@@ -64,13 +64,14 @@ class SparCC(Tool):
             cmd += '&'
         self.jobtext.append(cmd.format(data=data_file,
                                        iterations=self.iterations,
-                                       output=self.get_file(cor),
+                                       cor_output=self.get_file(cor),
+                                       cov_output=self.get_file(cov),
                                        stat=self.stat))
 
     def sparcc_permutations(self):
         """ Run sparcc on each generated permutation """
-        files = [self.get_file('pvals') / 'perm_cor_{}.txt'.format(i)
-                 for i in range(int(self.doc.config['permutations']))]
+        files = [self.get_file('pvals') / 'permutation_{}.txt'.format(i)
+                 for i in range(int(self.permutations))]
         for pfile in files:
             self.sparcc(pfile)
 
@@ -86,7 +87,7 @@ class SparCC(Tool):
         self.add_path('PseudoPval', '.txt')
         cmd = 'PseudoPvals.py {data} {perm} {iterations} -o {output} -t {sides}_sided'
         self.jobtext.append(cmd.format(data=self.get_file('correlation'),
-                                       perm=self.get_file('pvals') / 'permutation_#.txt',
+                                       perm=self.get_file('pcorrelations') / 'correlation_perm_#.txt',
                                        iterations=self.iterations,
                                        output=self.get_file('PseudoPval'),
                                        sides=sides))

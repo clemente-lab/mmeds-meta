@@ -247,22 +247,25 @@ class Tool(mp.Process):
         cmd = f'source activate {full_env};'
         self.jobtext.append(cmd)
 
+    def conda_deactivate(self):
+        """ Deactivate current anaconda3 environment """
+        cmd = 'conda deactivate;'
+        self.jobtext.append(cmd)
+
     def unzip_general(self, from_file, to_file):
         """
         A general unzip command for unzipping any artifact into a specified directory
         """
-        cmd = 'unzip {} -d {}'.format(from_file,
-                                      to_file)
-
+        # The -j and -o commands ignore the archive structure, meaning
+        #   all the files are extracted directly to the -d directory
+        cmd = 'unzip -jo {} -d {}'.format(from_file, to_file)
         self.jobtext.append(cmd)
 
     def move_general(self, from_file, to_file):
         """
         A general move for moving a file from one location to another
         """
-        cmd = 'mv {} {}'.format(from_file,
-                                to_file)
-
+        cmd = 'mv {} {}'.format(from_file, to_file)
         self.jobtext.append(cmd)
 
     def remove_general(self, rm_path):
@@ -275,18 +278,19 @@ class Tool(mp.Process):
     def biom_convert(self, from_file, to_file, to_tsv=True, sanitize=True):
         """
         Perform a biom convert either to .biom or to .tsv
-        Requires biom library in active environment
+        Requires biom installed in active environment
         """
         if to_tsv:
-            to = '--to-tsv'
+            convert = '--to-tsv'
         else:
-            to = '--to-hdf5'
+            convert = '--to-hdf5'
 
         cmd = 'biom convert -i {} -o {} {}'.format(from_file,
                                                    to_file,
-                                                   to)
+                                                   convert)
         self.jobtext.append(cmd)
 
+        # Remove the biom convert quirk "Constructed from BIOM file"
         if sanitize:
             cmd = "sed -i '1d' {}".format(to_file)
             self.jobtext.append(cmd)
@@ -300,7 +304,7 @@ class Tool(mp.Process):
         table = get_file_index_entry_location(self.path.parent, 'Qiime2', index_entry)
 
         self.unzip_general(table, self.get_file('tmp_feature_unzip'))
-        self.move_general(self.get_file('tmp_feature_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))
+        self.move_general(self.get_file('tmp_feature_unzip') / 'feature-table.biom', self.get_file('biom_feature'))
         self.source_activate('qiime')
         self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
         if clean:
@@ -313,7 +317,7 @@ class Tool(mp.Process):
         table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'rep_seqs_table')
 
         self.unzip_general(table, self.get_file('tmp_seqs_unzip'))
-        self.move_general(self.get_file('tmp_seqs_unzip') / 'data' / 'dna-sequences.fasta', self.get_file('rep_seqs'))
+        self.move_general(self.get_file('tmp_seqs_unzip') / 'dna-sequences.fasta', self.get_file('rep_seqs'))
 
         if clean:
             self.remove_general(self.get_file('tmp_seqs_unzip'))
