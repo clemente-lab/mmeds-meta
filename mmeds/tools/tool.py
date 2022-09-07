@@ -291,12 +291,13 @@ class Tool(mp.Process):
             cmd = "sed -i '1d' {}".format(to_file)
             self.jobtext.append(cmd)
 
-    def extract_qiime2_feature_table(self, clean=True):
+    def extract_qiime2_feature_table(self, index_entry='filtered_table', clean=True):
         """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
         self.add_path('tmp_feature_unzip')
         self.add_path('biom_feature', '.biom')
         self.add_path('feature_table', '.tsv')
-        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'filtered_table')
+        # 'index_entry' must be a FeatureTable artifact
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', index_entry)
 
         self.unzip_general(table, self.get_file('tmp_feature_unzip'))
         self.move_general(self.get_file('tmp_feature_unzip') / 'data' / 'feature-table.biom', self.get_file('biom_feature'))

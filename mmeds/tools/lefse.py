@@ -18,8 +18,9 @@ class Lefse(Tool):
         self.jobtext.append(load)
         self.module = load
 
-        self.subclass = None
-        self.subjects = None
+        self.lefse_class = self.config['class']
+        self.subclass = self.config['subclass']
+        self.subjects = self.config['subjects']
 
     def preprocess_feature_table(self):
         """ Generate table that LEfSe can read from qiime output using MMEDS script """
@@ -94,11 +95,8 @@ class Lefse(Tool):
                                        output=self.get_file('features_all')))
 
     def setup_analysis(self, summary=False):
-        self.lefse_class = self.config['class']
-        self.subclass = self.config['subclass']
-        self.subjects = self.config['subjects']
         self.set_stage(0)
-        self.extract_qiime2_feature_table()
+        self.extract_qiime2_feature_table('taxa_collapsed_relative_table')
         self.set_stage(1)
         self.preprocess_feature_table()
         self.source_activate('lefse')
