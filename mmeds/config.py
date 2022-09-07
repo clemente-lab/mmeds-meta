@@ -302,6 +302,7 @@ if not SESSION_PATH.exists():
         pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
+CUTIE_CONFIG_TEMPLATE = STORAGE_DIR / 'cutie_config_template.ini'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
