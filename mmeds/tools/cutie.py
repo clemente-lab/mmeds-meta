@@ -19,28 +19,21 @@ class CUTIE(Tool):
         self.module = load
 
         self.stat = self.config['statistic']
+        self.table = self.config['feature_table']
 
     def create_input_config_file(self):
         """ Create input config file defining CUTIE run """
         self.add_path('input_config', '.ini')
         self.add_path('CUTIE_out')
 
-        with open(self.get_file('input_config'), "w") as f:
-            f.write(CUTIE_CONFIG_TEMPLATE.format(
-                f1_path=,
-                f1_sep='/t',
-                f1_tidy=,
-                f1_skip=,
-                f1_col_start=,
-                f1_col_end=,
-                f2_path=,
-                f2_sep='/t',
-                f2_tidy=,
-                f2_skip=,
-                f2_col_start=,
-                f2_col_end=,
-                paired=,
-                out_dir=self.get_file('CUTIE_out'),
+        with open(CUTIE_CONFIG_TEMPLATE) as f:
+            template = f.read()
+
+        with open(self.get_file('input_config', True), "w") as f:
+            f.write(template.format(
+                f1_path=self.get_file('feature_table', True),
+                f2_path=self.get_file('continuous_mapping', True),
+                out_dir=self.get_file('CUTIE_out', True),
                 statistic=self.stat
             ))
 
@@ -51,8 +44,10 @@ class CUTIE(Tool):
 
     def setup_analysis(self, summary=False):
         self.set_stage(0)
-        self.create_input_config_file()
+        self.extract_qiime2_feature_table(self.table)
+        self.generate_continuous_mapping_file()
         self.set_stage(1)
+        self.create_input_config_file()
         self.run_CUTIE()
         self.write_file_locations()
         super().setup_analysis(summary=summary)

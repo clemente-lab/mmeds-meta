@@ -266,6 +266,7 @@ TOOL_FILES = {
     'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
     'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
     'sparcc': ['otu_table'],
+    'cutie': ['otu_table'],
     'lefse': ['lefse_table'],
     'picrust1': ['otu_table'],
     'picrust2': ['otu_table'],
@@ -333,6 +334,10 @@ CONFIG_PARAMETERS = {
         'iterations',
         'permutations',
         'type'],
+    'cutie': [
+        'statistic',
+        'feature_table',
+        'metadata_continuous'],
     'lefse': [
         'class',
         'subclass',

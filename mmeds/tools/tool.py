@@ -7,6 +7,7 @@ from copy import deepcopy
 from ppretty import ppretty
 from collections import defaultdict
 from datetime import datetime
+import pandas as pd
 
 from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
@@ -290,9 +291,9 @@ class Tool(mp.Process):
                                                    convert)
         self.jobtext.append(cmd)
 
-        # Remove the biom convert quirk "Constructed from BIOM file"
+        # Remove the biom convert quirk "Constructed from BIOM file" and leading '#'
         if sanitize:
-            cmd = "sed -i '1d' {}".format(to_file)
+            cmd = "sed -i '1d;2s/^#//' {}".format(to_file)
             self.jobtext.append(cmd)
 
     def extract_qiime2_feature_table(self, index_entry='filtered_table', clean=True):
@@ -321,6 +322,14 @@ class Tool(mp.Process):
 
         if clean:
             self.remove_general(self.get_file('tmp_seqs_unzip'))
+
+    def generate_continuous_mapping_file(self):
+        """ Create a version of the mapping file with only the continuous variables of interest """
+        self.add_path('continuous_mapping_file', '.tsv', key='continuous_mapping')
+        df = pd.read_csv(self.get_file('mapping', True), sep='\t', header=[0], skiprows=[1])
+        continuous = [c for c in self.doc.config['metadata_continuous']]
+        df = df[[c for c in df.columns if c in continuous or c == '#SampleID']]
+        df.to_csv(self.get_file('continuous_mapping', True), sep='\t', index=False, na_rep='nan')
 
     ############################
     # Analysis File Management #
