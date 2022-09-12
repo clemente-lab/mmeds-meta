@@ -1200,7 +1200,7 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name, self.get_dir())
 
             # Check that the config file is valid
-            util.load_config(config_path, files['metadata'])
+            util.load_config(config_path, files['metadata'], tool_type)
 
             # -1 is the kill_stage (used when testing)
             if not analysis_method == 'test':
