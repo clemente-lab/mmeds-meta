@@ -282,6 +282,10 @@ def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
         # If a Path was passed (as is the case during testing)
         if isinstance(config_file, Path):
             page = config_file.read_text()
+        # Use blank config
+        elif tool_type == 'test':
+            Logger.debug('Using blank config')
+            return config
         # If no config was provided load the default
         elif config_file is None or config_file == '':
             Logger.debug('Using default config')

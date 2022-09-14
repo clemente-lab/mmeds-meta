@@ -348,7 +348,8 @@ CONFIG_PARAMETERS = {
     'sparcc': [
         'statistic',
         'iterations',
-        'permutations']
+        'permutations'],
+    'test': []
 }
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'

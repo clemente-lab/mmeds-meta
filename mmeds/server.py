@@ -716,9 +716,7 @@ class MMEDSupload(MMEDSbase):
             # Add the success message if applicable
             page = self.load_webpage('upload_specimen_file',
                                      title='Upload Metadata',
-                                     success='Subject table uploaded successfully',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=uploadType)
+                                     success='Subject table uploaded successfully')
 
         # Not 100% sure this check still needs to be here, as the study name
         # should've already been checked at this point.

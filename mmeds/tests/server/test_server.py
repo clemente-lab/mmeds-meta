@@ -194,11 +194,13 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_ea_analysis_no_privileges(self):
+        Logger.info('ea analysis no privileges')
         self.login()
         self.check_analysis()
         self.logout()
 
     def test_eb_analysis_has_privileges(self):
+        Logger.info('eb analysis has privileges')
         self.login(lab=True)
         self.check_analysis(True)
         self.logout()
@@ -211,26 +213,27 @@ class TestServer(helper.CPWebCase):
         self.logout()
 
     def test_ed_error_404(self):
-        Logger.error("ed error 404")
+        Logger.info("ed error 404")
         self.login()
         self.get_error_page()
         self.logout()
 
     def test_y_query(self):
         return
+        Logger.info('y query')
         self.login()
         self.execute_invalid_query()
         self.execute_protected_query()
         self.execute_query()
 
     def test_z_cleanup(self):
-        Logger.error("z cleanup")
+        Logger.info("z cleanup")
         remove_user(self.server_user, testing=testing)
         remove_user(self.lab_user, testing=testing)
         # Send an email at the end to ensure there aren't issues with
         # accessing the correct email in future test runs
         send_email(fig.TEST_EMAIL, 'tester', 'error', testing=testing)
-        queue.put(('terminate'))
+        queue.put('terminate')
         Logger.error('Waiting on pipe')
         result = pipe.recv()
         while not result == 'Watcher exiting':
@@ -418,7 +421,7 @@ class TestServer(helper.CPWebCase):
         self.getPage('/upload/validate_metadata?barcodes_type=None', headers + self.cookies, 'POST', body)
         self.assertStatus('200 OK')
 
-        self.getPage('/upload/upload_specimen_metadata?uploadType=sparcc&studyName=Good_Study', self.cookies)
+        self.getPage('/upload/upload_specimen_metadata?uploadType=qiime&studyName=Good_Study', self.cookies)
         self.assertStatus('200 OK')
 
         headers, body = self.upload_files(['myMetaData'], [fig.TEST_SPECIMEN], ['text/tab-seperated-values'])
