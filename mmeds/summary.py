@@ -46,7 +46,7 @@ def summarize_qiime(summary_path, tool, testing=False):
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config(path / 'config_file.yaml', files['metadata'], True)
+    config = load_config(path / 'config_file.yaml', files['metadata'], tool, True)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
