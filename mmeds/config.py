@@ -356,6 +356,10 @@ MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
+DEFAULT_CONFIG_LEFSE = STORAGE_DIR / 'lefse_config.yaml'
+DEFAULT_CONFIG_SPARCC = STORAGE_DIR / 'sparcc_config.yaml'
+DEFAULT_CONFIG_PICRUST2 = STORAGE_DIR / 'picrust2_config.yaml'
+DEFAULT_CONFIG_CUTIE = STORAGE_DIR / 'cutie_config.yaml'
 if not TESTING:
     cp.config.update(CONFIG)
 

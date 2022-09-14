@@ -1393,13 +1393,13 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, tool_type, user, config):
+def start_analysis_local(queue, access_code, tool_type, user, config, runs={}):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
     if not config:
         config = fig.DEFAULT_CONFIG
-    queue.put(('analysis', user, access_code, tool_type, 'default', config, {}, -1, False))
+    queue.put(('analysis', user, access_code, tool_type, 'default', config, runs, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 
@@ -1602,8 +1602,9 @@ def get_subject_type(subject_file):
     return subject_type.lower()
 
 
-def get_file_index_entry_location(path, tool, entry):
+def get_file_index_entry_location(path, tool, entry, testing=False):
     """ Get entry from a non-active Tool's file_index.tsv file, for use in cross-tool analysis """
+
     # Collect possible analysis dirs for given tool
     dirs = path.glob(f"{tool}_*")
     highest = 0
@@ -1627,5 +1628,8 @@ def get_file_index_entry_location(path, tool, entry):
 
     if entry_exists:
         return Path(out_path)
+    elif testing:
+        # If testing, we won't find the file we're looking for as no analysis has been run
+        return Path('test_path.txt')
     else:
         raise KeyError(f"No entry for {entry} in directory {path}")

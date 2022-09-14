@@ -302,7 +302,7 @@ class Tool(mp.Process):
         self.add_path('biom_feature', '.biom')
         self.add_path('feature_table', '.tsv')
         # 'index_entry' must be a FeatureTable artifact
-        table = get_file_index_entry_location(self.path.parent, 'Qiime2', index_entry)
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', index_entry, self.testing)
 
         self.unzip_general(table, self.get_file('tmp_feature_unzip'))
         self.move_general(self.get_file('tmp_feature_unzip') / 'feature-table.biom', self.get_file('biom_feature'))
@@ -315,7 +315,7 @@ class Tool(mp.Process):
         """ Unzip qiime2 representative sequences artifact from previous analysis """
         self.add_path('tmp_seqs_unzip')
         self.add_path('rep_seqs', '.fasta')
-        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'rep_seqs_table')
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'rep_seqs_table', self.testing)
 
         self.unzip_general(table, self.get_file('tmp_seqs_unzip'))
         self.move_general(self.get_file('tmp_seqs_unzip') / 'dna-sequences.fasta', self.get_file('rep_seqs'))
