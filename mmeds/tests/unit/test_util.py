@@ -122,31 +122,31 @@ class UtilTests(TestCase):
 
     def test_load_config_file(self):
         # Test when no config is given
-        config = util.load_config(None, fig.TEST_METADATA)
-        for param in fig.CONFIG_PARAMETERS:
+        config = util.load_config(None, fig.TEST_METADATA, 'qiime2')
+        for param in fig.CONFIG_PARAMETERS['qiime2']:
             assert config.get(param) is not None
 
-        config = util.load_config(Path(fig.TEST_CONFIG_ALL), fig.TEST_METADATA)
+        config = util.load_config(Path(fig.TEST_CONFIG_ALL), fig.TEST_METADATA, 'qiime2')
         assert len(config['taxa_levels']) == 7
 
-        config = util.load_config(Path(fig.TEST_CONFIG_SUB), fig.TEST_METADATA)
+        config = util.load_config(Path(fig.TEST_CONFIG_SUB), fig.TEST_METADATA, 'qiime2')
         assert config['sub_analysis'] == ['SpecimenBodySite']
 
         # Check the config file fail states
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_1), fig.TEST_METADATA)
+            config = util.load_config(Path(fig.TEST_CONFIG_1), fig.TEST_METADATA, 'qiime2')
         assert 'Missing parameter' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_2), fig.TEST_METADATA)
+            config = util.load_config(Path(fig.TEST_CONFIG_2), fig.TEST_METADATA, 'qiime2')
         assert 'Invalid metadata column' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_3), fig.TEST_METADATA)
+            config = util.load_config(Path(fig.TEST_CONFIG_3), fig.TEST_METADATA, 'qiime2')
         assert 'Invalid parameter' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA)
+            config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA, 'qiime2')
         assert 'YAML format' in e_info.value.message
 
     def test_mmeds_to_MIxS(self):
