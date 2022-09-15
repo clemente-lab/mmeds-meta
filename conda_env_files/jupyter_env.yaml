@@ -15,4 +15,4 @@ dependencies:
   - r-GGally
   - pip
   - pip:
-      - git+https://github.com/clemente-lab/mmeds-meta@Enhancement-AddingAnalysisTools
+      - git+https://github.com/clemente-lab/mmeds-meta
