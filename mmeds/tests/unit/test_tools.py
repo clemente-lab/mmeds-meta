@@ -24,7 +24,7 @@ class ToolsTests(TestCase):
 
     def run_analysis(self, code, tool_type, analysis_type, TOOL, config, runs={}):
         tool = TOOL(self.q, fig.TEST_USER, 'random_code', code, tool_type, analysis_type, config,
-                    self.testing, runs, True, analysis=False)
+                    self.testing, runs, True, analysis=True)
         Logger.debug('Starting {}, id is {}'.format(tool.name, id(tool)))
         tool.run()
         self.assertEqual(tool.doc.analysis_type, analysis_type)

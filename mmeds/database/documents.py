@@ -195,7 +195,6 @@ class MMEDSDoc(men.Document):
         :access_code: A string. A unique code for accessing the new document.
         :files: A list of strings. Keys for the files to link to from the parents doc
         """
-
         # Create a new directory to perform the analysis in
         run_id = 0
 

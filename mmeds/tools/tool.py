@@ -859,7 +859,9 @@ class Tool(mp.Process):
                           study=self.doc.study_name))
         self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
-        self.move_user_files()
+        # If testing, no files have been generated
+        if not self.testing:
+            self.move_user_files()
 
     def run(self):
         """
