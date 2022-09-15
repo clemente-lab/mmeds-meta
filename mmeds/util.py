@@ -1633,3 +1633,53 @@ def get_file_index_entry_location(path, tool, entry, testing=False):
         return Path('test_path.txt')
     else:
         raise KeyError(f"No entry for {entry} in directory {path}")
+
+
+def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
+                          metadata_column_subject, o_table):
+    """ Converts a feature table tsv into a format that can be read by lefse's format_input script """
+    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False)
+    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
+
+    # Store metadata by ID, allowing for any subset of samples from the metadata
+    categories = {}
+    for i, cell in enumerate(mdf['#SampleID']['#q2:types']):
+        if cell not in categories:
+            categories[cell] = {}
+        categories[cell][metadata_column_class] = mdf[metadata_column_class]['categorical'][i]
+
+        if metadata_column_subclass:
+            categories[cell][metadata_column_subclass] = mdf[metadata_column_subclass]['categorical'][i]
+
+        if metadata_column_subject:
+            categories[cell][metadata_column_subject] = mdf[metadata_column_subject]['categorical'][i]
+
+    # Insert new metadata rows into feature table
+    t = [metadata_column_class]
+    for i, cell in enumerate(path_df.loc[0]):
+        if i == 0:
+            continue
+        t.append(categories[cell][metadata_column_class])
+    # Note: using the loc[#.#] format is a bit crude, but the best way I could
+    #   come up with for inserting rows without deleting already existing rows
+    #   or copying each line into a new df one by one
+    path_df.loc[1.5] = t
+
+    if metadata_column_subclass:
+        t = [metadata_column_subclass]
+        for i, cell in enumerate(path_df.loc[0]):
+            if i == 0:
+                continue
+            t.append(categories[cell][metadata_column_subclass])
+        path_df.loc[1.6] = t
+
+    if metadata_column_subject:
+        t = [metadata_column_subject]
+        for i, cell in enumerate(path_df.loc[0]):
+            if i == 0:
+                continue
+            t.append(categories[cell][metadata_column_subject])
+        path_df.loc[1.7] = t
+
+    path_df = path_df.sort_index().reset_index(drop=True)
+    path_df.to_csv(o_table, sep='\t', index=False, na_rep='nan')
