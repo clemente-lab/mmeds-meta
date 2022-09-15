@@ -14,7 +14,7 @@ from mmeds.util import load_config
 filterwarnings('ignore', category=rpy2.rinterface.RRuntimeWarning)
 
 # Load the configuration
-config = load_config(Path('config_file.yaml'), Path('metadata.tsv'), '{analysis_type}', True)
+config = load_config(Path('config_file.yaml'), Path('metadata.tsv'), '{analysis_type}', ignore_bad_cols=True)
 
 # Load metadata file
 if '{analysis_type}' == 'qiime2':
