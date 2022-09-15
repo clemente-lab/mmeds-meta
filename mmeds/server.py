@@ -1185,8 +1185,10 @@ class MMEDSanalysis(MMEDSbase):
             # Getting the files to check the config options match the provided metadata
             files = self.check_upload(access_code)
             Logger.debug(files)
-            with Database(testing=self.testing) as db:
-                sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
+            sequencing_runs = {}
+            if tool_type == 'qiime2':
+                with Database(testing=self.testing) as db:
+                    sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
 
             Logger.debug(sequencing_runs)
 
