@@ -30,6 +30,9 @@ jobs:
 
       - name: install jupyter
         run: conda env create -f ./conda_env_files/jupyter_env.yaml -p /home/runner/conda_envs/jupyter
+
+      - name: mmeds setup in jupyter
+        run: sudo python setup.py install --prefix /home/runner/conda_envs/jupyter
       
       - name: add bioconda channel for qiime
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
