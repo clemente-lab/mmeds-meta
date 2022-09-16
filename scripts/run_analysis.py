@@ -32,9 +32,6 @@ def run_analysis(study_name, tool_type, user, config):
 
     assert ret == 0
 
-    #run_analysis()
-    #summarize_qiime(f'{path}/Qiime2_0/summary', tool_type)
-
 
 def get_queue():
     """ Creates a watcher queue to be sent to the analysis function in util.py. Those functions
@@ -44,6 +41,7 @@ def get_queue():
     watcher.connect()
     queue = watcher.get_queue()
     return queue
+
 
 if __name__ == '__main__':
     run_analysis()

@@ -527,8 +527,8 @@ class Qiime2(Tool):
             new_file = 'comp-table-overall'
             infile = 'filtered_table'
         else:
-            new_file = 'comp-table-L{}'.format(level)
-            infile = 'taxa_collapsed_table_L{}'.format(level)
+            new_file = f'comp-table-L{level}'
+            infile = f'taxa_collapsed_table_L{level}'
         self.add_path(new_file, '.qza')
         cmd = [
             'qiime composition add-pseudocount',
@@ -566,7 +566,7 @@ class Qiime2(Tool):
     def taxa_collapse(self, taxa_levels):
         """ Collapse taxonomy at specified taxa levels (inclusive) """
         for taxa_level in range(taxa_levels[0], taxa_levels[1]+1):
-            new_file = 'taxa_collapsed_table_L{}'.format(taxa_level)
+            new_file = f'taxa_collapsed_table_L{taxa_level}'
             self.add_path(new_file, '.qza')
             cmd = [
                 'qiime taxa collapse',

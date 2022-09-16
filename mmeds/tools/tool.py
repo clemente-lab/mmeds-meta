@@ -296,7 +296,7 @@ class Tool(mp.Process):
             cmd = "sed -i '1d;2s/^#//' {}".format(to_file)
             self.jobtext.append(cmd)
 
-    def extract_qiime2_feature_table(self, index_entry='filtered_table', clean=True):
+    def extract_qiime2_feature_table(self, index_entry='filtered_table', remove_zip=True):
         """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
         self.add_path('tmp_feature_unzip')
         self.add_path('biom_feature', '.biom')
@@ -308,10 +308,10 @@ class Tool(mp.Process):
         self.move_general(self.get_file('tmp_feature_unzip') / 'feature-table.biom', self.get_file('biom_feature'))
         self.source_activate('qiime')
         self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
-        if clean:
+        if remove_zip:
             self.remove_general(self.get_file('tmp_feature_unzip'))
 
-    def extract_qiime2_rep_seqs(self, clean=True):
+    def extract_qiime2_rep_seqs(self, remove_zip=True):
         """ Unzip qiime2 representative sequences artifact from previous analysis """
         self.add_path('tmp_seqs_unzip')
         self.add_path('rep_seqs', '.fasta')
@@ -320,15 +320,15 @@ class Tool(mp.Process):
         self.unzip_general(table, self.get_file('tmp_seqs_unzip'))
         self.move_general(self.get_file('tmp_seqs_unzip') / 'dna-sequences.fasta', self.get_file('rep_seqs'))
 
-        if clean:
+        if remove_zip:
             self.remove_general(self.get_file('tmp_seqs_unzip'))
 
     def generate_continuous_mapping_file(self):
         """ Create a version of the mapping file with only the continuous variables of interest """
         self.add_path('continuous_mapping_file', '.tsv', key='continuous_mapping')
         df = pd.read_csv(self.get_file('mapping', True), sep='\t', header=[0], skiprows=[1])
-        continuous = [c for c in self.doc.config['metadata_continuous']]
-        df = df[[c for c in df.columns if c in continuous or c == '#SampleID']]
+        metadata_continuous = [c for c in self.doc.config['metadata_continuous']]
+        df = df[[c for c in df.columns if c in metadata_continuous or c == '#SampleID']]
         df.to_csv(self.get_file('continuous_mapping', True), sep='\t', index=False, na_rep='nan')
 
     ############################
