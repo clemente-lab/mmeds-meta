@@ -7,10 +7,12 @@ from copy import deepcopy
 from ppretty import ppretty
 from collections import defaultdict
 from datetime import datetime
+import pandas as pd
 
 from mmeds.database.database import Database
 from mmeds.util import (create_qiime_from_mmeds, write_config,
-                        load_metadata, write_metadata, camel_case)
+                        load_metadata, write_metadata, camel_case,
+                        get_file_index_entry_location)
 from mmeds.error import AnalysisError, MissingFileError
 from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE
 from mmeds.logging import Logger
@@ -180,12 +182,12 @@ class Tool(mp.Process):
         is used for every analysis but potentially in future these could be set via the config file.
         """
         params = {
-            'walltime': '6:00',
+            'walltime': '20:00',
             'walltime2': '2:00',
             'jobname': '{}-{}'.format(self.owner, self.doc.name),
             'path': self.path,
             'nodes': self.num_jobs,
-            'memory': 10000,
+            'memory': 50000,
             'queue': 'premium'
         }
         return params
@@ -234,6 +236,106 @@ class Tool(mp.Process):
             '--tool_type {};'.format(self.doc.tool_type)
         ]
         self.jobtext.append(' '.join(cmd))
+
+    def source_activate(self, env):
+        """ Change anaconda3 environment """
+        # Some possible envs: 'qiime', 'pheniqs', 'mmeds'
+        full_env = env
+        if env == 'qiime':
+            full_env = 'qiime2-2020.8.0'
+        elif env == 'mmeds':
+            full_env = '/sc/arion/projects/MMEDS/admin_modules/mmeds-stable'
+        elif env == 'picrust2':
+            full_env = '/sc/arion/projects/MMEDS/.modules/picrust2'
+        elif env == 'cutie':
+            full_env = '/sc/arion/projects/MMEDS/.modules/CUTIE'
+        elif env == 'lefse':
+            full_env = '/sc/arion/projects/MMEDS/.modules/lefse'
+        cmd = f'source activate {full_env};'
+        self.jobtext.append(cmd)
+
+    def conda_deactivate(self):
+        """ Deactivate current anaconda3 environment """
+        cmd = 'conda deactivate;'
+        self.jobtext.append(cmd)
+
+    def unzip_general(self, from_file, to_file):
+        """
+        A general unzip command for unzipping any artifact into a specified directory
+        """
+        # The -j and -o commands ignore the archive structure, meaning
+        #   all the files are extracted directly to the -d directory
+        cmd = 'unzip -jo {} -d {}'.format(from_file, to_file)
+        self.jobtext.append(cmd)
+
+    def move_general(self, from_file, to_file):
+        """
+        A general move for moving a file from one location to another
+        """
+        cmd = 'mv {} {}'.format(from_file, to_file)
+        self.jobtext.append(cmd)
+
+    def remove_general(self, rm_path):
+        """
+        A general remove for forcing the recursive deletion at a path
+        """
+        cmd = 'rm -rf {}'.format(rm_path)
+        self.jobtext.append(cmd)
+
+    def biom_convert(self, from_file, to_file, to_tsv=True, sanitize=True):
+        """
+        Perform a biom convert either to .biom or to .tsv
+        Requires biom installed in active environment
+        """
+        if to_tsv:
+            convert = '--to-tsv'
+        else:
+            convert = '--to-hdf5'
+
+        cmd = 'biom convert -i {} -o {} {}'.format(from_file,
+                                                   to_file,
+                                                   convert)
+        self.jobtext.append(cmd)
+
+        # Remove the biom convert quirk "Constructed from BIOM file" and leading '#'
+        if sanitize:
+            cmd = "sed -i '1d;2s/^#//' {}".format(to_file)
+            self.jobtext.append(cmd)
+
+    def extract_qiime2_feature_table(self, index_entry='filtered_table', remove_zip=True):
+        """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
+        self.add_path('tmp_feature_unzip')
+        self.add_path('biom_feature', '.biom')
+        self.add_path('feature_table', '.tsv')
+        # 'index_entry' must be a FeatureTable artifact
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', index_entry, self.testing)
+
+        self.unzip_general(table, self.get_file('tmp_feature_unzip'))
+        self.move_general(self.get_file('tmp_feature_unzip') / 'feature-table.biom', self.get_file('biom_feature'))
+        self.source_activate('qiime')
+        self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
+        if remove_zip:
+            self.remove_general(self.get_file('tmp_feature_unzip'))
+
+    def extract_qiime2_rep_seqs(self, remove_zip=True):
+        """ Unzip qiime2 representative sequences artifact from previous analysis """
+        self.add_path('tmp_seqs_unzip')
+        self.add_path('rep_seqs', '.fasta')
+        table = get_file_index_entry_location(self.path.parent, 'Qiime2', 'rep_seqs_table', self.testing)
+
+        self.unzip_general(table, self.get_file('tmp_seqs_unzip'))
+        self.move_general(self.get_file('tmp_seqs_unzip') / 'dna-sequences.fasta', self.get_file('rep_seqs'))
+
+        if remove_zip:
+            self.remove_general(self.get_file('tmp_seqs_unzip'))
+
+    def generate_continuous_mapping_file(self):
+        """ Create a version of the mapping file with only the continuous variables of interest """
+        self.add_path('continuous_mapping_file', '.tsv', key='continuous_mapping')
+        df = pd.read_csv(self.get_file('mapping', True), sep='\t', header=[0], skiprows=[1])
+        metadata_continuous = [c for c in self.doc.config['metadata_continuous']]
+        df = df[[c for c in df.columns if c in metadata_continuous or c == '#SampleID']]
+        df.to_csv(self.get_file('continuous_mapping', True), sep='\t', index=False, na_rep='nan')
 
     ############################
     # Analysis File Management #
@@ -297,7 +399,8 @@ class Tool(mp.Process):
         if self.testing:
             self.jobtext.append('module load mmeds-stable;')
         else:
-            self.jobtext.append('conda deactivate; source activate /hpc/users/mmedsadmin/.admin_modules/jupyter; ml texlive/2018')
+            self.jobtext.append(
+                'conda deactivate; source activate /hpc/users/mmedsadmin/.admin_modules/jupyter; ml texlive/2018')
         # Make sure the kernel is up to date
         self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name "Jupyter"')
         cmd = [
@@ -644,9 +747,8 @@ class Tool(mp.Process):
             jobfile = self.get_file('jobfile', True)
             self.write_file_locations()
 
-            self.logger.debug(self.doc.config['sub_analysis'])
             # Start the sub analyses if so configured
-            if not self.doc.config['sub_analysis'] == 'None':
+            if 'sub_analysis' in self.doc.config and not self.doc.config['sub_analysis'] == 'None':
                 self.logger.debug('I am not a sub analysis {}'.format(self.name))
                 self.create_children()
                 self.start_children()
@@ -763,7 +865,9 @@ class Tool(mp.Process):
                           study=self.doc.study_name))
         self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
-        self.move_user_files()
+        # If testing, no files have been generated
+        if not self.testing:
+            self.move_user_files()
 
     def run(self):
         """

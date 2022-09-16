@@ -46,7 +46,7 @@ def summarize_qiime(summary_path, tool, testing=False):
     copy(STORAGE_DIR / 'revtex.tplx', files['summary'])
 
     # Load the configuration
-    config = load_config(path / 'config_file.yaml', files['metadata'], True)
+    config = load_config(path / 'config_file.yaml', files['metadata'], tool, True)
 
     if tool == 'qiime1':
         summarize_qiime1(path, files, config, study_name)
@@ -568,10 +568,8 @@ class MMEDSNotebook():
                 # We install the jupyter kernel here because the test jobfile only runs qiime stuff
                 # This consolidates the jupyter commands that need to be run here.
                 # Running outside of conda environment, not working with github actions currently
-                nbconvert_cmd =  f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
+                nbconvert_cmd = f'python -m ipykernel install --user --name jupyter --display-name "Jupyter"; {cmd}'
                 output = run(nbconvert_cmd, check=True, shell=True, capture_output=True)
-
-
 
                 # tectonic is an alternative to texlive that can be installed via conda
                 pdf_cmd = f'tectonic {self.name}.tex'

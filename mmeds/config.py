@@ -266,8 +266,10 @@ TOOL_FILES = {
     'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
     'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
     'sparcc': ['otu_table'],
+    'cutie': ['otu_table'],
     'lefse': ['lefse_table'],
     'picrust1': ['otu_table'],
+    'picrust2': ['otu_table'],
     'test': []
 }
 
@@ -301,6 +303,7 @@ if not SESSION_PATH.exists():
         pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
+CUTIE_CONFIG_TEMPLATE = STORAGE_DIR / 'cutie_config_template.ini'
 MMEDS_LOG = DATABASE_DIR / 'mmeds_log.txt'
 SQL_LOG = DATABASE_DIR / 'sql_log.txt'
 DOCUMENT_LOG = DATABASE_DIR / 'document_log.txt'
@@ -319,23 +322,44 @@ if not LOG_DIR.exists():
     except FileExistsError:
         pass
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
-CONFIG_PARAMETERS = [
-    'sampling_depth',
-    'metadata',
-    'taxa_levels',
-    'abundance_threshold',
-    'font_size',
-    'sub_analysis',
-    'additional_analysis',
-    'iterations',
-    'permutations',
-    'type'
-]
+CONFIG_PARAMETERS = {
+    'qiime2': [
+        'sampling_depth',
+        'metadata',
+        'taxa_levels',
+        'abundance_threshold',
+        'font_size',
+        'sub_analysis',
+        'additional_analysis',
+        'iterations',
+        'permutations',
+        'type'],
+    'cutie': [
+        'statistic',
+        'feature_table',
+        'metadata_continuous'],
+    'lefse': [
+        'class',
+        'subclass',
+        'subjects'],
+    'picrust2': [
+        'stratified',
+        'per_sequence_contrib'],
+    'sparcc': [
+        'statistic',
+        'iterations',
+        'permutations'],
+    'test': []
+}
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
 SQL_DATABASE = 'mmeds_data1'
 DEFAULT_CONFIG = STORAGE_DIR / 'config_file.yaml'
+DEFAULT_CONFIG_LEFSE = STORAGE_DIR / 'lefse_config.yaml'
+DEFAULT_CONFIG_SPARCC = STORAGE_DIR / 'sparcc_config.yaml'
+DEFAULT_CONFIG_PICRUST2 = STORAGE_DIR / 'picrust2_config.yaml'
+DEFAULT_CONFIG_CUTIE = STORAGE_DIR / 'cutie_config.yaml'
 if not TESTING:
     cp.config.update(CONFIG)
 

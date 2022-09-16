@@ -1,0 +1,6 @@
+statistic: spearman
+feature_table: taxa_collapsed_relative_table
+metadata_continuous:
+  - SomeOtherInfo
+  - DaysSinceExperimentStart
+  - Depth

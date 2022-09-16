@@ -716,9 +716,7 @@ class MMEDSupload(MMEDSbase):
             # Add the success message if applicable
             page = self.load_webpage('upload_specimen_file',
                                      title='Upload Metadata',
-                                     success='Subject table uploaded successfully',
-                                     metadata_type=cp.session['metadata_type'].capitalize(),
-                                     version=uploadType)
+                                     success='Subject table uploaded successfully')
 
         # Not 100% sure this check still needs to be here, as the study name
         # should've already been checked at this point.
@@ -1187,8 +1185,10 @@ class MMEDSanalysis(MMEDSbase):
             # Getting the files to check the config options match the provided metadata
             files = self.check_upload(access_code)
             Logger.debug(files)
-            with Database(testing=self.testing) as db:
-                sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
+            sequencing_runs = {}
+            if tool_type == 'qiime2':
+                with Database(testing=self.testing) as db:
+                    sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
 
             Logger.debug(sequencing_runs)
 
@@ -1200,7 +1200,7 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name, self.get_dir())
 
             # Check that the config file is valid
-            util.load_config(config_path, files['metadata'])
+            util.load_config(config_path, files['metadata'], tool_type)
 
             # -1 is the kill_stage (used when testing)
             if not analysis_method == 'test':

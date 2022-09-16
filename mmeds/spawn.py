@@ -22,6 +22,8 @@ from mmeds.tools.qiime2 import Qiime2
 from mmeds.tools.sparcc import SparCC
 from mmeds.tools.lefse import Lefse
 from mmeds.tools.picrust1 import PiCRUSt1
+from mmeds.tools.picrust2 import PiCRUSt2
+from mmeds.tools.cutie import CUTIE
 from mmeds.tools.tool import TestTool
 from mmeds.logging import Logger
 
@@ -34,6 +36,8 @@ TOOLS = {
     'sparcc': SparCC,
     'lefse': Lefse,
     'picrust1': PiCRUSt1,
+    'picrust2': PiCRUSt2,
+    'cutie': CUTIE,
     'test': TestTool
 }
 
@@ -106,7 +110,7 @@ class Watcher(BaseManager):
         with Database('.', owner=user, testing=testing) as db:
             files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
-        config = load_config(config_file, files['metadata'])
+        config = load_config(config_file, files['metadata'], tool_type)
 
         # Switch statment will go here
         try:
@@ -298,11 +302,13 @@ class Watcher(BaseManager):
                 self.pipe.send('Analysis Not Started')
                 return
 
+        self.logger.debug("spawn analysis")
         # Otherwise continue
         p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
                                 config, self.testing, sequencing_runs, kill_stage, run_on_node)
         # Start the analysis running
         p.start()
+        self.logger.debug("analysis started")
         sleep(1)
         with Database(testing=self.testing, owner=user) as db:
             doc = db.get_doc(p.access_code)

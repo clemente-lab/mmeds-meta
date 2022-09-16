@@ -266,7 +266,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        keep_default_na=keep_default_na)
 
 
-def load_config(config_file, metadata, ignore_bad_cols=False):
+def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
     """
     Read the provided config file to determine settings for the analysis.
     ====================================================================
@@ -282,6 +282,10 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
         # If a Path was passed (as is the case during testing)
         if isinstance(config_file, Path):
             page = config_file.read_text()
+        # Use blank config
+        elif tool_type == 'test':
+            Logger.debug('Using blank config')
+            return config
         # If no config was provided load the default
         elif config_file is None or config_file == '':
             Logger.debug('Using default config')
@@ -298,11 +302,12 @@ def load_config(config_file, metadata, ignore_bad_cols=False):
 
     # Check if columns == 'all'
     for param in ['metadata', 'taxa_levels', 'sub_analysis']:
-        config['{}_all'.format(param)] = (config[param] == 'all')
-    return parse_parameters(config, metadata, ignore_bad_cols=ignore_bad_cols)
+        if param in config:
+            config['{}_all'.format(param)] = (config[param] == 'all')
+    return parse_parameters(config, metadata, tool_type, ignore_bad_cols=ignore_bad_cols)
 
 
-def parse_parameters(config, metadata, ignore_bad_cols=False):
+def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
     """
     Helper function for load_config. This parses the individual options provided in
     the config file. For example, the user can put 'all' as the taxa column option
@@ -311,13 +316,13 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS)
+    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS[tool_type])
             if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
-        for option in fig.CONFIG_PARAMETERS:
+        for option in fig.CONFIG_PARAMETERS[tool_type]:
             Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata' or option == 'sub_analysis':
@@ -339,7 +344,8 @@ def parse_parameters(config, metadata, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
-        if config['sub_analysis'] and len(config['metadata']) == 1:
+        if 'sub_analysis' in config and 'metadata' in config and \
+            config['sub_analysis'] and len(config['metadata']) == 1:
             raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
@@ -1387,9 +1393,20 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
+def start_analysis_local(queue, access_code, tool_type, user, config, runs={}):
+    """
+    Directly start an analysis using the watcher, bypassing the server
+    """
+    if not config:
+        config = fig.DEFAULT_CONFIG
+    queue.put(('analysis', user, access_code, tool_type, 'default', config, runs, -1, False))
+    Logger.debug("Analysis sent to queue directly")
+    return 0
+
+
 def upload_study_local(queue, study_name, subject, subject_type, specimen, user):
     """
-    # Directly upload a local study using the watcher, bypassing the server
+    Directly upload a local study using the watcher, bypassing the server
     """
     queue.put(('upload', study_name, subject, subject_type, specimen, user, False, False))
     Logger.debug("Study sent to queue directly")
@@ -1583,3 +1600,86 @@ def get_subject_type(subject_file):
         if not sub_type == subject_type:
             subject_type = 'mixed'
     return subject_type.lower()
+
+
+def get_file_index_entry_location(path, tool, entry, testing=False):
+    """ Get entry from a non-active Tool's file_index.tsv file, for use in cross-tool analysis """
+
+    # Collect possible analysis dirs for given tool
+    dirs = path.glob(f"{tool}_*")
+    highest = 0
+    for d in dirs:
+        cur = int(d.name.split("_")[-1])
+        if cur > highest:
+            highest = cur
+
+    # Check for entry, with highest count dir first (e.g. search Qiime2_1 over Qiime2_0 first)
+    entry_exists = False
+    out_path = ""
+    while not entry_exists and highest >= 0:
+        index = path / f"{tool}_{highest}" / "file_index.tsv"
+        if index.exists():
+            df = pd.read_csv(index, sep='\t', skiprows=[0], header=[0], index_col=0)
+            if entry in df.index:
+                entry_exists = True
+                out_path = df.at[entry, "Path"]
+        if not entry_exists:
+            highest -= 1
+
+    if entry_exists:
+        return Path(out_path)
+    elif testing:
+        # If testing, we won't find the file we're looking for as no analysis has been run
+        return Path('test_path.txt')
+    else:
+        raise KeyError(f"No entry for {entry} in directory {path}")
+
+
+def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
+                          metadata_column_subject, o_table):
+    """ Converts a feature table tsv into a format that can be read by lefse's format_input script """
+    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False)
+    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
+
+    # Store metadata by ID, allowing for any subset of samples from the metadata
+    categories = {}
+    for i, cell in enumerate(mdf['#SampleID']['#q2:types']):
+        if cell not in categories:
+            categories[cell] = {}
+        categories[cell][metadata_column_class] = mdf[metadata_column_class]['categorical'][i]
+
+        if metadata_column_subclass:
+            categories[cell][metadata_column_subclass] = mdf[metadata_column_subclass]['categorical'][i]
+
+        if metadata_column_subject:
+            categories[cell][metadata_column_subject] = mdf[metadata_column_subject]['categorical'][i]
+
+    # Insert new metadata rows into feature table
+    t = [metadata_column_class]
+    for i, cell in enumerate(path_df.loc[0]):
+        if i == 0:
+            continue
+        t.append(categories[cell][metadata_column_class])
+    # Note: using the loc[#.#] format is a bit crude, but the best way I could
+    #   come up with for inserting rows without deleting already existing rows
+    #   or copying each line into a new df one by one
+    path_df.loc[1.5] = t
+
+    if metadata_column_subclass:
+        t = [metadata_column_subclass]
+        for i, cell in enumerate(path_df.loc[0]):
+            if i == 0:
+                continue
+            t.append(categories[cell][metadata_column_subclass])
+        path_df.loc[1.6] = t
+
+    if metadata_column_subject:
+        t = [metadata_column_subject]
+        for i, cell in enumerate(path_df.loc[0]):
+            if i == 0:
+                continue
+            t.append(categories[cell][metadata_column_subject])
+        path_df.loc[1.7] = t
+
+    path_df = path_df.sort_index().reset_index(drop=True)
+    path_df.to_csv(o_table, sep='\t', index=False, na_rep='nan')
