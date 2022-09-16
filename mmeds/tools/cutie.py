@@ -14,7 +14,7 @@ class CUTIE(Tool):
         if testing:
             load = 'conda activate CUTIE;'
         else:
-            load = 'ml anaconda3;\nsource activate CUTIE;'
+            load = 'export LC_ALL=en_US.UTF-8;\nml anaconda3;\nsource activate CUTIE;'
         self.jobtext.append(load)
         self.module = load
 

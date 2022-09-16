@@ -14,7 +14,7 @@ class Lefse(Tool):
         if testing:
             load = 'conda activate lefse;'
         else:
-            load = 'ml anaconda3;'
+            load = 'export LC_ALL=en_US.UTF-8;\nml anaconda3;'
         self.jobtext.append(load)
         self.module = load
 

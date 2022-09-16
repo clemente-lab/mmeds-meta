@@ -13,7 +13,7 @@ class SparCC(Tool):
         if testing:
             load = 'conda activate sparcc;'
         else:
-            load = 'module load sparcc/2016-10-17;'
+            load = 'export LC_ALL=en_US.UTF-8;\nmodule load sparcc/2016-10-17;'
         self.jobtext.append(load)
         self.module = load
 
