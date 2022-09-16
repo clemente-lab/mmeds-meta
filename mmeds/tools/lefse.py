@@ -12,7 +12,7 @@ class Lefse(Tool):
                          run_on_node, analysis=analysis, child=child, restart_stage=restart_stage,
                          kill_stage=kill_stage)
         if testing:
-            load = 'module use {}/.modules/modulefiles; module load lefse;'.format(DATABASE_DIR.parent)
+            load = 'conda activate lefse;'
         else:
             load = 'ml anaconda3;'
         self.jobtext.append(load)

@@ -11,7 +11,7 @@ class SparCC(Tool):
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage,
                          kill_stage=kill_stage, child=child)
         if testing:
-            load = 'module use {}/.modules/modulefiles; module load sparcc;'.format(DATABASE_DIR.parent)
+            load = 'conda activate sparcc;'
         else:
             load = 'module load sparcc/2016-10-17;'
         self.jobtext.append(load)

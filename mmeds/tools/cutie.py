@@ -12,7 +12,7 @@ class CUTIE(Tool):
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage,
                          child=child)
         if testing:
-            load = 'module use {}/.modules/modulefiles; module load CUTIE;'.format(DATABASE_DIR.parent)
+            load = 'conda activate CUTIE;'
         else:
             load = 'ml anaconda3;\nsource activate CUTIE;'
         self.jobtext.append(load)

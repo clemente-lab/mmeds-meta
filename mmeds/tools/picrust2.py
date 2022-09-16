@@ -12,7 +12,7 @@ class PiCRUSt2(Tool):
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage,
                          child=child)
         if testing:
-            load = 'module use {}/.modules/modulefiles; module load picrust1;'.format(DATABASE_DIR.parent)
+            load = 'conda activate picrust2;'
         else:
             load = 'ml anaconda3;'
         self.jobtext.append(load)
