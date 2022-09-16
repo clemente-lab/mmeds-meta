@@ -62,7 +62,8 @@ jobs:
             path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
 
       - name: Upload Unit coverage
-        run: bash <(curl -s https://codecov.io/bash) -cF unit;
+        uses: codecov/codecov-action@v2
+
   run-tests-simple:
     runs-on: ubuntu-20.04
     steps:
@@ -105,7 +106,6 @@ jobs:
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v2
-        # run: bash <(curl -s https://codecov.io/bash) -cF unit;
 
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
