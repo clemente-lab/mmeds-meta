@@ -103,8 +103,10 @@ jobs:
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter spawn tool tools uploader util validate;
 
+      - name: Upload Unit coverage
+        uses: codecov/codecov-action@v2
+        # run: bash <(curl -s https://codecov.io/bash) -cF unit;
+
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
 
-      - name: Upload Unit coverage
-        run: bash <(curl -s https://codecov.io/bash) -cF unit;
