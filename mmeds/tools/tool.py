@@ -245,6 +245,12 @@ class Tool(mp.Process):
             full_env = 'qiime2-2020.8.0'
         elif env == 'mmeds':
             full_env = '/sc/arion/projects/MMEDS/admin_modules/mmeds-stable'
+        elif env == 'picrust2':
+            full_env = '/sc/arion/projects/MMEDS/.modules/picrust2'
+        elif env == 'cutie':
+            full_env = '/sc/arion/projects/MMEDS/.modules/CUTIE'
+        elif env == 'lefse':
+            full_env = '/sc/arion/projects/MMEDS/.modules/lefse'
         cmd = f'source activate {full_env};'
         self.jobtext.append(cmd)
 
