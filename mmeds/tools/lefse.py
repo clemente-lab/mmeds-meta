@@ -96,7 +96,7 @@ class Lefse(Tool):
 
     def setup_analysis(self, summary=False):
         self.set_stage(0)
-        self.extract_qiime2_feature_table('taxa_collapsed_relative_table')
+        self.extract_qiime2_feature_table('taxa_collapsed_relative_table', deactivate_prev=False)
         self.set_stage(1)
         self.preprocess_feature_table()
         self.source_activate('lefse')

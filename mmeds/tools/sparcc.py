@@ -13,7 +13,7 @@ class SparCC(Tool):
         if testing:
             load = 'conda activate sparcc;'
         else:
-            load = 'export LC_ALL=en_US.UTF-8;\nmodule load sparcc/2016-10-17;'
+            load = 'export LC_ALL=en_US.UTF-8;\nmodule load anaconda3;'
         self.jobtext.append(load)
         self.module = load
 
@@ -95,7 +95,8 @@ class SparCC(Tool):
     def setup_analysis(self, summary=False):
         self.set_stage(0)
         self.create_sub_folders()
-        self.extract_qiime2_feature_table()
+        self.extract_qiime2_feature_table(deactivate_prev=False)
+        self.source_activate('sparcc')
         self.sparcc()
         self.set_stage(1)
         self.make_bootstraps()

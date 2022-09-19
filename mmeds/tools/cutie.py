@@ -14,7 +14,7 @@ class CUTIE(Tool):
         if testing:
             load = 'conda activate CUTIE;'
         else:
-            load = 'export LC_ALL=en_US.UTF-8;\nml anaconda3;\nsource activate CUTIE;'
+            load = 'export LC_ALL=en_US.UTF-8;\nml anaconda3;'
         self.jobtext.append(load)
         self.module = load
 
@@ -44,10 +44,11 @@ class CUTIE(Tool):
 
     def setup_analysis(self, summary=False):
         self.set_stage(0)
-        self.extract_qiime2_feature_table(self.table)
+        self.extract_qiime2_feature_table(self.table, deactivate_prev=False)
         self.generate_continuous_mapping_file()
         self.set_stage(1)
         self.create_input_config_file()
+        self.source_activate('cutie')
         self.run_CUTIE()
         self.write_file_locations()
         super().setup_analysis(summary=summary)

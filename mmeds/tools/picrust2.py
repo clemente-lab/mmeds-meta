@@ -23,7 +23,7 @@ class PiCRUSt2(Tool):
 
     def extract_picrust_input(self):
         """ Extract the filtered table and representative sequences data from Qiime2 """
-        self.extract_qiime2_feature_table()
+        self.extract_qiime2_feature_table(deactivate_prev=False)
         self.extract_qiime2_rep_seqs()
 
     def picrust_pipeline(self):

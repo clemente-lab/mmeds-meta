@@ -46,20 +46,6 @@ class Qiime2(Tool):
     # =============== #
     # Qiime2 Commands #
     # =============== #
-    """
-    moved to parent class
-    def source_activate(self, env):
-        # possible envs: ['qiime', 'pheniqs', 'mmeds']
-        full_env = ''
-        if env == 'qiime':
-            full_env = 'qiime2-2020.8.0'
-        elif env == 'mmeds':
-            full_env = '/sc/arion/projects/MMEDS/admin_modules/mmeds-stable'
-        else:
-            full_env = env
-        cmd = 'source activate {};'.format(full_env)
-        self.jobtext.append(cmd)
-    """
 
     def split_by_sequencing_run(self):
         """ Separate metadata into sub-folders for each sequencing run """
@@ -587,6 +573,7 @@ class Qiime2(Tool):
         cmd = [
             'qiime feature-table merge',
             '--i-tables {}'.format(' '.join(collapsed_tables)),
+            '--p-overlap-method {}'.format('"error_on_overlapping_feature"'),
             '--o-merged-table {}'.format(self.get_file('taxa_collapsed_merged_table'))
         ]
         self.jobtext.append(' '.join(cmd))
