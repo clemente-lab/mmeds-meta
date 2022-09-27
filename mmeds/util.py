@@ -926,8 +926,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
-        if 'qiime2' == tool_type:
-            f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
+        f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         seen_ids = set()
         seen_bars = set()
         for row_index in range(len(mdata)):
@@ -1638,7 +1637,7 @@ def get_file_index_entry_location(path, tool, entry, testing=False):
 def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
                           metadata_column_subject, o_table):
     """ Converts a feature table tsv into a format that can be read by lefse's format_input script """
-    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False)
+    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False, dtype='string')
     mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
 
     # Store metadata by ID, allowing for any subset of samples from the metadata
@@ -1663,7 +1662,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     # Note: using the loc[#.#] format is a bit crude, but the best way I could
     #   come up with for inserting rows without deleting already existing rows
     #   or copying each line into a new df one by one
-    path_df.loc[1.5] = t
+    path_df.loc[0.5] = t
 
     if metadata_column_subclass:
         t = [metadata_column_subclass]
@@ -1671,7 +1670,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
             if i == 0:
                 continue
             t.append(categories[cell][metadata_column_subclass])
-        path_df.loc[1.6] = t
+        path_df.loc[0.6] = t
 
     if metadata_column_subject:
         t = [metadata_column_subject]
@@ -1679,7 +1678,8 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
             if i == 0:
                 continue
             t.append(categories[cell][metadata_column_subject])
-        path_df.loc[1.7] = t
+        path_df.loc[0.7] = t
 
     path_df = path_df.sort_index().reset_index(drop=True)
-    path_df.to_csv(o_table, sep='\t', index=False, na_rep='nan')
+    path_df = path_df.drop([0])
+    path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
