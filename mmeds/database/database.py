@@ -247,6 +247,39 @@ class Database:
         self.db.commit()
         return set_user
 
+    def extract_columns_from_where_query(self, where):
+        """
+        Given an SQL WHERE statement, extract only the relevant columns
+        Currently does not support the operators "BETWEEN", "LIKE", or "IN"
+        """
+        keyword_delimiter = r"AND|and|OR|or"
+        column_separator = r"(?:['\"`]?)([a-zA-Z0-9_\-]+)(?:['\"`]?\s*)(?:[<>!]?=|[<>])(?:\s*[a-zA-Z0-9'\"`]+)"
+
+        split_where = re.split(keyword_delimiter, where)
+        columns = []
+        for w in split_where:
+            w = w.strip()
+            matches = re.findall(column_separator, w)
+            if not len(matches) == 1:
+                raise ValueError(f"Could not resolve '{w}' to a single where clause")
+            columns.append(matches[0])
+        return columns
+
+    def query_meta_analysis(self, where):
+        """
+        Execute a query to get the full set of studies and SampleIDs that match
+        the given query
+        =========================================================
+        :where: An SQL-formatted WHERE statement for matching to the desired samples
+        """
+        columns = self.extract_columns_from_where_query(where)
+        Logger.debug(f"where columns: {columns}")
+        columns_str = ""
+        for c in columns:
+            columns_str += f", `{c}`"
+        data, header = self.execute(fmt.SELECT_META_ANALYSIS_QUERY.format(columns=columns_str, where=where))
+        Logger.debug(data, header)
+
     def format_html(self, text, header=None):
         """
         Applies PrettyTable HTML formatting to the provided string.
