@@ -61,7 +61,7 @@ SELECT_COLUMN_SUBJECT_QUERY = """\
 """
 
 SELECT_META_ANALYSIS_QUERY = """\
-    SELECT DISTINCT `RawDataID`, `StudyName`, {columns}\
+    SELECT DISTINCT `RawDataID`, `StudyName`{columns}\
     FROM `MetaAnalysisView`\
     WHERE {where};
 """
