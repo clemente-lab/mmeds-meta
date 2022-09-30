@@ -873,14 +873,15 @@ class MMEDSupload(MMEDSbase):
         else:
             cp.log("Upload is Qiime Single Barcodes")
             barcodes_type = 'single_barcodes'
-            try:
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                rev_reads=kwargs['rev_reads'],
-                                                barcodes=kwargs['barcodes'])
-            except KeyError:
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                barcodes=kwargs['barcodes'])
             reads_type = kwargs['reads_type']
+
+            if reads_type == 'paired_end':
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+            else:
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 barcodes=kwargs['barcodes'])
 
         cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads

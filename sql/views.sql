@@ -81,5 +81,5 @@ SELECT DISTINCT idSpecimen, idSubjectType, AliquotID, AliquotWeight, AliquotWeig
 -- Meta Analysis View --
 DROP VIEW IF EXISTS `mmeds_data1`.`MetaAnalysisView`;
 CREATE VIEW `mmeds_data1`.`MetaAnalysisView` AS
-SELECT DISTINCT * FROM SpecimenTable INNER JOIN SubjectTable ON SpecimenTable.idSubjectType=SubjectTable.idSubjectTypeHuman INNER JOIN AnimalSubjectTable ON SpecimenTable.idSubjectType=AnimalSubjectTable.idSubjectTypeAnimal;
+SELECT DISTINCT * FROM SpecimenTable LEFT JOIN SubjectTable ON SpecimenTable.idSubjectType=SubjectTable.idSubjectTypeHuman LEFT JOIN AnimalSubjectTable ON SpecimenTable.idSubjectType=AnimalSubjectTable.idSubjectTypeAnimal;
 
