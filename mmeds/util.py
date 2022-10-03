@@ -182,26 +182,31 @@ def join_metadata(subject, specimen, subject_type):
     return df
 
 
-def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDataID')):
+def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDataID'), new_study_name=None):
     """ Splits a full metadata file into two dataframes, subject and specimen """
-    # Determine subject column set
+    # Determine subject column set and subject ID col
     tables = [header[0] for header in full.columns]
-    print(tables)
     if 'Ethnicity' in tables and 'Chow' in tables:
         # Subject type mixed
         subj_tables = fig.MIXED_SUBJECT_TABLES
+        subj_id_col = full[[
+            ('Subjects', 'HostSubjectId'),
+            ('AnimalSubjects', 'AnimalSubjectID')
+        ]].bfill(axis=1).iloc[:, 0]
     elif 'Ethnicity' in tables:
         # Subject type human
         subj_tables = fig.SUBJECT_TABLES
+        subj_id_col = full[('Subjects', 'HostSubjectId')]
     elif 'Chow' in tables:
         # Subject type animal
         subj_tables = fig.ANIMAL_SUBJECT_TABLES
+        subj_id_col = full[('AnimalSubjects', 'AnimalSubjectID')]
     else:
         raise ValueError("Unable to determine subject type from metadata file")
     # Remove AdditionalMetaData from subject table set
     subj_tables.remove("AdditionalMetaData")
     # Duplicate subject ID column
-    full[('AdditionalMetaData', 'SubjectIdCol')] = full[('Subjects', 'HostSubjectId')]
+    full[('AdditionalMetaData', 'SubjectIdCol')] = subj_id_col
 
     # Get list of column headers based on config tables
     subj_cols = [col for col in full.columns if col[0] in subj_tables]
@@ -215,12 +220,18 @@ def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDa
     spec_df = full[spec_cols]
 
     if clean_for_meta_analysis:
+        spec_df[('AdditionalMetaData', 'OriginalRawDataID')] = spec_df[id_col]
         # Add unique integer to RawDataID to prevent repeat IDs
         for i, cell in enumerate(spec_df[id_col]):
             if i > 2:
-                spec_df.at[i, id_col] = f"{cell}_{i-2}"
+                spec_df.at[i, id_col] = f"{cell}_{i-3}"
         # Only include unique subjects
         subj_df = subj_df.drop_duplicates(ignore_index=True)
+
+        # Move old study names to separate column and add new study name
+        if new_study_name:
+            spec_df[('AdditionalMetaData', 'OriginalStudyName')] = spec_df[('Study', 'StudyName')]
+            spec_df.loc[3:, ('Study', 'StudyName')] = new_study_name
 
     return subj_df, spec_df
 
