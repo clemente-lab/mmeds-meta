@@ -182,6 +182,49 @@ def join_metadata(subject, specimen, subject_type):
     return df
 
 
+def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDataID')):
+    """ Splits a full metadata file into two dataframes, subject and specimen """
+    # Determine subject column set
+    tables = [header[0] for header in full.columns]
+    print(tables)
+    if 'Ethnicity' in tables and 'Chow' in tables:
+        # Subject type mixed
+        subj_tables = fig.MIXED_SUBJECT_TABLES
+    elif 'Ethnicity' in tables:
+        # Subject type human
+        subj_tables = fig.SUBJECT_TABLES
+    elif 'Chow' in tables:
+        # Subject type animal
+        subj_tables = fig.ANIMAL_SUBJECT_TABLES
+    else:
+        raise ValueError("Unable to determine subject type from metadata file")
+    # Remove AdditionalMetaData from subject table set
+    subj_tables.remove("AdditionalMetaData")
+    # Duplicate subject ID column
+    full[('AdditionalMetaData', 'SubjectIdCol')] = full[('Subjects', 'HostSubjectId')]
+
+    # Get list of column headers based on config tables
+    subj_cols = [col for col in full.columns if col[0] in subj_tables]
+    spec_cols = [col for col in full.columns if col[0] in fig.SPECIMEN_TABLES]
+
+    if set(spec_cols).intersection(set(subj_cols)):
+        raise ValueError("Cannot differentiate specimen and subject columns")
+
+    # Separate dfs by columns
+    subj_df = full[subj_cols]
+    spec_df = full[spec_cols]
+
+    if clean_for_meta_analysis:
+        # Add unique integer to RawDataID to prevent repeat IDs
+        for i, cell in enumerate(spec_df[id_col]):
+            if i > 2:
+                spec_df.at[i, id_col] = f"{cell}_{i-2}"
+        # Only include unique subjects
+        subj_df = subj_df.drop_duplicates(ignore_index=True)
+
+    return subj_df, spec_df
+
+
 def camel_case(value):
     """ Converts VALUE to camel case, replacing '_', '-', '.', ' ', with the capitalization. """
     return ''.join([x.capitalize() for x in
@@ -345,7 +388,7 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
             else:
                 assert config[option]
         if 'sub_analysis' in config and 'metadata' in config and \
-            config['sub_analysis'] and len(config['metadata']) == 1:
+                config['sub_analysis'] and len(config['metadata']) == 1:
             raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
@@ -992,7 +1035,8 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     """
     # The top of the output.json file, including R1, I1, I2, and R2
     if testing:
-        out_s = f'{{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "{o_directory}/output_all.fastq" ],'
+        out_s = f'{{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "{o_directory}\
+                    /output_all.fastq" ],'
     else:
         out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
     out_s += '\n\t"template": {\n\t\t"transform": {\n\t\t\t"comment": "This global transform directive specifies the \
@@ -1683,3 +1727,30 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     path_df = path_df.sort_index().reset_index(drop=True)
     path_df = path_df.drop([0])
     path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
+
+
+def concatenate_metadata_subsets(samples, paths):
+    """ Create a full dataframe of metadata based on the subsets of several """
+    # Create empty for concating
+    df = pd.DataFrame()
+    for p in paths:
+        # Get individual subsets
+        add_df = get_sample_subset_from_metadata(paths[p], samples[p])
+        Logger.debug(add_df)
+        df = pd.concat([df, add_df], ignore_index=True)
+    return df
+
+
+def get_sample_subset_from_metadata(metadata_file, samples, id_col=('RawData', 'RawDataID')):
+    """ Returns a dataframe of only the specified samples from a given metadata file """
+    df = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
+    # Always include the additional data in the extra header rows
+    subset = [0, 1, 2]
+
+    # Append necessary rows to list
+    for i, cell in enumerate(df[id_col]):
+        if i not in subset and cell in samples:
+            subset.append(i)
+
+    ret_df = df.loc[subset]
+    return ret_df

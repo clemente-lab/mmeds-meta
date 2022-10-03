@@ -252,7 +252,7 @@ class Database:
         Given an SQL WHERE statement, extract only the relevant columns
         Currently does not support the operators "BETWEEN", "LIKE", or "IN"
         """
-        keyword_delimiter = r"AND|and|OR|or"
+        keyword_delimiter = r"\s(?:AND|and|OR|or)\s"
         column_separator = r"(?:['\"`]?)([a-zA-Z0-9_\-]+)(?:['\"`]?\s*)(?:[<>!]?=|[<>])(?:\s*[a-zA-Z0-9'\"`]+)"
 
         split_where = re.split(keyword_delimiter, where)
@@ -267,18 +267,35 @@ class Database:
 
     def query_meta_analysis(self, where):
         """
-        Execute a query to get the full set of studies and SampleIDs that match
-        the given query
+        Execute a query to get the full set of studies, SampleIDs, and metadata
+        paths that match the given query
         =========================================================
         :where: An SQL-formatted WHERE statement for matching to the desired samples
         """
+        # Extract the relevant column names
         columns = self.extract_columns_from_where_query(where)
         Logger.debug(f"where columns: {columns}")
         columns_str = ""
+        # Add the relevant columns to the query, RawDataID and StudyName are present by default
         for c in columns:
-            columns_str += f", `{c}`"
+            if not c == 'RawDataID' and not c == 'StudyName':
+                columns_str += f", `{c}`"
         data, header = self.execute(fmt.SELECT_META_ANALYSIS_QUERY.format(columns=columns_str, where=where))
-        Logger.debug(data, header)
+
+        # Only collect the relevant RawDataIDs, organized by StudyName
+        ret_entries = {}
+        for entry in data:
+            if entry[1] not in ret_entries:
+                ret_entries[entry[1]] = [entry[0]]
+            else:
+                ret_entries[entry[1]].append(entry[0])
+
+        # Collect metadata file locations
+        metadata_paths = {}
+        for study_name in ret_entries:
+            metadata_paths[study_name] = self.get_metadata_file_location(study_name)
+
+        return ret_entries, metadata_paths
 
     def format_html(self, text, header=None):
         """
@@ -1064,6 +1081,11 @@ class Database:
                 empty_files.append(mdata.files[key])
                 del mdata.files[key]
         return empty_files
+
+    def get_metadata_file_location(self, study_name):
+        """ Return the metadata.tsv file location for a given study """
+        doc = MMEDSDoc.objects(doc_type='study', study_name=study_name).first()
+        return doc['files']['metadata']
 
     def delete_mongo_documents(self):
         """ Clear all metadata documents. This may be necessary if the MMEDSDoc class is modified """
