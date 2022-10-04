@@ -42,7 +42,7 @@ class DatabaseTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Load data that is to be used by multiple test cases """
-        self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA))
+        self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA_SINGLE))
         self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
         self.db = pms.connect(host='localhost',
