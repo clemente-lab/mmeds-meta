@@ -29,10 +29,10 @@ class SpawnTests(TestCase):
         """ Test uploading data through the queue """
         # Add multiple uploads from different users
         self.q.put(('upload', 'test_spawn', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER, False, False))
+                    fig.TEST_USER, False, False, False))
 
         self.q.put(('upload', 'test_spawn_0', fig.TEST_SUBJECT_SHORT, 'human', fig.TEST_SPECIMEN_SHORT,
-                    fig.TEST_USER_0, False, False))
+                    fig.TEST_USER_0, False, False, False))
 
         # Recieve the process info dicts from Watcher
         # Sent one at time b/c only one upload can happen at a time
@@ -96,7 +96,8 @@ class SpawnTests(TestCase):
     def test_d_node_analysis(self):
         Logger.info("node analysis")
         for i in range(3):
-            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'test', '20', None, {}, True, -1))
+            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'],
+                        'test', '20', None, {}, True, -1))
         for i in range(3):
             result = self.pipe.recv()
             Logger.error('{} result"{}"'.format(i, result))

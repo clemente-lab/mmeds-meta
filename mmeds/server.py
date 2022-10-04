@@ -907,7 +907,7 @@ class MMEDSupload(MMEDSbase):
                      user: {self.get_user()}\n \
                      ")
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, self.get_user(), False, public))
+                    specimen_metadata, self.get_user(), False, False, public))
 
         return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 

@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
+
+import click
 from mmeds.database.database import Database
 import mmeds.util as util
 import mmeds.config as fig
 import pandas as pd
-import click
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -16,9 +18,11 @@ def create_meta_study(where, study_name, out_specimen, out_subject):
     """ Script that takes in an SQL where clause, queries it to the database,
     gets back a list of studies and sample ids, creates new subject and specimen files
     from those, and writes to disk or stdout """
+    # Get entries from database
     with Database(testing=fig.TESTING) as db:
         entries, paths = db.query_meta_analysis(where)
 
+    # Combine dataframes and split into subject and specimen
     df = util.concatenate_metadata_subsets(entries, paths)
     subj_df, spec_df = util.split_metadata(df, new_study_name=study_name)
 
