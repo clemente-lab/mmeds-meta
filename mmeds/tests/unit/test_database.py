@@ -231,7 +231,7 @@ class DatabaseTests(TestCase):
         wheres = ['PrimaryInvestigator="Amy Poehler" AND StudyName != "Good_Study" AND StudyName != "Short_Study"']
 
         for w in wheres:
-            with Database(testing=testing) as db:
+            with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
                 entries, paths = db.query_meta_analysis(w)
                 assert entries
                 assert paths
