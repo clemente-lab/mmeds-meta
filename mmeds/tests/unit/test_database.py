@@ -228,7 +228,7 @@ class DatabaseTests(TestCase):
 
     def test_i_meta_query(self):
         """ Test meta analysis queries """
-        wheres = ['PrimaryInvestigator="Amy Poehler"']
+        wheres = ['PrimaryInvestigator="Amy Poehler" AND StudyName != "Good_Study"']
 
         for w in wheres:
             with Database(testing=testing) as db:
