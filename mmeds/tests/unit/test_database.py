@@ -153,7 +153,17 @@ class DatabaseTests(TestCase):
         assert not warnings
         assert not errors
 
-    def test_e_clear_user_data(self):
+    def test_ea_meta_query(self):
+        """ Test meta analysis queries """
+        wheres = ['PrimaryInvestigator="Amy Poehler"']
+
+        for w in wheres:
+            with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
+                entries, paths = db.query_meta_analysis(w)
+                assert entries
+                assert paths
+
+    def test_eb_clear_user_data(self):
         """
         Test that Database.clear_user_data('user') will
         empty all rows belonging exclusively to user
@@ -226,13 +236,4 @@ class DatabaseTests(TestCase):
             result = db.create_ids_file('Good_Study', 'aliquot')
         print(result)
 
-    def test_i_meta_query(self):
-        """ Test meta analysis queries """
-        wheres = ['PrimaryInvestigator="Amy Poehler" AND StudyName != "Good_Study" AND StudyName != "Short_Study"']
-
-        for w in wheres:
-            with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-                entries, paths = db.query_meta_analysis(w)
-                assert entries
-                assert paths
 
