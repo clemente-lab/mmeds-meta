@@ -100,7 +100,7 @@ def setup_tests(tests):
                            fig.TEST_CODE))
         test_setup.append((fig.TEST_SUBJECT_ALT,
                            'human',
-                           fig.TEST_SPECIMEN_ALT,
+                           fig.TEST_SPECIMEN_ALT_0,
                            fig.TEST_USER_0,
                            'Test_Single_0',
                            testing,
