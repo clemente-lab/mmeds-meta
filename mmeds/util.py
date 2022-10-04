@@ -1449,7 +1449,7 @@ def run_analysis(path, tool_type, testing=False):
 
 def start_analysis_local(queue, access_code, tool_type, user, config, runs={}):
     """
-    Directly start an a3alysis using the watcher, bypassing the server
+    Directly start an analysis using the watcher, bypassing the server
     """
     if not config:
         config = fig.DEFAULT_CONFIG

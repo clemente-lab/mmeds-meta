@@ -351,10 +351,10 @@ class Watcher(BaseManager):
             else:
                 Logger.debug(f"length: {len(process)}")
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
-                 username, meta_study, temporary, public) = process
+                 username, temporary, public) = process
                 # Start a process to handle loading the data
                 p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime',
-                                     study_name, meta_study, temporary, public, self.testing)
+                                     study_name, temporary, public, self.testing)
                 self.db_lock.acquire()
             p.start()
             self.add_process(ptype, p.access_code)
