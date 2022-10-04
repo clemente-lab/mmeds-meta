@@ -195,7 +195,7 @@ class DatabaseTests(TestCase):
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
             self.c.close()
 
-    def test_e_import_ICD_codes(self):
+    def test_f_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():
             # Check the first character
@@ -225,3 +225,14 @@ class DatabaseTests(TestCase):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
             result = db.create_ids_file('Good_Study', 'aliquot')
         print(result)
+
+    def test_i_meta_query(self):
+        """ Test meta analysis queries """
+        wheres = ['PrimaryInvestigator="Amy Poehler"']
+
+        for w in wheres:
+            with Database(testing=testing) as db:
+                entries, paths = db.query_meta_analysis(w)
+                assert entries
+                assert paths
+
