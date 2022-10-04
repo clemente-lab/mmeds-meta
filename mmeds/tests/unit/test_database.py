@@ -233,7 +233,7 @@ class DatabaseTests(TestCase):
 
     def test_h_download_ids(self):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-            result = db.create_ids_file('Good_Study', 'aliquot')
+            result = db.create_ids_file('Test_Single', 'aliquot')
         print(result)
 
 
