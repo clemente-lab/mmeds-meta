@@ -34,7 +34,7 @@ def upload_metadata(args):
     (subject_metadata, subject_type, specimen_metadata, owner, study_name, testing, access_code) = args
 
     p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime',
-                         study_name, False, False, testing, access_code)
+                         study_name, False, False, False, testing, access_code)
     return p.run()
 
 
