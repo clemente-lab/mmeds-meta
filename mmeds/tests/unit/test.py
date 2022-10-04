@@ -40,7 +40,7 @@ def setup_tests(tests):
     if {'documents', 'util', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            'human',
-                           fig.TEST_SPECIMEN_SHORT,
+                           fig.TEST_SPECIMEN_SINGLE_SHORT,
                            fig.TEST_USER,
                            'Test_Single_Short',
                            testing,
@@ -48,14 +48,14 @@ def setup_tests(tests):
         if 'tools' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
-                               fig.TEST_SPECIMEN_SHORT,
+                               fig.TEST_SPECIMEN_PAIRED,
                                fig.TEST_USER,
                                'Test_Paired',
                                testing,
                                fig.TEST_CODE_PAIRED))
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
-                               fig.TEST_SPECIMEN_SHORT,
+                               fig.TEST_SPECIMEN_DEMUXED,
                                fig.TEST_USER,
                                'Test_Demuxed',
                                testing,
@@ -86,14 +86,14 @@ def setup_tests(tests):
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
                            'human',
-                           fig.TEST_SPECIMEN,
+                           fig.TEST_SPECIMEN_SINGLE,
                            fig.TEST_USER,
                            'Test_Single',
                            testing,
                            fig.TEST_CODE))
         test_setup.append((fig.TEST_ANIMAL_SUBJECT,
                            'animal',
-                           fig.TEST_SPECIMEN,
+                           fig.TEST_SPECIMEN_ANIMAL,
                            fig.TEST_USER,
                            'Test_Animal_Single',
                            testing,
