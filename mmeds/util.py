@@ -203,13 +203,11 @@ def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDa
         subj_id_col = full[('AnimalSubjects', 'AnimalSubjectID')]
     else:
         raise ValueError("Unable to determine subject type from metadata file")
-    # Remove AdditionalMetaData from subject table set
-    subj_tables.remove("AdditionalMetaData")
     # Duplicate subject ID column
     full[('AdditionalMetaData', 'SubjectIdCol')] = subj_id_col
 
     # Get list of column headers based on config tables
-    subj_cols = [col for col in full.columns if col[0] in subj_tables]
+    subj_cols = [col for col in full.columns if col[0] in (subj_tables - {'AdditionalMetaData'})]
     spec_cols = [col for col in full.columns if col[0] in fig.SPECIMEN_TABLES]
 
     if set(spec_cols).intersection(set(subj_cols)):
