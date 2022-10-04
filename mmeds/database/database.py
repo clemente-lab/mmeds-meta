@@ -293,6 +293,7 @@ class Database:
         # Collect metadata file locations
         metadata_paths = {}
         for study_name in ret_entries:
+            Logger.debug(study_name)
             metadata_paths[study_name] = self.get_metadata_file_location(study_name)
 
         return ret_entries, metadata_paths
