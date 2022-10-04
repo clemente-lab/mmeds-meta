@@ -105,7 +105,7 @@ jobs:
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
       
       - name: Upload Server Coverage
-        run: bash <(curl -s https://codecov.io/bash) -cF server;
+        run: codecov/codecov-action@v2
 
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
