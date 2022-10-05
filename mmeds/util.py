@@ -1445,7 +1445,7 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, tool_type, user, config, runs={}):
+def start_analysis_local(queue, access_code, tool_type, user, config, runs={}, analysis_type='default'):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
