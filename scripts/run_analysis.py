@@ -7,6 +7,7 @@ from mmeds.summary import summarize_qiime
 from mmeds.database.database import Database
 from mmeds.spawn import Watcher
 from mmeds.util import setup_environment, run_analysis, start_analysis_local
+import mmeds.config as fig
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -26,7 +27,7 @@ def run_analysis(study_name, tool_type, user, config):
     Checks the number of reads per sample in a multiplexed file.
     """
     q = get_queue()
-    with Database(testing=True) as db:
+    with Database(testing=fig.TESTING) as db:
         access_code = db.get_access_code_from_study_name(study_name, user)
     ret = start_analysis_local(q, access_code, tool_type, user, config)
 
