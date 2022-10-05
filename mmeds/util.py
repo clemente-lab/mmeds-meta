@@ -1451,7 +1451,7 @@ def start_analysis_local(queue, access_code, tool_type, user, config, runs={}, a
     """
     if not config:
         config = fig.DEFAULT_CONFIG
-    queue.put(('analysis', user, access_code, tool_type, 'default', config, runs, -1, False))
+    queue.put(('analysis', user, access_code, tool_type, analysis_type, config, runs, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 
