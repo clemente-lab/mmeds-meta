@@ -31,7 +31,7 @@ def run_analysis(study_name, tool_type, user, config):
     with Database(testing=fig.TESTING) as db:
         access_code = db.get_access_code_from_study_name(study_name, user)
         files, path = db.get_mongo_files(access_code, True)
-        if tool_type = 'qiime2':
+        if tool_type == 'qiime2':
             runs = db.get_sequencing_run_locations(files['metadata'], user)
     ret = start_analysis_local(q, access_code, tool_type, user, config, runs)
 
