@@ -1712,7 +1712,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     for i, cell in enumerate(path_df.loc[0]):
         if i == 0:
             continue
-        if categories[cell][metadata_column_class] == 'nan':
+        if pd.isna(categories[cell][metadata_column_class]):
             to_drop.append(i)
         t.append(categories[cell][metadata_column_class])
     # Note: using the loc[#.#] format is a bit crude, but the best way I could
@@ -1725,7 +1725,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
         for i, cell in enumerate(path_df.loc[0]):
             if i == 0:
                 continue
-            if i not in to_drop and categories[cell][metadata_column_subclass] == 'nan':
+            if i not in to_drop and pd.isna(categories[cell][metadata_column_subclass]):
                 to_drop.append(i)
             t.append(categories[cell][metadata_column_subclass])
         path_df.loc[0.6] = t
