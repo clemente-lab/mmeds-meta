@@ -1688,7 +1688,7 @@ def get_file_index_entry_location(path, tool, entry, testing=False):
 
 
 def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
-                          metadata_column_subject, o_table):
+                          metadata_column_subject, o_table, remove_nans=True):
     """ Converts a feature table tsv into a format that can be read by lefse's format_input script """
     path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False, dtype='string')
     mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
@@ -1708,9 +1708,12 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
 
     # Insert new metadata rows into feature table
     t = [metadata_column_class]
+    to_drop = []
     for i, cell in enumerate(path_df.loc[0]):
         if i == 0:
             continue
+        if categories[cell][metadata_column_class] == 'nan':
+            to_drop.append(i)
         t.append(categories[cell][metadata_column_class])
     # Note: using the loc[#.#] format is a bit crude, but the best way I could
     #   come up with for inserting rows without deleting already existing rows
@@ -1722,6 +1725,8 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
         for i, cell in enumerate(path_df.loc[0]):
             if i == 0:
                 continue
+            if i not in to_drop and categories[cell][metadata_column_subclass] == 'nan':
+                to_drop.append(i)
             t.append(categories[cell][metadata_column_subclass])
         path_df.loc[0.6] = t
 
@@ -1735,6 +1740,9 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
 
     path_df = path_df.sort_index().reset_index(drop=True)
     path_df = path_df.drop([0])
+    # Remove samples with a nan in class or subclass
+    if remove_nans:
+        path_df = path_df.drop(to_drop, axis=1)
     path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
 
 
