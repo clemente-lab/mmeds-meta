@@ -1741,8 +1741,10 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     path_df = path_df.sort_index().reset_index(drop=True)
     path_df = path_df.drop([0])
     # Remove samples with a nan in class or subclass
+    Logger.error(to_drop)
     if remove_nans:
-        path_df = path_df.drop(to_drop, axis=1)
+        path_df = path_df.drop(columns=to_drop)
+        Logger.error("dropped nans")
     path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
 
 
