@@ -64,7 +64,7 @@ class Lefse(Tool):
         """ Create basic plot of the results """
 
         self.add_path('results_plot', '.svg')
-        cmd = 'lefse_plot_res.py {input_file} {plot} --format svg --max_feature_len 160 subclades -1;'
+        cmd = 'lefse_plot_res.py {input_file} {plot} --format svg --max_feature_len 160 --subclades -1;'
         self.jobtext.append(cmd.format(input_file=self.get_file('lefse_results'),
                                        plot=self.get_file('results_plot')))
 
