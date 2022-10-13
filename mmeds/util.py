@@ -1688,7 +1688,7 @@ def get_file_index_entry_location(path, tool, entry, testing=False):
 
 
 def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
-                          metadata_column_subject, o_table, remove_nans=True):
+                          metadata_column_subject, o_table, remove_nans=True, swap_delim=True):
     """ Converts a feature table tsv into a format that can be read by lefse's format_input script """
     path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False, dtype='string')
     mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
@@ -1705,6 +1705,11 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
 
         if metadata_column_subject:
             categories[cell][metadata_column_subject] = mdf[metadata_column_subject]['categorical'][i]
+
+    # Replace occurrences of ';' delimiter with '|'
+    if swap_delim:
+        for i, cell in enumerate(path_df[0]):
+            path_df.at[i, 0] = cell.replace(';', '|')
 
     # Insert new metadata rows into feature table
     t = [metadata_column_class]
