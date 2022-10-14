@@ -476,6 +476,8 @@ class Database:
             all uploaded studies
         :reset_needed: An int. An indicator, when 1 the user needs to update their password
         """
+        # NO NEW USERS ALLOWED. REMOVE WHEN USERS ALLOWED AGAIN.
+        return False
         with self.db.cursor() as cursor:
             cursor.execute('SELECT MAX(user_id) FROM user')
             user_id = int(cursor.fetchone()[0]) + 1

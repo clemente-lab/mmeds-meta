@@ -596,6 +596,8 @@ class MMEDSupload(MMEDSbase):
     def retry_upload(self):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
+        # UPLOADS CURRENTLY DISALLOWED
+        return False
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'subject':
             page = self.load_webpage('upload_metadata_file',
@@ -622,6 +624,8 @@ class MMEDSupload(MMEDSbase):
         to select the file to be replaced as well as the upload form for the
         new file.
         """
+        # MODIFYING UPLOAD CURRENTLY DISALLOWED
+        return False
         cp.log('In modify_upload')
         try:
             # Handle modifying the uploaded data
@@ -670,7 +674,8 @@ class MMEDSupload(MMEDSbase):
         Page for uploading subject metadata data.
         This is the first thing to be uploaded for a particular study.
         """
-
+        # UPLOADS CURRENTLY DISALLOWED
+        return False
         if subjectType is None and studyName is None:
             # If neither of these value are being passed in from the webpage then the
             # page is being reset to here from a further point in the upload process,
@@ -828,7 +833,8 @@ class MMEDSupload(MMEDSbase):
         """
         Page for uploading sequencing run data.
         """
-
+        # UPLOADS CURRENTLY DISALLOWED
+        return False
         if barcodes_type is None and run_name is None:
             # If neither of these value are being passed in from the webpage then the
             # page is being reset to here from a further point in the upload process,
@@ -1328,6 +1334,8 @@ class MMEDSquery(MMEDSbase):
     @cp.expose
     def execute_query(self, query):
         """ Execute the provided query and format the results as an html table """
+        # NOT ALLOWING QUERIES. REMOVE TO ADD QUERIES BACK.
+        return False
         try:
             # Set the session to use the current user
             with Database(testing=self.testing) as db:
