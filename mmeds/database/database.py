@@ -252,13 +252,17 @@ class Database:
         Given an SQL WHERE statement, extract only the relevant columns
         Currently does not support the operators "BETWEEN", "LIKE", or "IN"
         """
+        # These regex strings are used for separating clauses of the query and separating the column names specifically
         keyword_delimiter = r"\s(?:AND|and|OR|or)\s"
         column_separator = r"(?:['\"`]?)([a-zA-Z0-9_\-]+)(?:['\"`]?\s*)(?:[<>!]?=|[<>])(?:\s*[a-zA-Z0-9'\"`]+)"
 
+        # Split the clause based on the keyword_delimeter regex
         split_where = re.split(keyword_delimiter, where)
         columns = []
+        # Confirm each clause is accurate
         for w in split_where:
             w = w.strip()
+            # Only one column name per clause
             matches = re.findall(column_separator, w)
             if not len(matches) == 1:
                 raise ValueError(f"Could not resolve '{w}' to a single where clause")

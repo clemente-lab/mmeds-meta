@@ -182,27 +182,28 @@ def join_metadata(subject, specimen, subject_type):
     return df
 
 
-def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDataID'), new_study_name=None):
+def split_metadata(full, subject_type, clean_for_meta_analysis=True,
+                   id_col=('RawData', 'RawDataID'), new_study_name=None):
     """ Splits a full metadata file into two dataframes, subject and specimen """
     # Determine subject column set and subject ID col
     tables = [header[0] for header in full.columns]
-    if 'Ethnicity' in tables and 'Chow' in tables:
+    if subject_type == 'mixed':
         # Subject type mixed
         subj_tables = fig.MIXED_SUBJECT_TABLES
         subj_id_col = full[[
             ('Subjects', 'HostSubjectId'),
             ('AnimalSubjects', 'AnimalSubjectID')
         ]].bfill(axis=1).iloc[:, 0]
-    elif 'Ethnicity' in tables:
+    elif subject_type == 'human':
         # Subject type human
         subj_tables = fig.SUBJECT_TABLES
         subj_id_col = full[('Subjects', 'HostSubjectId')]
-    elif 'Chow' in tables:
+    elif subject_type == 'animal':
         # Subject type animal
         subj_tables = fig.ANIMAL_SUBJECT_TABLES
         subj_id_col = full[('AnimalSubjects', 'AnimalSubjectID')]
     else:
-        raise ValueError("Unable to determine subject type from metadata file")
+        raise ValueError(f"Invalid SubjectType: '{subject_type}'")
     # Duplicate subject ID column
     full[('AdditionalMetaData', 'SubjectIdCol')] = subj_id_col
 
@@ -217,6 +218,8 @@ def split_metadata(full, clean_for_meta_analysis=True, id_col=('RawData', 'RawDa
     subj_df = full[subj_cols]
     spec_df = full[spec_cols]
 
+    # Unused in sub-analysis generation.
+    # When used, ensures unique RawDataIDs and new StudyName while maintaining old data
     if clean_for_meta_analysis:
         spec_df[('AdditionalMetaData', 'OriginalRawDataID')] = spec_df[id_col]
         # Add unique integer to RawDataID to prevent repeat IDs
@@ -1708,8 +1711,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
 
     # Replace occurrences of ';' delimiter with '|'
     if swap_delim:
-        for i, cell in enumerate(path_df[0]):
-            path_df.at[i, 0] = cell.replace(';', '|')
+        path_df = path_df.replace(regex=r';', value='|')
 
     # Insert new metadata rows into feature table
     t = [metadata_column_class]
@@ -1770,6 +1772,8 @@ def get_sample_subset_from_metadata(metadata_file, samples, id_col=('RawData', '
     # Always include the additional data in the extra header rows
     subset = [0, 1, 2]
 
+    #ret_df = df.loc[(df[id_col].isin(samples)) | subset]
+    #return ret_df
     # Append necessary rows to list
     for i, cell in enumerate(df[id_col]):
         if i not in subset and cell in samples:
