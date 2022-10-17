@@ -1772,8 +1772,8 @@ def get_sample_subset_from_metadata(metadata_file, samples, id_col=('RawData', '
     # Always include the additional data in the extra header rows
     subset = [0, 1, 2]
 
-    #ret_df = df.loc[(df[id_col].isin(samples)) | subset]
-    #return ret_df
+    ret_df = df.loc[(df[id_col].isin(samples)) | (df.index.isin(subset))]
+    return ret_df
     # Append necessary rows to list
     for i, cell in enumerate(df[id_col]):
         if i not in subset and cell in samples:
