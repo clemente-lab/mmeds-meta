@@ -299,4 +299,4 @@ class UtilTests(TestCase):
                  '/home/runner/mmeds_server_data/studies/testuser_Test_Paired_0/full_metadata.tsv'}
 
         df = util.concatenate_metadata_subsets(entries, paths)
-        subj_df, spec_df = util.split_metadata(df, new_study_name="New_Test_Study")
+        subj_df, spec_df = util.split_metadata(df, 'human', new_study_name="New_Test_Study")

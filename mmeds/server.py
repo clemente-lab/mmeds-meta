@@ -1030,6 +1030,8 @@ class MMEDSauthentication(MMEDSbase):
         :password2: Second copy of the user's desire password, must match :password1:.
         :email: The email address the user is signing up with.
         """
+        # ADDING USERS FROM SERVER DISALLOWED
+        return False
         try:
             check_password(password1, password2)
             check_username(username, testing=self.testing)
