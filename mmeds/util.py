@@ -186,7 +186,6 @@ def split_metadata(full, subject_type, clean_for_meta_analysis=True,
                    id_col=('RawData', 'RawDataID'), new_study_name=None):
     """ Splits a full metadata file into two dataframes, subject and specimen """
     # Determine subject column set and subject ID col
-    tables = [header[0] for header in full.columns]
     if subject_type == 'mixed':
         # Subject type mixed
         subj_tables = fig.MIXED_SUBJECT_TABLES
@@ -1770,14 +1769,7 @@ def get_sample_subset_from_metadata(metadata_file, samples, id_col=('RawData', '
     """ Returns a dataframe of only the specified samples from a given metadata file """
     df = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
     # Always include the additional data in the extra header rows
-    subset = [0, 1, 2]
-
-    ret_df = df.loc[(df[id_col].isin(samples)) | (df.index.isin(subset))]
-    return ret_df
-    # Append necessary rows to list
-    for i, cell in enumerate(df[id_col]):
-        if i not in subset and cell in samples:
-            subset.append(i)
-
-    ret_df = df.loc[subset]
+    additional_subset = [0, 1, 2]
+    # Filter based on sample list plus additional data rows
+    ret_df = df.loc[(df[id_col].isin(samples)) | (df.index.isin(additional_subset))]
     return ret_df
