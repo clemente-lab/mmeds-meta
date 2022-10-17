@@ -1710,7 +1710,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
 
     # Replace occurrences of ';' delimiter with '|'
     if swap_delim:
-        path_df = path_df.replace(regex=r';', value='|')
+        path_df = path_df.replace({';': '|'}, regex=True)
 
     # Insert new metadata rows into feature table
     t = [metadata_column_class]
