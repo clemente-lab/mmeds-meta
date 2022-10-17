@@ -597,7 +597,8 @@ class MMEDSupload(MMEDSbase):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
         # UPLOADS CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'subject':
             page = self.load_webpage('upload_metadata_file',
@@ -625,7 +626,8 @@ class MMEDSupload(MMEDSbase):
         new file.
         """
         # MODIFYING UPLOAD CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         cp.log('In modify_upload')
         try:
             # Handle modifying the uploaded data
@@ -675,7 +677,8 @@ class MMEDSupload(MMEDSbase):
         This is the first thing to be uploaded for a particular study.
         """
         # UPLOADS CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         if subjectType is None and studyName is None:
             # If neither of these value are being passed in from the webpage then the
             # page is being reset to here from a further point in the upload process,
@@ -834,7 +837,8 @@ class MMEDSupload(MMEDSbase):
         Page for uploading sequencing run data.
         """
         # UPLOADS CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         if barcodes_type is None and run_name is None:
             # If neither of these value are being passed in from the webpage then the
             # page is being reset to here from a further point in the upload process,
@@ -1031,7 +1035,8 @@ class MMEDSauthentication(MMEDSbase):
         :email: The email address the user is signing up with.
         """
         # ADDING USERS FROM SERVER DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         try:
             check_password(password1, password2)
             check_username(username, testing=self.testing)
@@ -1337,7 +1342,8 @@ class MMEDSquery(MMEDSbase):
     def execute_query(self, query):
         """ Execute the provided query and format the results as an html table """
         # NOT ALLOWING QUERIES. REMOVE TO ADD QUERIES BACK.
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         try:
             # Set the session to use the current user
             with Database(testing=self.testing) as db:

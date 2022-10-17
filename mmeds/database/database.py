@@ -287,12 +287,13 @@ class Database:
         data, header = self.execute(fmt.SELECT_META_ANALYSIS_QUERY.format(columns=columns_str, where=where))
 
         # Only collect the relevant RawDataIDs, organized by StudyName
+        res_df = pd.DataFrame(data)
         ret_entries = {}
-        for entry in data:
-            if entry[1] not in ret_entries:
-                ret_entries[entry[1]] = [entry[0]]
+        for data_id, study_name in zip(res_df[0], res_df[1]):
+            if study_name not in ret_entries:
+                ret_entries[study_name] = [data_id]
             else:
-                ret_entries[entry[1]].append(entry[0])
+                ret_entries[study_name].append(data_id)
 
         # Collect metadata file locations
         metadata_paths = {}
