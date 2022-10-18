@@ -19,7 +19,7 @@ class UtilTests(TestCase):
         util.load_mmeds_stats()
 
     @skip
-    def test_simplified_to_full(self):
+    def test_a_simplified_to_full(self):
         df = util.simplified_to_full(fig.TEST_SUBJECT_SIMPLIFIED, '/tmp/subject_df.tsv', 'subject')
         df2 = util.simplified_to_full(fig.TEST_SPECIMEN_SIMPLIFIED, '/tmp/specimen_df.tsv', 'specimen')
         errors, dwarnings, subjects = validate_mapping_file('/tmp/subject_df.tsv',
@@ -41,7 +41,7 @@ class UtilTests(TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 
-    def test_format_alerts(self):
+    def test_b_format_alerts(self):
         args = {
                 'error': 'This is an error',
                 'warning': 'This is an warning',
@@ -52,11 +52,11 @@ class UtilTests(TestCase):
         assert 'w3-pale-yellow' in formatted['warning']
         assert 'w3-pale-green' in formatted['success']
 
-    def test_load_metadata_template(self):
+    def test_c_load_metadata_template(self):
         util.load_metadata_template('human')
         util.load_metadata_template('animal')
 
-    def test_is_numeric(self):
+    def test_d_is_numeric(self):
         assert util.is_numeric('45') is True
         assert util.is_numeric('4.5') is True
         assert util.is_numeric('r.5') is False
@@ -65,7 +65,7 @@ class UtilTests(TestCase):
         assert util.is_numeric('5r') is False
         assert util.is_numeric('2016-12-01') is False
 
-    def test_create_local_copy(self):
+    def test_e_create_local_copy(self):
         """ Test the creation of a new unique file. """
         h1 = hl.md5()
         h2 = hl.md5()
@@ -84,7 +84,7 @@ class UtilTests(TestCase):
 
         assert hash1 == hash2
 
-    def test_get_valid_columns(self):
+    def test_f_get_valid_columns(self):
         columns, col_types = util.get_valid_columns(fig.TEST_METADATA, 'all')
         for key in col_types.keys():
             assert key in columns
@@ -120,7 +120,7 @@ class UtilTests(TestCase):
                                                          'StudyName'])
         assert 'selected for analysis' in e_info.value.message
 
-    def test_load_config_file(self):
+    def test_g_load_config_file(self):
         # Test when no config is given
         config = util.load_config(None, fig.TEST_METADATA, 'qiime2')
         for param in fig.CONFIG_PARAMETERS['qiime2']:
@@ -149,7 +149,7 @@ class UtilTests(TestCase):
             config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA, 'qiime2')
         assert 'YAML format' in e_info.value.message
 
-    def test_mmeds_to_MIxS(self):
+    def test_h_mmeds_to_MIxS(self):
         return  # TODO Either fix the test or deprecate the functionality
         tempdir = Path(gettempdir())
         util.mmeds_to_MIxS(fig.TEST_METADATA, tempdir / 'MIxS.tsv')
@@ -159,7 +159,7 @@ class UtilTests(TestCase):
         util.MIxS_to_mmeds(fig.TEST_MIXS, tempdir / 'new_mmeds.tsv')
         assert (tempdir / 'new_mmeds.tsv').is_file()
 
-    def test_generate_error_html(self):
+    def test_i_generate_error_html(self):
         errors, warnings, subjects = validate_mapping_file(fig.TEST_SUBJECT_ERROR,
                                                            'Good_Study',
                                                            'subject',
@@ -170,14 +170,14 @@ class UtilTests(TestCase):
         document, errors = tidy_document(html)
         assert not errors
 
-    def test_copy_metadata(self):
+    def test_j_copy_metadata(self):
         tempdir = Path(gettempdir())
         util.copy_metadata(fig.TEST_METADATA, tempdir / 'new_metadata.tsv')
         df = read_csv(tempdir / 'new_metadata.tsv', header=[0, 1], skiprows=[2, 3, 4], sep='\t')
         assert df['AdditionalMetaData']['Together'].any()
         assert df['AdditionalMetaData']['Separate'].any()
 
-    def test_read_write_mmeds(self):
+    def test_k_read_write_mmeds(self):
         tmpdir = Path(gettempdir())
         mdf = util.load_metadata(fig.TEST_METADATA)
         util.write_metadata(mdf, tmpdir / 'metadata_copy.tsv')
@@ -191,7 +191,7 @@ class UtilTests(TestCase):
 
         assert hash1 == hash2
 
-    def test_join_metadata(self):
+    def test_l_join_metadata(self):
         # Test joining human metadata
         subject = util.load_metadata(fig.TEST_SUBJECT)
         specimen = util.load_metadata(fig.TEST_SPECIMEN)
@@ -204,7 +204,7 @@ class UtilTests(TestCase):
         df = util.join_metadata(subject, specimen, 'animal')
         assert df is not None
 
-    def test_quote_sql(self):
+    def test_m_quote_sql(self):
         """ Test the qouting of sql """
         with self.assertRaises(AssertionError):
             util.quote_sql('some string', quote=';')
@@ -220,7 +220,7 @@ class UtilTests(TestCase):
         self.assertEquals('select `HostSubjectId` from `Subjects`',
                           util.quote_sql('select {col} from {table}', col='HostSubjectId', table='Subjects'))
 
-    def test_safe_dict(self):
+    def test_n_safe_dict(self):
         test_dict = util.SafeDict({
             'val1': 1,
             'val2': 2
@@ -238,7 +238,7 @@ class UtilTests(TestCase):
         self.assertEqual(to_format.format_map(test_dict), all_formatted)
         self.assertNotIn('val3', test_dict.missed)
 
-    def test_parse_ICD(self):
+    def test_o_parse_ICD(self):
         """ Test the parsing of ICD_codes """
         cols = MultiIndex.from_tuples([('ICDCode', 'ICDCode')])
         codes = [
@@ -269,7 +269,7 @@ class UtilTests(TestCase):
         parsed_df = util.parse_ICD_codes(df)
         assert check_df.equals(parsed_df)
 
-    def test_levenshtein_distance(self):
+    def test_p_levenshtein_distance(self):
         """ Test the python-Levenshtein library's distance function """
         # To add more barcode tests, add tuples with format (string_1, string_2, expected_distance)
         test_barcodes = [
@@ -288,3 +288,15 @@ class UtilTests(TestCase):
         for str1, str2, expected_dist in test_barcodes:
             actual_dist = lev.distance(str1, str2)
             assert expected_dist == actual_dist
+
+    def test_q_metadata_concat_and_split(self):
+        """ Test the concatenating of metadata for meta studies and splitting into subj-spec """
+        entries = {'Test_Single_Short': ['L6S93', 'L6S95'],
+                   'Test_Paired': ['L6S98', 'L6S99']}
+        paths = {'Test_Single_Short':
+                 '/home/runner/mmeds_server_data/studies/testuser_Test_Single_Short_0/full_metadata.tsv',
+                 'Test_Paired':
+                 '/home/runner/mmeds_server_data/studies/testuser_Test_Paired_0/full_metadata.tsv'}
+
+        df = util.concatenate_metadata_subsets(entries, paths)
+        subj_df, spec_df = util.split_metadata(df, 'human', new_study_name="New_Test_Study")

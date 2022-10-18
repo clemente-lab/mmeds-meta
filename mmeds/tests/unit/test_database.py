@@ -42,7 +42,7 @@ class DatabaseTests(TestCase):
     @classmethod
     def setUpClass(self):
         """ Load data that is to be used by multiple test cases """
-        self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA))
+        self.df = parse_ICD_codes(load_metadata(fig.TEST_METADATA_SINGLE))
         self.df0 = parse_ICD_codes(load_metadata(fig.TEST_METADATA_ALT))
         # Connect to the database
         self.db = pms.connect(host='localhost',
@@ -153,7 +153,17 @@ class DatabaseTests(TestCase):
         assert not warnings
         assert not errors
 
-    def test_e_clear_user_data(self):
+    def test_ea_meta_query(self):
+        """ Test meta analysis queries """
+        wheres = ['PrimaryInvestigator="Amy Poehler"']
+
+        for w in wheres:
+            with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
+                entries, paths = db.query_meta_analysis(w)
+                assert entries
+                assert paths
+
+    def test_eb_clear_user_data(self):
         """
         Test that Database.clear_user_data('user') will
         empty all rows belonging exclusively to user
@@ -195,7 +205,7 @@ class DatabaseTests(TestCase):
             assert int(self.c.fetchone()[0]) == table_counts[table] - user_counts[table]
             self.c.close()
 
-    def test_e_import_ICD_codes(self):
+    def test_f_import_ICD_codes(self):
         """ Test the parsing and loading of ICD codes. """
         for i, code in self.df['ICDCode']['ICDCode'].items():
             # Check the first character
@@ -223,5 +233,7 @@ class DatabaseTests(TestCase):
 
     def test_h_download_ids(self):
         with Database(fig.TEST_DIR, user=user, owner=fig.TEST_USER, testing=testing) as db:
-            result = db.create_ids_file('Good_Study', 'aliquot')
+            result = db.create_ids_file('Test_Single', 'aliquot')
         print(result)
+
+

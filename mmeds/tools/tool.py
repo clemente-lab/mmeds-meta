@@ -237,9 +237,12 @@ class Tool(mp.Process):
         ]
         self.jobtext.append(' '.join(cmd))
 
-    def source_activate(self, env):
+    def source_activate(self, env, deactivate_prev=True):
         """ Change anaconda3 environment """
         # Some possible envs: 'qiime', 'pheniqs', 'mmeds'
+        if deactivate_prev:
+            self.conda_deactivate()
+
         full_env = env
         if env == 'qiime':
             full_env = 'qiime2-2020.8.0'
@@ -257,6 +260,18 @@ class Tool(mp.Process):
     def conda_deactivate(self):
         """ Deactivate current anaconda3 environment """
         cmd = 'conda deactivate;'
+        self.jobtext.append(cmd)
+
+    def module_load(self, module, purge=True):
+        """ Load an anaconda3 module """
+        if purge:
+            self.module_purge()
+        cmd = f'module load {module};'
+        self.jobtext.append(cmd)
+
+    def module_purge(self):
+        """ Purge anaconda3 modules """
+        cmd = 'module purge;'
         self.jobtext.append(cmd)
 
     def unzip_general(self, from_file, to_file):
@@ -302,7 +317,7 @@ class Tool(mp.Process):
             cmd = "sed -i '1d;2s/^#//' {}".format(to_file)
             self.jobtext.append(cmd)
 
-    def extract_qiime2_feature_table(self, index_entry='filtered_table', remove_zip=True):
+    def extract_qiime2_feature_table(self, index_entry='filtered_table', remove_zip=True, deactivate_prev=True):
         """ Unzip qiime2 feature table artifact from previous analysis, extract its biom file, and convert to tsv """
         self.add_path('tmp_feature_unzip')
         self.add_path('biom_feature', '.biom')
@@ -312,7 +327,7 @@ class Tool(mp.Process):
 
         self.unzip_general(table, self.get_file('tmp_feature_unzip'))
         self.move_general(self.get_file('tmp_feature_unzip') / 'feature-table.biom', self.get_file('biom_feature'))
-        self.source_activate('qiime')
+        self.source_activate('qiime', deactivate_prev)
         self.biom_convert(self.get_file('biom_feature'), self.get_file('feature_table'))
         if remove_zip:
             self.remove_general(self.get_file('tmp_feature_unzip'))

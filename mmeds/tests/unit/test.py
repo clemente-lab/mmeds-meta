@@ -24,7 +24,7 @@ def add_users(tests):
     # Add users as needed
     # users_added keeps track of the number of users added so they can all be removed at the end
     users_added = 0
-    if {'database', 'documents', 'spawn', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
+    if {'database', 'documents', 'util', 'spawn', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     # database and spawn tests require a second user
@@ -37,10 +37,10 @@ def add_users(tests):
 def setup_tests(tests):
     # Add test setups as needed:
     test_setup = []
-    if {'documents', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
+    if {'documents', 'util', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            'human',
-                           fig.TEST_SPECIMEN_SHORT,
+                           fig.TEST_SPECIMEN_SINGLE_SHORT,
                            fig.TEST_USER,
                            'Test_Single_Short',
                            testing,
@@ -48,14 +48,14 @@ def setup_tests(tests):
         if 'tools' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
-                               fig.TEST_SPECIMEN_SHORT,
+                               fig.TEST_SPECIMEN_PAIRED,
                                fig.TEST_USER,
                                'Test_Paired',
                                testing,
                                fig.TEST_CODE_PAIRED))
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
-                               fig.TEST_SPECIMEN_SHORT,
+                               fig.TEST_SPECIMEN_DEMUXED,
                                fig.TEST_USER,
                                'Test_Demuxed',
                                testing,
@@ -86,21 +86,21 @@ def setup_tests(tests):
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
                            'human',
-                           fig.TEST_SPECIMEN,
+                           fig.TEST_SPECIMEN_SINGLE,
                            fig.TEST_USER,
                            'Test_Single',
                            testing,
                            fig.TEST_CODE))
         test_setup.append((fig.TEST_ANIMAL_SUBJECT,
                            'animal',
-                           fig.TEST_SPECIMEN,
+                           fig.TEST_SPECIMEN_ANIMAL,
                            fig.TEST_USER,
                            'Test_Animal_Single',
                            testing,
                            fig.TEST_CODE))
         test_setup.append((fig.TEST_SUBJECT_ALT,
                            'human',
-                           fig.TEST_SPECIMEN_ALT,
+                           fig.TEST_SPECIMEN_ALT_0,
                            fig.TEST_USER_0,
                            'Test_Single_0',
                            testing,

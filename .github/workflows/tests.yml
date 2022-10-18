@@ -85,10 +85,18 @@ jobs:
         run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.;
 
       - name: Python install
-        run: sudo python setup.py install --verbose; pip install wheel; pip install git+https://github.com/clemente-lab/mmeds-meta;
+        run: sudo python setup.py install --verbose; pip install wheel; pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
 
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
+
+      - name: Unit Tests
+        run: |
+         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
+         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter spawn tool tools uploader util validate;
+
+      - name: Upload Unit coverage
+        uses: codecov/codecov-action@v2
 
       - name: Server Tests
         run: |
@@ -97,14 +105,6 @@ jobs:
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
       
       - name: Upload Server Coverage
-        run: bash <(curl -s https://codecov.io/bash) -cF server;
-
-      - name: Unit Tests
-        run: |
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter spawn tool tools uploader util validate;
-
-      - name: Upload Unit coverage
         uses: codecov/codecov-action@v2
 
       - name: Metadata Tests

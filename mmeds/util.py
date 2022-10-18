@@ -182,6 +182,60 @@ def join_metadata(subject, specimen, subject_type):
     return df
 
 
+def split_metadata(full, subject_type, clean_for_meta_analysis=True,
+                   id_col=('RawData', 'RawDataID'), new_study_name=None):
+    """ Splits a full metadata file into two dataframes, subject and specimen """
+    # Determine subject column set and subject ID col
+    if subject_type == 'mixed':
+        # Subject type mixed
+        subj_tables = fig.MIXED_SUBJECT_TABLES
+        subj_id_col = full[[
+            ('Subjects', 'HostSubjectId'),
+            ('AnimalSubjects', 'AnimalSubjectID')
+        ]].bfill(axis=1).iloc[:, 0]
+    elif subject_type == 'human':
+        # Subject type human
+        subj_tables = fig.SUBJECT_TABLES
+        subj_id_col = full[('Subjects', 'HostSubjectId')]
+    elif subject_type == 'animal':
+        # Subject type animal
+        subj_tables = fig.ANIMAL_SUBJECT_TABLES
+        subj_id_col = full[('AnimalSubjects', 'AnimalSubjectID')]
+    else:
+        raise ValueError(f"Invalid SubjectType: '{subject_type}'")
+    # Duplicate subject ID column
+    full[('AdditionalMetaData', 'SubjectIdCol')] = subj_id_col
+
+    # Get list of column headers based on config tables
+    subj_cols = [col for col in full.columns if col[0] in (subj_tables - {'AdditionalMetaData'})]
+    spec_cols = [col for col in full.columns if col[0] in fig.SPECIMEN_TABLES]
+
+    if set(spec_cols).intersection(set(subj_cols)):
+        raise ValueError("Cannot differentiate specimen and subject columns")
+
+    # Separate dfs by columns
+    subj_df = full[subj_cols]
+    spec_df = full[spec_cols]
+
+    # Unused in sub-analysis generation.
+    # When used, ensures unique RawDataIDs and new StudyName while maintaining old data
+    if clean_for_meta_analysis:
+        spec_df[('AdditionalMetaData', 'OriginalRawDataID')] = spec_df[id_col]
+        # Add unique integer to RawDataID to prevent repeat IDs
+        for i, cell in enumerate(spec_df[id_col]):
+            if i > 2:
+                spec_df.at[i, id_col] = f"{cell}_{i-3}"
+        # Only include unique subjects
+        subj_df = subj_df.drop_duplicates(ignore_index=True)
+
+        # Move old study names to separate column and add new study name
+        if new_study_name:
+            spec_df[('AdditionalMetaData', 'OriginalStudyName')] = spec_df[('Study', 'StudyName')]
+            spec_df.loc[3:, ('Study', 'StudyName')] = new_study_name
+
+    return subj_df, spec_df
+
+
 def camel_case(value):
     """ Converts VALUE to camel case, replacing '_', '-', '.', ' ', with the capitalization. """
     return ''.join([x.capitalize() for x in
@@ -345,7 +399,7 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
             else:
                 assert config[option]
         if 'sub_analysis' in config and 'metadata' in config and \
-            config['sub_analysis'] and len(config['metadata']) == 1:
+                config['sub_analysis'] and len(config['metadata']) == 1:
             raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
@@ -926,8 +980,7 @@ def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
 
     with open(qiime_file, 'w') as f:
         f.write('\t'.join(headers) + '\n')
-        if 'qiime2' == tool_type:
-            f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
+        f.write('\t'.join(['#q2:types'] + ['categorical' for x in range(len(headers) - 1)]) + '\n')
         seen_ids = set()
         seen_bars = set()
         for row_index in range(len(mdata)):
@@ -993,7 +1046,8 @@ def make_pheniqs_config(reads_forward, reads_reverse, barcodes_forward, barcodes
     """
     # The top of the output.json file, including R1, I1, I2, and R2
     if testing:
-        out_s = f'{{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "{o_directory}/output_all.fastq" ],'
+        out_s = f'{{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "{o_directory}\
+                    /output_all.fastq" ],'
     else:
         out_s = '{\n\t"input": [\n\t\t"%s",\n\t\t"%s",\n\t\t"%s",\n\t\t"%s"\n\t],\n\t"output": [ "output_all.fastq" ],'
     out_s += '\n\t"template": {\n\t\t"transform": {\n\t\t\t"comment": "This global transform directive specifies the \
@@ -1393,22 +1447,22 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, tool_type, user, config, runs={}):
+def start_analysis_local(queue, access_code, tool_type, user, config, runs={}, analysis_type='default'):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
     if not config:
         config = fig.DEFAULT_CONFIG
-    queue.put(('analysis', user, access_code, tool_type, 'default', config, runs, -1, False))
+    queue.put(('analysis', user, access_code, tool_type, analysis_type, config, runs, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 
 
-def upload_study_local(queue, study_name, subject, subject_type, specimen, user):
+def upload_study_local(queue, study_name, subject, subject_type, specimen, user, meta_study=False):
     """
     Directly upload a local study using the watcher, bypassing the server
     """
-    queue.put(('upload', study_name, subject, subject_type, specimen, user, False, False))
+    queue.put(('upload', study_name, subject, subject_type, specimen, user, meta_study, False, False))
     Logger.debug("Study sent to queue directly")
     return 0
 
@@ -1636,9 +1690,9 @@ def get_file_index_entry_location(path, tool, entry, testing=False):
 
 
 def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
-                          metadata_column_subject, o_table):
+                          metadata_column_subject, o_table, remove_nans=True, swap_delim=True):
     """ Converts a feature table tsv into a format that can be read by lefse's format_input script """
-    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False)
+    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False, dtype='string')
     mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
 
     # Store metadata by ID, allowing for any subset of samples from the metadata
@@ -1654,24 +1708,33 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
         if metadata_column_subject:
             categories[cell][metadata_column_subject] = mdf[metadata_column_subject]['categorical'][i]
 
+    # Replace occurrences of ';' delimiter with '|'
+    if swap_delim:
+        path_df[0] = path_df[0].str.replace(";", "|")
+
     # Insert new metadata rows into feature table
     t = [metadata_column_class]
+    to_drop = []
     for i, cell in enumerate(path_df.loc[0]):
         if i == 0:
             continue
+        if pd.isna(categories[cell][metadata_column_class]):
+            to_drop.append(i)
         t.append(categories[cell][metadata_column_class])
     # Note: using the loc[#.#] format is a bit crude, but the best way I could
     #   come up with for inserting rows without deleting already existing rows
     #   or copying each line into a new df one by one
-    path_df.loc[1.5] = t
+    path_df.loc[0.5] = t
 
     if metadata_column_subclass:
         t = [metadata_column_subclass]
         for i, cell in enumerate(path_df.loc[0]):
             if i == 0:
                 continue
+            if i not in to_drop and pd.isna(categories[cell][metadata_column_subclass]):
+                to_drop.append(i)
             t.append(categories[cell][metadata_column_subclass])
-        path_df.loc[1.6] = t
+        path_df.loc[0.6] = t
 
     if metadata_column_subject:
         t = [metadata_column_subject]
@@ -1679,7 +1742,34 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
             if i == 0:
                 continue
             t.append(categories[cell][metadata_column_subject])
-        path_df.loc[1.7] = t
+        path_df.loc[0.7] = t
 
     path_df = path_df.sort_index().reset_index(drop=True)
-    path_df.to_csv(o_table, sep='\t', index=False, na_rep='nan')
+    path_df = path_df.drop([0])
+    # Remove samples with a nan in class or subclass
+    if remove_nans:
+        path_df = path_df.drop(columns=to_drop)
+        Logger.debug("dropped nans")
+    path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
+
+
+def concatenate_metadata_subsets(samples, paths):
+    """ Create a full dataframe of metadata based on the subsets of several """
+    # Create empty for concating
+    df = pd.DataFrame()
+    for p in paths:
+        # Get individual subsets
+        add_df = get_sample_subset_from_metadata(paths[p], samples[p])
+        Logger.debug(add_df)
+        df = pd.concat([df, add_df], ignore_index=True)
+    return df
+
+
+def get_sample_subset_from_metadata(metadata_file, samples, id_col=('RawData', 'RawDataID')):
+    """ Returns a dataframe of only the specified samples from a given metadata file """
+    df = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
+    # Always include the additional data in the extra header rows
+    additional_subset = [0, 1, 2]
+    # Filter based on sample list plus additional data rows
+    ret_df = df.loc[(df[id_col].isin(samples)) | (df.index.isin(additional_subset))]
+    return ret_df

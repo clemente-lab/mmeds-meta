@@ -34,7 +34,7 @@ def upload_metadata(args):
     (subject_metadata, subject_type, specimen_metadata, owner, study_name, testing, access_code) = args
 
     p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime',
-                         study_name, False, False, testing, access_code)
+                         study_name, False, False, False, testing, access_code)
     return p.run()
 
 
@@ -247,6 +247,62 @@ class Database:
         self.db.commit()
         return set_user
 
+    def extract_columns_from_where_query(self, where):
+        """
+        Given an SQL WHERE statement, extract only the relevant columns
+        Currently does not support the operators "BETWEEN", "LIKE", or "IN"
+        """
+        # These regex strings are used for separating clauses of the query and separating the column names specifically
+        keyword_delimiter = r"\s(?:AND|and|OR|or)\s"
+        column_separator = r"(?:['\"`]?)([a-zA-Z0-9_\-]+)(?:['\"`]?\s*)(?:[<>!]?=|[<>])(?:\s*[a-zA-Z0-9'\"`]+)"
+
+        # Split the clause based on the keyword_delimeter regex
+        split_where = re.split(keyword_delimiter, where)
+        columns = []
+        # Confirm each clause is accurate
+        for w in split_where:
+            w = w.strip()
+            # Only one column name per clause
+            matches = re.findall(column_separator, w)
+            if not len(matches) == 1:
+                raise ValueError(f"Could not resolve '{w}' to a single where clause")
+            columns.append(matches[0])
+        return columns
+
+    def query_meta_analysis(self, where):
+        """
+        Execute a query to get the full set of studies, SampleIDs, and metadata
+        paths that match the given query
+        =========================================================
+        :where: An SQL-formatted WHERE statement for matching to the desired samples
+        """
+        # Extract the relevant column names
+        columns = self.extract_columns_from_where_query(where)
+        Logger.debug(f"where columns: {columns}")
+        columns_str = ""
+        # Add the relevant columns to the query, RawDataID and StudyName are present by default
+        for c in columns:
+            if not c == 'RawDataID' and not c == 'StudyName':
+                columns_str += f", `{c}`"
+        data, header = self.execute(fmt.SELECT_META_ANALYSIS_QUERY.format(columns=columns_str, where=where))
+
+        # Only collect the relevant RawDataIDs, organized by StudyName
+        res_df = pd.DataFrame(data)
+        ret_entries = {}
+        for data_id, study_name in zip(res_df[0], res_df[1]):
+            if study_name not in ret_entries:
+                ret_entries[study_name] = [data_id]
+            else:
+                ret_entries[study_name].append(data_id)
+
+        # Collect metadata file locations
+        metadata_paths = {}
+        for study_name in ret_entries:
+            Logger.debug(study_name)
+            metadata_paths[study_name] = self.get_metadata_file_location(study_name)
+
+        return ret_entries, metadata_paths
+
     def format_html(self, text, header=None):
         """
         Applies PrettyTable HTML formatting to the provided string.
@@ -425,8 +481,6 @@ class Database:
             all uploaded studies
         :reset_needed: An int. An indicator, when 1 the user needs to update their password
         """
-        # NO NEW USERS ALLOWED. REMOVE WHEN USERS ALLOWED AGAIN.
-        return False
         with self.db.cursor() as cursor:
             cursor.execute('SELECT MAX(user_id) FROM user')
             user_id = int(cursor.fetchone()[0]) + 1
@@ -1033,6 +1087,11 @@ class Database:
                 empty_files.append(mdata.files[key])
                 del mdata.files[key]
         return empty_files
+
+    def get_metadata_file_location(self, study_name):
+        """ Return the metadata.tsv file location for a given study """
+        doc = MMEDSDoc.objects(doc_type='study', study_name=study_name).first()
+        return doc['files']['metadata']
 
     def delete_mongo_documents(self):
         """ Clear all metadata documents. This may be necessary if the MMEDSDoc class is modified """

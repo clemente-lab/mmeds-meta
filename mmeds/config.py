@@ -19,6 +19,9 @@ TESTING = not ('chimera' in getfqdn().split('.'))
 # If not running on web01, can't connect to databases
 IS_PRODUCTION = 'web01' in getfqdn().split('.')
 
+# While this is false, users cannot be added, cannot upload, and cannot query from webpage
+LIVE_PROD_ACCESS = False
+
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
@@ -415,11 +418,17 @@ TEST_STRIPPED_DIRS = [
 TEST_PHENIQS_MAPPING = str(TEST_PATH / 'test_pheniqs_mapping_file.tsv')
 TEST_STUDY = str(TEST_PATH / 'test_study')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
+TEST_SPECIMEN_SINGLE = str(TEST_PATH / 'test_specimen_single.tsv')
+TEST_SPECIMEN_ANIMAL = str(TEST_PATH / 'test_specimen_animal.tsv')
 TEST_SPECIMEN_SIMPLIFIED = str(TEST_PATH / 'test_specimen_simplified.tsv')
 TEST_SPECIMEN_ALT = str(TEST_PATH / 'test_specimen_alt.tsv')
+TEST_SPECIMEN_ALT_0 = str(TEST_PATH / 'test_specimen_alt_0.tsv')
 TEST_SPECIMEN_ERROR = str(TEST_PATH / 'validation_files/test_specimen_error.tsv')
 TEST_SPECIMEN_WARN = str(TEST_PATH / 'validation_files/test_specimen_warn.tsv')
 TEST_SPECIMEN_SHORT = str(TEST_PATH / 'test_specimen_short.tsv')
+TEST_SPECIMEN_SINGLE_SHORT = str(TEST_PATH / 'test_specimen_single_short.tsv')
+TEST_SPECIMEN_PAIRED = str(TEST_PATH / 'test_specimen_paired.tsv')
+TEST_SPECIMEN_DEMUXED = str(TEST_PATH / 'test_specimen_demuxed.tsv')
 TEST_SPECIMEN_SHORT_DUAL = str(TEST_PATH / 'test_specimen_short_dual.tsv')
 TEST_SPECIMEN_SHORT_WARN = str(TEST_PATH / 'validation_files/test_specimen_short_warn.tsv')
 TEST_SUBJECT = str(TEST_PATH / 'test_subject.tsv')
@@ -433,6 +442,7 @@ TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
 TEST_SUBJECT_SHORT_DUAL = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_SUBJECT_SHORT = str(TEST_PATH / 'test_subject_short.tsv')
 TEST_METADATA = str(TEST_PATH / 'test_metadata.tsv')
+TEST_METADATA_SINGLE = str(TEST_PATH / 'test_metadata_single.tsv')
 TEST_ANIMAL_METADATA = str(TEST_PATH / 'test_animal_metadata.tsv')
 TEST_MIXED_METADATA = str(TEST_PATH / 'test_mixed_metadata.tsv')
 TEST_METADATA_ALT = str(TEST_PATH / 'test_metadata_alt.tsv')

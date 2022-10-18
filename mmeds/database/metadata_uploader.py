@@ -23,7 +23,7 @@ class MetaDataUploader(Process):
     This class handles the yprocessing and uploading of mmeds metadata files into the MySQL database.
     """
     def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
-                 study_name, temporary, public, testing, access_code=None):
+                 study_name, meta_study, temporary, public, testing, access_code=None):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -43,6 +43,7 @@ class MetaDataUploader(Process):
             'owner': owner,
             'study_type': study_type,
             'study_name': study_name,
+            'meta_study': meta_study,
             'temporary': temporary,
             'public': public,
             'testing': testing
@@ -56,6 +57,7 @@ class MetaDataUploader(Process):
         self.subject_metadata = Path(subject_metadata)
         self.specimen_metadata = Path(specimen_metadata)
         self.study_name = study_name
+        self.meta_study = meta_study
         self.temporary = temporary
         self.public = public
         self.created = datetime.now()
@@ -219,7 +221,8 @@ class MetaDataUploader(Process):
         self.mongo_import(**kwargs)
 
         # If the metadata file is not temporary perform the import into the SQL database
-        if not self.temporary:
+        # If study is meta study also do not perform import, all data is already there
+        if not self.temporary and not self.meta_study:
             # Sort the available tables based on TABLE_ORDER
             columns = self.df.columns.levels[0].tolist()
             column_order = [fig.TABLE_ORDER.index(col) for col in columns]

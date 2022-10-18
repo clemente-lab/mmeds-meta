@@ -597,7 +597,8 @@ class MMEDSupload(MMEDSbase):
         """ Retry the upload of data files. """
         cp.log('upload/retry_upload')
         # UPLOADS CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         # Add the success message if applicable
         if cp.session['metadata_type'] == 'subject':
             page = self.load_webpage('upload_metadata_file',
@@ -625,7 +626,8 @@ class MMEDSupload(MMEDSbase):
         new file.
         """
         # MODIFYING UPLOAD CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         cp.log('In modify_upload')
         try:
             # Handle modifying the uploaded data
@@ -675,7 +677,8 @@ class MMEDSupload(MMEDSbase):
         This is the first thing to be uploaded for a particular study.
         """
         # UPLOADS CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         if subjectType is None and studyName is None:
             # If neither of these value are being passed in from the webpage then the
             # page is being reset to here from a further point in the upload process,
@@ -834,7 +837,8 @@ class MMEDSupload(MMEDSbase):
         Page for uploading sequencing run data.
         """
         # UPLOADS CURRENTLY DISALLOWED
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         if barcodes_type is None and run_name is None:
             # If neither of these value are being passed in from the webpage then the
             # page is being reset to here from a further point in the upload process,
@@ -879,14 +883,15 @@ class MMEDSupload(MMEDSbase):
         else:
             cp.log("Upload is Qiime Single Barcodes")
             barcodes_type = 'single_barcodes'
-            try:
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                rev_reads=kwargs['rev_reads'],
-                                                barcodes=kwargs['barcodes'])
-            except KeyError:
-                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
-                                                barcodes=kwargs['barcodes'])
             reads_type = kwargs['reads_type']
+
+            if reads_type == 'paired_end':
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 rev_reads=kwargs['rev_reads'],
+                                                 barcodes=kwargs['barcodes'])
+            else:
+                datafiles = self.load_data_files(for_reads=kwargs['for_reads'],
+                                                 barcodes=kwargs['barcodes'])
 
         cp.log("Server putting upload in queue {}".format(id(self.q)))
         # Add the files to be uploaded to the queue for uploads
@@ -912,7 +917,7 @@ class MMEDSupload(MMEDSbase):
                      user: {self.get_user()}\n \
                      ")
         self.q.put(('upload', cp.session['study_name'], subject_metadata, cp.session['subject_type'],
-                    specimen_metadata, self.get_user(), False, public))
+                    specimen_metadata, self.get_user(), False, False, public))
 
         return self.load_webpage('home', success='Upload Initiated. You will receive an email when this finishes')
 
@@ -1029,6 +1034,9 @@ class MMEDSauthentication(MMEDSbase):
         :password2: Second copy of the user's desire password, must match :password1:.
         :email: The email address the user is signing up with.
         """
+        # ADDING USERS FROM SERVER DISALLOWED
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         try:
             check_password(password1, password2)
             check_username(username, testing=self.testing)
@@ -1334,7 +1342,8 @@ class MMEDSquery(MMEDSbase):
     def execute_query(self, query):
         """ Execute the provided query and format the results as an html table """
         # NOT ALLOWING QUERIES. REMOVE TO ADD QUERIES BACK.
-        return False
+        if not fig.LIVE_PROD_ACCESS:
+            return False
         try:
             # Set the session to use the current user
             with Database(testing=self.testing) as db:

@@ -60,6 +60,12 @@ SELECT_COLUMN_SUBJECT_QUERY = """\
     `HostSubjectId` = "{HostSubjectId}"\
 """
 
+SELECT_META_ANALYSIS_QUERY = """\
+    SELECT DISTINCT `RawDataID`, `StudyName`{columns}\
+    FROM `MetaAnalysisView`\
+    WHERE {where};
+"""
+
 
 def build_html_table(header, data):
     """

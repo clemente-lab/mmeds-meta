@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import click
 from mmeds.util import format_table_to_lefse
 

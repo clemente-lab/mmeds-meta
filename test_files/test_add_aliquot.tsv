@@ -1,10 +1,10 @@
 StudyName	SpecimenID	AliquotID	AliquotWeight	AliquotWeightUnit	StorageInstitution	StorageFreezer
-Short_Study	L6S93	Aliquot1	0.05	Kilogram	Mount Sinai	Freezer 45
-Short_Study	L6S93	Aliquot2	1.05	Kilogram	Mount Sinai	Freezer 46
-Short_Study	L6S93	Aliquot3	2.05	Kilogram	Mount Sinai	Freezer 47
-Short_Study	L6S93	Aliquot4	3.05	Kilogram	Mount Sinai	Freezer 48
-Short_Study	L5S203	Aliquot5	0.05	Kilogram	Mount Sinai	Freezer 49
-Short_Study	L5S203	Aliquot6	1.05	Kilogram	Mount Sinai	Freezer 50
-Short_Study	L5S203	Aliquot7	2.05	Kilogram	Mount Sinai	Freezer 51
-Short_Study	L5S203	Aliquot8	3.05	Kilogram	Mount Sinai	Freezer 52
-Short_Study	L1S8	Aliquot9	0.00304	Kilogram	Mount Sinai	Freezer 53
+Test_Single_Short	L6S93	Aliquot1	0.05	Kilogram	Mount Sinai	Freezer 45
+Test_Single_Short	L6S93	Aliquot2	1.05	Kilogram	Mount Sinai	Freezer 46
+Test_Single_Short	L6S93	Aliquot3	2.05	Kilogram	Mount Sinai	Freezer 47
+Test_Single_Short	L6S93	Aliquot4	3.05	Kilogram	Mount Sinai	Freezer 48
+Test_Single_Short	L5S203	Aliquot5	0.05	Kilogram	Mount Sinai	Freezer 49
+Test_Single_Short	L5S203	Aliquot6	1.05	Kilogram	Mount Sinai	Freezer 50
+Test_Single_Short	L5S203	Aliquot7	2.05	Kilogram	Mount Sinai	Freezer 51
+Test_Single_Short	L5S203	Aliquot8	3.05	Kilogram	Mount Sinai	Freezer 52
+Test_Single_Short	L1S8	Aliquot9	0.00304	Kilogram	Mount Sinai	Freezer 53
