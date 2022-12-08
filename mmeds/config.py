@@ -15,9 +15,13 @@ import re
 
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
+TESTING = True
 
 # If not running on web01, can't connect to databases
 IS_PRODUCTION = 'web01' in getfqdn().split('.')
+IS_PRODUCTION = False
+
+DATABASE_DIR = Path('/home/matt') / 'mmeds_server_data'
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
 LIVE_PROD_ACCESS = False
@@ -281,29 +285,35 @@ ERROR_FP = 'error_log.tsv'
 
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
-if not DATABASE_DIR.exists():
-    try:
-        DATABASE_DIR.mkdir()
-    except FileExistsError:
-        pass
+if IS_PRODUCTION or TESTING:
 
-if not STUDIES_DIR.exists():
-    try:
-        STUDIES_DIR.mkdir()
-    except FileExistsError:
-        pass
+    if not DATABASE_DIR.exists():
+        try:
+            #DATABASE_DIR.mkdir()
+            pass
+        except FileExistsError:
+            pass
 
-if not SEQUENCING_DIR.exists():
-    try:
-        SEQUENCING_DIR.mkdir()
-    except FileExistsError:
-        pass
+    if not STUDIES_DIR.exists():
+        try:
+            pass
+            #STUDIES_DIR.mkdir()
+        except FileExistsError:
+            pass
 
-if not SESSION_PATH.exists():
-    try:
-        SESSION_PATH.mkdir()
-    except FileExistsError:
-        pass
+    if not SEQUENCING_DIR.exists():
+        try:
+            pass
+            #SEQUENCING_DIR.mkdir()
+        except FileExistsError:
+            pass
+
+    if not SESSION_PATH.exists():
+        try:
+            pass
+            #SESSION_PATH.mkdir()
+        except FileExistsError:
+            pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CUTIE_CONFIG_TEMPLATE = STORAGE_DIR / 'cutie_config_template.ini'
@@ -316,11 +326,13 @@ LOG_CONFIG = STORAGE_DIR / 'log_config.yaml'
 if not PROCESS_LOG_DIR.exists():
     try:
         PROCESS_LOG_DIR.mkdir()
+        pass
     except FileExistsError:
         pass
 LOG_DIR = DATABASE_DIR
 if not LOG_DIR.exists():
     try:
+        pass
         LOG_DIR.mkdir()
     except FileExistsError:
         pass
@@ -654,7 +666,8 @@ CONTINUOUS_GRADIENTS = [
 ]
 
 # Try connecting via the testing setup
-if IS_PRODUCTION or TESTING:
+DB_INSTALLED = False
+if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
                          user='root',
