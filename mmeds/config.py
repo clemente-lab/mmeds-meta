@@ -667,6 +667,7 @@ CONTINUOUS_GRADIENTS = [
 
 # Try connecting via the testing setup
 DB_INSTALLED = False
+IS_PRODUCTION = False
 if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
