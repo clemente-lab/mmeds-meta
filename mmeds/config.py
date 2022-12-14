@@ -285,35 +285,33 @@ ERROR_FP = 'error_log.tsv'
 
 MODULE_ROOT = DATABASE_DIR.parent / '.modules/modulefiles'
 
-if IS_PRODUCTION or TESTING:
+if not DATABASE_DIR.exists():
+    try:
+        DATABASE_DIR.mkdir()
+        pass
+    except FileExistsError:
+        pass
 
-    if not DATABASE_DIR.exists():
-        try:
-            #DATABASE_DIR.mkdir()
-            pass
-        except FileExistsError:
-            pass
+if not STUDIES_DIR.exists():
+    try:
+        pass
+        STUDIES_DIR.mkdir()
+    except FileExistsError:
+        pass
 
-    if not STUDIES_DIR.exists():
-        try:
-            pass
-            #STUDIES_DIR.mkdir()
-        except FileExistsError:
-            pass
+if not SEQUENCING_DIR.exists():
+    try:
+        pass
+        SEQUENCING_DIR.mkdir()
+    except FileExistsError:
+        pass
 
-    if not SEQUENCING_DIR.exists():
-        try:
-            pass
-            #SEQUENCING_DIR.mkdir()
-        except FileExistsError:
-            pass
-
-    if not SESSION_PATH.exists():
-        try:
-            pass
-            #SESSION_PATH.mkdir()
-        except FileExistsError:
-            pass
+if not SESSION_PATH.exists():
+    try:
+        pass
+        SESSION_PATH.mkdir()
+    except FileExistsError:
+        pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CUTIE_CONFIG_TEMPLATE = STORAGE_DIR / 'cutie_config_template.ini'
