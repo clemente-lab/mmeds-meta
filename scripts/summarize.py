@@ -23,7 +23,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-x', '--testing',
               required=False,
               is_flag=True,
-              help='testing ability to generate summaries, not run them')
+              help='testing flag for summaries, set if not in production')
 def run_summarize(path, tool_type, testing):
     summarize_qiime(path, tool_type, testing)
 

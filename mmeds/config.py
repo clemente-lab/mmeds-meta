@@ -15,16 +15,16 @@ import re
 
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
-TESTING = True
 
 # If not running on web01, can't connect to databases
 IS_PRODUCTION = 'web01' in getfqdn().split('.')
-IS_PRODUCTION = False
-
-DATABASE_DIR = Path('/home/matt') / 'mmeds_server_data'
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
 LIVE_PROD_ACCESS = False
+
+# Every MMEDs script imports config.py and thus tries to connect to the database even if it doesn't need to
+# this flag is just to disable that behavior as necessary
+DB_INSTALLED = True
 
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
@@ -666,8 +666,6 @@ CONTINUOUS_GRADIENTS = [
 ]
 
 # Try connecting via the testing setup
-DB_INSTALLED = False
-IS_PRODUCTION = False
 if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
