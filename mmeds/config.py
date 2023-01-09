@@ -289,21 +289,25 @@ if not DATABASE_DIR.exists():
     try:
         DATABASE_DIR.mkdir()
     except FileExistsError:
+        pass
 
 if not STUDIES_DIR.exists():
     try:
         STUDIES_DIR.mkdir()
     except FileExistsError:
+        pass
 
 if not SEQUENCING_DIR.exists():
     try:
         SEQUENCING_DIR.mkdir()
     except FileExistsError:
+        pass
 
 if not SESSION_PATH.exists():
     try:
         SESSION_PATH.mkdir()
     except FileExistsError:
+        pass
 
 JOB_TEMPLATE = STORAGE_DIR / 'job_template.lsf'
 CUTIE_CONFIG_TEMPLATE = STORAGE_DIR / 'cutie_config_template.ini'
@@ -317,11 +321,15 @@ if not PROCESS_LOG_DIR.exists():
     try:
         PROCESS_LOG_DIR.mkdir()
     except FileExistsError:
+        pass
+
 LOG_DIR = DATABASE_DIR
 if not LOG_DIR.exists():
     try:
         LOG_DIR.mkdir()
     except FileExistsError:
+        pass
+
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = {
     'qiime2': [
@@ -375,11 +383,14 @@ if not TEST_DIR.exists():
     try:
         TEST_DIR.mkdir()
     except FileExistsError:
+        pass
+
 TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
 if not TEST_DIR_0.exists():
     try:
         TEST_DIR_0.mkdir()
     except FileExistsError:
+        pass
 
 TEST_USER = 'testuser'
 SERVER_USER = 'serveruser'
