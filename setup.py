@@ -57,6 +57,7 @@ setup(name='mmeds',
       include_package_data=True,
       scripts=glob('scripts/*.py'),
       install_requires=[
+          'python==3.9.15',
           'cherrypy==18.6.0',
           'codecov==2.1.11',
           'setuptools>=46.4.0',
