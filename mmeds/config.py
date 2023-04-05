@@ -55,7 +55,7 @@ else:
     HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
-    WWW_ROOT = "https://mmedsadmin.u.hpc.mssm.edu/"
+    WWW_ROOT = "https://mmedsadmin.dmz.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
     SERVER_PATH = SERVER_ROOT + 'app.wsgi/'
