@@ -40,7 +40,8 @@ def upload_sequencing_run(sequencing_run_name, forward_reads, reverse_reads, for
 
 def get_queue():
     """ Creates a watcher queue to be sent to the analysis function in util.py. Those functions
-    cannot create their own Watcher queue due to their needing a recurursive import """
+    cannot create their own Watcher queue due to their needing a recursive import
+    """
     watcher = Watcher()
     watcher.connect()
     queue = watcher.get_queue()
