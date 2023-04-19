@@ -1,4 +1,4 @@
-name: qiime2-deicode
+name: qiime2-2020.8.0
 channels:
   - qiime2/label/r2020.8
   - conda-forge
@@ -60,7 +60,6 @@ dependencies:
   - deblur=1.1.0
   - decorator=4.4.2
   - defusedxml=0.6.0
-  - deicode
   - dendropy=4.4.0
   - dnaio=0.4.2
   - emperor=1.0.1
