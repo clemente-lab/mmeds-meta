@@ -28,6 +28,7 @@ host/*
 
 # All backup files
 .~*
+**/.coverage
 *.bak
 /mmeds/resources/privkey.pem
 /mmeds/secrets.py
