@@ -29,7 +29,7 @@ jobs:
         run: sudo python setup.py install --verbose; pip install wheel; pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
 
       - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env.yaml -p /home/runner/conda_envs/jupyter
+        run: conda env create -f ./conda_env_files/jupyter_env-github.yaml -p /home/runner/conda_envs/jupyter; conda activate jupyter; pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
 
       - name: add bioconda channel for qiime
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
