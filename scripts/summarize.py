@@ -20,8 +20,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Path to analysis directory')
 @click.option('-t', '--tool_type', required=False,
               help='Type of tools to perform summary for')
-def run_summarize(path, tool_type):
-    summarize_qiime(path, tool_type)
+@click.option('-x', '--testing',
+              required=False,
+              is_flag=True,
+              help='testing flag for summaries, set if not in production')
+def run_summarize(path, tool_type, testing):
+    summarize_qiime(path, tool_type, testing)
 
 
 if __name__ == "__main__":
