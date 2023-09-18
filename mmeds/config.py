@@ -20,7 +20,7 @@ TESTING = not ('chimera' in getfqdn().split('.'))
 IS_PRODUCTION = 'web01' in getfqdn().split('.')
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
-LIVE_PROD_ACCESS = False
+LIVE_PROD_ACCESS = True
 
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
