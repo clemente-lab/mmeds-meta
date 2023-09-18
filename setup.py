@@ -37,7 +37,7 @@ class cleanProject(install):
 
 
 setup(name='mmeds',
-      version='0.7.1',
+      version='0.8.5',
       description='',
       classifiers=[
           'Development Status :: 3 - Alpha',
@@ -58,15 +58,13 @@ setup(name='mmeds',
       scripts=glob('scripts/*.py'),
       install_requires=[
           'cherrypy==18.6.0',
-          'codecov==2.1.11',
-          'setuptools>=46.4.0',
+          'codecov==2.1.13',
+          'setuptools==52.0.0',
           'mongoengine==0.23.0',
-          'numpy==1.21.0',
           'nbformat',
           'pandas==1.2.3',
           'pandoc==2.0a4',
           'pint==0.17',
-          'pillow==8.3.2',
           'ppretty==1.3',
           'prettytable==2.1.0',
           'psutil==5.8.0',

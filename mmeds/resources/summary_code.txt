@@ -29,11 +29,14 @@ metadata_discrete = sorted([x for x in config['metadata'] if not config['metadat
 metadata_continuous = sorted([x for x in config['metadata'] if config['metadata_continuous'][x]])
 
 # Calculate needed number of discrete colors, equal to the number of values across all discrete variables
-max_colors = 0
-for group_name in metadata_discrete:
-    if group_name in mdf and not mdf[group_name].isnull().all():
-        grouping = mdf[group_name]
-        max_colors += grouping.nunique()
+if metadata_discrete:
+    max_colors = 0
+    for group_name in metadata_discrete:
+        if group_name in mdf and not mdf[group_name].isnull().all():
+            grouping = mdf[group_name]
+            max_colors += grouping.nunique()
+else:
+    max_colors = 1
 
 all_colors = ['color{{}}'.format(i) for i in range(max_colors)]
 
@@ -48,7 +51,7 @@ for group_name in metadata_discrete:
     if not mdf[group_name].isnull().all():
         grouping = mdf[group_name]
         color_maps[group_name] = {str(x):'color{}'.format(color_max + i)
-                                      for i, x in enumerate(grouping.drop_duplicates())} 
+                                      for i, x in enumerate(grouping.drop_duplicates())}
         color_max += grouping.nunique() # Unique grouping vals
 =====
 r_setup<source>
@@ -241,10 +244,11 @@ for i, line in enumerate(lines):
         packages_end = i
 
 # Define the colors for each category/value in the alpha/beta plots
-for group_name, group in df.groupby('GroupName'):
-    zipped = zip(group.GroupID.unique(), group.Grouping.unique())
-    lists = ['{}/{}'.format(x, y) for x, y in zipped]
-    latex.append('\\def\\{group}{{{colors}}}\n'.format(group=group_name, colors=','.join(lists)))
+if metadata_discrete:
+    for group_name, group in df.groupby('GroupName'):
+        zipped = zip(group.GroupID.unique(), group.Grouping.unique())
+        lists = ['{}/{}'.format(x, y) for x, y in zipped]
+        latex.append('\\def\\{group}{{{colors}}}\n'.format(group=group_name, colors=','.join(lists)))
 
 new_lines = lines[:packages_end] + latex + lines[packages_end:]
 

@@ -22,6 +22,10 @@ IS_PRODUCTION = 'web01' in getfqdn().split('.')
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
 LIVE_PROD_ACCESS = False
 
+# Every MMEDs script imports config.py and thus tries to connect to the database even if it doesn't need to
+# this flag is just to disable that behavior as necessary
+DB_INSTALLED = True
+
 if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
@@ -318,12 +322,14 @@ if not PROCESS_LOG_DIR.exists():
         PROCESS_LOG_DIR.mkdir()
     except FileExistsError:
         pass
+
 LOG_DIR = DATABASE_DIR
 if not LOG_DIR.exists():
     try:
         LOG_DIR.mkdir()
     except FileExistsError:
         pass
+
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = {
     'qiime2': [
@@ -378,6 +384,7 @@ if not TEST_DIR.exists():
         TEST_DIR.mkdir()
     except FileExistsError:
         pass
+
 TEST_DIR_0 = DATABASE_DIR / 'mmeds_test_dir0'
 if not TEST_DIR_0.exists():
     try:
@@ -654,7 +661,7 @@ CONTINUOUS_GRADIENTS = [
 ]
 
 # Try connecting via the testing setup
-if IS_PRODUCTION or TESTING:
+if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
                          user='root',

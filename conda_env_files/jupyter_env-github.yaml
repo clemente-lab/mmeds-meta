@@ -16,5 +16,3 @@ dependencies:
   - pillow
   - pandas
   - rpy2
-  - pip:
-      - git+https://github.com/clemente-lab/mmeds-meta
