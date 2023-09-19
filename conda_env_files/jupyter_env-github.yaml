@@ -1,18 +1,16 @@
 name: jupyter
 channels:
-  - defaults
-  - bioconda
   - conda-forge
 dependencies:
-  - numpy=1.21.0
-  - ipykernel
   - jupyter_client=6.1.12
   - nbconvert=5.6.1
-  - pip
-  - ipython_genutils=0.2.0
-  - jinja2
-  - python
-  - r-base=4.1
-  - pillow
-  - pandas
   - rpy2
+  - ipykernel
+  - pandas=1.2.3
+  - pillow
+  - ipython_genutils=0.2.0
+  - Jinja2=3.0
+  - r-base=4.1
+  - r-ggrepel
+  - r-GGally
+  - pip
