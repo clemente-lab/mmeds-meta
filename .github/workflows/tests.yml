@@ -33,7 +33,7 @@ jobs:
             
       - name: install mmeds to jupyter
         run: |
-          source activate jupyter;
+          source activate /home/runner/conda_envs/jupyter;
           pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
           conda deactivate;
 
