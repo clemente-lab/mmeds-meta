@@ -16,13 +16,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Subclass on which to perform LEfSe analysis')
 @click.option('-u', '--metadata-column-subject', required=False,
               help='If provided, column values will replace the given SampleIDs')
+@click.option('-nh', '--no_hierarchies', is_flag=True, default=False,
+              help="Do not replace ';' with '|' for hierarchical run")
 @click.option('-o', '--o-table', required=True,
               help='Output TSV ready for LEfSe\'s "format_input.py"')
 def format_table(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
-                 metadata_column_subject, o_table):
+                 metadata_column_subject, no_hierarchies, o_table):
     """ Script that calls the format function in util.py to convert to a format that can be read by format_input.py """
     format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadata_column_subclass,
-                          metadata_column_subject, o_table)
+                          metadata_column_subject, o_table, swap_delim=(not no_hierarchies))
 
 
 if __name__ == '__main__':

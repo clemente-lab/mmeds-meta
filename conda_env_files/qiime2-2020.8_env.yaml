@@ -1,3 +1,4 @@
+name: qiime2-2020.8.0
 channels:
   - qiime2/label/r2020.8
   - conda-forge

@@ -1,4 +1,4 @@
-name: jupyter-prev
+name: jupyter
 channels:
   - conda-forge
 dependencies:
@@ -15,4 +15,7 @@ dependencies:
   - r-GGally
   - pip
   - pip:
-      - git+https://github.com/clemente-lab/mmeds-meta
+    - git+https://github.com/clemente-lab/mmeds-meta@Enhancement-PreviousChanges
+# at the moment, I don't have a better solution other than changing this branch for each pull request
+
+

@@ -18,7 +18,7 @@
 *~
 
 # vi swap files
-.*.swp
+.*.sw*
 
 # OS X files
 .DS_Store
@@ -27,7 +27,8 @@
 host/*
 
 # All backup files
-.*
+.~*
+**/.coverage
 *.bak
 /mmeds/resources/privkey.pem
 /mmeds/secrets.py
