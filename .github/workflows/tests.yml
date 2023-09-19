@@ -6,6 +6,9 @@ on: [push
 jobs:
   run-tests-complex:
     runs-on: ubuntu-20.04
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.9
@@ -36,7 +39,7 @@ jobs:
             
       - name: install mmeds to jupyter
         run: |
-          conda  activate /home/runner/conda_envs/jupyter;
+          conda activate /home/runner/conda_envs/jupyter;
           pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
           conda deactivate;
 
