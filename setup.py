@@ -59,7 +59,7 @@ setup(name='mmeds',
       install_requires=[
           'cherrypy==18.6.0',
           'codecov==2.1.13',
-          'setuptools==52.0.0',
+          'setuptools==65.5.1',
           'mongoengine==0.23.0',
           'nbformat',
           'pandas==1.2.3',
