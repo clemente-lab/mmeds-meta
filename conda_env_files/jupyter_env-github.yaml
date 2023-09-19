@@ -14,3 +14,8 @@ dependencies:
   - r-ggrepel
   - r-GGally
   - pip
+  - pip:
+    - git+https://github.com/clemente-lab/mmeds-meta@Enhancement-PreviousChanges
+# at the moment, I don't have a better solution other than changing this branch for each pull request
+
+
