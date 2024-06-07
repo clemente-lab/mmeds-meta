@@ -1,0 +1,6 @@
+sequencing_runs:
+  - TEST_RUN
+  - TEST_DUAL_RUN
+metadata:
+  - Sex
+  - Group

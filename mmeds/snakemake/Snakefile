@@ -1,0 +1,234 @@
+configfile: "test_config.yaml"
+
+import pandas as pd
+
+rule results:
+    input:
+        "diversity/faith_pd_group_significance.qzv",
+        expand("diversity/bray_curtis_{var}_significance.qzv", var=config['metadata'])
+
+rule merge_sequencing_runs:
+    input:
+        feature_tables = expand("section_{sequencing_run}/table_dada2.qza", sequencing_run=config['sequencing_runs']),
+        rep_seqs = expand("section_{sequencing_run}/rep_seqs_dada2.qza", sequencing_run=config['sequencing_runs'])
+    output:
+        feature_table = "tables/feature_table.qza",
+        rep_seqs_table = "tables/rep_seqs_table.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        """
+        qiime feature-table merge --i-tables {input.feature_tables} --o-merged-table {output.feature_table}
+        qiime feature-table merge-seqs --i-data {input.rep_seqs} --o-merged-data {output.rep_seqs_table}
+        """
+
+rule import_single_barcodes:
+    input:
+        import_dir = "section_{sequencing_run}/import_dir",
+        forward_reads = "section_{sequencing_run}/import_dir/forward.fastq.gz",
+        reverse_reads = "section_{sequencing_run}/import_dir/reverse.fastq.gz",
+        barcodes = "section_{sequencing_run}/import_dir/barcodes.fastq.gz"
+    output:
+        "section_{sequencing_run}/qiime_artifact.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime tools import "
+        "--type EMPPairedEndSequences "
+        "--input-path {input} "
+        "--output-path {output}"
+
+rule import_pheniqs_sample_data:
+    input:
+        dir = "section_{sequencing_run}/stripped_output",
+    output:
+        "section_{sequencing_run}/demux_file.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime tools import "
+        "--type SampleData[PairedEndSequencesWithQuality] "
+        "--input-format CasavaOneEightSingleLanePerSampleDirFmt "
+        "--input-path {input.dir} "
+        "--output-path {output}"
+
+rule build_phylogenetic_tree:
+    input:
+        feature_table = "tables/feature_table.qza",
+        rep_seqs = "tables/rep_seqs_table.qza"
+    output:
+        feature_table_viz = "tables/feature_table_viz.qzv",
+        rooted_tree = "tables/rooted_tree.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        """
+        qiime feature-table summarize --i-table {input.feature_table} --o-visualization {output.feature_table_viz}
+        qiime alignment mafft --i-sequences {input.rep_seqs} --o-alignment temp_files/alignment.qza
+        qiime alignment mask --i-alignment temp_files/alignment.qza --o-masked-alignment temp_files/masked_alignment.qza
+        qiime phylogeny fasttree --i-alignment temp_files/masked_alignment.qza --o-tree temp_files/unrooted_tree.qza
+        qiime phylogeny midpoint-root --i-tree temp_files/unrooted_tree.qza --o-rooted-tree tables/rooted_tree.qza
+        """
+
+ruleorder: diversity_core_metrics_phylogenetic > diversity_core_metrics
+
+rule diversity_core_metrics_phylogenetic:
+    threads: 10
+    input:
+        feature_table = "tables/feature_table.qza",
+        rooted_tree = "tables/rooted_tree.qza",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        "diversity/core_metrics_results"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime diversity core-metrics-phylogenetic "
+        "--i-table {input.feature_table} "
+        "--i-phylogeny {input.rooted_tree} "
+        "--p-sampling-depth 1000 "
+        "--m-metadata-file {input.mapping_file} "
+        "--p-n-jobs-or-threads {threads} "
+        "--output-dir {output}"
+
+rule diversity_core_metrics:
+    threads: 10
+    input:
+        feature_table = "tables/feature_table.qza",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        "diversity/core_metrics_results"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime diversity core-metrics "
+        "--i-table {input.feature_table} "
+        "--p-sampling-depth 1000 "
+        "--m-metadata-file {input.mapping_file} "
+        "--p-n-jobs-or-threads {threads} "
+        "--output-dir {output}"
+
+rule alpha_diversity_ANOVA_test:
+    threads: 3
+    input:
+        div = "diversity/core_metrics_results",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        faith_pd = "diversity/faith_pd_group_significance.qzv",
+        shannon = "diversity/shannon_group_significance.qzv",
+        observed_features = "diversity/observed_features_group_significance.qzv"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        """
+        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/faith_pd_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output.faith_pd}&
+        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/shannon_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output.shannon}&
+        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/observed_features_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output.observed_features}&
+        wait
+        """
+
+rule beta_diversity_PERMANOVA_test:
+    threads: 3
+    input:
+        div = "diversity/core_metrics_results",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        bray_curtis = "diversity/bray_curtis_{var}_significance.qzv",
+        unweighted = "diversity/unweighted_{var}_significance.qzv",
+        weighted = "diversity/weighted_{var}_significance.qzv"
+    shell:
+        """
+        qiime diversity beta-group-significance --i-distance-matrix {input.div}/bray_curtis_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output.bray_curtis}&
+        qiime diversity beta-group-significance --i-distance-matrix {input.div}/unweighted_unifrac_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output.unweighted}&
+        qiime diversity beta-group-significance --i-distance-matrix {input.div}/weighted_unifrac_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output.weighted}&
+        wait
+        """
+
+rule demux_single_barcodes:
+    input:
+        seqs = "section_{sequencing_run}/qiime_artifact.qza",
+        barcodes = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv"
+    output:
+        error_correction = "section_{sequencing_run}/error_correction.qza",
+        demux_file = "section_{sequencing_run}/demux_file.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime demux emp-paired "
+        "--i-seqs {input.seqs} "
+        "--m-barcodes-file {input.barcodes} "
+        "--m-barcodes-column BarcodeSequence "
+        "--p-rev-comp-maping-barcodes "
+        "--o-error-correction {output.error_correction} "
+        "--o-per-sample-sequences {output.demux_file}"
+
+rule demux_dual_barcodes_pheniqs:
+    input:
+        "section_{sequencing_run}/pheniqs_config.json"
+    output:
+        "section_{sequencing_run}/pheniqs_output"
+    conda:
+        "pheniqs"
+    shell:
+        "pheniqs mux --config {input}"
+
+rule dada2_denoise:
+    threads: 10
+    input:
+        "section_{sequencing_run}/demux_file.qza"
+    output:
+        rep_seqs = "section_{sequencing_run}/rep_seqs_dada2.qza",
+        feature_table = "section_{sequencing_run}/table_dada2.qza",
+        stats = "section_{sequencing_run}/stats_dada2.qza",
+        stats_viz = "section_{sequencing_run}/stats_dada2_viz.qzv"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime dada2 denoise-paired "
+        "--i-demultiplexed-seqs {input} "
+        "--p-trim-left-f 0 --p-trim-left-r 0 --p-trunc-len-f 0 --p-trunc-len-r 0 "
+        "--o-representative-sequences {output.rep_seqs} "
+        "--o-table {output.feature_table} "
+        "--o-denoising-stats {output.stats} "
+        "--p-n-threads {threads}; "
+        "qiime metadata tabulate "
+        "--m-input-file {output.stats} "
+        "--o-visualization {output.stats_viz}"
+
+rule strip_error_barcodes:
+    input:
+        dir = "section_{sequencing_run}/pheniqs_output",
+        mapping_file = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv",
+    output:
+        dir = "section_{sequencing_run}/stripped_output"
+    conda:
+        "mmeds"
+    shell:
+        "strip_error_barcodes.py "
+        "--num-allowed-errors 1 "
+        "--m-mapping-file {input.mapping_file} "
+        "--i-directory {input.dir} "
+        "--o-directory {output.dir}"
+
+rule make_pheniqs_config:
+    input:
+        dir = "section_{sequencing_run}",
+        forward_reads = "section_{sequencing_run}/import_dir/forward.fastq.gz",
+        reverse_reads = "section_{sequencing_run}/import_dir/reverse.fastq.gz",
+        for_barcodes = "section_{sequencing_run}/import_dir/for_barcodes.fastq.gz",
+        rev_barcodes = "section_{sequencing_run}/import_dir/rev_barcodes.fastq.gz",
+        mapping_file = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv"
+    output:
+        "section_{sequencing_run}/pheniqs_config.json",
+    conda:
+        "mmeds"
+    shell:
+        "make_pheniqs_config.py "
+        "--reads-forward {input.forward_reads} "
+        "--reads-reverse {input.reverse_reads} "
+        "--barcodes-forward {input.for_barcodes} "
+        "--barcodes-reverse {input.rev_barcodes} "
+        "--mapping-file {input.mapping_file} "
+        "--o-directory {input.dir}/pheniqs_output "
+        "--o-config {output}"
+        
