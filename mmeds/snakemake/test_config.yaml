@@ -4,3 +4,9 @@ sequencing_runs:
 metadata:
   - Sex
   - Group
+alpha_metrics:
+  - faith_pd
+  - observed_features
+beta_metrics:
+  - bray_curtis
+  - unweighted_unifrac

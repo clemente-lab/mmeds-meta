@@ -1,11 +1,9 @@
 configfile: "test_config.yaml"
 
-import pandas as pd
-
 rule results:
     input:
-        "diversity/faith_pd_group_significance.qzv",
-        expand("diversity/bray_curtis_{var}_significance.qzv", var=config['metadata'])
+        expand("diversity/{metric}_group_ANOVA.qzv", metric=config['alpha_metrics']),
+        expand("diversity/{metric}_{var}_PERMANOVA.qzv", metric=config['beta_metrics'], var=config['metadata'])
 
 rule merge_sequencing_runs:
     input:
@@ -109,22 +107,16 @@ rule diversity_core_metrics:
         "--output-dir {output}"
 
 rule alpha_diversity_ANOVA_test:
-    threads: 3
     input:
         div = "diversity/core_metrics_results",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        faith_pd = "diversity/faith_pd_group_significance.qzv",
-        shannon = "diversity/shannon_group_significance.qzv",
-        observed_features = "diversity/observed_features_group_significance.qzv"
+        "diversity/{metric}_group_ANOVA.qzv",
     conda:
         "qiime2-2020.8.0"
     shell:
         """
-        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/faith_pd_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output.faith_pd}&
-        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/shannon_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output.shannon}&
-        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/observed_features_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output.observed_features}&
-        wait
+        qiime diversity alpha-group-significance --i-alpha-diversity {input.div}/{wildcards.metric}_vector.qza --m-metadata-file {input.mapping_file} --o-visualization {output}
         """
 
 rule beta_diversity_PERMANOVA_test:
@@ -133,15 +125,10 @@ rule beta_diversity_PERMANOVA_test:
         div = "diversity/core_metrics_results",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        bray_curtis = "diversity/bray_curtis_{var}_significance.qzv",
-        unweighted = "diversity/unweighted_{var}_significance.qzv",
-        weighted = "diversity/weighted_{var}_significance.qzv"
+        "diversity/{metric}_{var}_PERMANOVA.qzv",
     shell:
         """
-        qiime diversity beta-group-significance --i-distance-matrix {input.div}/bray_curtis_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output.bray_curtis}&
-        qiime diversity beta-group-significance --i-distance-matrix {input.div}/unweighted_unifrac_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output.unweighted}&
-        qiime diversity beta-group-significance --i-distance-matrix {input.div}/weighted_unifrac_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output.weighted}&
-        wait
+        qiime diversity beta-group-significance --i-distance-matrix {input.div}/{wildcards.metric}_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output}
         """
 
 rule demux_single_barcodes:
