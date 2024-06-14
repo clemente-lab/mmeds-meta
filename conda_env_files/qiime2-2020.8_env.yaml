@@ -356,7 +356,7 @@ dependencies:
   - scikit-bio=0.5.5
   - scikit-learn=0.23.1
   - scipy=1.5.2
-  - seaborn=0.10.1
+  - seaborn=0.10.1_1
   - seaborn-base=0.10.1
   - send2trash=1.5.0
   - sepp=4.3.10
