@@ -186,7 +186,7 @@ class MMEDSDoc(men.Document):
         Logger.debug('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
         return child
 
-    def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code):
+    def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code, analysis_name = "analysis"):
         """
         Create a new AnalysisDoc from the current StudyDoc.
         :name: A string. The name of the new document.
@@ -197,11 +197,10 @@ class MMEDSDoc(men.Document):
         """
         # Create a new directory to perform the analysis in
         run_id = 0
-
-        new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
+        new_dir = Path(self.path) / '{}_{}_{}'.format(name, analysis_name, run_id)
         while new_dir.is_dir():
             run_id += 1
-            new_dir = Path(self.path) / '{}_{}'.format(name, run_id)
+            new_dir = Path(self.path) / '{}_{}_{}'.format(name, analysis_name, run_id)
         new_dir = new_dir.resolve()
         new_dir.mkdir()
 

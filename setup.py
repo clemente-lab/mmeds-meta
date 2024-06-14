@@ -52,7 +52,8 @@ setup(name='mmeds',
       packages=[
           'mmeds',
           'mmeds.tools',
-          'mmeds.database'
+          'mmeds.database',
+          'mmeds.snakemake'
       ],
       include_package_data=True,
       scripts=glob('scripts/*.py'),
