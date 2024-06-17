@@ -8,6 +8,7 @@ import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
 import mmeds.resources as resources
+import mmeds.snakemake as snakemake
 import mmeds
 import hashlib
 import re
@@ -30,6 +31,7 @@ if TESTING:
     ROOT = Path(mmeds.__file__).parent.resolve()
     HTML_DIR = Path(html.__file__).parent.resolve()
     STORAGE_DIR = Path(resources.__file__).parent.resolve()
+    SNAKEMAKE_DIR = Path(snakemake.__file__).parent.resolve()
     # If apache is trying to access apache's home directory for `mmeds_server_data` rather than your user account's home
     # you may need to hardcode the path here
     # TODO: Add mmeds configuration options for DATABASE_DIR
@@ -264,21 +266,13 @@ HTML_ARGS = {
     '#': '#',
 }
 
-##########################
-# CONFIGURE TOOL GLOBALS #
-###########################
+##############################
+# CONFIGURE ANALYSIS GLOBALS #
+##############################
 
 
-TOOL_FILES = {
-    'child_analysis': ['otu_table'],
-    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
-    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
-    'sparcc': ['otu_table'],
-    'cutie': ['otu_table'],
-    'lefse': ['lefse_table'],
-    'picrust1': ['otu_table'],
-    'picrust2': ['otu_table'],
-    'test': []
+WORKFLOW_FILES = {
+    "standard_pipeline": [SNAKEMAKE_DIR / "standard_pipeline.Snakefile"]
 }
 
 UPLOADED_FP = 'uploaded_file'
@@ -333,13 +327,15 @@ if not LOG_DIR.exists():
 
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = {
-    'qiime2': [
+    'standard_pipeline': [
         'sampling_depth',
         'metadata',
+        'alpha_metrics',
+        'beta_metrics',
+        'sequencing_runs',
         'taxa_levels',
         'abundance_threshold',
         'font_size',
-        'sub_analysis',
         'additional_analysis',
         'iterations',
         'permutations',
@@ -361,6 +357,15 @@ CONFIG_PARAMETERS = {
         'permutations'],
     'test': []
 }
+
+CONFIG_LISTS = [
+    'metadata',
+    'taxa_levels',
+    'alpha_metrics',
+    'beta_metrics',
+    'sequencing_runs'
+]
+
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'

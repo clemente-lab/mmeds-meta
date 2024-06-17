@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from ppretty import ppretty
-from mmeds.config import DOCUMENT_LOG, TOOL_FILES
+from mmeds.config import DOCUMENT_LOG
 from mmeds.util import copy_metadata, camel_case
 from mmeds.error import AnalysisError
 from mmeds.logging import Logger
@@ -37,6 +37,7 @@ class MMEDSDoc(men.Document):
     tool_type = men.StringField(max_length=45)  # Type of tool
     doc_type = men.StringField(max_length=45)  # Study, Analysis, or SequencingRun
     analysis_type = men.StringField(max_length=45)
+    analysis_name = men.StringField(max_length=45)
 
     # Stages: created, started, <Name of last method>, finished, errored
     analysis_status = men.StringField(max_length=45)
@@ -96,96 +97,6 @@ class MMEDSDoc(men.Document):
                 writeable[key] = str(deepcopy(item))
         return writeable
 
-    def generate_analysis_doc(self, name, access_code):
-        """
-        Creates a new AnalysisDoc for a child analysis
-        ==============================================
-        :atype: A string. The type of analysis this doc corresponds to
-        :access_code: A string. The code for accessing this analysis
-        """
-
-        child_path = Path(self.path) / camel_case(name)
-        child_path.mkdir()
-
-        child_files = deepcopy(self.files)
-        child_files['metadata'] = str(child_path / 'metadata.tsv')
-
-        child_config = deepcopy(self.config)
-        child_config['sub_analysis'] = 'None'
-
-        child = MMEDSDoc(created=datetime.now(),
-                         last_accessed=datetime.now(),
-                         sub_analysis=True,
-                         testing=self.testing,
-                         name=child_path.name,
-                         owner=self.owner,
-                         email=self.email,
-                         path=str(child_path),
-                         study_code=str(self.study_code),
-                         study_name=self.study_name,
-                         access_code=str(access_code),
-                         reads_type=self.reads_type,
-                         data_type=self.data_type,
-                         doc_type='analysis',
-                         analysis_status='Pending',
-                         restart_stage='0',
-                         files=child_files,
-                         config=child_config)
-
-        # Update the child's attributes
-        child.save()
-        return child
-
-    def generate_sub_analysis_doc(self, category, value, analysis_code):
-        """
-        Creates a new AnalysisDoc for a child analysis
-        ==============================================
-        :category: The metadata column this analysis is being split off based on
-        :value: The value of the column for this particular sub-analysis
-        :analysis_code: The access_code to use for this sub-analysis
-        """
-        Logger.debug('create sub analysis cat: {}, val: {}, code: {}'.format(category, value, analysis_code))
-
-        count = 0
-        child_path = Path(self.path) / camel_case('{}_{}_{}'.format(category[1], value, count))
-        while child_path.exists():
-            count += 1
-            child_path = Path(self.path) / camel_case('{}_{}_{}'.format(category[1], value, count))
-        child_path.mkdir()
-
-        child_files = deepcopy(self.files)
-        child_files['metadata'] = str(child_path / 'metadata.tsv')
-
-        child_config = deepcopy(self.config)
-        child_config['sub_analysis'] = 'None'
-        child_config['metadata'] = [cat for cat in self.config['metadata'] if not cat == category[1]]
-
-        child = MMEDSDoc(created=datetime.now(),
-                         last_accessed=datetime.now(),
-                         sub_analysis=True,
-                         testing=self.testing,
-                         name=child_path.name,
-                         owner=self.owner,
-                         email=self.email,
-                         path=str(child_path),
-                         study_code=self.study_code,
-                         study_name=self.study_name,
-                         access_code=analysis_code,
-                         reads_type=self.reads_type,
-                         barcodes_type=self.barcodes_type,
-                         data_type=self.data_type,
-                         tool_type=self.tool_type,
-                         doc_type='analysis',
-                         analysis_status='Pending',
-                         restart_stage='0',
-                         files=child_files,
-                         config=child_config)
-
-        # Update the child's attributes
-        child.save()
-        Logger.debug('Created with {}, {}, {}, {}'.format(category, value, analysis_code, child_path))
-        return child
-
     def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code, analysis_name = "analysis"):
         """
         Create a new AnalysisDoc from the current StudyDoc.
@@ -206,21 +117,11 @@ class MMEDSDoc(men.Document):
 
         files = {}
         Logger.debug('Creating analysis {}'.format(name))
-
-        try:
-            for file_key in TOOL_FILES[tool_type]:
-                # Create links to the files if they exist
-                if self.files.get(file_key) is not None:
-                    Logger.debug('Copy file {}: {}'.format(file_key, self.files.get(file_key)))
-                    (new_dir / Path(self.files[file_key]).name).symlink_to(self.files[file_key])
-                    files[file_key] = new_dir / Path(self.files[file_key]).name
-        except KeyError:
-            raise AnalysisError('Invalid type for analysis {}'.format(tool_type))
-
         copy_metadata(self.files['metadata'], new_dir / 'metadata.tsv')
         files['metadata'] = new_dir / 'metadata.tsv'
         string_files = {str(key): str(value) for key, value in files.items()}
 
+        print(config)
         doc = MMEDSDoc(created=datetime.now(),
                        last_accessed=datetime.now(),
                        sub_analysis=False,
@@ -239,6 +140,7 @@ class MMEDSDoc(men.Document):
                        tool_type=tool_type,
                        data_type=self.data_type,
                        analysis_type=analysis_type,
+                       analysis_name=analysis_name,
                        analysis_status='created',
                        restart_stage=0,
                        config=config,

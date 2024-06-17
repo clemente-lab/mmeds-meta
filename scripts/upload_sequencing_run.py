@@ -20,6 +20,7 @@ def upload_sequencing_run(sequencing_run_name, forward_reads, reverse_reads, for
     Uploads a sequencing run directly from the command line, bypassing the server
     """
     q = get_queue()
+    print("test")
     datafiles = {'forward': str(Path(forward_reads).resolve()),
                  'for_barcodes': str(Path(forward_barcodes).resolve())}
     if reverse_reads:

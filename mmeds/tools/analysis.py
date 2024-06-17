@@ -10,12 +10,11 @@ from datetime import datetime
 import pandas as pd
 
 from mmeds.database.database import Database
-from mmeds.snakemake.workflows import get_workflow
 from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case,
-                        get_file_index_entry_location)
+                        get_file_index_entry_location, get_mapping_file_subset)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, SNAKEMAKE_DIR
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, WORKFLOW_FILES, SNAKEMAKE_DIR
 from mmeds.logging import Logger
 
 import multiprocessing as mp
@@ -187,24 +186,6 @@ class Analysis(mp.Process):
         self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
                         self.config['type'], self.doc.config, self.run_on_node, self.kill_stage))
 
-    def summary(self):
-        """ Setup script to create summary. """
-        self.add_path('summary')
-        if self.testing:
-            self.jobtext.append('module load mmeds-stable;')
-        else:
-            self.jobtext.append('source activate /sc/arion/projects/MMEDS/admin_modules/jupyter;')
-            self.jobtext.append('ml texlive/2018;')
-        # Make sure the kernel is up to date
-        self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name="Jupyter"')
-
-        cmd = [
-            'summarize.py ',
-            '--path "{}"'.format(self.run_dir),
-            '--tool_type {};'.format(self.doc.tool_type)
-        ]
-        self.jobtext.append(' '.join(cmd))
-
     ############################
     # Analysis File Management #
     ############################
@@ -228,7 +209,7 @@ class Analysis(mp.Process):
         mmeds_file = self.get_file('metadata', True)
 
         # Create the Qiime mapping file
-        qiime_file = self.path / 'qiime_mapping_file.tsv'
+        qiime_file = self.get_file("tables_dir", True) / 'qiime_mapping_file.tsv'
         create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.tool_type)
 
         # Add the mapping file to the MetaData object
@@ -260,6 +241,38 @@ class Analysis(mp.Process):
         cmd = f'zip -r {self.run_dir}.zip {self.run_dir};'
         self.jobtext.append(cmd)
 
+    def split_by_sequencing_run(self):
+        """ Separate metadata into sub-folders for each sequencing run """
+        for run in self.sequencing_runs:
+            # Create sequencing run folder
+            self.add_path(self.path / f"section_{run}", key=f"section_{run}")
+            run_dir = self.get_file(f"section_{run}", True)
+            if not run_dir.is_dir():
+                run_dir.mkdir()
+
+            # Create sub-import folder
+            self.add_path(run_dir / 'import_dir', key=f'working_dir_{run}')
+            working_dir = self.get_file(f"working_dir_{run}", True)
+            if not working_dir.is_dir():
+                working_dir.mkdir()
+
+            # Create symlinks to each file of each sequencing run
+            for f in self.sequencing_runs[run]:
+                self.add_path(working_dir / f"{f}", ".fastq.gz", key=f'{f}_{run}')
+                self.get_file(f"{f}_{run}", True).symlink_to(self.sequencing_runs[run][f])
+
+            # Create sub-mapping file that only includes samples for this sequencing run
+            self.add_path(run_dir / f"qiime_mapping_file_{run}", ".tsv", key=f"mapping_{run}")
+            df = get_mapping_file_subset(self.get_file("mapping", True), run)
+            df.to_csv(self.get_file(f"mapping_{run}", True), sep='\t', index=False)
+
+    def make_analysis_dirs(self):
+        if self.tool_type == 'standard_pipeline':
+            self.add_path(self.path / 'tables', key="tables_dir")
+            tables_dir = self.get_file("tables_dir", True)
+            if not tables_dir.is_dir():
+                tables_dir.mkdir()
+
     ##############################
     # Analysis Execution Control #
     ##############################
@@ -275,7 +288,7 @@ class Analysis(mp.Process):
             if self.restart_stage == 0:
                 parent_doc = db.get_doc(self.study_code)
                 self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type, self.analysis_type,
-                                                        self.config, self.access_code, run_id = self.analysis_name)
+                                                        self.config, self.access_code, self.analysis_name)
             else:
                 self.doc = db.get_doc(self.access_code)
 
@@ -289,23 +302,37 @@ class Analysis(mp.Process):
         self.path = Path(self.doc.path)
         self.add_path(self.path, key='path')
 
+        self.make_analysis_dirs()
+
         # This is somewhere issues can arrive. If there are problematic differences
         # between the config file as it was uploaded, and what the analysis is running
         # from, `write_config` likely had something to do with it.
         write_config(self.doc.config, self.path)
         self.create_qiime_mapping_file()
+        for workflow_file in WORKFLOW_FILES[self.tool_type]:
+            with open(workflow_file, "rt") as f:
+                workflow_text = f.read()
+            workflow_text = workflow_text.format(snakemake_dir=SNAKEMAKE_DIR,
+                                                 metric = "{metric}",
+                                                 var = "{var}")
+            with open(self.path / "Snakefile", "wt") as f:
+                f.write(workflow_text)
+                self.add_path(self.path, key=workflow_file.name)
+
+        if self.tool_type == 'standard_pipeline':
+            self.split_by_sequencing_run()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
     def setup_analysis(self, summary=True):
         """ Setup error logs and jobfile. """
-        workflow = get_workflow(self.analysis_type)
+        self.jobtext.append(f"cd {self.run_dir}")
+        self.jobtext.append("source activate snakemake")
+        self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_diagram.pdf")
+        self.jobtext.append("snakemake --use-conda --cores 10")
+        self.jobtext.append('echo "MMEDS_FINISHED"')
 
         if summary:
             self.summary()
-
-        self.jobtext.append("source activate snakemake")
-        self.jobtext.append("snakemake")
-        self.jobtext.append('echo "MMEDS_FINISHED"')
 
         submitfile = self.path / 'submitfile'
         self.add_path(submitfile, '.sh', 'submitfile')
@@ -481,7 +508,7 @@ class Analysis(mp.Process):
             self.update_doc(pid=None, is_alive=False, analysis_status='Finished', exit_code=exit_code)
 
 
-class TestAnalysis(Tool):
+class TestAnalysis(Analysis):
     """
     A class for running tool methods during testing with minimal overhead
     """

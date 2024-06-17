@@ -354,8 +354,11 @@ def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
     except (yaml.YAMLError, yaml.scanner.ScannerError):
         raise InvalidConfigError('There was an error loading your config. Config files must be in YAML format.')
 
+    # Add sequencing runs to config for snakemake
+    if tool_type == 'standard_pipeline':
+        config["sequencing_runs"] = get_sequencing_run_names(metadata)
     # Check if columns == 'all'
-    for param in ['metadata', 'taxa_levels', 'sub_analysis']:
+    for param in fig.CONFIG_LISTS:
         if param in config:
             config['{}_all'.format(param)] = (config[param] == 'all')
     return parse_parameters(config, metadata, tool_type, ignore_bad_cols=ignore_bad_cols)
@@ -379,7 +382,7 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
         for option in fig.CONFIG_PARAMETERS[tool_type]:
             Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
-            if option == 'metadata' or option == 'sub_analysis':
+            if option == 'metadata':
                 config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
                                                                                            config[option],
                                                                                            ignore_bad_cols)
@@ -398,12 +401,13 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
-        if 'sub_analysis' in config and 'metadata' in config and \
-                config['sub_analysis'] and len(config['metadata']) == 1:
-            raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config
+
+def get_sequencing_run_names(metadata):
+    df = load_metadata(metadata, header=0, na_values='nan', skiprows=[0, 2, 3, 4])
+    return list(df["RawDataProtocolID"].unique())
 
 
 def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
@@ -465,11 +469,11 @@ def write_config(config, path):
     config_text = {}
     for (key, value) in config.items():
         # Don't write values that are generated on loading
-        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
-                   'sub_analysis_continuous', 'sub_analysis_all']:
+        if key in ['Together', 'Separate', 'metadata_continuous'] + [f"{val}_all" for val in fig.CONFIG_LISTS]:
             continue
         # If the value was initially 'all', write that
-        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
+        # TODO Make configurable
+        elif key in fig.CONFIG_LISTS:
             if config['{}_all'.format(key)]:
                 config_text[key] = 'all'
             # Write lists as comma seperated strings
@@ -1447,13 +1451,13 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, tool_type, user, config, runs={}, analysis_type='default'):
+def start_analysis_local(queue, access_code, analysis_name, tool_type, user, config, runs={}, analysis_type='default'):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
     if not config:
         config = fig.DEFAULT_CONFIG
-    queue.put(('analysis', user, access_code, tool_type, analysis_type, config, runs, -1, False))
+    queue.put(('analysis', user, access_code, tool_type, analysis_type, analysis_name, config, runs, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 

@@ -25,6 +25,7 @@ from mmeds.tools.picrust1 import PiCRUSt1
 from mmeds.tools.picrust2 import PiCRUSt2
 from mmeds.tools.cutie import CUTIE
 from mmeds.tools.tool import TestTool
+from mmeds.tools.analysis import Analysis
 from mmeds.logging import Logger
 
 # This is used as a stand in for a switch statement when the watcher
@@ -103,7 +104,7 @@ class Watcher(BaseManager):
             print(self.q.get())
             sleep(1)
 
-    def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
+    def spawn_analysis(self, tool_type, analysis_type, analysis_name, user, parent_code,
                        config_file, testing, sequencing_runs, run_on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
         # Create access code for this analysis
@@ -114,9 +115,8 @@ class Watcher(BaseManager):
 
         # Switch statment will go here
         try:
-            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type,
-                                    analysis_type, config, testing, sequencing_runs, run_on_node,
-                                    kill_stage=kill_stage)
+            tool = Analysis(self.q, user, access_code, parent_code, tool_type, analysis_type, analysis_name,
+                            config, testing, sequencing_runs, run_on_node, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
         return tool
@@ -290,7 +290,8 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of analysis processes
         """
-        ptype, user, access_code, tool_type, analysis_type, config, sequencing_runs, kill_stage, run_on_node = process
+        ptype, user, access_code, tool_type, analysis_type, analysis_name, \
+            config, sequencing_runs, kill_stage, run_on_node = process
 
         # If running directly on the server node
         if run_on_node:
@@ -304,7 +305,7 @@ class Watcher(BaseManager):
 
         self.logger.debug("spawn analysis")
         # Otherwise continue
-        p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
+        p = self.spawn_analysis(tool_type, analysis_type, analysis_name, user, access_code,
                                 config, self.testing, sequencing_runs, kill_stage, run_on_node)
         # Start the analysis running
         p.start()
@@ -428,6 +429,7 @@ class Watcher(BaseManager):
                     exit()
                 # If it's an analysis
                 elif process[0] == 'analysis':
+                    print("Test")
                     self.handle_analysis(process)
                 # If it's a restart of an analysis
                 elif process[0] == 'restart':

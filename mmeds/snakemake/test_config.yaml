@@ -1,3 +1,4 @@
+rarefaction_depth: 1000
 sequencing_runs:
   - TEST_RUN
   - TEST_DUAL_RUN
@@ -10,3 +11,8 @@ alpha_metrics:
 beta_metrics:
   - bray_curtis
   - unweighted_unifrac
+taxa_levels:
+  - 2
+  - 5
+  - 6
+  - 7

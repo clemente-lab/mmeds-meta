@@ -1036,13 +1036,13 @@ class Database:
         for run in df[column]:
             if run not in runs:
                 runs.append(run)
-
         # Get paths, these should exist due to already checking during validation
         run_paths = {}
         for run in runs:
             doc = MMEDSDoc.objects(doc_type='sequencing_run', study_name=run, owner=user).first()
             run_paths[run] = {}
             # Get individual files within sequencing run directories
+            print(Path(doc.path) / fig.SEQUENCING_DIRECTORY_FILE)
             with open(Path(doc.path) / fig.SEQUENCING_DIRECTORY_FILE, "rt") as f:
                 content = f.read().split('\n')
                 # Read the key value pair of datafile type and file location
@@ -1051,7 +1051,6 @@ class Database:
                     if ": " in line:
                         key, val = line.split(": ")
                         run_paths[run][key] = Path(doc.path) / val
-
         return run_paths
 
     def get_all_studies(self):

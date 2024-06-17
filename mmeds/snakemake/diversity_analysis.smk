@@ -1,4 +1,5 @@
 ruleorder: diversity_core_metrics_phylogenetic > diversity_core_metrics
+ruleorder: alpha_rarefaction_phylogenetic > alpha_rarefaction
 
 rule diversity_core_metrics_phylogenetic:
     threads: 10
@@ -35,6 +36,38 @@ rule diversity_core_metrics:
         "--m-metadata-file {input.mapping_file} "
         "--p-n-jobs-or-threads {threads} "
         "--output-dir {output}"
+
+rule alpha_rarefaction_phylogenetic:
+    input:
+        feature_table = "tables/feature_table.qza",
+        rooted_tree = "tables/rooted_tree.qza",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        "diversity/alpha_rarefaction.qzv"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime diversity alpha-rarefaction "
+        "--i-table {input.feature_table} "
+        "--i-phylogeny {input.rooted_tree} "
+        "--m-metadata-file {input.mapping_file} "
+        "--p-max-depth {config[rarefaction_depth]} "
+        "--o-visualization {output}"
+
+rule alpha_rarefaction:
+    input:
+        feature_table = "tables/feature_table.qza",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        "diversity/alpha_rarefaction.qzv"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime diversity alpha-rarefaction "
+        "--i-table {input.feature_table} "
+        "--m-metadata-file {input.mapping_file} "
+        "--p-max-depth {config[rarefaction_depth]} "
+        "--o-visualization {output}"
 
 rule alpha_diversity_ANOVA_test:
     input:

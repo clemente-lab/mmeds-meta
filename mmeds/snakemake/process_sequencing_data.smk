@@ -3,7 +3,7 @@ rule merge_sequencing_runs:
         feature_tables = expand("section_{sequencing_run}/table_dada2.qza", sequencing_run=config['sequencing_runs']),
         rep_seqs = expand("section_{sequencing_run}/rep_seqs_dada2.qza", sequencing_run=config['sequencing_runs'])
     output:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/feature_table_no_reads_threshold.qza",
         rep_seqs_table = "tables/rep_seqs_table.qza"
     conda:
         "qiime2-2020.8.0"
@@ -12,6 +12,21 @@ rule merge_sequencing_runs:
         qiime feature-table merge --i-tables {input.feature_tables} --o-merged-table {output.feature_table}
         qiime feature-table merge-seqs --i-data {input.rep_seqs} --o-merged-data {output.rep_seqs_table}
         """
+
+rule filter_table_by_threshold:
+    input:
+        feature_table = "tables/feature_table_no_reads_threshold.qza",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        "tables/feature_table.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime feature-table filter-samples "
+        "--i-table {input.feature_table} "
+        "--m-metadata-file {input.mapping_file} "
+        "--p-min-frequency {config[rarefaction_depth]} "
+        "--o-filtered-table {output}"
 
 rule import_single_barcodes:
     input:
