@@ -320,7 +320,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        keep_default_na=keep_default_na)
 
 
-def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
+def load_config(config_file, metadata, workflow_type, ignore_bad_cols=False):
     """
     Read the provided config file to determine settings for the analysis.
     ====================================================================
@@ -337,7 +337,7 @@ def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
         if isinstance(config_file, Path):
             page = config_file.read_text()
         # Use blank config
-        elif tool_type == 'test':
+        elif workflow_type == 'test':
             Logger.debug('Using blank config')
             return config
         # If no config was provided load the default
@@ -355,16 +355,16 @@ def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
         raise InvalidConfigError('There was an error loading your config. Config files must be in YAML format.')
 
     # Add sequencing runs to config for snakemake
-    if tool_type == 'standard_pipeline':
+    if workflow_type == 'standard_pipeline':
         config["sequencing_runs"] = get_sequencing_run_names(metadata)
     # Check if columns == 'all'
     for param in fig.CONFIG_LISTS:
         if param in config:
             config['{}_all'.format(param)] = (config[param] == 'all')
-    return parse_parameters(config, metadata, tool_type, ignore_bad_cols=ignore_bad_cols)
+    return parse_parameters(config, metadata, workflow_type, ignore_bad_cols=ignore_bad_cols)
 
 
-def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
+def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     """
     Helper function for load_config. This parses the individual options provided in
     the config file. For example, the user can put 'all' as the taxa column option
@@ -373,13 +373,13 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS[tool_type])
+    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS[workflow_type])
             if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
-        for option in fig.CONFIG_PARAMETERS[tool_type]:
+        for option in fig.CONFIG_PARAMETERS[workflow_type]:
             Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata':
@@ -953,7 +953,7 @@ def setup_environment(module):
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, workflow_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -1419,13 +1419,13 @@ def get_mapping_file_subset(metadata, selection, column="RawDataProtocolID"):
     return df
 
 
-def run_analysis(path, tool_type, testing=False):
+def run_analysis(path, workflow_type, testing=False):
     """
     Run analysis for one of MMEDs tools
     Currently only setup for qiime2
 
     path: path to analysis folder i.e. Study/Qiime2_0)
-    tool_type: tool to use. qiime1, qiime2, lefse, etc
+    workflow_type: tool to use. qiime1, qiime2, lefse, etc
     """
     if testing:
         # This module file is setup for running on github actions
@@ -1451,13 +1451,13 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, analysis_name, tool_type, user, config, runs={}, analysis_type='default'):
+def start_analysis_local(queue, access_code, analysis_name, workflow_type, user, config, runs={}, analysis_type='default'):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
     if not config:
         config = fig.DEFAULT_CONFIG
-    queue.put(('analysis', user, access_code, tool_type, analysis_type, analysis_name, config, runs, -1, False))
+    queue.put(('analysis', user, access_code, workflow_type, analysis_type, analysis_name, config, runs, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 

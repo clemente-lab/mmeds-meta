@@ -6,9 +6,9 @@ from mmeds.util import get_file_index_entry_location
 class Lefse(Tool):
     """ A class for LEfSe analysis of uploaded studies. """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type,  config, testing, runs,
+    def __init__(self, queue, owner, access_code, parent_code, workflow_type, analysis_type,  config, testing, runs,
                  run_on_node, analysis=True, child=False, restart_stage=0, kill_stage=-1):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+        super().__init__(queue, owner, access_code, parent_code, workflow_type, analysis_type, config, testing, runs,
                          run_on_node, analysis=analysis, child=child, restart_stage=restart_stage,
                          kill_stage=kill_stage)
         if testing:

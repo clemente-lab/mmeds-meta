@@ -29,7 +29,7 @@ class Analysis(mp.Process):
     will happen in seperate processes when Process.start() is called.
     """
 
-    def __init__(self, queue, owner, access_code, study_code, tool_type, analysis_type, analysis_name, config,
+    def __init__(self, queue, owner, access_code, study_code, workflow_type, analysis_type, analysis_name, config,
                  testing, runs, run_on_node, threads=10, analysis=True, restart_stage=0, kill_stage=-1):
         """
         Setup the Analysis class
@@ -53,7 +53,7 @@ class Analysis(mp.Process):
         self.logger = Logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
-        self.tool_type = tool_type
+        self.workflow_type = workflow_type
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
         self.owner = owner
@@ -177,13 +177,13 @@ class Analysis(mp.Process):
         }
         return params
 
-    def queue_analysis(self, tool_type):
+    def queue_analysis(self, workflow_type):
         """
         Add an analysis of the specified type to the watcher queue
         ===============================
-        :tool_type: The type of tool to spawn
+        :workflow_type: The type of tool to spawn
         """
-        self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
+        self.queue.put(('analysis', self.owner, self.doc.access_code, workflow_type,
                         self.config['type'], self.doc.config, self.run_on_node, self.kill_stage))
 
     ############################
@@ -210,7 +210,7 @@ class Analysis(mp.Process):
 
         # Create the Qiime mapping file
         qiime_file = self.get_file("tables_dir", True) / 'qiime_mapping_file.tsv'
-        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.tool_type)
+        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.workflow_type)
 
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
@@ -228,7 +228,7 @@ class Analysis(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {};'.format(self.doc.tool_type)
+            '--workflow_type {};'.format(self.doc.workflow_type)
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -267,7 +267,7 @@ class Analysis(mp.Process):
             df.to_csv(self.get_file(f"mapping_{run}", True), sep='\t', index=False)
 
     def make_analysis_dirs(self):
-        if self.tool_type == 'standard_pipeline':
+        if self.workflow_type == 'standard_pipeline':
             self.add_path(self.path / 'tables', key="tables_dir")
             tables_dir = self.get_file("tables_dir", True)
             if not tables_dir.is_dir():
@@ -287,7 +287,7 @@ class Analysis(mp.Process):
         with Database(owner=self.owner, testing=self.testing) as db:
             if self.restart_stage == 0:
                 parent_doc = db.get_doc(self.study_code)
-                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type, self.analysis_type,
+                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.workflow_type, self.analysis_type,
                                                         self.config, self.access_code, self.analysis_name)
             else:
                 self.doc = db.get_doc(self.access_code)
@@ -309,7 +309,7 @@ class Analysis(mp.Process):
         # from, `write_config` likely had something to do with it.
         write_config(self.doc.config, self.path)
         self.create_qiime_mapping_file()
-        for workflow_file in WORKFLOW_FILES[self.tool_type]:
+        for workflow_file in WORKFLOW_FILES[self.workflow_type]:
             with open(workflow_file, "rt") as f:
                 workflow_text = f.read()
             workflow_text = workflow_text.format(snakemake_dir=SNAKEMAKE_DIR,
@@ -319,7 +319,7 @@ class Analysis(mp.Process):
                 f.write(workflow_text)
                 self.add_path(self.path, key=workflow_file.name)
 
-        if self.tool_type == 'standard_pipeline':
+        if self.workflow_type == 'standard_pipeline':
             self.split_by_sequencing_run()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
@@ -327,7 +327,8 @@ class Analysis(mp.Process):
         """ Setup error logs and jobfile. """
         self.jobtext.append(f"cd {self.run_dir}")
         self.jobtext.append("source activate snakemake")
-        self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_diagram.pdf")
+        self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_dag.pdf")
+        self.jobtext.append("snakemake --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
         self.jobtext.append("snakemake --use-conda --cores 10")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
@@ -380,7 +381,7 @@ class Analysis(mp.Process):
             # Tell the watcher to send an email that the analysis has started.
             email = ('email', self.doc.email, self.owner, 'analysis_start',
                      dict(code=self.access_code,
-                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          analysis='{}-{}'.format(self.doc.workflow_type, self.doc.analysis_type),
                           study=self.doc.study_name))
             self.queue.put(email)
 
@@ -470,7 +471,7 @@ class Analysis(mp.Process):
 
             email = ('email', self.doc.email, self.doc.owner, 'error',
                      dict(code=self.doc.access_code,
-                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          analysis='{}-{}'.format(self.doc.workflow_type, self.doc.analysis_type),
                           stage=self.doc.restart_stage,
                           study=self.doc.study_name))
             self.queue.put(email)
@@ -478,7 +479,7 @@ class Analysis(mp.Process):
         else:
             email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
                      dict(code=self.doc.access_code,
-                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          analysis='{}-{}'.format(self.doc.workflow_type, self.doc.analysis_type),
                           study=self.doc.study_name))
         self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
@@ -513,9 +514,9 @@ class TestAnalysis(Analysis):
     A class for running tool methods during testing with minimal overhead
     """
 
-    def __init__(self, queue, owner, access_code, study_code, tool_type, analysis_type, config, testing, runs,
+    def __init__(self, queue, owner, access_code, study_code, workflow_type, analysis_type, config, testing, runs,
                  run_on_node, analysis=True, restart_stage=0, kill_stage=-1, time=10):
-        super().__init__(queue, owner, access_code, study_code, tool_type, analysis_type, config, testing, runs,
+        super().__init__(queue, owner, access_code, study_code, workflow_type, analysis_type, config, testing, runs,
                          run_on_node, analysis=analysis, restart_stage=restart_stage)
         print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))
         self.time = time

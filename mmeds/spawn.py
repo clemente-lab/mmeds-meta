@@ -104,18 +104,18 @@ class Watcher(BaseManager):
             print(self.q.get())
             sleep(1)
 
-    def spawn_analysis(self, tool_type, analysis_type, analysis_name, user, parent_code,
+    def spawn_analysis(self, workflow_type, analysis_type, analysis_name, user, parent_code,
                        config_file, testing, sequencing_runs, run_on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
         # Create access code for this analysis
         with Database('.', owner=user, testing=testing) as db:
             files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
-        config = load_config(config_file, files['metadata'], tool_type)
+        config = load_config(config_file, files['metadata'], workflow_type)
 
         # Switch statment will go here
         try:
-            tool = Analysis(self.q, user, access_code, parent_code, tool_type, analysis_type, analysis_name,
+            tool = Analysis(self.q, user, access_code, parent_code, workflow_type, analysis_type, analysis_name,
                             config, testing, sequencing_runs, run_on_node, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
@@ -135,7 +135,7 @@ class Watcher(BaseManager):
                 rmtree(ad.path)
         # Create the appropriate tool
         try:
-            tool = TOOLS[ad.tool_type](self.q, ad.owner, analysis_code, ad.study_code, ad.tool_type,
+            tool = TOOLS[ad.workflow_type](self.q, ad.owner, analysis_code, ad.study_code, ad.workflow_type,
                                        ad.analysis_type, ad.config, testing, run_on_node,
                                        analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
         except KeyError:
@@ -290,7 +290,7 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of analysis processes
         """
-        ptype, user, access_code, tool_type, analysis_type, analysis_name, \
+        ptype, user, access_code, workflow_type, analysis_type, analysis_name, \
             config, sequencing_runs, kill_stage, run_on_node = process
 
         # If running directly on the server node
@@ -299,13 +299,13 @@ class Watcher(BaseManager):
             if len(self.running_on_node) > 3:
                 with Database(testing=self.testing) as db:
                     toaddr = db.get_email(user)
-                send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=tool_type)
+                send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=workflow_type)
                 self.pipe.send('Analysis Not Started')
                 return
 
         self.logger.debug("spawn analysis")
         # Otherwise continue
-        p = self.spawn_analysis(tool_type, analysis_type, analysis_name, user, access_code,
+        p = self.spawn_analysis(workflow_type, analysis_type, analysis_name, user, access_code,
                                 config, self.testing, sequencing_runs, kill_stage, run_on_node)
         # Start the analysis running
         p.start()

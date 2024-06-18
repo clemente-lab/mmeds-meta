@@ -22,8 +22,8 @@ class ToolsTests(TestCase):
         self.q = Queue()
         self.testing = True
 
-    def run_analysis(self, code, tool_type, analysis_type, TOOL, config, runs={}):
-        tool = TOOL(self.q, fig.TEST_USER, 'random_code', code, tool_type, analysis_type, config,
+    def run_analysis(self, code, workflow_type, analysis_type, TOOL, config, runs={}):
+        tool = TOOL(self.q, fig.TEST_USER, 'random_code', code, workflow_type, analysis_type, config,
                     self.testing, runs, True, analysis=True)
         Logger.debug('Starting {}, id is {}'.format(tool.name, id(tool)))
         tool.run()
@@ -31,9 +31,9 @@ class ToolsTests(TestCase):
         rmtree(tool.path)
 
     def test_a_qiime2_setup_analysis(self):
-        for tool_type, analysis_type in [('qiime2', 'dada2'), ('qiime2', 'deblur')]:
+        for workflow_type, analysis_type in [('qiime2', 'dada2'), ('qiime2', 'deblur')]:
             for code in [fig.TEST_CODE_SHORT, fig.TEST_CODE_PAIRED, fig.TEST_CODE_DEMUX]:
-                self.run_analysis(code, tool_type, analysis_type, Qiime2, self.config)
+                self.run_analysis(code, workflow_type, analysis_type, Qiime2, self.config)
 
     def test_b_qiime2_child_setup_analysis(self):
         config = load_config(Path(fig.TEST_CONFIG), fig.TEST_METADATA, 'qiime2')

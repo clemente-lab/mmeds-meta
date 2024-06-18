@@ -34,7 +34,7 @@ class MMEDSDoc(men.Document):
     reads_type = men.StringField(max_length=45)     # single_end or paired_end
     barcodes_type = men.StringField(max_length=45)  # Single or Paired
     data_type = men.StringField(max_length=45)  #
-    tool_type = men.StringField(max_length=45)  # Type of tool
+    workflow_type = men.StringField(max_length=45)  # Type of tool
     doc_type = men.StringField(max_length=45)  # Study, Analysis, or SequencingRun
     analysis_type = men.StringField(max_length=45)
     analysis_name = men.StringField(max_length=45)
@@ -97,7 +97,7 @@ class MMEDSDoc(men.Document):
                 writeable[key] = str(deepcopy(item))
         return writeable
 
-    def generate_MMEDSDoc(self, name, tool_type, analysis_type, config, access_code, analysis_name = "analysis"):
+    def generate_MMEDSDoc(self, name, workflow_type, analysis_type, config, access_code, analysis_name = "analysis"):
         """
         Create a new AnalysisDoc from the current StudyDoc.
         :name: A string. The name of the new document.
@@ -137,7 +137,7 @@ class MMEDSDoc(men.Document):
                        reads_type=self.reads_type,
                        barcodes_type=self.barcodes_type,
                        doc_type='analysis',
-                       tool_type=tool_type,
+                       workflow_type=workflow_type,
                        data_type=self.data_type,
                        analysis_type=analysis_type,
                        analysis_name=analysis_name,

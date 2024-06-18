@@ -6,9 +6,9 @@ from mmeds.tools.tool import Tool
 class CUTIE(Tool):
     """ A class for CUTIE analysis of uploaded studies. """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+    def __init__(self, queue, owner, access_code, parent_code, workflow_type, analysis_type, config, testing, runs,
                  run_on_node, analysis=True, restart_stage=0, kill_stage=-1, child=False):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+        super().__init__(queue, owner, access_code, parent_code, workflow_type, analysis_type, config, testing, runs,
                          run_on_node=run_on_node, analysis=analysis, restart_stage=restart_stage, kill_stage=kill_stage,
                          child=child)
         if testing:

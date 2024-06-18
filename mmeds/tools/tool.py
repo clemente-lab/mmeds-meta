@@ -29,7 +29,7 @@ class Tool(mp.Process):
     will happen in seperate processes when Process.start() is called.
     """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+    def __init__(self, queue, owner, access_code, parent_code, workflow_type, analysis_type, config, testing, runs,
                  run_on_node, threads=10, analysis=True, child=False, restart_stage=0, kill_stage=-1):
         """
         Setup the Tool class
@@ -55,7 +55,7 @@ class Tool(mp.Process):
         self.logger = Logger
         self.logger.debug('initilize {}'.format(self.name))
         self.debug = True
-        self.tool_type = tool_type
+        self.workflow_type = workflow_type
         self.parent_code = parent_code
         self.testing = testing
         self.jobtext = ['source ~/.bashrc;', 'set -e', 'set -o pipefail', 'echo $PATH']
@@ -73,7 +73,7 @@ class Tool(mp.Process):
         self.run_dir = None
         self.restart_stage = restart_stage
         self.analysis_type = analysis_type
-        self.tool_type = tool_type
+        self.workflow_type = workflow_type
         self.config = config
         self.kill_stage = kill_stage
         self.access_code = access_code
@@ -210,13 +210,13 @@ class Tool(mp.Process):
             if str(job_id) in jobs:
                 running = True
 
-    def queue_analysis(self, tool_type):
+    def queue_analysis(self, workflow_type):
         """
         Add an analysis of the specified type to the watcher queue
         ===============================
-        :tool_type: The type of tool to spawn
+        :workflow_type: The type of tool to spawn
         """
-        self.queue.put(('analysis', self.owner, self.doc.access_code, tool_type,
+        self.queue.put(('analysis', self.owner, self.doc.access_code, workflow_type,
                         self.config['type'], self.doc.config, self.run_on_node, self.kill_stage))
 
     def summary(self):
@@ -233,7 +233,7 @@ class Tool(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {};'.format(self.doc.tool_type)
+            '--workflow_type {};'.format(self.doc.workflow_type)
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -403,7 +403,7 @@ class Tool(mp.Process):
 
         # Create the Qiime mapping file
         qiime_file = self.path / 'qiime_mapping_file.tsv'
-        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.tool_type)
+        create_qiime_from_mmeds(mmeds_file, qiime_file, self.doc.workflow_type)
 
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
@@ -421,7 +421,7 @@ class Tool(mp.Process):
         cmd = [
             'summarize.py ',
             '--path "{}"'.format(self.run_dir),
-            '--tool_type {};'.format(self.doc.tool_type)
+            '--workflow_type {};'.format(self.doc.workflow_type)
         ]
         self.jobtext.append(' '.join(cmd))
 
@@ -593,7 +593,7 @@ class Tool(mp.Process):
         copying over the necessary files from self.doc.files and created a modified copy
         of the configfile.
         """
-        self.name = self.name + '-{}'.format(self.tool_type)
+        self.name = self.name + '-{}'.format(self.workflow_type)
 
         with Database(owner=self.owner, testing=self.testing) as db:
             parent_doc = db.get_doc(self.parent_code)
@@ -681,7 +681,7 @@ class Tool(mp.Process):
         with Database(owner=self.owner, testing=self.testing) as db:
             if self.restart_stage == 0:
                 parent_doc = db.get_doc(self.parent_code)
-                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.tool_type,
+                self.doc = parent_doc.generate_MMEDSDoc(self.name.split('-')[0], self.workflow_type,
                                                         self.analysis_type, self.config, self.access_code)
             else:
                 self.doc = db.get_doc(self.access_code)
@@ -776,7 +776,7 @@ class Tool(mp.Process):
             # Tell the watcher to send an email that the analysis has started.
             email = ('email', self.doc.email, self.owner, 'analysis_start',
                      dict(code=self.access_code,
-                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          analysis='{}-{}'.format(self.doc.workflow_type, self.doc.analysis_type),
                           study=self.doc.study_name))
             self.queue.put(email)
 
@@ -868,7 +868,7 @@ class Tool(mp.Process):
 
             email = ('email', self.doc.email, self.doc.owner, 'error',
                      dict(code=self.doc.access_code,
-                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          analysis='{}-{}'.format(self.doc.workflow_type, self.doc.analysis_type),
                           stage=self.doc.restart_stage,
                           study=self.doc.study_name))
             self.queue.put(email)
@@ -876,7 +876,7 @@ class Tool(mp.Process):
         else:
             email = ('email', self.doc.email, self.doc.owner, 'analysis_done',
                      dict(code=self.doc.access_code,
-                          analysis='{}-{}'.format(self.doc.tool_type, self.doc.analysis_type),
+                          analysis='{}-{}'.format(self.doc.workflow_type, self.doc.analysis_type),
                           study=self.doc.study_name))
         self.queue.put(email)
         self.update_doc(restart_stage=-1)  # Indicates analysis finished successfully
@@ -913,9 +913,9 @@ class TestTool(Tool):
     A class for running tool methods during testing with minimal overhead
     """
 
-    def __init__(self, queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+    def __init__(self, queue, owner, access_code, parent_code, workflow_type, analysis_type, config, testing, runs,
                  run_on_node, analysis=True, restart_stage=0, kill_stage=-1, time=10):
-        super().__init__(queue, owner, access_code, parent_code, tool_type, analysis_type, config, testing, runs,
+        super().__init__(queue, owner, access_code, parent_code, workflow_type, analysis_type, config, testing, runs,
                          run_on_node, analysis=analysis, restart_stage=restart_stage)
         print('Creating test tool with restart stage {} and time {}'.format(restart_stage, time))
         self.time = time

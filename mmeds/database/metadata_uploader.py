@@ -103,7 +103,7 @@ class MetaDataUploader(Process):
                               last_accessed=datetime.utcnow(),
                               testing=self.testing,
                               doc_type='study',
-                              tool_type=self.study_type,
+                              workflow_type=self.study_type,
                               study_name=self.study_name,
                               access_code=self.access_code,
                               owner=self.owner,
