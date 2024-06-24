@@ -75,6 +75,8 @@ STUDIES_DIR = DATABASE_DIR / 'studies'
 SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
 TAXONOMIC_DATABASE_DIR = DATABASE_DIR / "taxonomic_databases"
+SNAKEMAKE_WORKFLOWS_DIR = SNAKEMAKE_DIR / "workflows"
+SNAKEMAKE_RULES_DIR = SNAKEMAKE_DIR / "rules"
 
 ############################
 # CONFIGURE SERVER GLOBALS #

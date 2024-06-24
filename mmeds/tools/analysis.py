@@ -14,7 +14,8 @@ from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case,
                         get_file_index_entry_location, get_mapping_file_subset)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, WORKFLOWS, SNAKEMAKE_DIR, TAXONOMIC_DATABASES
+from mmeds.config import (COL_TO_TABLE, JOB_TEMPLATE, WORKFLOWS, SNAKEMAKE_WORKFLOWS_DIR,
+                          SNAKEMAKE_RULES_DIR, TAXONOMIC_DATABASES)
 from mmeds.logging import Logger
 
 import multiprocessing as mp
@@ -217,13 +218,13 @@ class Analysis(mp.Process):
 
     def create_snakemake_file(self):
         """ Copy a snakemake Snakefile to be used for analysis """
-        workflow_file = SNAKEMAKE_DIR / f"{self.workflow_type}.Snakefile"
+        workflow_file = SNAKEMAKE_WORKFLOWS_DIR / f"{self.workflow_type}.Snakefile"
         # Open file for copying
         with open(workflow_file, "rt") as f:
             workflow_text = f.read()
 
         # Specify directory with snakemake rules
-        workflow_text = workflow_text.format(snakemake_dir=SNAKEMAKE_DIR)
+        workflow_text = workflow_text.format(snakemake_dir=SNAKEMAKE_RULES_DIR)
 
         # Write new Snakefile in analysis directory
         snakefile = self.path / "Snakefile"
@@ -347,9 +348,8 @@ class Analysis(mp.Process):
         """ Setup error logs and jobfile. """
         self.jobtext.append(f"cd {self.run_dir}")
         self.jobtext.append("source activate snakemake")
-        self.jobtext.append("snakemake -n -l -D")
-        self.jobtext.append("snakemake --debug-dag --dag | dot -Tpdf > snakemake_dag.pdf")
-        self.jobtext.append("snakemake --debug-dag --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
+        self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_dag.pdf")
+        self.jobtext.append("snakemake --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
         self.jobtext.append("snakemake --use-conda --cores 10")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
