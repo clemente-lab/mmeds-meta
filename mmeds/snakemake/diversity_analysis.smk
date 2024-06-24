@@ -15,7 +15,7 @@ rule diversity_core_metrics_phylogenetic:
         "qiime diversity core-metrics-phylogenetic "
         "--i-table {input.feature_table} "
         "--i-phylogeny {input.rooted_tree} "
-        "--p-sampling-depth {config[rarefaction_depth]} "
+        "--p-sampling-depth {config[sampling_depth]} "
         "--m-metadata-file {input.mapping_file} "
         "--p-n-jobs-or-threads {threads} "
         "--output-dir {output}"
@@ -32,7 +32,7 @@ rule diversity_core_metrics:
     shell:
         "qiime diversity core-metrics "
         "--i-table {input.feature_table} "
-        "--p-sampling-depth {config[rarefaction_depth]} "
+        "--p-sampling-depth {config[sampling_depth]} "
         "--m-metadata-file {input.mapping_file} "
         "--p-n-jobs-or-threads {threads} "
         "--output-dir {output}"
@@ -51,7 +51,7 @@ rule alpha_rarefaction_phylogenetic:
         "--i-table {input.feature_table} "
         "--i-phylogeny {input.rooted_tree} "
         "--m-metadata-file {input.mapping_file} "
-        "--p-max-depth {config[rarefaction_depth]} "
+        "--p-max-depth {config[sampling_depth]} "
         "--o-visualization {output}"
 
 rule alpha_rarefaction:
@@ -66,7 +66,7 @@ rule alpha_rarefaction:
         "qiime diversity alpha-rarefaction "
         "--i-table {input.feature_table} "
         "--m-metadata-file {input.mapping_file} "
-        "--p-max-depth {config[rarefaction_depth]} "
+        "--p-max-depth {config[sampling_depth]} "
         "--o-visualization {output}"
 
 rule alpha_diversity_ANOVA_test:

@@ -46,6 +46,7 @@ if TESTING:
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
+
 else:
     # We're on web01 and using MMEDs out of if it's project diredctory
     # OR, we're in the folder /sc/arion/projects/MMEDS
@@ -73,6 +74,7 @@ else:
 STUDIES_DIR = DATABASE_DIR / 'studies'
 SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
+TAXONOMIC_DATABASE_DIR = DATABASE_DIR / "taxonomic_databases"
 
 ############################
 # CONFIGURE SERVER GLOBALS #
@@ -271,9 +273,29 @@ HTML_ARGS = {
 ##############################
 
 
-WORKFLOW_FILES = {
-    "standard_pipeline": [SNAKEMAKE_DIR / "standard_pipeline.Snakefile"]
+WORKFLOWS = {
+    "standard_pipeline": {
+        "parameters": [
+            'sampling_depth',
+            'metadata',
+            'alpha_metrics',
+            'beta_metrics',
+            'taxonomic_database',
+            'sequencing_runs',
+            'taxa_levels'
+        ]
+    }
 }
+
+TAXONOMIC_DATABASES = {
+    "greengenes": TAXONOMIC_DATABASE_DIR / "gg-13-8-99-nb-2020-8-0.qza",
+    "greengenes2": TAXONOMIC_DATABASE_DIR / "greengenes2.2020-10.nb-classifier.qza",
+    "silva": TAXONOMIC_DATABASE_DIR / "silva-138-99-nb-classifier.qza"
+}
+
+if TESTING:
+    TAXONOMIC_DATABASES["test"] = TAXONOMIC_DATABASE_DIR / "dummy_classifier.qza"
+
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
@@ -333,13 +355,7 @@ CONFIG_PARAMETERS = {
         'alpha_metrics',
         'beta_metrics',
         'sequencing_runs',
-        'taxa_levels',
-        'abundance_threshold',
-        'font_size',
-        'additional_analysis',
-        'iterations',
-        'permutations',
-        'type'],
+        'taxa_levels'],
     'cutie': [
         'statistic',
         'feature_table',

@@ -25,7 +25,7 @@ rule filter_table_by_threshold:
         "qiime feature-table filter-samples "
         "--i-table {input.feature_table} "
         "--m-metadata-file {input.mapping_file} "
-        "--p-min-frequency {config[rarefaction_depth]} "
+        "--p-min-frequency {config[sampling_depth]} "
         "--o-filtered-table {output}"
 
 rule import_single_barcodes:

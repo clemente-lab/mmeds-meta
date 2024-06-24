@@ -355,7 +355,7 @@ def load_config(config_file, metadata, workflow_type, ignore_bad_cols=False):
         raise InvalidConfigError('There was an error loading your config. Config files must be in YAML format.')
 
     # Add sequencing runs to config for snakemake
-    if workflow_type == 'standard_pipeline':
+    if "sequencing_runs" in fig.WORKFLOWS[workflow_type]["parameters"]:
         config["sequencing_runs"] = get_sequencing_run_names(metadata)
     # Check if columns == 'all'
     for param in fig.CONFIG_LISTS:
@@ -373,13 +373,13 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS[workflow_type])
+    diff = {x for x in set(config.keys()).difference(fig.WORKFLOWS[workflow_type]["parameters"])
             if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
-        for option in fig.CONFIG_PARAMETERS[workflow_type]:
+        for option in fig.WORKFLOWS[workflow_type]["parameters"]:
             Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
             if option == 'metadata':

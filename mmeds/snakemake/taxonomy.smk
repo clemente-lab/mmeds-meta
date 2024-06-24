@@ -1,12 +1,61 @@
-rule classify_taxonomy_asvs:
+# TODO: programmatically make classifiers one rule
+rule classify_taxonomy_greengenes:
     threads: 10
     input:
-        classifier = "test_classifier.test",
+        classifier = "tables/gg-13-8-99-nb-2020-8-0.qza",
         rep_seqs = "tables/rep_seqs_table.qza"
     output:
         "tables/taxonomy.qza"
     conda:
-        "qiime-2020.8.0"
+        "qiime2-2020.8.0"
+    shell:
+        "qiime feature-classifier classify-sklearn "
+        "--i-classifier {input.classifier} "
+        "--i-reads {input.rep_seqs} "
+        "--p-n-jobs {threads} "
+        "--o-classification {output}"
+
+rule classify_taxonomy_greengenes2:
+    threads: 10
+    input:
+        classifier = "tables/greengenes2.2020-10.nb-classifier.qza",
+        rep_seqs = "tables/rep_seqs_table.qza"
+    output:
+        "tables/taxonomy.qza"
+    conda:
+        "qiime2-2023.9"
+    shell:
+        "qiime feature-classifier classify-sklearn "
+        "--i-classifier {input.classifier} "
+        "--i-reads {input.rep_seqs} "
+        "--p-n-jobs {threads} "
+        "--o-classification {output}"
+
+rule classify_taxonomy_silva:
+    threads: 10
+    input:
+        classifier = "tables/silva-138-99-nb-classifier.qza",
+        rep_seqs = "tables/rep_seqs_table.qza"
+    output:
+        "tables/taxonomy.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime feature-classifier classify-sklearn "
+        "--i-classifier {input.classifier} "
+        "--i-reads {input.rep_seqs} "
+        "--p-n-jobs {threads} "
+        "--o-classification {output}"
+
+rule classify_taxonomy_test:
+    threads: 10
+    input:
+        classifier = "tables/dummy_classifier.qza",
+        rep_seqs = "tables/rep_seqs_table.qza"
+    output:
+        "tables/taxonomy.qza"
+    conda:
+        "qiime2-2020.8.0"
     shell:
         "qiime feature-classifier classify-sklearn "
         "--i-classifier {input.classifier} "
@@ -21,7 +70,7 @@ rule taxonomy_collapse:
     output:
         "tables/taxa_table_L{level}.qza"
     conda:
-        "qiime-2020.8.0"
+        "qiime2-2020.8.0"
     shell:
         "qiime taxa collapse "
         "--i-table {input.feature_table} "
@@ -37,7 +86,7 @@ rule taxonomic_barplot:
     output:
         "tables/taxa_barplot.qzv"
     conda:
-        "qiime-2020.8.0"
+        "qiime2-2020.8.0"
     shell:
         "qiime taxa barplot "
         "--i-table {input.feature_table} "

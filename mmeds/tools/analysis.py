@@ -14,7 +14,7 @@ from mmeds.util import (create_qiime_from_mmeds, write_config,
                         load_metadata, write_metadata, camel_case,
                         get_file_index_entry_location, get_mapping_file_subset)
 from mmeds.error import AnalysisError, MissingFileError
-from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, WORKFLOW_FILES, SNAKEMAKE_DIR
+from mmeds.config import COL_TO_TABLE, JOB_TEMPLATE, WORKFLOWS, SNAKEMAKE_DIR, TAXONOMIC_DATABASES
 from mmeds.logging import Logger
 
 import multiprocessing as mp
@@ -215,6 +215,22 @@ class Analysis(mp.Process):
         # Add the mapping file to the MetaData object
         self.add_path(qiime_file, key='mapping')
 
+    def create_snakemake_file(self):
+        """ Copy a snakemake Snakefile to be used for analysis """
+        workflow_file = SNAKEMAKE_DIR / f"{self.workflow_type}.Snakefile"
+        # Open file for copying
+        with open(workflow_file, "rt") as f:
+            workflow_text = f.read()
+
+        # Specify directory with snakemake rules
+        workflow_text = workflow_text.format(snakemake_dir=SNAKEMAKE_DIR)
+
+        # Write new Snakefile in analysis directory
+        snakefile = self.path / "Snakefile"
+        self.add_path(snakefile, key="snakefile")
+        with open(snakefile, "wt") as f:
+            f.write(workflow_text)
+
     def summary(self):
         """ Setup script to create summary. """
         self.add_path('summary')
@@ -240,6 +256,14 @@ class Analysis(mp.Process):
         """
         cmd = f'zip -r {self.run_dir}.zip {self.run_dir};'
         self.jobtext.append(cmd)
+
+    def copy_taxonomic_database(self):
+        """ Copy in the database (e.g. greengenes, silva) to be used for classification"""
+        database_file = TAXONOMIC_DATABASES[self.config["taxonomic_database"]]
+        database_copy = self.get_file("tables_dir", True) / database_file.name
+        self.add_path(database_copy, key="taxonomic_database")
+        copy(database_file, database_copy)
+
 
     def split_by_sequencing_run(self):
         """ Separate metadata into sub-folders for each sequencing run """
@@ -267,11 +291,10 @@ class Analysis(mp.Process):
             df.to_csv(self.get_file(f"mapping_{run}", True), sep='\t', index=False)
 
     def make_analysis_dirs(self):
-        if self.workflow_type == 'standard_pipeline':
-            self.add_path(self.path / 'tables', key="tables_dir")
-            tables_dir = self.get_file("tables_dir", True)
-            if not tables_dir.is_dir():
-                tables_dir.mkdir()
+        self.add_path(self.path / 'tables', key="tables_dir")
+        tables_dir = self.get_file("tables_dir", True)
+        if not tables_dir.is_dir():
+            tables_dir.mkdir()
 
     ##############################
     # Analysis Execution Control #
@@ -309,26 +332,24 @@ class Analysis(mp.Process):
         # from, `write_config` likely had something to do with it.
         write_config(self.doc.config, self.path)
         self.create_qiime_mapping_file()
-        for workflow_file in WORKFLOW_FILES[self.workflow_type]:
-            with open(workflow_file, "rt") as f:
-                workflow_text = f.read()
-            workflow_text = workflow_text.format(snakemake_dir=SNAKEMAKE_DIR,
-                                                 metric = "{metric}",
-                                                 var = "{var}")
-            with open(self.path / "Snakefile", "wt") as f:
-                f.write(workflow_text)
-                self.add_path(self.path, key=workflow_file.name)
 
-        if self.workflow_type == 'standard_pipeline':
+        # Add handling for raw data if used by the workflow
+        if "sequencing_runs" in WORKFLOWS[self.workflow_type]["parameters"]:
             self.split_by_sequencing_run()
+
+        if "taxonomic_database" in WORKFLOWS[self.workflow_type]["parameters"]:
+            self.copy_taxonomic_database()
+
+        self.create_snakemake_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
     def setup_analysis(self, summary=True):
         """ Setup error logs and jobfile. """
         self.jobtext.append(f"cd {self.run_dir}")
         self.jobtext.append("source activate snakemake")
-        self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_dag.pdf")
-        self.jobtext.append("snakemake --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
+        self.jobtext.append("snakemake -n -l -D")
+        self.jobtext.append("snakemake --debug-dag --dag | dot -Tpdf > snakemake_dag.pdf")
+        self.jobtext.append("snakemake --debug-dag --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
         self.jobtext.append("snakemake --use-conda --cores 10")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 

@@ -33,7 +33,7 @@ def run_analysis(study_name, analysis_name, workflow_type, user, config):
     with Database(testing=fig.TESTING) as db:
         access_code = db.get_access_code_from_study_name(study_name, user)
         files, path = db.get_mongo_files(access_code, False)
-        if workflow_type == 'standard_pipeline':
+        if "sequencing_runs" in fig.WORKFLOWS[workflow_type]["parameters"]:
             runs = db.get_sequencing_run_locations(files['metadata'], user)
             analysis_type = 'dada2'
     ret = start_analysis_local(q, access_code, analysis_name, workflow_type, user, config, runs, analysis_type)
