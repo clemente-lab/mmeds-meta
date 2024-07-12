@@ -1657,6 +1657,7 @@ def get_subject_type(subject_file):
     for sub_type in df['SubjectType']['SubjectType']:
         if not sub_type == subject_type:
             subject_type = 'mixed'
+            break
     return subject_type.lower()
 
 

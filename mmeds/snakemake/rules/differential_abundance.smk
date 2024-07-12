@@ -29,7 +29,7 @@ rule differential_abundance_lefse:
 
 rule differential_abundance_lefse_strict:
     input:
-        "tables/lefse_format_strict.{table}.{class}.{subclass}.tsv"
+        "tables/lefse_format.{table}.{class}.{subclass}.tsv"
     output:
         lefse_input = "tables/lefse_input_strict.{table}.{class}.{subclass}.lefse",
         lefse_results = "results/lefse_results_strict.{table}.{class}.{subclass}.tsv"
@@ -41,3 +41,29 @@ rule differential_abundance_lefse_strict:
         lefse_run.py {output.lefse_input} {output.lefse_results} -y 1
         """
 
+rule plot_lefse_results:
+    input:
+        "results/lefse_results.{table}.{class}.{subclass}.tsv"
+    output:
+        "results/lefse_plot.{table}.{class}.{subclass}.pdf"
+    params:
+        tool_dir = get_tool_dir()
+    shell:
+        """
+        ml R/4.1.0
+        Rscript {params.tool_dir}/plot_lefse.R {input} {output}
+        """
+
+rule plot_lefse_results_strict:
+    input:
+        "results/lefse_results_strict.{table}.{class}.{subclass}.tsv"
+    output:
+        "results/lefse_plot_strict.{table}.{class}.{subclass}.pdf"
+    params:
+        tool_dir = get_tool_dir()
+    shell:
+        """
+        ml R/4.1.0
+        Rscript {params.tool_dir}/plot_lefse.R {input} {output} --strict
+        """
+        

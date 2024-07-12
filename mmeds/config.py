@@ -63,6 +63,7 @@ else:
     CSS_DIR = ROOT / 'mmeds/CSS'
     STORAGE_DIR = ROOT / 'mmeds/resources'
     SNAKEMAKE_DIR = ROOT / 'mmeds/snakemake'
+    TOOLS_DIR = ROOT / 'mmeds/tools'
     WWW_ROOT = "https://mmedsadmin.dmz.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
@@ -286,6 +287,13 @@ WORKFLOWS = {
             'sequencing_runs',
             'taxa_levels'
         ]
+    },
+    "lefse": {
+        "parameters": [
+            "tables",
+            "classes",
+            "subclasses"
+        ]
     }
 }
 
@@ -381,7 +389,10 @@ CONFIG_LISTS = [
     'taxa_levels',
     'alpha_metrics',
     'beta_metrics',
-    'sequencing_runs'
+    'sequencing_runs',
+    'tables',
+    'classes',
+    'subclasses'
 ]
 
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'

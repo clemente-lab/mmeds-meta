@@ -84,7 +84,9 @@ setup(name='mmeds',
           'jaraco.classes==3.2.1',
           'jaraco.text==3.5.0',
           'jaraco.functools==3.3.0',
-          'tempora==4.0.2'
+          'tempora==4.0.2',
+          'snakemake',
+          'graphviz',
       ],
       zip_safe=False,
       cmdclass={'install': cleanProject}

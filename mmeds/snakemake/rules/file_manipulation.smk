@@ -31,21 +31,3 @@ rule format_metadata_qiime_to_lefse:
         "-s {wildcards.subclass} "
         "-u HostSubjectId "
         "-o {output}"
-
-rule format_metadata_qiime_to_lefse_strict:
-    input:
-        feature_table = "tables/{table}.tsv",
-        mapping_file = "tables/qiime_mapping_file.tsv"
-    output:
-        "tables/lefse_format_strict.{table}.{class}.{subclass}.tsv"
-    conda:
-        "/sc/arion/projects/MMEDS/admin_modules/mmeds-stable"
-    shell:
-        "format_lefse.py "
-        "-i {input.feature_table} "
-        "-m {input.mapping_file} "
-        "-c {wildcards.class} "
-        "-s {wildcards.subclass} "
-        "-u HostSubjectId "
-        "-o {output}"
-

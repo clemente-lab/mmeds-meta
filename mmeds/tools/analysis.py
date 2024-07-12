@@ -265,6 +265,24 @@ class Analysis(mp.Process):
         self.add_path(database_copy, key="taxonomic_database")
         copy(database_file, database_copy)
 
+    def link_feature_tables(self):
+        """ Symlink to feature tables that were generated in a previous analysis """
+        with Database(owner=self.owner, testing=self.testing) as db:
+            previous_analyses = list(db.get_all_analyses_from_study(self.study_code))
+
+        tables_dir = self.get_file("tables_dir", True)
+        for table in self.config["tables"]:
+            self.add_path(tables_dir / f"{table}.qza", key=table)
+            table_files = []
+            for doc in previous_analyses:
+                analysis_dir = Path(doc["path"])
+                table_files += list(analysis_dir.glob(f"**/{table}.qza"))
+
+            if len(table_files) < 1:
+                raise MissingFileError(f"No file named {table}.qza in previous analyses of study {self.doc.study_name}")
+
+            #TODO: Handle more than 1 matching file
+            self.get_file(table, True).symlink_to(table_files[0])
 
     def split_by_sequencing_run(self):
         """ Separate metadata into sub-folders for each sequencing run """
@@ -340,6 +358,9 @@ class Analysis(mp.Process):
 
         if "taxonomic_database" in WORKFLOWS[self.workflow_type]["parameters"]:
             self.copy_taxonomic_database()
+
+        if "tables" in WORKFLOWS[self.workflow_type]["parameters"]:
+            self.link_feature_tables()
 
         self.create_snakemake_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))

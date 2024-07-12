@@ -1,10 +1,10 @@
 configfile: "test_lefse_config.yaml"
 report: "report.rst"
 
+include: "../rules/common.smk"
 include: "../rules/differential_abundance.smk"
 include: "../rules/file_manipulation.smk"
 include: "../rules/table_filtering.smk"
-include: "../rules/common.smk"
 
 rule results:
     input:
