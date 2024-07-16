@@ -1,7 +1,6 @@
 import pandas as pd
 from copy import deepcopy
 from pathlib import Path
-from mmeds.config import TOOLS_DIR
 
 metadata = pd.read_csv("tables/qiime_mapping_file.tsv", sep='\t', header=[0], skiprows=[1])
 
@@ -34,4 +33,5 @@ def lefse_splits(wildcards):
 
 
 def get_tool_dir():
-    return str(TOOLS_DIR)
+    # FIXME: get TOOL_DIR from mmeds.config when snakemake is added to mmeds env
+    return "~/mmeds-meta/mmeds/tools"
