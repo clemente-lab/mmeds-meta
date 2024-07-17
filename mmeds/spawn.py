@@ -17,30 +17,8 @@ from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.error import AnalysisError, MissingUploadError
 
-from mmeds.tools.qiime1 import Qiime1
-from mmeds.tools.qiime2 import Qiime2
-from mmeds.tools.sparcc import SparCC
-from mmeds.tools.lefse import Lefse
-from mmeds.tools.picrust1 import PiCRUSt1
-from mmeds.tools.picrust2 import PiCRUSt2
-from mmeds.tools.cutie import CUTIE
-from mmeds.tools.tool import TestTool
 from mmeds.tools.analysis import Analysis
 from mmeds.logging import Logger
-
-# This is used as a stand in for a switch statement when the watcher
-# spins up a new analysis process. It should be replaced with an
-# actual switch statement when MMEDs migrates to 3.10
-TOOLS = {
-    'qiime1': Qiime1,
-    'qiime2': Qiime2,
-    'sparcc': SparCC,
-    'lefse': Lefse,
-    'picrust1': PiCRUSt1,
-    'picrust2': PiCRUSt2,
-    'cutie': CUTIE,
-    'test': TestTool
-}
 
 # The amount of steps with no jobs before the watcher will sleep
 TIMEOUT = 20
