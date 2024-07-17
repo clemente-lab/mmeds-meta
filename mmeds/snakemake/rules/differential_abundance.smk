@@ -20,7 +20,7 @@ rule differential_abundance_lefse:
         lefse_input = "tables/lefse_input.{table}.{class}.{subclass}.lefse",
         lefse_results = "results/lefse_results.{table}.{class}.{subclass}.tsv"
     conda:
-        "/sc/arion/projects/MMEDS/.modules/lefse"
+        "lefse"
     shell:
         """
         lefse_format_input.py {input} {output.lefse_input} -c 1 -s 2 -u 3 -o 1000000
@@ -34,7 +34,7 @@ rule differential_abundance_lefse_strict:
         lefse_input = "tables/lefse_input_strict.{table}.{class}.{subclass}.lefse",
         lefse_results = "results/lefse_results_strict.{table}.{class}.{subclass}.tsv"
     conda:
-        "/sc/arion/projects/MMEDS/.modules/lefse"
+        "lefse"
     shell:
         """
         lefse_format_input.py {input} {output.lefse_input} -c 1 -s 2 -u 3 -o 1000000

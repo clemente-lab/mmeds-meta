@@ -7,12 +7,12 @@ rule extract_feature_table_tsv:
         "qiime2-2020.8.0"
     shell:
         """
-        unzip -jo {input} -d tables/tmp_unzip
-        mv tables/tmp_unzip/feature-table.biom tables/
-        biom convert --to-tsv -i tables/feature-table.biom -o {output}
+        unzip -jo {input} -d tables/tmp_unzip_{wildcards.table}
+        mv tables/tmp_unzip_{wildcards.table}/feature-table.biom tables/{wildcards.table}.biom
+        biom convert --to-tsv -i tables/{wildcards.table}.biom -o {output}
         sed -i '1d;2s/^#//' {output}
-        rm -rf tables/tmp_unzip
-        rm -f tables/feature-table.biom
+        rm -rf tables/tmp_unzip_{wildcards.table}
+        rm -f tables/{wildcards.table}.biom
         """
 
 rule format_metadata_qiime_to_lefse:
@@ -22,7 +22,7 @@ rule format_metadata_qiime_to_lefse:
     output:
         "tables/lefse_format.{table}.{class}.{subclass}.tsv"
     conda:
-        "/sc/arion/projects/MMEDS/admin_modules/mmeds-stable"
+        "mmeds_test"
     shell:
         "format_lefse.py "
         "-i {input.feature_table} "
