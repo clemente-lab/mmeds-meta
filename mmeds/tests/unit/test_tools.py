@@ -18,7 +18,7 @@ class ToolsTests(TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.config = load_config(None, fig.TEST_METADATA_SHORT, 'qiime2')
+        self.config = load_config(None, fig.TEST_METADATA_SHORT, 'standard_pipeline')
         self.q = Queue()
         self.testing = True
 

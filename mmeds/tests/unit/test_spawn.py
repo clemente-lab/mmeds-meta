@@ -62,7 +62,8 @@ class SpawnTests(TestCase):
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, {}, True, -1))
+            self.q.put(('analysis', proc['owner'], proc['access_code'], 'standard_pipeline',
+                        'default', 'test_analysis', None, {}, -1, False))
 
         Logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
@@ -95,10 +96,9 @@ class SpawnTests(TestCase):
 
     def test_d_node_analysis(self):
         Logger.info("node analysis")
-        for i in range(3):
-            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'],
-                        'test', '20', None, {}, True, -1))
-        for i in range(3):
+        for i in range(5):
+            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'standard_pipeline',
+                        'default', 'test_analysis_node', None, {}, -1, True))
             result = self.pipe.recv()
             Logger.error('{} result"{}"'.format(i, result))
         self.assertEqual(result, 'Analysis Not Started')

@@ -274,6 +274,7 @@ class Watcher(BaseManager):
         # If running directly on the server node
         if run_on_node:
             # Inform the user if there are too many processes already running
+            Logger.debug(f"{len(self.running_on_node)} running on node")
             if len(self.running_on_node) > 3:
                 with Database(testing=self.testing) as db:
                     toaddr = db.get_email(user)
@@ -407,7 +408,6 @@ class Watcher(BaseManager):
                     exit()
                 # If it's an analysis
                 elif process[0] == 'analysis':
-                    print("Test")
                     self.handle_analysis(process)
                 # If it's a restart of an analysis
                 elif process[0] == 'restart':

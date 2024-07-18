@@ -371,7 +371,7 @@ class Analysis(mp.Process):
         self.jobtext.append("conda activate mmeds_test")
         self.jobtext.append("snakemake --dag | dot -Tpdf >| snakemake_dag.pdf")
         self.jobtext.append("snakemake --rulegraph | dot -Tpdf >| snakemake_rulegraph.pdf")
-        self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs}")
+        self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs} --default-resource tmpdir=\"tmp_dir\"")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
         if summary:
