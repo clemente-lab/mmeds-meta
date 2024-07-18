@@ -10,4 +10,3 @@
 #BSUB -eo {path}/{jobname}.stderr
 #BSUB -L /bin/bash
 
-ml anaconda3/2024.06

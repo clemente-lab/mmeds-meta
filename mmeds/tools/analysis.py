@@ -367,9 +367,10 @@ class Analysis(mp.Process):
     def setup_analysis(self, summary=False):
         """ Setup error logs and jobfile. """
         self.jobtext.append(f"cd {self.run_dir}")
+        self.jobtest.append("ml anaconda3/2024.06")
         self.jobtext.append("conda activate mmeds_test")
-        self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_dag.pdf")
-        self.jobtext.append("snakemake --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
+        self.jobtext.append("snakemake --dag | dot -Tpdf >| snakemake_dag.pdf")
+        self.jobtext.append("snakemake --rulegraph | dot -Tpdf >| snakemake_rulegraph.pdf")
         self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs}")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
