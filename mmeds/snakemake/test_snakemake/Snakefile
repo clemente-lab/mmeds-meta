@@ -1,4 +1,4 @@
-configfile: "test_lefse_config.yaml"
+configfile: "test_lefse_config2.yaml"
 report: "report.rst"
 
 include: "../rules/common.smk"

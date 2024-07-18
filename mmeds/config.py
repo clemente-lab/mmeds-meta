@@ -21,7 +21,7 @@ TESTING = not ('chimera' in getfqdn().split('.'))
 IS_PRODUCTION = 'web01' in getfqdn().split('.')
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
-LIVE_PROD_ACCESS = False
+LIVE_PROD_ACCESS = True
 
 # Every MMEDs script imports config.py and thus tries to connect to the database even if it doesn't need to
 # this flag is just to disable that behavior as necessary

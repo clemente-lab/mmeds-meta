@@ -10,4 +10,4 @@
 #BSUB -eo {path}/{jobname}.stderr
 #BSUB -L /bin/bash
 
-export QIIME_BSUB_OPTIONS='-q {queue} -P acc_MMEDS -W {walltime2} -n 1 -R rusage[mem=2000]';
+ml anaconda3/2024.06

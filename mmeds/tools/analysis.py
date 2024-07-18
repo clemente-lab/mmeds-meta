@@ -169,7 +169,6 @@ class Analysis(mp.Process):
         """
         params = {
             'walltime': '20:00',
-            'walltime2': '2:00',
             'jobname': '{}-{}'.format(self.owner, self.doc.name),
             'path': self.path,
             'nodes': self.num_jobs,
@@ -365,13 +364,13 @@ class Analysis(mp.Process):
         self.create_snakemake_file()
         self.run_dir = Path('$RUN_{}'.format(self.name.split('-')[0]))
 
-    def setup_analysis(self, summary=True):
+    def setup_analysis(self, summary=False):
         """ Setup error logs and jobfile. """
         self.jobtext.append(f"cd {self.run_dir}")
-        self.jobtext.append("source activate snakemake")
+        self.jobtext.append("conda activate mmeds_test")
         self.jobtext.append("snakemake --dag | dot -Tpdf > snakemake_dag.pdf")
         self.jobtext.append("snakemake --rulegraph | dot -Tpdf > snakemake_rulegraph.pdf")
-        self.jobtext.append("snakemake --use-conda --cores 10")
+        self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs}")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
         if summary:
