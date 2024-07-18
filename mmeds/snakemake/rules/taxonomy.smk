@@ -65,7 +65,7 @@ rule classify_taxonomy_test:
 
 rule taxonomy_collapse:
     input:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/asv_table.qza",
         taxonomy = "tables/taxonomy.qza"
     output:
         "tables/taxa_table_L{level}.qza"
@@ -80,7 +80,7 @@ rule taxonomy_collapse:
 
 rule taxonomic_barplot:
     input:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/asv_table.qza",
         taxonomy = "tables/taxonomy.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:

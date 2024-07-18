@@ -14,7 +14,7 @@ def lefse_splits(wildcards):
         subclasses = []
         if "subclasses" in config and config["subclasses"]:
             subclasses = deepcopy(config["subclasses"])
-        
+
         if lefse_class not in subclasses:
             subclasses += [lefse_class]
 
@@ -23,7 +23,7 @@ def lefse_splits(wildcards):
                              feature_table=config["tables"], lefse_class=lefse_class, subclass=subclasses)
             continue
 
-            
+
         splits += expand("results/lefse_plot_strict.{feature_table}.{lefse_class}.{subclass}.pdf",
                          feature_table=config["tables"], lefse_class=lefse_class, subclass=subclasses)
         for i in range(len(categories)-1):
@@ -32,6 +32,11 @@ def lefse_splits(wildcards):
                                      feature_table=config["tables"], lefse_class=lefse_class, cat1=categories[i], cat2=categories[j], subclass=subclasses)
     return splits
 
+def demux_single_option(wildcards):
+    components = wildcards.sequencing_run.split("_")
+    if "MSQ" in components and int(components[-1]) > 90:
+        return "--p-no-golay-error-correction"
+    return "--p-rev-comp-mapping-barcodes"
 
 def get_tool_dir():
     return TOOLS_DIR

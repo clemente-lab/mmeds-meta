@@ -27,11 +27,12 @@ LIVE_PROD_ACCESS = True
 # this flag is just to disable that behavior as necessary
 DB_INSTALLED = True
 
+ROOT = Path(mmeds.__file__).parent.resolve()
+HTML_DIR = Path(html.__file__).parent.resolve()
+STORAGE_DIR = Path(resources.__file__).parent.resolve()
+SNAKEMAKE_DIR = Path(snakemake.__file__).parent.resolve()
+
 if TESTING:
-    ROOT = Path(mmeds.__file__).parent.resolve()
-    HTML_DIR = Path(html.__file__).parent.resolve()
-    STORAGE_DIR = Path(resources.__file__).parent.resolve()
-    SNAKEMAKE_DIR = Path(snakemake.__file__).parent.resolve()
     # If apache is trying to access apache's home directory for `mmeds_server_data` rather than your user account's home
     # you may need to hardcode the path here
     # TODO: Add mmeds configuration options for DATABASE_DIR
@@ -57,12 +58,9 @@ else:
         ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
     else:
         DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
+        # ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
 
-    HTML_DIR = ROOT / 'mmeds/html'
     CSS_DIR = ROOT / 'mmeds/CSS'
-    STORAGE_DIR = ROOT / 'mmeds/resources'
-    SNAKEMAKE_DIR = ROOT / 'mmeds/snakemake'
     TOOLS_DIR = ROOT / 'mmeds/tools'
     WWW_ROOT = "https://mmedsadmin.dmz.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"

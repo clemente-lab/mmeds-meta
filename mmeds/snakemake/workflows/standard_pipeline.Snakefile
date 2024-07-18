@@ -1,11 +1,13 @@
 configfile: "config_file.yaml"
 report: "report.rst"
 
+include: "{snakemake_dir}/common.smk"
 include: "{snakemake_dir}/demux_denoise.smk"
 include: "{snakemake_dir}/process_sequencing_data.smk"
 include: "{snakemake_dir}/diversity_analysis.smk"
 include: "{snakemake_dir}/taxonomy.smk"
 include: "{snakemake_dir}/differential_abundance.smk"
+include: "{snakemake_dir}/table_filtering.smk"
 
 rule results:
     input:

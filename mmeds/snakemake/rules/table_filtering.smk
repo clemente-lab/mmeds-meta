@@ -1,9 +1,9 @@
 rule filter_table_by_threshold:
     input:
-        feature_table = "tables/feature_table_no_reads_threshold.qza",
+        feature_table = "tables/asv_table_no_reads_threshold.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "tables/feature_table.qza"
+        "tables/asv_table.qza"
     conda:
         "qiime2-2020.8.0"
     shell:

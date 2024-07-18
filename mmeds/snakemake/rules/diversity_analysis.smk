@@ -4,7 +4,7 @@ ruleorder: alpha_rarefaction_phylogenetic > alpha_rarefaction
 rule diversity_core_metrics_phylogenetic:
     threads: 10
     input:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/asv_table.qza",
         rooted_tree = "tables/rooted_tree.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
@@ -23,7 +23,7 @@ rule diversity_core_metrics_phylogenetic:
 rule diversity_core_metrics:
     threads: 10
     input:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/asv_table.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
         "diversity/core_metrics_results"
@@ -39,7 +39,7 @@ rule diversity_core_metrics:
 
 rule alpha_rarefaction_phylogenetic:
     input:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/asv_table.qza",
         rooted_tree = "tables/rooted_tree.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
@@ -56,7 +56,7 @@ rule alpha_rarefaction_phylogenetic:
 
 rule alpha_rarefaction:
     input:
-        feature_table = "tables/feature_table.qza",
+        feature_table = "tables/asv_table.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
         "diversity/alpha_rarefaction.qzv"
