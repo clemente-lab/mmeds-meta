@@ -92,7 +92,7 @@ class SpawnTests(TestCase):
                         procs = proc
                     elif proc not in procs:
                         procs += proc
-                timeout += 1
+                        timeout += 20
                 sleep(0.2)
 
         self.assertTrue(info == procs[0] or info == procs[1])
