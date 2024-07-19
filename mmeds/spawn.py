@@ -113,8 +113,8 @@ class Watcher(BaseManager):
                 rmtree(ad.path)
         # Create the appropriate tool
         try:
-            tool = TOOLS[ad.workflow_type](self.q, ad.owner, analysis_code, ad.study_code, ad.workflow_type,
-                                       ad.analysis_type, ad.config, testing, run_on_node,
+            tool = Analysis(self.q, ad.owner, analysis_code, ad.study_code, ad.workflow_type,
+                                       ad.analysis_type, ad.analysis_name, ad.config, testing, {}, run_on_node,
                                        analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
@@ -274,12 +274,11 @@ class Watcher(BaseManager):
         # If running directly on the server node
         if run_on_node:
             # Inform the user if there are too many processes already running
-            Logger.debug(f"{len(self.running_on_node)} running on node")
             if len(self.running_on_node) > 3:
+                self.pipe.send('Analysis Not Started')
                 with Database(testing=self.testing) as db:
                     toaddr = db.get_email(user)
                 send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=workflow_type)
-                self.pipe.send('Analysis Not Started')
                 return
 
         self.logger.debug("spawn analysis")
@@ -317,6 +316,7 @@ class Watcher(BaseManager):
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
                 p = MetaDataAdder(owner, access_code, aliquot_table, id_type, generate_id, self.testing)
+                self.db_lock.acquire()
 
             # Add new sequencing run
             elif 'run' in process[0]:
@@ -404,7 +404,7 @@ class Watcher(BaseManager):
                     # Notify other processes the watcher is exiting
                     self.pipe.send('Watcher exiting')
                     # Send email notification of watcher termination to admin
-                    send_email(fig.CONTACT_EMAIL, 'admin', 'watcher_termination')
+                    send_email(fig.CONTACT_EMAIL, 'admin', 'watcher_termination', self.testing)
                     exit()
                 # If it's an analysis
                 elif process[0] == 'analysis':
