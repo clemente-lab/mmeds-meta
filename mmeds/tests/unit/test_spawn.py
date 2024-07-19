@@ -87,10 +87,11 @@ class SpawnTests(TestCase):
                     break
 
                 proc = safe_load(f)
-                if len(proc) == len(self.infos):
-                    procs = proc
-                elif proc not in procs:
-                    procs += proc
+                if proc:
+                    if len(proc) == len(self.infos):
+                        procs = proc
+                    elif proc not in procs:
+                        procs += proc
                 timeout += 1
                 sleep(0.2)
 
