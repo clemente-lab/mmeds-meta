@@ -95,6 +95,8 @@ class SpawnTests(TestCase):
                         procs += proc
                 timeout += 1
                 sleep(0.2)
+                
+        print(f"Infos: {info}, {info_0}\n\nProcs: {procs}")
 
         self.assertTrue(info == procs[0] or info == procs[1])
         self.assertTrue(info_0 == procs[0] or info_0 == procs[1])
