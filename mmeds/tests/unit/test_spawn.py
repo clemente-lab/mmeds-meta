@@ -83,7 +83,7 @@ class SpawnTests(TestCase):
         # Check they match the contents of current_processes
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             while len(procs) != len(self.infos):
-                if timeout > 5:
+                if timeout > 20:
                     break
 
                 proc = safe_load(f)
@@ -92,7 +92,7 @@ class SpawnTests(TestCase):
                         procs = proc
                     elif proc not in procs:
                         procs += proc
-                        timeout += 20
+                timeout += 1
                 sleep(0.2)
 
         self.assertTrue(info == procs[0] or info == procs[1])
