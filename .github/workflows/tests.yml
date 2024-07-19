@@ -83,7 +83,7 @@ jobs:
         run: mysql -u root -proot < setup.sql
 
       - name: Server data setup
-        run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.;
+        run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.; mkdir /home/runner/mmeds_server_data/taxonomic_databases; touch /home/runner/mmeds_server_data/taxonomic_databases/dummy_classifier.qza;
 
       - name: Python install
         run: sudo python setup.py install --verbose; pip install wheel; pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
