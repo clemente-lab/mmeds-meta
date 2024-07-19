@@ -63,6 +63,7 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([], procs)
+        pipe_results = self.receive_all_pipe_outputs(5)
         Logger.info('Upload data finished')
 
     def test_b_start_analysis(self):
