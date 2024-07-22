@@ -52,7 +52,7 @@ class Analysis(mp.Process):
         super().__init__()
         self.queue = queue
         self.logger = Logger
-        self.logger.debug('initilize {}'.format(self.name))
+        Logger.debug('initilize {}'.format(self.name))
         self.debug = True
         self.workflow_type = workflow_type
         self.testing = testing
@@ -366,6 +366,7 @@ class Analysis(mp.Process):
 
     def setup_analysis(self, summary=False):
         """ Setup error logs and jobfile. """
+        Logger.debug("setting up analysis")
         self.jobtext.append(f"cd {self.run_dir}")
         self.jobtext.append("ml anaconda3/2024.06")
         self.jobtext.append("conda activate mmeds_test")
@@ -374,6 +375,7 @@ class Analysis(mp.Process):
         self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs} --default-resource tmpdir=\"tmp_dir\"")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
+        Logger.debug("adding summary")
         if summary:
             self.summary()
 
@@ -386,6 +388,7 @@ class Analysis(mp.Process):
             jobfile = self.path / 'jobfile_{}.lsf'.format(count)
             count += 1
         self.add_path(jobfile, key='jobfile')
+        Logger.debug("created job and submit files")
 
         if self.testing:
             # Setup the error log in a testing environment
@@ -402,7 +405,7 @@ class Analysis(mp.Process):
         else:
             errorlog = self.path / '{}-{}.stdout'.format(self.owner, self.doc.name)
             self.add_path(errorlog, key='errorlog')
-            self.logger.debug('In run_analysis')
+            Logger.debug('In run_analysis')
             # Get the job header text from the template
             temp = JOB_TEMPLATE.read_text()
             # Write all the commands
@@ -418,7 +421,7 @@ class Analysis(mp.Process):
 
             self.update_doc(analysis_status='started')
             type_ron = type(self.run_on_node)
-            self.logger.error(f'testing: {self.testing}, ron: {self.run_on_node} (type) {type_ron}')
+            Logger.error(f'testing: {self.testing}, ron: {self.run_on_node} (type) {type_ron}')
 
             # Tell the watcher to send an email that the analysis has started.
             email = ('email', self.doc.email, self.owner, 'analysis_start',
@@ -428,13 +431,13 @@ class Analysis(mp.Process):
             self.queue.put(email)
 
             if self.testing or not (self.run_on_node == -1):
-                self.logger.debug('I {} am about to run'.format(self.name))
+                Logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
-                self.logger.debug('I {} have finished running'.format(self.name))
+                Logger.debug('I {} have finished running'.format(self.name))
             else:
                 # Create a file to execute the submission
                 submitfile = self.get_file('submitfile', True)
@@ -444,14 +447,14 @@ class Analysis(mp.Process):
                 jobfile.chmod(0o770)
 
                 output = run([submitfile], check=True, capture_output=True)
-                self.logger.debug('Submitted job {}'.format(output.stdout))
+                Logger.debug('Submitted job {}'.format(output.stdout))
                 job_id = int(str(output.stdout).split(' ')[1].strip('<>'))
-                self.logger.error(job_id)
+                Logger.error(job_id)
                 self.wait_on_job(job_id)
 
-            self.logger.debug('{}: pre post analysis'.format(self.name))
+            Logger.debug('{}: pre post analysis'.format(self.name))
             self.post_analysis()
-            self.logger.debug('{}: post post analysis'.format(self.name))
+            Logger.debug('{}: post post analysis'.format(self.name))
         except CalledProcessError as e:
             self.move_user_files()
             self.write_file_locations()
@@ -464,7 +467,7 @@ class Analysis(mp.Process):
         # Raise an error if the final command doesn't run
         if 'MMEDS_FINISHED' not in log_text:
             self.update_doc(exit_code=1)
-            self.logger.debug('{}: Analysis did not finish'.format(self.name))
+            Logger.debug('{}: Analysis did not finish'.format(self.name))
             # Count the check points in the output to determine where to restart from
             stage = 0
             for i in range(1, 6):
@@ -479,29 +482,29 @@ class Analysis(mp.Process):
                 deleted = []
                 # Go through all files in the analysis
                 for stage, files in self.stage_files.items():
-                    self.logger.debug('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
+                    Logger.debug('{}: Stage: {}, Files: {}'.format(self.name, stage, files))
                     # If they should be created after the last checkpoint
                     if stage >= self.doc.restart_stage:
-                        self.logger.debug('{}: Greater than restart stage'.format(self.name))
+                        Logger.debug('{}: Greater than restart stage'.format(self.name))
                         for f in files:
                             if not f == 'jobfile' and not f == 'errorlog':
                                 deleted.append(f)
                                 # Check if they exist
                                 unfinished = self.get_file(f, True)
-                                self.logger.debug('{}: checking file {}'.format(self.name, unfinished))
+                                Logger.debug('{}: checking file {}'.format(self.name, unfinished))
                                 if unfinished.exists():
-                                    self.logger.debug('{}: file exists'.format(self.name))
+                                    Logger.debug('{}: file exists'.format(self.name))
                                     # Otherwise delete them
                                     if unfinished.is_dir():
-                                        self.logger.debug('{}: rmtree'.format(self.name))
+                                        Logger.debug('{}: rmtree'.format(self.name))
                                         rmtree(unfinished)
                                     else:
-                                        self.logger.debug('{}: unlink'.format(self.name))
+                                        Logger.debug('{}: unlink'.format(self.name))
                                         unfinished.unlink()
                                 else:
-                                    self.logger.debug('{}: file does exist {}'.format(self.name, unfinished))
+                                    Logger.debug('{}: file does exist {}'.format(self.name, unfinished))
                     else:
-                        self.logger.debug('{}: stage already passed'.format(self.name))
+                        Logger.debug('{}: stage already passed'.format(self.name))
 
                 # Remove the deleted files from the mongodb document for the analysis
                 finished_files = self.doc.files
@@ -509,7 +512,7 @@ class Analysis(mp.Process):
                     del finished_files[key]
                 self.update_doc(files=finished_files)
 
-                self.logger.debug('{}: finished file cleanup'.format(self.name))
+                Logger.debug('{}: finished file cleanup'.format(self.name))
 
             email = ('email', self.doc.email, self.doc.owner, 'error',
                      dict(code=self.doc.access_code,
@@ -537,12 +540,12 @@ class Analysis(mp.Process):
         # Unless all of run completes succesfully exit code should be 1
         exit_code = 1
         try:
-            self.logger.debug('{} calling run'.format(self.name))
+            Logger.debug('{} calling run'.format(self.name))
             self.initial_setup()
             self.jobtext.append('{}={};'.format(str(self.run_dir).replace('$', ''), self.path))
-            self.logger.debug('Finished initial setup')
+            Logger.debug('Finished initial setup')
 
-            self.logger.debug('I {} am running analysis'.format(self.name))
+            Logger.debug('I {} am running analysis'.format(self.name))
             self.run_analysis()
 
             exit_code = 0  # Tool as completed successfully

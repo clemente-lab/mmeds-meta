@@ -73,14 +73,14 @@ class DatabaseTests(TestCase):
         tables.sort(key=lambda x: fig.TABLE_ORDER.index(x))
         del tables[tables.index('AdditionalMetaData')]
         del tables[tables.index('ICDCode')]
-        Logger.info(f"tables: {tables}")
+        # Logger.info(f"tables: {tables}")
         for row in range(len(self.df)):
             for table in tables:
-                Logger.info('Query table {}'.format(table))
+                # Logger.info('Query table {}'.format(table))
                 # Create the query
                 sql, args = self.builder.build_sql(table, row)
-                Logger.info(sql)
-                Logger.info(args)
+                # Logger.info(sql)
+                # Logger.info(args)
                 self.c = self.db.cursor()
                 found = self.c.execute(sql, args)
                 # Assert there exists at least one entry matching this description
@@ -88,10 +88,10 @@ class DatabaseTests(TestCase):
                     assert found > 0
                     self.c.close()
                 except AssertionError as e:
-                    Logger.info(self.df.iloc[row])
-                    Logger.info(sql)
-                    Logger.info("Didn't find entry {}:{}".format(table, row))
-                    Logger.info(self.c.fetchall())
+                    # Logger.info(self.df.iloc[row])
+                    # Logger.info(sql)
+                    # Logger.info("Didn't find entry {}:{}".format(table, row))
+                    # Logger.info(self.c.fetchall())
                     self.c.close()
                     raise e
 

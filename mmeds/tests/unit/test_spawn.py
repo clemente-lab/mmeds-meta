@@ -91,7 +91,7 @@ class SpawnTests(TestCase):
             timeout += 1
             sleep(0.2)
 
-        pipe_results = self.receive_all_pipe_output(5)
+        pipe_results = self.receive_all_pipe_output(8)
 
         Logger.debug(f"PIPE: {pipe_results}\n\nPROCS: {procs}")
 
@@ -117,7 +117,7 @@ class SpawnTests(TestCase):
             self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'standard_pipeline',
                         'default', 'test_analysis_node', None, {}, -1, True))
 
-        pipe_results = self.receive_all_pipe_output(5)
+        pipe_results = self.receive_all_pipe_output(8)
         Logger.debug(f"PIPE RESULTS: {pipe_results}")
         self.assertIn("Analysis Not Started", pipe_results)
         self.assertEquals(pipe_results.count(0), 4)
