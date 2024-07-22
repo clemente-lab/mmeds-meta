@@ -111,7 +111,12 @@ jobs:
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
 
+      - name: File Reader
+        if: failure()
+        uses: andstor/file-reader-action@v1.0.0
+        with:
+            path: "/home/runner/mmeds_server_data/MMEDS_log.txt"
+
       - name: Print Failure Log
         if: failure()
-        run: echo "$(cat /home/runner/mmeds_server_data/MMEDS_log.txt)" >> $GITHUB_OUTPUT
-
+        run: echo "${ steps.read_file.outputs.contents }"
