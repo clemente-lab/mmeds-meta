@@ -114,7 +114,7 @@ jobs:
       - name: Load File Action
         if: failure()
         id: read_file
-        uses: andstor/file-reader-action@v1.0.0
+        uses: guibranco/github-file-reader-action-v2@latest
         with:
             path: "/home/runner/mmeds_server_data/MMEDS_log.txt"
 
