@@ -94,7 +94,7 @@ jobs:
       - name: Unit Tests
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter spawn tool tools uploader util validate;
+         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn;
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v2
@@ -111,12 +111,8 @@ jobs:
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
 
-      - name: File Reader
+      - name: Print MMEDS Logs
         if: failure()
         uses: andstor/file-reader-action@v1.0.0
         with:
             path: "/home/runner/mmeds_server_data/MMEDS_log.txt"
-
-      - name: Print Failure Log
-        if: failure()
-        run: echo "${ steps.read_file.outputs.contents }"
