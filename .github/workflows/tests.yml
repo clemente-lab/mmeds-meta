@@ -111,6 +111,7 @@ jobs:
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
 
-      - name: Print Log
-        run: cat /home/runner/mmeds_server_data/MMEDS_log.txt
+      - name: Print Failure Log
+        if: failure()
+        run: echo "$(cat /home/runner/mmeds_server_data/MMEDS_log.txt)" >> $GITHUB_OUTPUT
 
