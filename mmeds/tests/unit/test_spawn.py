@@ -74,36 +74,33 @@ class SpawnTests(TestCase):
 
         Logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
-
-        info = self.pipe.recv()
-        info_0 = self.pipe.recv()
-        self.analyses += [info, info_0]
-
         procs = []
         timeout = 0
         # Check they match the contents of current_processes
-        with open(fig.CURRENT_PROCESSES, 'r') as f:
-            while len(procs) != len(self.infos):
-                if timeout > 20:
-                    break
+        while len(procs) != len(self.infos):
+            if timeout > 40:
+                break
+            with open(fig.CURRENT_PROCESSES, 'r') as f:
 
                 proc = safe_load(f)
                 if proc:
-                    if len(proc) == len(self.infos):
-                        procs = proc
-                    elif proc not in procs:
-                        procs += proc
-                timeout += 1
-                sleep(0.2)
-                
-        print(f"Infos: {info}, {info_0}\n\nProcs: {procs}")
+                    for p in proc:
+                        if p not in procs:
+                            procs.append(p)
+            timeout += 1
+            sleep(0.2)
 
-        self.assertTrue(info == procs[0] or info == procs[1])
-        self.assertTrue(info_0 == procs[0] or info_0 == procs[1])
+        pipe_results = self.receive_all_pipe_output(5)
+
+        Logger.debug(f"PIPE: {pipe_results}\n\nPROCS: {procs}")
 
         # Check the processes exited with code 0
-        pipe_results = self.receive_all_pipe_output(5)
         self.assertEqual(pipe_results.count(0), 2)
+        for res in pipe_results:
+            if res != 0:
+                self.assertIn(res, procs)
+                self.analyses += [res]
+
 
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """

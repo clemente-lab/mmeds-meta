@@ -344,6 +344,7 @@ def load_config(config_file, metadata, workflow_type, ignore_bad_cols=False):
         elif config_file is None or config_file == '':
             Logger.debug('Using default config')
             page = fig.DEFAULT_CONFIG.read_text()
+            Logger.debug(page)
         elif isinstance(config_file, str):
             page = Path(config_file).read_text()
         else:
