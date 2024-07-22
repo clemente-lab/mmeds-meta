@@ -83,6 +83,7 @@ class SpawnTests(TestCase):
             with open(fig.CURRENT_PROCESSES, 'r') as f:
 
                 proc = safe_load(f)
+                Logger.debug(proc)
                 if proc:
                     for p in proc:
                         if p not in procs:
