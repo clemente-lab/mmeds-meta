@@ -185,6 +185,8 @@ class Watcher(BaseManager):
                 continue
         with open(fig.CURRENT_PROCESSES, 'w+') as f:
             yaml.dump(sorted(writeable, key=lambda x: x['created']), f)
+        with open(fig.CURRENT_PROCESSES, 'r') as f:
+            Logger.error(yaml.safe_load(f))
 
     def log_processes(self):
         """
