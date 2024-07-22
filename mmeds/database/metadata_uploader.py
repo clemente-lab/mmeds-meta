@@ -285,8 +285,8 @@ class MetaDataUploader(Process):
         # Go through each row
         for row in range(len(self.df.index)):
             sql, args = self.builder.build_sql(table, row)
-            Logger.info(sql)
-            Logger.info(args)
+            # Logger.info(sql)
+            # Logger.info(args)
             # Get any foreign keys which can also make this row unique
             fkeys = ['{}={}'.format(key, value) for key, value in args.items() if '_id' in key]
             # Create the entry
