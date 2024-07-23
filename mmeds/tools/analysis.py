@@ -433,10 +433,14 @@ class Analysis(mp.Process):
             if self.testing or not (self.run_on_node == -1):
                 Logger.debug('I {} am about to run'.format(self.name))
                 jobfile.chmod(0o770)
+                with open(jobfile, 'r') as f:
+                    Logger.debug(f"Jobfile:\n{f.read()}")
                 # Send the output to the error log
                 with open(self.get_file('errorlog', True), 'w+', buffering=1) as f:
                     # Run the command
                     run([jobfile], stdout=f, stderr=f)
+                with open(self.get_file('errorlog', True), 'r') as f:
+                    Logger.debug(f"Job stdout/err:\n{f.read()}")
                 Logger.debug('I {} have finished running'.format(self.name))
             else:
                 # Create a file to execute the submission
