@@ -15,7 +15,7 @@ dependencies:
   - r-GGally
   - pip
   - pip:
-    - git+https://github.com/clemente-lab/mmeds-meta@Enhancement-PreviousChanges
+    - git+https://github.com/clemente-lab/mmeds-meta@Enhancement-SnakemakeAnalysis
 # at the moment, I don't have a better solution other than changing this branch for each pull request
 
 
