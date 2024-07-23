@@ -108,7 +108,7 @@ class SpawnTests(TestCase):
         Logger.info("restarting analysis")
         for proc in self.analyses:
             self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
-        pipe_results = self.receive_all_pipe_output(5)
+        pipe_results = self.receive_all_pipe_output(8)
         self.assertEqual(pipe_results.count(0), len(self.analyses))
 
     def test_d_node_analysis(self):

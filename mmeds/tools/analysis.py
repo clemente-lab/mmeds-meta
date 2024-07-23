@@ -368,6 +368,8 @@ class Analysis(mp.Process):
         """ Setup error logs and jobfile. """
         Logger.debug("setting up analysis")
         self.jobtext.append(f"cd {self.run_dir}")
+        if self.testing:
+            self.jobtext.append("sleep 2")
         self.jobtext.append("ml anaconda3/2024.06")
         self.jobtext.append("conda activate mmeds_test")
         self.jobtext.append("snakemake --dag | dot -Tpdf >| snakemake_dag.pdf")
