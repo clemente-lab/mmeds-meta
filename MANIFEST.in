@@ -2,6 +2,7 @@ include mmeds/html/*
 include mmeds/CSS/*
 include mmeds/resources/*
 include mmeds/test_files/*
+include mmeds/tools/*
 include mmeds/snakemake/*
 include mmeds/snakemake/rules/*
 include mmeds/snakemake/workflows/*
