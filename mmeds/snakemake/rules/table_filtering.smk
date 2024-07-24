@@ -25,5 +25,5 @@ rule filter_table_to_two_classes:
         "qiime feature-table filter-samples "
         "--i-table {input.feature_table} "
         "--m-metadata-file {input.mapping_file} "
-        "--p-where \"{wildcards.category}==\'{wildcards.class1}\' OR {wildcards.category}==\'{wildcards.class2}\'\" "
+        "--p-where \"[{wildcards.category}]==\'{wildcards.class1}\' OR [{wildcards.category}]==\'{wildcards.class2}\'\" "
         "--o-filtered-table {output}"
