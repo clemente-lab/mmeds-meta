@@ -53,7 +53,7 @@ else:
     # OR, we're in the folder /sc/arion/projects/MMEDS
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
 
-    CSS_DIR = ROOT / 'mmeds/CSS'
+    CSS_DIR = ROOT / 'CSS'
     WWW_ROOT = "https://mmedsadmin.dmz.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
@@ -62,7 +62,7 @@ else:
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
 
 
-TOOLS_DIR = ROOT / 'mmeds/tools'
+TOOLS_DIR = ROOT / 'tools'
 STUDIES_DIR = DATABASE_DIR / 'studies'
 SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
