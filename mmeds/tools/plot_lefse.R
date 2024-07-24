@@ -87,8 +87,7 @@ if (nrow(plot_data) > 0) {
         scale_fill_manual(values=colors)
     plot(p)
     ggsave(args$output_file, width=plot_width, height=plot_height, units = 'px', limitsize = FALSE)
-}
-else {
+} else {
     pdf(args$output_file)
     dev.off()
 }
