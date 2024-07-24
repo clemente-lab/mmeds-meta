@@ -63,7 +63,7 @@ jobs:
             path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
 
       - name: Upload Unit coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
 
   run-tests-simple:
     runs-on: ubuntu-20.04
@@ -97,7 +97,7 @@ jobs:
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn;
 
       - name: Upload Unit coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
 
       - name: Server Tests
         run: |
@@ -106,7 +106,7 @@ jobs:
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
 
       - name: Upload Server Coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
 
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
