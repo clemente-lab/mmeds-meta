@@ -64,6 +64,8 @@ jobs:
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v4
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}
 
   run-tests-simple:
     runs-on: ubuntu-20.04
@@ -98,6 +100,8 @@ jobs:
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v4
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Server Tests
         run: |
@@ -107,6 +111,8 @@ jobs:
 
       - name: Upload Server Coverage
         uses: codecov/codecov-action@v4
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Metadata Tests
         run: pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/metadata/test_error_metadata.py;
