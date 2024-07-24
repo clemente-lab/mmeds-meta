@@ -1718,6 +1718,9 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     if swap_delim:
         path_df[0] = path_df[0].str.replace(";", "|")
 
+    # Replace occurrences of ' ' with '_' for readability
+    path_df[0] = path_df[0].str.replace(" ", "_")
+
     # Insert new metadata rows into feature table
     t = [metadata_column_class]
     to_drop = []
