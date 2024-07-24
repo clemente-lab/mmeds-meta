@@ -51,17 +51,9 @@ if TESTING:
 else:
     # We're on web01 and using MMEDs out of if it's project diredctory
     # OR, we're in the folder /sc/arion/projects/MMEDS
-    # TODO: this isn't great, means we have to be careful not naming folders, files as MMEDS
-    # However, it's a solution that doesn't add any dependancies, and I think we should rework config.py anyway
-    if 'matt' in Path.cwd().parts and 'clemej05a' in Path.cwd().parts:
-        DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
-        ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
-    else:
-        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-        # ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
+    DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
 
     CSS_DIR = ROOT / 'mmeds/CSS'
-    TOOLS_DIR = ROOT / 'mmeds/tools'
     WWW_ROOT = "https://mmedsadmin.dmz.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
@@ -70,6 +62,7 @@ else:
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
 
 
+TOOLS_DIR = ROOT / 'mmeds/tools'
 STUDIES_DIR = DATABASE_DIR / 'studies'
 SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
