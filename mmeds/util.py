@@ -1469,7 +1469,7 @@ def upload_study_local(queue, study_name, subject, subject_type, specimen, user,
 
 def upload_sequencing_run_local(queue, run_name, user, datafiles, reads_type, barcodes_type):
     """
-    # Directly upload a local sequencing run using the watcher, bypassing the server
+     Directly upload a local sequencing run using the watcher, bypassing the server
     """
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
     Logger.debug("Sequencing run sent to queue directly")

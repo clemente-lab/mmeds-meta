@@ -21,8 +21,7 @@ def upload_sequencing_run(sequencing_run_name, forward_reads, reverse_reads, for
     """
     q = get_queue()
     print("test")
-    datafiles = {'forward': str(Path(forward_reads).resolve()),
-                 'for_barcodes': str(Path(forward_barcodes).resolve())}
+    datafiles = {'forward': str(Path(forward_reads).resolve())}
     if reverse_reads:
         reads_type = 'paired_end'
         datafiles['reverse'] = str(Path(reverse_reads).resolve())
@@ -31,8 +30,10 @@ def upload_sequencing_run(sequencing_run_name, forward_reads, reverse_reads, for
 
     if reverse_barcodes:
         barcodes_type = 'dual_barcodes'
+        datafiles['for_barcodes']: str(Path(forward_barcodes).resolve())
         datafiles['rev_barcodes'] = str(Path(reverse_barcodes).resolve())
     else:
+        datafiles['barcodes']: str(Path(forward_barcodes).resolve())
         barcodes_type = 'single_barcodes'
 
     result = util.upload_sequencing_run_local(q, sequencing_run_name, user, datafiles, reads_type, barcodes_type)
