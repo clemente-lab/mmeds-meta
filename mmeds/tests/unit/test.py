@@ -28,7 +28,7 @@ def add_users(tests):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     # database and spawn tests require a second user
-    if 'database' in tests or 'spawn' in tests or 'analysis' in tests:
+    if 'database' in tests or 'spawn' in tests or 'tools' in tests or 'analysis' in tests:
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     return users_added
@@ -63,7 +63,7 @@ def setup_tests(tests):
             test_setup.append((fig.TEST_MIXED_SUBJECT,
                                'mixed',
                                fig.TEST_MIXED_SPECIMEN,
-                               fig.TEST_USER,
+                               fig.TEST_USER_0,
                                'Test_Mixed',
                                testing,
                                fig.TEST_CODE_MIXED))

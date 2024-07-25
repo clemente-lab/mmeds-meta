@@ -20,7 +20,7 @@ class AnalysisTests(TestCase):
         cls.watcher = Watcher()
         cls.watcher.connect()
         cls.queue = cls.watcher.get_queue()
-        with Database(owner=fig.TEST_USER, testing=True) as db:
+        with Database(owner=fig.TEST_USER_0, testing=True) as db:
             cls.analysis_code = db.create_access_code()
         cls.config = load_config(fig.DEFAULT_CONFIG, fig.TEST_MIXED_METADATA, 'standard_pipeline')
 
@@ -29,7 +29,7 @@ class AnalysisTests(TestCase):
         datafiles = {"forward": fig.TEST_READS,
                      "reverse": fig.TEST_REV_READS,
                      "barcodes": fig.TEST_BARCODES}
-        result = upload_sequencing_run_local(self.queue, fig.TEST_SEQUENCING_NAME, fig.TEST_USER, datafiles, 'paired_end', 'single_barcodes')
+        result = upload_sequencing_run_local(self.queue, fig.TEST_SEQUENCING_NAME, fig.TEST_USER_0, datafiles, 'paired_end', 'single_barcodes')
         self.assertEquals(result, 0)
 
 
@@ -47,13 +47,13 @@ class AnalysisTests(TestCase):
 
     def test_c_analysis_class(self):
         """ Test the analysis object """
-        with Database(owner=fig.TEST_USER, testing=True) as db:
-            self.runs = db.get_sequencing_run_locations(fig.TEST_MIXED_METADATA, fig.TEST_USER)
-        analysis = Analysis(self.queue, fig.TEST_USER, self.analysis_code, fig.TEST_CODE_MIXED,
+        with Database(owner=fig.TEST_USER_0, testing=True) as db:
+            self.runs = db.get_sequencing_run_locations(fig.TEST_MIXED_METADATA, fig.TEST_USER_0)
+        analysis = Analysis(self.queue, fig.TEST_USER_0, self.analysis_code, fig.TEST_CODE_MIXED,
                             'standard_pipeline', 'default', 'test_init', self.config, True, self.runs, False)
         analysis.run()
 
         info = analysis.get_info()
-        self.assertEquals(info['owner'], fig.TEST_USER)
+        self.assertEquals(info['owner'], fig.TEST_USER_0)
         self.assertEquals(info['analysis_code'], self.analysis_code)
 
