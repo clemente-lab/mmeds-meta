@@ -24,11 +24,11 @@ def add_users(tests):
     # Add users as needed
     # users_added keeps track of the number of users added so they can all be removed at the end
     users_added = 0
-    if {'database', 'documents', 'util', 'spawn', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
+    if {'database', 'documents', 'util', 'spawn', 'tool', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     # database and spawn tests require a second user
-    if 'database' in tests or 'spawn' in tests:
+    if 'database' in tests or 'spawn' in tests or 'analysis' in tests:
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     return users_added
@@ -37,7 +37,7 @@ def add_users(tests):
 def setup_tests(tests):
     # Add test setups as needed:
     test_setup = []
-    if {'documents', 'util', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
+    if {'documents', 'util', 'tool', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            'human',
                            fig.TEST_SPECIMEN_SINGLE_SHORT,
@@ -45,7 +45,7 @@ def setup_tests(tests):
                            'Test_Single_Short',
                            testing,
                            fig.TEST_CODE_SHORT))
-        if 'tools' in tests:
+        if 'tools' in tests or 'analysis' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
                                fig.TEST_SPECIMEN_PAIRED,

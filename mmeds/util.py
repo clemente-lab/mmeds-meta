@@ -1428,12 +1428,7 @@ def run_analysis(path, workflow_type, testing=False):
     path: path to analysis folder i.e. Study/Qiime2_0)
     workflow_type: tool to use. qiime1, qiime2, lefse, etc
     """
-    if testing:
-        # This module file is setup for running on github actions
-        qiime_env = setup_environment('qiime2-2020.8')
-    else:
-        # This module file is setup for running on minerva
-        qiime_env = setup_environment('qiime2/2020.8')
+    qiime_env = setup_environment('qiime2/2020.8')
 
     qiime = f'bash {path}/jobfile_test.sh'
 
