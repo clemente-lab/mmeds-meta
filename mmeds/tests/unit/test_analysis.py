@@ -1,6 +1,7 @@
 from unittest import TestCase
 from pathlib import Path
 import mmeds.config as fig
+from time import sleep
 
 from mmeds.util import run_analysis, load_config, upload_sequencing_run_local
 from mmeds.summary import summarize_qiime
@@ -30,6 +31,7 @@ class AnalysisTests(TestCase):
                      "reverse": fig.TEST_REV_READS,
                      "barcodes": fig.TEST_BARCODES}
         result = upload_sequencing_run_local(self.queue, fig.TEST_SEQUENCING_NAME, fig.TEST_USER_0, datafiles, 'paired_end', 'single_barcodes')
+        sleep(5)
         self.assertEquals(result, 0)
 
 

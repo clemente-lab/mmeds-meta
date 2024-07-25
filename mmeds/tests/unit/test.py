@@ -64,7 +64,7 @@ def setup_tests(tests):
                                'mixed',
                                fig.TEST_MIXED_SPECIMEN,
                                fig.TEST_USER_0,
-                               'Test_Mixed',
+                               'TEST_MIXED_17',
                                testing,
                                fig.TEST_CODE_MIXED))
             # Upload OTU if running test_tools.py
