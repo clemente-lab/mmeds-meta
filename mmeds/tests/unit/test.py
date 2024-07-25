@@ -60,6 +60,13 @@ def setup_tests(tests):
                                'Test_Demuxed',
                                testing,
                                fig.TEST_CODE_DEMUX))
+            test_setup.append((fig.TEST_MIXED_SUBJECT,
+                               'mixed',
+                               fig.TEST_MIXED_SPECIMEN,
+                               fig.TEST_USER,
+                               'Test_Mixed',
+                               testing,
+                               fig.TEST_CODE_MIXED))
             # Upload OTU if running test_tools.py
             # Functionality removed in study-sequencing run split
             """
