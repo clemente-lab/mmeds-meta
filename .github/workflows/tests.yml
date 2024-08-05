@@ -59,6 +59,7 @@ jobs:
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py analysis demultiplex;
+         coverage combine -a;
 
       - uses: actions/upload-artifact@v3
         with:
@@ -100,6 +101,7 @@ jobs:
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn;
+         coverage combine -a;
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v4
@@ -111,6 +113,7 @@ jobs:
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s --durations=0 ./mmeds/tests/watcher/test_watcher.py&
           sleep 1;
           pytest --cov=mmeds -W ignore::DeprecationWarning -W ignore::FutureWarning -s ./mmeds/tests/server/test_server.py -x --durations=0;
+          coverage combine -a;
 
       - name: Upload Server Coverage
         uses: codecov/codecov-action@v4
