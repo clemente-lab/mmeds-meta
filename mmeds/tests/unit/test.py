@@ -141,6 +141,9 @@ def remove_users(users_added):
 
 
 def main():
+    # Start the watcher as a subprocess if we're on github actions
+    if Path("/home/runner").exists():
+        run(['python', './mmeds/host/manager.py'], check=True)
     # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
     pudb = 'log' in tests
