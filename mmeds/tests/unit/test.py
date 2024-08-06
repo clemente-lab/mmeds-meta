@@ -1,4 +1,4 @@
-from subprocess import run
+from subprocess import run, Popen
 from pathlib import Path
 import sys
 import coverage
@@ -143,7 +143,7 @@ def remove_users(users_added):
 def main():
     # Start the watcher as a subprocess if we're on github actions
     if Path("/home/runner").exists():
-        run(['python', './mmeds/host/manager.py'], check=True)
+        Popen(['python', './mmeds/host/manager.py'])
     # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
     pudb = 'log' in tests
