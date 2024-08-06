@@ -170,7 +170,8 @@ def main():
             'formatter',
             'adder',
             'uploader',
-            'error'
+            'error',
+            'snakemake'
         ]
 
     users_added = add_users(tests)
