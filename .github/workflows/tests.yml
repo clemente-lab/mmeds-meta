@@ -58,8 +58,7 @@ jobs:
       - name: Unit Tests
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py analysis demultiplex;
-         coverage combine -a;
+         coverage run -a --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py analysis demultiplex;
 
       - uses: actions/upload-artifact@v3
         with:
@@ -103,8 +102,7 @@ jobs:
       - name: Unit Tests
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn snakemake;
-         coverage combine -a;
+         coverage run -a --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn snakemake;
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v4
