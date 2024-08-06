@@ -58,4 +58,3 @@ class AnalysisTests(TestCase):
         info = analysis.get_info()
         self.assertEquals(info['owner'], fig.TEST_USER_0)
         self.assertEquals(info['analysis_code'], self.analysis_code)
-
