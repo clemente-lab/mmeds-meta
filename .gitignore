@@ -45,3 +45,5 @@ htmlcov/
 tags
 
 # Snakemake work files
+**/.snakemake
+**/.snakemake/*
