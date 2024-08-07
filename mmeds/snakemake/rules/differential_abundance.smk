@@ -31,7 +31,7 @@ rule differential_abundance_lefse_strict:
     input:
         "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
     output:
-        lefse_input = "tables/lefse_input_strict.{table}.{class}.{subclass}.lefse",
+        lefse_input = "tables/{class}/lefse_input_strict.{table}.{class}.{subclass}.lefse",
         lefse_results = "results/{class}/lefse_results_strict.{table}.{class}.{subclass}.tsv"
     conda:
         "lefse"
