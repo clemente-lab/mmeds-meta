@@ -74,7 +74,7 @@ rule alpha_diversity_ANOVA_test:
         div = "diversity/core_metrics_results",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "diversity/{metric}_group_ANOVA.qzv",
+        "diversity/ANOVA/{metric}_group_ANOVA.qzv",
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -88,7 +88,7 @@ rule beta_diversity_PERMANOVA_test:
         div = "diversity/core_metrics_results",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "diversity/{metric}_{var}_PERMANOVA.qzv",
+        "diversity/PERMANOVA/{var}/{metric}_{var}_PERMANOVA.qzv",
     shell:
         """
         qiime diversity beta-group-significance --i-distance-matrix {input.div}/{wildcards.metric}_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output}

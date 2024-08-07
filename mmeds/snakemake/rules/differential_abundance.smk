@@ -15,10 +15,10 @@ rule differential_abundance_ancom_bc:
 
 rule differential_abundance_lefse:
     input:
-        "tables/lefse_format.{table}.{class}.{subclass}.tsv"
+        "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
     output:
-        lefse_input = "tables/lefse_input.{table}.{class}.{subclass}.lefse",
-        lefse_results = "results/lefse_results.{table}.{class}.{subclass}.tsv"
+        lefse_input = "tables/{class}/lefse_input.{table}.{class}.{subclass}.lefse",
+        lefse_results = "results/{class}/lefse_results.{table}.{class}.{subclass}.tsv"
     conda:
         "lefse"
     shell:
@@ -29,10 +29,10 @@ rule differential_abundance_lefse:
 
 rule differential_abundance_lefse_strict:
     input:
-        "tables/lefse_format.{table}.{class}.{subclass}.tsv"
+        "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
     output:
         lefse_input = "tables/lefse_input_strict.{table}.{class}.{subclass}.lefse",
-        lefse_results = "results/lefse_results_strict.{table}.{class}.{subclass}.tsv"
+        lefse_results = "results/{class}/lefse_results_strict.{table}.{class}.{subclass}.tsv"
     conda:
         "lefse"
     shell:
@@ -43,9 +43,9 @@ rule differential_abundance_lefse_strict:
 
 rule plot_lefse_results:
     input:
-        "results/lefse_results.{table}.{class}.{subclass}.tsv"
+        "results/{class}/lefse_results.{table}.{class}.{subclass}.tsv"
     output:
-        "results/lefse_plot.{table}.{class}.{subclass}.pdf"
+        "results/{class}/lefse_plot.{table}.{class}.{subclass}.pdf"
     params:
         tool_dir = get_tool_dir()
     shell:
@@ -56,9 +56,9 @@ rule plot_lefse_results:
 
 rule plot_lefse_results_strict:
     input:
-        "results/lefse_results_strict.{table}.{class}.{subclass}.tsv"
+        "results/{class}/lefse_results_strict.{table}.{class}.{subclass}.tsv"
     output:
-        "results/lefse_plot_strict.{table}.{class}.{subclass}.pdf"
+        "results/{class}/lefse_plot_strict.{table}.{class}.{subclass}.pdf"
     params:
         tool_dir = get_tool_dir()
     shell:
