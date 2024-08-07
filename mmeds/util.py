@@ -950,7 +950,7 @@ def setup_environment(module):
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
     # CODECOV FLAG
-    new_env["COVERAGE_PROCESS_START"] = True
+    new_env["COVERAGE_PROCESS_START"] = "1"
 
     Logger.debug("Created environment for module {}".format(module))
     Logger.debug(new_env)
