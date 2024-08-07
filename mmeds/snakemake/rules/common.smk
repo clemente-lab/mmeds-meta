@@ -16,17 +16,17 @@ def lefse_splits(wildcards):
         if "subclasses" in config and config["subclasses"]:
             subclasses = deepcopy(config["subclasses"])
 
-        if lefse_class not in subclasses:
-            subclasses += [lefse_class]
-
         if len(categories) < 2:
             continue
 
         if len(categories) < 3:
             if not sufficient_values(value_counts, categories[0], categories[1]):
                 continue
-            splits += expand("results/{lefse_class}/lefse_plot.{feature_table}.{lefse_class}.{subclass}.pdf",
-                             feature_table=config["tables"], lefse_class=lefse_class, subclass=subclasses)
+            splits += expand("results/{lefse_class}/lefse_plot.{feature_table}.{lefse_class}.NA.pdf",
+                             feature_table=config["tables"], lefse_class=lefse_class)
+            if subclasses:
+                splits += expand("results/{lefse_class}/lefse_plot.{feature_table}.{lefse_class}.{subclass}.pdf",
+                                feature_table=config["tables"], lefse_class=lefse_class, subclass=subclasses)
             continue
 
 
@@ -36,8 +36,11 @@ def lefse_splits(wildcards):
             for j in range(i+1, len(categories)):
                     if not sufficient_values(value_counts, categories[i], categories[j]):
                         continue
-                    splits += expand("results/{lefse_class}/lefse_plot.{feature_table}_{lefse_class}_{cat1}_or_{cat2}.{lefse_class}.{subclass}.pdf",
-                                     feature_table=config["tables"], lefse_class=lefse_class, cat1=categories[i], cat2=categories[j], subclass=subclasses)
+                    splits += expand("results/{lefse_class}/lefse_plot.{feature_table}_{lefse_class}_{cat1}_or_{cat2}.{lefse_class}.NA.pdf",
+                                     feature_table=config["tables"], lefse_class=lefse_class, cat1=categories[i], cat2=categories[j])
+                    if subclasses:
+                        splits += expand("results/{lefse_class}/lefse_plot.{feature_table}_{lefse_class}_{cat1}_or_{cat2}.{lefse_class}.{subclass}.pdf",
+                                         feature_table=config["tables"], lefse_class=lefse_class, cat1=categories[i], cat2=categories[j], subclass=subclasses)
 
     formatted_splits = []
     for s in splits:
@@ -45,12 +48,12 @@ def lefse_splits(wildcards):
         if separated[-2] == separated[-3]:
             separated[-2] = "NA"
         formatted_splits += [".".join(separated)]
-    
+
     return formatted_splits
 
 def lefse_get_subclass(wildcards):
     subclass = wildcards["class"] if wildcards["subclass"] == "NA" else wildcards["subclass"]
-    return wildcards["subclass"]
+    return subclass
 
 def sufficient_values(value_counts, cat1, cat2, threshold=2):
     if value_counts[cat1] < threshold or value_counts[cat2] < threshold:
