@@ -4,7 +4,6 @@
 #BSUB -J {jobname}
 #BSUB -P acc_MMEDS
 #BSUB -n {nodes}
-#BSUB -R "span[hosts=1]"
 #BSUB -R rusage[mem={memory}]
 #BSUB -o {path}/{jobname}.stdout
 #BSUB -eo {path}/{jobname}.stderr
