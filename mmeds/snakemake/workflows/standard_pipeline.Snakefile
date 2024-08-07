@@ -11,8 +11,8 @@ include: "{snakemake_dir}/table_filtering.smk"
 
 rule results:
     input:
-        expand("diversity/{{metric}}_group_ANOVA.qzv", metric=config['alpha_metrics']),
-        expand("diversity/{{metric}}_{{var}}_PERMANOVA.qzv", metric=config['beta_metrics'], var=config['metadata']),
+        expand("diversity/ANOVA/{{metric}}_group_ANOVA.qzv", metric=config['alpha_metrics']),
+        expand("diversity/PERMANOVA/{{var}}/{{metric}}_{{var}}_PERMANOVA.qzv", metric=config['beta_metrics'], var=config['metadata']),
         "diversity/alpha_rarefaction.qzv",
         "tables/taxa_barplot.qzv",
-        expand("differential_abundance/ancom-bc_{{table}}_{{var}}_barplot.qzv", table=expand("taxa_table_L{{level}}", level=config['taxa_levels']), var=config['metadata'])
+        expand("differential_abundance/{{var}}/ancom-bc_{{table}}_{{var}}_barplot.qzv", table=expand("taxa_table_L{{level}}", level=config['taxa_levels']), var=config['metadata'])
