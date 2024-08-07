@@ -25,6 +25,7 @@ class ToolTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
+        return
         for new_dir in self.dirs:
             rmtree(new_dir)
 
