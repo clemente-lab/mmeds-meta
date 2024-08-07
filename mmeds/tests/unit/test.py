@@ -5,6 +5,7 @@ import coverage
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.database.database import upload_metadata, upload_otu, upload_lefse
+from mmeds.util import setup_environment
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -143,7 +144,7 @@ def remove_users(users_added):
 def main():
     # Start the watcher as a subprocess if we're on github actions
     if Path("/home/runner").exists():
-        Popen(['python', './mmeds/host/manager.py'])
+        Popen(['python', './mmeds/host/manager.py'], env=setup_environment("mmeds-stable"))
     # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
     pudb = 'log' in tests
