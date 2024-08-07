@@ -915,7 +915,7 @@ def parse_locals(line, variables, new_env):
     return line, variables
 
 
-def setup_environment(module):
+def setup_environment(module, testing=False):
     """
     Returns a dictionary with the environment variables loaded for a particular module.
     ===================================================================================
@@ -949,8 +949,10 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
+
     # CODECOV FLAG
-    new_env["COVERAGE_PROCESS_START"] = "1"
+    if testing:
+        new_env["COVERAGE_PROCESS_START"] = "./.coveragerc"
 
     Logger.debug("Created environment for module {}".format(module))
     Logger.debug(new_env)
