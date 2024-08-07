@@ -15,6 +15,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
       - name: Install packages
         run: pip install -U pip; pip install cryptography; pip install jupyter_client==6.1.12; pip install ipython_genutils==0.2.0; pip install nbconvert==5.6.1; pip install rpy2; pip install ipykernel; pip install pandas==1.2.3; pip install pillow; pip install -U Jinja2==3.0
 
@@ -27,12 +31,13 @@ jobs:
         run: mysql -u root -proot < setup.sql
       - name: Server data setup
         run: mkdir /home/runner/mmeds_server_data; mkdir /home/runner/conda_envs; mkdir -p /home/runner/conda_env_files/pheniqs; mkdir -p /home/runner/.modules/modulefiles; cp -r ./test_files /home/runner/mmeds_server_data/.; cp ./mmeds/resources/mmeds_stats.yaml /home/runner/mmeds_server_data/.; cp -r ./modules/* /home/runner/.modules/modulefiles/.; cp -r ./conda_env_files/* /home/runner/conda_env_files/.; mkdir /home/runner/mmeds_server_data/taxonomic_databases; touch /home/runner/mmeds_server_data/taxonomic_databases/dummy_classifier.qza;
-
+    
       - name: Python install
         run: sudo python setup.py install --verbose; pip install wheel; pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
 
-      - name: install jupyter
-        run: conda env create -f ./conda_env_files/jupyter_env-github.yaml -p /home/runner/conda_envs/jupyter; 
+        #- name: install jupyter
+        #run: conda env create -f ./conda_env_files/jupyter_env-github.yaml -p /home/runner/conda_envs/jupyter; 
+
 
       - name: add bioconda channel for qiime
         run: conda config --append channels conda-forge --append channels bioconda --append channels defaults
@@ -40,11 +45,13 @@ jobs:
       - name: install qiime
         run: conda env create -f ./conda_env_files/qiime2-2020.8_env.yaml -p /home/runner/conda_envs/qiime2-2020.8
 
-      - name: install R
-        run: sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common; sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'; sudo apt install r-base;
+    
+    #- name: install R
+        #run: sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common; sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9; sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'; sudo apt install r-base;
 
-      - name: install R dependencies
-        run: sudo Rscript -e 'install.packages("GGally",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; sudo Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggplot2",dependencies=TRUE)';
+        #- name: install R dependencies
+        #run: sudo Rscript -e 'install.packages("GGally",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggrepel",dependencies=TRUE)'; sudo Rscript -e 'install.packages("RColorBrewer",dependencies=TRUE)'; sudo Rscript -e 'install.packages("ggplot2",dependencies=TRUE)';
+    
 
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
@@ -54,7 +61,6 @@ jobs:
 
       - name: Unit Tests
         run: |
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py analysis demultiplex;
 
       - uses: actions/upload-artifact@v3
@@ -78,6 +84,9 @@ jobs:
       - name: Install packages
         run: pip install -U pip; sudo apt-get install tidy environment-modules -y; pip install cryptography;
 
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
       - name: Start Services
         run: sudo systemctl start mysql.service; sudo systemctl start mongod.service;
 
@@ -90,13 +99,15 @@ jobs:
       - name: Python install
         run: sudo python setup.py install --verbose; pip install wheel; pip install git+https://github.com/clemente-lab/mmeds-meta@$GITHUB_REF_NAME;
 
+      - name: Install GraphViz
+        run: sudo apt-get install graphviz
+
       - name: install pheniqs
         run: conda env create -f ./conda_env_files/pheniqs_env.yaml -p /home/runner/conda_envs/pheniqs
 
       - name: Unit Tests
         run: |
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/host/manager.py&
-         coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn;
+            coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py adder authentication database documents error formatter tool tools uploader util validate spawn snakemake;
 
       - name: Upload Unit coverage
         uses: codecov/codecov-action@v4

@@ -20,7 +20,9 @@ rule format_metadata_qiime_to_lefse:
         feature_table = "tables/{table}.tsv",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "tables/lefse_format.{table}.{class}.{subclass}.tsv"
+        "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
+    params:
+        subclass = lefse_get_subclass
     conda:
         "mmeds_test"
     shell:
@@ -28,6 +30,6 @@ rule format_metadata_qiime_to_lefse:
         "-i {input.feature_table} "
         "-m {input.mapping_file} "
         "-c {wildcards.class} "
-        "-s {wildcards.subclass} "
+        "-s {params.subclass} "
         "-u HostSubjectId "
         "-o {output}"

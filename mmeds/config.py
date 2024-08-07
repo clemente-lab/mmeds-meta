@@ -426,6 +426,7 @@ TEST_CODE = 'singlereads'
 TEST_CODE_SHORT = 'singlereadsshort'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
+TEST_CODE_MIXED = 'mixedstudy'
 TEST_CODE_OTU = 'otutable'
 TEST_CODE_LEFSE = 'lefsetable'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
@@ -448,6 +449,7 @@ TEST_STRIPPED_DIRS = [
     str(TEST_PATH / 'test_stripped_1'),
     str(TEST_PATH / 'test_stripped_2')
 ]
+TEST_SNAKEMAKE_DIR = str(TEST_PATH / 'test_snakemake')
 TEST_PHENIQS_MAPPING = str(TEST_PATH / 'test_pheniqs_mapping_file.tsv')
 TEST_STUDY = str(TEST_PATH / 'test_study')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
@@ -469,6 +471,7 @@ TEST_SUBJECT_SIMPLIFIED = str(TEST_PATH / 'test_subject_simplified.tsv')
 TEST_ADD_SUBJECT = str(TEST_PATH / 'test_add_subject.tsv')
 TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
 TEST_MIXED_SUBJECT = str(TEST_PATH / 'test_mixed_subject.tsv')
+TEST_MIXED_SPECIMEN = str(TEST_PATH / 'test_mixed_specimen.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
 TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
 TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
@@ -503,6 +506,8 @@ USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
 SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
 SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 CONFIG_EXAMPLE = str(TEST_PATH / 'config_example.yaml')
+
+TEST_SEQUENCING_NAME = "TEST_RUN"
 
 
 # Defaults

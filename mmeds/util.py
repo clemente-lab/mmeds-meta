@@ -915,7 +915,7 @@ def parse_locals(line, variables, new_env):
     return line, variables
 
 
-def setup_environment(module):
+def setup_environment(module, testing=False):
     """
     Returns a dictionary with the environment variables loaded for a particular module.
     ===================================================================================
@@ -949,6 +949,11 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
+
+    # CODECOV FLAG
+    if testing:
+        new_env["COVERAGE_PROCESS_START"] = "./.coveragerc"
+
     Logger.debug("Created environment for module {}".format(module))
     Logger.debug(new_env)
     return new_env
@@ -1428,12 +1433,7 @@ def run_analysis(path, workflow_type, testing=False):
     path: path to analysis folder i.e. Study/Qiime2_0)
     workflow_type: tool to use. qiime1, qiime2, lefse, etc
     """
-    if testing:
-        # This module file is setup for running on github actions
-        qiime_env = setup_environment('qiime2-2020.8')
-    else:
-        # This module file is setup for running on minerva
-        qiime_env = setup_environment('qiime2/2020.8')
+    qiime_env = setup_environment('qiime2/2020.8')
 
     qiime = f'bash {path}/jobfile_test.sh'
 
@@ -1474,7 +1474,7 @@ def upload_study_local(queue, study_name, subject, subject_type, specimen, user,
 
 def upload_sequencing_run_local(queue, run_name, user, datafiles, reads_type, barcodes_type):
     """
-    # Directly upload a local sequencing run using the watcher, bypassing the server
+     Directly upload a local sequencing run using the watcher, bypassing the server
     """
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
     Logger.debug("Sequencing run sent to queue directly")
