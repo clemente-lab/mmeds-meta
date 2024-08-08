@@ -22,7 +22,7 @@ class AnalysisTests(TestCase):
         self.watcher = Watcher()
         self.watcher.connect()
         self.queue = self.watcher.get_queue()
-        self.config = load_config(fig.DEFAULT_CONFIG, fig.TEST_MIXED_METADATA, 'standard_pipeline')
+        self.config = load_config(fig.DEFAULT_CONFIG, fig.TEST_MIXED_METADATA, 'core_pipeline_taxonomic')
         self.config_lefse = load_config(fig.DEFAULT_CONFIG_LEFSE, fig.TEST_MIXED_METADATA, 'lefse')
         self.analysis = []
         with Database(owner=fig.TEST_USER_0, testing=True) as db:
@@ -43,15 +43,15 @@ class AnalysisTests(TestCase):
         with Database(owner=fig.TEST_USER_0, testing=True) as db:
             self.runs = db.get_sequencing_run_locations(fig.TEST_MIXED_METADATA, fig.TEST_USER_0)
         self.analysis += [Analysis(self.queue, fig.TEST_USER_0, self.analysis_code_0, fig.TEST_CODE_MIXED,
-                                'standard_pipeline', 'default', 'test_init', self.config, True, self.runs, False, threads=2)]
+                                'core_pipeline_taxonomic', 'default', 'test_init', self.config, True, self.runs, False, threads=2)]
         self.analysis += [Analysis(self.queue, fig.TEST_USER_0, self.analysis_code_1, fig.TEST_CODE_MIXED,
                                 'lefse', 'default', 'test_lefse', self.config_lefse, True, {}, False, threads=2)]
 
 
-    def test_c_standard_pipeline(self):
+    def test_c_core_pipeline_taxonomic(self):
         """ Test running a standard analysis """
         # run_analysis() executes analyses synchronously rather than submitting as a job
-        run_analysis(self.test_study, 'standard_pipeline', testing=True)
+        run_analysis(self.test_study, 'core_pipeline_taxonomic', testing=True)
 
     def test_d_analysis_class(self):
         """ Test the analysis objects """

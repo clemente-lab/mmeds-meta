@@ -122,28 +122,28 @@ class UtilTests(TestCase):
 
     def test_g_load_config_file(self):
         # Test when no config is given
-        config = util.load_config(None, fig.TEST_METADATA, 'standard_pipeline')
-        for param in fig.WORKFLOWS['standard_pipeline']['parameters']:
+        config = util.load_config(None, fig.TEST_METADATA, 'core_pipeline_taxonomic')
+        for param in fig.WORKFLOWS['core_pipeline_taxonomic']['parameters']:
             assert config.get(param) is not None
 
-        config = util.load_config(Path(fig.TEST_CONFIG_ALL), fig.TEST_METADATA, 'standard_pipeline')
+        config = util.load_config(Path(fig.TEST_CONFIG_ALL), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert len(config['taxa_levels']) == 7
 
         # Check the config file fail states
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_1), fig.TEST_METADATA, 'standard_pipeline')
+            config = util.load_config(Path(fig.TEST_CONFIG_1), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert 'Missing parameter' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_2), fig.TEST_METADATA, 'standard_pipeline')
+            config = util.load_config(Path(fig.TEST_CONFIG_2), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert 'Invalid metadata column' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_CONFIG_3), fig.TEST_METADATA, 'standard_pipeline')
+            config = util.load_config(Path(fig.TEST_CONFIG_3), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert 'Invalid parameter' in e_info.value.message
 
         with raises(InvalidConfigError) as e_info:
-            config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA, 'standard_pipeline')
+            config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert 'YAML format' in e_info.value.message
 
     def test_h_mmeds_to_MIxS(self):

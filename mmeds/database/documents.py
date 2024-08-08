@@ -121,7 +121,6 @@ class MMEDSDoc(men.Document):
         files['metadata'] = new_dir / 'metadata.tsv'
         string_files = {str(key): str(value) for key, value in files.items()}
 
-        print(config)
         doc = MMEDSDoc(created=datetime.now(),
                        last_accessed=datetime.now(),
                        sub_analysis=False,
