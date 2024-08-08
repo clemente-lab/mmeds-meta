@@ -74,11 +74,7 @@ class Analysis(mp.Process):
         self.access_code = access_code
         self.study_code = study_code
         self.sequencing_runs = runs
-
-        if testing:
-            self.num_jobs = 2
-        else:
-            self.num_jobs = min([threads, mp.cpu_count()])
+        self.num_jobs = min([threads, mp.cpu_count()])
 
     def __str__(self):
         """ Provides a nicely formatted string representation of a Tool process """

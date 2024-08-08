@@ -13,7 +13,7 @@ import mmeds.secrets as sec
 """
 - To run all the tests: python test.py
 - To run a specific set of test: python test.py test_name1 test_name2 etc
-  - possible test names: authentication, database, documents, spawn, tool, tools, util, validate
+  - possible test names: authentication, database, documents, spawn, snakemake, tools, util, validate
 - To run all tests with the pudb pytest plugin python test.py pudb
 """
 
@@ -25,7 +25,7 @@ def add_users(tests):
     # Add users as needed
     # users_added keeps track of the number of users added so they can all be removed at the end
     users_added = 0
-    if {'database', 'documents', 'util', 'spawn', 'tool', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
+    if {'database', 'documents', 'util', 'spawn', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     # database and spawn tests require a second user
@@ -38,7 +38,7 @@ def add_users(tests):
 def setup_tests(tests):
     # Add test setups as needed:
     test_setup = []
-    if {'documents', 'util', 'tool', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
+    if {'documents', 'util', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            'human',
                            fig.TEST_SPECIMEN_SINGLE_SHORT,
@@ -167,7 +167,6 @@ def main():
             'documents',
             'spawn',
             'demultiplex',
-            'tool',
             'tools',
             'util',
             'validate',

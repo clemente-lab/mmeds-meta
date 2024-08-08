@@ -6,8 +6,10 @@ from time import sleep
 from mmeds.util import run_analysis, load_config, upload_sequencing_run_local
 from mmeds.summary import summarize_qiime
 from mmeds.spawn import Watcher
+from mmeds.logging import Logger
 from mmeds.tools.analysis import Analysis
 from mmeds.database.database import Database
+import mmeds.error as err
 
 
 class AnalysisTests(TestCase):
@@ -21,9 +23,12 @@ class AnalysisTests(TestCase):
         cls.watcher = Watcher()
         cls.watcher.connect()
         cls.queue = cls.watcher.get_queue()
+        cls.config = load_config(fig.DEFAULT_CONFIG, fig.TEST_MIXED_METADATA, 'standard_pipeline')
         with Database(owner=fig.TEST_USER_0, testing=True) as db:
             cls.analysis_code = db.create_access_code()
-        cls.config = load_config(fig.DEFAULT_CONFIG, fig.TEST_MIXED_METADATA, 'standard_pipeline')
+            cls.runs = db.get_sequencing_run_locations(fig.TEST_MIXED_METADATA, fig.TEST_USER_0)
+        cls.analysis = Analysis(cls.queue, fig.TEST_USER_0, cls.analysis_code, fig.TEST_CODE_MIXED,
+                                'standard_pipeline', 'default', 'test_init', cls.config, True, cls.runs, False, threads=2)
 
     def test_a_upload_sequencing_run(self):
         """ Upload sequencing run for analysis """
@@ -49,12 +54,40 @@ class AnalysisTests(TestCase):
 
     def test_c_analysis_class(self):
         """ Test the analysis object """
-        with Database(owner=fig.TEST_USER_0, testing=True) as db:
-            self.runs = db.get_sequencing_run_locations(fig.TEST_MIXED_METADATA, fig.TEST_USER_0)
-        analysis = Analysis(self.queue, fig.TEST_USER_0, self.analysis_code, fig.TEST_CODE_MIXED,
-                            'standard_pipeline', 'default', 'test_init', self.config, True, self.runs, False)
-        analysis.run()
+        self.analysis.run()
 
-        info = analysis.get_info()
+        info = self.analysis.get_info()
         self.assertEquals(info['owner'], fig.TEST_USER_0)
         self.assertEquals(info['analysis_code'], self.analysis_code)
+
+    def test_d_analysis_utils(self):
+        """ Test that adding files to the tool object works properly """
+        Logger.info(str(self.analysis))
+        assert 'testfile' not in self.analysis.doc.files.keys()
+        self.analysis.add_path('testfile', '.txt')
+        assert 'testfile' in self.analysis.doc.files.keys()
+
+    def test_e_get_job_params(self):
+        params = self.analysis.get_job_params()
+        assert params['nodes'] == 2
+
+    def test_f_get_files(self):
+        """ Test getting file locations """
+        return True
+
+    def test_g_missing_file(self):
+        """ Test that an appropriate error will be raised if a file doesn't exist on disk """
+        files = self.analysis.doc.files
+        # Add a nonexistent file
+        files['fakefile'] = '/fake/dir'
+        self.analysis.update_doc(files=files)
+        with self.assertRaises(err.MissingFileError):
+            self.analysis.get_file('fakefile', check=True)
+        del files['fakefile']
+        self.analysis.update_doc(files=files)
+
+    def test_h_update_doc(self):
+        self.assertEqual(self.analysis.doc.study_name, 'TEST_MIXED_17')
+        self.analysis.update_doc(study_name='Test_Update')
+        self.assertEqual(self.analysis.doc.study_name, 'Test_Update')
+
