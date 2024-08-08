@@ -1,0 +1,19 @@
+sampling_depth: 1000
+sequencing_runs:
+  - TEST_RUN
+  - TEST_DUAL_RUN
+metadata:
+  - Sex
+  - Group
+alpha_metrics:
+  - faith_pd
+  - observed_features
+beta_metrics:
+  - bray_curtis
+  - unweighted_unifrac
+taxa_levels:
+  - 2
+  - 5
+  - 6
+  - 7
+taxanomic_database: test
