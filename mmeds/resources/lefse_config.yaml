@@ -1,3 +1,7 @@
-class: class_col
-subclass: subclass_col
-subjects: subjects_col
+tables:
+  - taxa_table_L6
+classes:
+  - Sex
+  - Group
+subclasses:
+  - Group

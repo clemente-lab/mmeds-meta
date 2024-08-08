@@ -4,7 +4,6 @@ import mmeds.config as fig
 from time import sleep
 
 from mmeds.util import run_analysis, load_config, upload_sequencing_run_local
-from mmeds.summary import summarize_qiime
 from mmeds.spawn import Watcher
 from mmeds.logging import Logger
 from mmeds.tools.analysis import Analysis
@@ -24,9 +23,11 @@ class AnalysisTests(TestCase):
         self.watcher.connect()
         self.queue = self.watcher.get_queue()
         self.config = load_config(fig.DEFAULT_CONFIG, fig.TEST_MIXED_METADATA, 'standard_pipeline')
+        self.config_lefse = load_config(fig.DEFAULT_CONFIG_LEFSE, fig.TEST_MIXED_METADATA, 'lefse')
         self.analysis = []
         with Database(owner=fig.TEST_USER_0, testing=True) as db:
-            self.analysis_code = db.create_access_code()
+            self.analysis_code_0 = db.create_access_code()
+            self.analysis_code_1 = db.create_access_code()
 
     def test_a_upload_sequencing_run(self):
         """ Upload sequencing run for analysis """
@@ -41,30 +42,36 @@ class AnalysisTests(TestCase):
         """ Test analysis object """
         with Database(owner=fig.TEST_USER_0, testing=True) as db:
             self.runs = db.get_sequencing_run_locations(fig.TEST_MIXED_METADATA, fig.TEST_USER_0)
-        self.analysis += [Analysis(self.queue, fig.TEST_USER_0, self.analysis_code, fig.TEST_CODE_MIXED,
+        self.analysis += [Analysis(self.queue, fig.TEST_USER_0, self.analysis_code_0, fig.TEST_CODE_MIXED,
                                 'standard_pipeline', 'default', 'test_init', self.config, True, self.runs, False, threads=2)]
+        self.analysis += [Analysis(self.queue, fig.TEST_USER_0, self.analysis_code_1, fig.TEST_CODE_MIXED,
+                                'lefse', 'default', 'test_lefse', self.config_lefse, True, {}, False, threads=2)]
 
 
-    def test_b_standard_pipeline(self):
+    def test_c_standard_pipeline(self):
         """ Test running a standard analysis """
         # run_analysis() executes analyses synchronously rather than submitting as a job
         run_analysis(self.test_study, 'standard_pipeline', testing=True)
-        """
-        summarize_qiime(f'{self.test_study}/Qiime2_0', 'standard_pipeline', testing=True)
 
-         check for summary pdf, also gets uploaded as an artifact in github actions for inspection
-        pdf_output = Path(f'{self.test_study}/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.ipynb')
-        self.assertTrue(pdf_output.exists())
-        """
-
-    def test_c_analysis_class(self):
-        """ Test the analysis object """
+    def test_d_analysis_class(self):
+        """ Test the analysis objects """
         analysis = self.analysis[0]
         analysis.run()
 
         info = analysis.get_info()
+        table = Path(info['path']) / 'tables' / 'taxa_table_L6.qza'
+        table.touch()
+
         self.assertEquals(info['owner'], fig.TEST_USER_0)
-        self.assertEquals(info['analysis_code'], self.analysis_code)
+        self.assertEquals(info['analysis_code'], self.analysis_code_0)
+
+    def test_e_lefse_analysis_class(self):
+        lefse_analysis = self.analysis[1]
+        lefse_analysis.run()
+
+        info = lefse_analysis.get_info()
+        self.assertEquals(info['owner'], fig.TEST_USER_0)
+        self.assertEquals(info['analysis_code'], self.analysis_code_1)
 
     def test_d_analysis_utils(self):
         """ Test that adding files to the tool object works properly """

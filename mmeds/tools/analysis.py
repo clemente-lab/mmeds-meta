@@ -227,32 +227,6 @@ class Analysis(mp.Process):
         with open(snakefile, "wt") as f:
             f.write(workflow_text)
 
-    def summary(self):
-        """ Setup script to create summary. """
-        self.add_path('summary')
-        if self.testing:
-            self.jobtext.append('module load mmeds-stable;')
-        else:
-            self.jobtext.append(
-                'conda deactivate; source activate /hpc/users/mmedsadmin/.admin_modules/jupyter; ml texlive/2018')
-        # Make sure the kernel is up to date
-        self.jobtext.append('python -m ipykernel install --user --name jupyter --display-name "Jupyter"')
-        cmd = [
-            'summarize.py ',
-            '--path "{}"'.format(self.run_dir),
-            '--workflow_type {};'.format(self.doc.workflow_type)
-        ]
-        self.jobtext.append(' '.join(cmd))
-
-    def zip(self):
-        """
-        Create a zip of the whole analyis directory.
-        This way a user can download the whole thing
-        if they are so inclined.
-        """
-        cmd = f'zip -r {self.run_dir}.zip {self.run_dir};'
-        self.jobtext.append(cmd)
-
     def copy_taxonomic_database(self):
         """ Copy in the database (e.g. greengenes, silva) to be used for classification"""
         database_file = TAXONOMIC_DATABASES[self.config["taxonomic_database"]]
@@ -372,10 +346,6 @@ class Analysis(mp.Process):
         self.jobtext.append("snakemake --rulegraph | dot -Tpdf >| snakemake_rulegraph.pdf")
         self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs} --default-resource tmpdir=\"tmp_dir\"")
         self.jobtext.append('echo "MMEDS_FINISHED"')
-
-        Logger.debug("adding summary")
-        if summary:
-            self.summary()
 
         submitfile = self.path / 'submitfile'
         self.add_path(submitfile, '.sh', 'submitfile')
