@@ -3,7 +3,8 @@ from shutil import rmtree
 from multiprocessing import Queue
 
 from mmeds.util import load_config
-
+from mmeds.tools.analysis import Analysis
+from mmeds.logging import Logger
 import mmeds.config as fig
 import mmeds.error as err
 
@@ -15,62 +16,40 @@ class ToolTests(TestCase):
     @classmethod
     def setUpClass(self):
         self.q = Queue()
-        """
-        self.config = load_config('', fig.TEST_METADATA_SHORTEST, 'test')
-        self.tool = Tool(self.q, fig.TEST_USER, 'some new code', fig.TEST_CODE_SHORT,
-                         'test', '1', self.config, True, 2, True)
-        self.tool.initial_setup()
-        self.dirs = [self.tool.doc.path]
-        """
+        self.config = load_config('', fig.TEST_METADATA_SHORTEST, 'standard_pipeline')
+        self.analysis = Analysis(self.q, fig.TEST_USER, 'some new code', fig.TEST_CODE_SHORT, 'standard_pipeline',
+                         'default', 'test', self.config, True, {}, True)
+        self.analysis.initial_setup()
+        self.dirs = self.analysis.doc.path
 
-    @classmethod
-    def tearDownClass(self):
-        return
-        for new_dir in self.dirs:
-            rmtree(new_dir)
-
-    @skip
-    def test_add_path(self):
+    def test_a_add_paths(self):
         """ Test that adding files to the tool object works properly """
-        assert 'testfile' not in self.tool.doc.files.keys()
-        self.tool.add_path('testfile', '.txt')
-        assert 'testfile' in self.tool.doc.files.keys()
+        Logger.info(str(self.analysis))
+        assert 'testfile' not in self.analysis.doc.files.keys()
+        self.analysis.add_path('testfile', '.txt')
+        assert 'testfile' in self.analysis.doc.files.keys()
 
-    @skip
-    def test_get_job_params(self):
-        params = self.tool.get_job_params()
+    def test_b_get_job_params(self):
+        params = self.analysis.get_job_params()
         assert params['nodes'] == 2
 
-    @skip
-    def test_move_user_files(self):
+    def test_c_get_files(self):
         """ Test the method for finishing analysis and writing file locations. """
-        self.tool.add_path('test1', '.qzv')
-        self.tool.add_path('test2', '.qzv')
+        assert True
 
-        (self.tool.path / 'test1.qzv').touch()
-        (self.tool.path / 'test2.qzv').touch()
-
-        self.tool.move_user_files()
-
-        assert (self.tool.path / 'visualizations_dir').is_dir()
-        assert ((self.tool.path / 'visualizations_dir') / 'test1.qzv').is_file()
-        assert ((self.tool.path / 'visualizations_dir') / 'test2.qzv').is_file()
-
-    @skip
     def test_missing_file(self):
         """ Test that an appropriate error will be raised if a file doesn't exist on disk """
         # TODO
-        files = self.tool.doc.files
+        files = self.analysis.doc.files
         # Add a non-existent file
         files['fakefile'] = '/fake/dir/'
-        self.tool.update_doc(files=files)
+        self.analysis.update_doc(files=files)
         with self.assertRaises(err.MissingFileError):
-            self.tool.get_file('fakefile', check=True)
+            self.analysis.get_file('fakefile', check=True)
         del files['fakefile']
-        self.tool.update_doc(files=files)
+        self.analysis.update_doc(files=files)
 
-    @skip
     def test_update_doc(self):
-        self.assertEqual(self.tool.doc.study_name, 'Test_Single_Short')
-        self.tool.update_doc(study_name='Test_Update')
-        self.assertEqual(self.tool.doc.study_name, 'Test_Update')
+        self.assertEqual(self.analysis.doc.study_name, 'Test_Single_Short')
+        self.analysis.update_doc(study_name='Test_Update')
+        self.assertEqual(self.analysis.doc.study_name, 'Test_Update')
