@@ -82,7 +82,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install packages
-        run: pip install -U pip; sudo apt-get install tidy environment-modules coverage -y; pip install cryptography; pip install coverage;
+        run: pip install -U pip; sudo apt-get install tidy environment-modules -y; pip install cryptography; pip install coverage;
 
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=." >> $GITHUB_ENV
