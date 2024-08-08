@@ -268,7 +268,7 @@ HTML_ARGS = {
 
 
 WORKFLOWS = {
-    "standard_pipeline": {
+    "core_pipeline_taxonomic": {
         "parameters": [
             'sampling_depth',
             'metadata',
@@ -350,7 +350,7 @@ if not LOG_DIR.exists():
 
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = {
-    'standard_pipeline': [
+    'core_pipeline_taxonomic': [
         'sampling_depth',
         'metadata',
         'alpha_metrics',

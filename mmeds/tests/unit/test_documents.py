@@ -30,7 +30,7 @@ class DocumentsTests(TestCase):
 
     def create_from_study(self):
         """ Test creating a document """
-        config = util.load_config(None, fig.TEST_METADATA, 'standard_pipeline')
+        config = util.load_config(None, fig.TEST_METADATA, 'core_pipeline_taxonomic')
         sd = docs.MMEDSDoc.objects(access_code=self.test_code).first()
         ad = sd.generate_MMEDSDoc('testDocument', 'qiime2', 'DADA2', config, 'test_documents')
         self.assertEqual(Path(sd.path), Path(ad.path).parent)

@@ -37,9 +37,9 @@ class SnakemakeTests(TestCase):
         return 0
 
 
-    def test_a_standard_pipeline(self):
+    def test_a_core_pipeline_taxonomic(self):
         """ Test snakemake standard pipeline analysis """
-        result = self.run_snakemake(Path(fig.TEST_SNAKEMAKE_DIR) / "standard_pipeline")
+        result = self.run_snakemake(Path(fig.TEST_SNAKEMAKE_DIR) / "core_pipeline_taxonomic")
         self.assertEquals(result, 0)
 
 
