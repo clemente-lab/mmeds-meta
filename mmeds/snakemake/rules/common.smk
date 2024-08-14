@@ -37,7 +37,7 @@ def pairwise_splits(wildcards, tool, vars):
                     splits += expand("results/{var}/lefse_plot.{feature_table}.{var}.{subclass}.pdf",
                                     feature_table=tables, var=var, subclass=subclasses)
             elif tool == "ancombc":
-                splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}.qzv",
+                splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}-{var}-clean.{var}.qzv",
                                 feature_table=tables, var=var)
             continue
                 

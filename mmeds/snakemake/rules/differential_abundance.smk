@@ -1,6 +1,6 @@
 rule differential_abundance_ancom_bc:
     input:
-        feature_table = "tables/{table}.qza",
+        feature_table = "tables/{var}/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
         diffs = "differential_abundance/{var}/ancom-bc_diffs.{table}.{var}.qza",
