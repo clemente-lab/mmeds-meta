@@ -3,8 +3,8 @@ rule differential_abundance_ancom_bc:
         feature_table = "tables/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        diffs = "differential_abundance/{var}/ancom-bc_{table}_{var}_diffs.qza",
-        barplot = "differential_abundance/{var}/ancom-bc_{table}_{var}_barplot.qzv"
+        diffs = "differential_abundance/{var}/ancom-bc_diffs.{table}.{var}.qza",
+        barplot = "differential_abundance/{var}/ancom-bc_barplot.{table}.{var}.qzv"
     conda:
         "qiime2-2023.9"
     shell:

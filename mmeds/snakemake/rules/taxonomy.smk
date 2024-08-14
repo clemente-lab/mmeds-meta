@@ -68,7 +68,7 @@ rule taxonomy_collapse:
         feature_table = "tables/asv_table.qza",
         taxonomy = "tables/taxonomy.qza"
     output:
-        "tables/taxa_table_L{level}.qza"
+        "tables/taxa_table_L{level,[1-8]}.qza"
     conda:
         "qiime2-2020.8.0"
     shell:
