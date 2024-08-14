@@ -24,6 +24,9 @@ def pairwise_splits(wildcards, tool, vars):
         if len(categories) < 2:
             continue
 
+        if tool == "ancombc" and len(categories) > 8:
+            continue
+
         if len(categories) < 3:
             if not sufficient_values(value_counts, categories[0], categories[1]):
                 continue
