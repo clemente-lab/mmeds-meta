@@ -43,13 +43,13 @@ def pairwise_splits(wildcards, tool, vars):
                 if not sufficient_values(value_counts, categories[i], categories[j]):
                     continue
                 if tool == "lefse":
-                    splits += expand("results/{var}/lefse_plot.{feature_table}.{var}_{cat1}_or_{cat2}.{var}.NA.pdf",
+                    splits += expand("results/{var}/lefse_plot.{feature_table}.{var}-{cat1}-or-{cat2}.{var}.NA.pdf",
                                      feature_table=tables, var=var, cat1=categories[i], cat2=categories[j])
                     if subclasses:
-                        splits += expand("results/{var}/lefse_plot.{feature_table}.{var}_{cat1}_or_{cat2}.{var}.{subclass}.pdf",
+                        splits += expand("results/{var}/lefse_plot.{feature_table}.{var}-{cat1}-or-{cat2}.{var}.{subclass}.pdf",
                                          feature_table=tables, var=var, cat1=categories[i], cat2=categories[j], subclass=subclasses)
                 elif tool == "ancombc":
-                    splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}_{cat1}_or_{cat2}.{var}.qzv",
+                    splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}-{cat1}-or-{cat2}.{var}.qzv",
                                      feature_table=tables, var=var, cat1=categories[i], cat2=categories[j])
     return splits
 

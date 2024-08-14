@@ -18,7 +18,7 @@ rule filter_table_to_two_classes:
         feature_table = "tables/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "tables/{table}.{category}_{class1}_or_{class2}.qza"
+        "tables/{table}.{category}-{class1}-or-{class2}.qza"
     conda:
         "qiime2-2020.8.0"
     shell:
