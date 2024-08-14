@@ -3,6 +3,8 @@ rule extract_feature_table_tsv:
         "tables/{table}.qza"
     output:
         "tables/{table}.tsv"
+    wildcard_constraints:
+        table = "[^/]+"
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -32,9 +34,28 @@ rule extract_feature_table_tsv_class:
         rm -f tables/{wildcards.table}.biom
         """
 
-rule format_metadata_qiime_to_lefse:
+rule format_metadata_qiime_to_lefse_class:
     input:
         feature_table = "tables/{class}/{table}.tsv",
+        mapping_file = "tables/qiime_mapping_file.tsv"
+    output:
+        "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
+    params:
+        subclass = lefse_get_subclass
+    conda:
+        "mmeds_test"
+    shell:
+        "format_lefse.py "
+        "-i {input.feature_table} "
+        "-m {input.mapping_file} "
+        "-c {wildcards.class} "
+        "-s {params.subclass} "
+        "-u HostSubjectId "
+        "-o {output}"
+
+rule format_metadata_qiime_to_lefse:
+    input:
+        feature_table = "tables/{table}.tsv",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
         "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
