@@ -8,7 +8,7 @@ rule diversity_core_metrics_phylogenetic:
         rooted_tree = "tables/rooted_tree.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "diversity/core_metrics_results"
+        directory("diversity/core_metrics_results")
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -26,7 +26,7 @@ rule diversity_core_metrics:
         feature_table = "tables/asv_table.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "diversity/core_metrics_results"
+        directory("diversity/core_metrics_results")
     conda:
         "qiime2-2020.8.0"
     shell:
