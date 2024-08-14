@@ -70,9 +70,9 @@ rule build_phylogenetic_tree:
         feature_table = "tables/asv_table.qza",
         rep_seqs = "tables/rep_seqs_table.qza"
     output:
-        alignment = temp("tables/alignment.qza")
-        masked_alignment = temp("tables/masked_alignment.qza")
-        unrooted_tree = temp("tables/unrooted_tree.qza")
+        alignment = temp("tables/alignment.qza"),
+        masked_alignment = temp("tables/masked_alignment.qza"),
+        unrooted_tree = temp("tables/unrooted_tree.qza"),
         feature_table_viz = "tables/asv_table_viz.qzv",
         rooted_tree = "tables/rooted_tree.qza"
     conda:
