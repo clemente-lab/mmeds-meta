@@ -40,5 +40,5 @@ rule filter_nans:
         "qiime feature-table filter-samples "
         "--i-table {input.feature_table} "
         "--m-metadata-file {input.mapping_file} "
-        "--p-where \"[wildcards.category]!=\'nan\'\" "
+        "--p-where \"{wildcards.category}!=\'nan\'\" "
         "--o-filtered-table {output}"
