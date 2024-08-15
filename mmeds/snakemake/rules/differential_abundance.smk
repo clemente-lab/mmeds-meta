@@ -1,15 +1,15 @@
 rule differential_abundance_ancom_bc:
     input:
-        feature_table = "tables/{var}/{table}.qza",
+        feature_table = "tables/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        diffs = "differential_abundance/{var}/ancom-bc_diffs.{table}.{var}.qza",
-        barplot = "differential_abundance/{var}/ancom-bc_barplot.{table}.{var}.qzv"
+        diffs = "differential_abundance/{var}/ancom-bc_diffs.{table}.{var}::{cat}.qza",
+        barplot = "differential_abundance/{var}/ancom-bc_barplot.{table}.{var}::{cat}.qzv"
     conda:
         "qiime2-2023.9"
     shell:
         """
-        qiime composition ancombc --i-table {input.feature_table} --m-metadata-file {input.mapping_file} --p-formula {wildcards.var} --o-differentials {output.diffs}
+        qiime composition ancombc --i-table {input.feature_table} --m-metadata-file {input.mapping_file} --p-formula {wildcards.var} --p-reference-levels {wildcards.var}::{wildcards.cat} --o-differentials {output.diffs}
         qiime composition da-barplot --i-data {output.diffs} --p-significance-threshold 0.05 --p-label-limit 2000 --o-visualization {output.barplot}
         """
 

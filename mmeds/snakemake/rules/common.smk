@@ -24,9 +24,6 @@ def pairwise_splits(wildcards, tool, vars):
         if len(categories) < 2:
             continue
 
-        if tool == "ancombc" and len(categories) > 8:
-            continue
-
         if len(categories) < 3:
             if not sufficient_values(value_counts, categories[0], categories[1]):
                 continue
@@ -37,11 +34,14 @@ def pairwise_splits(wildcards, tool, vars):
                     splits += expand("results/{var}/lefse_plot.{feature_table}.{var}.{subclass}.pdf",
                                     feature_table=tables, var=var, subclass=subclasses)
             elif tool == "ancombc":
-                splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}-{var}-clean.{var}.qzv",
-                                feature_table=tables, var=var)
+                splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}::{cat}.qzv",
+                                feature_table=tables, var=var, cat=categories[0])
             continue
                 
         for i in range(len(categories)-1):
+            if tool == "ancombc":
+                splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}::{cat}.qzv",
+                                 feature_table=tables, var=var, cat=categories[i])
             for j in range(i+1, len(categories)):
                 if not sufficient_values(value_counts, categories[i], categories[j]):
                     continue
@@ -51,9 +51,6 @@ def pairwise_splits(wildcards, tool, vars):
                     if subclasses:
                         splits += expand("results/{var}/lefse_plot.{feature_table}.{var}-{cat1}-or-{cat2}.{var}.{subclass}.pdf",
                                          feature_table=tables, var=var, cat1=categories[i], cat2=categories[j], subclass=subclasses)
-                elif tool == "ancombc":
-                    splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}-{cat1}-or-{cat2}.{var}.qzv",
-                                     feature_table=tables, var=var, cat1=categories[i], cat2=categories[j])
     return splits
 
 def ancombc_splits(wildcards):
