@@ -75,8 +75,6 @@ rule build_phylogenetic_tree:
         unrooted_tree = temp("tables/unrooted_tree.qza"),
         feature_table_viz = "tables/asv_table_viz.qzv",
         rooted_tree = "tables/rooted_tree.qza"
-    resources:
-        mem_mb = 5000
     conda:
         "qiime2-2020.8.0"
     shell:
