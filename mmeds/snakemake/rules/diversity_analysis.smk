@@ -89,6 +89,8 @@ rule beta_diversity_PERMANOVA_test:
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
         "diversity/PERMANOVA/{var}/{metric}_{var}_PERMANOVA.qzv",
+    conda:
+        "qiime2-2020.8.0"
     shell:
         """
         qiime diversity beta-group-significance --i-distance-matrix {input.div}/{wildcards.metric}_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output}
