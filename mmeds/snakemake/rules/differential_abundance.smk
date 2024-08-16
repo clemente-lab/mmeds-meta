@@ -7,6 +7,8 @@ rule differential_abundance_ancom_bc:
         barplot = "differential_abundance/{var}/ancom-bc_barplot.{table}.{var}::{cat}.qzv"
     conda:
         "qiime2-2023.9"
+    resources:
+        mem_mb = 5000
     shell:
         """
         qiime composition ancombc --i-table {input.feature_table} --m-metadata-file {input.mapping_file} --p-formula {wildcards.var} --p-reference-levels {wildcards.var}::{wildcards.cat} --o-differentials {output.diffs}
