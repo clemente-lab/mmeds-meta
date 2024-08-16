@@ -9,8 +9,8 @@ rule differential_abundance_ancom_bc:
         "qiime2-2023.9"
     shell:
         """
-        qiime composition ancombc --i-table {input.feature_table} --m-metadata-file {input.mapping_file} --p-formula {wildcards.var} --p-reference-levels {wildcards.var}::{wildcards.cat} --o-differentials {output.diffs}
-        qiime composition da-barplot --i-data {output.diffs} --p-significance-threshold 0.05 --p-label-limit 2000 --o-visualization {output.barplot}
+        qiime composition ancombc --verbose --i-table {input.feature_table} --m-metadata-file {input.mapping_file} --p-formula {wildcards.var} --p-reference-levels {wildcards.var}::{wildcards.cat} --o-differentials {output.diffs}
+        qiime composition da-barplot --verbose --i-data {output.diffs} --p-significance-threshold 0.05 --p-label-limit 2000 --o-visualization {output.barplot}
         """
 
 rule differential_abundance_lefse:
