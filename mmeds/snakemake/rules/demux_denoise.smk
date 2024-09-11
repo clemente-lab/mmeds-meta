@@ -22,21 +22,23 @@ rule demux_dual_barcodes_pheniqs:
     input:
         "section_{sequencing_run}/pheniqs_config.json"
     output:
-        "section_{sequencing_run}/pheniqs_output"
+        directory("section_{sequencing_run}/pheniqs_output")
     conda:
         "pheniqs"
     shell:
+        "mkdir {output}; "
         "pheniqs mux --config {input}"
 
 rule strip_error_barcodes:
     input:
-        dir = "section_{sequencing_run}/pheniqs_output",
+        dir = directory("section_{sequencing_run}/pheniqs_output"),
         mapping_file = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv",
     output:
-        dir = "section_{sequencing_run}/stripped_output"
+        dir = directory("section_{sequencing_run}/stripped_output")
     conda:
-        "mmeds"
+        "mmeds_test"
     shell:
+        "mkdir {output}; "
         "strip_error_barcodes.py "
         "--num-allowed-errors 1 "
         "--m-mapping-file {input.mapping_file} "

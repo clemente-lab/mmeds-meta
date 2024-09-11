@@ -54,7 +54,7 @@ rule make_pheniqs_config:
     output:
         "section_{sequencing_run}/pheniqs_config.json",
     conda:
-        "mmeds"
+        "mmeds_test"
     shell:
         "make_pheniqs_config.py "
         "--reads-forward {input.forward_reads} "
