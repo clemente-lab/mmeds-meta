@@ -31,7 +31,7 @@ rule demux_dual_barcodes_pheniqs:
 
 rule strip_error_barcodes:
     input:
-        dir = directory("section_{sequencing_run}/pheniqs_output"),
+        dir = "section_{sequencing_run}/pheniqs_output",
         mapping_file = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv",
     output:
         dir = directory("section_{sequencing_run}/stripped_output")

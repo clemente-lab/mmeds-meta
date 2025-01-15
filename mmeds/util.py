@@ -1704,6 +1704,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     # Store metadata by ID, allowing for any subset of samples from the metadata
     categories = {}
     for i, cell in enumerate(mdf['#SampleID']['#q2:types']):
+        cell = str(cell)
         if cell not in categories:
             categories[cell] = {}
         categories[cell][metadata_column_class] = mdf[metadata_column_class]['categorical'][i]
@@ -1725,6 +1726,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     t = [metadata_column_class]
     to_drop = []
     for i, cell in enumerate(path_df.loc[0]):
+        cell = str(cell)
         if i == 0:
             continue
         if pd.isna(categories[cell][metadata_column_class]):

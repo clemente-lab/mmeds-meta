@@ -11,7 +11,7 @@ def pairwise_splits(wildcards, tool, vars):
     else:
         tables = [f"taxa_table_L{x}" for x in config["taxa_levels"]]
 
-    subclasses = None
+    subclasses = False
     if tool == "lefse" and "subclasses" in config and config["subclasses"]:
         subclasses = deepcopy(config["subclasses"])
 
