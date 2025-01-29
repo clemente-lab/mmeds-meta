@@ -37,49 +37,53 @@ bkg <-
 
 colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 
-data <-read.table(args$results_table, header = FALSE, sep = "\t")
-names(data) <- c("RawTaxa", "X", "Group", "LDA", "pval")
+data <-read.table(args$results_table, header = T, sep = "\t")
 
 plot_data <- subset(data, !is.na(data$LDA))
-taxa_strs <- list()
-for (raw in plot_data$RawTaxa) {
-    split <- as.character(unlist(str_split(raw, "\\.")))
-    i <- length(split)
-    blanks <- 0
-    while (i > 0) {
-        if (split[i] == "__" | str_sub(split[i], start=-2) == "__") {
-            blanks <- blanks + 1
-            split <- split[1:i-1]
+if (nrow(plot_data) == 0) {
+    pdf(args$output_file, height=5, width=5)
+    plot.new()
+    text(0.45, 0.5, "No Significant Results")
+    dev.off()
+} else {
+    taxa_strs <- list()
+    for (raw in plot_data$RawTaxa) {
+        split <- as.character(unlist(str_split(raw, "\\.")))
+        i <- length(split)
+        blanks <- 0
+        while (i > 0) {
+            if (split[i] == "__" | str_sub(split[i], start=-2) == "__") {
+                blanks <- blanks + 1
+                split <- split[1:i-1]
+            }
+            else {
+                break
+            }
+            i <- i - 1
+        }
+
+        if (length(split) == 1) {
+            taxa_str <- split[1]
         }
         else {
-            break
+            taxa_str <- paste(split[length(split)-1], split[length(split)])
         }
-        i <- i - 1
-    }
 
-    if (length(split) == 1) {
-        taxa_str <- split[1]
-    }
-    else {
-        taxa_str <- paste(split[length(split)-1], split[length(split)])
-    }
-
-    if (blanks > 0) {
-        for (i in 1:blanks) {
-            taxa_str <- paste(taxa_str, "__uncl.", sep="")
+        if (blanks > 0) {
+            for (i in 1:blanks) {
+                taxa_str <- paste(taxa_str, "__uncl.", sep="")
+            }
         }
+        taxa_strs <- append(taxa_strs, taxa_str)
     }
-    taxa_strs <- append(taxa_strs, taxa_str)
-}
 
-plot_data$Taxa <- as.character(taxa_strs)
-plot_data <- plot_data[order(plot_data$Group),]
-if (!args$strict) {
-    plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA
-}
-plot_data <- plot_data[!duplicated(plot_data$Taxa),]
+    plot_data$Taxa <- as.character(taxa_strs)
+    plot_data <- plot_data[order(plot_data$Group),]
+    if (!args$strict) {
+        plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA
+    }
+    plot_data <- plot_data[!duplicated(plot_data$Taxa),]
 
-if (nrow(plot_data) > 0) {
     plot_width <- (max(nchar(plot_data$Taxa)) + max(nchar(plot_data$Group)))*30 + 1000
     plot_height <- nrow(plot_data)*50 + 400
     p <- ggbarplot(plot_data, x="Taxa", y="LDA", fill="Group", width= 1, color = "white", sort.val = "asc", sort.by.groups=TRUE) + 
@@ -87,7 +91,4 @@ if (nrow(plot_data) > 0) {
         scale_fill_manual(values=colors)
     plot(p)
     ggsave(args$output_file, width=plot_width, height=plot_height, units = 'px', limitsize = FALSE)
-} else {
-    pdf(args$output_file)
-    dev.off()
 }
