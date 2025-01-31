@@ -40,6 +40,7 @@ colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 data <-read.table(args$results_table, header = T, sep = "\t")
 
 plot_data <- subset(data, !is.na(data$LDA))
+plot_data$Group <- factor(plot_data$Group)
 if (nrow(plot_data) == 0) {
     pdf(args$output_file, height=5, width=5)
     plot.new()
