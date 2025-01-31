@@ -80,7 +80,7 @@ if (nrow(plot_data) == 0) {
 
     plot_data$Taxa <- as.character(taxa_strs)
     plot_data <- plot_data[order(plot_data$Group),]
-    if (!args$strict) {
+    if (!args$strict & length(unique(plot_data$Group)) > 1) {
         plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA
     }
     plot_data <- plot_data[!duplicated(plot_data$Taxa),]
