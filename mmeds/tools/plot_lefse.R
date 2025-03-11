@@ -4,6 +4,7 @@ parser <- arg_parser("parse arguments", hide.opts=TRUE)
 parser <- add_argument(parser, "results-table", nargs=1, help="LEfSe Results Table")
 parser <- add_argument(parser, "output-file", nargs=1, help="LEfSe plot output")
 parser <- add_argument(parser, "--strict", flag=TRUE, help="Analysis run strictly on more than two classes, allow for this")
+parser <- add_argument(parser, "--no-string-clean", flag=TRUE, help="If set, no processing will be done on row labels")
 
 args <- parse_args(parser)
 
@@ -12,6 +13,10 @@ library(dplyr)
 library(tidyverse)
 library(ggpubr)
 library(stringr)
+library(this.path)
+
+# MMEDS R utils
+source(paste(this.dir(), "R_utils.R", sep="/"))
 
 # Prevents Rplots.pdf being generated in working dir
 pdf(NULL)
@@ -47,38 +52,11 @@ if (nrow(plot_data) == 0) {
     dev.off()
 } else {
     plot_data$Group <- as.character(plot_data$Group)
-    taxa_strs <- list()
-    for (raw in plot_data$RawTaxa) {
-        split <- as.character(unlist(str_split(raw, "\\.")))
-        i <- length(split)
-        blanks <- 0
-        while (i > 0) {
-            if (split[i] == "__" | str_sub(split[i], start=-2) == "__") {
-                blanks <- blanks + 1
-                split <- split[1:i-1]
-            }
-            else {
-                break
-            }
-            i <- i - 1
-        }
-
-        if (length(split) == 1) {
-            taxa_str <- split[1]
-        }
-        else {
-            taxa_str <- paste(split[length(split)-1], split[length(split)])
-        }
-
-        if (blanks > 0) {
-            for (i in 1:blanks) {
-                taxa_str <- paste(taxa_str, "__uncl.", sep="")
-            }
-        }
-        taxa_strs <- append(taxa_strs, taxa_str)
+    if (args$no_string_clean) {
+        plot_data$Taxa <- plot_data$RawTaxa
+    } else {
+        plot_data$Taxa <- clean_taxa_string(plot_data$RawTaxa)
     }
-
-    plot_data$Taxa <- as.character(taxa_strs)
     plot_data <- plot_data[order(plot_data$Group),]
     if (!args$strict & length(unique(plot_data$Group)) > 1) {
         plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA

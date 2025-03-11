@@ -1764,6 +1764,48 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
 
 
+def format_table_to_humann(i_table, metadata_file, metadata_columns, o_table, remove_nans=False, add_codes=False):
+    """ Converts a feature table into a format that can be read by humann_barplot """
+    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False, dtype='string')
+    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
+
+    # Store metadata by ID, allowing for any subset of samples from the metadata
+    categories = {}
+    for i, cell in enumerate(mdf['#SampleID']['#q2:types']):
+        cell = str(cell)
+        categories[cell] = {}
+        for col in metadata_columns:
+            categories[cell][col] = mdf[col]['categorical'][i]
+
+    # For BRITE Hierarchical format, need to generate a code for each unique pathway
+    if add_codes:
+        pathways = path_df[path_df.columns[0]]
+        coded_pathways = []
+        for p in pathways:
+            code_base = p.split("|")[0].split(";")[-1]
+            code = re.sub(r'[^0-9a-zA-Z]+', '-', code_base)
+            coded_pathways.append(f"{code}: {p}")
+        path_df[path_df.columns[0]] = coded_pathways
+
+    # Add each metadata column as a new row to feature table
+    to_drop = []
+    for col in metadata_columns:
+        new_row = [col]
+        for i, cell in enumerate(path_df.loc[0]):
+            if i == 0:
+                continue
+            if i not in to_drop and pd.isna(categories[cell][col]):
+                to_drop.append(i)
+            new_row.append(categories[cell][col])
+        new_row_df = pd.DataFrame(new_row).T
+        path_df = pd.concat([path_df[:1], new_row_df, path_df[1:]])
+        path_df.reset_index(inplace=True, drop=True)
+    # Remove samples with a nan in the added metadata
+    if remove_nans:
+        path_df = path_df.drop(columns=to_drop)
+    path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
+
+
 def concatenate_metadata_subsets(samples, paths):
     """ Create a full dataframe of metadata based on the subsets of several """
     # Create empty for concating

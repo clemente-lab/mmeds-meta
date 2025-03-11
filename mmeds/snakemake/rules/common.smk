@@ -42,6 +42,12 @@ def pairwise_splits(wildcards, tool, vars):
             if tool == "ancombc":
                 splits += expand("differential_abundance/{var}/ancom-bc_barplot.{feature_table}.{var}::{cat}.qzv",
                                  feature_table=tables, var=var, cat=categories[i])
+            else:
+                splits += expand("results/{var}/lefse_plot_strict.{feature_table}.{var}.NA.pdf",
+                                     feature_table=tables, var=var)
+                if subclasses:
+                    splits += expand("results/{var}/lefse_plot_strict.{feature_table}.{var}.{subclass}.pdf",
+                                         feature_table=tables, var=var, subclass=subclasses)
             for j in range(i+1, len(categories)):
                 if not sufficient_values(value_counts, categories[i], categories[j]):
                     continue

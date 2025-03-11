@@ -1,0 +1,7 @@
+tables:
+  - taxa_collapsed_table_L7
+classes:
+  - AD
+  - Group
+subclasses:
+  - Group
