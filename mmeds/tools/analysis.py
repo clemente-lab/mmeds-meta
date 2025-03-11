@@ -346,7 +346,7 @@ class Analysis(mp.Process):
             self.jobtext.append("extract_data_tables.py -i config_file.yaml -p tables")
         self.jobtext.append("snakemake --dag | dot -Tpdf >| snakemake_dag.pdf")
         self.jobtext.append("snakemake --rulegraph | dot -Tpdf >| snakemake_rulegraph.pdf")
-        self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs} --default-resource tmpdir=\"tmp_dir\"")
+        self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs} --default-resource tmpdir=\"tmp_dir\" -k")
         self.jobtext.append('echo "MMEDS_FINISHED"')
 
         submitfile = self.path / 'submitfile'
