@@ -277,14 +277,16 @@ WORKFLOWS = {
             'taxonomic_database',
             'sequencing_runs',
             'taxa_levels'
-        ]
+        ],
+        "extract_tables": False
     },
     "lefse": {
         "parameters": [
             "tables",
             "classes",
             "subclasses"
-        ]
+        ],
+        "extract_tables": True
     }
 }
 

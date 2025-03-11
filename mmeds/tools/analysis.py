@@ -342,6 +342,8 @@ class Analysis(mp.Process):
             self.jobtext.append("sleep 2")
         self.jobtext.append("ml anaconda3/2024.06")
         self.jobtext.append("conda activate mmeds_test")
+        if WORKFLOWS[self.workflow_type]["extract_tables"]:
+            self.jobtext.append("extract_data_tables.py -i config_file.yaml -p tables")
         self.jobtext.append("snakemake --dag | dot -Tpdf >| snakemake_dag.pdf")
         self.jobtext.append("snakemake --rulegraph | dot -Tpdf >| snakemake_rulegraph.pdf")
         self.jobtext.append(f"snakemake --use-conda --cores {self.num_jobs} --default-resource tmpdir=\"tmp_dir\"")
