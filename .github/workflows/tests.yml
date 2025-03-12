@@ -63,7 +63,7 @@ jobs:
         run: |
          coverage run --parallel-mode --concurrency=multiprocessing ./mmeds/tests/unit/test.py analysis demultiplex;
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
             name: summary-pdf-output
             path: /home/runner/mmeds_server_data/test_files/test_study/Qiime2_0/summary/mkstapylton@gmail.com-mattS-qiime2.pdf
