@@ -7,13 +7,17 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
     taxa_strs <- list()
     repeats <- list()
     for (raw in raw_taxa) {
-        # First, clean "." and "'" characters that will affect the splitting into components
+        # First check for strings that are special cases
+        is_virus <- grepl("virus", raw, ignore.case = T)
+        is_uncharacterized_spp <- grepl("sp\\.|str\\.", raw, ignore.case = T)
+        is_special_case <- ( is_virus | is_uncharacterized_spp )
+
+        # Clean "." and "'" characters that will affect the splitting into components
         raw <- str_replace_all(raw, "sp\\.", "sp")
         raw <- str_replace_all(raw, "str\\.", "str")
         raw <- str_replace_all(raw, "'", "")
 
         # Check if the string contains a viral annotation
-        is_virus <- grepl("virus", raw, ignore.case = T)
 
         # Split the string components, which may be delimited by ".", "|", or ";"
         split <- as.character(unlist(str_split(raw, "\\.|\\||\\;")))
@@ -40,7 +44,7 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
         # Split the most detailed string component further into its sub-levels
         lvl_split <- as.character(unlist(str_split(split[length(split)], "_")))
         i <- length(lvl_split)
-        if (strict & !is_virus) {
+        if (strict & !is_special_case) {
             # Running strictly, remove more
             while(i > 0) {
                 # Remove numeric components or short modifiers to species annotations
