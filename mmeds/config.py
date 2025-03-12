@@ -282,6 +282,7 @@ WORKFLOWS = {
     },
     "lefse": {
         "parameters": [
+            "clean_strings",
             "tables",
             "classes",
             "subclasses"

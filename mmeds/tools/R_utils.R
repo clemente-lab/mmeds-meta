@@ -12,6 +12,9 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
         raw <- str_replace_all(raw, "str\\.", "str")
         raw <- str_replace_all(raw, "'", "")
 
+        # Check if the string contains a viral annotation
+        is_virus <- grepl("virus", raw, ignore.case = T)
+
         # Split the string components, which may be delimited by ".", "|", or ";"
         split <- as.character(unlist(str_split(raw, "\\.|\\||\\;")))
         i <- length(split)
@@ -37,7 +40,7 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
         # Split the most detailed string component further into its sub-levels
         lvl_split <- as.character(unlist(str_split(split[length(split)], "_")))
         i <- length(lvl_split)
-        if (strict) {
+        if (strict & !is_virus) {
             # Running strictly, remove more
             while(i > 0) {
                 # Remove numeric components or short modifiers to species annotations
@@ -57,7 +60,7 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
                 taxa_str <- paste("(", lvl_split[1], ") ", lvl_split[length(lvl_split)], sep="")
             }
         } else {
-            # Not running strictly, remove less
+            # Not running strictly or string is a virus, remove less
             if (has_spp) {
                 taxa_str <- paste(lvl_split[3:length(lvl_split)], collapse=' ')
             } else {

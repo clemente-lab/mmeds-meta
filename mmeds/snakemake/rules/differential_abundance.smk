@@ -49,11 +49,12 @@ rule plot_lefse_results:
     output:
         "results/{class}/lefse_plot.{table}.{class}.{subclass}.pdf"
     params:
-        tool_dir = get_tool_dir()
+        tool_dir = get_tool_dir(),
+        clean_strings = lambda wildcards: "" if config["clean_strings"] else "--no-string-clean"
     shell:
         """
         ml R/4.1.0
-        Rscript {params.tool_dir}/plot_lefse.R {input} {output}
+        Rscript {params.tool_dir}/plot_lefse.R {input} {output} {params.clean_strings}
         """
 
 rule plot_lefse_results_strict:
@@ -62,10 +63,11 @@ rule plot_lefse_results_strict:
     output:
         "results/{class}/lefse_plot_strict.{table}.{class}.{subclass}.pdf"
     params:
-        tool_dir = get_tool_dir()
+        tool_dir = get_tool_dir(),
+        clean_strings = lambda wildcards: "" if config["clean_strings"] else "--no-string-clean"
     shell:
         """
         ml R/4.1.0
-        Rscript {params.tool_dir}/plot_lefse.R {input} {output} --strict
+        Rscript {params.tool_dir}/plot_lefse.R {input} {output} --strict {params.clean_strings}
         """
-        
+
