@@ -33,7 +33,8 @@ rule import_pheniqs_sample_data:
     input:
         dir = "section_{sequencing_run}/stripped_output",
     output:
-        "section_{sequencing_run}/demux_file.qza"
+        demux_file = "section_{sequencing_run}/demux_file.qza",
+        demux_viz = "section_{sequencing_run}/demux_viz.qzv"
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -41,7 +42,10 @@ rule import_pheniqs_sample_data:
         "--type SampleData[PairedEndSequencesWithQuality] "
         "--input-format CasavaOneEightSingleLanePerSampleDirFmt "
         "--input-path {input.dir} "
-        "--output-path {output}"
+        "--output-path {output.demux_file}; "
+        "qiime demux summarize "
+        "--i-table {output.demux_file} "
+        "--o-visualization {output.demux_viz}"
 
 rule make_pheniqs_config:
     input:

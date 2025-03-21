@@ -2,6 +2,7 @@ import pandas as pd
 from copy import deepcopy
 from pathlib import Path
 from mmeds.config import TOOLS_DIR
+from subprocess import run
 
 metadata = pd.read_csv("tables/qiime_mapping_file.tsv", sep='\t', header=[0], skiprows=[1], dtype='str')
 
@@ -17,6 +18,8 @@ def pairwise_splits(wildcards, tool, vars):
 
     splits = []
     for table in tables:
+        if not Path(f"tables/{table}.tsv").exists():
+            extract_feature_table_subprocess(table)
         table_df = pd.read_csv(f"tables/{table}.tsv", sep='\t', header=[0], index_col=0)
         filtered_metadata = metadata.loc[metadata["#SampleID"].isin(table_df.columns)]
         for var in vars:
@@ -91,5 +94,29 @@ def demux_single_option(wildcards):
         return "--p-no-golay-error-correction"
     return "--p-rev-comp-mapping-barcodes"
 
+def get_lefse_plot_options():
+    opts = ""
+    if "clean_strings" in config and config["clean_strings"] is not None and not config["clean_strings"]:
+        opts += "--no-string-clean "
+    if "plot_max_rows" in config and type(config["plot_max_rows"]) is int and config["plot_max_rows"] > 0:
+        opts += f"--row-max {config['plot_max_rows']} "
+    if "match_string" in config and config["match_string"]:
+        opts += f"--match-string {config['match_string']} "
+    return opts
+
 def get_tool_dir():
     return TOOLS_DIR
+
+def extract_feature_table_subprocess(table):
+    qza_file = Path(f"tables/{table}.qza")
+    tsv_file = Path(f"tables/{table}.tsv")
+    tmp_dir = Path("tables/tmp_unzip")
+
+    if not qza_file.exists():
+        raise FileNotFoundError(f"{qza_file.name} not found in tables folder")
+
+    run(["unzip", "-qq", "-jo", str(qza_file), "-d", str(tmp_dir)])
+    run(["biom", "convert", "--to-tsv", "-i", str(tmp_dir / "feature-table.biom"), "-o", str(tsv_file)])
+    run(["rm", "-rf", str(tmp_dir)])
+    run(["sed", "-i", "1d;2s/^#//", str(tsv_file)])
+

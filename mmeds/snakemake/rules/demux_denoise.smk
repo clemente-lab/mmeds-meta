@@ -4,7 +4,8 @@ rule demux_single_barcodes:
         barcodes = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv"
     output:
         error_correction = "section_{sequencing_run}/error_correction.qza",
-        demux_file = "section_{sequencing_run}/demux_file.qza"
+        demux_file = "section_{sequencing_run}/demux_file.qza",
+        demux_viz = "section_{sequencing_run}/demux_viz.qza"
     conda:
         "qiime2-2020.8.0"
     params:
@@ -16,7 +17,10 @@ rule demux_single_barcodes:
         "--m-barcodes-column BarcodeSequence "
         "{params.option} "
         "--o-error-correction-details {output.error_correction} "
-        "--o-per-sample-sequences {output.demux_file}"
+        "--o-per-sample-sequences {output.demux_file}; "
+        "qiime demux summarize "
+        "--i-data {output.demux_file} "
+        "--o-visualization {output.demux_viz}"
 
 rule demux_dual_barcodes_pheniqs:
     input:
