@@ -9,21 +9,20 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
     for (raw in raw_taxa) {
         # First check for strings that are special cases
         is_virus <- grepl("virus", raw, ignore.case = T)
-        is_uncharacterized_spp <- grepl("sp\\.|str\\.", raw, ignore.case = T)
+        is_uncharacterized_spp <- grepl("sp\\.|sp_|str\\.|str_", raw, ignore.case = T)
         is_special_case <- ( is_virus | is_uncharacterized_spp )
 
         # Clean "." and "'" characters that will affect the splitting into components
         raw <- str_replace_all(raw, "sp\\.", "sp")
         raw <- str_replace_all(raw, "str\\.", "str")
+        raw <- str_replace_all(raw, "sp__", "sp_")
+        raw <- str_replace_all(raw, "str__", "str_")
         raw <- str_replace_all(raw, "'", "")
-
-        # Check if the string contains a viral annotation
 
         # Split the string components, which may be delimited by ".", "|", or ";"
         split <- as.character(unlist(str_split(raw, "\\.|\\||\\;")))
         i <- length(split)
         blanks <- 0
-        has_spp <- str_sub(split[length(split)], 1, 1) == "s"
         while (i > 0) {
             # Trim off unclassified components, and determine whether the string is classified at the species level
             if (!split[i] == "__" & str_sub(split[i], start=-2) == "__") {
@@ -40,10 +39,15 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
             }
             i <- i - 1
         }
+        has_spp <- str_sub(split[length(split)], 1, 1) == "s"
 
         # Split the most detailed string component further into its sub-levels
         lvl_split <- as.character(unlist(str_split(split[length(split)], "_")))
         i <- length(lvl_split)
+        anno_start <- 3
+        while (anno_start <= length(split) & lvl_split[anno_start] == "") {
+            anno_start <- anno_start + 1
+        }
         if (strict & !is_special_case) {
             # Running strictly, remove more
             while(i > 0) {
@@ -58,17 +62,17 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
 
             if (has_spp) {
                 # The third and final elements at this point should represent the genus and species
-                taxa_str <- paste(lvl_split[3], lvl_split[length(lvl_split)])
+                taxa_str <- paste(lvl_split[anno_start], lvl_split[length(lvl_split)])
             } else {
                 # The first element should represent the letter code of the taxa level, and the final element should represent that annotation
                 taxa_str <- paste("(", lvl_split[1], ") ", lvl_split[length(lvl_split)], sep="")
             }
         } else {
-            # Not running strictly or string is a virus, remove less
+            # Not running strictly or string is a special case, remove less
             if (has_spp) {
-                taxa_str <- paste(lvl_split[3:length(lvl_split)], collapse=' ')
+                taxa_str <- paste(lvl_split[anno_start:length(lvl_split)], collapse=' ')
             } else {
-                taxa_str <- paste("(", lvl_split[1], ") ", paste(lvl_split[3:length(lvl_split)], collapse=' '), sep="")
+                taxa_str <- paste("(", lvl_split[1], ") ", paste(lvl_split[anno_start:length(lvl_split)], collapse=' '), sep="")
             }
         }
 
