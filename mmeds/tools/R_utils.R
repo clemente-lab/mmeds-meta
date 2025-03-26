@@ -10,7 +10,8 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
         # First check for strings that are special cases
         is_virus <- grepl("virus", raw, ignore.case = T)
         is_uncharacterized_spp <- grepl("sp\\.|sp_|str\\.|str_", raw, ignore.case = T)
-        is_special_case <- ( is_virus | is_uncharacterized_spp )
+        is_unclassified <- grepl("unclassified|not_reported", raw, ignore.case = T)
+        is_special_case <- ( is_virus | is_uncharacterized_spp | is_unclassified )
 
         # Clean "." and "'" characters that will affect the splitting into components
         raw <- str_replace_all(raw, "sp\\.", "sp")
@@ -63,9 +64,12 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
             if (has_spp) {
                 # The third and final elements at this point should represent the genus and species
                 taxa_str <- paste(lvl_split[anno_start], lvl_split[length(lvl_split)])
-            } else {
+            } else if (anno_start == length(lvl_split)) {
                 # The first element should represent the letter code of the taxa level, and the final element should represent that annotation
                 taxa_str <- paste("(", lvl_split[1], ") ", lvl_split[length(lvl_split)], sep="")
+            } else {
+                # Multiple tokens in the annotation level
+                taxa_str <- paste("(", lvl_split[1], ") ", paste(lvl_split[anno_start:length(lvl_split)], collapse=' '), sep="")
             }
         } else {
             # Not running strictly or string is a special case, remove less
