@@ -374,8 +374,8 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.WORKFLOWS[workflow_type]["parameters"])
-            if '_all' not in x}
+    diff = {x for x in set(config.keys()).difference(set(fig.WORKFLOWS[workflow_type]["parameters"]).union(\
+                set(fig.WORKFLOWS[workflow_type]["optional_parameters"]))) if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
@@ -402,6 +402,15 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
+
+        # Parse the optional parameters
+        for option in fig.WORKFLOWS[workflow_type]["optional_parameters"]:
+            Logger.debug('checking {}'.format(option))
+            if option in config:
+                if config[option] == 'True':
+                    config[option] = True
+                elif config[option] == 'False':
+                    config[option] = False
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config

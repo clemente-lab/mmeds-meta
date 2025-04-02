@@ -277,12 +277,15 @@ WORKFLOWS = {
             'taxonomic_database',
             'sequencing_runs',
             'taxa_levels'
-        ]
+        ],
+        "optional_parameters": []
     },
     "lefse": {
         "parameters": [
             "tables",
-            "classes",
+            "classes"
+        ],
+        "optional_parameters": [
             "subclasses",
             "clean_strings",
             "plot_max_rows",
