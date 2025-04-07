@@ -62,8 +62,14 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
             }
 
             if (has_spp) {
-                # The third and final elements at this point should represent the genus and species
-                taxa_str <- paste(lvl_split[anno_start], lvl_split[length(lvl_split)])
+                if (anno_start == length(lvl_split)) {
+                    # Only one string at species level, get genus from previous level
+                    genus_split <- as.character(unlist(str_split(split[length(split)-1], "_")))
+                    taxa_str <- paste(genus_split[length(genus_split)], lvl_split[length(lvl_split)])
+                } else {
+                    # The third and final elements at this point should represent the genus and species
+                    taxa_str <- paste(lvl_split[anno_start], lvl_split[length(lvl_split)])
+                }
             } else if (anno_start == length(lvl_split)) {
                 # The first element should represent the letter code of the taxa level, and the final element should represent that annotation
                 taxa_str <- paste("(", lvl_split[1], ") ", lvl_split[length(lvl_split)], sep="")
@@ -74,7 +80,13 @@ clean_taxa_string <- function(raw_taxa, strict=T) {
         } else {
             # Not running strictly or string is a special case, remove less
             if (has_spp) {
-                taxa_str <- paste(lvl_split[anno_start:length(lvl_split)], collapse=' ')
+                if (anno_start == length(lvl_split)) {
+                    # Only one string at species level, get genus from previous level
+                    genus_split <- as.character(unlist(str_split(split[length(split)-1], "_")))
+                    taxa_str <- paste(genus_split[length(genus_split)], paste(lvl_split[anno_split:length(lvl_split)], collapse=' '))
+                } else {
+                    taxa_str <- paste(lvl_split[anno_start:length(lvl_split)], collapse=' ')
+                }
             } else {
                 taxa_str <- paste("(", lvl_split[1], ") ", paste(lvl_split[anno_start:length(lvl_split)], collapse=' '), sep="")
             }
