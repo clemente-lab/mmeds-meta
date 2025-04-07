@@ -16,7 +16,7 @@ import gzip
 import re
 import pandas as pd
 import numpy as np
-import Levenshtein as lev
+import nltk
 import mmeds.config as fig
 from mmeds.logging import Logger
 from subprocess import CalledProcessError
@@ -1239,8 +1239,8 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
     while read:
 
         # Use Levenshtein distance on each barcode to determine error count
-        diff = lev.distance(read.group(1), forward_barcode)
-        diff += lev.distance(read.group(2), reverse_barcode)
+        diff = nltk.edit_distance(read.group(1), forward_barcode)
+        diff += nltk.edit_distance(read.group(2), reverse_barcode)
 
         # Add read to the output if there are few enough errors
         if diff <= num_allowed_errors:

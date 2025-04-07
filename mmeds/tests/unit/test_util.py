@@ -8,7 +8,7 @@ from tempfile import gettempdir
 from tidylib import tidy_document
 from pandas import read_csv, DataFrame, MultiIndex
 from numpy import nan
-import Levenshtein as lev
+import nltk
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -283,7 +283,7 @@ class UtilTests(TestCase):
         ]
 
         for str1, str2, expected_dist in test_barcodes:
-            actual_dist = lev.distance(str1, str2)
+            actual_dist = nltk.edit_distance(str1, str2)
             assert expected_dist == actual_dist
 
     def test_q_metadata_concat_and_split(self):
