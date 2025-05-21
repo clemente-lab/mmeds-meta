@@ -1,3 +1,7 @@
+"""
+Rscript which takes in a LEfSe results table and parameters, and uses ggplot2 to generate a results plot, automatically finding correct specifications for image size
+"""
+
 library(argparser)
 
 parser <- arg_parser("parse arguments", hide.opts=TRUE)
@@ -16,6 +20,7 @@ library(stringr)
 # Prevents Rplots.pdf being generated in working dir
 pdf(NULL)
 
+# Custom themeing
 bkg <-
     theme(axis.text.x = element_text(size = 10, color = "black")) +
     theme(axis.text.x = element_text(angle=90, vjust = 0.5, hjust = 1)) +
@@ -35,11 +40,14 @@ bkg <-
     theme(plot.title = element_text(hjust = 0.5)) +
     theme(plot.subtitle = element_text(size=9, color= "black"))
 
+# Can handle at most 6 classes in a strict plot
 colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 
+# Read in raw data
 data <-read.table(args$results_table, header = FALSE, sep = "\t")
 names(data) <- c("RawTaxa", "X", "Group", "LDA", "pval")
 
+# Only keep data with significant results
 plot_data <- subset(data, !is.na(data$LDA))
 taxa_strs <- list()
 for (raw in plot_data$RawTaxa) {
@@ -72,6 +80,7 @@ for (raw in plot_data$RawTaxa) {
     taxa_strs <- append(taxa_strs, taxa_str)
 }
 
+# Set classes to go in opposite directions in plot if not strict
 plot_data$Taxa <- as.character(taxa_strs)
 plot_data <- plot_data[order(plot_data$Group),]
 if (!args$strict) {
@@ -79,6 +88,7 @@ if (!args$strict) {
 }
 plot_data <- plot_data[!duplicated(plot_data$Taxa),]
 
+# Only plot if there are entries left after filtering
 if (nrow(plot_data) > 0) {
     plot_width <- (max(nchar(plot_data$Taxa)) + max(nchar(plot_data$Group)))*30 + 1000
     plot_height <- nrow(plot_data)*50 + 400
