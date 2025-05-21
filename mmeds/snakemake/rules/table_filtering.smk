@@ -1,4 +1,5 @@
 rule filter_table_by_threshold:
+    """ Filter table to a specified threshold that matches the depth at which the table will be rarefied """
     input:
         feature_table = "tables/asv_table_no_reads_threshold.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
@@ -14,6 +15,7 @@ rule filter_table_by_threshold:
         "--o-filtered-table {output}"
 
 rule filter_table_to_two_classes:
+    """ Filter a table to two specific classes in a metadata category for explicit comparison """
     input:
         feature_table = "tables/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"

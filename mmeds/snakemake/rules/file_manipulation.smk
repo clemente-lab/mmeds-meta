@@ -1,4 +1,5 @@
 rule extract_feature_table_tsv:
+    """ Remove feature table biom file from qza archive, convert to readable tsv for downstream analysis """
     input:
         "tables/{table}.qza"
     output:
@@ -16,6 +17,7 @@ rule extract_feature_table_tsv:
         """
 
 rule format_metadata_qiime_to_lefse:
+    """ Convert a tsv feature table to LEfSe format including class, subclass, and subject rows """
     input:
         feature_table = "tables/{table}.tsv",
         mapping_file = "tables/qiime_mapping_file.tsv"

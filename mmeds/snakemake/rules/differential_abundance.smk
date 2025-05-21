@@ -1,4 +1,5 @@
 rule differential_abundance_ancom_bc:
+    """ Perform differential abundance analysis with ANCOMBC from q2-composition """
     input:
         feature_table = "tables/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
@@ -14,6 +15,7 @@ rule differential_abundance_ancom_bc:
         """
 
 rule differential_abundance_lefse:
+    """ Perform differential abundance with LEfSe on 2 categories """
     input:
         "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
     output:
@@ -28,6 +30,7 @@ rule differential_abundance_lefse:
         """
 
 rule differential_abundance_lefse_strict:
+    """ Perform strict differential abundance with LEfSe on 3 or more categories """
     input:
         "tables/{class}/lefse_format.{table}.{class}.{subclass}.tsv"
     output:
@@ -42,6 +45,7 @@ rule differential_abundance_lefse_strict:
         """
 
 rule plot_lefse_results:
+    """ Custom plot for standard LEfSe results """
     input:
         "results/{class}/lefse_results.{table}.{class}.{subclass}.tsv"
     output:
@@ -55,6 +59,7 @@ rule plot_lefse_results:
         """
 
 rule plot_lefse_results_strict:
+    """ Custom plot for strict LEfSe results """
     input:
         "results/{class}/lefse_results_strict.{table}.{class}.{subclass}.tsv"
     output:
@@ -66,4 +71,4 @@ rule plot_lefse_results_strict:
         ml R/4.1.0
         Rscript {params.tool_dir}/plot_lefse.R {input} {output} --strict
         """
-        
+
