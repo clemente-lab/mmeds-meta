@@ -44,7 +44,7 @@ rule import_pheniqs_sample_data:
         "--input-path {input.dir} "
         "--output-path {output.demux_file}; "
         "qiime demux summarize "
-        "--i-table {output.demux_file} "
+        "--i-data {output.demux_file} "
         "--o-visualization {output.demux_viz}"
 
 rule make_pheniqs_config:

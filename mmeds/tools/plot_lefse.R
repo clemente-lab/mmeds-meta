@@ -20,7 +20,6 @@ library(this.path)
 # MMEDS R utils
 source(paste(this.dir(), "R_utils.R", sep="/"))
 
-
 # Prevents Rplots.pdf being generated in working dir
 pdf(NULL)
 

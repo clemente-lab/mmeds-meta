@@ -2,7 +2,7 @@ ruleorder: diversity_core_metrics_phylogenetic > diversity_core_metrics
 ruleorder: alpha_rarefaction_phylogenetic > alpha_rarefaction
 
 rule diversity_core_metrics_phylogenetic:
-    threads: 10
+    # threads: 10
     input:
         feature_table = "tables/asv_table.qza",
         rooted_tree = "tables/rooted_tree.qza",
@@ -21,7 +21,7 @@ rule diversity_core_metrics_phylogenetic:
         "--output-dir {output}"
 
 rule diversity_core_metrics:
-    threads: 10
+    # threads: 10
     input:
         feature_table = "tables/asv_table.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"

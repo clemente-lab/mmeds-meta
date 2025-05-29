@@ -31,6 +31,22 @@ rule classify_taxonomy_greengenes2:
         "--p-n-jobs {threads} "
         "--o-classification {output}"
 
+rule classify_taxonomy_greengenes2_old_qiime2:
+    threads: 10
+    input:
+        classifier = "tables/greengenes2.2020-10.nb-classifier.old_qiime2.qza",
+        rep_seqs = "tables/rep_seqs_table.qza"
+    output:
+        "tables/taxonomy.qza"
+    conda:
+        "qiime2-2020.8.0"
+    shell:
+        "qiime feature-classifier classify-sklearn "
+        "--i-classifier {input.classifier} "
+        "--i-reads {input.rep_seqs} "
+        "--p-n-jobs {threads} "
+        "--o-classification {output}"
+
 rule classify_taxonomy_silva:
     threads: 10
     input:

@@ -717,6 +717,7 @@ class MMEDSupload(MMEDSbase):
             cp.session['metadata_type'] = 'specimen'
             cp.session['study_name'] = studyName
             cp.session['upload_type'] = uploadType
+            cp.log(cp.session["upload_type"])
 
             with Database(path='.', testing=self.testing, owner=self.get_user()) as db:
                 db.check_study_name(studyName)

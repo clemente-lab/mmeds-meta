@@ -1,9 +1,8 @@
 # Basic config options
 SetHandler wsgi-script
-<Files .htaccess>
-  Order allow,deny
-  Deny from all
-</Files>
+<RequireAll>
+    Require all granted
+</RequireAll>
 
 # Allow access to the CSS directory
 # Options +Indexes

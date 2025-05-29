@@ -1801,7 +1801,7 @@ def format_table_to_humann(i_table, metadata_file, metadata_columns, o_table, re
     for col in metadata_columns:
         new_row = [col]
         for i, cell in enumerate(path_df.loc[0]):
-            if i == 0:
+            if i == 0 or cell not in categories:
                 continue
             if i not in to_drop and pd.isna(categories[cell][col]):
                 to_drop.append(i)
