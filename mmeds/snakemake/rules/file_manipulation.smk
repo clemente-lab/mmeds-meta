@@ -5,16 +5,12 @@ rule extract_feature_table_tsv:
     output:
         "tables/{table}.tsv"
     conda:
-        "qiime2-2020.8.0"
+        "mmeds_test"
     shell:
-        """
-        unzip -jo {input} -d tables/tmp_unzip_{wildcards.table}
-        mv tables/tmp_unzip_{wildcards.table}/feature-table.biom tables/{wildcards.table}.biom
-        biom convert --to-tsv -i tables/{wildcards.table}.biom -o {output}
-        sed -i '1d;2s/^#//' {output}
-        rm -rf tables/tmp_unzip_{wildcards.table}
-        rm -f tables/{wildcards.table}.biom
-        """
+        "extract_feature_table.sh "
+        "{input} "
+        "{output} "
+        "tables/tmp_unzip_{wildcards.table}"
 
 rule format_metadata_qiime_to_lefse:
     """ Convert a tsv feature table to LEfSe format including class, subclass, and subject rows """

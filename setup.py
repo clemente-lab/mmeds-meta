@@ -56,7 +56,7 @@ setup(name='mmeds',
           'mmeds.snakemake'
       ],
       include_package_data=True,
-      scripts=glob('scripts/*.py'),
+      scripts=glob('scripts/*'),
       install_requires=[
           'cherrypy==18.6.0',
           'codecov==2.1.13',
