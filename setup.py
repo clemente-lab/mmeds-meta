@@ -58,6 +58,7 @@ setup(name='mmeds',
       include_package_data=True,
       scripts=glob('scripts/*'),
       install_requires=[
+          'biom-format==2.1.16',
           'cherrypy==18.6.0',
           'codecov==2.1.13',
           'setuptools==52.0.0',
