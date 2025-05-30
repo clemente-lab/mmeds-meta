@@ -1,4 +1,5 @@
 rule demux_single_barcodes:
+    """ Demultiplex a paired-end single-barcoded sequencing run with QIIME EMP"""
     input:
         seqs = "section_{sequencing_run}/qiime_import_artifact.qza",
         barcodes = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv"
@@ -23,6 +24,7 @@ rule demux_single_barcodes:
         "--o-visualization {output.demux_viz}"
 
 rule demux_dual_barcodes_pheniqs:
+    """ Demultiplex a paired-end dual-barcoded sequencing run with Pheniqs """
     input:
         "section_{sequencing_run}/pheniqs_config.json"
     output:
@@ -34,6 +36,7 @@ rule demux_dual_barcodes_pheniqs:
         "pheniqs mux --config {input}"
 
 rule strip_error_barcodes:
+    """ Filter Pheniqs output to barcodes that match exactly or differ by only one base """
     input:
         dir = "section_{sequencing_run}/pheniqs_output",
         mapping_file = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv",
@@ -50,6 +53,7 @@ rule strip_error_barcodes:
         "--o-directory {output.dir}"
 
 rule dada2_denoise:
+    """ Denoise demultiplexed sequencing using QIIME and DADA2 with default params """
     threads: 10
     input:
         "section_{sequencing_run}/demux_file.qza"

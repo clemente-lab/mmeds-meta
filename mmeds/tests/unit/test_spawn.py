@@ -26,6 +26,7 @@ class SpawnTests(TestCase):
         self.analyses = []
 
     def receive_all_pipe_output(self, time):
+        """ Wait a given number of seconds for all output from the Watcher to process """
         pipe_results = []
         while self.pipe.poll(time):
             pipe_results.append(self.pipe.recv())

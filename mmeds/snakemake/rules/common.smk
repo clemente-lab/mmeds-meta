@@ -4,6 +4,10 @@ from pathlib import Path
 from mmeds.config import TOOLS_DIR
 from subprocess import run
 
+"""
+This common.smk file, following snakemake conventions, contains all the python logic necessary for generating the snakemake rule DAG
+"""
+
 metadata = pd.read_csv("tables/qiime_mapping_file.tsv", sep='\t', header=[0], skiprows=[1], dtype='str')
 
 def pairwise_splits(wildcards, tool, vars):
@@ -28,9 +32,11 @@ def pairwise_splits(wildcards, tool, vars):
             value_counts = filtered_metadata[var].value_counts()
 
             if len(categories) < 2:
+                # Only one value in the class, nothing to compare
                 continue
 
             if len(categories) < 3:
+                # Exactly two values in the class, no pairwise checks needed
                 if not sufficient_values(value_counts, categories[0], categories[1]):
                     continue
                 if tool == "lefse":
@@ -55,6 +61,7 @@ def pairwise_splits(wildcards, tool, vars):
                         splits += expand("results/{var}/lefse_plot_strict.{feature_table}.{var}.{subclass}.pdf",
                                              feature_table=table, var=var, subclass=subclasses)
                 for j in range(i+1, len(categories)):
+                    # Perform pairwise checks
                     if not sufficient_values(value_counts, categories[i], categories[j]):
                         continue
                     if tool == "lefse":
@@ -69,6 +76,10 @@ def ancombc_splits(wildcards):
     return pairwise_splits(wildcards, "ancombc", config["metadata"])
 
 def lefse_splits(wildcards):
+    """ 
+    Replace occurrences where class==subclass with subclass="NA", which is the default behavior, this handles the issue at the DAG level
+        e.g. separated: ["results/class/lefse_plot", "feature_table_class_cat1_or_cat2", "class", "subclass", "pdf"]
+    """
     splits = pairwise_splits(wildcards, "lefse", config["classes"])
     formatted_splits = []
     for s in splits:
@@ -84,11 +95,13 @@ def lefse_get_subclass(wildcards):
     return subclass
 
 def sufficient_values(value_counts, cat1, cat2, threshold=2):
+    """ Check if two categories have enough samples for a comparison """
     if value_counts[cat1] < threshold or value_counts[cat2] < threshold:
         return False
     return True
 
 def demux_single_option(wildcards):
+    """ Studies from MSQ past their 90th run require no golay error correction, all others require rev comp mapping barcodes """
     components = wildcards.sequencing_run.split("_")
     if "MSQ" in components and int(components[-1]) > 90:
         return "--p-no-golay-error-correction"

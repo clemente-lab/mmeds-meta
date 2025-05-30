@@ -1,5 +1,6 @@
 # TODO: programmatically make classifiers one rule
 rule classify_taxonomy_greengenes:
+    """ Classify sequences with GreenGenes """
     threads: 10
     input:
         classifier = "tables/gg-13-8-99-nb-2020-8-0.qza",
@@ -16,6 +17,7 @@ rule classify_taxonomy_greengenes:
         "--o-classification {output}"
 
 rule classify_taxonomy_greengenes2:
+    """ Classify sequences with GreenGenes2 """
     threads: 10
     input:
         classifier = "tables/greengenes2.2020-10.nb-classifier.qza",
@@ -48,6 +50,7 @@ rule classify_taxonomy_greengenes2_old_qiime2:
         "--o-classification {output}"
 
 rule classify_taxonomy_silva:
+    """ Classify sequences with SILVA """
     threads: 10
     input:
         classifier = "tables/silva-138-99-nb-classifier.qza",
@@ -64,6 +67,7 @@ rule classify_taxonomy_silva:
         "--o-classification {output}"
 
 rule classify_taxonomy_test:
+    """ Dummy classification for automated testing """
     threads: 10
     input:
         classifier = "tables/dummy_classifier.qza",
@@ -80,6 +84,7 @@ rule classify_taxonomy_test:
         "--o-classification {output}"
 
 rule taxonomy_collapse:
+    """ Collapse table to a particular taxonomic level using q2-taxa """
     input:
         feature_table = "tables/asv_table.qza",
         taxonomy = "tables/taxonomy.qza"
@@ -95,6 +100,7 @@ rule taxonomy_collapse:
         "--o-collapsed-table {output}"
 
 rule taxonomic_barplot:
+    """ Generate standard taxa barplot qzv using q2-taxa """
     input:
         feature_table = "tables/asv_table.qza",
         taxonomy = "tables/taxonomy.qza",

@@ -56,7 +56,7 @@ setup(name='mmeds',
           'mmeds.snakemake'
       ],
       include_package_data=True,
-      scripts=glob('scripts/*.py'),
+      scripts=glob('scripts/*'),
       install_requires=[
           'biom-format==2.1.16',
           'cherrypy==18.6.0',

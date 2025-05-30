@@ -7,7 +7,7 @@ from mmeds.util import setup_environment
 from mmeds.logging import Logger
 
 class SnakemakeTests(TestCase):
-    """ Test running analyses """
+    """ Test running snakemake analyses """
     @classmethod
     def setUpClass(cls):
         """ Set up tests """

@@ -1,4 +1,5 @@
 rule merge_sequencing_runs:
+    """ Merge the results of all sequencing runs included in a study into a single table for downstream analysis """
     input:
         feature_tables = expand("section_{sequencing_run}/table_dada2.qza", sequencing_run=config['sequencing_runs']),
         rep_seqs = expand("section_{sequencing_run}/rep_seqs_dada2.qza", sequencing_run=config['sequencing_runs'])
@@ -14,6 +15,7 @@ rule merge_sequencing_runs:
         """
 
 rule import_single_barcodes:
+    """ Import paired-end single-barcoded multiplexed fastq data from MMEDS sequencing_runs into QIIME2 format """
     input:
         import_dir = "section_{sequencing_run}/import_dir",
         forward_reads = "section_{sequencing_run}/import_dir/forward.fastq.gz",
@@ -30,6 +32,7 @@ rule import_single_barcodes:
         "--output-path {output}"
 
 rule import_pheniqs_sample_data:
+    """ Import paired-end pheniqs-demultiplexed fastq data into QIIME2 format """
     input:
         dir = "section_{sequencing_run}/stripped_output",
     output:
@@ -48,6 +51,7 @@ rule import_pheniqs_sample_data:
         "--o-visualization {output.demux_viz}"
 
 rule make_pheniqs_config:
+    """ Create YAML file describing all barcodes and samples to Pheniqs """
     input:
         dir = "section_{sequencing_run}",
         forward_reads = "section_{sequencing_run}/import_dir/forward.fastq.gz",
@@ -70,6 +74,7 @@ rule make_pheniqs_config:
         "--o-config {output}"
 
 rule build_phylogenetic_tree:
+    """ Perform all QIIME2 steps necessary for building and rooting the phylogenetic tree from DADA2 sequence data """
     input:
         feature_table = "tables/asv_table.qza",
         rep_seqs = "tables/rep_seqs_table.qza"
