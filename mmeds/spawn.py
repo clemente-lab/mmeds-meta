@@ -17,29 +17,8 @@ from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.error import AnalysisError, MissingUploadError
 
-from mmeds.tools.qiime1 import Qiime1
-from mmeds.tools.qiime2 import Qiime2
-from mmeds.tools.sparcc import SparCC
-from mmeds.tools.lefse import Lefse
-from mmeds.tools.picrust1 import PiCRUSt1
-from mmeds.tools.picrust2 import PiCRUSt2
-from mmeds.tools.cutie import CUTIE
-from mmeds.tools.tool import TestTool
+from mmeds.tools.analysis import Analysis
 from mmeds.logging import Logger
-
-# This is used as a stand in for a switch statement when the watcher
-# spins up a new analysis process. It should be replaced with an
-# actual switch statement when MMEDs migrates to 3.10
-TOOLS = {
-    'qiime1': Qiime1,
-    'qiime2': Qiime2,
-    'sparcc': SparCC,
-    'lefse': Lefse,
-    'picrust1': PiCRUSt1,
-    'picrust2': PiCRUSt2,
-    'cutie': CUTIE,
-    'test': TestTool
-}
 
 # The amount of steps with no jobs before the watcher will sleep
 TIMEOUT = 20
@@ -103,20 +82,19 @@ class Watcher(BaseManager):
             print(self.q.get())
             sleep(1)
 
-    def spawn_analysis(self, tool_type, analysis_type, user, parent_code,
+    def spawn_analysis(self, workflow_type, analysis_type, analysis_name, user, parent_code,
                        config_file, testing, sequencing_runs, run_on_node, kill_stage=-1):
         """ Start running the analysis in a new process """
         # Create access code for this analysis
         with Database('.', owner=user, testing=testing) as db:
             files, path = db.get_mongo_files(parent_code)
             access_code = db.create_access_code()
-        config = load_config(config_file, files['metadata'], tool_type)
+        config = load_config(config_file, files['metadata'], workflow_type)
 
         # Switch statment will go here
         try:
-            tool = TOOLS[tool_type](self.q, user, access_code, parent_code, tool_type,
-                                    analysis_type, config, testing, sequencing_runs, run_on_node,
-                                    kill_stage=kill_stage)
+            tool = Analysis(self.q, user, access_code, parent_code, workflow_type, analysis_type, analysis_name,
+                            config, testing, sequencing_runs, run_on_node, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
         return tool
@@ -135,8 +113,8 @@ class Watcher(BaseManager):
                 rmtree(ad.path)
         # Create the appropriate tool
         try:
-            tool = TOOLS[ad.tool_type](self.q, ad.owner, analysis_code, ad.study_code, ad.tool_type,
-                                       ad.analysis_type, ad.config, testing, run_on_node,
+            tool = Analysis(self.q, ad.owner, analysis_code, ad.study_code, ad.workflow_type,
+                                       ad.analysis_type, ad.analysis_name, ad.config, testing, {}, run_on_node,
                                        analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
@@ -207,6 +185,8 @@ class Watcher(BaseManager):
                 continue
         with open(fig.CURRENT_PROCESSES, 'w+') as f:
             yaml.dump(sorted(writeable, key=lambda x: x['created']), f)
+        with open(fig.CURRENT_PROCESSES, 'r') as f:
+            Logger.error(yaml.safe_load(f))
 
     def log_processes(self):
         """
@@ -290,21 +270,22 @@ class Watcher(BaseManager):
         ====================================================================
         Handles the creation of analysis processes
         """
-        ptype, user, access_code, tool_type, analysis_type, config, sequencing_runs, kill_stage, run_on_node = process
+        ptype, user, access_code, workflow_type, analysis_type, analysis_name, \
+            config, sequencing_runs, kill_stage, run_on_node = process
 
         # If running directly on the server node
         if run_on_node:
             # Inform the user if there are too many processes already running
             if len(self.running_on_node) > 3:
+                self.pipe.send('Analysis Not Started')
                 with Database(testing=self.testing) as db:
                     toaddr = db.get_email(user)
-                send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=tool_type)
-                self.pipe.send('Analysis Not Started')
+                send_email(toaddr, user, 'too_many_on_node', self.testing, analysis=workflow_type)
                 return
 
         self.logger.debug("spawn analysis")
         # Otherwise continue
-        p = self.spawn_analysis(tool_type, analysis_type, user, access_code,
+        p = self.spawn_analysis(workflow_type, analysis_type, analysis_name, user, access_code,
                                 config, self.testing, sequencing_runs, kill_stage, run_on_node)
         # Start the analysis running
         p.start()
@@ -337,6 +318,7 @@ class Watcher(BaseManager):
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
                 p = MetaDataAdder(owner, access_code, aliquot_table, id_type, generate_id, self.testing)
+                self.db_lock.acquire()
 
             # Add new sequencing run
             elif 'run' in process[0]:
@@ -424,7 +406,7 @@ class Watcher(BaseManager):
                     # Notify other processes the watcher is exiting
                     self.pipe.send('Watcher exiting')
                     # Send email notification of watcher termination to admin
-                    send_email(fig.CONTACT_EMAIL, 'admin', 'watcher_termination')
+                    send_email(fig.CONTACT_EMAIL, 'admin', 'watcher_termination', self.testing)
                     exit()
                 # If it's an analysis
                 elif process[0] == 'analysis':

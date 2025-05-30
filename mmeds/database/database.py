@@ -1036,7 +1036,6 @@ class Database:
         for run in df[column]:
             if run not in runs:
                 runs.append(run)
-
         # Get paths, these should exist due to already checking during validation
         run_paths = {}
         for run in runs:
@@ -1051,7 +1050,6 @@ class Database:
                     if ": " in line:
                         key, val = line.split(": ")
                         run_paths[run][key] = Path(doc.path) / val
-
         return run_paths
 
     def get_all_studies(self):

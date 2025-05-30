@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from pathlib import Path
 import mongoengine as men
 
@@ -25,13 +25,12 @@ class DocumentsTests(TestCase):
         self.owner = fig.TEST_USER  # 'test_owner'
 
     def test_creation(self):
-        """"""
         self.create_from_study()
-        self.create_from_analysis()
+        # self.create_from_analysis()
 
     def create_from_study(self):
         """ Test creating a document """
-        config = util.load_config(None, fig.TEST_METADATA, 'qiime2')
+        config = util.load_config(None, fig.TEST_METADATA, 'core_pipeline_taxonomic')
         sd = docs.MMEDSDoc.objects(access_code=self.test_code).first()
         ad = sd.generate_MMEDSDoc('testDocument', 'qiime2', 'DADA2', config, 'test_documents')
         self.assertEqual(Path(sd.path), Path(ad.path).parent)

@@ -43,3 +43,7 @@ htmlcov/
 
 # My Git tags file
 tags
+
+# Snakemake work files
+**/.snakemake
+**/.snakemake/*

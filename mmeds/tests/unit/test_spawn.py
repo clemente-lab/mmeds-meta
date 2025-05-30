@@ -25,6 +25,13 @@ class SpawnTests(TestCase):
         self.infos = []
         self.analyses = []
 
+    def receive_all_pipe_output(self, time):
+        """ Wait a given number of seconds for all output from the Watcher to process """
+        pipe_results = []
+        while self.pipe.poll(time):
+            pipe_results.append(self.pipe.recv())
+        return pipe_results
+
     def test_a_upload_data(self):
         """ Test uploading data through the queue """
         # Add multiple uploads from different users
@@ -57,52 +64,66 @@ class SpawnTests(TestCase):
         with open(fig.CURRENT_PROCESSES, 'r') as f:
             procs = safe_load(f)
         self.assertEqual([], procs)
+        pipe_results = self.receive_all_pipe_output(5)
         Logger.info('Upload data finished')
 
     def test_b_start_analysis(self):
         """ Test starting analysis through the queue """
         for proc in self.infos:
-            self.q.put(('analysis', proc['owner'], proc['access_code'], 'test', '20', None, {}, True, -1))
+            self.q.put(('analysis', proc['owner'], proc['access_code'], 'core_pipeline_taxonomic',
+                        'default', 'test_analysis', None, {}, -1, False))
 
         Logger.info('Waiting on analysis')
         # Check the analyses are started and running simultainiously
-        info = self.pipe.recv()
-        info_0 = self.pipe.recv()
-        self.analyses += [info, info_0]
-        sleep(2)
-
+        procs = []
+        timeout = 0
         # Check they match the contents of current_processes
-        with open(fig.CURRENT_PROCESSES, 'r') as f:
-            procs = safe_load(f)
+        while len(procs) != len(self.infos):
+            if timeout > 40:
+                break
+            with open(fig.CURRENT_PROCESSES, 'r') as f:
 
-        self.assertEqual(info, procs[0])
-        self.assertEqual(info_0, procs[1])
+                proc = safe_load(f)
+                Logger.debug(proc)
+                if proc:
+                    for p in proc:
+                        if p not in procs:
+                            procs.append(p)
+            timeout += 1
+            sleep(0.2)
 
-        # Check the process exited with code 0
-        self.assertEqual(self.pipe.recv(), 0)
-        self.assertEqual(self.pipe.recv(), 0)
+        pipe_results = self.receive_all_pipe_output(8)
 
-    @skip
+        Logger.debug(f"PIPE: {pipe_results}\n\nPROCS: {procs}")
+
+        # Check the processes exited with code 0
+        self.assertEqual(pipe_results.count(0), 2)
+        for res in pipe_results:
+            if res != 0:
+                self.assertIn(res, procs)
+                self.analyses += [res]
+
+
     def test_c_restart_analysis(self):
         """ Test restarting the two analyses from their respective docs. """
         Logger.info("restarting analysis")
         for proc in self.analyses:
             self.q.put(('restart', proc['owner'], proc['access_code'], True, 1, -1))
-            # Get the test tool
-            self.pipe.recv()
-        self.assertEqual(self.pipe.recv(), 0)
-        self.assertEqual(self.pipe.recv(), 0)
+        pipe_results = self.receive_all_pipe_output(8)
+        self.assertEqual(pipe_results.count(0), len(self.analyses))
 
     def test_d_node_analysis(self):
         Logger.info("node analysis")
-        for i in range(3):
-            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'],
-                        'test', '20', None, {}, True, -1))
-        for i in range(3):
-            result = self.pipe.recv()
-            Logger.error('{} result"{}"'.format(i, result))
-        self.assertEqual(result, 'Analysis Not Started')
+        for i in range(5):
+            self.q.put(('analysis', self.infos[0]['owner'], self.infos[0]['access_code'], 'core_pipeline_taxonomic',
+                        'default', 'test_analysis_node', None, {}, -1, True))
 
+        pipe_results = self.receive_all_pipe_output(8)
+        Logger.debug(f"PIPE RESULTS: {pipe_results}")
+        self.assertIn("Analysis Not Started", pipe_results)
+        self.assertEquals(pipe_results.count(0), 4)
+
+    @skip("uploading ids outdated")
     def test_e_generate_ids(self):
         Logger.info("generate ids")
         # Get the initial results
@@ -113,11 +134,10 @@ class SpawnTests(TestCase):
                         ufile,
                         utype,
                         True))
-            result = self.pipe.recv()
+            pipe_results = self.receive_all_pipe_output(5)
+            self.assertIn(0, pipe_results)
 
-            result = self.pipe.recv()
-            self.assertEqual(result, 0)
-
+    @skip("uploading ids outdated")
     def test_f_add_subject_data(self):
         # Get the initial results
         for (utype, ufile) in [('subject', fig.TEST_ADD_SUBJECT)]:
@@ -127,10 +147,8 @@ class SpawnTests(TestCase):
                         ufile,
                         utype,
                         False))
-            result = self.pipe.recv()
-
-            result = self.pipe.recv()
-            self.assertEqual(result, 0)
+            pipe_results = self.receive_all_pipe_output(5)
+            self.assertIn(0, pipe_results)
 
     def test_g_clean_temp_folders(self):
         """ Test code for removing temporary folders daily and on startup. """

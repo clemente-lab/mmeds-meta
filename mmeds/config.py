@@ -8,6 +8,7 @@ import pymysql as pms
 import mmeds.secrets as sec
 import mmeds.html as html
 import mmeds.resources as resources
+import mmeds.snakemake as snakemake
 import mmeds
 import hashlib
 import re
@@ -20,16 +21,18 @@ TESTING = not ('chimera' in getfqdn().split('.'))
 IS_PRODUCTION = 'web01' in getfqdn().split('.')
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
-LIVE_PROD_ACCESS = False
+LIVE_PROD_ACCESS = True
 
 # Every MMEDs script imports config.py and thus tries to connect to the database even if it doesn't need to
 # this flag is just to disable that behavior as necessary
 DB_INSTALLED = True
 
+ROOT = Path(mmeds.__file__).parent.resolve()
+HTML_DIR = Path(html.__file__).parent.resolve()
+STORAGE_DIR = Path(resources.__file__).parent.resolve()
+SNAKEMAKE_DIR = Path(snakemake.__file__).parent.resolve()
+
 if TESTING:
-    ROOT = Path(mmeds.__file__).parent.resolve()
-    HTML_DIR = Path(html.__file__).parent.resolve()
-    STORAGE_DIR = Path(resources.__file__).parent.resolve()
     # If apache is trying to access apache's home directory for `mmeds_server_data` rather than your user account's home
     # you may need to hardcode the path here
     # TODO: Add mmeds configuration options for DATABASE_DIR
@@ -44,21 +47,13 @@ if TESTING:
     SERVER_PATH = 'http://localhost/myapp/'
     CSS_DIR = 'http://localhost/CSS/'
     IMAGE_PATH = str(CSS_DIR) + '/'
+
 else:
     # We're on web01 and using MMEDs out of if it's project diredctory
     # OR, we're in the folder /sc/arion/projects/MMEDS
-    # TODO: this isn't great, means we have to be careful not naming folders, files as MMEDS
-    # However, it's a solution that doesn't add any dependancies, and I think we should rework config.py anyway
-    if 'matt' in Path.cwd().parts and 'clemej05a' in Path.cwd().parts:
-        DATABASE_DIR = Path('/hpc/users/stapym01') / 'mmeds_server_data'
-        ROOT = Path('/sc/arion/projects/clemej05a/matt/mmeds-meta/')
-    else:
-        DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
-        ROOT = Path('/hpc/users/mmedsadmin/www/mmeds-meta/')
+    DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
 
-    HTML_DIR = ROOT / 'mmeds/html'
-    CSS_DIR = ROOT / 'mmeds/CSS'
-    STORAGE_DIR = ROOT / 'mmeds/resources'
+    CSS_DIR = ROOT / 'CSS'
     WWW_ROOT = "https://mmedsadmin.dmz.hpc.mssm.edu/"
     SERVER_ROOT = WWW_ROOT + "mmeds_app/"
     # Replace the old version
@@ -67,9 +62,13 @@ else:
     IMAGE_PATH = WWW_ROOT + 'mmeds/CSS/'
 
 
+TOOLS_DIR = ROOT / 'tools'
 STUDIES_DIR = DATABASE_DIR / 'studies'
 SEQUENCING_DIR = DATABASE_DIR / 'sequencing_runs'
 SESSION_PATH = DATABASE_DIR / 'CherryPySessions'
+TAXONOMIC_DATABASE_DIR = DATABASE_DIR / "taxonomic_databases"
+SNAKEMAKE_WORKFLOWS_DIR = SNAKEMAKE_DIR / "workflows"
+SNAKEMAKE_RULES_DIR = SNAKEMAKE_DIR / "rules"
 
 ############################
 # CONFIGURE SERVER GLOBALS #
@@ -263,22 +262,41 @@ HTML_ARGS = {
     '#': '#',
 }
 
-##########################
-# CONFIGURE TOOL GLOBALS #
-###########################
+##############################
+# CONFIGURE ANALYSIS GLOBALS #
+##############################
 
 
-TOOL_FILES = {
-    'child_analysis': ['otu_table'],
-    'qiime1': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
-    'qiime2': ['data', 'for_reads', 'rev_reads', 'barcodes', 'for_barcodes', 'rev_barcodes', 'metadata'],
-    'sparcc': ['otu_table'],
-    'cutie': ['otu_table'],
-    'lefse': ['lefse_table'],
-    'picrust1': ['otu_table'],
-    'picrust2': ['otu_table'],
-    'test': []
+WORKFLOWS = {
+    "core_pipeline_taxonomic": {
+        "parameters": [
+            'sampling_depth',
+            'metadata',
+            'alpha_metrics',
+            'beta_metrics',
+            'taxonomic_database',
+            'sequencing_runs',
+            'taxa_levels'
+        ]
+    },
+    "lefse": {
+        "parameters": [
+            "tables",
+            "classes",
+            "subclasses"
+        ]
+    }
 }
+
+TAXONOMIC_DATABASES = {
+    "greengenes": TAXONOMIC_DATABASE_DIR / "gg-13-8-99-nb-2020-8-0.qza",
+    "greengenes2": TAXONOMIC_DATABASE_DIR / "greengenes2.2020-10.nb-classifier.qza",
+    "silva": TAXONOMIC_DATABASE_DIR / "silva-138-99-nb-classifier.qza"
+}
+
+if TESTING:
+    TAXONOMIC_DATABASES["test"] = TAXONOMIC_DATABASE_DIR / "dummy_classifier.qza"
+
 
 UPLOADED_FP = 'uploaded_file'
 ERROR_FP = 'error_log.tsv'
@@ -332,17 +350,13 @@ if not LOG_DIR.exists():
 
 CURRENT_PROCESSES = DATABASE_DIR / 'current_processes.yaml'
 CONFIG_PARAMETERS = {
-    'qiime2': [
+    'core_pipeline_taxonomic': [
         'sampling_depth',
         'metadata',
-        'taxa_levels',
-        'abundance_threshold',
-        'font_size',
-        'sub_analysis',
-        'additional_analysis',
-        'iterations',
-        'permutations',
-        'type'],
+        'alpha_metrics',
+        'beta_metrics',
+        'sequencing_runs',
+        'taxa_levels'],
     'cutie': [
         'statistic',
         'feature_table',
@@ -360,6 +374,18 @@ CONFIG_PARAMETERS = {
         'permutations'],
     'test': []
 }
+
+CONFIG_LISTS = [
+    'metadata',
+    'taxa_levels',
+    'alpha_metrics',
+    'beta_metrics',
+    'sequencing_runs',
+    'tables',
+    'classes',
+    'subclasses'
+]
+
 CONTACT_EMAIL = 'adam.cantor@mssm.edu'
 MMEDS_EMAIL = 'donotreply.mmeds.server@outlook.com'
 TEST_EMAIL = 'mmeds.tester@outlook.com'
@@ -400,6 +426,7 @@ TEST_CODE = 'singlereads'
 TEST_CODE_SHORT = 'singlereadsshort'
 TEST_CODE_PAIRED = 'pairedreads'
 TEST_CODE_DEMUX = 'demuxedreads'
+TEST_CODE_MIXED = 'mixedstudy'
 TEST_CODE_OTU = 'otutable'
 TEST_CODE_LEFSE = 'lefsetable'
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
@@ -422,6 +449,7 @@ TEST_STRIPPED_DIRS = [
     str(TEST_PATH / 'test_stripped_1'),
     str(TEST_PATH / 'test_stripped_2')
 ]
+TEST_SNAKEMAKE_DIR = str(TEST_PATH / 'test_snakemake')
 TEST_PHENIQS_MAPPING = str(TEST_PATH / 'test_pheniqs_mapping_file.tsv')
 TEST_STUDY = str(TEST_PATH / 'test_study')
 TEST_SPECIMEN = str(TEST_PATH / 'test_specimen.tsv')
@@ -443,6 +471,7 @@ TEST_SUBJECT_SIMPLIFIED = str(TEST_PATH / 'test_subject_simplified.tsv')
 TEST_ADD_SUBJECT = str(TEST_PATH / 'test_add_subject.tsv')
 TEST_ANIMAL_SUBJECT = str(TEST_PATH / 'test_animal_subject.tsv')
 TEST_MIXED_SUBJECT = str(TEST_PATH / 'test_mixed_subject.tsv')
+TEST_MIXED_SPECIMEN = str(TEST_PATH / 'test_mixed_specimen.tsv')
 TEST_SUBJECT_ERROR = str(TEST_PATH / 'validation_files/test_subject_error.tsv')
 TEST_SUBJECT_WARN = str(TEST_PATH / 'validation_files/test_subject_warn.tsv')
 TEST_SUBJECT_ALT = str(TEST_PATH / 'test_subject_alt.tsv')
@@ -477,6 +506,8 @@ USER_GUIDE = str(TEST_PATH / 'User_Guide.txt')
 SUBJECT_TEMPLATE = str(TEST_PATH / 'subject_template.tsv')
 SPECIMEN_TEMPLATE = str(TEST_PATH / 'specimen_template.tsv')
 CONFIG_EXAMPLE = str(TEST_PATH / 'config_example.yaml')
+
+TEST_SEQUENCING_NAME = "TEST_RUN"
 
 
 # Defaults

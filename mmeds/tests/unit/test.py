@@ -1,10 +1,11 @@
-from subprocess import run
+from subprocess import run, Popen
 from pathlib import Path
 import sys
 import coverage
 
 from mmeds.authentication import add_user, remove_user
 from mmeds.database.database import upload_metadata, upload_otu, upload_lefse
+from mmeds.util import setup_environment
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -12,7 +13,7 @@ import mmeds.secrets as sec
 """
 - To run all the tests: python test.py
 - To run a specific set of test: python test.py test_name1 test_name2 etc
-  - possible test names: authentication, database, documents, spawn, tool, tools, util, validate
+  - possible test names: authentication, database, documents, spawn, snakemake, tools, util, validate
 - To run all tests with the pudb pytest plugin python test.py pudb
 """
 
@@ -24,11 +25,11 @@ def add_users(tests):
     # Add users as needed
     # users_added keeps track of the number of users added so they can all be removed at the end
     users_added = 0
-    if {'database', 'documents', 'util', 'spawn', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
+    if {'database', 'documents', 'util', 'spawn', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
         add_user(fig.TEST_USER, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     # database and spawn tests require a second user
-    if 'database' in tests or 'spawn' in tests:
+    if 'database' in tests or 'spawn' in tests or 'tools' in tests or 'analysis' in tests:
         add_user(fig.TEST_USER_0, sec.TEST_PASS, fig.TEST_EMAIL, testing=testing)
         users_added += 1
     return users_added
@@ -37,7 +38,7 @@ def add_users(tests):
 def setup_tests(tests):
     # Add test setups as needed:
     test_setup = []
-    if {'documents', 'util', 'tool', 'tools', 'formatter', 'adder'}.intersection(tests):
+    if {'documents', 'util', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
         test_setup.append((fig.TEST_SUBJECT_SHORT,
                            'human',
                            fig.TEST_SPECIMEN_SINGLE_SHORT,
@@ -45,7 +46,7 @@ def setup_tests(tests):
                            'Test_Single_Short',
                            testing,
                            fig.TEST_CODE_SHORT))
-        if 'tools' in tests:
+        if 'tools' in tests or 'analysis' in tests:
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
                                fig.TEST_SPECIMEN_PAIRED,
@@ -60,6 +61,13 @@ def setup_tests(tests):
                                'Test_Demuxed',
                                testing,
                                fig.TEST_CODE_DEMUX))
+            test_setup.append((fig.TEST_MIXED_SUBJECT,
+                               'mixed',
+                               fig.TEST_MIXED_SPECIMEN,
+                               fig.TEST_USER_0,
+                               'TEST_MIXED_17',
+                               testing,
+                               fig.TEST_CODE_MIXED))
             # Upload OTU if running test_tools.py
             # Functionality removed in study-sequencing run split
             """
@@ -134,6 +142,9 @@ def remove_users(users_added):
 
 
 def main():
+    # Start the watcher as a subprocess if we're on github actions
+    if Path("/home/runner").exists():
+        Popen(['python', './mmeds/host/manager.py'], env=setup_environment("mmeds-stable"))
     # Grab the arguments passed to the script, skipping the script itself
     tests = sys.argv[1:]
     pudb = 'log' in tests
@@ -156,14 +167,14 @@ def main():
             'documents',
             'spawn',
             'demultiplex',
-            'tool',
             'tools',
             'util',
             'validate',
             'formatter',
             'adder',
             'uploader',
-            'error'
+            'error',
+            'snakemake'
         ]
 
     users_added = add_users(tests)

@@ -338,7 +338,7 @@ class MMEDSstudy(MMEDSbase):
             option_template = '<option value="{}">{}</option>'
 
             # Get analyses related to this study
-            analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.tool_type,
+            analyses = [option_template.format(doc.access_code, '{}-{} {}'.format(doc.workflow_type,
                                                                                   doc.analysis_type,
                                                                                   doc.created.strftime("%Y-%m-%d")))
                         for doc in docs]
@@ -1149,7 +1149,7 @@ class MMEDSanalysis(MMEDSbase):
         page = self.load_webpage('analysis_view_page',
                                  title=analysis.study_name,
                                  study_name=analysis.study_name,
-                                 analysis_name='{}-{}'.format(analysis.tool_type, analysis.analysis_type),
+                                 analysis_name='{}-{}'.format(analysis.workflow_type, analysis.analysis_type),
                                  date_created=analysis.created,
                                  last_accessed=analysis.last_accessed,
                                  reads_type=analysis.reads_type,
@@ -1158,7 +1158,7 @@ class MMEDSanalysis(MMEDSbase):
                                  owner=analysis.owner,
                                  email=analysis.email,
                                  path=analysis.path,
-                                 tool_type=analysis.tool_type,
+                                 workflow_type=analysis.workflow_type,
                                  download_all_display=download_all_display,
                                  analysis_type=analysis.analysis_type,
                                  analysis_status=analysis.analysis_status,
@@ -1178,10 +1178,10 @@ class MMEDSanalysis(MMEDSbase):
             rather than being submitted to the job queue.
         """
         if '-' in analysis_method:
-            tool_type = analysis_method.split('-')[0]
+            workflow_type = analysis_method.split('-')[0]
             analysis_type = analysis_method.split('-')[1]
         else:
-            tool_type = analysis_method
+            workflow_type = analysis_method
             analysis_type = 'default'
         try:
             # The run on node option shouldn't appear for users without
@@ -1200,7 +1200,7 @@ class MMEDSanalysis(MMEDSbase):
             files = self.check_upload(access_code)
             Logger.debug(files)
             sequencing_runs = {}
-            if tool_type == 'qiime2':
+            if workflow_type == 'qiime2':
                 with Database(testing=self.testing) as db:
                     sequencing_runs = db.get_sequencing_run_locations(files['metadata'], self.get_user())
 
@@ -1214,11 +1214,11 @@ class MMEDSanalysis(MMEDSbase):
                 config_path = create_local_copy(config.file, config.name, self.get_dir())
 
             # Check that the config file is valid
-            util.load_config(config_path, files['metadata'], tool_type)
+            util.load_config(config_path, files['metadata'], workflow_type)
 
             # -1 is the kill_stage (used when testing)
             if not analysis_method == 'test':
-                self.q.put(('analysis', self.get_user(), access_code, tool_type,
+                self.q.put(('analysis', self.get_user(), access_code, workflow_type,
                             analysis_type, config_path, sequencing_runs, -1, runOnNode))
             page = self.load_webpage('home', title='Welcome to MMEDS',
                                      success='Analysis started you will receive an email shortly')

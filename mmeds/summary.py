@@ -1,3 +1,4 @@
+"""
 from pathlib import Path
 from nbformat import v4
 from collections import defaultdict
@@ -13,7 +14,7 @@ from mmeds.logging import Logger
 
 
 def summarize_qiime(summary_path, tool, testing=False):
-    """ Handle setup and running the summary for the two qiimes """
+    # Handle setup and running the summary for the two qiimes
     path = Path(summary_path)
 
     # Load the files
@@ -55,11 +56,11 @@ def summarize_qiime(summary_path, tool, testing=False):
 
 
 def summarize_qiime1(path, files, config, study_name):
-    """
-    Create summary of analysis results
-    """
+
+    # Create summary of analysis results
+
     def move_files(move_path, category):
-        """ Collect the contents of all files match the regex in path """
+        # Collect the contents of all files match the regex in path
         Logger.debug('Move files {}'.format(category))
         data_files = diversity.glob(move_path.format(depth=config['sampling_depth']))
         for data in data_files:
@@ -114,7 +115,7 @@ def summarize_qiime1(path, files, config, study_name):
 
 
 def summarize_qiime2(path, files, config, study_name, testing=False):
-    """ Create summary of the files produced by the qiime2 analysis. """
+    # Create summary of the files produced by the qiime2 analysis.
     Logger.debug('Start Qiime2 summary')
     path = path.absolute()
 
@@ -200,10 +201,10 @@ def summarize_qiime2(path, files, config, study_name, testing=False):
 
 
 class MMEDSNotebook():
-    """ A class for handling the creation and execution of the summary notebooks. """
+    # A class for handling the creation and execution of the summary notebooks.
 
     def __init__(self, config, analysis_type, files, execute, name, path):
-        """
+
         Create the summary PDF for qiime1 analysis
         ==========================================
         :config: A dictionary containing all the configuration options for this analysis
@@ -211,7 +212,7 @@ class MMEDSNotebook():
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
         :name: A string. The name of the notebook and PDF document.
         :path: A file path. The path to the directory containing all the summary files.
-        """
+
         self.cells = []
         self.analysis_type = analysis_type
         self.files = files
@@ -242,7 +243,7 @@ class MMEDSNotebook():
         self.source = parse_code_blocks(STORAGE_DIR / 'summary_code.txt')
 
     def add_code(self, text, meta=None):
-        """ Add a code cell to the notebook's list of cells. """
+        # Add a code cell to the notebook's list of cells.
         new_cell = v4.new_code_cell(source=text)
         if meta:
             for key, value in meta.items():
@@ -250,7 +251,7 @@ class MMEDSNotebook():
         self.cells.append(new_cell)
 
     def add_markdown(self, text, meta=None):
-        """ Add a code cell to the notebook's list of cells. """
+        # Add a code cell to the notebook's list of cells.
         new_cell = v4.new_markdown_cell(source=text)
         if meta:
             for key, value in meta.items():
@@ -258,13 +259,13 @@ class MMEDSNotebook():
         self.cells.append(new_cell)
 
     def update_template(self, location, text):
-        """
+
         Updates the revtex template used for converting the notebook to a PDF
         =====================================================================
         :location: A string. Determine what section of the template to add the
             text to.
         :text: A string. The text to add to the template.
-        """
+
         with open(self.path / 'mod_revtex.tplx') as f:
             lines = f.readlines()
             # Find the locations of the different sections of the template
@@ -290,9 +291,9 @@ class MMEDSNotebook():
                 f.write(line)
 
     def table_stats(self, data_file):
-        """
+
         Create plots and stats for asv data
-        """
+
         self.add_markdown("## Dada2 Statistics")
         filename = "table_stats.png"
         self.add_code(self.source['table_py'].format(file1=data_file))
@@ -302,11 +303,11 @@ class MMEDSNotebook():
         self.add_markdown(self.source['page_break'])
 
     def taxa_plots(self, data_file):
-        """
+
         Create plots for taxa summary files.
         ====================================
         :data_file: The location of the file to create the plotting code for.
-        """
+
         # Get the taxa level from the filename
         level = data_file.split('.')[0][-1]
         self.add_markdown('## {level} Level'.format(level=self.words[level]))
@@ -346,11 +347,11 @@ class MMEDSNotebook():
             self.add_markdown(self.source['page_break'])
 
     def alpha_plots(self, data_file):
-        """
+
         Create plots for alpha diversity files.
         =======================================
         :data_file: The location of the file to create the plotting code for.
-        """
+
         Logger.debug('Alpha plots for file {}'.format(data_file))
         if self.analysis_type == 'qiime1':
             xaxis = 'SequencesPerSample'
@@ -398,11 +399,11 @@ class MMEDSNotebook():
             self.add_markdown(self.source['page_break'])
 
     def beta_plots(self, data_file):
-        """
+
         Create plots for beta diversity files.
         =======================================
         :data_file: The location of the file to create the plotting code for.
-        """
+
         Logger.debug('Beta plots for file {}'.format(data_file))
         if 'bray_curtis' in data_file:
             display_name = 'Bray-Curtis'
@@ -449,9 +450,9 @@ class MMEDSNotebook():
             self.add_markdown(self.source['page_break'])
 
     def setup_summary_directory(self):
-        """
+
         Prepare the files in the summary directory for jupyter notebook execution.
-        """
+
         column_swap = {column: column for column in self.config['metadata']}
         for column in self.config['metadata']:
             for key, value in self.words.items():
@@ -460,12 +461,12 @@ class MMEDSNotebook():
                         column_swap[column] = column_swap[column].replace(key, value)
 
     def summarize(self):
-        """
+
         Create the python notebook containing the summary of analysis results.
         =====================================================================
         :files: A dictionary of locations for the files to use when creating plots.
         :execute: A boolean. If True execute the notebook when exporting to PDF, otherwise don't.
-        """
+
 
         Logger.debug('in notebook')
         Logger.debug(self.files)
@@ -538,11 +539,11 @@ class MMEDSNotebook():
         return nn
 
     def write_notebook(self, nn, testing=False):
-        """
+
         Write the notebook and export it to a PDF.
         ==========================================
         :nn: A python notebook object.
-        """
+
         try:
             jupyter_env = setup_environment('jupyter')
             if testing:

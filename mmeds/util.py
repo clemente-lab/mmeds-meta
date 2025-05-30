@@ -320,7 +320,7 @@ def load_metadata(file_name, header=[0, 1], skiprows=[2, 3, 4], na_values='NA', 
                        keep_default_na=keep_default_na)
 
 
-def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
+def load_config(config_file, metadata, workflow_type, ignore_bad_cols=False):
     """
     Read the provided config file to determine settings for the analysis.
     ====================================================================
@@ -337,13 +337,14 @@ def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
         if isinstance(config_file, Path):
             page = config_file.read_text()
         # Use blank config
-        elif tool_type == 'test':
+        elif workflow_type == 'test':
             Logger.debug('Using blank config')
             return config
         # If no config was provided load the default
         elif config_file is None or config_file == '':
             Logger.debug('Using default config')
             page = fig.DEFAULT_CONFIG.read_text()
+            Logger.debug(page)
         elif isinstance(config_file, str):
             page = Path(config_file).read_text()
         else:
@@ -354,14 +355,17 @@ def load_config(config_file, metadata, tool_type, ignore_bad_cols=False):
     except (yaml.YAMLError, yaml.scanner.ScannerError):
         raise InvalidConfigError('There was an error loading your config. Config files must be in YAML format.')
 
+    # Add sequencing runs to config for snakemake
+    if "sequencing_runs" in fig.WORKFLOWS[workflow_type]["parameters"]:
+        config["sequencing_runs"] = get_sequencing_run_names(metadata)
     # Check if columns == 'all'
-    for param in ['metadata', 'taxa_levels', 'sub_analysis']:
+    for param in fig.CONFIG_LISTS:
         if param in config:
             config['{}_all'.format(param)] = (config[param] == 'all')
-    return parse_parameters(config, metadata, tool_type, ignore_bad_cols=ignore_bad_cols)
+    return parse_parameters(config, metadata, workflow_type, ignore_bad_cols=ignore_bad_cols)
 
 
-def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
+def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     """
     Helper function for load_config. This parses the individual options provided in
     the config file. For example, the user can put 'all' as the taxa column option
@@ -370,16 +374,16 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.CONFIG_PARAMETERS[tool_type])
+    diff = {x for x in set(config.keys()).difference(fig.WORKFLOWS[workflow_type]["parameters"])
             if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
         # Parse the values/levels to be included in the analysis
-        for option in fig.CONFIG_PARAMETERS[tool_type]:
+        for option in fig.WORKFLOWS[workflow_type]["parameters"]:
             Logger.debug('checking {}'.format(option))
             # Get approriate metadata columns based on the metadata file
-            if option == 'metadata' or option == 'sub_analysis':
+            if option == 'metadata':
                 config[option], config['{}_continuous'.format(option)] = get_valid_columns(metadata,
                                                                                            config[option],
                                                                                            ignore_bad_cols)
@@ -398,12 +402,13 @@ def parse_parameters(config, metadata, tool_type, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
-        if 'sub_analysis' in config and 'metadata' in config and \
-                config['sub_analysis'] and len(config['metadata']) == 1:
-            raise InvalidConfigError('More than one column must be select as metadata to run sub_analysis')
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config
+
+def get_sequencing_run_names(metadata):
+    df = load_metadata(metadata, header=0, na_values='nan', skiprows=[0, 2, 3, 4])
+    return list(df["RawDataProtocolID"].unique())
 
 
 def get_valid_columns(metadata_file, option, ignore_bad_cols=False):
@@ -465,11 +470,11 @@ def write_config(config, path):
     config_text = {}
     for (key, value) in config.items():
         # Don't write values that are generated on loading
-        if key in ['Together', 'Separate', 'metadata_continuous', 'taxa_levels_all', 'metadata_all',
-                   'sub_analysis_continuous', 'sub_analysis_all']:
+        if key in ['Together', 'Separate', 'metadata_continuous'] + [f"{val}_all" for val in fig.CONFIG_LISTS]:
             continue
         # If the value was initially 'all', write that
-        elif key in ['taxa_levels', 'metadata', 'sub_analysis']:
+        # TODO Make configurable
+        elif key in fig.CONFIG_LISTS:
             if config['{}_all'.format(key)]:
                 config_text[key] = 'all'
             # Write lists as comma seperated strings
@@ -910,7 +915,7 @@ def parse_locals(line, variables, new_env):
     return line, variables
 
 
-def setup_environment(module):
+def setup_environment(module, testing=False):
     """
     Returns a dictionary with the environment variables loaded for a particular module.
     ===================================================================================
@@ -944,12 +949,17 @@ def setup_environment(module):
         # Set environment variables
         elif parts[0] == 'setenv':
             new_env[parts[1]] = parts[2]
+
+    # CODECOV FLAG
+    if testing:
+        new_env["COVERAGE_PROCESS_START"] = "./.coveragerc"
+
     Logger.debug("Created environment for module {}".format(module))
     Logger.debug(new_env)
     return new_env
 
 
-def create_qiime_from_mmeds(mmeds_file, qiime_file, tool_type):
+def create_qiime_from_mmeds(mmeds_file, qiime_file, workflow_type):
     """
     Create a qiime mapping file from the mmeds metadata
     ===================================================
@@ -1415,20 +1425,15 @@ def get_mapping_file_subset(metadata, selection, column="RawDataProtocolID"):
     return df
 
 
-def run_analysis(path, tool_type, testing=False):
+def run_analysis(path, workflow_type, testing=False):
     """
     Run analysis for one of MMEDs tools
     Currently only setup for qiime2
 
     path: path to analysis folder i.e. Study/Qiime2_0)
-    tool_type: tool to use. qiime1, qiime2, lefse, etc
+    workflow_type: tool to use. qiime1, qiime2, lefse, etc
     """
-    if testing:
-        # This module file is setup for running on github actions
-        qiime_env = setup_environment('qiime2-2020.8')
-    else:
-        # This module file is setup for running on minerva
-        qiime_env = setup_environment('qiime2/2020.8')
+    qiime_env = setup_environment('qiime2/2020.8')
 
     qiime = f'bash {path}/jobfile_test.sh'
 
@@ -1447,13 +1452,13 @@ def run_analysis(path, tool_type, testing=False):
         raise e
 
 
-def start_analysis_local(queue, access_code, tool_type, user, config, runs={}, analysis_type='default'):
+def start_analysis_local(queue, access_code, analysis_name, workflow_type, user, config, runs={}, analysis_type='default'):
     """
     Directly start an analysis using the watcher, bypassing the server
     """
     if not config:
         config = fig.DEFAULT_CONFIG
-    queue.put(('analysis', user, access_code, tool_type, analysis_type, config, runs, -1, False))
+    queue.put(('analysis', user, access_code, workflow_type, analysis_type, analysis_name, config, runs, -1, False))
     Logger.debug("Analysis sent to queue directly")
     return 0
 
@@ -1469,7 +1474,7 @@ def upload_study_local(queue, study_name, subject, subject_type, specimen, user,
 
 def upload_sequencing_run_local(queue, run_name, user, datafiles, reads_type, barcodes_type):
     """
-    # Directly upload a local sequencing run using the watcher, bypassing the server
+     Directly upload a local sequencing run using the watcher, bypassing the server
     """
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
     Logger.debug("Sequencing run sent to queue directly")
@@ -1653,6 +1658,7 @@ def get_subject_type(subject_file):
     for sub_type in df['SubjectType']['SubjectType']:
         if not sub_type == subject_type:
             subject_type = 'mixed'
+            break
     return subject_type.lower()
 
 
@@ -1711,6 +1717,9 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     # Replace occurrences of ';' delimiter with '|'
     if swap_delim:
         path_df[0] = path_df[0].str.replace(";", "|")
+
+    # Replace occurrences of ' ' with '_' for readability
+    path_df[0] = path_df[0].str.replace(" ", "_")
 
     # Insert new metadata rows into feature table
     t = [metadata_column_class]

@@ -1,0 +1,10 @@
+tables:
+  - taxa_table_L6
+  - taxa_table_L7
+classes:
+  - FA
+  - AD
+  - Group
+  - IgAsort
+subclasses:
+
