@@ -66,32 +66,36 @@ rule extract_feature_table_tsv_class:
         rm -f tables/{wildcards.table}.biom
         """
 
-rule convert_tsv_to_biom:
-    """ convert (abs) count table in tsv form to biom hdf5 form """
-    input:
-        feature_table = "tables/{table}.tsv"
-    output:
-        "tables/{table}.biom"
-    conda:
-        "qiime2-2020.8.0"
-    shell:
-        "biom convert --to-hdf5 -i tables/{input.feature_table} -o {output}"
+#rule convert_tsv_to_biom:
+#    """ convert (abs) count table in tsv form to biom hdf5 form """
+#    input:
+#        feature_table = "tables/{table}.tsv"
+#    output:
+#        "tables/{table}.biom"
+#    wildcard_constraints:
+#        table = "[^/]+"
+#    conda:
+#        "qiime2-2020.8.0"
+#    shell:
+#        "biom convert --to-hdf5 -i tables/{input.feature_table} -o {output}"
 
-rule convert_biom_to_qza:
-    """ convert biom hdf5 form to qza artifact in qiime """
-    input:
-        feature_table = "tables/{table}.biom"
-    output:
-        "tables/{table}.qza"
-    conda:
-        "qiime2-2020.8.0"
-    shell:
-        """
-        qiime tools import \
-            --type 'FeatureTable[Frequency]' \ 
-            --input-path {input.feature_table} \
-            --output-path {output}
-        """
+#rule convert_biom_to_qza:
+#    """ convert biom hdf5 form to qza artifact in qiime """
+#    input:
+#        feature_table = "tables/{table}.biom"
+#    output:
+#        "tables/{table}.qza"
+#    wildcard_constraints:
+#        table = "[^/]+"
+#    conda:
+#        "qiime2-2020.8.0"
+#    shell:
+#        """
+#        qiime tools import \
+#            --type 'FeatureTable[Frequency]' \ 
+#            --input-path {input.feature_table} \
+#            --output-path {output}
+#        """
 
 rule format_metadata_qiime_to_lefse_class:
     input:
