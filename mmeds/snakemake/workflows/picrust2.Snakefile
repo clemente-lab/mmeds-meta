@@ -8,4 +8,4 @@ include: "{snakemake_dir}/picrust.smk"
 
 rule results:
     input:
-        "picrust2_out"
+        directory("picrust2_out")
