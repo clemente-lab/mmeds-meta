@@ -48,21 +48,6 @@ rule extract_feature_table_fasta:
         "fasta "
         "tables/tmp_unzip_{wildcards.table}"
 
-rule extract_feature_table_tsv:
-    """ Remove feature table biom file from qza archive, convert to readable tsv for downstream analysis """
-    input:
-        "tables/{table}.qza"
-    output:
-        "tables/{table}.tsv"
-    conda:
-        "mmeds_test"
-    shell:
-        "extract_feature_table.sh "
-        "{input} "
-        "{output} "
-        "tsv "
-        "tables/tmp_unzip_{wildcards.table}"
-
 rule extract_feature_table_tsv_class:
     input:
         "tables/{class}/{table}.qza"
