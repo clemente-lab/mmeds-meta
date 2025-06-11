@@ -12,6 +12,7 @@ rule extract_feature_table_tsv:
         "extract_feature_table.sh "
         "{input} "
         "{output} "
+        "tsv "
         "tables/tmp_unzip_{wildcards.table}"
 
 rule extract_feature_table_biom:
