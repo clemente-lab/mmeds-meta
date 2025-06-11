@@ -4,7 +4,8 @@ report: "report.rst"
 include: "{snakemake_dir}/common.smk"
 include: "{snakemake_dir}/file_manipulation.smk"
 include: "{snakemake_dir}/table_filtering.smk"
+include: "{snakemake_dir}/picrust.smk"
 
 rule results:
     input:
-        picrust2_core
+        "picrust2_out"
