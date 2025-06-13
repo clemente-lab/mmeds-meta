@@ -9,5 +9,6 @@ omit =
     scripts/**
     ~/.modules/**
     **/modules/**
+    /opt/**
 source =
     mmeds/

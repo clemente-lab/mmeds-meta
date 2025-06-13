@@ -27,6 +27,7 @@ source(paste(this.dir(), "R_utils.R", sep="/"))
 # Prevents Rplots.pdf being generated in working dir
 pdf(NULL)
 
+# Custom themeing
 bkg <-
     theme(axis.text.x = element_text(size = 10, color = "black")) +
     theme(axis.text.x = element_text(angle=90, vjust = 0.5, hjust = 1)) +
@@ -46,10 +47,12 @@ bkg <-
     theme(plot.title = element_text(hjust = 0.5)) +
     theme(plot.subtitle = element_text(size=9, color= "black"))
 
+# Can handle at most 6 classes in a strict plot
 colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 
 data <-read.table(args$results_table, header = T, sep = "\t")
 
+# Only keep data with significant results
 plot_data <- subset(data, !is.na(data$LDA))
 if (!is.na(args$match_string)) {
     plot_data <- plot_data[grepl(args$match_string, plot_data$RawTaxa, ignore.case=T),]
@@ -70,6 +73,7 @@ if (nrow(plot_data) == 0) {
 
     plot_data <- plot_data[order(plot_data$Group),]
     if (!args$strict && length(unique(plot_data$Group)) > 1) {
+        # Set classes to go in opposite directions in plot if not strict
         plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA
     }
     plot_data <- plot_data[!duplicated(plot_data$Taxa),]

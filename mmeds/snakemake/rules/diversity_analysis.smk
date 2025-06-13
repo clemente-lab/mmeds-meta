@@ -1,7 +1,9 @@
+# ruleorders will prefer phylogenetic methods if phylogeny is available
 ruleorder: diversity_core_metrics_phylogenetic > diversity_core_metrics
 ruleorder: alpha_rarefaction_phylogenetic > alpha_rarefaction
 
 rule diversity_core_metrics_phylogenetic:
+    """ Generate standard diversity metrics with q2-diversity, including phylogenetic metrics """
     # threads: 10
     input:
         feature_table = "tables/asv_table.qza",
@@ -21,6 +23,7 @@ rule diversity_core_metrics_phylogenetic:
         "--output-dir {output}"
 
 rule diversity_core_metrics:
+    """ Generate standard diversity metrics with q2-diversity, without phylogenetic metrics """
     # threads: 10
     input:
         feature_table = "tables/asv_table.qza",
@@ -38,6 +41,7 @@ rule diversity_core_metrics:
         "--output-dir {output}"
 
 rule alpha_rarefaction_phylogenetic:
+    """ Generate alpha rarefaction curves with q2-diversity, including phylogenetic metrics """
     input:
         feature_table = "tables/asv_table.qza",
         rooted_tree = "tables/rooted_tree.qza",
@@ -55,6 +59,7 @@ rule alpha_rarefaction_phylogenetic:
         "--o-visualization {output}"
 
 rule alpha_rarefaction:
+    """ Generate alpha rarefaction curves with q2-diversity, without phylogenetic metrics """
     input:
         feature_table = "tables/asv_table.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
@@ -70,6 +75,7 @@ rule alpha_rarefaction:
         "--o-visualization {output}"
 
 rule alpha_diversity_ANOVA_test:
+    """ Perform standard ANOVA with q2-diversity against provided alpha metric across all classes included in the metadata """
     input:
         div = "diversity/core_metrics_results",
         mapping_file = "tables/qiime_mapping_file.tsv"
@@ -83,6 +89,7 @@ rule alpha_diversity_ANOVA_test:
         """
 
 rule beta_diversity_PERMANOVA_test:
+    """ Perform standard PERMANOVA with q2-diversity against provided beta metric pairwise across specified category """
     threads: 3
     input:
         div = "diversity/core_metrics_results",
