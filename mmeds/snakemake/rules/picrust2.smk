@@ -4,7 +4,7 @@ rule picrust2_core:
         rep_seqs = "tables/rep_seqs_table.fasta",
         biom_feature_table = "tables/asv_table.biom"
     output:
-        "picrust2_out"
+        directory("picrust2_out")
     conda:
         # "qiime2-2020.8.0" # or should I use "qiime2-2023.9"
         "/sc/arion/projects/MMEDS/.modules/picrust2"
