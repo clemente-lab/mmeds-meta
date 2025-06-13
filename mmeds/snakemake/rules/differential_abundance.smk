@@ -58,6 +58,7 @@ rule plot_lefse_results:
     shell:
         """
         ml R/4.1.0
+        export R_LIBS="/hpc/users/mmedsadmin/.Rlib:$R_LIBS"
         Rscript {params.tool_dir}/plot_lefse.R {input} {output} {params.plot_options}
         """
 
