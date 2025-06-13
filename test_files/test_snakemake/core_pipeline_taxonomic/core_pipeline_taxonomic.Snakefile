@@ -16,4 +16,3 @@ rule results:
         "diversity/alpha_rarefaction.qzv",
         "tables/taxa_barplot.qzv",
         expand("tables/taxa_table_L{level}.qza", level=config['taxa_levels']),
-        ancombc_splits
