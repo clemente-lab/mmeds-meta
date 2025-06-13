@@ -1,13 +1,16 @@
-"""
-Rscript which takes in a LEfSe results table and parameters, and uses ggplot2 to generate a results plot, automatically finding correct specifications for image size
-"""
+####
+# Rscript which takes in a LEfSe results table and parameters, and uses ggplot2 to generate a results plot, automatically finding correct specifications for image size
+####
 
 library(argparser)
 
 parser <- arg_parser("parse arguments", hide.opts=TRUE)
 parser <- add_argument(parser, "results-table", nargs=1, help="LEfSe Results Table")
 parser <- add_argument(parser, "output-file", nargs=1, help="LEfSe plot output")
+parser <- add_argument(parser, "--row-max", nargs=1, help="Will filter table down to the top {row-max} strengths", default=NA, type='integer')
+parser <- add_argument(parser, "--match-string", nargs=1, help="Only plot features that contain a match with a string", default=NA)
 parser <- add_argument(parser, "--strict", flag=TRUE, help="Analysis run strictly on more than two classes, allow for this")
+parser <- add_argument(parser, "--no-string-clean", flag=TRUE, help="If set, no processing will be done on row labels")
 
 args <- parse_args(parser)
 
@@ -16,6 +19,10 @@ library(dplyr)
 library(tidyverse)
 library(ggpubr)
 library(stringr)
+library(this.path)
+
+# MMEDS R utils
+source(paste(this.dir(), "R_utils.R", sep="/"))
 
 # Prevents Rplots.pdf being generated in working dir
 pdf(NULL)
@@ -43,53 +50,39 @@ bkg <-
 # Can handle at most 6 classes in a strict plot
 colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 
-# Read in raw data
-data <-read.table(args$results_table, header = FALSE, sep = "\t")
-names(data) <- c("RawTaxa", "X", "Group", "LDA", "pval")
+data <-read.table(args$results_table, header = T, sep = "\t")
 
 # Only keep data with significant results
 plot_data <- subset(data, !is.na(data$LDA))
-taxa_strs <- list()
-for (raw in plot_data$RawTaxa) {
-    split <- as.character(unlist(str_split(raw, "\\.")))
-    i <- length(split)
-    blanks <- 0
-    while (i > 0) {
-        if (split[i] == "__" | str_sub(split[i], start=-2) == "__") {
-            blanks <- blanks + 1
-            split <- split[1:i-1]
-        }
-        else {
-            break
-        }
-        i <- i - 1
-    }
-
-    if (length(split) == 1) {
-        taxa_str <- split[1]
-    }
-    else {
-        taxa_str <- paste(split[length(split)-1], split[length(split)])
-    }
-
-    if (blanks > 0) {
-        for (i in 1:blanks) {
-            taxa_str <- paste(taxa_str, "__uncl.", sep="")
-        }
-    }
-    taxa_strs <- append(taxa_strs, taxa_str)
+if (!is.na(args$match_string)) {
+    plot_data <- plot_data[grepl(args$match_string, plot_data$RawTaxa, ignore.case=T),]
 }
 
-# Set classes to go in opposite directions in plot if not strict
-plot_data$Taxa <- as.character(taxa_strs)
-plot_data <- plot_data[order(plot_data$Group),]
-if (!args$strict) {
-    plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA
-}
-plot_data <- plot_data[!duplicated(plot_data$Taxa),]
+if (nrow(plot_data) == 0) {
+    pdf(args$output_file, height=5, width=5)
+    plot.new()
+    text(0.45, 0.5, "No Significant Results")
+    dev.off()
+} else {
+    plot_data$Group <- as.character(plot_data$Group)
+    if (args$no_string_clean) {
+        plot_data$Taxa <- plot_data$RawTaxa
+    } else {
+        plot_data$Taxa <- clean_taxa_string(plot_data$RawTaxa)
+    }
 
-# Only plot if there are entries left after filtering
-if (nrow(plot_data) > 0) {
+    plot_data <- plot_data[order(plot_data$Group),]
+    if (!args$strict && length(unique(plot_data$Group)) > 1) {
+        # Set classes to go in opposite directions in plot if not strict
+        plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA <- -1 * plot_data[plot_data$Group == unique(plot_data$Group)[1],]$LDA
+    }
+    plot_data <- plot_data[!duplicated(plot_data$Taxa),]
+
+    if (!is.na(args$row_max) && nrow(plot_data) > args$row_max) {
+        plot_data <- plot_data[order(-abs(plot_data$LDA)),][1:args$row_max,]
+        plot_data <- plot_data[order(plot_data$Group),]
+    }
+
     plot_width <- (max(nchar(plot_data$Taxa)) + max(nchar(plot_data$Group)))*30 + 1000
     plot_height <- nrow(plot_data)*50 + 400
     p <- ggbarplot(plot_data, x="Taxa", y="LDA", fill="Group", width= 1, color = "white", sort.val = "asc", sort.by.groups=TRUE) + 
@@ -97,7 +90,4 @@ if (nrow(plot_data) > 0) {
         scale_fill_manual(values=colors)
     plot(p)
     ggsave(args$output_file, width=plot_width, height=plot_height, units = 'px', limitsize = FALSE)
-} else {
-    pdf(args$output_file)
-    dev.off()
 }

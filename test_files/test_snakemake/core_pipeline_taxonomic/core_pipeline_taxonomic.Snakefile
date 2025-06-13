@@ -16,5 +16,4 @@ rule results:
         "diversity/alpha_rarefaction.qzv",
         "tables/taxa_barplot.qzv",
         expand("tables/taxa_table_L{level}.qza", level=config['taxa_levels']),
-        expand("differential_abundance/{var}/ancom-bc_{table}_{var}_barplot.qzv", table=expand("taxa_table_L{level}", level=config['taxa_levels']), var=config['metadata'])
-
+        ancombc_splits

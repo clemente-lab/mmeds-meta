@@ -3,7 +3,6 @@
 import click
 from pathlib import Path
 from subprocess import run, CalledProcessError
-from mmeds.summary import summarize_qiime
 from mmeds.database.database import Database
 from mmeds.spawn import Watcher
 from mmeds.util import setup_environment, run_analysis, start_analysis_local

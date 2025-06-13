@@ -1,3 +1,5 @@
+#!/user/bin/env python3
+
 import click
 import os
 import gzip

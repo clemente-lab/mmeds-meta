@@ -4,13 +4,13 @@ ruleorder: alpha_rarefaction_phylogenetic > alpha_rarefaction
 
 rule diversity_core_metrics_phylogenetic:
     """ Generate standard diversity metrics with q2-diversity, including phylogenetic metrics """
-    threads: 10
+    # threads: 10
     input:
         feature_table = "tables/asv_table.qza",
         rooted_tree = "tables/rooted_tree.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "diversity/core_metrics_results"
+        directory("diversity/core_metrics_results")
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -24,12 +24,12 @@ rule diversity_core_metrics_phylogenetic:
 
 rule diversity_core_metrics:
     """ Generate standard diversity metrics with q2-diversity, without phylogenetic metrics """
-    threads: 10
+    # threads: 10
     input:
         feature_table = "tables/asv_table.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
-        "diversity/core_metrics_results"
+        directory("diversity/core_metrics_results")
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -96,6 +96,8 @@ rule beta_diversity_PERMANOVA_test:
         mapping_file = "tables/qiime_mapping_file.tsv"
     output:
         "diversity/PERMANOVA/{var}/{metric}_{var}_PERMANOVA.qzv",
+    conda:
+        "qiime2-2020.8.0"
     shell:
         """
         qiime diversity beta-group-significance --i-distance-matrix {input.div}/{wildcards.metric}_distance_matrix.qza --m-metadata-file {input.mapping_file} --m-metadata-column {wildcards.var} --p-pairwise --o-visualization {output}

@@ -5,7 +5,8 @@ rule demux_single_barcodes:
         barcodes = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv"
     output:
         error_correction = "section_{sequencing_run}/error_correction.qza",
-        demux_file = "section_{sequencing_run}/demux_file.qza"
+        demux_file = "section_{sequencing_run}/demux_file.qza",
+        demux_viz = "section_{sequencing_run}/demux_viz.qza"
     conda:
         "qiime2-2020.8.0"
     params:
@@ -17,17 +18,21 @@ rule demux_single_barcodes:
         "--m-barcodes-column BarcodeSequence "
         "{params.option} "
         "--o-error-correction-details {output.error_correction} "
-        "--o-per-sample-sequences {output.demux_file}"
+        "--o-per-sample-sequences {output.demux_file}; "
+        "qiime demux summarize "
+        "--i-data {output.demux_file} "
+        "--o-visualization {output.demux_viz}"
 
 rule demux_dual_barcodes_pheniqs:
     """ Demultiplex a paired-end dual-barcoded sequencing run with Pheniqs """
     input:
         "section_{sequencing_run}/pheniqs_config.json"
     output:
-        "section_{sequencing_run}/pheniqs_output"
+        directory("section_{sequencing_run}/pheniqs_output")
     conda:
         "pheniqs"
     shell:
+        "mkdir {output}; "
         "pheniqs mux --config {input}"
 
 rule strip_error_barcodes:
@@ -36,10 +41,11 @@ rule strip_error_barcodes:
         dir = "section_{sequencing_run}/pheniqs_output",
         mapping_file = "section_{sequencing_run}/qiime_mapping_file_{sequencing_run}.tsv",
     output:
-        dir = "section_{sequencing_run}/stripped_output"
+        dir = directory("section_{sequencing_run}/stripped_output")
     conda:
-        "mmeds"
+        "mmeds_test"
     shell:
+        "mkdir {output}; "
         "strip_error_barcodes.py "
         "--num-allowed-errors 1 "
         "--m-mapping-file {input.mapping_file} "
