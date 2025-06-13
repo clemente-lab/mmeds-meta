@@ -1,6 +1,5 @@
-"""
-Rscript which takes in a LEfSe results table and parameters, and uses ggplot2 to generate a results plot, automatically finding correct specifications for image size
-"""
+# Rscript which takes in a LEfSe results table and parameters, and uses ggplot2 to generate a results plot, automatically finding correct specifications for image size
+
 
 library(argparser)
 
