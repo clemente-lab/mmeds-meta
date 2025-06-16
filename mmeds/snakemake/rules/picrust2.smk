@@ -12,4 +12,5 @@ rule picrust2_core:
         "picrust2_pipeline.py "
         "-s {input.rep_seqs} "
         "-i {input.biom_feature_table} "
-        "-o {output}"
+        "-o {output} "
+        "--stratified "
