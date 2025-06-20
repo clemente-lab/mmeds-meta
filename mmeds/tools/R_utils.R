@@ -10,7 +10,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
     repeats <- list()
     for (raw in raw_taxa) {
         # First check for strings that are special cases
-        if (raw %in% c("unclassified", "not_reported")) {
+        if (grepl("not_reported", raw) || raw=="unclassified") {
           taxa_strs <- append(taxa_strs, raw)
           next
         }
