@@ -17,8 +17,8 @@ import re
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
 
-# If not running on web01, can't connect to databases
-IS_PRODUCTION = 'web01' in getfqdn().split('.')
+# If not running on web03, can't connect to databases
+IS_PRODUCTION = 'web03' in getfqdn().split('.')
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
 LIVE_PROD_ACCESS = True
@@ -49,7 +49,7 @@ if TESTING:
     IMAGE_PATH = str(CSS_DIR) + '/'
 
 else:
-    # We're on web01 and using MMEDs out of if it's project diredctory
+    # We're on web03 and using MMEDs out of if it's project diredctory
     # OR, we're in the folder /sc/arion/projects/MMEDS
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
 
@@ -277,13 +277,19 @@ WORKFLOWS = {
             'taxonomic_database',
             'sequencing_runs',
             'taxa_levels'
-        ]
+        ],
+        "optional_parameters": []
     },
     "lefse": {
         "parameters": [
             "tables",
-            "classes",
-            "subclasses"
+            "classes"
+        ],
+        "optional_parameters": [
+            "subclasses",
+            "clean_strings",
+            "plot_max_rows",
+            "match_string"
         ]
     }
 }

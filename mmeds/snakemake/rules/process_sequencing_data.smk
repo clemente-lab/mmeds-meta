@@ -36,7 +36,8 @@ rule import_pheniqs_sample_data:
     input:
         dir = "section_{sequencing_run}/stripped_output",
     output:
-        "section_{sequencing_run}/demux_file.qza"
+        demux_file = "section_{sequencing_run}/demux_file.qza",
+        demux_viz = "section_{sequencing_run}/demux_viz.qzv"
     conda:
         "qiime2-2020.8.0"
     shell:
@@ -44,7 +45,10 @@ rule import_pheniqs_sample_data:
         "--type SampleData[PairedEndSequencesWithQuality] "
         "--input-format CasavaOneEightSingleLanePerSampleDirFmt "
         "--input-path {input.dir} "
-        "--output-path {output}"
+        "--output-path {output.demux_file}; "
+        "qiime demux summarize "
+        "--i-data {output.demux_file} "
+        "--o-visualization {output.demux_viz}"
 
 rule make_pheniqs_config:
     """ Create YAML file describing all barcodes and samples to Pheniqs """
@@ -58,7 +62,7 @@ rule make_pheniqs_config:
     output:
         "section_{sequencing_run}/pheniqs_config.json",
     conda:
-        "mmeds"
+        "mmeds_test"
     shell:
         "make_pheniqs_config.py "
         "--reads-forward {input.forward_reads} "
@@ -75,6 +79,9 @@ rule build_phylogenetic_tree:
         feature_table = "tables/asv_table.qza",
         rep_seqs = "tables/rep_seqs_table.qza"
     output:
+        alignment = temp("tables/alignment.qza"),
+        masked_alignment = temp("tables/masked_alignment.qza"),
+        unrooted_tree = temp("tables/unrooted_tree.qza"),
         feature_table_viz = "tables/asv_table_viz.qzv",
         rooted_tree = "tables/rooted_tree.qza"
     conda:
@@ -82,8 +89,8 @@ rule build_phylogenetic_tree:
     shell:
         """
         qiime feature-table summarize --i-table {input.feature_table} --o-visualization {output.feature_table_viz}
-        qiime alignment mafft --i-sequences {input.rep_seqs} --o-alignment temp_files/alignment.qza
-        qiime alignment mask --i-alignment temp_files/alignment.qza --o-masked-alignment temp_files/masked_alignment.qza
-        qiime phylogeny fasttree --i-alignment temp_files/masked_alignment.qza --o-tree temp_files/unrooted_tree.qza
-        qiime phylogeny midpoint-root --i-tree temp_files/unrooted_tree.qza --o-rooted-tree tables/rooted_tree.qza
+        qiime alignment mafft --i-sequences {input.rep_seqs} --o-alignment {output.alignment}
+        qiime alignment mask --i-alignment {output.alignment} --o-masked-alignment {output.masked_alignment}
+        qiime phylogeny fasttree --i-alignment {output.masked_alignment} --o-tree {output.unrooted_tree}
+        qiime phylogeny midpoint-root --i-tree {output.unrooted_tree} --o-rooted-tree {output.rooted_tree}
         """
