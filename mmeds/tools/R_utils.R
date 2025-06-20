@@ -10,6 +10,10 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
     repeats <- list()
     for (raw in raw_taxa) {
         # First check for strings that are special cases
+        if (raw %in% c("unclassified", "not_reported")) {
+          taxa_strs <- append(taxa_strs, raw)
+          next
+        }
         is_virus <- grepl("virus", raw, ignore.case = T)
         is_uncharacterized_spp <- grepl("sp\\.|sp_|str\\.|str_", raw, ignore.case = T)
         is_unclassified <- grepl("unclassified|not_reported", raw, ignore.case = T)
@@ -225,7 +229,8 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
                 ungroup() %>%
                 mutate(Taxon=factor(Taxon, levels=rev(c(plotfeats, "Remainder")))) %>%
                 left_join(metadata)
-        ))
+        )
+    )
     feature_order <- c(names(rowMeans(features)[order(rowMeans(features), decreasing=T)][1:ntoplot]), 'Remainder')
     fplot$Taxon <- factor(fplot$Taxon, levels=feature_order)
 
@@ -244,4 +249,5 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
 
     return(bplot)
 }
+
 
