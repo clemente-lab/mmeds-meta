@@ -150,7 +150,8 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     )
 
     if(missing(ntoplot) & nrow(features)>10){ntoplot=10} else if (missing(ntoplot)){ntoplot=nrow(features)}
-    features<-as.data.frame(make_percent(features), check.names=F)
+    features <- as.data.frame(make_percent(features), check.names=F)
+    features[is.na(features)] <- 0
 
     if(missing(metadata)){metadata<-data.frame(SampleID=colnames(features))}
     if(!"SampleID" %in% colnames(metadata)){metadata <- metadata %>% rownames_to_column("SampleID")}
@@ -159,6 +160,7 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     }
 
     plotfeats<-names(sort(rowMeans(features), decreasing = TRUE)[1:ntoplot]) # extract the top N most abundant features on average
+
     if (sort=="top") {
         sort_by <- c(plotfeats[1])
     } else if (sort %in% c("all", "dominant")) {
