@@ -374,7 +374,7 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(set(fig.WORKFLOWS[workflow_type]["parameters"]).union(\
+    diff = {x for x in set(config.keys()).difference(set(fig.WORKFLOWS[workflow_type]["parameters"]).union(
                 set(fig.WORKFLOWS[workflow_type]["optional_parameters"]))) if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
@@ -414,6 +414,7 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config
+
 
 def get_sequencing_run_names(metadata):
     df = load_metadata(metadata, header=0, na_values='nan', skiprows=[0, 2, 3, 4])
@@ -1156,7 +1157,6 @@ def strip_error_barcodes(num_allowed_errors,
     :reverse_barcode_cats: tuple with reverse barcode header text
     """
     # Read in mapping file
-    output_content = {}
     map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
     # Only three columns are needed
@@ -1362,11 +1362,8 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     barcode_return = create_barcode_mapfile(Path(demux_file).parent, for_barcodes, rev_barcodes,
                                             Path(demux_file).stem, map_file, get_read_counts)
     if get_read_counts:
-        map_df = barcode_return[0]
         matched_barcodes = barcode_return[1]
         all_barcodes = barcode_return[2]
-    else:
-        map_df = barcode_return
 
     new_env = setup_environment('qiime/1.9.1')
 
@@ -1577,11 +1574,8 @@ def get_study_components(study_dirs):
         directory_info[study]['specimen'] = spec[0]
 
         # Collect names of used sequencing runs
-        runs = []
         df = pd.read_csv(directory_info[study]['specimen'], sep='\t', header=[0, 1], skiprows=[2, 3, 4])
-        for run in df['RawDataProtocol']['RawDataProtocolID']:
-            if run not in runs:
-                runs.append(run)
+        runs = list(df['RawDataProtocol']['RawDataProtocolID'].unique())
         directory_info[study]['runs'] = runs
         directory_info[study]['name'] = df['Study']['StudyName'][0]
 
@@ -1599,7 +1593,7 @@ def get_study_components(study_dirs):
     return directory_info
 
 
-def get_sequencing_run_locations(runs):
+def get_sequencing_run_locations(runs, user):
     """
     Get file locations of sequencing runs, for use with dump & load
     """
