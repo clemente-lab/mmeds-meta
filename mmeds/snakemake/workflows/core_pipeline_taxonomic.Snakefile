@@ -15,5 +15,5 @@ rule results:
         expand("diversity/PERMANOVA/{{var}}/{{metric}}_{{var}}_PERMANOVA.qzv", metric=config['beta_metrics'], var=config['metadata']),
         "diversity/alpha_rarefaction.qzv",
         "tables/taxa_barplot.qzv",
-        expand("tables/taxa_table_L{level}.qza", level=config['taxa_levels'])
+        expand("tables/taxa_table_L{{level}}.qza", level=config['taxa_levels'])
 
