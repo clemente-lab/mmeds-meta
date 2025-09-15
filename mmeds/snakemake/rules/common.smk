@@ -20,6 +20,7 @@ def pairwise_splits(wildcards, tool, vars):
     if tool == "lefse" and "subclasses" in config and config["subclasses"]:
         subclasses = deepcopy(config["subclasses"])
 
+
     splits = []
     for table in tables:
         if not Path(f"tables/{table}.tsv").exists():
@@ -76,7 +77,7 @@ def ancombc_splits(wildcards):
     return pairwise_splits(wildcards, "ancombc", config["metadata"])
 
 def lefse_splits(wildcards):
-    """ 
+    """
     Replace occurrences where class==subclass with subclass="NA", which is the default behavior, this handles the issue at the DAG level
         e.g. separated: ["results/class/lefse_plot", "feature_table_class_cat1_or_cat2", "class", "subclass", "pdf"]
     """

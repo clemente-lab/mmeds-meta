@@ -52,10 +52,16 @@ col2 <- c("#DDDDDD","#720510","#fdb529","#8caf7c","#6E1945","#D1E1EC","#191919",
 
 col3 <- col1[c(1, 6, 11, 16, 21, 26, 31, 5, 10, 15, 20, 25, 30, 4, 9, 14, 19, 24, 29, 3, 8, 13, 18, 23, 28, 2, 7, 12, 17, 22, 27)]
 
+col4 <- c("#DDDDDD", "#FE7926", "#F8DE7E","#b6d7a8","#5E0031", "#C62702", "#022f59","#005496","#915d78", "#b3cde0", "#528652")
+
+nplot <- 30
 if (args$colors == 1) {
     selected_col <- col1 
 } else if (args$colors == 2) {
     selected_col <- col2 
+} else if (args$colors == 4){
+    selected_col <- col4
+    nplot <- 10
 } else {
     selected_col <- col3
 }
@@ -71,7 +77,7 @@ if (!args$no_string_clean) {
     rownames(data) <- clean_taxa_string(rownames(data), no_reps=T)
 }
 
-p <- taxa_barplot(data, metadata, category = args$category, ntoplot = 30, sort = args$sort) +
+p <- taxa_barplot(data, metadata, category = args$category, ntoplot = nplot, sort = args$sort) +
       ylab("Relative abundance (%)") + guides(fill = guide_legend(ncol = 1)) + scale_fill_manual(values = rev(selected_col)) + bkg
 plot(p)
 ggsave(args$output_file, height=6, width=args$width, units='in')

@@ -47,7 +47,7 @@ def dump(input_study_names, path, output_zip, user, no_zip):
                 all_runs.append(run)
 
     # Get sequencing run locations
-    run_locations = util.get_sequencing_run_locations(all_runs)
+    run_locations = util.get_sequencing_run_locations(all_runs, user)
 
     # Create file structure to be zipped
     zip_path = head / output_zip
