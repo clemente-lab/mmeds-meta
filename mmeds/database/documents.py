@@ -1,12 +1,21 @@
 import mongoengine as men
+from enum import Enum
 from datetime import datetime
 from pathlib import Path
 from copy import deepcopy
 from ppretty import ppretty
 from mmeds.config import DOCUMENT_LOG
-from mmeds.util import copy_metadata, camel_case
-from mmeds.error import AnalysisError
+from mmeds.util import copy_metadata  # , camel_case
+# from mmeds.error import AnalysisError
 from mmeds.logging import Logger
+
+
+class DocType(Enum):
+    STUDY = 0
+    ANALYSIS = 1
+    METADATA = 2
+    DATA = 3
+    FEATURE_TABLE = 4
 
 
 class MMEDSDoc(men.Document):
@@ -22,52 +31,16 @@ class MMEDSDoc(men.Document):
     last_accessed = men.DateTimeField(required=True)
     public = men.BooleanField()
     testing = men.BooleanField(required=True)
-    sub_analysis = men.BooleanField()                       # If this document corresponds to a sub analysis
-    is_alive = men.BooleanField()  # If the process it's related to is currently running
-    name = men.StringField(max_length=100)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100)
-    path = men.StringField(max_length=256)
-    study_code = men.StringField(max_length=100)
-    study_name = men.StringField(max_length=100)
     access_code = men.StringField(max_length=50)
-    reads_type = men.StringField(max_length=45)     # single_end or paired_end
-    barcodes_type = men.StringField(max_length=45)  # Single or Paired
-    data_type = men.StringField(max_length=45)  #
-    workflow_type = men.StringField(max_length=45)  # Type of tool
-    doc_type = men.StringField(max_length=45)  # Study, Analysis, or SequencingRun
-    analysis_type = men.StringField(max_length=45)
-    analysis_name = men.StringField(max_length=45)
-
-    # Stages: created, started, <Name of last method>, finished, errored
-    analysis_status = men.StringField(max_length=45)
-    restart_stage = men.IntField()
-    pid = men.IntField()
-    exit_code = men.IntField()
-    files = men.DictField()
-    config = men.DictField()
+    doc_type = men.EnumField(DocType, required=True)
+    is_active = men.BooleanField()
 
     # When the document is updated record the
     # location of all files in a new file
     def save(self, **kwargs):
         super().save(**kwargs)
-        if self.path is not None:
-            with open(str(Path(self.path) / 'file_index.tsv'), 'w') as f:
-                f.write('{}\t{}\t{}\n'.format(self.owner, self.email, self.access_code))
-                f.write('Key\tPath\n')
-                for key, file_path in self.files.items():
-                    # Skip non existent files
-                    if file_path is None:
-                        continue
-                    # If it's a key for an analysis point to the file index for that analysis
-                    elif isinstance(file_path, dict):
-                        f.write('{}\t{}\n'.format(key, Path(self.path) / key / 'file_index.tsv'))
-                    # Otherwise just write the value
-                    else:
-                        f.write('{}\t{}\n'.format(key, file_path))
-            with open(DOCUMENT_LOG, 'a') as f:
-                f.write('-\t'.join([str(type(self)), self.owner, 'Upload', 'Finished',
-                                    self.path, self.access_code]) + '\n')
 
     def __str__(self):
         """ Return a printable string """
@@ -78,14 +51,7 @@ class MMEDSDoc(men.Document):
         info = {
             'created': self.created,
             'owner': self.owner,
-            'stage': self.restart_stage,
-            'study_code': self.study_code,
             'access_code': self.access_code,
-            'type': self.analysis_type,
-            'pid': self.pid,
-            'path': self.path,
-            'name': self.name,
-            'is_alive': self.is_alive
         }
         writeable = {}
         for key, item in info.items():
@@ -97,7 +63,7 @@ class MMEDSDoc(men.Document):
                 writeable[key] = str(deepcopy(item))
         return writeable
 
-    def generate_MMEDSDoc(self, name, workflow_type, analysis_type, config, access_code, analysis_name = "analysis"):
+    def generate_MMEDSDoc(self, name, workflow_type, analysis_type, config, access_code, analysis_name="analysis"):
         """
         Create a new AnalysisDoc from the current StudyDoc.
         :name: A string. The name of the new document.
@@ -151,3 +117,55 @@ class MMEDSDoc(men.Document):
                                                  datetime.now(), doc.path, doc.access_code]]) + '\n')
             Logger.debug('saved analysis doc')
         return doc
+
+
+class StudyDoc(MMEDSDoc):
+    """
+    MongoDB Document for storing studies
+    """
+    study_name = men.StringField()
+    path = men.StringField()
+    metadata = men.ReferenceField(MMEDSDoc)
+    data = men.ListField(men.ReferenceField(MMEDSDoc))
+    analyses = men.ListField(men.ReferenceField(MMEDSDoc))
+
+
+class AnalysisDoc(MMEDSDoc):
+    """
+    MongoDB Document for storing analyses
+    """
+    analysis_name = men.StringField()
+    path = men.StringField()
+    study = men.ReferenceField(MMEDSDoc)
+    workflow_type = men.StringField()
+    config = men.FileField()
+
+
+class MetadataDoc(MMEDSDoc):
+    """
+    MongoDB Document for storing metadata
+    """
+    study = men.ReferenceField(MMEDSDoc)
+    subject_file = men.FileField()
+    specimen_file = men.FileField()
+    qiime_file = men.FileField()
+
+
+class DataDoc(MMEDSDoc):
+    """
+    MongoDB Document for storing raw data
+    """
+    data_name = men.StringField()
+    data_type = men.StringField()
+    studies = men.ListField(men.ReferenceField(MMEDSDoc))
+    files = men.ListField(men.FileField())
+
+
+class FeatureTableDoc(MMEDSDoc):
+    """
+    MongoDB Document for storing feature tables
+    """
+    table_name = men.StringField()
+    studies = men.ListField(men.ReferenceField(MMEDSDoc))
+    from_analysis = men.ReferenceField(MMEDSDoc)
+    table = men.FileField()

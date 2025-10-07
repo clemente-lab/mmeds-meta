@@ -369,7 +369,7 @@ class Database:
         try:
             # Get headers from a joined table
             if 'JOIN' in sql:
-                table = sql[sql.find('('):sql.rfind(')')+1]
+                table = sql[sql.find('('):sql.rfind(')') + 1]
             else:  # Otherwise get headers from a single table
                 # \S is a pattern that matches any non-whitespace character
                 # * matches any number of repititions of the preciding match pattern
@@ -812,16 +812,16 @@ class Database:
     ########################################
     #               MongoDB                #
     ########################################
-    def create_access_code(self, check_code=None, length=20):
+    def create_access_code(self, length=50):
         """ Creates a unique code for identifying a mongo db document """
-        if check_code is None:
-            check_code = fig.get_salt(20)
-        code = check_code
-        count = 0
-        # Ensure no document exists with the given access code
-        while MMEDSDoc.objects(access_code=code).first():
-            code = check_code + '-' + str(count)
-            count += 1
+        code = fig.get_salt(length)
+        n_tries = 50
+        # Ensure no document exists with the given access code, throw error after n tries
+        while MMEDSDoc.objects(access_code=code).first() and n_tries > 0:
+            code = fig.get_salt(length)
+            n_tries -= 1
+        if n_tries == 0:
+            raise TableAccessError("Unable to generate unique access code, try increasing length")
         return code
 
     def mongo_clean(self, access_code):
@@ -907,7 +907,7 @@ class Database:
 
     def check_repeated_subjects(self, df, subject_type, subject_col=-2):
         """
-        Checks for users that match those already in the database.
+        Checks for subjects that match those already in the database.
         """
         warnings = []
         # If there is no subjects table in the metadata this
@@ -981,14 +981,6 @@ class Database:
         mdata.last_accessed = datetime.utcnow()
         mdata.save()
         return mdata.files, mdata.path
-
-    def get_metadata(self, access_code):
-        """
-        Return the MMEDSDoc object.
-        This object should be treated as read only.
-        Any modifications should be done through the Database class.
-        """
-        return MMEDSDoc.objects(access_code=access_code, owner=self.owner).first()
 
     def get_doc(self, access_code, check_owner=True):
         """

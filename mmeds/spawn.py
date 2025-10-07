@@ -17,6 +17,7 @@ from mmeds.database.database import Database
 from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
+from mmeds.database.study_creator import StudyCreator
 from mmeds.error import AnalysisError, MissingUploadError
 
 from mmeds.tools.analysis import Analysis
@@ -120,8 +121,8 @@ class Watcher(BaseManager):
         # Create the appropriate tool
         try:
             tool = Analysis(self.q, ad.owner, analysis_code, ad.study_code, ad.workflow_type,
-                                       ad.analysis_type, ad.analysis_name, ad.config, testing, {}, run_on_node,
-                                       analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
+                            ad.analysis_type, ad.analysis_name, ad.config, testing, {}, run_on_node,
+                            analysis=run_analysis, restart_stage=restart_stage, kill_stage=kill_stage)
         except KeyError:
             raise AnalysisError('Tool type did not match any')
         return tool
@@ -236,7 +237,7 @@ class Watcher(BaseManager):
 
                     if datetime.utcnow() - temp_dt > timedelta(days=1):
                         rmtree(temp_sub_dir)
-                except(ValueError):
+                except ValueError:
                     self.logger.error(f'Error removing temp folder: {temp_sub_dir}')
                     self.cleaned_temp = datetime.utcnow()
 
@@ -318,8 +319,11 @@ class Watcher(BaseManager):
 
         # If there is nothing uploading currently start the new upload process
         if self.current_upload is None:
-            # Check what type of upload this is
+            # Prepare MongoDB Access Code
+            with Database(testing=self.testing) as db:
+                new_access_code = db.create_access_code()
 
+            # Check what type of upload this is
             # Add metadata to existing study
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
@@ -334,14 +338,13 @@ class Watcher(BaseManager):
                 p = DataUploader(username, reads_type, barcodes_type, sequencing_run_name,
                                  datafiles, public, self.testing)
                 self.db_lock.acquire()
-
             # Add new study
             else:
                 Logger.debug(f"length: {len(process)}")
                 (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
                  username, meta_study, temporary, public) = process
                 # Start a process to handle loading the data
-                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime',
+                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', study_doc,
                                      study_name, meta_study, temporary, public, self.testing)
                 self.db_lock.acquire()
             p.start()
@@ -358,6 +361,21 @@ class Watcher(BaseManager):
         else:
             # If there is another upload return the process info to the queue
             self.q.put(process)
+
+    def handle_create_study(self, process):
+        """
+        :process: A n-tuple containing information on what process to spawn.
+        ====================================================================
+        Handles the creation of new studies
+        """
+        (ptype, study_name, subject_type, username, meta_study, public) = process
+
+        # Prepare MongoDB Access Code
+        with Database(testing=self.testing) as db:
+            new_access_code = db.create_access_code()
+
+        p = StudyCreator(new_access_code, study_name, subject_type, username, meta_study, public, self.testing)
+        p.start()
 
     def handle_restart(self, process):
         """
@@ -424,6 +442,8 @@ class Watcher(BaseManager):
                 elif 'upload' in process[0]:
                     Logger.error("Got an upload, processing")
                     self.handle_upload(process)
+                elif process[0] == 'create-study':
+                    self.handle_create_study(process)
                 elif process[0] == 'email':
                     self.logger.error('Sending email')
                     ptype, toaddr, user, message, kwargs = process

@@ -14,9 +14,9 @@ from mmeds.logging import Logger
 from mmeds.util import (send_email, create_local_copy)
 
 
-class DataUploader(Process):
+class FeatureTableUploader(Process):
     """
-    This class handles the processing and uploading of fastq sequencing run files into MongoDB
+    This class handles the processing and uploading of observation matrix tables
     """
     def __init__(self, access_code, owner, data_name, data_type, data_files, public, testing):
         warnings.simplefilter('ignore')

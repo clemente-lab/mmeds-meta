@@ -14,7 +14,7 @@ from mmeds.error import NoResultError
 from mmeds.util import (quote_sql, parse_ICD_codes, send_email, create_local_copy,
                         load_metadata, join_metadata, write_metadata)
 from mmeds.database.sql_builder import SQLBuilder
-from mmeds.database.documents import MMEDSDoc
+import mmeds.database.documents as docs
 from mmeds.logging import Logger
 
 
@@ -22,7 +22,7 @@ class MetaDataUploader(Process):
     """
     This class handles the yprocessing and uploading of mmeds metadata files into the MySQL database.
     """
-    def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type,
+    def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type, study_doc,
                  study_name, meta_study, temporary, public, testing, access_code=None):
         """
         Connect to the specified database.
@@ -53,6 +53,7 @@ class MetaDataUploader(Process):
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.testing = testing
+        self.study = study_doc
         self.study_type = study_type
         self.subject_metadata = Path(subject_metadata)
         self.specimen_metadata = Path(specimen_metadata)
@@ -93,22 +94,21 @@ class MetaDataUploader(Process):
         if access_code is None:
             self.access_code = fig.get_salt(50)
             # Ensure a unique access code
-            while list(MMEDSDoc.objects(access_code=self.access_code)):
+            while list(docs.MMEDSDoc.objects(access_code=self.access_code)):
                 self.access_code = fig.get_salt(50)
         else:
             self.access_code = access_code
 
         # Create the document
-        self.mdata = MMEDSDoc(created=datetime.utcnow(),
-                              last_accessed=datetime.utcnow(),
-                              testing=self.testing,
-                              doc_type='study',
-                              workflow_type=self.study_type,
-                              study_name=self.study_name,
-                              access_code=self.access_code,
-                              owner=self.owner,
-                              public=self.public)
-
+        self.mdata = docs.MetadataDoc(created=datetime.utcnow(),
+                                      last_accessed=datetime.utcnow(),
+                                      public=self.public,
+                                      testing=self.testing,
+                                      owner=self.owner,
+                                      email=self.email,
+                                      access_code=self.access_code,
+                                      doc_type=docs.DocType.METADATA,
+                                      study=self.study)
         self.mdata.save()
 
         count = 0
@@ -119,7 +119,7 @@ class MetaDataUploader(Process):
         new_dir.mkdir()
 
         self.path = Path(new_dir) / 'database_files'
-        MMEDSDoc.objects.timeout(False)
+        docs.MMEDSDoc.objects.timeout(False)
 
     def get_info(self):
         """ Method to return a dictionary of relevant info for the process log """
@@ -146,7 +146,7 @@ class MetaDataUploader(Process):
         :testing: True if the server is running locally.
         :datafiles: A list of datafiles to be uploaded
         """
-        self.mdata.update(is_alive=True)
+        self.mdata.update(is_active=True)
         self.mdata.save()
         Logger.debug('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
 
@@ -204,7 +204,7 @@ class MetaDataUploader(Process):
                    code=self.access_code, testing=self.testing)
 
         # Update the doc to reflect the successful upload
-        self.mdata.update(is_alive=False, exit_code=0)
+        self.mdata.update(is_active=False, exit_code=0)
         self.mdata.save()
         return 0
 

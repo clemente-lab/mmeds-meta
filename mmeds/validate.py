@@ -264,7 +264,7 @@ class Validator:
         # Grab run names
         run_names = []
         for r in runs:
-            run_names.append(r.study_name)
+            run_names.append(r.data_name)
 
         # Confirm metadata run names exist in the db run names
         err_str = '{}\t{}\tSequencing Run Error: Value {} of row {} in column {} \
