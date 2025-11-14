@@ -55,10 +55,11 @@ rule plot_lefse_results:
     params:
         tool_dir = get_tool_dir(),
         plot_options = get_lefse_plot_options()
+    conda:
+        "mmeds_test"
     shell:
         """
-        ml R/4.1.0
-        export R_LIBS="/hpc/users/mmedsadmin/.Rlib:$R_LIBS"
+        export R_LIBS="/hpc/users/mmedsadmin/.Rlib"
         Rscript {params.tool_dir}/plot_lefse.R {input} {output} {params.plot_options}
         """
 
@@ -71,10 +72,11 @@ rule plot_lefse_results_strict:
     params:
         tool_dir = get_tool_dir(),
         plot_options = get_lefse_plot_options()
+    conda:
+        "mmeds_test"
     shell:
         """
-        ml R/4.1.0
-        export R_LIBS="/hpc/users/mmedsadmin/.Rlib:$R_LIBS"
+        export R_LIBS="/hpc/users/mmedsadmin/.Rlib"
         Rscript {params.tool_dir}/plot_lefse.R {input} {output} --strict {params.plot_options}
         """
 

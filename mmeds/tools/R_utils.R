@@ -1,6 +1,7 @@
 library(stringr)
 library(tidyverse)
 library(qiime2R)
+library(ggrepel)
 
 clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
     # Takes in a character vector of taxonomic strings and attempts to coerce them into a 'clean', unified format such that all in the output are unique.
@@ -25,6 +26,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
         raw <- str_replace_all(raw, "sp__", "sp_")
         raw <- str_replace_all(raw, "str__", "str_")
         raw <- str_replace_all(raw, "'", "")
+        # raw <- str_replace_all(raw, "\\.", "")
         raw <- str_replace_all(raw, "___", "__")
         raw <- str_replace_all(raw, "'", "")
         raw <- str_replace_all(raw, " ", "_")
@@ -94,7 +96,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
                 if (anno_start == length(lvl_split)) {
                     # Only one string at species level, get genus from previous level
                     genus_split <- as.character(unlist(str_split(split[length(split)-1], "_")))
-                    taxa_str <- paste(genus_split[1:length(genus_split)], paste(lvl_split[anno_start:length(lvl_split)], collapse=' '))
+                    taxa_str <- paste(genus_split[3:length(genus_split)], paste(lvl_split[anno_start:length(lvl_split)], collapse=' '))
                 } else {
                     taxa_str <- paste(lvl_split[anno_start:length(lvl_split)], collapse=' ')
                 }
@@ -103,7 +105,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
             }
         }
 
-        if (taxa_str %in% taxa_strs & !taxa_str %in% repeats) {
+        if (taxa_str %in% taxa_strs && !taxa_str %in% repeats) {
             repeats <- append(repeats, taxa_str)
         }
         taxa_strs <- append(taxa_strs, taxa_str)
@@ -252,4 +254,86 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     return(bplot)
 }
 
+get_fold_change <- function(data, column, column_labels, features) {
+    # Given a set of features (e.g. taxa, pathways) and a two-way comparison between groups,
+    #   return dataframe with one column of features and one column of groupwise log2FoldChange
+    features_df <- data[, features]
+    min_nonzero <- min(features_df[features_df!=0])
+    pseudo <- 10^floor(log10(min_nonzero))
+
+    folds <- c()
+    for (f in features) {
+        set1 <- data[data[[column]]==column_labels[1],][[f]]
+        set2 <- data[data[[column]]==column_labels[2],][[f]]
+        fold <- mean(log2(set1+pseudo)) - mean(log2(set2+pseudo))
+        folds <- c(folds, fold)
+    }
+
+    fold_df <- data.frame(
+        feature=features,
+        log2FC=folds
+    )
+    return(fold_df)
+}
+
+get_qval_on_pval_scale <- function(plot_mat, qval_thresh) {
+    pseudo <- qval_thresh / 10
+    plot_mat_qval_signif <- plot_mat[!is.na(plot_mat$adjP) & plot_mat$adjP < qval_thresh,]
+    plot_mat_qval_signif <- plot_mat_qval_signif[order(-plot_mat_qval_signif$adjP),]
+    plot_mat_qval_not_signif <- plot_mat[!is.na(plot_mat$adjP) & plot_mat$adjP >= qval_thresh,]
+    plot_mat_qval_not_signif <- plot_mat_qval_not_signif[order(plot_mat_qval_not_signif$adjP),]
+
+    if (nrow(plot_mat_qval_signif)==0) {return (min(plot_mat_qval_not_signif$rawP)-pseudo)}
+
+    pval_high <- plot_mat_qval_not_signif$rawP[1]
+    pval_low <- plot_mat_qval_signif$rawP[1]
+    qval_on_pval_scale <- mean(pval_high, pval_low)
+    return (qval_on_pval_scale)
+}
+
+differential_volcano_plot <- function(plot_mat, valPos, valNeg, clean_strings=T) {
+    no_inf <- plot_mat[abs(plot_mat$log2FC)!=Inf & !is.na(plot_mat$rawP),]
+    max_x <- max(abs(min(no_inf$log2FC)), max(no_inf$log2FC))
+    max_x <- max_x * 1.05
+    if (Inf %in% plot_mat$log2FC) {plot_mat[plot_mat$log2FC==Inf,]$log2FC <- max_x}
+    if (-Inf %in% plot_mat$log2FC) {plot_mat[plot_mat$log2FC==-Inf,]$log2FC <- -max_x}
+
+    plot_mat$label <- ""
+    label_rows <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<0.05)
+    if (nrow(plot_mat[label_rows,]) > 0) {
+        if (clean_strings) {
+            plot_mat[label_rows,]$label <- clean_taxa_string(plot_mat[label_rows,]$feature, strict=F)
+        } else {
+            plot_mat[label_rows,]$label <- plot_mat[label_rows,]$feature
+        }
+    }
+
+    pval_thresh <- 0.05
+    qval_thresh <- 0.1
+    qval_thresh_as_pval <- max(pval_thresh, get_qval_on_pval_scale(plot_mat, qval_thresh))
+    print(qval_thresh_as_pval)
+
+    plot_mat$signif <- "0"
+    rows_raw <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<pval_thresh)
+    pos_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & plot_mat$log2FC>0)
+    neg_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & plot_mat$log2FC<0)
+    if (nrow(plot_mat[c(rows_raw),]) > 0) {
+        plot_mat[rows_raw,]$signif <- "1"
+    }
+    if (nrow(plot_mat[pos_rows_adj,]) > 0) {
+        plot_mat[pos_rows_adj,]$signif <- "2"
+    }
+    if (nrow(plot_mat[neg_rows_adj,]) > 0) {
+        plot_mat[neg_rows_adj,]$signif <- "3"
+    }
+
+    p <- ggplot(plot_mat, aes(x=log2FC, y=-log2(rawP), color=factor(signif, levels=c("0", "1", "2", "3")))) +
+        geom_hline(yintercept=-log2(pval_thresh), linewidth=0.3, color="grey20", linetype = "dashed") +
+        geom_hline(yintercept=-log2(qval_thresh_as_pval), linewidth=0.3, color="grey20", linetype = "dashed") +
+        #geom_vline(xintercept=0, linewidth=0.3, color="grey20", linetype = "dashed") +
+        theme_classic() + theme(legend.position="none") + labs(x=paste(valNeg, "   <-   log2FC   ->   ", valPos)) +
+        geom_text_repel(aes(label=label), color="black", force=5, max.overlaps=15, force_pull=0.1, size=3, min.segment.length=0.2) +
+        scale_color_manual(values=c("0"="grey60", "1"="grey30", "2"="red3", "3"="cyan3")) + xlim(-max_x, max_x) + geom_point()
+    return(p)
+}
 
