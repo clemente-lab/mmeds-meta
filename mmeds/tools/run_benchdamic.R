@@ -7,10 +7,15 @@ parser <- add_argument(parser, "metadata-column", nargs=1, help="Metadata catego
 parser <- add_argument(parser, "metadata-values", nargs=2, help="Two comma-separated values in the metadata category \
                                                                  that will be differentiated, positive value first")
 parser <- add_argument(parser, "out-dir", nargs=1, help="Directory for outputting results")
-parser <- add_argument(parser, "--no-string-clean", flag=TRUE, help="If set, no processing will be done on row labels")
+parser <- add_argument(parser, "--string-clean-level", default=2, help="0=No string cleaning; 1=Non-strict string cleaning; 2=Strict string cleaning;")
+parser <- add_argument(parser, "--faster", flag=T, help="Only run quicker benchdamic DAA methods (currently LinDA, MaAsLin2)")
+parser <- add_argument(parser, "--label-level", default=2, help="0=Only label features that match args from --include-labels; \
+                                                                 1=Label matching args and all significant above qval thresh; \
+                                                                 2=Label matching args and all significant above pval thresh")
+parser <- add_argument(parser, "--include-labels", nargs=Inf, help="Any number of comma-separated values to use with grep \
+                                                                    to determine which features to label in resulting plots")
 
 args <- parse_args(parser)
-
 print(args)
 
 library(benchdamic)
@@ -37,18 +42,22 @@ phyloseq_data_obj <- qza_to_phyloseq(
     metadata=args$metadata_file
 )
 
-q2_features <- as.data.frame(t(read_qza(args$feature_table)$data), check.names=F)
-features_vec <- str_replace_all(colnames(q2_features), ";", "\\.")
+q2_features <- as.data.frame(t(make_proportion(read_qza(args$feature_table)$data)), check.names=F)
+features_vec <- colnames(q2_features)
+features_vec <- str_replace_all(features_vec, ";", "\\.")
+features_vec <- str_replace_all(features_vec, " - ", "-")
+features_vec <- str_replace_all(features_vec, " \\/ ", "_")
+features_vec <- str_replace_all(features_vec, " ", "_")
+features_vec <- str_replace_all(features_vec, "\\|", "\\.")
+features_vec <- str_replace_all(features_vec, ",|\\(|\\)|\\:", "")
 colnames(q2_features) <- features_vec
 q2_features <- rownames_to_column(q2_features, var="SampleID")
 q2_metadata <- read_q2metadata(args$metadata_file)
-q2_data_obj <- merge(q2_metadata, q2_features, by="SampleID")
+q2_data_obj <- merge(q2_metadata, q2_features, by="SampleID", suffixes=c("", ".2"))
 foldchange_df <- get_fold_change(q2_data_obj, var, c(valPos, valNeg), features_vec)
 
 subset_text <- paste(var, " %in% c('", valPos, "', '", valNeg, "')", sep="")
 
-phyloseq_rownames <- rownames(otu_table(phyloseq_data_obj))
-phyloseq_rownames <- str_replace_all(phyloseq_rownames, ";", "\\.")
 phyloseq_data_obj <- phyloseq_data_obj %>% subset_samples(
     eval(parse(text=subset_text))
 )
@@ -63,7 +72,7 @@ phyloseq_data_obj <- phyloseq_data_obj %>% transform_sample_counts(
 #)
 #phyloseq_data_obj <- runNormalizations(norms, phyloseq_data_obj)
 
-rownames(otu_table(phyloseq_data_obj)) <- phyloseq_rownames
+rownames(otu_table(phyloseq_data_obj)) <- features_vec
 
 run_ALDEx2 <- set_ALDEx2(
   pseudo_count = FALSE,
@@ -103,14 +112,24 @@ run_Maaslin2 <- set_Maaslin2(
 )
 
 run_methods <- c(run_ALDEx2, run_ANCOMBC, run_LinDA, run_Maaslin2)
+if (args$faster) {
+    run_methods <- c(run_LinDA, run_Maaslin2)
+}
 benchdamic_results <- runDA(run_methods, phyloseq_data_obj)
 
-results_mats <- list(
-    "ALDEx2"=as.data.frame(benchdamic_results$ALDEx2.all.wilcox.unpaired$pValMat),
-    "ANCOM-BC"=as.data.frame(benchdamic_results$ANCOM.BC$pValMat),
-    "LinDA"=as.data.frame(benchdamic_results$linda.win0.03.imputation$pValMat),
-    "MaAsLin2"=as.data.frame(benchdamic_results$Maaslin2.CLRnorm.NONEtrans.LM$pValMat)
-)
+if (args$faster) {
+    results_mats <- list(
+        "LinDA"=as.data.frame(benchdamic_results$linda.win0.03.imputation$pValMat),
+        "MaAsLin2"=as.data.frame(benchdamic_results$Maaslin2.CLRnorm.NONEtrans.LM$pValMat)
+    )
+} else {
+    results_mats <- list(
+        "ALDEx2"=as.data.frame(benchdamic_results$ALDEx2.all.wilcox.unpaired$pValMat),
+        "ANCOM-BC"=as.data.frame(benchdamic_results$ANCOM.BC$pValMat),
+        "LinDA"=as.data.frame(benchdamic_results$linda.win0.03.imputation$pValMat),
+        "MaAsLin2"=as.data.frame(benchdamic_results$Maaslin2.CLRnorm.NONEtrans.LM$pValMat)
+    )
+}
 
 for (tool in names(results_mats)) {
     results_mats[[tool]] <- rownames_to_column(results_mats[[tool]], var="feature")
@@ -130,7 +149,7 @@ write.table(out_table, paste(args$out_dir, "/benchdamic_results_table_", var, ".
 
 for (tool in names(results_mats)) {
     pdf(paste(args$out_dir, "/volcano_plot_", tool, "_", var, "_rawP.pdf", sep=""), width=10, height=8)
-    p <- differential_volcano_plot(results_mats[[tool]], valPos, valNeg, !args$no_string_clean)
+    p <- differential_volcano_plot(results_mats[[tool]], valPos, valNeg, args$string_clean_level, args$label_level, args$include_labels)
     print(p)
     dev.off()
 }

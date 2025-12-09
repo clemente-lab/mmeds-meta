@@ -26,7 +26,7 @@ rule differential_abundance_lefse:
     shell:
         """
         lefse_format_input.py {input} {output.lefse_input} -c 1 -s 2 -u 3 -o 1000000
-        lefse_run.py {output.lefse_input} {output.lefse_results}
+        lefse_run.py {output.lefse_input} {output.lefse_results} -a 1 -w 1 -l 0
         sed -i "1s/^/RawTaxa\tX\tGroup\tLDA\tpval\\n/" {output.lefse_results}
         """
 
@@ -42,7 +42,7 @@ rule differential_abundance_lefse_strict:
     shell:
         """
         lefse_format_input.py {input} {output.lefse_input} -c 1 -s 2 -u 3 -o 1000000
-        lefse_run.py {output.lefse_input} {output.lefse_results} -y 1
+        lefse_run.py {output.lefse_input} {output.lefse_results} -y 1 -a 1 -w 1 -l 0
         sed -i "1s/^/RawTaxa\tX\tGroup\tLDA\tpval\\n/" {output.lefse_results}
         """
 
