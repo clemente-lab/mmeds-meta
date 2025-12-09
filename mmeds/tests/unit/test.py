@@ -46,14 +46,14 @@ def setup_tests(tests):
                            'Test_Single_Short',
                            testing,
                            fig.TEST_CODE_SHORT))
+        test_setup.append((fig.TEST_SUBJECT_SHORT,
+                            'human',
+                            fig.TEST_SPECIMEN_PAIRED,
+                            fig.TEST_USER,
+                            'Test_Paired',
+                            testing,
+                            fig.TEST_CODE_PAIRED))
         if 'tools' in tests or 'analysis' in tests:
-            test_setup.append((fig.TEST_SUBJECT_SHORT,
-                               'human',
-                               fig.TEST_SPECIMEN_PAIRED,
-                               fig.TEST_USER,
-                               'Test_Paired',
-                               testing,
-                               fig.TEST_CODE_PAIRED))
             test_setup.append((fig.TEST_SUBJECT_SHORT,
                                'human',
                                fig.TEST_SPECIMEN_DEMUXED,

@@ -293,9 +293,9 @@ class UtilTests(TestCase):
         entries = {'Test_Single_Short': ['L6S93', 'L6S95'],
                    'Test_Paired': ['L6S98', 'L6S99']}
         paths = {'Test_Single_Short':
-                 '/home/runner/mmeds_server_data/studies/testuser_Test_Single_Short_0/full_metadata.tsv',
+                 Path(fig.DATABASE_DIR) / "studies" / "testuser_Test_Single_Short_0" / "full_metadata.tsv",
                  'Test_Paired':
-                 '/home/runner/mmeds_server_data/studies/testuser_Test_Paired_0/full_metadata.tsv'}
+                 Path(fig.DATABASE_DIR) / "studies" / "testuser_Test_Paired_0" / "full_metadata.tsv"}
 
         df = util.concatenate_metadata_subsets(entries, paths)
         subj_df, spec_df = util.split_metadata(df, 'human', new_study_name="New_Test_Study")
@@ -313,7 +313,6 @@ class UtilTests(TestCase):
         # Assert created file is equal to test example
         self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))
 
-
     def test_s_format_to_humann(self):
         """ Test converting to format readable for humann_barplot functions """
         tmpdir = Path(gettempdir())
@@ -322,7 +321,12 @@ class UtilTests(TestCase):
         test_true_result = fig.TEST_FORMAT_HUMANN_RESULT
         test_out_result = tmpdir / "test_humann_format_out.tsv"
 
-        util.format_table_to_humann(test_table, test_map, ["Stage", "MASLDstatus"], test_out_result, True, True)
+        util.format_table_to_humann(test_table, test_map, ["MASLDstatus", "Stage"], test_out_result, True, True)
+
+        with open(test_out_result, "r") as f1, open(test_true_result, "r") as f2:
+            for r1, r2 in zip(f1, f2):
+                if r1 != r2:
+                    print(f"{r1}\nIS NOT EQUAL TO\n{r2}")
 
         # Assert created file is equal to test example
         self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))
