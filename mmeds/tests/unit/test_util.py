@@ -9,6 +9,7 @@ from tidylib import tidy_document
 from pandas import read_csv, DataFrame, MultiIndex
 from numpy import nan
 import nltk
+import filecmp
 import mmeds.config as fig
 import hashlib as hl
 import os
