@@ -15,6 +15,7 @@ import re
 
 
 # Check where this code is being run
+print(getfqdn().split('.'))
 TESTING = not ('chimera' in getfqdn().split('.'))
 
 # If not running on web03, can't connect to databases
@@ -437,10 +438,10 @@ TEST_CODE_OTU = 'otutable'
 TEST_CODE_LEFSE = 'lefsetable'
 TEST_FORMAT_HUMANN_MAPPING = str(TEST_PATH / 'test_qiime_mapping_file_format_to_humann.tsv')
 TEST_FORMAT_HUMANN_TABLE = str(TEST_PATH / 'test_BRITE_pathways_stratified_format_to_humann.tsv')
-TEST_FORMAT_HUMANN_RESULT = str(TEST_PATH / 'test_taxa_table_L7_format_to_lefse.tsv')
+TEST_FORMAT_HUMANN_RESULT = str(TEST_PATH / 'test_formatted_humann_table.tsv')
 TEST_FORMAT_LEFSE_MAPPING = str(TEST_PATH / 'test_qiime_mapping_file_format_to_lefse.tsv')
 TEST_FORMAT_LEFSE_TABLE = str(TEST_PATH / 'test_taxa_table_L7_format_to_lefse.tsv')
-TEST_FORMAT_LEFSE_RESULT = str(TEST_PATH / 'test_taxa_table_L7_format_to_lefse.tsv')
+TEST_FORMAT_LEFSE_RESULT = str(TEST_PATH / 'test_formatted_lefse_table.tsv')
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')
@@ -708,7 +709,7 @@ if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
                          user='root',
-                         password='root',
+                         password="",
                          db=SQL_DATABASE,
                          max_allowed_packet=2048000000,
                          local_infile=True)
