@@ -18,7 +18,8 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
         is_virus <- grepl("virus", raw, ignore.case = T)
         is_uncharacterized_spp <- grepl("sp\\.|sp_|str\\.|str_", raw, ignore.case = T)
         is_unclassified <- grepl("unclassified|not_reported", raw, ignore.case = T)
-        is_special_case <- ( is_virus | is_uncharacterized_spp | is_unclassified )
+        is_clade <- grepl("_clade_", raw, ignore.case = T)
+        is_special_case <- ( is_virus | is_uncharacterized_spp | is_unclassified | is_clade )
 
         # Clean "." and "'" characters that will affect the splitting into components
         raw <- str_replace_all(raw, "sp\\.", "sp")
@@ -131,7 +132,6 @@ wrap_text <- function(x, chars = 10) {
     x <- gsub("_", " ", x)
     stringr::str_wrap(x, chars)
 }
-
 
 taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     # Modified version of taxa_barplot from qiime2R library
@@ -258,7 +258,8 @@ get_fold_change <- function(data, column, column_labels, features) {
     # Given a set of features (e.g. taxa, pathways) and a two-way comparison between groups,
     #   return dataframe with one column of features and one column of groupwise log2FoldChange
     features_df <- data[, features]
-    min_nonzero <- min(features_df[features_df!=0])
+    features_df[] <- lapply(features_df, function(x) as.numeric(as.character(x)))
+    min_nonzero <- min(features_df[features_df!=0], na.rm=T)
     pseudo <- 10^floor(log10(min_nonzero))
 
     folds <- c()
@@ -277,46 +278,55 @@ get_fold_change <- function(data, column, column_labels, features) {
 }
 
 get_qval_on_pval_scale <- function(plot_mat, qval_thresh) {
-    pseudo <- qval_thresh / 10
     plot_mat_qval_signif <- plot_mat[!is.na(plot_mat$adjP) & plot_mat$adjP < qval_thresh,]
     plot_mat_qval_signif <- plot_mat_qval_signif[order(-plot_mat_qval_signif$adjP),]
     plot_mat_qval_not_signif <- plot_mat[!is.na(plot_mat$adjP) & plot_mat$adjP >= qval_thresh,]
     plot_mat_qval_not_signif <- plot_mat_qval_not_signif[order(plot_mat_qval_not_signif$adjP),]
 
-    if (nrow(plot_mat_qval_signif)==0) {return (min(plot_mat_qval_not_signif$rawP)-pseudo)}
+    if (nrow(plot_mat_qval_signif)==0) {
+        return ((min(plot_mat_qval_not_signif$rawP) / 2))
+    }
 
     pval_high <- plot_mat_qval_not_signif$rawP[1]
     pval_low <- plot_mat_qval_signif$rawP[1]
-    qval_on_pval_scale <- mean(pval_high, pval_low)
+    qval_on_pval_scale <- mean(c(pval_high, pval_low))
     return (qval_on_pval_scale)
 }
 
-differential_volcano_plot <- function(plot_mat, valPos, valNeg, clean_strings=T) {
+differential_volcano_plot <- function(plot_mat, valPos, valNeg, string_clean_level=2, label_level=2, include_labels=NA) {
     no_inf <- plot_mat[abs(plot_mat$log2FC)!=Inf & !is.na(plot_mat$rawP),]
     max_x <- max(abs(min(no_inf$log2FC)), max(no_inf$log2FC))
     max_x <- max_x * 1.05
     if (Inf %in% plot_mat$log2FC) {plot_mat[plot_mat$log2FC==Inf,]$log2FC <- max_x}
     if (-Inf %in% plot_mat$log2FC) {plot_mat[plot_mat$log2FC==-Inf,]$log2FC <- -max_x}
 
+    pval_thresh <- 0.05
+    qval_thresh <- 0.1
+    qval_thresh_as_pval <- min(pval_thresh, get_qval_on_pval_scale(plot_mat, qval_thresh))
+
     plot_mat$label <- ""
-    label_rows <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<0.05)
+    if (label_level==2) {label_thresh <- pval_thresh}
+    else if (label_level==1) {label_thresh <- qval_thresh_as_pval} 
+    else {label_thresh <- 0}
+    if (!all(is.na(include_labels)) && (length(include_labels)>0)) {
+        label_grep_pattern <- paste(include_labels, collapse="|")
+        print(label_grep_pattern)
+        label_rows <- c(!is.na(plot_mat$rawP) & (plot_mat$rawP < label_thresh | grepl(label_grep_pattern, plot_mat$feature, ignore.case=T)))
+    } else {
+        label_rows <- c(!is.na(plot_mat$rawP) & plot_mat$rawP < label_thresh)
+    }
     if (nrow(plot_mat[label_rows,]) > 0) {
-        if (clean_strings) {
-            plot_mat[label_rows,]$label <- clean_taxa_string(plot_mat[label_rows,]$feature, strict=F)
+        if (string_clean_level > 0) {
+            plot_mat[label_rows,]$label <- clean_taxa_string(plot_mat[label_rows,]$feature, strict=(string_clean_level==2))
         } else {
             plot_mat[label_rows,]$label <- plot_mat[label_rows,]$feature
         }
     }
 
-    pval_thresh <- 0.05
-    qval_thresh <- 0.1
-    qval_thresh_as_pval <- max(pval_thresh, get_qval_on_pval_scale(plot_mat, qval_thresh))
-    print(qval_thresh_as_pval)
-
     plot_mat$signif <- "0"
     rows_raw <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<pval_thresh)
-    pos_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & plot_mat$log2FC>0)
-    neg_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & plot_mat$log2FC<0)
+    pos_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & !is.na(plot_mat$log2FC) & plot_mat$log2FC>0)
+    neg_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & !is.na(plot_mat$log2FC) & plot_mat$log2FC<0)
     if (nrow(plot_mat[c(rows_raw),]) > 0) {
         plot_mat[rows_raw,]$signif <- "1"
     }
@@ -330,9 +340,8 @@ differential_volcano_plot <- function(plot_mat, valPos, valNeg, clean_strings=T)
     p <- ggplot(plot_mat, aes(x=log2FC, y=-log2(rawP), color=factor(signif, levels=c("0", "1", "2", "3")))) +
         geom_hline(yintercept=-log2(pval_thresh), linewidth=0.3, color="grey20", linetype = "dashed") +
         geom_hline(yintercept=-log2(qval_thresh_as_pval), linewidth=0.3, color="grey20", linetype = "dashed") +
-        #geom_vline(xintercept=0, linewidth=0.3, color="grey20", linetype = "dashed") +
         theme_classic() + theme(legend.position="none") + labs(x=paste(valNeg, "   <-   log2FC   ->   ", valPos)) +
-        geom_text_repel(aes(label=label), color="black", force=5, max.overlaps=15, force_pull=0.1, size=3, min.segment.length=0.2) +
+        geom_text_repel(aes(label=label), color="black", force=5, max.overlaps=100, force_pull=0.1, size=3, min.segment.length=0.2) +
         scale_color_manual(values=c("0"="grey60", "1"="grey30", "2"="red3", "3"="cyan3")) + xlim(-max_x, max_x) + geom_point()
     return(p)
 }

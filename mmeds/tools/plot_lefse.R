@@ -53,7 +53,7 @@ colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 data <-read.table(args$results_table, header = T, sep = "\t")
 
 # Only keep data with significant results
-plot_data <- subset(data, !is.na(data$LDA))
+plot_data <- subset(data, (!is.na(data$LDA) & data$LDA > 2 & data$pval < 0.05))
 if (!is.na(args$match_string)) {
     plot_data <- plot_data[grepl(args$match_string, plot_data$RawTaxa, ignore.case=T),]
 }
