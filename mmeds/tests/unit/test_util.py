@@ -311,9 +311,18 @@ class UtilTests(TestCase):
         util.format_table_to_lefse(test_table, test_map, "Group", "IgAsort", "HostSubjectId", test_out_result)
 
         # Assert created file is equal to test example
-        self.assertTrue(filecmp.cmp(test_true_result, test_out_result))
+        self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))
 
 
     def test_s_format_to_humann(self):
         """ Test converting to format readable for humann_barplot functions """
+        tmpdir = Path(gettempdir())
+        test_map = fig.TEST_FORMAT_HUMANN_MAPPING
+        test_table = fig.TEST_FORMAT_HUMANN_TABLE
+        test_true_result = fig.TEST_FORMAT_HUMANN_RESULT
+        test_out_result = tmpdir / "test_humann_format_out.tsv"
 
+        util.format_table_to_humann(test_table, test_map, ["Stage", "MASLDstatus"], True, True)
+
+        # Assert created file is equal to test example
+        self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))
