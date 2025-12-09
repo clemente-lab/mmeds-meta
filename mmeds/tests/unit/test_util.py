@@ -146,6 +146,7 @@ class UtilTests(TestCase):
             config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert 'YAML format' in e_info.value.message
 
+    @skip
     def test_h_mmeds_to_MIxS(self):
         return  # TODO Either fix the test or deprecate the functionality
         tempdir = Path(gettempdir())
@@ -297,3 +298,21 @@ class UtilTests(TestCase):
 
         df = util.concatenate_metadata_subsets(entries, paths)
         subj_df, spec_df = util.split_metadata(df, 'human', new_study_name="New_Test_Study")
+
+    def test_r_format_to_lefse(self):
+        """ Test converting to lefse format for differential abundance analysis """
+        tmpdir = Path(gettempdir())
+        test_map = fig.TEST_FORMAT_LEFSE_MAPPING
+        test_table = fig.TEST_FORMAT_LEFSE_TABLE
+        test_true_result = fig.TEST_FORMAT_LEFSE_RESULT
+        test_out_result = tmpdir / "test_lefse_format_out.tsv"
+
+        util.format_table_to_lefse(test_table, test_map, "Group", "IgAsort", "HostSubjectId", test_out_result)
+
+        # Assert created file is equal to test example
+        self.assertTrue(filecmp.cmp(test_true_result, test_out_result))
+
+
+    def test_s_format_to_humann(self):
+        """ Test converting to format readable for humann_barplot functions """
+
