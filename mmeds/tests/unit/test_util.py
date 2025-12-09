@@ -322,7 +322,7 @@ class UtilTests(TestCase):
         test_true_result = fig.TEST_FORMAT_HUMANN_RESULT
         test_out_result = tmpdir / "test_humann_format_out.tsv"
 
-        util.format_table_to_humann(test_table, test_map, ["Stage", "MASLDstatus"], True, True)
+        util.format_table_to_humann(test_table, test_map, ["Stage", "MASLDstatus"], test_out_result, True, True)
 
         # Assert created file is equal to test example
         self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))
