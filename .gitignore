@@ -32,6 +32,7 @@ host/*
 *.bak
 /mmeds/resources/privkey.pem
 /mmeds/secrets.py
+mmeds/secrets.py
 **/secrets.py
 
 # Coverage reports
