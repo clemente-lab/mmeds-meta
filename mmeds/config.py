@@ -15,7 +15,6 @@ import re
 
 
 # Check where this code is being run
-print(getfqdn().split('.'))
 TESTING = not ('chimera' in getfqdn().split('.'))
 
 # If not running on web03, can't connect to databases
@@ -709,7 +708,7 @@ if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
                          user='root',
-                         password="",
+                         password='root',
                          db=SQL_DATABASE,
                          max_allowed_packet=2048000000,
                          local_infile=True)
