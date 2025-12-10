@@ -335,29 +335,29 @@ class Watcher(BaseManager):
                 (ptype, sequencing_run_name, username, reads_type, barcodes_type,
                  datafiles, public) = process
 
-                p = DataUploader(username, reads_type, barcodes_type, sequencing_run_name,
+                p = DataUploader(new_access_code, username, sequencing_run_name, reads_type,
                                  datafiles, public, self.testing)
                 self.db_lock.acquire()
             # Add new study
             else:
                 Logger.debug(f"length: {len(process)}")
-                (ptype, study_name, subject_metadata, subject_type, specimen_metadata,
-                 username, meta_study, temporary, public) = process
+                (ptype, study_doc, subject_metadata, specimen_metadata, subject_type,
+                    username, meta_study, temporary, public) = process
                 # Start a process to handle loading the data
-                p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, username, 'qiime', study_doc,
-                                     study_name, meta_study, temporary, public, self.testing)
-                self.db_lock.acquire()
-            p.start()
-            self.add_process(ptype, p.access_code)
-            with Database(testing=self.testing) as db:
-                doc = db.get_doc(p.access_code, False)
-            Logger.debug(doc.get_info())
-            self.pipe.send(doc.get_info())
-            # Keep track of this new process
-            self.started.append(p.access_code)
-            self.current_upload = p
-            if self.testing:
-                p.join()
+                p = MetaDataUploader(new_access_code, subject_metadata, subject_type, specimen_metadata, username, 'qiime',
+                                     study_doc, meta_study, temporary, public, self.testing)
+        self.db_lock.acquire()
+        p.start()
+        self.add_process(ptype, p.access_code)
+        with Database(testing=self.testing) as db:
+            doc = db.get_doc(p.access_code, False)
+        Logger.debug(doc.get_info())
+        self.pipe.send(doc.get_info())
+        # Keep track of this new process
+        self.started.append(p.access_code)
+        self.current_upload = p
+        if self.testing:
+            p.join()
         else:
             # If there is another upload return the process info to the queue
             self.q.put(process)
@@ -376,6 +376,13 @@ class Watcher(BaseManager):
 
         p = StudyCreator(new_access_code, study_name, subject_type, username, meta_study, public, self.testing)
         p.start()
+        self.add_process(ptype, p.access_code)
+        with Database(testing=self.testing) as db:
+            doc = db.get_doc(p.access_code, False)
+        Logger.debug(doc.get_info())
+        self.pipe.send(doc.get_info())
+        # Keep track of this new process
+        self.started.append(p.access_code)
 
     def handle_restart(self, process):
         """

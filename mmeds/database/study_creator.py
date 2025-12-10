@@ -100,7 +100,8 @@ class StudyCreator(Process):
                                   access_code=self.access_code,
                                   doc_type=doc.DocType.STUDY,
                                   study_name=self.study_name,
-                                  path=self.path)
+                                  path=str(self.path),
+                                  is_alive=True)
         self.study.save()
 
     def get_info(self):
@@ -118,8 +119,6 @@ class StudyCreator(Process):
         """
         Thread that handles the creation of a study document
         """
-        self.study.update(is_active=True)
-        self.study.save()
         Logger.debug('Handling creation of study {} for user {}'.format(self.study_name, self.owner))
 
         # Get user information from SQL
@@ -145,6 +144,6 @@ class StudyCreator(Process):
                    code=self.access_code, testing=self.testing)
 
         # Update the doc to reflect the successful upload
-        self.study.update(is_active=False, exit_code=0)
+        self.study.update(is_alive=False, exit_code=0)
         self.study.save()
         return 0

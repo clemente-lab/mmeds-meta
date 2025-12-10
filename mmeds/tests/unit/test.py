@@ -4,8 +4,8 @@ import sys
 import coverage
 
 from mmeds.authentication import add_user, remove_user
-from mmeds.database.database import upload_metadata, upload_otu, upload_lefse
 from mmeds.util import setup_environment
+from mmeds.spawn import Watcher
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -37,60 +37,71 @@ def add_users(tests):
 
 def setup_tests(tests):
     # Add test setups as needed:
+    test_studies = []
+    test_metadata = []
     test_setup = []
     if {'documents', 'util', 'tools', 'formatter', 'adder', 'analysis'}.intersection(tests):
-        test_setup.append((fig.TEST_SUBJECT_SHORT,
-                           'human',
-                           fig.TEST_SPECIMEN_SINGLE_SHORT,
-                           fig.TEST_USER,
-                           'Test_Single_Short',
-                           testing,
-                           fig.TEST_CODE_SHORT))
-        test_setup.append((fig.TEST_SUBJECT_SHORT,
-                            'human',
-                            fig.TEST_SPECIMEN_PAIRED,
-                            fig.TEST_USER,
-                            'Test_Paired',
-                            testing,
-                            fig.TEST_CODE_PAIRED))
+        test_studies.append(('create-study',
+                             'Test_Single_Short',
+                             'human',
+                             fig.TEST_USER,
+                             False,
+                             False))
+        test_studies.append(('create-study',
+                             'Test_Paired',
+                             'human',
+                             fig.TEST_USER,
+                             False,
+                             False))
+        test_metadata.append(("upload-metadata",
+                              None,
+                              fig.TEST_SUBJECT_SHORT,
+                              fig.TEST_SPECIMEN_SINGLE_SHORT,
+                              "human",
+                              fig.TEST_USER,
+                              False,
+                              False,
+                              False))
+        test_metadata.append(("upload-metadata",
+                              None,
+                              fig.TEST_SUBJECT_SHORT,
+                              fig.TEST_SPECIMEN_PAIRED,
+                              "human",
+                              fig.TEST_USER,
+                              False,
+                              False,
+                              False))
         if 'tools' in tests or 'analysis' in tests:
-            test_setup.append((fig.TEST_SUBJECT_SHORT,
-                               'human',
-                               fig.TEST_SPECIMEN_DEMUXED,
-                               fig.TEST_USER,
-                               'Test_Demuxed',
-                               testing,
-                               fig.TEST_CODE_DEMUX))
-            test_setup.append((fig.TEST_MIXED_SUBJECT,
-                               'mixed',
-                               fig.TEST_MIXED_SPECIMEN,
-                               fig.TEST_USER_0,
-                               'TEST_MIXED_17',
-                               testing,
-                               fig.TEST_CODE_MIXED))
-            # Upload OTU if running test_tools.py
-            # Functionality removed in study-sequencing run split
-            """
-            test_otu = (fig.TEST_SUBJECT_SHORT,
-                        'human',
-                        fig.TEST_SPECIMEN_SHORT,
-                        fig.TEST_DIR,
-                        fig.TEST_USER,
-                        'Test_SparCC',
-                        fig.TEST_OTU,
-                        fig.TEST_CODE_OTU)
-            assert 0 == upload_otu(test_otu)
-            # Upload Lefse data if running test_tools.py
-            test_lefse = (fig.TEST_SUBJECT_SHORT,
-                          'human',
-                          fig.TEST_SPECIMEN_SHORT,
-                          fig.TEST_DIR,
-                          fig.TEST_USER,
-                          'Test_Lefse',
-                          fig.TEST_LEFSE,
-                          fig.TEST_CODE_LEFSE)
-            assert 0 == upload_lefse(test_lefse)
-            """
+            test_studies.append(('create-study',
+                                 'Test_Demuxed',
+                                 'human',
+                                 fig.TEST_USER,
+                                 False,
+                                 False))
+            test_studies.append(('create-study',
+                                 'Test_MIXED_17',
+                                 'mixed',
+                                 fig.TEST_USER_0,
+                                 False,
+                                 False))
+            test_metadata.append(("upload-metadata",
+                                  None,
+                                  fig.TEST_SUBJECT_SHORT,
+                                  fig.TEST_SPECIMEN_DEMUXED,
+                                  "human",
+                                  fig.TEST_USER,
+                                  False,
+                                  False,
+                                  False))
+            test_metadata.append(("upload-metadata",
+                                  None,
+                                  fig.TEST_MIXED_SUBJECT,
+                                  fig.TEST_MIXED_SPECIMEN,
+                                  "mixed",
+                                  fig.TEST_USER_0,
+                                  False,
+                                  False,
+                                  False))
     if 'database' in tests:
         test_setup.append((fig.TEST_SUBJECT,
                            'human',
@@ -113,10 +124,31 @@ def setup_tests(tests):
                            'Test_Single_0',
                            testing,
                            fig.TEST_CODE + '0'))
+    if test_studies:
+        watcher = Watcher()
+        watcher.connect()
+        queue = watcher.get_queue()
+        pipe = watcher.get_pipe()
 
-    for setup in test_setup:
-        print(setup)
-        assert 0 == upload_metadata(setup)
+    study_docs = []
+    for study in test_studies:
+        print(study)
+        queue.put(study)
+        doc_pipe_out = pipe.recv()
+        study_docs.append(doc_pipe_out["access_code"])
+        exit_code_pipe_out = pipe.recv()
+        assert exit_code_pipe_out == 0
+
+    assert len(study_docs) == len(test_metadata)
+    for metadata, doc in zip(test_metadata, study_docs):
+        metadata = list(metadata)
+        metadata[1] = doc
+        metadata = tuple(metadata)
+        print(metadata)
+        queue.put(metadata)
+        doc_pipe_out = pipe.recv()
+        exit_code_pipe_out = pipe.recv()
+        assert exit_code_pipe_out == 0
 
 
 def run_tests(tests, pudb):

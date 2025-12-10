@@ -34,7 +34,7 @@ class AnalysisTests(TestCase):
         datafiles = {"forward": fig.TEST_READS,
                      "reverse": fig.TEST_REV_READS,
                      "barcodes": fig.TEST_BARCODES}
-        result = upload_sequencing_run_local(self.queue, fig.TEST_SEQUENCING_NAME, fig.TEST_USER_0, datafiles, 'paired_end', 'single_barcodes')
+        result = upload_sequencing_run_local(self.queue, fig.TEST_SEQUENCING_NAME, fig.TEST_USER_0, datafiles, 'MultiplexedPairedEndSingleBarcodes', 'single')
         sleep(5)
         self.assertEquals(result, 0)
 

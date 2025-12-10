@@ -17,20 +17,19 @@ from collections import defaultdict
 from mmeds.error import (TableAccessError, MissingUploadError, MissingFileError, StudyNameError,
                          MetaDataError, NoResultError, InvalidSQLError)
 from mmeds.util import (send_email, pyformat_translate, quote_sql, parse_ICD_codes)
-from mmeds.database.metadata_uploader import MetaDataUploader
+# from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.database.sql_builder import SQLBuilder
-from mmeds.database.documents import MMEDSDoc
+from mmeds.database.documents import MMEDSDoc, DocType
 from mmeds.logging import Logger
 
 DAYS = 13
 
 
+"""
 # Used in test_cases
 def upload_metadata(args):
-    """
     This function wraps the metadatauploader class for when you want to run the upload
     in the current process rather than spinning up a new one
-    """
     (subject_metadata, subject_type, specimen_metadata, owner, study_name, testing, access_code) = args
 
     p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'qiime',
@@ -39,10 +38,8 @@ def upload_metadata(args):
 
 
 def upload_otu(args):
-    """
     Same idea as `upload_metadata` except uploads an otu table rather than fastq files. Upload_metadata should
     maybe re-named to clarify that it's actually a fastq upload.
-    """
     (subject_metadata, subject_type, specimen_metadata, path, owner, study_name, otu_table, access_code) = args
     datafiles = {'otu_table': otu_table}
     p = MetaDataUploader(subject_metadata, subject_type, specimen_metadata, owner, 'sparcc', 'otu_table',
@@ -52,9 +49,7 @@ def upload_otu(args):
 
 
 def upload_lefse(args):
-    """
     Same as the other two but this time for lefse tables.
-    """
     (subject_metadata, subject_type, specimen_metadata, path, owner, study_name, lefse_table, access_code) = args
     datafiles = {'lefse_table': lefse_table}
 
@@ -62,6 +57,7 @@ def upload_lefse(args):
                          None, study_name, False, datafiles, False, True, access_code)
     p.run()
     return 0
+"""
 
 
 class Database:
@@ -1029,8 +1025,9 @@ class Database:
         # Get paths, these should exist due to already checking during validation
         run_paths = {}
         for run in runs:
-            doc = MMEDSDoc.objects(doc_type='sequencing_run', study_name=run, owner=user).first()
-            run_paths[run] = {}
+            doc = MMEDSDoc.objects(doc_type=DocType.DATA, data_name=run, owner=user).first()
+            run_paths[run] = doc.files
+            """
             # Get individual files within sequencing run directories
             with open(Path(doc.path) / fig.SEQUENCING_DIRECTORY_FILE, "rt") as f:
                 content = f.read().split('\n')
@@ -1040,6 +1037,7 @@ class Database:
                     if ": " in line:
                         key, val = line.split(": ")
                         run_paths[run][key] = Path(doc.path) / val
+            """
         return run_paths
 
     def get_all_studies(self):

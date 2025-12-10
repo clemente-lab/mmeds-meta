@@ -36,18 +36,19 @@ class DataUploader(Process):
         self.owner = owner
         self.testing = testing
         self.data_name = data_name
+        self.data_type = data_type
         self.public = public
         self.datafiles = data_files
 
-        if data_type == "MultiplexedPairedEndSingleBarcodes":
+        if self.data_type == "MultiplexedPairedEndSingleBarcodes":
             self.reads_type = "paired"
             self.barcodes_type = "single"
             self.demultiplexed = False
-        elif data_type == "MultiplexedPairedEndDualBarcodes":
+        elif self.data_type == "MultiplexedPairedEndDualBarcodes":
             self.reads_type = "paired"
             self.barcodes_type = "dual"
             self.demultiplexed = False
-        elif data_type == "DemultiplexedPairedEnd":
+        elif self.data_type == "DemultiplexedPairedEnd":
             self.reads_type = None
             self.barcodes_type = None
             self.demultiplexed = True
@@ -89,7 +90,7 @@ class DataUploader(Process):
                                  access_code=self.access_code,
                                  data_name=self.data_name,
                                  data_type=self.data_type,
-                                 files=[],
+                                 files={},
                                  owner=self.owner,
                                  public=self.public)
 
@@ -123,7 +124,7 @@ class DataUploader(Process):
         """
         self.data.update(is_alive=True)
         self.data.save()
-        Logger.debug('Handling upload for sequencing run {} for user {}'.format(self.sequencing_run_name, self.owner))
+        Logger.debug('Handling upload for sequencing run {} for user {}'.format(self.data_name, self.owner))
 
         # If the owner is None set user_id to 0
         if self.owner is None:
@@ -158,14 +159,6 @@ class DataUploader(Process):
                            for key, filepath in self.datafiles.items()
                            if filepath is not None}
 
-        for key, filepath in self.datafiles.items():
-            filepath = Path(filepath)
-            with open(filepath, 'rb') as f:
-                grid_file = men.GridFSProxy()
-                grid_file.put(f, content_type='text/plain', filename=filepath.name)
-                self.data.files.append(grid_file)
-        self.data.save()
-
         # Create sequencing run directory file
         with open(self.path.parent / fig.SEQUENCING_DIRECTORY_FILE, "wt") as f:
             for key, filepath in self.datafiles.items():
@@ -176,10 +169,10 @@ class DataUploader(Process):
                     adjusted = 'reverse'
                 f.write(f"{adjusted}: {Path(filepath).name}\n")
 
-        self.mongo_import(**datafile_copies)
+        self.mongo_import(**self.datafiles)
 
         # Send the confirmation email
-        send_email(self.email, self.owner, message='upload-run', run=self.sequencing_run_name,
+        send_email(self.email, self.owner, message='upload-run', run=self.data_name,
                    code=self.access_code, testing=self.testing)
         # Update the doc to reflect the successful upload
         self.data.update(is_alive=False, exit_code=0)
@@ -188,6 +181,10 @@ class DataUploader(Process):
 
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
-        self.data.files.update(kwargs)
+        for key, filepath in kwargs.items():
+            self.data.files[key] = men.GridFSProxy()
+            with open(filepath, "rb") as f:
+                self.data.files[key].put(f, content_type="text/plain")
+
         self.data.update(email=self.email, path=str(self.path.parent))
         self.data.save()

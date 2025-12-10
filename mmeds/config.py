@@ -708,7 +708,7 @@ if IS_PRODUCTION or (TESTING and DB_INSTALLED):
     try:
         db = pms.connect(host='localhost',
                          user='root',
-                         password='root',
+                         password='',
                          db=SQL_DATABASE,
                          max_allowed_packet=2048000000,
                          local_infile=True)

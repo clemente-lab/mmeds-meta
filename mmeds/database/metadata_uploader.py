@@ -14,6 +14,7 @@ from mmeds.error import NoResultError
 from mmeds.util import (quote_sql, parse_ICD_codes, send_email, create_local_copy,
                         load_metadata, join_metadata, write_metadata)
 from mmeds.database.sql_builder import SQLBuilder
+from mmeds.database.database import Database
 import mmeds.database.documents as docs
 from mmeds.logging import Logger
 
@@ -22,8 +23,8 @@ class MetaDataUploader(Process):
     """
     This class handles the yprocessing and uploading of mmeds metadata files into the MySQL database.
     """
-    def __init__(self, subject_metadata, subject_type, specimen_metadata, owner, study_type, study_doc,
-                 study_name, meta_study, temporary, public, testing, access_code=None):
+    def __init__(self, access_code, subject_metadata, subject_type, specimen_metadata, owner, study_type, study_doc,
+                 meta_study, temporary, public, testing):
         """
         Connect to the specified database.
         Initialize variables for this session.
@@ -36,32 +37,42 @@ class MetaDataUploader(Process):
         """
         warnings.simplefilter('ignore')
         super().__init__()
+
+        if type(study_doc) == str:
+            with Database(owner=owner, testing=testing) as db:
+                study_doc_ref = db.get_study_from_access_code(study_doc)
+            if study_doc_ref is None:
+                raise NoResultError(f"No study found with access code {study_doc}")
+            study_doc = study_doc_ref
+
         Logger.debug('MetadataUploader created with params')
         Logger.debug({
             'subject_metadata': subject_metadata,
             'specimen_metadata': specimen_metadata,
             'owner': owner,
             'study_type': study_type,
-            'study_name': study_name,
+            'study_name': study_doc.study_name,
             'meta_study': meta_study,
             'temporary': temporary,
             'public': public,
             'testing': testing
         })
 
+        self.access_code = access_code
+        self.study_doc = study_doc
         self.subject_type = subject_type
         self.IDs = defaultdict(dict)
         self.owner = owner
         self.testing = testing
-        self.study = study_doc
         self.study_type = study_type
         self.subject_metadata = Path(subject_metadata)
         self.specimen_metadata = Path(specimen_metadata)
-        self.study_name = study_name
+        self.study_name = study_doc.study_name
         self.meta_study = meta_study
         self.temporary = temporary
         self.public = public
         self.created = datetime.now()
+        self.email = fig.MMEDS_EMAIL
 
         # Like Database, this should be replaced with a switch statement
         # If testing connect to test server
@@ -91,14 +102,6 @@ class MetaDataUploader(Process):
                                      authentication_source=sec.MONGO_DATABASE,
                                      host=sec.MONGO_HOST)
 
-        if access_code is None:
-            self.access_code = fig.get_salt(50)
-            # Ensure a unique access code
-            while list(docs.MMEDSDoc.objects(access_code=self.access_code)):
-                self.access_code = fig.get_salt(50)
-        else:
-            self.access_code = access_code
-
         # Create the document
         self.mdata = docs.MetadataDoc(created=datetime.utcnow(),
                                       last_accessed=datetime.utcnow(),
@@ -108,7 +111,8 @@ class MetaDataUploader(Process):
                                       email=self.email,
                                       access_code=self.access_code,
                                       doc_type=docs.DocType.METADATA,
-                                      study=self.study)
+                                      study=self.study_doc,
+                                      latest_version=True)
         self.mdata.save()
 
         count = 0
@@ -146,7 +150,7 @@ class MetaDataUploader(Process):
         :testing: True if the server is running locally.
         :datafiles: A list of datafiles to be uploaded
         """
-        self.mdata.update(is_active=True)
+        self.mdata.update(is_alive=True)
         self.mdata.save()
         Logger.debug('Handling upload for study {} for user {}'.format(self.study_name, self.owner))
 
@@ -204,7 +208,7 @@ class MetaDataUploader(Process):
                    code=self.access_code, testing=self.testing)
 
         # Update the doc to reflect the successful upload
-        self.mdata.update(is_active=False, exit_code=0)
+        self.mdata.update(is_alive=False, exit_code=0)
         self.mdata.save()
         return 0
 
@@ -428,8 +432,15 @@ class MetaDataUploader(Process):
     def mongo_import(self, **kwargs):
         """ Imports additional columns into the NoSQL database. """
         # Add the files approprate to the type of study
-        self.mdata.files.update(kwargs)
-        self.mdata.files['metadata'] = self.metadata
+        with open(self.subject_metadata, "rb") as f:
+            self.mdata.subject_file.put(f, content_type="text/plain")
+
+        with open(self.specimen_metadata, "rb") as f:
+            self.mdata.specimen_file.put(f, content_type="text/plain")
+
+        with open(self.metadata, "rb") as f:
+            self.mdata.full_metadata_file.put(f, content_type="text/plain")
+
         self.mdata.update(email=self.email, path=str(self.path.parent))
         # Save the document
         self.mdata.save()

@@ -27,19 +27,24 @@ class MMEDSDoc(men.Document):
     Otherwise MongoEngine will complain about certain document properties not
     existing.
     """
+    meta = {'allow_inheritance': True}
+
     created = men.DateTimeField(require=True)               # Datetime stamp of document creation
     last_accessed = men.DateTimeField(required=True)
     public = men.BooleanField()
     testing = men.BooleanField(required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100)
+    path = men.StringField(max_length=300)
     access_code = men.StringField(max_length=50)
     doc_type = men.EnumField(DocType, required=True)
-    is_active = men.BooleanField()
+    is_alive = men.BooleanField()
+    exit_code = men.IntField()
 
     # When the document is updated record the
     # location of all files in a new file
     def save(self, **kwargs):
+        Logger.error(f"Saving MongoDB Document of type {self.doc_type}")
         super().save(**kwargs)
 
     def __str__(self):
@@ -148,7 +153,9 @@ class MetadataDoc(MMEDSDoc):
     study = men.ReferenceField(MMEDSDoc)
     subject_file = men.FileField()
     specimen_file = men.FileField()
+    full_metadata_file = men.FileField()
     qiime_file = men.FileField()
+    latest_version = men.BooleanField()
 
 
 class DataDoc(MMEDSDoc):
@@ -158,7 +165,8 @@ class DataDoc(MMEDSDoc):
     data_name = men.StringField()
     data_type = men.StringField()
     studies = men.ListField(men.ReferenceField(MMEDSDoc))
-    files = men.ListField(men.FileField())
+    files = men.MapField(field=men.FileField())
+    latest_version = men.BooleanField()
 
 
 class FeatureTableDoc(MMEDSDoc):
@@ -169,3 +177,4 @@ class FeatureTableDoc(MMEDSDoc):
     studies = men.ListField(men.ReferenceField(MMEDSDoc))
     from_analysis = men.ReferenceField(MMEDSDoc)
     table = men.FileField()
+    latest_version = men.BooleanField()
