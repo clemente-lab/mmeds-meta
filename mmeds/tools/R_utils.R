@@ -263,9 +263,11 @@ get_fold_change <- function(data, column, column_labels, features) {
     pseudo <- 10^floor(log10(min_nonzero))
 
     folds <- c()
+    group1 <- data[data[[column]]==column_labels[1] & !is.na(data[[column]]),]
+    group2 <- data[data[[column]]==column_labels[2] & !is.na(data[[column]]),]
     for (f in features) {
-        set1 <- data[data[[column]]==column_labels[1],][[f]]
-        set2 <- data[data[[column]]==column_labels[2],][[f]]
+        set1 <- group1[[f]]
+        set2 <- group2[[f]]
         fold <- mean(log2(set1+pseudo)) - mean(log2(set2+pseudo))
         folds <- c(folds, fold)
     }
