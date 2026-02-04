@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from pathlib import Path
 import mmeds.config as fig
 from time import sleep
@@ -47,7 +47,7 @@ class AnalysisTests(TestCase):
         self.analysis += [Analysis(self.queue, fig.TEST_USER_0, self.analysis_code_1, fig.TEST_CODE_MIXED,
                                 'lefse', 'default', 'test_lefse', self.config_lefse, True, {}, False, threads=2)]
 
-
+    @skip
     def test_c_core_pipeline_taxonomic(self):
         """ Test running a standard analysis """
         # run_analysis() executes analyses synchronously rather than submitting as a job

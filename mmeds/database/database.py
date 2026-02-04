@@ -1005,14 +1005,14 @@ class Database:
         """ Verifies the provided study name is valid and not already in use. """
         if not study_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha numeric characters and '_' are allowed in the study name")
-        if MMEDSDoc.objects(study_name=study_name, doc_type='study'):
+        if MMEDSDoc.objects(study_name=study_name, doc_type=DocType.STUDY):
             raise StudyNameError(f"Study name {study_name} already in use")
 
     def check_sequencing_run_name(self, run_name):
         """ Verifies the provided sequencing run name is valid and not already in use. """
         if not run_name.replace('_', '').isalnum():
             raise StudyNameError("Only alpha-numeric characters and '_' are allowed in the sequencing run name")
-        if MMEDSDoc.objects(study_name=run_name, doc_type='sequencing_run'):
+        if MMEDSDoc.objects(data_name=run_name, doc_type=DocType.DATA):
             raise StudyNameError(f"Sequencing Run name {run_name} already in use")
 
     def get_sequencing_run_locations(self, metadata, user, column=("RawDataProtocol", "RawDataProtocolID")):
@@ -1042,27 +1042,27 @@ class Database:
 
     def get_all_studies(self):
         """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(doc_type='study')
+        return MMEDSDoc.objects(doc_type=DocType.STUDY)
 
     def get_all_analyses(self):
         """ Return all analyses currently stored in the database. """
-        return MMEDSDoc.objects(doc_type='analysis')
+        return MMEDSDoc.objects(doc_type=DocType.ANALYSIS)
 
     def get_all_sequencing_runs(self):
         """ Return all sequencing runs currently stored in the database. """
-        return MMEDSDoc.objects(doc_type='sequencing_run')
+        return MMEDSDoc.objects(doc_type=DocType.DATA)
 
     def get_all_user_sequencing_runs(self, user):
         """ Return all sequencing runs currently stored in the database owned by USER. """
-        return MMEDSDoc.objects(doc_type='sequencing_run', owner=user)
+        return MMEDSDoc.objects(doc_type=DocType.DATA, owner=user)
 
     def get_all_user_studies(self, user):
         """ Return all studies currently stored in the database owned by USER. """
-        return MMEDSDoc.objects(doc_type='study', owner=user)
+        return MMEDSDoc.objects(doc_type=DocType.STUDY, owner=user)
 
     def get_all_analyses_from_study(self, access_code):
         """ Return all studies currently stored in the database. """
-        return MMEDSDoc.objects(study_code=access_code, doc_type='analysis')
+        return MMEDSDoc.objects(study_code=access_code, doc_type=DocType.ANALYSIS)
 
     def check_files(self, access_code):
         """ Check that all files associated with the study actually exist. """
@@ -1076,7 +1076,7 @@ class Database:
 
     def get_metadata_file_location(self, study_name):
         """ Return the metadata.tsv file location for a given study """
-        doc = MMEDSDoc.objects(doc_type='study', study_name=study_name).first()
+        doc = MMEDSDoc.objects(doc_type=DocType.STUDY, study_name=study_name).first()
         return doc['files']['metadata']
 
     def delete_mongo_documents(self):

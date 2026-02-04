@@ -328,7 +328,6 @@ class Watcher(BaseManager):
             if 'ids' in process[0]:
                 (ptype, owner, access_code, aliquot_table, id_type, generate_id) = process
                 p = MetaDataAdder(owner, access_code, aliquot_table, id_type, generate_id, self.testing)
-                self.db_lock.acquire()
 
             # Add new sequencing run
             elif 'run' in process[0]:
@@ -337,7 +336,6 @@ class Watcher(BaseManager):
 
                 p = DataUploader(new_access_code, username, sequencing_run_name, reads_type,
                                  datafiles, public, self.testing)
-                self.db_lock.acquire()
             # Add new study
             else:
                 Logger.debug(f"length: {len(process)}")
