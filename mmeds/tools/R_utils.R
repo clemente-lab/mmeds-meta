@@ -156,7 +156,7 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     features[is.na(features)] <- 0
 
     if(missing(metadata)){metadata<-data.frame(SampleID=colnames(features))}
-    if(!"SampleID" %in% colnames(metadata)){metadata <- metadata %>% rownames_to_column("SampleID")}
+    if(!"SampleID" %in% colnames(metadata)){metadata <- metadata |> rownames_to_column("SampleID")}
     if(!missing(category) && !is.na(category)){
         if(!category %in% colnames(metadata)){message(stop(category, " not found as column in metdata"))}
     }
@@ -223,15 +223,15 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     suppressMessages(
         suppressWarnings(
             fplot<-
-                features %>%
-                as.data.frame() %>%
-                rownames_to_column(var="Taxon") %>%
-                gather(-Taxon, key="SampleID", value="Abundance") %>%
-                mutate(Taxon=if_else(Taxon %in% plotfeats, Taxon, "Remainder")) %>%
-                group_by(Taxon, SampleID) %>%
-                summarize(Abundance=sum(Abundance)) %>%
-                ungroup() %>%
-                mutate(Taxon=factor(Taxon, levels=rev(c(plotfeats, "Remainder")))) %>%
+                features |>
+                as.data.frame() |>
+                rownames_to_column(var="Taxon") |>
+                gather(-Taxon, key="SampleID", value="Abundance") |>
+                mutate(Taxon=if_else(Taxon %in% plotfeats, Taxon, "Remainder")) |>
+                group_by(Taxon, SampleID) |>
+                summarize(Abundance=sum(Abundance)) |>
+                ungroup() |>
+                mutate(Taxon=factor(Taxon, levels=rev(c(plotfeats, "Remainder")))) |>
                 left_join(metadata)
         )
     )

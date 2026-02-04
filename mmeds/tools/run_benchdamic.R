@@ -58,11 +58,11 @@ foldchange_df <- get_fold_change(q2_data_obj, var, c(valPos, valNeg), features_v
 
 subset_text <- paste(var, " %in% c('", valPos, "', '", valNeg, "')", sep="")
 
-phyloseq_data_obj <- phyloseq_data_obj %>% subset_samples(
+phyloseq_data_obj <- phyloseq_data_obj |> subset_samples(
     eval(parse(text=subset_text))
 )
 
-phyloseq_data_obj <- phyloseq_data_obj %>% transform_sample_counts(
+phyloseq_data_obj <- phyloseq_data_obj |> transform_sample_counts(
     function(x) {as.integer(x)}
 )
 
