@@ -12,6 +12,41 @@ rule extract_feature_table_tsv:
         "extract_feature_table.sh "
         "{input} "
         "{output} "
+        "tsv "
+        "tables/tmp_unzip_{wildcards.table}"
+
+rule extract_feature_table_biom:
+    """ Remove feature table biom file from qza archive """
+    input: 
+        "tables/{table}.qza"
+    output:
+        "tables/{table}.biom"
+    wildcard_constraints:
+        table = "[^/]+"
+    conda:
+        "mmeds_test"
+    shell:
+        "extract_feature_table.sh "
+        "{input} "
+        "{output} "
+        "biom "
+        "tables/tmp_unzip_{wildcards.table}"
+
+rule extract_feature_table_fasta:
+    """ Remove underlying fasta data from qza archive """
+    input: 
+        "tables/{table}.qza"
+    output:
+        "tables/{table}.fasta"
+    wildcard_constraints:
+        table = "[^/]+"
+    conda:
+        "mmeds_test"
+    shell:
+        "extract_feature_table.sh "
+        "{input} "
+        "{output} "
+        "fasta "
         "tables/tmp_unzip_{wildcards.table}"
 
 rule extract_feature_table_tsv_class:

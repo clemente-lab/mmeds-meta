@@ -6,6 +6,7 @@ from subprocess import run, CalledProcessError
 from mmeds.util import setup_environment
 from mmeds.logging import Logger
 
+
 class SnakemakeTests(TestCase):
     """ Test running snakemake analyses """
     @classmethod
@@ -36,12 +37,10 @@ class SnakemakeTests(TestCase):
         run(f"rm -f {dag}; rm -f {rulegraph}; rm -f {snakefile}", shell=True)
         return 0
 
-
     def test_a_core_pipeline_taxonomic(self):
         """ Test snakemake standard pipeline analysis """
         result = self.run_snakemake(Path(fig.TEST_SNAKEMAKE_DIR) / "core_pipeline_taxonomic")
         self.assertEquals(result, 0)
-
 
     def test_b_lefse(self):
         """ Test snakemake lefse analysis """
@@ -52,4 +51,9 @@ class SnakemakeTests(TestCase):
     def test_c_lefse_failure(self):
         """ Test analysis with undefined snakemake method """
         result = self.run_snakemake(Path(fig.TEST_SNAKEMAKE_DIR) / "lefse_failure")
+        self.assertEquals(result, 0)
+
+    def test_d_picrust2(self):
+        """ Test snakemake picrust2 analysis """
+        result = self.run_snakemake(Path(fig.TEST_SNAKEMAKE_DIR) / "picrust2")
         self.assertEquals(result, 0)

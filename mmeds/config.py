@@ -291,6 +291,12 @@ WORKFLOWS = {
             "plot_max_rows",
             "match_string"
         ]
+    },
+    "picrust2": {
+        "parameters": [
+            "tables"  # this is going to always be 'asv_table.qza' and 'rep_seqs_table.qza'  TODO: default parameters?
+        ],
+        "optional_parameters": []
     }
 }
 
