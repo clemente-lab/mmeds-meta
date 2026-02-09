@@ -1032,10 +1032,8 @@ class Database:
         df = pd.read_csv(metadata, sep='\t', header=[0, 1], skiprows=[2, 3, 4])
 
         # Store run names from metadata
-        runs = []
-        for run in df[column]:
-            if run not in runs:
-                runs.append(run)
+        runs = list(df[column].unique())
+
         # Get paths, these should exist due to already checking during validation
         run_paths = {}
         for run in runs:

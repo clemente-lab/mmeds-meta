@@ -8,7 +8,8 @@ from tempfile import gettempdir
 from tidylib import tidy_document
 from pandas import read_csv, DataFrame, MultiIndex
 from numpy import nan
-import Levenshtein as lev
+import nltk
+import filecmp
 import mmeds.config as fig
 import hashlib as hl
 import os
@@ -146,6 +147,7 @@ class UtilTests(TestCase):
             config = util.load_config(Path(fig.TEST_METADATA), fig.TEST_METADATA, 'core_pipeline_taxonomic')
         assert 'YAML format' in e_info.value.message
 
+    @skip
     def test_h_mmeds_to_MIxS(self):
         return  # TODO Either fix the test or deprecate the functionality
         tempdir = Path(gettempdir())
@@ -283,7 +285,7 @@ class UtilTests(TestCase):
         ]
 
         for str1, str2, expected_dist in test_barcodes:
-            actual_dist = lev.distance(str1, str2)
+            actual_dist = nltk.edit_distance(str1, str2)
             assert expected_dist == actual_dist
 
     def test_q_metadata_concat_and_split(self):
@@ -291,9 +293,40 @@ class UtilTests(TestCase):
         entries = {'Test_Single_Short': ['L6S93', 'L6S95'],
                    'Test_Paired': ['L6S98', 'L6S99']}
         paths = {'Test_Single_Short':
-                 '/home/runner/mmeds_server_data/studies/testuser_Test_Single_Short_0/full_metadata.tsv',
+                 Path(fig.DATABASE_DIR) / "studies" / "testuser_Test_Single_Short_0" / "full_metadata.tsv",
                  'Test_Paired':
-                 '/home/runner/mmeds_server_data/studies/testuser_Test_Paired_0/full_metadata.tsv'}
+                 Path(fig.DATABASE_DIR) / "studies" / "testuser_Test_Paired_0" / "full_metadata.tsv"}
 
         df = util.concatenate_metadata_subsets(entries, paths)
         subj_df, spec_df = util.split_metadata(df, 'human', new_study_name="New_Test_Study")
+
+    def test_r_format_to_lefse(self):
+        """ Test converting to lefse format for differential abundance analysis """
+        tmpdir = Path(gettempdir())
+        test_map = fig.TEST_FORMAT_LEFSE_MAPPING
+        test_table = fig.TEST_FORMAT_LEFSE_TABLE
+        test_true_result = fig.TEST_FORMAT_LEFSE_RESULT
+        test_out_result = tmpdir / "test_lefse_format_out.tsv"
+
+        util.format_table_to_lefse(test_table, test_map, "Group", "IgAsort", "HostSubjectId", test_out_result)
+
+        # Assert created file is equal to test example
+        self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))
+
+    def test_s_format_to_humann(self):
+        """ Test converting to format readable for humann_barplot functions """
+        tmpdir = Path(gettempdir())
+        test_map = fig.TEST_FORMAT_HUMANN_MAPPING
+        test_table = fig.TEST_FORMAT_HUMANN_TABLE
+        test_true_result = fig.TEST_FORMAT_HUMANN_RESULT
+        test_out_result = tmpdir / "test_humann_format_out.tsv"
+
+        util.format_table_to_humann(test_table, test_map, ["MASLDstatus", "Stage"], test_out_result, True, True)
+
+        with open(test_out_result, "r") as f1, open(test_true_result, "r") as f2:
+            for r1, r2 in zip(f1, f2):
+                if r1 != r2:
+                    print(f"{r1}\nIS NOT EQUAL TO\n{r2}")
+
+        # Assert created file is equal to test example
+        self.assertTrue(filecmp.cmp(test_true_result, test_out_result, shallow=False))

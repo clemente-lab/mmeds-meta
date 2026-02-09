@@ -17,8 +17,8 @@ import re
 # Check where this code is being run
 TESTING = not ('chimera' in getfqdn().split('.'))
 
-# If not running on web01, can't connect to databases
-IS_PRODUCTION = 'web01' in getfqdn().split('.')
+# If not running on web03, can't connect to databases
+IS_PRODUCTION = 'web03' in getfqdn().split('.')
 
 # While this is false, users cannot be added, cannot upload, and cannot query from webpage
 LIVE_PROD_ACCESS = True
@@ -49,7 +49,7 @@ if TESTING:
     IMAGE_PATH = str(CSS_DIR) + '/'
 
 else:
-    # We're on web01 and using MMEDs out of if it's project diredctory
+    # We're on web03 and using MMEDs out of if it's project diredctory
     # OR, we're in the folder /sc/arion/projects/MMEDS
     DATABASE_DIR = Path('/sc/arion/projects/MMEDS/mmeds_server_data')
 
@@ -277,14 +277,27 @@ WORKFLOWS = {
             'taxonomic_database',
             'sequencing_runs',
             'taxa_levels'
-        ]
+        ],
+        "optional_parameters": []
     },
     "lefse": {
         "parameters": [
             "tables",
-            "classes",
-            "subclasses"
+            "classes"
+        ],
+        "optional_parameters": [
+            "subclasses",
+            "clean_strings",
+            "plot_max_rows",
+            "include_string",
+            "exclude_string"
         ]
+    },
+    "picrust2": {
+        "parameters": [
+            "tables"  # this is going to always be 'asv_table.qza' and 'rep_seqs_table.qza'  TODO: default parameters?
+        ],
+        "optional_parameters": []
     }
 }
 
@@ -429,6 +442,12 @@ TEST_CODE_DEMUX = 'demuxedreads'
 TEST_CODE_MIXED = 'mixedstudy'
 TEST_CODE_OTU = 'otutable'
 TEST_CODE_LEFSE = 'lefsetable'
+TEST_FORMAT_HUMANN_MAPPING = str(TEST_PATH / 'test_qiime_mapping_file_format_to_humann.tsv')
+TEST_FORMAT_HUMANN_TABLE = str(TEST_PATH / 'test_BRITE_pathways_stratified_format_to_humann.tsv')
+TEST_FORMAT_HUMANN_RESULT = str(TEST_PATH / 'test_formatted_humann_table.tsv')
+TEST_FORMAT_LEFSE_MAPPING = str(TEST_PATH / 'test_qiime_mapping_file_format_to_lefse.tsv')
+TEST_FORMAT_LEFSE_TABLE = str(TEST_PATH / 'test_taxa_table_L7_format_to_lefse.tsv')
+TEST_FORMAT_LEFSE_RESULT = str(TEST_PATH / 'test_formatted_lefse_table.tsv')
 TEST_MIXS = str(TEST_PATH / 'test_MIxS.tsv')
 TEST_MIXS_MMEDS = str(TEST_PATH / 'MIxS_metadata.tsv')
 TEST_OTU = str(TEST_PATH / 'test_otu_table.txt')

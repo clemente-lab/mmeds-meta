@@ -16,7 +16,7 @@ import gzip
 import re
 import pandas as pd
 import numpy as np
-import Levenshtein as lev
+import nltk
 import mmeds.config as fig
 from mmeds.logging import Logger
 from subprocess import CalledProcessError
@@ -374,8 +374,8 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
     the metadata. This functionality has been causing some problems recently however.
     """
     # Ignore the 'all' keys
-    diff = {x for x in set(config.keys()).difference(fig.WORKFLOWS[workflow_type]["parameters"])
-            if '_all' not in x}
+    diff = {x for x in set(config.keys()).difference(set(fig.WORKFLOWS[workflow_type]["parameters"]).union(
+                set(fig.WORKFLOWS[workflow_type]["optional_parameters"]))) if '_all' not in x}
     if diff:
         raise InvalidConfigError('Invalid parameter(s) {} in config file'.format(diff))
     try:
@@ -402,9 +402,19 @@ def parse_parameters(config, metadata, workflow_type, ignore_bad_cols=False):
             # Otherwise just ensure the parameter exists.
             else:
                 assert config[option]
+
+        # Parse the optional parameters
+        for option in fig.WORKFLOWS[workflow_type]["optional_parameters"]:
+            Logger.debug('checking {}'.format(option))
+            if option in config:
+                if config[option] == 'True':
+                    config[option] = True
+                elif config[option] == 'False':
+                    config[option] = False
     except (KeyError, AssertionError):
         raise InvalidConfigError('Missing parameter {} in config file'.format(option))
     return config
+
 
 def get_sequencing_run_names(metadata):
     df = load_metadata(metadata, header=0, na_values='nan', skiprows=[0, 2, 3, 4])
@@ -1147,7 +1157,6 @@ def strip_error_barcodes(num_allowed_errors,
     :reverse_barcode_cats: tuple with reverse barcode header text
     """
     # Read in mapping file
-    output_content = {}
     map_df = pd.read_csv(Path(mapping_file), sep='\t', header=[0, 1], na_filter=False)
 
     # Only three columns are needed
@@ -1230,8 +1239,8 @@ def get_stripped_file_content(num_allowed_errors, forward_barcode, reverse_barco
     while read:
 
         # Use Levenshtein distance on each barcode to determine error count
-        diff = lev.distance(read.group(1), forward_barcode)
-        diff += lev.distance(read.group(2), reverse_barcode)
+        diff = nltk.edit_distance(read.group(1), forward_barcode)
+        diff += nltk.edit_distance(read.group(2), reverse_barcode)
 
         # Add read to the output if there are few enough errors
         if diff <= num_allowed_errors:
@@ -1353,11 +1362,8 @@ def validate_demultiplex(demux_file, for_barcodes, rev_barcodes, map_file, log_d
     barcode_return = create_barcode_mapfile(Path(demux_file).parent, for_barcodes, rev_barcodes,
                                             Path(demux_file).stem, map_file, get_read_counts)
     if get_read_counts:
-        map_df = barcode_return[0]
         matched_barcodes = barcode_return[1]
         all_barcodes = barcode_return[2]
-    else:
-        map_df = barcode_return
 
     new_env = setup_environment('qiime/1.9.1')
 
@@ -1568,11 +1574,8 @@ def get_study_components(study_dirs):
         directory_info[study]['specimen'] = spec[0]
 
         # Collect names of used sequencing runs
-        runs = []
         df = pd.read_csv(directory_info[study]['specimen'], sep='\t', header=[0, 1], skiprows=[2, 3, 4])
-        for run in df['RawDataProtocol']['RawDataProtocolID']:
-            if run not in runs:
-                runs.append(run)
+        runs = list(df['RawDataProtocol']['RawDataProtocolID'].unique())
         directory_info[study]['runs'] = runs
         directory_info[study]['name'] = df['Study']['StudyName'][0]
 
@@ -1590,7 +1593,7 @@ def get_study_components(study_dirs):
     return directory_info
 
 
-def get_sequencing_run_locations(runs):
+def get_sequencing_run_locations(runs, user):
     """
     Get file locations of sequencing runs, for use with dump & load
     """
@@ -1704,6 +1707,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     # Store metadata by ID, allowing for any subset of samples from the metadata
     categories = {}
     for i, cell in enumerate(mdf['#SampleID']['#q2:types']):
+        cell = str(cell)
         if cell not in categories:
             categories[cell] = {}
         categories[cell][metadata_column_class] = mdf[metadata_column_class]['categorical'][i]
@@ -1725,6 +1729,7 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     t = [metadata_column_class]
     to_drop = []
     for i, cell in enumerate(path_df.loc[0]):
+        cell = str(cell)
         if i == 0:
             continue
         if pd.isna(categories[cell][metadata_column_class]):
@@ -1759,6 +1764,48 @@ def format_table_to_lefse(i_table, metadata_file, metadata_column_class, metadat
     if remove_nans:
         path_df = path_df.drop(columns=to_drop)
         Logger.debug("dropped nans")
+    path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
+
+
+def format_table_to_humann(i_table, metadata_file, metadata_columns, o_table, remove_nans=False, add_codes=False):
+    """ Converts a feature table into a format that can be read by humann_barplot """
+    path_df = pd.read_csv(i_table, sep='\t', header=None, low_memory=False, dtype='string')
+    mdf = pd.read_csv(metadata_file, sep='\t', header=[0, 1])
+
+    # Store metadata by ID, allowing for any subset of samples from the metadata
+    categories = {}
+    for i, cell in enumerate(mdf['#SampleID']['#q2:types']):
+        cell = str(cell)
+        categories[cell] = {}
+        for col in metadata_columns:
+            categories[cell][col] = mdf[col]['categorical'][i]
+
+    # For BRITE Hierarchical format, need to generate a code for each unique pathway
+    if add_codes:
+        pathways = path_df[path_df.columns[0]]
+        coded_pathways = []
+        for p in pathways:
+            code_base = p.split("|")[0].split(";")[-1]
+            code = re.sub(r'[^0-9a-zA-Z]+', '-', code_base)
+            coded_pathways.append(f"{code}: {p}")
+        path_df[path_df.columns[0]] = coded_pathways
+
+    # Add each metadata column as a new row to feature table
+    to_drop = []
+    for col in metadata_columns:
+        new_row = [col]
+        for i, cell in enumerate(path_df.loc[0]):
+            if i == 0 or cell not in categories:
+                continue
+            if i not in to_drop and pd.isna(categories[cell][col]):
+                to_drop.append(i)
+            new_row.append(categories[cell][col])
+        new_row_df = pd.DataFrame(new_row).T
+        path_df = pd.concat([path_df[:1], new_row_df, path_df[1:]])
+        path_df.reset_index(inplace=True, drop=True)
+    # Remove samples with a nan in the added metadata
+    if remove_nans:
+        path_df = path_df.drop(columns=to_drop)
     path_df.to_csv(o_table, sep='\t', index=False, header=False, na_rep='nan')
 
 

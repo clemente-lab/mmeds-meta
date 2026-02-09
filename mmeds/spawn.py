@@ -4,8 +4,10 @@ from time import sleep
 from shutil import rmtree
 from pathlib import Path
 from datetime import datetime, timedelta
+
 from multiprocessing import Queue, Pipe, Lock
 from multiprocessing.managers import BaseManager
+import multiprocessing.managers
 
 import mmeds.config as fig
 import mmeds.secrets as sec
@@ -39,7 +41,7 @@ def killall(processes):
 
 class Watcher(BaseManager):
 
-    def __init__(self, address=("", sec.WATCHER_PORT), authkey=sec.AUTH_KEY):
+    def __init__(self, address=("127.0.0.1", sec.WATCHER_PORT), authkey=sec.AUTH_KEY):
         """
         Initialize an instance of the Watcher class. It inherits from multiprocessing.Process
         =====================================================================================
@@ -47,9 +49,11 @@ class Watcher(BaseManager):
             the necessary information will be added to this queue.
         :testing: A boolean. If true run in testing configuration, otherwise run in deployment configuration.
         """
+        Logger.debug("attempting connection")
         super().__init__(address, authkey)
         self.testing = fig.TESTING
         Logger.debug(f"WATCHER SELF.TESTING: {self.testing}")
+        Logger.debug(f"multiprocessing location: {multiprocessing.managers.__file__}")
         self.count = 0
         self.processes = []
         self.running_processes = []
@@ -71,6 +75,8 @@ class Watcher(BaseManager):
     def start(self):
         super().start()
         self.set_queue()
+        Logger.error("QUEUE SET STARTING RUN")
+        Logger.error(self.get_queue())
         self.run()
 
     def set_queue(self):
