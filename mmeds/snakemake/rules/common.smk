@@ -11,6 +11,7 @@ This common.smk file, following snakemake conventions, contains all the python l
 
 metadata = pd.read_csv("tables/qiime_mapping_file.tsv", sep='\t', header=[0], skiprows=[1], dtype='str')
 
+
 def pairwise_splits(wildcards, tool, vars):
     """
     When running differential analysis on any number of variables and tables, create all the possible pairwise splits
@@ -132,8 +133,10 @@ def get_lefse_plot_options():
         opts += "--no-string-clean "
     if "plot_max_rows" in config and type(config["plot_max_rows"]) is int and config["plot_max_rows"] > 0:
         opts += f"--row-max {config['plot_max_rows']} "
-    if "match_string" in config and config["match_string"]:
-        opts += f"--match-string {config['match_string']} "
+    if "include_string" in config and config["include_string"]:
+        opts += f"--include-string {config['exclude_string']} "
+    if "exclude_string" in config and config["exclude_string"]:
+        opts += f"--exclude-string {config['exclude_string']} "
     return opts
 
 

@@ -8,7 +8,8 @@ parser <- arg_parser("parse arguments", hide.opts=TRUE)
 parser <- add_argument(parser, "results-table", nargs=1, help="LEfSe Results Table")
 parser <- add_argument(parser, "output-file", nargs=1, help="LEfSe plot output")
 parser <- add_argument(parser, "--row-max", nargs=1, help="Will filter table down to the top {row-max} strengths", default=NA, type='integer')
-parser <- add_argument(parser, "--match-string", nargs=1, help="Only plot features that contain a match with a string", default=NA)
+parser <- add_argument(parser, "--include-string", nargs=1, help="Only plot features that contain a match with a string", default=NA)
+parser <- add_argument(parser, "--exclude-string", nargs=1, help="Do not plot features that contain a match with a string", default=NA)
 parser <- add_argument(parser, "--strict", flag=TRUE, help="Analysis run strictly on more than two classes, allow for this")
 parser <- add_argument(parser, "--no-string-clean", flag=TRUE, help="If set, no processing will be done on row labels")
 
@@ -52,10 +53,13 @@ colors <- c("blue3", "#E68800", 'green4', 'pink', 'brown', 'grey')
 
 data <-read.table(args$results_table, header = T, sep = "\t")
 
-# Only keep data with significant results
+# Only keep data with significant results and include/exclude specifications
 plot_data <- subset(data, (!is.na(data$LDA) & data$LDA > 2 & data$pval < 0.05))
-if (!is.na(args$match_string)) {
-    plot_data <- plot_data[grepl(args$match_string, plot_data$RawTaxa, ignore.case=T),]
+if (!is.na(args$include_string)) {
+    plot_data <- plot_data[grepl(args$include_string, plot_data$RawTaxa, ignore.case=T),]
+}
+if (!is.na(args$exclude_string)) {
+    plot_data <- plot_data[!grepl(args$exclude_string, plot_data$RawTaxa, ignore.case=T),]
 }
 
 if (nrow(plot_data) == 0) {

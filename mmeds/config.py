@@ -289,7 +289,8 @@ WORKFLOWS = {
             "subclasses",
             "clean_strings",
             "plot_max_rows",
-            "match_string"
+            "include_string",
+            "exclude_string"
         ]
     },
     "picrust2": {
