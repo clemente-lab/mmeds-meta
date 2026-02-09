@@ -4,7 +4,7 @@ report: "report.rst"
 include: "{snakemake_dir}/common.smk"
 include: "{snakemake_dir}/file_manipulation.smk"
 include: "{snakemake_dir}/table_filtering.smk"
-include: "{snakemake_dir}/functional_annotation.smk
+include: "{snakemake_dir}/functional_annotation.smk"
 
 rule results:
     input:
