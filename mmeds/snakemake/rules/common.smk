@@ -134,7 +134,7 @@ def get_lefse_plot_options():
     if "plot_max_rows" in config and type(config["plot_max_rows"]) is int and config["plot_max_rows"] > 0:
         opts += f"--row-max {config['plot_max_rows']} "
     if "include_string" in config and config["include_string"]:
-        opts += f"--include-string {config['exclude_string']} "
+        opts += f"--include-string {config['include_string']} "
     if "exclude_string" in config and config["exclude_string"]:
         opts += f"--exclude-string {config['exclude_string']} "
     return opts
