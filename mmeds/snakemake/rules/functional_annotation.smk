@@ -6,11 +6,10 @@ rule picrust2_core:
     output:
         directory("picrust2_out")
     conda:
-        # "qiime2-2020.8.0" # or should I use "qiime2-2023.9"
-        "/sc/arion/projects/MMEDS/.modules/picrust2"
+        "picrust2"
     shell:
         "picrust2_pipeline.py "
         "-s {input.rep_seqs} "
         "-i {input.biom_feature_table} "
         "-o {output} "
-        "--stratified "
+        "--stratified"
