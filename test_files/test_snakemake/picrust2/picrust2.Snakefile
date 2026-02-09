@@ -1,10 +1,10 @@
 configfile: "test_picrust2_config.yaml"
 report: "report.rst"
 
-include: "{snakemake_dir}/common.smk"
-include: "{snakemake_dir}/file_manipulation.smk"
-include: "{snakemake_dir}/table_filtering.smk"
-include: "{snakemake_dir}/functional_annotation.smk"
+include: "snakemake_dir/common.smk"
+include: "snakemake_dir/file_manipulation.smk"
+include: "snakemake_dir/table_filtering.smk"
+include: "snakemake_dir/functional_annotation.smk"
 
 rule results:
     input:
