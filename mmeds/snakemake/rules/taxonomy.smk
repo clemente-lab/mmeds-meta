@@ -34,6 +34,7 @@ rule classify_taxonomy_greengenes2:
         "--o-classification {output}"
 
 rule classify_taxonomy_greengenes2_old_qiime2:
+    """ Classify sequences with GreenGenes2 using the older qiime2 install """
     threads: 10
     input:
         classifier = "tables/greengenes2.2020-10.nb-classifier.old_qiime2.qza",

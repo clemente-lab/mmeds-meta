@@ -37,7 +37,7 @@ rule diversity_core_metrics:
         "--i-table {input.feature_table} "
         "--p-sampling-depth {config[sampling_depth]} "
         "--m-metadata-file {input.mapping_file} "
-        "--p-n-jobs-or-threads {threads} "
+        "--p-n-jobs {threads} "
         "--output-dir {output}"
 
 rule alpha_rarefaction_phylogenetic:

@@ -1,6 +1,7 @@
 library(stringr)
 library(tidyverse)
 library(qiime2R)
+library(ggrepel)
 
 clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
     # Takes in a character vector of taxonomic strings and attempts to coerce them into a 'clean', unified format such that all in the output are unique.
@@ -10,10 +11,15 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
     repeats <- list()
     for (raw in raw_taxa) {
         # First check for strings that are special cases
+        if (grepl("not_reported", raw) || raw=="unclassified") {
+          taxa_strs <- append(taxa_strs, raw)
+          next
+        }
         is_virus <- grepl("virus", raw, ignore.case = T)
         is_uncharacterized_spp <- grepl("sp\\.|sp_|str\\.|str_", raw, ignore.case = T)
         is_unclassified <- grepl("unclassified|not_reported", raw, ignore.case = T)
-        is_special_case <- ( is_virus | is_uncharacterized_spp | is_unclassified )
+        is_clade <- grepl("_clade_", raw, ignore.case = T)
+        is_special_case <- ( is_virus | is_uncharacterized_spp | is_unclassified | is_clade )
 
         # Clean "." and "'" characters that will affect the splitting into components
         raw <- str_replace_all(raw, "sp\\.", "sp")
@@ -21,6 +27,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
         raw <- str_replace_all(raw, "sp__", "sp_")
         raw <- str_replace_all(raw, "str__", "str_")
         raw <- str_replace_all(raw, "'", "")
+        # raw <- str_replace_all(raw, "\\.", "")
         raw <- str_replace_all(raw, "___", "__")
         raw <- str_replace_all(raw, "'", "")
         raw <- str_replace_all(raw, " ", "_")
@@ -90,7 +97,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
                 if (anno_start == length(lvl_split)) {
                     # Only one string at species level, get genus from previous level
                     genus_split <- as.character(unlist(str_split(split[length(split)-1], "_")))
-                    taxa_str <- paste(genus_split[1:length(genus_split)], paste(lvl_split[anno_start:length(lvl_split)], collapse=' '))
+                    taxa_str <- paste(genus_split[3:length(genus_split)], paste(lvl_split[anno_start:length(lvl_split)], collapse=' '))
                 } else {
                     taxa_str <- paste(lvl_split[anno_start:length(lvl_split)], collapse=' ')
                 }
@@ -99,7 +106,7 @@ clean_taxa_string <- function(raw_taxa, strict=T, no_reps=F) {
             }
         }
 
-        if (taxa_str %in% taxa_strs & !taxa_str %in% repeats) {
+        if (taxa_str %in% taxa_strs && !taxa_str %in% repeats) {
             repeats <- append(repeats, taxa_str)
         }
         taxa_strs <- append(taxa_strs, taxa_str)
@@ -126,7 +133,6 @@ wrap_text <- function(x, chars = 10) {
     stringr::str_wrap(x, chars)
 }
 
-
 taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     # Modified version of taxa_barplot from qiime2R library
     # Takes in a feature table, optional parameters, and outputs the resulting taxa plot
@@ -146,15 +152,17 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     )
 
     if(missing(ntoplot) & nrow(features)>10){ntoplot=10} else if (missing(ntoplot)){ntoplot=nrow(features)}
-    features<-as.data.frame(make_percent(features), check.names=F)
+    features <- as.data.frame(make_percent(features), check.names=F)
+    features[is.na(features)] <- 0
 
     if(missing(metadata)){metadata<-data.frame(SampleID=colnames(features))}
-    if(!"SampleID" %in% colnames(metadata)){metadata <- metadata %>% rownames_to_column("SampleID")}
+    if(!"SampleID" %in% colnames(metadata)){metadata <- metadata |> rownames_to_column("SampleID")}
     if(!missing(category) && !is.na(category)){
         if(!category %in% colnames(metadata)){message(stop(category, " not found as column in metdata"))}
     }
 
     plotfeats<-names(sort(rowMeans(features), decreasing = TRUE)[1:ntoplot]) # extract the top N most abundant features on average
+
     if (sort=="top") {
         sort_by <- c(plotfeats[1])
     } else if (sort %in% c("all", "dominant")) {
@@ -215,17 +223,18 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     suppressMessages(
         suppressWarnings(
             fplot<-
-                features %>%
-                as.data.frame() %>%
-                rownames_to_column(var="Taxon") %>%
-                gather(-Taxon, key="SampleID", value="Abundance") %>%
-                mutate(Taxon=if_else(Taxon %in% plotfeats, Taxon, "Remainder")) %>%
-                group_by(Taxon, SampleID) %>%
-                summarize(Abundance=sum(Abundance)) %>%
-                ungroup() %>%
-                mutate(Taxon=factor(Taxon, levels=rev(c(plotfeats, "Remainder")))) %>%
+                features |>
+                as.data.frame() |>
+                rownames_to_column(var="Taxon") |>
+                gather(-Taxon, key="SampleID", value="Abundance") |>
+                mutate(Taxon=if_else(Taxon %in% plotfeats, Taxon, "Remainder")) |>
+                group_by(Taxon, SampleID) |>
+                summarize(Abundance=sum(Abundance)) |>
+                ungroup() |>
+                mutate(Taxon=factor(Taxon, levels=rev(c(plotfeats, "Remainder")))) |>
                 left_join(metadata)
-        ))
+        )
+    )
     feature_order <- c(names(rowMeans(features)[order(rowMeans(features), decreasing=T)][1:ntoplot]), 'Remainder')
     fplot$Taxon <- factor(fplot$Taxon, levels=feature_order)
 
@@ -243,5 +252,99 @@ taxa_barplot <- function(features, metadata, category, ntoplot, sort="top"){
     if(!missing(category) && !is.na(category)){bplot<-bplot + facet_grid(~get(category), scales="free_x", space="free", labeller = as_labeller(wrap_text))}
 
     return(bplot)
+}
+
+get_fold_change <- function(data, column, column_labels, features) {
+    # Given a set of features (e.g. taxa, pathways) and a two-way comparison between groups,
+    #   return dataframe with one column of features and one column of groupwise log2FoldChange
+    features_df <- data[, features]
+    features_df[] <- lapply(features_df, function(x) as.numeric(as.character(x)))
+    min_nonzero <- min(features_df[features_df!=0], na.rm=T)
+    pseudo <- 10^floor(log10(min_nonzero))
+
+    folds <- c()
+    group1 <- data[data[[column]]==column_labels[1] & !is.na(data[[column]]),]
+    group2 <- data[data[[column]]==column_labels[2] & !is.na(data[[column]]),]
+    for (f in features) {
+        set1 <- group1[[f]]
+        set2 <- group2[[f]]
+        fold <- mean(log2(set1+pseudo)) - mean(log2(set2+pseudo))
+        folds <- c(folds, fold)
+    }
+
+    fold_df <- data.frame(
+        feature=features,
+        log2FC=folds
+    )
+    return(fold_df)
+}
+
+get_qval_on_pval_scale <- function(plot_mat, qval_thresh) {
+    plot_mat_qval_signif <- plot_mat[!is.na(plot_mat$adjP) & plot_mat$adjP < qval_thresh,]
+    plot_mat_qval_signif <- plot_mat_qval_signif[order(-plot_mat_qval_signif$adjP),]
+    plot_mat_qval_not_signif <- plot_mat[!is.na(plot_mat$adjP) & plot_mat$adjP >= qval_thresh,]
+    plot_mat_qval_not_signif <- plot_mat_qval_not_signif[order(plot_mat_qval_not_signif$adjP),]
+
+    if (nrow(plot_mat_qval_signif)==0) {
+        return ((min(plot_mat_qval_not_signif$rawP) / 2))
+    }
+
+    pval_high <- plot_mat_qval_not_signif$rawP[1]
+    pval_low <- plot_mat_qval_signif$rawP[1]
+    qval_on_pval_scale <- mean(c(pval_high, pval_low))
+    return (qval_on_pval_scale)
+}
+
+differential_volcano_plot <- function(plot_mat, valPos, valNeg, string_clean_level=2, label_level=2, include_labels=NA) {
+    no_inf <- plot_mat[abs(plot_mat$log2FC)!=Inf & !is.na(plot_mat$rawP),]
+    max_x <- max(abs(min(no_inf$log2FC)), max(no_inf$log2FC))
+    max_x <- max_x * 1.05
+    if (Inf %in% plot_mat$log2FC) {plot_mat[plot_mat$log2FC==Inf,]$log2FC <- max_x}
+    if (-Inf %in% plot_mat$log2FC) {plot_mat[plot_mat$log2FC==-Inf,]$log2FC <- -max_x}
+
+    pval_thresh <- 0.05
+    qval_thresh <- 0.1
+    qval_thresh_as_pval <- min(pval_thresh, get_qval_on_pval_scale(plot_mat, qval_thresh))
+
+    plot_mat$label <- ""
+    if (label_level==2) {label_thresh <- pval_thresh}
+    else if (label_level==1) {label_thresh <- qval_thresh_as_pval} 
+    else {label_thresh <- 0}
+    if (!all(is.na(include_labels)) && (length(include_labels)>0)) {
+        label_grep_pattern <- paste(include_labels, collapse="|")
+        print(label_grep_pattern)
+        label_rows <- c(!is.na(plot_mat$rawP) & (plot_mat$rawP < label_thresh | grepl(label_grep_pattern, plot_mat$feature, ignore.case=T)))
+    } else {
+        label_rows <- c(!is.na(plot_mat$rawP) & plot_mat$rawP < label_thresh)
+    }
+    if (nrow(plot_mat[label_rows,]) > 0) {
+        if (string_clean_level > 0) {
+            plot_mat[label_rows,]$label <- clean_taxa_string(plot_mat[label_rows,]$feature, strict=(string_clean_level==2))
+        } else {
+            plot_mat[label_rows,]$label <- plot_mat[label_rows,]$feature
+        }
+    }
+
+    plot_mat$signif <- "0"
+    rows_raw <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<pval_thresh)
+    pos_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & !is.na(plot_mat$log2FC) & plot_mat$log2FC>0)
+    neg_rows_adj <- c(!is.na(plot_mat$rawP) & plot_mat$rawP<qval_thresh_as_pval & !is.na(plot_mat$log2FC) & plot_mat$log2FC<0)
+    if (nrow(plot_mat[c(rows_raw),]) > 0) {
+        plot_mat[rows_raw,]$signif <- "1"
+    }
+    if (nrow(plot_mat[pos_rows_adj,]) > 0) {
+        plot_mat[pos_rows_adj,]$signif <- "2"
+    }
+    if (nrow(plot_mat[neg_rows_adj,]) > 0) {
+        plot_mat[neg_rows_adj,]$signif <- "3"
+    }
+
+    p <- ggplot(plot_mat, aes(x=log2FC, y=-log2(rawP), color=factor(signif, levels=c("0", "1", "2", "3")))) +
+        geom_hline(yintercept=-log2(pval_thresh), linewidth=0.3, color="grey20", linetype = "dashed") +
+        geom_hline(yintercept=-log2(qval_thresh_as_pval), linewidth=0.3, color="grey20", linetype = "dashed") +
+        theme_classic() + theme(legend.position="none") + labs(x=paste(valNeg, "   <-   log2FC   ->   ", valPos)) +
+        geom_text_repel(aes(label=label), color="black", force=5, max.overlaps=100, force_pull=0.1, size=3, min.segment.length=0.2) +
+        scale_color_manual(values=c("0"="grey60", "1"="grey30", "2"="red3", "3"="cyan3")) + xlim(-max_x, max_x) + geom_point()
+    return(p)
 }
 

@@ -31,6 +31,7 @@ rule filter_table_to_two_classes:
         "--o-filtered-table {output}"
 
 rule filter_nans:
+    """ Filter implicit 'nan's out of a table. Rule currently unused """
     input:
         feature_table = "tables/{table}.qza",
         mapping_file = "tables/qiime_mapping_file.tsv"
