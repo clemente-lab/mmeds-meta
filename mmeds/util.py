@@ -804,6 +804,13 @@ def send_email(toaddr, user, message='upload', testing=False, **kwargs):
                'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
                'If you have any issues please email: {cemail} with a description of your problem.\n'
         subject = 'New Sequencing Run Uploaded'
+    elif message == 'upload-feature-table':
+        body = 'Hello {email}, \nthe user {user} uploaded a feature table "{table_name}" for the {study} study ' +
+                'to the mmeds database server.\nThis table can now be used for downstream analyses.' +\
+               'In order to gain access to this data without the password to\n{user} you must provide ' +\
+               'the following access code:\n{code}\n\nBest,\nMmeds Team\n\n' +\
+               'If you have any issues please email: {cemail} with a description of your problem.\n'
+        subject = 'New Feature Table Uploaded'
     elif message == 'ids_generated':
         body = 'Hello {email},\nthe user {user} uploaded {id_type}s for the study {study}. \n' +\
                'The aliquots are added and the IDs have been generated.\n\nBest,\nMmeds Team\n\n' +\
@@ -1484,6 +1491,15 @@ def upload_sequencing_run_local(queue, run_name, user, datafiles, reads_type, ba
     """
     queue.put(('upload-run', run_name, user, reads_type, barcodes_type, datafiles, False))
     Logger.debug("Sequencing run sent to queue directly")
+    return 0
+
+
+def upload_feature_table_local(queue, user, study, table_name, table_type, table_file):
+    """
+    Directly upload a local feature table using the watcher, bypassing the server
+    """
+    queue.put(('upload-feature-table', user, study, table_name, table_type, table_file, False))
+    Logger.debug("Feature table sent to queue directly")
     return 0
 
 

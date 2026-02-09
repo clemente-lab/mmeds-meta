@@ -9,7 +9,7 @@ import pymysql as pms
 from datetime import datetime
 from pathlib import Path
 from multiprocessing import Process
-from mmeds.error import NoResultError, InvalidUploadError
+from mmeds.error import NoResultError
 from mmeds.logging import Logger
 from mmeds.util import (send_email, create_local_copy)
 
@@ -18,15 +18,15 @@ class FeatureTableUploader(Process):
     """
     This class handles the processing and uploading of observation matrix tables
     """
-    def __init__(self, access_code, owner, data_name, data_type, data_files, public, testing):
+    def __init__(self, access_code, owner, studies, table_name, table_type, table_file, public, testing):
         warnings.simplefilter('ignore')
         super().__init__()
-        Logger.debug('DataUploader created with params')
+        Logger.debug('FeatureTableUploader created with params')
         Logger.debug({
             'owner': owner,
-            'data_name': data_name,
-            'data_type': data_type,
-            'data_files': data_files,
+            'table_name': table_name,
+            'table_type': table_type,
+            'table_file': table_file,
             'public': public,
             'testing': testing
         })
@@ -35,24 +35,8 @@ class FeatureTableUploader(Process):
         self.access_code = access_code
         self.owner = owner
         self.testing = testing
-        self.data_name = data_name
+        self.table_name = table_name
         self.public = public
-        self.datafiles = data_files
-
-        if data_type == "MultiplexedPairedEndSingleBarcodes":
-            self.reads_type = "paired"
-            self.barcodes_type = "single"
-            self.demultiplexed = False
-        elif data_type == "MultiplexedPairedEndDualBarcodes":
-            self.reads_type = "paired"
-            self.barcodes_type = "dual"
-            self.demultiplexed = False
-        elif data_type == "DemultiplexedPairedEnd":
-            self.reads_type = None
-            self.barcodes_type = None
-            self.demultiplexed = True
-        else:
-            raise InvalidUploadError(f"Got unexpected data type '{data_type}'")
 
         # If testing connect to test server
         if testing:
@@ -82,34 +66,24 @@ class FeatureTableUploader(Process):
                                      host=sec.MONGO_HOST)
 
         # Create the document
-        self.data = docs.DataDoc(created=datetime.utcnow(),
-                                 last_accessed=datetime.utcnow(),
-                                 testing=self.testing,
-                                 doc_type=docs.DocType.DATA,
-                                 access_code=self.access_code,
-                                 data_name=self.data_name,
-                                 data_type=self.data_type,
-                                 files=[],
-                                 owner=self.owner,
-                                 public=self.public)
-
-        self.data.save()
-
-        count = 0
-        new_dir = fig.SEQUENCING_DIR / ('{}_{}_{}'.format(self.owner, self.data_name, count))
-
-        while new_dir.is_dir():
-            count += 1
-            new_dir = fig.SEQUENCING_DIR / ('{}_{}_{}'.format(self.owner, self.data_name, count))
-        new_dir.mkdir()
-
-        self.path = Path(new_dir) / 'database_dir'
+        self.doc = docs.FeatureTableDoc(created=datetime.utcnow(),
+                                        last_accessed=datetime.utcnow(),
+                                        testing=self.testing,
+                                        doc_type=docs.DocType.FEATURE_TABLE,
+                                        access_code=self.access_code,
+                                        table_name=self.table_name,
+                                        table_type=self.table_type,
+                                        studies=self.studies,
+                                        owner=self.owner,
+                                        public=self.public,
+                                        latest_version=True)
+        self.doc.save()
 
     def get_info(self):
         """ Method to return a dictionary of relevant info for the process log """
         info = {
             'created': self.created,
-            'type': 'upload-run',
+            'type': 'upload-feature-table',
             'owner': self.owner,
             'pid': self.pid,
             'name': self.name,
@@ -121,9 +95,9 @@ class FeatureTableUploader(Process):
         """
         Thread that handles the upload of sequencing run files.
         """
-        self.data.update(is_alive=True)
-        self.data.save()
-        Logger.debug('Handling upload for sequencing run {} for user {}'.format(self.sequencing_run_name, self.owner))
+        self.doc.update(is_alive=True)
+        self.doc.save()
+        Logger.debug('Handling upload for feature table {} for user {}'.format(self.table_name, self.owner))
 
         # If the owner is None set user_id to 0
         if self.owner is None:
@@ -142,52 +116,26 @@ class FeatureTableUploader(Process):
             self.user_id = int(result[0])
             self.email = result[1]
 
-        # If the metadata is to be made public overwrite the user_id
-        if self.public:
-            self.user_id = 1
-        self.check_file = fig.DATABASE_DIR / 'last_check.dat'
-
         if not self.path.is_dir():
             self.path.mkdir()
-        self.data.update(path=str(self.path.parent))
-        self.data.save()
+        self.doc.update(path=str(self.path.parent))
+        self.doc.save()
 
-        # Create a copy of the Data files
-        datafile_copies = {key: create_local_copy(Path(filepath).read_bytes(),
-                                                  f"{Path(filepath).name}", self.path.parent, False)
-                           for key, filepath in self.datafiles.items()
-                           if filepath is not None}
-
-        for key, filepath in self.datafiles.items():
-            filepath = Path(filepath)
-            with open(filepath, 'rb') as f:
-                grid_file = men.GridFSProxy()
-                grid_file.put(f, content_type='text/plain', filename=filepath.name)
-                self.data.files.append(grid_file)
-        self.data.save()
-
-        # Create sequencing run directory file
-        with open(self.path.parent / fig.SEQUENCING_DIRECTORY_FILE, "wt") as f:
-            for key, filepath in self.datafiles.items():
-                adjusted = key
-                if key == 'for_reads':
-                    adjusted = 'forward'
-                elif key == 'rev_reads':
-                    adjusted = 'reverse'
-                f.write(f"{adjusted}: {Path(filepath).name}\n")
-
-        self.mongo_import(**datafile_copies)
+        self.mongo_import(self.table_file)
 
         # Send the confirmation email
-        send_email(self.email, self.owner, message='upload-run', run=self.sequencing_run_name,
-                   code=self.access_code, testing=self.testing)
+        send_email(self.email, self.owner, message='upload-feature_table', study=self.studies[0],
+                   table_name=self.table_name, code=self.access_code, testing=self.testing)
         # Update the doc to reflect the successful upload
-        self.data.update(is_alive=False, exit_code=0)
-        self.data.save()
+        self.doc.update(is_alive=False, exit_code=0)
+        self.doc.save()
         return 0
 
-    def mongo_import(self, **kwargs):
+    def mongo_import(self, table_file):
         """ Imports additional columns into the NoSQL database. """
-        self.data.files.update(kwargs)
-        self.data.update(email=self.email, path=str(self.path.parent))
-        self.data.save()
+        self.doc.table = men.GridFSProxy()
+        with open(table_file, "rb") as f:
+            self.doc.table.put(f, content_type="text/plain")
+
+        self.doc.update(email=self.email, path=str(self.path.parent))
+        self.doc.save()

@@ -18,6 +18,7 @@ from mmeds.database.metadata_uploader import MetaDataUploader
 from mmeds.database.data_uploader import DataUploader
 from mmeds.database.metadata_adder import MetaDataAdder
 from mmeds.database.study_creator import StudyCreator
+from mmeds.database.feature_table_uploader import FeatureTableUploader
 from mmeds.error import AnalysisError, MissingUploadError
 
 from mmeds.tools.analysis import Analysis
@@ -331,19 +332,26 @@ class Watcher(BaseManager):
 
             # Add new sequencing run
             elif 'run' in process[0]:
-                (ptype, sequencing_run_name, username, reads_type, barcodes_type,
-                 datafiles, public) = process
+                (ptype, sequencing_run_name, username, reads_type, barcodes_type, datafiles, public) = process
 
                 p = DataUploader(new_access_code, username, sequencing_run_name, reads_type,
                                  datafiles, public, self.testing)
+
+            # Add new feature table
+            elif 'feature-table' in process[0]:
+                (ptype, username, study, table_name, table_type, table_file, public) = process
+
+                p = FeatureTableUploader(new_access_code, username, [study], table_name, table_type, table_file,
+                                         public, self.testing)
+
             # Add new study
             else:
                 Logger.debug(f"length: {len(process)}")
                 (ptype, study_doc, subject_metadata, specimen_metadata, subject_type,
                     username, meta_study, temporary, public) = process
                 # Start a process to handle loading the data
-                p = MetaDataUploader(new_access_code, subject_metadata, subject_type, specimen_metadata, username, 'qiime',
-                                     study_doc, meta_study, temporary, public, self.testing)
+                p = MetaDataUploader(new_access_code, subject_metadata, subject_type, specimen_metadata, username,
+                                     'qiime', study_doc, meta_study, temporary, public, self.testing)
         self.db_lock.acquire()
         p.start()
         self.add_process(ptype, p.access_code)

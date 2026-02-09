@@ -35,7 +35,6 @@ class MMEDSDoc(men.Document):
     testing = men.BooleanField(required=True)
     owner = men.StringField(max_length=100, required=True)
     email = men.StringField(max_length=100)
-    path = men.StringField(max_length=300)
     access_code = men.StringField(max_length=50)
     doc_type = men.EnumField(DocType, required=True)
     is_alive = men.BooleanField()
@@ -166,7 +165,6 @@ class DataDoc(MMEDSDoc):
     data_type = men.StringField()
     studies = men.ListField(men.ReferenceField(MMEDSDoc))
     files = men.MapField(field=men.FileField())
-    latest_version = men.BooleanField()
 
 
 class FeatureTableDoc(MMEDSDoc):
@@ -174,6 +172,7 @@ class FeatureTableDoc(MMEDSDoc):
     MongoDB Document for storing feature tables
     """
     table_name = men.StringField()
+    table_type = men.StringField()
     studies = men.ListField(men.ReferenceField(MMEDSDoc))
     from_analysis = men.ReferenceField(MMEDSDoc)
     table = men.FileField()
